@@ -27,9 +27,3 @@ class BaseService @Autowired()(baseConfig: BaseConfig) {
     s"The service says: alfa '${baseConfig.someKey}'"
   }
 }
-
-object BaseService {
-  private var context: ApplicationContext = null
-
-  def getBean[T](beanClass: Class[T]): T = context.getBean(beanClass)
-}
