@@ -67,14 +67,7 @@ _productMT
 _nestedStructs
 myTestCheckpoints
 
-**/main/resources/application.properties
-**/main/resources/application.conf
-**/main/resources/application.yaml
-**/main/resources/application.yml
-**/main/resources/spline.properties
-**/main/resources/kafka.properties
-**/menas/*/main/resources/*.properties
-**/enceladus_env.sh
+
 *.config
 *.keytab
 .DS_Store
