@@ -16,14 +16,10 @@
 
 package za.co.absa.atum.web.api.config
 
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.stereotype.Component
+import org.springframework.boot.context.properties.{ConfigurationProperties, ConstructorBinding}
 
-import scala.beans.BeanProperty
-
-@Component
-@ConfigurationProperties(prefix = "my-service")
-class BaseConfig() {
-  @BeanProperty
-  var someKey: String = _
-}
+@ConstructorBinding
+@ConfigurationProperties(prefix = "atum.web.api.config")
+class BaseConfig(
+                val someKey: String
+                )

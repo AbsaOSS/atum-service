@@ -14,6 +14,5 @@
  * limitations under the License.
  */
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "1.1.0")
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.6.0")

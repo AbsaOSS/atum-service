@@ -23,12 +23,6 @@ Test / parallelExecution := false
 lazy val root = (project in file("."))
   .settings(
     name := "Atum Service",
-    assembly / mainClass := Some("za.co.absa.atum.web.api.AtumService"),
-    assembly / assemblyMergeStrategy  := {
-      case PathList("META-INF", "spring.factories") => MergeStrategy.filterDistinctLines
-      case PathList("META-INF", _*) => MergeStrategy.discard
-      case _ => MergeStrategy.first
-    },
     libraryDependencies ++= dependencies,
     webappWebInfClasses := true,
     inheritJarManifest := true

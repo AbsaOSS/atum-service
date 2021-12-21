@@ -28,7 +28,7 @@ class BaseController @Autowired()(baseService: BaseService) {
   @GetMapping(path = Array("/test"), produces = Array(MediaType.TEXT_PLAIN_VALUE))
   @ResponseBody
   def handleRequest(): String = {
-    s"Hallo from a Scala controller! ${baseService.getMessage}"
+    s"Hello from a Scala controller! ${baseService.getMessage}"
   }
 
 }
