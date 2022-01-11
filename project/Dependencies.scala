@@ -25,6 +25,9 @@ object Dependencies {
   lazy val springBootTomcat = springOrg % "spring-boot-starter-tomcat" % springVersion
   lazy val springBootTest = springOrg % "spring-boot-starter-test" % springVersion
   lazy val servletApi = "javax.servlet" % "javax.servlet-api" % "3.0.1"
+  lazy val springFoxSwagger = "io.springfox" % "springfox-swagger2" % "3.0.0"
+  lazy val springFoxBoot = "io.springfox" % "springfox-boot-starter" % "3.0.0"
+  lazy val springFoxSwaggerUI = "io.springfox" % "springfox-swagger-ui" % "3.0.0"
 
   lazy val dependencies: Seq[ModuleID] = Seq(
     scalaTest % Test,
@@ -32,6 +35,9 @@ object Dependencies {
     springBootWeb,
     springBootConfiguration,
     springBootTomcat % Provided,
-    servletApi % Provided
+    servletApi % Provided,
+    springFoxSwagger,
+    springFoxSwaggerUI,
+    springFoxBoot
   )
 }
