@@ -18,43 +18,44 @@ package za.co.absa.atum.web.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.service.FlowService.{DefaultLimit, DefaultOffset}
-import za.co.absa.atum.web.model.Flow
+import za.co.absa.atum.web.model.{Flow, Segmentation}
 
 import java.util.UUID
 import scala.collection.mutable
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 
 @Service
-class FlowService @Autowired()() {
+class SegmentationService @Autowired()(flowService: FlowService) {
   // temporary storage // redo with db-persistence layer when ready
-  val inmemory: mutable.Map[UUID, Flow] = scala.collection.mutable.Map[UUID, Flow]()
+  val inmemory: mutable.Map[UUID, Segmentation] = scala.collection.mutable.Map[UUID, Segmentation]()
 
-  def getList(limit: Int = DefaultLimit, offset: Int = DefaultOffset): Future[List[Flow]] = Future {
+  def getList(limit: Int = DefaultLimit, offset: Int = DefaultOffset): Future[List[Segmentation]] = Future {
     inmemory.values.drop(offset).take(limit).toList // limiting, todo pagination or similar
   }
 
-  def add(f: Flow): Future[UUID] = Future {
-    require(f.id.isEmpty)
+  def add(seg: Segmentation): Future[UUID] = {
+    require(seg.id.isEmpty)
 
-    // persistence impl: supplies the ID internally:
-    val newId = UUID.randomUUID()
-    inmemory.put(newId, f.withId(newId)) match {
-      case None => newId // added successfully
-      case Some(_) => throw new IllegalStateException(s"Flow with id ${f.id} already exists") // todo persistence-based exception
+    flowService.get(seg.flowId).flatMap {
+      case None => throw NotFoundException(s"Flow referenced by flowId=${seg.flowId} not found!")
+      case Some(_) =>
+        // persistence impl: supplies the ID internally:
+        val newId = UUID.randomUUID()
+        inmemory.put(newId, seg.withId(newId)) match {
+          case None => Future.successful(newId)  // added successfully
+          case Some(_) => throw new IllegalStateException(s"Segmentation with id ${seg.id} already exists") // todo persistence-based exception
+        }
     }
   }
 
-  def get(uuid: UUID): Future[Option[Flow]] = Future {
+  def get(uuid: UUID): Future[Option[Segmentation]] = Future {
     inmemory.get(uuid)
   }
 
 }
 
-// todo when generalizing into EntityService, use these as default
-object FlowService {
-  val DefaultLimit: Int = 20
-  val DefaultOffset: Int = 0
-}
+

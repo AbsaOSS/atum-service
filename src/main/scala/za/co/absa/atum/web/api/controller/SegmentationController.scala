@@ -18,46 +18,46 @@ package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
-import org.springframework.web.bind.annotation.{GetMapping, PathVariable, PostMapping, RequestBody, RequestMapping, RequestParam, ResponseBody, ResponseStatus, RestController}
+import org.springframework.web.bind.annotation._
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
-import za.co.absa.atum.web.api.service.FlowService
-import za.co.absa.atum.web.model.Flow
+import za.co.absa.atum.web.api.service.{FlowService, SegmentationService}
+import za.co.absa.atum.web.model.{Flow, Segmentation}
 
 import java.net.URI
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.util.{Optional, UUID}
 import java.util.concurrent.CompletableFuture
+import java.util.{Optional, UUID}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @RestController
-@RequestMapping(Array("/api/flows"))
-class FlowController @Autowired()(flowService: FlowService) {
+@RequestMapping(Array("/api/segmentations"))
+class SegmentationController @Autowired()(segmentationService: SegmentationService) {
 
   @GetMapping(Array("/"))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam limit: Optional[Int], @RequestParam offset: Optional[Int]): CompletableFuture[Seq[Flow]] = {
-    val actualLimit = limit.toScalaOption.getOrElse(FlowService.DefaultLimit)
+  def getList(@RequestParam limit: Optional[Int], @RequestParam offset: Optional[Int]): CompletableFuture[Seq[Segmentation]] = {
+    val actualLimit = limit.toScalaOption.getOrElse(FlowService.DefaultLimit) // todo generalize
     val actualOffset = offset.toScalaOption.getOrElse(FlowService.DefaultOffset)
-    flowService.getList(limit = actualLimit, offset = actualOffset)
+    segmentationService.getList(limit = actualLimit, offset = actualOffset)
   }
 
   @GetMapping(Array("/{id}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionDetail(@PathVariable id: UUID): CompletableFuture[Flow] = {
-    flowService.get(id).map{
+  def getVersionDetail(@PathVariable id: UUID): CompletableFuture[Segmentation] = {
+    segmentationService.get(id).map{
       case Some(flow) => flow
-      case None => throw NotFoundException(s"No flow by id $id")
+      case None => throw NotFoundException(s"No segmentation by id $id")
     }
   }
 
   @PostMapping(Array("/"))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@RequestBody item: Flow): CompletableFuture[ResponseEntity[MessagePayload]] = {
-    flowService.add(item).map { id =>
-      val location: URI = new URI(s"/api/flows/${id}")
+  def create(@RequestBody item: Segmentation): CompletableFuture[ResponseEntity[MessagePayload]] = {
+    segmentationService.add(item).map { id =>
+      val location: URI = new URI(s"/api/segmentations/${id}")
       ResponseEntity.created(location)
-        .body[MessagePayload](MessagePayload(s"Successfully created flow with id $id"))
+        .body[MessagePayload](MessagePayload(s"Successfully created segmentation with id $id"))
     }
   }
 
