@@ -16,12 +16,14 @@
 
 package za.co.absa.atum.web.api
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
-import org.springframework.context.annotation.{Configuration, PropertySource}
+import org.springframework.context.annotation.{Bean, Configuration, PropertySource}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 @Configuration
 @SpringBootApplication
@@ -30,6 +32,12 @@ import org.springframework.context.annotation.{Configuration, PropertySource}
 class AtumService extends SpringBootServletInitializer {
   override def configure(application: SpringApplicationBuilder): SpringApplicationBuilder =
     application.sources(classOf[AtumService])
+
+  @Bean
+  def objectMapper(): ObjectMapper = {
+    new ObjectMapper()
+      .registerModule(DefaultScalaModule)
+  }
 }
 
 object AtumService extends App {
