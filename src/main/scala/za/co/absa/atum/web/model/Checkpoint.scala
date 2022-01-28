@@ -18,8 +18,12 @@ package za.co.absa.atum.web.model
 
 import java.util.UUID
 
-case class Segmentation(id: Option[UUID],
-                        flowId: UUID) {
-
-  def withId(uuid: UUID): Segmentation = copy(id = Some(uuid))
-}
+case class Checkpoint(id: Option[UUID],
+                      name: String,
+                      software: Option[String] = None,
+                      version: Option[String] = None,
+                      processStartTime: String,
+                      processEndTime: String,
+                      workflowName: String,
+                      order: Int,
+                      measurements: List[Measurement])

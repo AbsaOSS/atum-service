@@ -16,10 +16,10 @@
 
 package za.co.absa.atum.web.model
 
-import java.util.UUID
-
-case class Segmentation(id: Option[UUID],
-                        flowId: UUID) {
-
-  def withId(uuid: UUID): Segmentation = copy(id = Some(uuid))
-}
+case class Measurement
+(
+  controlName: String,
+  controlType: String,
+  controlCol: String,
+  controlValue: Any
+)

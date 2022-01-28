@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.service.FlowService.{DefaultLimit, DefaultOffset}
-import za.co.absa.atum.web.model.{Flow, Segmentation}
+import za.co.absa.atum.web.model.{ControlMeasure, Flow, Segmentation}
 
 import java.util.UUID
 import scala.collection.mutable
@@ -29,29 +29,39 @@ import scala.concurrent.Future
 
 
 @Service
-class SegmentationService @Autowired()(flowService: FlowService) {
+class ControlMeasureService @Autowired()(flowService: FlowService, segmentationService: SegmentationService) {
   // temporary storage // redo with db-persistence layer when ready
-  val inmemory: mutable.Map[UUID, Segmentation] = scala.collection.mutable.Map[UUID, Segmentation]()
+  val inmemory: mutable.Map[UUID, ControlMeasure] = scala.collection.mutable.Map[UUID, ControlMeasure]()
 
-  def getList(limit: Int = DefaultLimit, offset: Int = DefaultOffset): Future[List[Segmentation]] = Future {
+  def getList(limit: Int = DefaultLimit, offset: Int = DefaultOffset): Future[List[ControlMeasure]] = Future {
     inmemory.values.drop(offset).take(limit).toList // limiting, todo pagination or similar
   }
 
-  def add(seg: Segmentation): Future[UUID] = {
-    require(seg.id.isEmpty)
+  def add(cm: ControlMeasure): Future[UUID] = {
+    require(cm.id.isEmpty)
 
-    flowService.get(seg.flowId).flatMap {
-      case None => throw NotFoundException(s"Flow referenced by flowId=${seg.flowId} not found!")
-      case Some(_) =>
+    val flowSegId: Future[(Option[Flow], Option[Segmentation])] = for {
+      flow <- flowService.get(cm.flowId)
+      seg <- segmentationService.get(cm.segmentationId)
+    } yield (flow, seg)
+
+    flowSegId.flatMap {
+      case (None, _) => throw NotFoundException(s"Referenced flow (flowId=${cm.flowId} was not found.")
+      case (_, None) => throw NotFoundException(s"Referenced segmentations (segId=${cm.segmentationId} was not found.")
+      case _ =>
         // persistence impl: supplies the ID internally:
         val newId = UUID.randomUUID()
-        inmemory.put(newId, seg.withId(newId)) // assuming the persistence would throw on error
+        inmemory.put(newId, cm.withId(newId)) // assuming the persistence would throw on error
         Future.successful(newId)
     }
   }
 
-  def get(uuid: UUID): Future[Option[Segmentation]] = Future {
+  def get(uuid: UUID): Future[Option[ControlMeasure]] = Future {
     inmemory.get(uuid)
+  }
+
+  def getListByFlowAndSegIds(flowId: UUID, segId: UUID): Future[Seq[ControlMeasure]] = Future {
+    inmemory.values.filter(cm => cm.flowId.equals(flowId) && cm.segmentationId.equals(segId)).toSeq
   }
 
 }

@@ -41,10 +41,8 @@ class FlowService @Autowired()() {
 
     // persistence impl: supplies the ID internally:
     val newId = UUID.randomUUID()
-    inmemory.put(newId, f.withId(newId)) match {
-      case None => newId // added successfully
-      case Some(_) => throw new IllegalStateException(s"Flow with id ${f.id} already exists") // todo persistence-based exception
-    }
+    inmemory.put(newId, f.withId(newId)) // assuming the persistence would throw on error
+    newId
   }
 
   def get(uuid: UUID): Future[Option[Flow]] = Future {

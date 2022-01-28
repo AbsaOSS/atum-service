@@ -23,5 +23,6 @@ case class Flow(id: Option[UUID],
                 properties: Map[String, String] = Map()) {
 
   def apply(desc: Option[String] = None): Flow = Flow(None, desc)
-  def withId(uuid: UUID):Flow = copy(id = Some(uuid))
+
+  def withId(uuid: UUID): Flow = copy(id = Some(uuid))
 }

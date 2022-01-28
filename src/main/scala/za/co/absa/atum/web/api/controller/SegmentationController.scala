@@ -34,7 +34,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @RequestMapping(Array("/api/segmentations"))
 class SegmentationController @Autowired()(segmentationService: SegmentationService) {
 
-  @GetMapping(Array("/"))
+  @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
   def getList(@RequestParam limit: Optional[Int], @RequestParam offset: Optional[Int]): CompletableFuture[Seq[Segmentation]] = {
     val actualLimit = limit.toScalaOption.getOrElse(FlowService.DefaultLimit) // todo generalize
@@ -44,14 +44,14 @@ class SegmentationController @Autowired()(segmentationService: SegmentationServi
 
   @GetMapping(Array("/{id}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionDetail(@PathVariable id: UUID): CompletableFuture[Segmentation] = {
+  def getOne(@PathVariable id: UUID): CompletableFuture[Segmentation] = {
     segmentationService.get(id).map{
       case Some(flow) => flow
       case None => throw NotFoundException(s"No segmentation by id $id")
     }
   }
 
-  @PostMapping(Array("/"))
+  @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
   def create(@RequestBody item: Segmentation): CompletableFuture[ResponseEntity[MessagePayload]] = {
     segmentationService.add(item).map { id =>
