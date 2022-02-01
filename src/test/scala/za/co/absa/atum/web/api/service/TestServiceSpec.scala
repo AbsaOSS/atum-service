@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.controller
+package za.co.absa.atum.web.api.service
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, ResponseBody, RestController}
-import za.co.absa.atum.web.api.service.BaseService
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.TestContextManager
 
-@RestController
-@RequestMapping(Array("/api"))
-class BaseController @Autowired()(baseService: BaseService) {
 
-  @GetMapping(path = Array("/test"), produces = Array(MediaType.TEXT_PLAIN_VALUE))
-  @ResponseBody
-  def handleRequest(): String = {
-    s"Hello from a Scala controller! ${baseService.getMessage}"
+@SpringBootTest
+class TestServiceSpec extends AnyFlatSpec with Matchers {
+
+  @Autowired
+  private var testService: TestService = _
+
+  // Makes the above autowired work
+  new TestContextManager(this.getClass).prepareTestInstance(this)
+
+  "TestService" should "say greetings" in {
+    testService.getMessage shouldEqual "The service says: alfa 'ALFA'"
   }
-
 }

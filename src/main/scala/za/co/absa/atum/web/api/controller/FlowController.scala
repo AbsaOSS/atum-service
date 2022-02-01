@@ -17,48 +17,12 @@
 package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.{HttpStatus, ResponseEntity}
-import org.springframework.web.bind.annotation.{GetMapping, PathVariable, PostMapping, RequestBody, RequestMapping, RequestParam, ResponseStatus, RestController}
-import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.api.implicits._
-import za.co.absa.atum.web.api.payload.MessagePayload
+import org.springframework.web.bind.annotation.{RequestMapping, RestController}
 import za.co.absa.atum.web.api.service.FlowService
-import za.co.absa.atum.web.model.Flow
-
-import java.net.URI
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.util.{Optional, UUID}
-import java.util.concurrent.CompletableFuture
 
 @RestController
 @RequestMapping(Array("/api/flows"))
-class FlowController @Autowired()(flowService: FlowService) {
-
-  @GetMapping(Array(""))
-  @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam limit: Optional[Int], @RequestParam offset: Optional[Int]): CompletableFuture[Seq[Flow]] = { // todo does not work?
-    val actualLimit = limit.toScalaOption.getOrElse(FlowService.DefaultLimit)
-    val actualOffset = offset.toScalaOption.getOrElse(FlowService.DefaultOffset)
-    flowService.getList(limit = actualLimit, offset = actualOffset)
-  }
-
-  @GetMapping(Array("/{id}"))
-  @ResponseStatus(HttpStatus.OK)
-  def getOne(@PathVariable id: UUID): CompletableFuture[Flow] = {
-    flowService.get(id).map {
-      case Some(flow) => flow
-      case None => throw NotFoundException(s"No flow by id $id")
-    }
-  }
-
-  @PostMapping(Array(""))
-  @ResponseStatus(HttpStatus.CREATED)
-  def create(@RequestBody item: Flow): CompletableFuture[ResponseEntity[MessagePayload]] = {
-    flowService.add(item).map { id =>
-      val location: URI = new URI(s"/api/flows/${id}")
-      ResponseEntity.created(location)
-        .body[MessagePayload](MessagePayload(s"Successfully created flow with id $id"))
-    }
-  }
+class FlowController @Autowired()(flowService: FlowService)
+  extends BaseApiController(flowService) {
 
 }

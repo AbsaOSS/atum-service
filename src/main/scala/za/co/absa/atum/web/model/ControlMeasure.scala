@@ -23,9 +23,9 @@ case class ControlMeasure(id: Option[UUID],
                           segmentationId: UUID,
                           metadata: ControlMeasureMetadata,
                           runUniqueId: Option[String],
-                          checkpoints: List[Checkpoint]) {
+                          checkpoints: List[Checkpoint]) extends BaseApiModel {
 
-  def withId(uuid: UUID): ControlMeasure = copy(id = Some(uuid))
+  override def withId(uuid: UUID): ControlMeasure = copy(id = Some(uuid))
 }
 
 

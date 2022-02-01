@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.controller
+package za.co.absa.atum.web.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation._
-import za.co.absa.atum.web.api.service.ControlMeasureService
+import org.springframework.stereotype.Service
+import za.co.absa.atum.web.api.config.BaseConfig
 
-@RestController
-@RequestMapping(Array("/api/controlmeasures"))
-class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasureService)
-  extends BaseApiController(controlMeasureService) {
-
-  // todo get by controlMeasureService.getListByFlowAndSegIds(flowid, segid)
-  //  @RequestParam flowid: Optional[UUID], @RequestParam segid: Optional[UUID]
-
+@Service
+class TestService @Autowired()(baseConfig: BaseConfig) {
+  def getMessage: String = {
+    s"The service says: alfa '${baseConfig.someKey}'"
+  }
 }

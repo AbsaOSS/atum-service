@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.controller
+package za.co.absa.atum.web.api.service
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation._
-import za.co.absa.atum.web.api.service.ControlMeasureService
+import za.co.absa.atum.web.model.BaseApiModel
 
-@RestController
-@RequestMapping(Array("/api/controlmeasures"))
-class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasureService)
-  extends BaseApiController(controlMeasureService) {
+import java.util.UUID
+import scala.concurrent.Future
 
-  // todo get by controlMeasureService.getListByFlowAndSegIds(flowid, segid)
-  //  @RequestParam flowid: Optional[UUID], @RequestParam segid: Optional[UUID]
+trait BaseApiService[C <: BaseApiModel] {
+
+  def getList(limit: Int, offset: Int): Future[List[C]]
+
+  def add(item: C): Future[UUID]
+
+  def getById(uuid: UUID): Future[Option[C]]
 
 }

@@ -18,21 +18,20 @@ package za.co.absa.atum.web.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.atum.web.api.service.FlowService.{DefaultLimit, DefaultOffset}
 import za.co.absa.atum.web.model.Flow
 
 import java.util.UUID
 import scala.collection.mutable
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 
 @Service
-class FlowService @Autowired()() {
+class FlowService @Autowired()() extends BaseApiService[Flow] {
   // temporary storage // redo with db-persistence layer when ready
   val inmemory: mutable.Map[UUID, Flow] = scala.collection.mutable.Map[UUID, Flow]()
 
-  def getList(limit: Int = DefaultLimit, offset: Int = DefaultOffset): Future[List[Flow]] = Future {
+  def getList(limit: Int, offset: Int): Future[List[Flow]] = Future {
     inmemory.values.drop(offset).take(limit).toList // limiting, todo pagination or similar
   }
 
@@ -45,14 +44,14 @@ class FlowService @Autowired()() {
     newId
   }
 
-  def get(uuid: UUID): Future[Option[Flow]] = Future {
+  def getById(uuid: UUID): Future[Option[Flow]] = Future {
     inmemory.get(uuid)
   }
 
 }
-
-// todo when generalizing into EntityService, use these as default
-object FlowService {
-  val DefaultLimit: Int = 20
-  val DefaultOffset: Int = 0
-}
+//
+//// todo when generalizing into EntityService, use these as default
+//object FlowService {
+//  val DefaultLimit: Int = 20
+//  val DefaultOffset: Int = 0
+//}

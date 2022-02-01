@@ -19,7 +19,6 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.api.service.FlowService.{DefaultLimit, DefaultOffset}
 import za.co.absa.atum.web.model.{Flow, Segmentation}
 
 import java.util.UUID
@@ -29,18 +28,18 @@ import scala.concurrent.Future
 
 
 @Service
-class SegmentationService @Autowired()(flowService: FlowService) {
+class SegmentationService @Autowired()(flowService: FlowService) extends BaseApiService[Segmentation] {
   // temporary storage // redo with db-persistence layer when ready
   val inmemory: mutable.Map[UUID, Segmentation] = scala.collection.mutable.Map[UUID, Segmentation]()
 
-  def getList(limit: Int = DefaultLimit, offset: Int = DefaultOffset): Future[List[Segmentation]] = Future {
+  def getList(limit: Int, offset: Int): Future[List[Segmentation]] = Future {
     inmemory.values.drop(offset).take(limit).toList // limiting, todo pagination or similar
   }
 
   def add(seg: Segmentation): Future[UUID] = {
     require(seg.id.isEmpty)
 
-    flowService.get(seg.flowId).flatMap {
+    flowService.getById(seg.flowId).flatMap {
       case None => throw NotFoundException(s"Flow referenced by flowId=${seg.flowId} not found!")
       case Some(_) =>
         // persistence impl: supplies the ID internally:
@@ -50,7 +49,7 @@ class SegmentationService @Autowired()(flowService: FlowService) {
     }
   }
 
-  def get(uuid: UUID): Future[Option[Segmentation]] = Future {
+  def getById(uuid: UUID): Future[Option[Segmentation]] = Future {
     inmemory.get(uuid)
   }
 

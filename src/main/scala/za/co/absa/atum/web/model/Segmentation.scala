@@ -19,7 +19,7 @@ package za.co.absa.atum.web.model
 import java.util.UUID
 
 case class Segmentation(id: Option[UUID],
-                        flowId: UUID) {
+                        flowId: UUID) extends BaseApiModel {
 
-  def withId(uuid: UUID): Segmentation = copy(id = Some(uuid))
+  override def withId(uuid: UUID): Segmentation = copy(id = Some(uuid))
 }

@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.service
+package za.co.absa.atum.web.model
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Service
-import za.co.absa.atum.web.api.config.BaseConfig
+import java.util.UUID
 
-@Service
-class BaseService @Autowired()(baseConfig: BaseConfig) {
-  def getMessage: String = {
-    s"The service says: alfa '${baseConfig.someKey}'"
-  }
+trait BaseApiModel {
+  def id: Option[UUID]
+  def withId(uuid: UUID): BaseApiModel
 }
+

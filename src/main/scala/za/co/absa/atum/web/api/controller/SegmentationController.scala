@@ -32,33 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 @RestController
 @RequestMapping(Array("/api/segmentations"))
-class SegmentationController @Autowired()(segmentationService: SegmentationService) {
-
-  @GetMapping(Array(""))
-  @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam limit: Optional[Int], @RequestParam offset: Optional[Int]): CompletableFuture[Seq[Segmentation]] = {
-    val actualLimit = limit.toScalaOption.getOrElse(FlowService.DefaultLimit) // todo generalize
-    val actualOffset = offset.toScalaOption.getOrElse(FlowService.DefaultOffset)
-    segmentationService.getList(limit = actualLimit, offset = actualOffset)
-  }
-
-  @GetMapping(Array("/{id}"))
-  @ResponseStatus(HttpStatus.OK)
-  def getOne(@PathVariable id: UUID): CompletableFuture[Segmentation] = {
-    segmentationService.get(id).map{
-      case Some(flow) => flow
-      case None => throw NotFoundException(s"No segmentation by id $id")
-    }
-  }
-
-  @PostMapping(Array(""))
-  @ResponseStatus(HttpStatus.CREATED)
-  def create(@RequestBody item: Segmentation): CompletableFuture[ResponseEntity[MessagePayload]] = {
-    segmentationService.add(item).map { id =>
-      val location: URI = new URI(s"/api/segmentations/${id}")
-      ResponseEntity.created(location)
-        .body[MessagePayload](MessagePayload(s"Successfully created segmentation with id $id"))
-    }
-  }
+class SegmentationController @Autowired()(segmentationService: SegmentationService)
+  extends BaseApiController(segmentationService) {
 
 }
