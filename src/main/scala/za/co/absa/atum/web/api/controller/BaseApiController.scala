@@ -33,9 +33,9 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
 
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam limit: Optional[Int], @RequestParam offset: Optional[Int]): CompletableFuture[Seq[C]] = {
-    val actualLimit = limit.toScalaOption.getOrElse(BaseApiController.DefaultLimit)
-    val actualOffset = offset.toScalaOption.getOrElse(BaseApiController.DefaultOffset)
+  def getList(@RequestParam limit: Optional[String], @RequestParam offset: Optional[String]): CompletableFuture[Seq[C]] = {
+    val actualLimit = limit.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
+    val actualOffset = offset.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
     baseApiService.getList(limit = actualLimit, offset = actualOffset)
   }
 
