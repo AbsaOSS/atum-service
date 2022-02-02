@@ -19,6 +19,7 @@ package za.co.absa.atum.web.api.service
 import za.co.absa.atum.web.model.BaseApiModel
 
 import java.util.UUID
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 trait BaseApiService[C <: BaseApiModel] {
@@ -28,5 +29,10 @@ trait BaseApiService[C <: BaseApiModel] {
   def add(item: C): Future[UUID]
 
   def getById(uuid: UUID): Future[Option[C]]
+
+  def exists(uuid: UUID): Future[Boolean] = {
+    // default implementation that will work, but specific services may override it for optimization
+    getById(uuid).map(_.nonEmpty)
+  }
 
 }

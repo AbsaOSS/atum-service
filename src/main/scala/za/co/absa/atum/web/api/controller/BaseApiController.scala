@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.{Optional, UUID}
 import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiService[C]) {
 

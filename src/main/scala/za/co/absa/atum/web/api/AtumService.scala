@@ -17,15 +17,14 @@
 package za.co.absa.atum.web.api
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.{Bean, Configuration, PropertySource}
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 @Configuration
 @SpringBootApplication
