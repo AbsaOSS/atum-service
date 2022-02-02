@@ -18,6 +18,7 @@ package za.co.absa.atum.web.api.controller
 
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
@@ -27,6 +28,7 @@ import za.co.absa.atum.web.model.BaseApiModel
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.{Optional, UUID}
+import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiService[C]) {
@@ -50,9 +52,14 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
 
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@RequestBody item: C): CompletableFuture[ResponseEntity[MessagePayload]] = {
+  def create(@RequestBody item: C, request: HttpServletRequest): CompletableFuture[ResponseEntity[MessagePayload]] = {
     baseApiService.add(item).map { id =>
-      val location: URI = new URI(s"/api/controlmeasures/${id}") // todo generalize location somehow
+      val location: URI = ServletUriComponentsBuilder
+        .fromRequest(request)
+        .path("/{id}")
+        .buildAndExpand(id)
+        .toUri() // will create location e.g. /api/controlmeasures/someIdHere
+
       ResponseEntity.created(location)
         .body[MessagePayload](MessagePayload(s"Successfully created control measure with id $id"))
     }
