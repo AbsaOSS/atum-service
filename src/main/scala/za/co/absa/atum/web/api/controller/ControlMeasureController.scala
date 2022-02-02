@@ -17,15 +17,29 @@
 package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
 import za.co.absa.atum.web.api.service.ControlMeasureService
+import za.co.absa.atum.web.api.implicits._
+import za.co.absa.atum.web.model.ControlMeasure
+
+import java.util.{Optional, UUID}
+import java.util.concurrent.CompletableFuture
 
 @RestController
 @RequestMapping(Array("/api/controlmeasures"))
 class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasureService)
   extends BaseApiController(controlMeasureService) {
 
-  // todo get by controlMeasureService.getListByFlowAndSegIds(flowid, segid)
-  //  @RequestParam flowid: Optional[UUID], @RequestParam segid: Optional[UUID]
+  @GetMapping(Array("/{flowid}/{segid}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getListByFlowAndSegIds(@PathVariable flowId: UUID, @PathVariable segId: UUID,
+                             @RequestParam limit: Optional[String], @RequestParam offset: Optional[String]
+                            ): CompletableFuture[Seq[ControlMeasure]] = {
 
+    val actualLimit = limit.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
+    val actualOffset = offset.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
+    controlMeasureService.getListByFlowAndSegIds(flowId, segId, actualLimit, actualOffset)
+
+  }
 }

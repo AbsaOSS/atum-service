@@ -33,4 +33,11 @@ class RestExceptionHandler {
       .body[MessagePayload](MessagePayload(exception.getMessage))
   }
 
+  @ExceptionHandler(value = Array(classOf[IllegalArgumentException]))
+  def handleNotFoundException(exception: IllegalArgumentException): ResponseEntity[MessagePayload] = {
+    ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body[MessagePayload](MessagePayload(exception.getMessage))
+  }
+
 }

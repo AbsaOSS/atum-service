@@ -61,8 +61,11 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     inmemory.get(uuid)
   }
 
-  def getListByFlowAndSegIds(flowId: UUID, segId: UUID): Future[Seq[ControlMeasure]] = Future {
-    inmemory.values.filter(cm => cm.flowId.equals(flowId) && cm.segmentationId.equals(segId)).toSeq
+  def getListByFlowAndSegIds(flowId: UUID, segId: UUID, limit: Int, offset: Int): Future[List[ControlMeasure]] = Future {
+    inmemory.values
+      .filter(cm => cm.flowId.equals(flowId) && cm.segmentationId.equals(segId))
+      .drop(offset).take(limit)
+      .toList
   }
 
 }
