@@ -19,7 +19,7 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.model.{ControlMeasure, Flow, Segmentation}
+import za.co.absa.atum.web.model.{ControlMeasure, ControlMeasureMetadata, Flow, Segmentation}
 
 import java.util.UUID
 import scala.collection.mutable
@@ -39,7 +39,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
   }
 
   def add(cm: ControlMeasure): Future[UUID] = {
-    require(cm.id.isEmpty)
+    require(cm.id.isEmpty, "A new ControlMeasure payload must not have id!")
 
     val flowSegId: Future[(Option[Flow], Option[Segmentation])] = for {
       flow <- flowService.getById(cm.flowId)

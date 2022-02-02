@@ -36,7 +36,7 @@ class FlowService @Autowired()() extends BaseApiService[Flow] {
   }
 
   def add(f: Flow): Future[UUID] = Future {
-    require(f.id.isEmpty)
+    require(f.id.isEmpty, "A new Flow payload must not have id!")
 
     // persistence impl: supplies the ID internally:
     val newId = UUID.randomUUID()

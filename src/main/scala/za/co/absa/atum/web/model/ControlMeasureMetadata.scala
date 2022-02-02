@@ -23,4 +23,4 @@ case class ControlMeasureMetadata(sourceApplication: String,
                                   sourceType: String,
                                   version: Int,
                                   informationDate: String,
-                                  additionalInfo: Map[String, String])
+                                  additionalInfo: Map[String, String] = Map.empty)

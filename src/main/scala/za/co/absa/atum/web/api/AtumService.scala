@@ -16,7 +16,9 @@
 
 package za.co.absa.atum.web.api
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
@@ -37,6 +39,7 @@ class AtumService extends SpringBootServletInitializer {
   def objectMapper(): ObjectMapper = {
     new ObjectMapper()
       .registerModule(DefaultScalaModule)
+      .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
   }
 }
 

@@ -37,7 +37,7 @@ class SegmentationService @Autowired()(flowService: FlowService) extends BaseApi
   }
 
   def add(seg: Segmentation): Future[UUID] = {
-    require(seg.id.isEmpty)
+    require(seg.id.isEmpty, "A new Segmentation payload must not have id!")
 
     flowService.getById(seg.flowId).flatMap {
       case None => throw NotFoundException(s"Flow referenced by flowId=${seg.flowId} not found!")
