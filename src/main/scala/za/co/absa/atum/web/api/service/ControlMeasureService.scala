@@ -41,35 +41,40 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
   def add(cm: ControlMeasure): Future[UUID] = {
     require(cm.id.isEmpty, "A new ControlMeasure payload must not have id!")
 
-    for {
+    checkFlowAndSegExistAndThen(cm) {
+      val newId = UUID.randomUUID()
+      inmemory.put(newId, cm.withId(newId)) // assuming the persistence would throw on error
+      newId
+    }
+  }
+
+
+  def update(cm: ControlMeasure): Future[Unit] = {
+    require(cm.id.nonEmpty, "A ControlMeasure update must have its id defined!")
+    val cmId = cm.id.get
+
+    checkFlowAndSegExistAndThen(cm) {
+      inmemory.get(cmId) match {
+        case None => throw NotFoundException(s"ControlMeasure referenced by id=${cmId} was not found.")
+        case Some(existingCm) =>
+          assert(existingCm.id.equals(cm.id)) // just to be sure that the content matches the key
+          inmemory.put(cmId, cm) match {
+            case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$cmId, but found none.")
+            case Some(_) =>
+          }
+      }
+    }
+  }
+
+  def checkFlowAndSegExistAndThen[S](cm: ControlMeasure)(fn: => S): Future[S] = {
+    val check: Future[Unit] = for {
       flowExists <- flowService.exists(cm.flowId)
       _ = if (!flowExists) throw NotFoundException(s"Referenced flow (flowId=${cm.flowId}) was not found.")
       segExists <- segmentationService.exists(cm.segmentationId)
       _ = if (!segExists) throw NotFoundException(s"Referenced segmentations (segId=${cm.segmentationId}) was not found.")
-      newId <- {
-        val newId = UUID.randomUUID()
-        inmemory.put(newId, cm.withId(newId)) // assuming the persistence would throw on error
-        Future.successful(newId)
-      }
-    } yield newId
+    } yield ()
 
-  }
-
-  def update(cm: ControlMeasure): Future[Unit] = Future {
-    require(cm.id.nonEmpty, "A ControlMeasure update must have its id defined!")
-    val cmId = cm.id.get
-
-    // todo flow/seg existence check // todo common with add()?
-
-    inmemory.get(cmId) match {
-      case None => throw NotFoundException(s"ControlMeasure referenced by id=${cmId} was not found.")
-      case Some(existingCm) =>
-        assert(existingCm.id.equals(cm.id)) // just to be sure that the content matches the key
-        inmemory.put(cmId, cm) match {
-          case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$cmId, but found none.")
-          case Some(_) => // expected
-        }
-    }
+    check.map(_ => fn)
   }
 
   def updateMetadata(id: UUID, metadata: ControlMeasureMetadata): Future[Unit] = Future {
