@@ -26,4 +26,7 @@ case class Checkpoint(id: Option[UUID],
                       processEndTime: String,
                       workflowName: String,
                       order: Int,
-                      measurements: List[Measurement])
+                      measurements: List[Measurement]) extends BaseApiModel {
+
+  override def withId(uuid: UUID): Checkpoint = copy(id = Some(uuid))
+}

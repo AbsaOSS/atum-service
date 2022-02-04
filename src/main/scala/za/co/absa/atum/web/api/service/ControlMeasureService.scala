@@ -19,7 +19,7 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.model.{ControlMeasure, ControlMeasureMetadata, Flow, Segmentation}
+import za.co.absa.atum.web.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, Flow, Segmentation}
 
 import java.util.UUID
 import scala.collection.mutable
@@ -49,19 +49,17 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
   }
 
 
-  def update(cm: ControlMeasure): Future[Unit] = {
+  def update(cm: ControlMeasure): Future[Boolean] = {
     require(cm.id.nonEmpty, "A ControlMeasure update must have its id defined!")
     val cmId = cm.id.get
 
-    checkFlowAndSegExistAndThen(cm) {
-      inmemory.get(cmId) match {
-        case None => throw NotFoundException(s"ControlMeasure referenced by id=${cmId} was not found.")
-        case Some(existingCm) =>
-          assert(existingCm.id.equals(cm.id)) // just to be sure that the content matches the key
-          inmemory.put(cmId, cm) match {
-            case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$cmId, but found none.")
-            case Some(_) =>
-          }
+    withExistingEntityF(cmId) { existingCm =>
+      checkFlowAndSegExistAndThen(cm) { // checking the new CM
+        assert(existingCm.id.equals(cm.id)) // just to be sure that the content matches the key
+        inmemory.put(cmId, cm) match {
+          case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$cmId, but found none.")
+          case Some(_) => true
+        }
       }
     }
   }
@@ -77,20 +75,18 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     check.map(_ => fn)
   }
 
-  def updateMetadata(id: UUID, metadata: ControlMeasureMetadata): Future[Unit] = Future {
-    inmemory.get(id) match {
-      case None => throw NotFoundException(s"ControlMeasure referenced by id=${id} was not found.")
-      case Some(existingCm) =>
-        val updatedCm = existingCm.copy(metadata = metadata)
-        inmemory.put(id, updatedCm) match {
-          case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$id, but found none.")
-          case Some(_) => // expected
-        }
+  def updateMetadata(id: UUID, metadata: ControlMeasureMetadata): Future[Unit] = {
+    withExistingEntity(id) { existingCm =>
+      val updatedCm = existingCm.copy(metadata = metadata)
+      inmemory.put(id, updatedCm) match {
+        case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$id, but found none.")
+        case Some(_) => // expected
+      }
     }
   }
 
   def getById(uuid: UUID): Future[Option[ControlMeasure]] = Future {
-    inmemory.get(uuid)
+    inmemory.get(uuid) // todo consider  withExistingControlMeasure(uuid) { Some(_) }
   }
 
   def getListByFlowAndSegIds(flowId: UUID, segId: UUID, limit: Int, offset: Int): Future[List[ControlMeasure]] = Future {
@@ -98,6 +94,32 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
       .filter(cm => cm.flowId.equals(flowId) && cm.segmentationId.equals(segId))
       .drop(offset).take(limit)
       .toList
+  }
+
+  // checkpoints:
+  def addCheckpoint(cmId: UUID, checkpoint: Checkpoint): Future[UUID] = {
+    require(checkpoint.id.isEmpty, "A new CP payload must not have id!")
+
+    withExistingEntity(cmId) { cm =>
+      val newId = UUID.randomUUID()
+      val newCheckpointWithId = checkpoint.withId(newId)
+      val updatedCm = cm.copy(checkpoints = (cm.checkpoints ++ List(newCheckpointWithId)))
+      inmemory.put(cmId, updatedCm) // assuming the persistence would throw on error
+      newId
+    }
+  }
+
+  def getCheckpointList(cmId: UUID): Future[List[Checkpoint]] = {
+    withExistingEntity(cmId) { _.checkpoints}
+  }
+
+  def getCheckpointById(cmId: UUID, cpId: UUID): Future[Checkpoint] = {
+    withExistingEntity(cmId) {
+      _.checkpoints.filter(_.id.equals(cpId)).headOption match {
+        case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
+        case Some(cp) => cp
+      }
+    }
   }
 
 }
