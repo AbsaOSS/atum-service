@@ -48,10 +48,5 @@ class FlowService @Autowired()() extends BaseApiService[Flow] {
     inmemory.get(uuid)
   }
 
+  override protected def entityName: String = "Flow"
 }
-//
-//// todo when generalizing into EntityService, use these as default
-//object FlowService {
-//  val DefaultLimit: Int = 20
-//  val DefaultOffset: Int = 0
-//}

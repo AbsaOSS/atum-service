@@ -44,10 +44,7 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
   @GetMapping(Array("/{id}"))
   @ResponseStatus(HttpStatus.OK)
   def getOne(@PathVariable id: UUID): CompletableFuture[C] = {
-    baseApiService.getById(id).map{
-      case Some(flow) => flow
-      case None => throw NotFoundException(s"No entity found by id $id")
-    }
+    baseApiService.withExistingEntity(id){entity => entity}
   }
 
   @PostMapping(Array(""))

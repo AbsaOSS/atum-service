@@ -69,7 +69,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
       flowExists <- flowService.exists(cm.flowId)
       _ = if (!flowExists) throw NotFoundException(s"Referenced flow (flowId=${cm.flowId}) was not found.")
       segExists <- segmentationService.exists(cm.segmentationId)
-      _ = if (!segExists) throw NotFoundException(s"Referenced segmentations (segId=${cm.segmentationId}) was not found.")
+      _ = if (!segExists) throw NotFoundException(s"Referenced segmentation (segId=${cm.segmentationId}) was not found.")
     } yield ()
 
     check.map(_ => fn)
@@ -86,7 +86,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
   }
 
   def getById(uuid: UUID): Future[Option[ControlMeasure]] = Future {
-    inmemory.get(uuid) // todo consider  withExistingControlMeasure(uuid) { Some(_) }
+    inmemory.get(uuid)
   }
 
   def getListByFlowAndSegIds(flowId: UUID, segId: UUID, limit: Int, offset: Int): Future[List[ControlMeasure]] = Future {
@@ -115,13 +115,14 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
 
   def getCheckpointById(cmId: UUID, cpId: UUID): Future[Checkpoint] = {
     withExistingEntity(cmId) {
-      _.checkpoints.filter(_.id.equals(cpId)).headOption match {
+      _.checkpoints.filter(_.id.equals(Some(cpId))).headOption match {
         case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
         case Some(cp) => cp
       }
     }
   }
 
+  override protected def entityName: String = "ControlMeasure"
 }
 
 

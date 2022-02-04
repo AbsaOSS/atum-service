@@ -65,11 +65,13 @@ trait BaseApiService[C <: BaseApiModel] {
    */
   def withExistingEntityF[S](id: UUID)(fn: C => Future[S]): Future[S] = {
     getById(id) flatMap {
-      case None => Future.failed(throw NotFoundException(s"$entityName referenced by id=${id} was not found.")) // todo check proper entity name
+      case None => Future.failed(
+        throw NotFoundException(s"$entityName referenced by id=${id} was not found.")
+      )
       case Some(existingEntity) => fn(existingEntity)
     }
   }
 
-  def entityName: String = "Entity" // perhaps implicitly[ClassTag[C]].runtimeClass.getSimpleName ??
+  protected def entityName: String
 
 }

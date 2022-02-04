@@ -53,6 +53,7 @@ class SegmentationService @Autowired()(flowService: FlowService) extends BaseApi
     inmemory.get(uuid)
   }
 
+  override protected def entityName: String = "Segmentation"
 }
 
 

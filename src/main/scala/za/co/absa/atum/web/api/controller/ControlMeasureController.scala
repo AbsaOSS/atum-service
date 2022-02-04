@@ -17,16 +17,19 @@
 package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
+import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.ControlMeasureService
-import za.co.absa.atum.web.model.{ControlMeasure, ControlMeasureMetadata}
+import za.co.absa.atum.web.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata}
 
+import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.{Optional, UUID}
+import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @RestController
@@ -55,10 +58,7 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
   @GetMapping(Array("/{id}/metadata"))
   @ResponseStatus(HttpStatus.OK)
   def getMetadata(@PathVariable id: UUID): CompletableFuture[ControlMeasureMetadata] = {
-    controlMeasureService.getById(id).map{
-      case Some(flow) => flow.metadata
-      case None => throw NotFoundException(s"No entity found by id $id")
-    }
+    controlMeasureService.withExistingEntity(id)(_.metadata)
   }
 
   @PutMapping(Array("/{id}/metadata"))
@@ -66,6 +66,33 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
   def updateMetadata(@PathVariable id: UUID, @RequestBody metadata: ControlMeasureMetadata): CompletableFuture[MessagePayload] = {
     controlMeasureService.updateMetadata(id, metadata)
       .map(_ => MessagePayload(s"Successfully updated metadata of ControlMeasure id=$id"))
+  }
+
+  @GetMapping(Array("/{id}/checkpoints"))
+  @ResponseStatus(HttpStatus.OK)
+  def getCheckpoint(@PathVariable id: UUID): CompletableFuture[List[Checkpoint]] = {
+    controlMeasureService.getCheckpointList(id)
+  }
+
+  @PostMapping(Array("/{cmId}/checkpoints"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def create(@PathVariable cmId: UUID, @RequestBody cp: Checkpoint, request: HttpServletRequest): CompletableFuture[ResponseEntity[MessagePayload]] = {
+    controlMeasureService.addCheckpoint(cmId, cp).map { cpId =>
+      val location: URI = ServletUriComponentsBuilder
+        .fromRequest(request)
+        .path("/{cpId}") // todo test what it returns
+        .buildAndExpand(cpId)
+        .toUri() // will create location e.g. /api/controlmeasures/{cmId}/checkpoints/{cpId}
+
+      ResponseEntity.created(location)
+        .body[MessagePayload](MessagePayload(s"Successfully Checkpoint id=$cpId, for ControlMeasure id=$cmId"))
+    }
+  }
+
+  @GetMapping(Array("/{cmId}/checkpoints/{cpId}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getOneCheckpoint(@PathVariable cmId: UUID, @PathVariable cpId: UUID): CompletableFuture[Checkpoint] = {
+    controlMeasureService.getCheckpointById(cmId, cpId)
   }
 
 }
