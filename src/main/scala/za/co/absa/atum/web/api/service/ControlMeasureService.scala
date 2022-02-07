@@ -19,7 +19,7 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, Flow, Measurement, Segmentation}
+import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, ControlMeasure, ControlMeasureMetadata, Flow, Measurement, Segmentation}
 
 import java.util.UUID
 import scala.collection.mutable
@@ -125,9 +125,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     }
   }
 
-  def updateCheckpoint(cmId: UUID, checkpointUpdate: Checkpoint): Future[Boolean] = {
-    require(checkpointUpdate.id.nonEmpty, "A Checkpoint update must have its id defined!")
-    val cpId = checkpointUpdate.id.get
+  def updateCheckpoint(cmId: UUID, cpId: UUID, checkpointUpdate: CheckpointUpdate): Future[Boolean] = {
 
     withExistingEntityF(cmId) { existingCm =>
       existingCm.checkpoints.find(_.id.equals(Some(cpId))) match {
@@ -135,7 +133,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
         case Some(existingCp) =>
           assert(existingCp.id.equals(Some(cpId))) // just to be sure that the content matches the key
           val updatedCps = existingCm.checkpoints.map {
-            case Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _) => checkpointUpdate // replaced cp by the update
+            case cp @ Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _) => cp.withUpdate(checkpointUpdate) // reflects the update
             case cp => cp // other CPs untouched
           }
 
@@ -158,8 +156,13 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
         case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
         case Some(existingCp) =>
           assert(existingCp.id.equals(Some(cpId))) // just to be sure that the content matches the key
-          val updatedCp = existingCp.copy(measurements = existingCp.measurements ++ List(measurement))
-          updateCheckpoint(cmId, updatedCp)
+          val updatedCps = existingCm.checkpoints.map {
+            case cp @ Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
+            case cp => cp // other CPs untouched
+          }
+
+          val updatedCm = existingCm.copy(checkpoints = updatedCps)
+          update(updatedCm)
       }
     }
   }

@@ -24,7 +24,7 @@ import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.ControlMeasureService
-import za.co.absa.atum.web.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, Measurement}
+import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, ControlMeasure, ControlMeasureMetadata, Measurement}
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture
@@ -100,10 +100,8 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
 
   @PutMapping(Array("/{cmId}/checkpoints/{cpId}"))
   @ResponseStatus(HttpStatus.OK)
-  def updateCheckpoint(@PathVariable cmId: UUID, @PathVariable cpId: UUID, @RequestBody checkpoint: Checkpoint): CompletableFuture[MessagePayload] = {
-    require(checkpoint.id.isEmpty, "A ControlMeasure update payload must have no id (it is given in the URL)!")
-    val cp = checkpoint.withId(cpId)
-    controlMeasureService.updateCheckpoint(cmId, cp).map(_ => MessagePayload(s"Successfully updated Checkpoint id=$cpId"))
+  def updateCheckpoint(@PathVariable cmId: UUID, @PathVariable cpId: UUID, @RequestBody cpUpdate: CheckpointUpdate): CompletableFuture[MessagePayload] = {
+    controlMeasureService.updateCheckpoint(cmId, cpId, cpUpdate).map(_ => MessagePayload(s"Successfully updated Checkpoint id=$cpId"))
   }
 
   @GetMapping(Array("/{cmId}/checkpoints/{cpId}/measurements"))

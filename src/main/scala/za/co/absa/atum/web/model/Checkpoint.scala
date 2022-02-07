@@ -29,4 +29,31 @@ case class Checkpoint(id: Option[UUID],
                       measurements: List[Measurement] = List.empty) extends BaseApiModel {
 
   override def withId(uuid: UUID): Checkpoint = copy(id = Some(uuid))
+
+  def withUpdate(update: CheckpointUpdate): Checkpoint = {
+    this
+      .updateIfDefined(update.name) { case (field, cp) => cp.copy(name = field) }
+      .updateIfDefined(update.software) { case (field, cp) => cp.copy(software = Some(field)) } // cannot be unset atm
+      .updateIfDefined(update.version) { case (field, cp) => cp.copy(version = Some(field)) }
+      .updateIfDefined(update.processStartTime) { case (field, cp) => cp.copy(processStartTime = field) }
+      .updateIfDefined(update.processEndTime) { case (field, cp) => cp.copy(processEndTime = field) }
+      .updateIfDefined(update.workflowName) { case (field, cp) => cp.copy(workflowName = field) }
+      .updateIfDefined(update.order) { case (field, cp) => cp.copy(order = field) }
+  }
+
+  def updateIfDefined[T](optField: Option[T])(updateFn: (T, Checkpoint) => Checkpoint): Checkpoint = {
+    optField match {
+      case None => this
+      case Some(field) => updateFn(field, this)
+    }
+  }
+
+
 }
+case class CheckpointUpdate(name: Option[String] = None,
+                            software: Option[String] = None,
+                            version: Option[String] = None,
+                            processStartTime: Option[String] = None,
+                            processEndTime: Option[String] = None,
+                            workflowName: Option[String] = None,
+                            order: Option[Int] = None)
