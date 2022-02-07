@@ -40,6 +40,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
 
   def add(cm: ControlMeasure): Future[UUID] = {
     require(cm.id.isEmpty, "A new ControlMeasure payload must not have id!")
+    require(cm.checkpoints.isEmpty, "A new ControlMeasure payload must not have checkpoints! Add them separately.")
 
     checkFlowAndSegExistAndThen(cm) {
       val newId = UUID.randomUUID()
@@ -110,7 +111,9 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
   }
 
   def getCheckpointList(cmId: UUID): Future[List[Checkpoint]] = {
-    withExistingEntity(cmId) { _.checkpoints}
+    withExistingEntity(cmId) {
+      _.checkpoints
+    }
   }
 
   def getCheckpointById(cmId: UUID, cpId: UUID): Future[Checkpoint] = {
@@ -118,6 +121,29 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
       _.checkpoints.filter(_.id.equals(Some(cpId))).headOption match {
         case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
         case Some(cp) => cp
+      }
+    }
+  }
+
+  def updateCheckpoint(cmId: UUID, checkpointUpdate: Checkpoint): Future[Boolean] = {
+    require(checkpointUpdate.id.nonEmpty, "A Checkpoint update must have its id defined!")
+    val cpId = checkpointUpdate.id.get
+
+    withExistingEntity(cmId) { existingCm =>
+      existingCm.checkpoints.find(_.id.equals(Some(cpId))) match {
+        case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
+        case Some(existingCp) =>
+          assert(existingCp.id.equals(Some(cpId))) // just to be sure that the content matches the key
+          val updatedCps = existingCm.checkpoints.map {
+            case Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _) => checkpointUpdate // replaced cp by the update
+            case cp => cp // other CPs untouched
+          }
+
+          val updatedCm = existingCm.copy(checkpoints = updatedCps)
+          inmemory.put(cmId, updatedCm) match {
+            case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$cpId, but found none.")
+            case Some(_) => true
+          }
       }
     }
   }

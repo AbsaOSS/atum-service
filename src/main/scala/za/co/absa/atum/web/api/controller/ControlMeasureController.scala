@@ -40,7 +40,7 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
   @PutMapping(Array("/{id}"))
   @ResponseStatus(HttpStatus.OK)
   def update(@PathVariable id: UUID, @RequestBody controlMeasure: ControlMeasure): CompletableFuture[MessagePayload] = {
-    require(controlMeasure.id.isEmpty, "A ControlMeasure update payload must have no id (it is given in the URL!")
+    require(controlMeasure.id.isEmpty, "A ControlMeasure update payload must have no id (it is given in the URL)!")
     val cm = controlMeasure.withId(id)
     controlMeasureService.update(cm).map(_ => MessagePayload(s"Successfully updated ControlMeasure id=$id"))
   }
@@ -93,6 +93,17 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
   @ResponseStatus(HttpStatus.OK)
   def getOneCheckpoint(@PathVariable cmId: UUID, @PathVariable cpId: UUID): CompletableFuture[Checkpoint] = {
     controlMeasureService.getCheckpointById(cmId, cpId)
+  }
+
+  // todo change PUTs payload to have all-optional fields so that updates can be partial only
+  // (not overwrite/unnecessarily repeat the whole entity)
+
+  @PutMapping(Array("/{cmId}/checkpoints/{cpId}"))
+  @ResponseStatus(HttpStatus.OK)
+  def updateCheckpoint(@PathVariable cmId: UUID, @PathVariable cpId: UUID, @RequestBody checkpoint: Checkpoint): CompletableFuture[MessagePayload] = {
+    require(checkpoint.id.isEmpty, "A ControlMeasure update payload must have no id (it is given in the URL)!")
+    val cp = checkpoint.withId(cpId)
+    controlMeasureService.updateCheckpoint(cmId, cp).map(_ => MessagePayload(s"Successfully updated Checkpoint id=$cpId"))
   }
 
 }
