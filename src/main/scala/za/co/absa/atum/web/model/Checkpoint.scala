@@ -16,7 +16,13 @@
 
 package za.co.absa.atum.web.model
 
+import com.fasterxml.jackson.core.`type`.TypeReference
+import com.fasterxml.jackson.module.scala.JsonScalaEnumeration
+import za.co.absa.atum.web.model.Checkpoint.CheckpointStatus
+
 import java.util.UUID
+
+class CheckpointStatusTypeRef extends TypeReference[CheckpointStatus.type]
 
 case class Checkpoint(id: Option[UUID],
                       name: String,
@@ -26,7 +32,10 @@ case class Checkpoint(id: Option[UUID],
                       processEndTime: String,
                       workflowName: String,
                       order: Int,
-                      measurements: List[Measurement] = List.empty) extends BaseApiModel {
+                      @JsonScalaEnumeration(classOf[CheckpointStatusTypeRef]) status: CheckpointStatus.Value = CheckpointStatus.Open,
+                      measurements: List[Measurement] = List.empty) extends BaseApiModel{
+
+
 
   override def withId(uuid: UUID): Checkpoint = copy(id = Some(uuid))
 
@@ -39,6 +48,7 @@ case class Checkpoint(id: Option[UUID],
       .updateIfDefined(update.processEndTime) { case (field, cp) => cp.copy(processEndTime = field) }
       .updateIfDefined(update.workflowName) { case (field, cp) => cp.copy(workflowName = field) }
       .updateIfDefined(update.order) { case (field, cp) => cp.copy(order = field) }
+      .updateIfDefined(update.status) { case (field, cp) => cp.copy(status = field) }
   }
 
   def updateIfDefined[T](optField: Option[T])(updateFn: (T, Checkpoint) => Checkpoint): Checkpoint = {
@@ -48,12 +58,23 @@ case class Checkpoint(id: Option[UUID],
     }
   }
 
-
 }
+
+object Checkpoint {
+
+  object CheckpointStatus extends Enumeration {
+
+    val Open = Value("open")
+    val Closed = Value("closed")
+  }
+}
+
 case class CheckpointUpdate(name: Option[String] = None,
                             software: Option[String] = None,
                             version: Option[String] = None,
                             processStartTime: Option[String] = None,
                             processEndTime: Option[String] = None,
                             workflowName: Option[String] = None,
-                            order: Option[Int] = None)
+                            order: Option[Int] = None,
+                            @JsonScalaEnumeration(classOf[CheckpointStatusTypeRef]) status: Option[CheckpointStatus.Value] = None
+                           )

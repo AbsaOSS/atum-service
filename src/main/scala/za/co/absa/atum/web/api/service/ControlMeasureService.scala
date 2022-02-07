@@ -133,7 +133,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
         case Some(existingCp) =>
           assert(existingCp.id.equals(Some(cpId))) // just to be sure that the content matches the key
           val updatedCps = existingCm.checkpoints.map {
-            case cp @ Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _) => cp.withUpdate(checkpointUpdate) // reflects the update
+            case cp @ Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.withUpdate(checkpointUpdate) // reflects the update
             case cp => cp // other CPs untouched
           }
 
@@ -157,7 +157,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
         case Some(existingCp) =>
           assert(existingCp.id.equals(Some(cpId))) // just to be sure that the content matches the key
           val updatedCps = existingCm.checkpoints.map {
-            case cp @ Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
+            case cp @ Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
             case cp => cp // other CPs untouched
           }
 
