@@ -19,7 +19,7 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, Flow, Segmentation}
+import za.co.absa.atum.web.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, Flow, Measurement, Segmentation}
 
 import java.util.UUID
 import scala.collection.mutable
@@ -118,7 +118,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
 
   def getCheckpointById(cmId: UUID, cpId: UUID): Future[Checkpoint] = {
     withExistingEntity(cmId) {
-      _.checkpoints.filter(_.id.equals(Some(cpId))).headOption match {
+      _.checkpoints.find(_.id.equals(Some(cpId))) match {
         case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
         case Some(cp) => cp
       }
@@ -129,7 +129,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     require(checkpointUpdate.id.nonEmpty, "A Checkpoint update must have its id defined!")
     val cpId = checkpointUpdate.id.get
 
-    withExistingEntity(cmId) { existingCm =>
+    withExistingEntityF(cmId) { existingCm =>
       existingCm.checkpoints.find(_.id.equals(Some(cpId))) match {
         case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
         case Some(existingCp) =>
@@ -140,10 +140,26 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
           }
 
           val updatedCm = existingCm.copy(checkpoints = updatedCps)
-          inmemory.put(cmId, updatedCm) match {
-            case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$cpId, but found none.")
-            case Some(_) => true
-          }
+          update(updatedCm)
+      }
+    }
+  }
+
+  // measurements:
+  def getMeasurements(cmId: UUID, cpId: UUID): Future[List[Measurement]] = {
+    getCheckpointById(cmId, cpId).map {
+      _.measurements
+    }
+  }
+
+  def addMeasurement(cmId: UUID, cpId: UUID, measurement: Measurement): Future[Boolean] = {
+    withExistingEntityF(cmId) { existingCm =>
+      existingCm.checkpoints.find(_.id.equals(Some(cpId))) match {
+        case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
+        case Some(existingCp) =>
+          assert(existingCp.id.equals(Some(cpId))) // just to be sure that the content matches the key
+          val updatedCp = existingCp.copy(measurements = existingCp.measurements ++ List(measurement))
+          updateCheckpoint(cmId, updatedCp)
       }
     }
   }

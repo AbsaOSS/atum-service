@@ -24,7 +24,7 @@ import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.ControlMeasureService
-import za.co.absa.atum.web.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata}
+import za.co.absa.atum.web.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, Measurement}
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture
@@ -80,12 +80,12 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
     controlMeasureService.addCheckpoint(cmId, cp).map { cpId =>
       val location: URI = ServletUriComponentsBuilder
         .fromRequest(request)
-        .path("/{cpId}") // todo test what it returns
+        .path("/{cpId}")
         .buildAndExpand(cpId)
         .toUri() // will create location e.g. /api/controlmeasures/{cmId}/checkpoints/{cpId}
 
       ResponseEntity.created(location)
-        .body[MessagePayload](MessagePayload(s"Successfully Checkpoint id=$cpId, for ControlMeasure id=$cmId"))
+        .body[MessagePayload](MessagePayload(s"Successfully added Checkpoint id=$cpId, for ControlMeasure id=$cmId"))
     }
   }
 
@@ -104,6 +104,26 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
     require(checkpoint.id.isEmpty, "A ControlMeasure update payload must have no id (it is given in the URL)!")
     val cp = checkpoint.withId(cpId)
     controlMeasureService.updateCheckpoint(cmId, cp).map(_ => MessagePayload(s"Successfully updated Checkpoint id=$cpId"))
+  }
+
+  @GetMapping(Array("/{cmId}/checkpoints/{cpId}/measurements"))
+  @ResponseStatus(HttpStatus.OK)
+  def getMeasurements(@PathVariable cmId: UUID, @PathVariable cpId: UUID): CompletableFuture[List[Measurement]] = {
+    controlMeasureService.getMeasurements(cmId, cpId)
+  }
+
+  @PostMapping(Array("/{cmId}/checkpoints/{cpId}/measurements"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def createMeasurement(@PathVariable cmId: UUID, @PathVariable cpId: UUID, @RequestBody measurement: Measurement, request: HttpServletRequest): CompletableFuture[ResponseEntity[MessagePayload]] = {
+    controlMeasureService.addMeasurement(cmId, cpId, measurement).map { _ =>
+      val location: URI = ServletUriComponentsBuilder
+        .fromRequest(request)
+        .build()
+        .toUri()
+
+      ResponseEntity.created(location)
+        .body[MessagePayload](MessagePayload(s"Successfully added Measurement to CP id=$cpId, for ControlMeasure id=$cmId"))
+    }
   }
 
 }
