@@ -17,6 +17,7 @@
 package za.co.absa.atum.web.api.service
 
 import za.co.absa.atum.web.api.NotFoundException
+import za.co.absa.atum.web.dao.ApiModelDao
 import za.co.absa.atum.web.model.BaseApiModel
 
 import java.util.UUID
@@ -24,24 +25,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-trait BaseApiService[C <: BaseApiModel] {
-
-  def getList(limit: Int, offset: Int): Future[List[C]]
-
-  def add(item: C): Future[UUID]
-
-  def getById(uuid: UUID): Future[Option[C]] // todo open just return Future[C] or throw?
+trait BaseApiService[C <: BaseApiModel] extends ApiModelDao[C] {
 
   def exists(uuid: UUID): Future[Boolean] = {
     // default implementation that will work, but specific services may override it for optimization
     getById(uuid).map(_.nonEmpty)
-    // todo if getById only returns Future[C], consider default impl such as:
-    //  getById(uuid).transformWith {
-    //    case Success(_) => Future.successful(true)
-    //    case Failure(_) => Future.successful(false)
-    //  }
   }
-
   /**
    * Finds entity by `id` and applies method `fn`. Throws NotFoundException when not found
    */
@@ -64,6 +53,6 @@ trait BaseApiService[C <: BaseApiModel] {
     }
   }
 
-  protected def entityName: String
+  def entityName: String
 
 }

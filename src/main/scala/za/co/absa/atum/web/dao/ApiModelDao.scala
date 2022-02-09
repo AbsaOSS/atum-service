@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.model
+package za.co.absa.atum.web.dao
+
+import za.co.absa.atum.web.model.BaseApiModel
 
 import java.util.UUID
+import scala.concurrent.Future
 
-trait BaseApiModel {
-  def id: Option[UUID]
+trait ApiModelDao[T <: BaseApiModel] {
 
-  //todo def withId[T <: BaseApiModel](uuid: UUID): T or even def withId[T <: BaseApiModel[T]](uuid: UUID): T ?
-  def withId(uuid: UUID): BaseApiModel
+  def getList(limit: Int, offset: Int, filter: T => Boolean = _ => true): Future[List[T]]
 
-  def entityName: String = this.getClass.getSimpleName
+  def getById(uuid: UUID): Future[Option[T]]
+
+  def add(entity: T): Future[UUID]
+
+  def update(entity: T): Future[Boolean]
+
 }
 

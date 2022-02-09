@@ -19,41 +19,42 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.model.{Flow, Segmentation}
+import za.co.absa.atum.web.dao.InMemoryApiModelDao
+import za.co.absa.atum.web.model.Segmentation
 
 import java.util.UUID
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
 @Service
-class SegmentationService @Autowired()(flowService: FlowService) extends BaseApiService[Segmentation] {
-  // temporary storage // redo with db-persistence layer when ready
-  val inmemory: mutable.Map[UUID, Segmentation] = scala.collection.mutable.Map[UUID, Segmentation]()
+class SegmentationService @Autowired()(flowService: FlowService) extends BaseApiService[Segmentation]
+  with InMemoryApiModelDao[Segmentation] {
 
-  def getList(limit: Int, offset: Int): Future[List[Segmentation]] = Future {
-    inmemory.values.slice(offset, offset + limit).toList // limiting, todo pagination or similar
-  }
-
-  def add(seg: Segmentation): Future[UUID] = {
+  override def add(seg: Segmentation): Future[UUID] = {
     require(seg.id.isEmpty, "A new Segmentation payload must not have id!")
-
-    flowService.getById(seg.flowId).flatMap {
-      case None => throw NotFoundException(s"Flow referenced by flowId=${seg.flowId} not found!")
-      case Some(_) =>
-        // persistence impl: supplies the ID internally:
-        val newId = UUID.randomUUID()
-        inmemory.put(newId, seg.withId(newId)) // assuming the persistence would throw on error
-        Future.successful(newId)
+    flowService.withFlowExistsF(seg.flowId) {
+      super.add(seg)
     }
   }
 
-  def getById(uuid: UUID): Future[Option[Segmentation]] = Future {
-    inmemory.get(uuid)
+  override def update(seg: Segmentation): Future[Boolean] = {
+    require(seg.id.nonEmpty, "Updated segmentation must have id!")
+    flowService.withFlowExistsF(seg.flowId) {
+      super.update(seg)
+    }
   }
 
-  override protected def entityName: String = "Segmentation"
+  def withSegmentationExistsF[S](segId: UUID)(fn: => Future[S]): Future[S] = {
+    val check: Future[Unit] = for {
+      segExists <- this.exists(segId)
+      _ = if (!segExists) throw NotFoundException(s"Referenced segmentation (segId=$segId) was not found.")
+    } yield ()
+
+    check.flatMap(_ => fn)
+  }
+
+  override def entityName: String = "Segmentation"
 }
 
 

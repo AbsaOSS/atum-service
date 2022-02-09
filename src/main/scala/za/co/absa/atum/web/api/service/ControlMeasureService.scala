@@ -19,6 +19,7 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
+import za.co.absa.atum.web.dao.InMemoryApiModelDao
 import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, ControlMeasure, ControlMeasureMetadata, Flow, Measurement, Segmentation}
 
 import java.util.UUID
@@ -29,84 +30,62 @@ import scala.concurrent.Future
 
 @Service
 class ControlMeasureService @Autowired()(flowService: FlowService, segmentationService: SegmentationService)
-  extends BaseApiService[ControlMeasure] {
+  extends BaseApiService[ControlMeasure] with InMemoryApiModelDao[ControlMeasure]  {
 
-  // temporary storage // redo with db-persistence layer when ready
-  val inmemory: mutable.Map[UUID, ControlMeasure] = scala.collection.mutable.Map[UUID, ControlMeasure]()
-
-  def getList(limit: Int, offset: Int): Future[List[ControlMeasure]] = Future {
-    inmemory.values.slice(offset, offset + limit).toList // limiting, todo pagination or similar
-  }
-
-  def add(cm: ControlMeasure): Future[UUID] = {
+  override def add(cm: ControlMeasure): Future[UUID] = {
     require(cm.id.isEmpty, "A new ControlMeasure payload must not have id!")
     require(cm.checkpoints.isEmpty, "A new ControlMeasure payload must not have checkpoints! Add them separately.")
 
-    checkFlowAndSegExistAndThen(cm) {
-      val newId = UUID.randomUUID()
-      inmemory.put(newId, cm.withId(newId)) // assuming the persistence would throw on error
-      newId
+    withFlowAndSegExistF(cm) {
+      super.add(cm)
     }
   }
 
 
-  def update(cm: ControlMeasure): Future[Boolean] = {
+  override def update(cm: ControlMeasure): Future[Boolean] = {
     require(cm.id.nonEmpty, "A ControlMeasure update must have its id defined!")
     val cmId = cm.id.get
 
     withExistingEntityF(cmId) { existingCm =>
-      checkFlowAndSegExistAndThen(cm) { // checking the new CM
+      withFlowAndSegExistF(cm) { // checking the new CM
         assert(existingCm.id.equals(cm.id)) // just to be sure that the content matches the key
-        inmemory.put(cmId, cm) match {
-          case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$cmId, but found none.")
-          case Some(_) => true
-        }
+        super.update(cm)
       }
     }
   }
 
-  def checkFlowAndSegExistAndThen[S](cm: ControlMeasure)(fn: => S): Future[S] = {
-    val check: Future[Unit] = for {
-      flowExists <- flowService.exists(cm.flowId)
-      _ = if (!flowExists) throw NotFoundException(s"Referenced flow (flowId=${cm.flowId}) was not found.")
-      segExists <- segmentationService.exists(cm.segmentationId)
-      _ = if (!segExists) throw NotFoundException(s"Referenced segmentation (segId=${cm.segmentationId}) was not found.")
-    } yield ()
-
-    check.map(_ => fn)
+  def withFlowAndSegExistF[S](cm: ControlMeasure)(fn: => Future[S]): Future[S] = {
+    flowService.withFlowExistsF(cm.flowId) {
+      segmentationService.withSegmentationExistsF(cm.segmentationId) {
+        fn
+      }
+    }
   }
 
-  def updateMetadata(id: UUID, metadata: ControlMeasureMetadata): Future[Unit] = {
-    withExistingEntity(id) { existingCm =>
+  def updateMetadata(id: UUID, metadata: ControlMeasureMetadata): Future[Boolean] = {
+    withExistingEntityF(id) { existingCm =>
       val updatedCm = existingCm.copy(metadata = metadata)
-      inmemory.put(id, updatedCm) match {
-        case None => throw new IllegalStateException(s"Expected to find previous persisted version of ControlMeasure by id=$id, but found none.")
-        case Some(_) => // expected
-      }
+      super.update(updatedCm)
     }
   }
 
-  def getById(uuid: UUID): Future[Option[ControlMeasure]] = Future {
-    inmemory.get(uuid)
-  }
-
-  def getListByFlowAndSegIds(flowId: UUID, segId: UUID, limit: Int, offset: Int): Future[List[ControlMeasure]] = Future {
-    inmemory.values
-      .filter(cm => cm.flowId.equals(flowId) && cm.segmentationId.equals(segId))
-      .slice(offset, offset + limit)
-      .toList
+  def getListByFlowAndSegIds(flowId: UUID, segId: UUID, limit: Int, offset: Int): Future[List[ControlMeasure]] = {
+    val filter: ControlMeasure => Boolean = {
+      cm => cm.flowId.equals(flowId) && cm.segmentationId.equals(segId)
+    }
+    super.getList(offset, limit, filter)
   }
 
   // checkpoints:
   def addCheckpoint(cmId: UUID, checkpoint: Checkpoint): Future[UUID] = {
     require(checkpoint.id.isEmpty, "A new CP payload must not have id!")
 
-    withExistingEntity(cmId) { cm =>
+    withExistingEntityF(cmId) { cm =>
       val newId = UUID.randomUUID()
       val newCheckpointWithId = checkpoint.withId(newId)
       val updatedCm = cm.copy(checkpoints = (cm.checkpoints ++ List(newCheckpointWithId)))
-      inmemory.put(cmId, updatedCm) // assuming the persistence would throw on error
-      newId
+
+      super.update(updatedCm).map(_ => newId)
     }
   }
 
@@ -133,7 +112,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
         case Some(existingCp) =>
           assert(existingCp.id.contains(cpId)) // just to be sure that the content matches the key
           val updatedCps = existingCm.checkpoints.map {
-            case cp @ Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.withUpdate(checkpointUpdate) // reflects the update
+            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.withUpdate(checkpointUpdate) // reflects the update
             case cp => cp // other CPs untouched
           }
 
@@ -157,7 +136,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
         case Some(existingCp) =>
           assert(existingCp.id.contains(cpId)) // just to be sure that the content matches the key
           val updatedCps = existingCm.checkpoints.map {
-            case cp @ Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
+            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
             case cp => cp // other CPs untouched
           }
 
@@ -167,7 +146,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     }
   }
 
-  override protected def entityName: String = "ControlMeasure"
+  override def entityName: String = "ControlMeasure"
 }
 
 
