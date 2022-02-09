@@ -64,8 +64,8 @@ object Checkpoint {
 
   object CheckpointStatus extends Enumeration {
 
-    val Open = Value("open")
-    val Closed = Value("closed")
+    val Open: CheckpointStatus.Value = Value("open")
+    val Closed: CheckpointStatus.Value = Value("closed")
   }
 }
 

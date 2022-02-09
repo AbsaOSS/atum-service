@@ -43,11 +43,7 @@ trait BaseApiService[C <: BaseApiModel] {
   }
 
   /**
-   * Finds entity by `id`` and applies method `fn`. Throws NotFoundException when not found
-   * @param id
-   * @param fn
-   * @tparam S
-   * @return
+   * Finds entity by `id` and applies method `fn`. Throws NotFoundException when not found
    */
   def withExistingEntity[S](id: UUID)(fn: C => S): Future[S] = {
     withExistingEntityF(id) { c =>
@@ -58,15 +54,11 @@ trait BaseApiService[C <: BaseApiModel] {
   /**
    * Same as za.co.absa.atum.web.api.service.BaseApiService#withExistingEntity(java.util.UUID, scala.Function1), but
    * you may pass `fn` that returns a Future.
-   * @param id
-   * @param fn
-   * @tparam S
-   * @return
    */
   def withExistingEntityF[S](id: UUID)(fn: C => Future[S]): Future[S] = {
     getById(id) flatMap {
       case None => Future.failed(
-        throw NotFoundException(s"$entityName referenced by id=${id} was not found.")
+        throw NotFoundException(s"$entityName referenced by id=$id was not found.")
       )
       case Some(existingEntity) => fn(existingEntity)
     }

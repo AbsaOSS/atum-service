@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.web.api.controller
 
-import org.slf4j.LoggerFactory
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
 import za.co.absa.atum.web.api.NotFoundException
@@ -24,7 +23,6 @@ import za.co.absa.atum.web.api.payload.MessagePayload
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
-  private val logger = LoggerFactory.getLogger(this.getClass)
 
   @ExceptionHandler(value = Array(classOf[NotFoundException]))
   def handleNotFoundException(exception: NotFoundException): ResponseEntity[MessagePayload] = {

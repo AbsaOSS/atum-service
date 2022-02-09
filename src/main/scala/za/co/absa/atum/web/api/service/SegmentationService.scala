@@ -33,7 +33,7 @@ class SegmentationService @Autowired()(flowService: FlowService) extends BaseApi
   val inmemory: mutable.Map[UUID, Segmentation] = scala.collection.mutable.Map[UUID, Segmentation]()
 
   def getList(limit: Int, offset: Int): Future[List[Segmentation]] = Future {
-    inmemory.values.drop(offset).take(limit).toList // limiting, todo pagination or similar
+    inmemory.values.slice(offset, offset + limit).toList // limiting, todo pagination or similar
   }
 
   def add(seg: Segmentation): Future[UUID] = {

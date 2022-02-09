@@ -32,7 +32,7 @@ class FlowService @Autowired()() extends BaseApiService[Flow] {
   val inmemory: mutable.Map[UUID, Flow] = scala.collection.mutable.Map[UUID, Flow]()
 
   def getList(limit: Int, offset: Int): Future[List[Flow]] = Future {
-    inmemory.values.drop(offset).take(limit).toList // limiting, todo pagination or similar
+    inmemory.values.slice(offset, offset + limit).toList // limiting, todo pagination or similar
   }
 
   def add(f: Flow): Future[UUID] = Future {
