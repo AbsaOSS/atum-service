@@ -19,7 +19,7 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.dao.InMemoryApiModelDao
+import za.co.absa.atum.web.dao.ApiModelDao
 import za.co.absa.atum.web.model.Segmentation
 
 import java.util.UUID
@@ -27,9 +27,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
+
 @Service
-class SegmentationService @Autowired()(flowService: FlowService) extends BaseApiService[Segmentation]
-  with InMemoryApiModelDao[Segmentation] {
+class SegmentationService @Autowired()(flowService: FlowService, dao: ApiModelDao[Segmentation]) extends BaseApiService[Segmentation](dao) {
 
   override def add(seg: Segmentation): Future[UUID] = {
     require(seg.id.isEmpty, "A new Segmentation payload must not have id!")

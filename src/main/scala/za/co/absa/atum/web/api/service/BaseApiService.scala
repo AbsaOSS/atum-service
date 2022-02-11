@@ -25,11 +25,19 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-trait BaseApiService[C <: BaseApiModel] extends ApiModelDao[C] {
+abstract class BaseApiService[C <: BaseApiModel](dao: ApiModelDao[C]) {
+
+  def getList(limit: Int, offset: Int, filter: C => Boolean = _ => true): Future[List[C]] = dao.getList(limit, offset, filter)
+
+  def getById(uuid: UUID): Future[Option[C]] = dao.getById(uuid)
+
+  def add(entity: C): Future[UUID] = dao.add(entity)
+
+  def update(entity: C): Future[Boolean] = dao.update(entity)
 
   def exists(uuid: UUID): Future[Boolean] = {
     // default implementation that will work, but specific services may override it for optimization
-    getById(uuid).map(_.nonEmpty)
+    dao.getById(uuid).map(_.nonEmpty)
   }
   /**
    * Finds entity by `id` and applies method `fn`. Throws NotFoundException when not found
@@ -45,7 +53,7 @@ trait BaseApiService[C <: BaseApiModel] extends ApiModelDao[C] {
    * you may pass `fn` that returns a Future.
    */
   def withExistingEntityF[S](id: UUID)(fn: C => Future[S]): Future[S] = {
-    getById(id).flatMap {
+    dao.getById(id).flatMap {
       case None => Future.failed(
         throw NotFoundException(s"$entityName referenced by id=$id was not found.")
       )

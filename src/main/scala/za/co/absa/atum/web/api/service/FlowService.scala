@@ -19,16 +19,16 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.dao.InMemoryApiModelDao
+import za.co.absa.atum.web.dao.ApiModelDao
 import za.co.absa.atum.web.model.Flow
 
 import java.util.UUID
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 
 @Service
-class FlowService @Autowired()() extends BaseApiService[Flow] with InMemoryApiModelDao[Flow] {
+class FlowService @Autowired()(dao: ApiModelDao[Flow]) extends BaseApiService[Flow](dao) {
   override val entityName: String = "Flow"
 
   def withFlowExistsF[S](flowId: UUID)(fn: => Future[S]): Future[S] = {

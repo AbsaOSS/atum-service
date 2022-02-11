@@ -16,7 +16,9 @@
 
 package za.co.absa.atum.web.dao
 
-import za.co.absa.atum.web.model.BaseApiModel
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Repository
+import za.co.absa.atum.web.model.{BaseApiModel, ControlMeasure, Flow, Segmentation}
 
 import java.util.UUID
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
@@ -24,7 +26,21 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait InMemoryApiModelDao[T <: BaseApiModel] extends ApiModelDao[T] {
+
+object InMemoryApiModelDao {
+
+  @Repository
+  class InMemoryFlowDao @Autowired()() extends InMemoryApiModelDao[Flow]
+
+  @Repository
+  class InMemorySegmentationDao @Autowired()() extends InMemoryApiModelDao[Segmentation]
+
+  @Repository
+  class InMemoryControlMeasureDao @Autowired()() extends InMemoryApiModelDao[ControlMeasure]
+
+}
+
+class InMemoryApiModelDao[T <: BaseApiModel] extends ApiModelDao[T] {
 
   private val inmemory: ConcurrentMap[UUID, T] = new ConcurrentHashMap[UUID, T]()
 

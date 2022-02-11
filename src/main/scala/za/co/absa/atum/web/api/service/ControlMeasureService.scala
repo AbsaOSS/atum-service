@@ -19,18 +19,18 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.dao.InMemoryApiModelDao
-import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, ControlMeasure, ControlMeasureMetadata, Flow, Measurement, Segmentation}
+import za.co.absa.atum.web.dao.ApiModelDao
+import za.co.absa.atum.web.model._
 
 import java.util.UUID
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
 @Service
-class ControlMeasureService @Autowired()(flowService: FlowService, segmentationService: SegmentationService)
-  extends BaseApiService[ControlMeasure] with InMemoryApiModelDao[ControlMeasure]  {
+class ControlMeasureService @Autowired()(flowService: FlowService, segmentationService: SegmentationService,
+                                         dao: ApiModelDao[ControlMeasure])
+  extends BaseApiService[ControlMeasure](dao) {
 
   override def add(cm: ControlMeasure): Future[UUID] = {
     require(cm.id.isEmpty, "A new ControlMeasure payload must not have id!")
