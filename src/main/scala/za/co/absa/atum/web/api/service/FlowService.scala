@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 @Service
 class FlowService @Autowired()() extends BaseApiService[Flow] with InMemoryApiModelDao[Flow] {
-  override def entityName: String = "Flow"
+  override val entityName: String = "Flow"
 
   def withFlowExistsF[S](flowId: UUID)(fn: => Future[S]): Future[S] = {
     val check: Future[Unit] = for {

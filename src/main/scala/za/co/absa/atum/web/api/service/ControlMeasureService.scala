@@ -78,7 +78,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
 
   // checkpoints:
   def addCheckpoint(cmId: UUID, checkpoint: Checkpoint): Future[UUID] = {
-    require(checkpoint.id.isEmpty, "A new CP payload must not have id!")
+    require(checkpoint.id.isEmpty, "A new Checkpoint payload must not have id!")
 
     withExistingEntityF(cmId) { cm =>
       val newId = UUID.randomUUID()
@@ -146,7 +146,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     }
   }
 
-  override def entityName: String = "ControlMeasure"
+  override val entityName: String = "ControlMeasure"
 }
 
 

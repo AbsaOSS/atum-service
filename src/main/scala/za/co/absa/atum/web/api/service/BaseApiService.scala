@@ -45,7 +45,7 @@ trait BaseApiService[C <: BaseApiModel] extends ApiModelDao[C] {
    * you may pass `fn` that returns a Future.
    */
   def withExistingEntityF[S](id: UUID)(fn: C => Future[S]): Future[S] = {
-    getById(id) flatMap {
+    getById(id).flatMap {
       case None => Future.failed(
         throw NotFoundException(s"$entityName referenced by id=$id was not found.")
       )
@@ -53,6 +53,6 @@ trait BaseApiService[C <: BaseApiModel] extends ApiModelDao[C] {
     }
   }
 
-  def entityName: String
+  val entityName: String
 
 }

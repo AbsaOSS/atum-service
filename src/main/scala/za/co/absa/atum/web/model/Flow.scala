@@ -19,7 +19,7 @@ package za.co.absa.atum.web.model
 import java.util.UUID
 
 case class Flow(id: Option[UUID],
-                desc: Option[String],
+                description: Option[String],
                 properties: Map[String, String] = Map()) extends BaseApiModel {
 
   def apply(desc: Option[String] = None): Flow = Flow(None, desc)

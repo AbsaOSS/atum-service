@@ -54,7 +54,7 @@ class SegmentationService @Autowired()(flowService: FlowService) extends BaseApi
     check.flatMap(_ => fn)
   }
 
-  override def entityName: String = "Segmentation"
+  override val entityName: String = "Segmentation"
 }
 
 
