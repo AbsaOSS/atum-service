@@ -16,3 +16,8 @@ This is possible thanks to [xsbt-web-plugin](https://github.com/earldouglas/xsbt
 sbt:Atum Service> tomcat:start
 sbt:Atum Service> tomcat:stop
 ```
+
+### REST API Reference 
+
+The REST API exposes a Swagger Documentation UI which documents all the HTTP endpoints exposed.
+It can be found at **{REST_API_HOST}/swagger-ui/** (e.g. `http://localhost:8080/swagger-ui/`)

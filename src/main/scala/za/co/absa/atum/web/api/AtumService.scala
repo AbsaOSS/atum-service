@@ -25,11 +25,13 @@ import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.{Bean, Configuration, PropertySource}
+import springfox.documentation.swagger2.annotations.EnableSwagger2
 
 @Configuration
 @SpringBootApplication(scanBasePackages = Array("za.co.absa.atum.web")) // dao is outside default web.api package
 @PropertySource(Array("classpath:application.properties"))
 @ConfigurationPropertiesScan(Array("za.co.absa.atum.web.api.config"))
+@EnableSwagger2
 class AtumService extends SpringBootServletInitializer {
   override def configure(application: SpringApplicationBuilder): SpringApplicationBuilder =
     application.sources(classOf[AtumService])
