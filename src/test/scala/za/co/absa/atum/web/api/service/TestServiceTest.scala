@@ -24,7 +24,7 @@ import org.springframework.test.context.TestContextManager
 
 
 @SpringBootTest
-class TestServiceSpec extends AnyFlatSpec with Matchers {
+class TestServiceTest extends AnyFlatSpec with Matchers {
 
   @Autowired
   private var testService: TestService = _
