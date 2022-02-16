@@ -29,6 +29,12 @@ object Dependencies {
   lazy val springFoxBoot = "io.springfox" % "springfox-boot-starter" % "3.0.0"
   lazy val springFoxSwaggerUI = "io.springfox" % "springfox-swagger-ui" % "3.0.0"
 
+  // controller implicits:  java CompletableFuture -> scala Future
+  lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
+  // object mapper serialization
+  lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.1"
+
+
   lazy val dependencies: Seq[ModuleID] = Seq(
     scalaTest % Test,
     springBootTest % Test,
@@ -38,6 +44,8 @@ object Dependencies {
     servletApi % Provided,
     springFoxSwagger,
     springFoxSwaggerUI,
-    springFoxBoot
+    springFoxBoot,
+    scalaJava8Compat,
+    jacksonModuleScala
   )
 }

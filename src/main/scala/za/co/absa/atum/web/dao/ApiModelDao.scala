@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.service
+package za.co.absa.atum.web.dao
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Service
-import za.co.absa.atum.web.api.config.BaseConfig
+import za.co.absa.atum.web.model.BaseApiModel
 
-@Service
-class BaseService @Autowired()(baseConfig: BaseConfig) {
-  def getMessage: String = {
-    s"The service says: alfa '${baseConfig.someKey}'"
-  }
+import java.util.UUID
+import scala.concurrent.Future
+
+trait ApiModelDao[T <: BaseApiModel] {
+
+  def getList(limit: Int, offset: Int, filter: T => Boolean = _ => true): Future[List[T]]
+
+  def getById(uuid: UUID): Future[Option[T]]
+
+  def add(entity: T): Future[UUID]
+
+  def update(entity: T): Future[Boolean]
+
 }
+
