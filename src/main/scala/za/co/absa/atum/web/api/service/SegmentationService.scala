@@ -45,14 +45,8 @@ class SegmentationService @Autowired()(flowService: FlowService, dao: ApiModelDa
     }
   }
 
-  def withSegmentationExistsF[S](segId: UUID)(fn: => Future[S]): Future[S] = {
-    val check: Future[Unit] = for {
-      segExists <- this.exists(segId)
-      _ = if (!segExists) throw NotFoundException(s"Referenced segmentation (segId=$segId) was not found.")
-    } yield ()
-
-    check.flatMap(_ => fn)
-  }
+  // todo replace with withExistingEntityF entirely
+  def withSegmentationExistsF[S](segId: UUID)(fn: => Future[S]): Future[S] = withExistingEntityF(segId)(_ => fn)
 
   override val entityName: String = "Segmentation"
 }

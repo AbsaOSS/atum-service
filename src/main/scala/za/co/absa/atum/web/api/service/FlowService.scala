@@ -31,12 +31,6 @@ import scala.concurrent.Future
 class FlowService @Autowired()(dao: ApiModelDao[Flow]) extends BaseApiService[Flow](dao) {
   override val entityName: String = "Flow"
 
-  def withFlowExistsF[S](flowId: UUID)(fn: => Future[S]): Future[S] = {
-    val check: Future[Unit] = for {
-      flowExists <- this.exists(flowId)
-      _ = if (!flowExists) throw NotFoundException(s"Referenced flow (flowId=$flowId) was not found.")
-    } yield ()
-
-    check.flatMap(_ => fn)
-  }
+  // todo replace usage entirely?
+  def withFlowExistsF[S](flowId: UUID)(fn: => Future[S]): Future[S] = withExistingEntityF(flowId)(_ => fn)
 }
