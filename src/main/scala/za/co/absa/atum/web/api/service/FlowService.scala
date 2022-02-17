@@ -31,6 +31,4 @@ import scala.concurrent.Future
 class FlowService @Autowired()(dao: ApiModelDao[Flow]) extends BaseApiService[Flow](dao) {
   override val entityName: String = "Flow"
 
-  // todo replace usage entirely?
-  def withFlowExistsF[S](flowId: UUID)(fn: => Future[S]): Future[S] = withExistingEntityF(flowId)(_ => fn)
 }

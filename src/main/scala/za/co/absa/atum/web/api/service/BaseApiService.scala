@@ -35,7 +35,7 @@ abstract class BaseApiService[C <: BaseApiModel](dao: ApiModelDao[C]) {
 
   def update(entity: C): Future[Boolean] = dao.update(entity)
 
-  def exists(uuid: UUID): Future[Boolean] = {
+  def exists(uuid: UUID): Future[Boolean] = { // todo move to dao?
     // default implementation that will work, but specific services may override it for optimization
     dao.getById(uuid).map(_.nonEmpty)
   }
@@ -59,6 +59,22 @@ abstract class BaseApiService[C <: BaseApiModel](dao: ApiModelDao[C]) {
       )
       case Some(existingEntity) => fn(existingEntity)
     }
+  }
+
+  /**
+   * Similar to `withExistingEntityF`, the entity is not passed along (thus must not be even retrieved fully)
+   * @param id
+   * @param fn
+   * @tparam S
+   * @return
+   */
+  def whenEntityExistsF[S](id: UUID)(fn: => Future[S]): Future[S] = {
+    val check: Future[Unit] = for {
+      entityExists <- this.exists(id)
+      _ = if (!entityExists) throw NotFoundException(s"Referenced $entityName (id=$id) was not found.")
+    } yield ()
+
+    check.flatMap(_ => fn)
   }
 
   val entityName: String

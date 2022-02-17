@@ -70,7 +70,7 @@ class SegmentationServiceTest extends AnyFlatSpec with ScalaFutures with Patienc
 
     whenReady(segService.add(freshSegmentation).failed) { exception =>
       exception shouldBe a[NotFoundException]
-      exception.getMessage shouldBe s"Flow referenced by id=${nonExistingFlowId1.toString} was not found."
+      exception.getMessage shouldBe s"Referenced Flow (id=${nonExistingFlowId1.toString}) was not found."
     }
     verifyNoInteractions(mockedSegDao)
   }
