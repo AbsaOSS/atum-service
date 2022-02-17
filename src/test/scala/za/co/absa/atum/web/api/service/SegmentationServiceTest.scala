@@ -16,8 +16,8 @@
 
 package za.co.absa.atum.web.api.service
 
-import org.mockito.{ArgumentMatchersSugar, Mockito}
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito
+import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
 import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
@@ -25,48 +25,54 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.dao.ApiModelDao
-import za.co.absa.atum.web.model.Segmentation
+import za.co.absa.atum.web.model.{Flow, Segmentation}
 
 import java.util.UUID
 import scala.concurrent.Future
 
 
 class SegmentationServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfiguration
-  with Matchers with IdiomaticMockito with ArgumentMatchersSugar with BeforeAndAfterEach {
+  with Matchers with IdiomaticMockito with BeforeAndAfterEach {
 
-  // specific implementation in place instead of Mockito's mock (=> Future[S] type hard to mock)
-  val mockedFlowService = new FlowService(null) {
-    override def withFlowExistsF[S](flowId: UUID)(fn: => Future[S]): Future[S] = {
-      if (flowId == existingFlowId1) fn else
-        Future.failed(NotFoundException(s"Flow referenced by id=$flowId was not found."))
-    }
+  override def beforeEach(): Unit = {
+    Mockito.reset(mockedSegDao, mockedFlowDao) // this allows verify to always count from fresh 0 in each test
   }
-  private val mockedSegDao: ApiModelDao[Segmentation] = mock[ApiModelDao[Segmentation]]
-  private val segService = new SegmentationService(mockedFlowService, mockedSegDao)
 
-  private val existingFlowId1 = UUID.randomUUID()
-  private val nonExistingFlowId1 = UUID.randomUUID()
+  private val mockedSegDao: ApiModelDao[Segmentation] = mock[ApiModelDao[Segmentation]]
+  private val mockedFlowDao: ApiModelDao[Flow] = mock[ApiModelDao[Flow]]
+
+  private val flowService = new FlowService(mockedFlowDao)
+  private val segService = new SegmentationService(flowService, mockedSegDao)
+
   private val segId1 = UUID.randomUUID()
 
   // not covering what BaseApiService(Test) has already covered
   "SegmentationService" should "add a segmentation with flow dependency check (flow exists)" in {
-    val freshSegmentation = Segmentation(None, flowId = existingFlowId1) // has existing flow
+    val existingFlowId1 = UUID.randomUUID()
+
+    val freshSegmentation = Segmentation(None, flowId = existingFlowId1)
+    when(mockedFlowDao.getById(existingFlowId1)).thenReturn(Future.successful(Some(Flow(Some(existingFlowId1), None)))) // flow found
     when(mockedSegDao.add(freshSegmentation)).thenReturn(Future.successful(segId1))
 
     whenReady(segService.add(freshSegmentation)) {
       _ shouldBe segId1
     }
     verify(mockedSegDao, times(1)).add(freshSegmentation)
+    verify(mockedFlowDao, times(1)).getById(existingFlowId1)
   }
 
-  it should "prevent adding a segmentation with flow dependency check (flow not exitx)" in {
+  it should "prevent adding a segmentation with flow dependency check (flow does not exist)" in {
+    val nonExistingFlowId1 = UUID.randomUUID()
     val freshSegmentation = Segmentation(None, flowId = nonExistingFlowId1)
+
+    when(mockedFlowDao.getById(nonExistingFlowId1)).thenReturn(Future.successful(None)) // flow not found
+    // no need to mock mockedSegDao.add(freshSegmentation) - expecting no interaction due to flow-non-exist check
 
     whenReady(segService.add(freshSegmentation).failed) { exception =>
       exception shouldBe a[NotFoundException]
       exception.getMessage shouldBe s"Flow referenced by id=${nonExistingFlowId1.toString} was not found."
     }
-    verify(mockedSegDao, times(0)).add(freshSegmentation)
+    verifyNoInteractions(mockedSegDao)
   }
 
 }
