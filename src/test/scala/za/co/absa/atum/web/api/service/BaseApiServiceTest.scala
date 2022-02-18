@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.web.api.service
 
-import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
-import org.mockito.scalatest.IdiomaticMockito
+import org.mockito.PrefixExpectations
+import org.mockito.scalatest.IdiomaticMockitoBase
+import org.mockito.scalatest.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -44,15 +44,15 @@ object BaseApiServiceTest {
 }
 
 class BaseApiServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfiguration
-  with Matchers with IdiomaticMockito with BeforeAndAfterEach {
+  with Matchers with MockitoSugar with IdiomaticMockitoBase with PrefixExpectations with BeforeAndAfterEach {
 
   private val mockedDao: ApiModelDao[TestEntity] = mock[ApiModelDao[TestEntity]]
   private val service = new BaseApiService[TestEntity](mockedDao) {
     override val entityName: String = "TestEntity"
   }
 
-  override def beforeEach(): Unit = {
-    Mockito.reset(mockedDao) // this allows verify to always count from fresh 0 in each test
+  override def beforeEach(): Unit = { // can be also done by mixing in org.mockito.integrations.scalatest.ResetMocksAfterEachTest
+    reset(mockedDao) // this allows verify to always count from fresh 0 in each test
   }
 
   private val existingId1 = UUID.randomUUID()
