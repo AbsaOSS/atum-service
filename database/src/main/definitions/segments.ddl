@@ -21,12 +21,13 @@ CREATE TABLE definitions.segments
     key_flow_definition     BIGINT NOT NULL,
     segment_name            TEXT NOT NULL,
     segment_type            TEXT NOT NULL,
+    mandatory               BOOLEAN NOT NULL,
     created_by              TEXT NOT NULL,
     created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT segments_pk PRIMARY KEY (id_segment_definition)
 );
 
 ALTER TABLE definitions.segments
-    ADD CONSTRAINT flows_unq UNIQUE (key_flow, segment_name);
+    ADD CONSTRAINT flows_unq UNIQUE (key_flow_definition, segment_name);
 
 ALTER TABLE definitions.segments OWNER to atum_owner;
