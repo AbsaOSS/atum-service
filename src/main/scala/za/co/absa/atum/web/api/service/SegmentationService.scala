@@ -33,25 +33,16 @@ class SegmentationService @Autowired()(flowService: FlowService, dao: ApiModelDa
 
   override def add(seg: Segmentation): Future[UUID] = {
     require(seg.id.isEmpty, "A new Segmentation payload must not have id!")
-    flowService.withFlowExistsF(seg.flowId) {
+    flowService.whenEntityExistsF(seg.flowId) {
       super.add(seg)
     }
   }
 
   override def update(seg: Segmentation): Future[Boolean] = {
     require(seg.id.nonEmpty, "Updated segmentation must have id!")
-    flowService.withFlowExistsF(seg.flowId) {
+    flowService.whenEntityExistsF(seg.flowId) {
       super.update(seg)
     }
-  }
-
-  def withSegmentationExistsF[S](segId: UUID)(fn: => Future[S]): Future[S] = {
-    val check: Future[Unit] = for {
-      segExists <- this.exists(segId)
-      _ = if (!segExists) throw NotFoundException(s"Referenced segmentation (segId=$segId) was not found.")
-    } yield ()
-
-    check.flatMap(_ => fn)
   }
 
   override val entityName: String = "Segmentation"

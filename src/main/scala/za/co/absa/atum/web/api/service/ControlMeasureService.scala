@@ -36,7 +36,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     require(cm.id.isEmpty, "A new ControlMeasure payload must not have id!")
     require(cm.checkpoints.isEmpty, "A new ControlMeasure payload must not have checkpoints! Add them separately.")
 
-    withFlowAndSegExistF(cm) {
+    whenFlowAndSegExistF(cm) {
       super.add(cm)
     }
   }
@@ -47,16 +47,16 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     val cmId = cm.id.get
 
     withExistingEntityF(cmId) { existingCm =>
-      withFlowAndSegExistF(cm) { // checking the new CM
+      whenFlowAndSegExistF(cm) { // checking the new CM
         assert(existingCm.id.equals(cm.id)) // just to be sure that the content matches the key
         super.update(cm)
       }
     }
   }
 
-  def withFlowAndSegExistF[S](cm: ControlMeasure)(fn: => Future[S]): Future[S] = {
-    flowService.withFlowExistsF(cm.flowId) {
-      segmentationService.withSegmentationExistsF(cm.segmentationId) {
+  def whenFlowAndSegExistF[S](cm: ControlMeasure)(fn: => Future[S]): Future[S] = {
+    flowService.whenEntityExistsF(cm.flowId) {
+      segmentationService.whenEntityExistsF(cm.segmentationId) {
         fn
       }
     }
