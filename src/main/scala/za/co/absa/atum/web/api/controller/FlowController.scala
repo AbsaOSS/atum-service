@@ -21,6 +21,7 @@ import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.web.api.controller.BaseApiController.{LimitParamName, OffsetParamName}
+import za.co.absa.atum.web.api.controller.FlowController.FlowDefParamName
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.FlowService
@@ -31,7 +32,6 @@ import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.collection.JavaConverters._
 
 @RestController
@@ -49,15 +49,12 @@ class FlowController @Autowired()(flowService: FlowService) extends BaseApiContr
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
   override def getList(@RequestParam allParams: java.util.Map[String,String]): CompletableFuture[Seq[Flow]] = {
+    // this REST mapping is overridden from BaseApiController - using java.util.Map for a common param interface
     val scalaParams = allParams.asScala.toMap
-
-    val actualLimit = scalaParams.get(LimitParamName).map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
-    val actualOffset = scalaParams.get(OffsetParamName).map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
-
-    // todo generalize
-    scalaParams.get("flowdef").map(UUID.fromString) match {
-      case Some(flowDefId) => flowService.getListByFlowDefId(flowDefId, limit = actualLimit, offset = actualOffset) // does not work yet?
-      case None => flowService.getList(limit = actualLimit, offset = actualOffset)
+    scalaParams.get(FlowDefParamName).map(UUID.fromString) match {
+      case None => super.getList(allParams) // default impl for no flowDef filtering
+      case Some(flowDefId) =>
+        flowService.getListByFlowDefId(flowDefId, limit = getLimitFromParams(scalaParams), offset = getOffsetFromParams(scalaParams))
     }
   }
 
@@ -130,4 +127,8 @@ class FlowController @Autowired()(flowService: FlowService) extends BaseApiContr
     }
   }
 
+}
+
+object FlowController {
+  val FlowDefParamName = "flowdef"
 }

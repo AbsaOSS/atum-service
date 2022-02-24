@@ -19,7 +19,7 @@ package za.co.absa.atum.web.api.controller
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import za.co.absa.atum.web.api.controller.BaseApiController.{LimitParamName, OffsetParamName}
+import za.co.absa.atum.web.api.controller.BaseApiController.{DefaultLimit, DefaultOffset, LimitParamName, OffsetParamName}
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.BaseApiService
@@ -38,11 +38,7 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
   @ResponseStatus(HttpStatus.OK)
   def getList(@RequestParam allParams: java.util.Map[String,String]): CompletableFuture[Seq[C]] = {
     val scalaParams = allParams.asScala.toMap
-
-    val actualLimit = scalaParams.get(LimitParamName).map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
-    val actualOffset = scalaParams.get(OffsetParamName).map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
-
-    baseApiService.getList(limit = actualLimit, offset = actualOffset)
+    baseApiService.getList(limit = getLimitFromParams(scalaParams), offset = getOffsetFromParams(scalaParams))
   }
 
   @GetMapping(Array("/{id}"))
@@ -67,6 +63,14 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
   }
 
   val entityName: String = baseApiService.entityName
+
+  protected def getLimitFromParams(params: Map[String, String], defaultValue: Int = DefaultLimit): Int = {
+    params.get(LimitParamName).map(_.toInt).getOrElse(defaultValue)
+  }
+
+  protected def getOffsetFromParams(params: Map[String, String], defaultValue: Int = DefaultOffset): Int = {
+    params.get(OffsetParamName).map(_.toInt).getOrElse(defaultValue)
+  }
 }
 
 object BaseApiController {
@@ -75,4 +79,5 @@ object BaseApiController {
 
   val OffsetParamName = "offset"
   val DefaultOffset: Int = 0
+
 }
