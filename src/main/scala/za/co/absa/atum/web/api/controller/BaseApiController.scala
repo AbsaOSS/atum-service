@@ -19,6 +19,7 @@ package za.co.absa.atum.web.api.controller
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import za.co.absa.atum.web.api.controller.BaseApiController.{LimitParamName, OffsetParamName}
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.BaseApiService
@@ -28,15 +29,19 @@ import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.{Optional, UUID}
 import javax.servlet.http.HttpServletRequest
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiService[C]) {
 
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam limit: Optional[String], @RequestParam offset: Optional[String]): CompletableFuture[Seq[C]] = {
-    val actualLimit = limit.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
-    val actualOffset = offset.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
+  def getList(@RequestParam allParams: java.util.Map[String,String]): CompletableFuture[Seq[C]] = {
+    val scalaParams = allParams.asScala.toMap
+
+    val actualLimit = scalaParams.get(LimitParamName).map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
+    val actualOffset = scalaParams.get(OffsetParamName).map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
+
     baseApiService.getList(limit = actualLimit, offset = actualOffset)
   }
 
@@ -65,6 +70,9 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
 }
 
 object BaseApiController {
+  val LimitParamName = "limit"
   val DefaultLimit: Int = 20
+
+  val OffsetParamName = "offset"
   val DefaultOffset: Int = 0
 }

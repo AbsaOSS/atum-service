@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import za.co.absa.atum.web.api.controller.BaseApiController.{LimitParamName, OffsetParamName}
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.FlowService
@@ -30,6 +31,8 @@ import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import scala.collection.JavaConverters._
 
 @RestController
 @RequestMapping(Array("/api/flows"))
@@ -43,16 +46,20 @@ class FlowController @Autowired()(flowService: FlowService) extends BaseApiContr
     flowService.update(cm).map(_ => MessagePayload(s"Successfully updated $entityName id=$id"))
   }
 
-  // todo - either completely different mapping or overriding the existing method with allParams map?
-//  @GetMapping(Array("/{flowid}/{segid}"))
-//  @ResponseStatus(HttpStatus.OK)
-//  def getListByFlowId(@PathVariable flowId: UUID, @PathVariable segId: UUID,
-//                             @RequestParam limit: Optional[String], @RequestParam offset: Optional[String]
-//                            ): CompletableFuture[Seq[ControlMeasure]] = {
-//    val actualLimit = limit.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
-//    val actualOffset = offset.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
-//    controlMeasureService.getListByFlowId(flowId, segId, actualLimit, actualOffset)
-//  }
+  @GetMapping(Array(""))
+  @ResponseStatus(HttpStatus.OK)
+  override def getList(@RequestParam allParams: java.util.Map[String,String]): CompletableFuture[Seq[Flow]] = {
+    val scalaParams = allParams.asScala.toMap
+
+    val actualLimit = scalaParams.get(LimitParamName).map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
+    val actualOffset = scalaParams.get(OffsetParamName).map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
+
+    // todo generalize
+    scalaParams.get("flowdef").map(UUID.fromString) match {
+      case Some(flowDefId) => flowService.getListByFlowDefId(flowDefId, limit = actualLimit, offset = actualOffset) // does not work yet?
+      case None => flowService.getList(limit = actualLimit, offset = actualOffset)
+    }
+  }
 
   @GetMapping(Array("/{id}/metadata"))
   @ResponseStatus(HttpStatus.OK)

@@ -75,7 +75,7 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
     val filter: Flow => Boolean = {
       _.flowDefId.equals(flowDefId)
     }
-    super.getList(offset, limit, filter)
+    super.getList(limit, offset, filter)
   }
 
   // checkpoints:
