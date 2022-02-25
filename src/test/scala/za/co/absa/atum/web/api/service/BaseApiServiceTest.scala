@@ -42,7 +42,7 @@ object BaseApiServiceTest {
   }
 
 }
-
+// this service test effectively covers FlowDefinitionService, too, as there are no diversions from the base impl.
 class BaseApiServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfiguration
   with Matchers with MockitoSugar with IdiomaticMockitoBase with PrefixExpectations with BeforeAndAfterEach {
 

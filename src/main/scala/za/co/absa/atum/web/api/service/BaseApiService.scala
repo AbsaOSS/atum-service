@@ -35,7 +35,7 @@ abstract class BaseApiService[C <: BaseApiModel](dao: ApiModelDao[C]) {
 
   def update(entity: C): Future[Boolean] = dao.update(entity)
 
-  def exists(uuid: UUID): Future[Boolean] = { // todo move to dao?
+  def exists(uuid: UUID): Future[Boolean] = {
     // default implementation that will work, but specific services may override it for optimization
     dao.getById(uuid).map(_.nonEmpty)
   }

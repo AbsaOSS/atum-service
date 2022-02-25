@@ -55,7 +55,7 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
     }
   }
 
-  private def whenSegmentationsRequirementsAreMet[S](flow: Flow, requiredSegmentations: Set[String])(fn: => Future[S]): Future[S] = {
+  private[service] def whenSegmentationsRequirementsAreMet[S](flow: Flow, requiredSegmentations: Set[String])(fn: => Future[S]): Future[S] = {
     flow.missingSegmentationsOf(requiredSegmentations) match {
       case missingSet if missingSet.nonEmpty =>
         Future.failed(new IllegalArgumentException(s"Required segmentation was not present in the $entityName, " +
