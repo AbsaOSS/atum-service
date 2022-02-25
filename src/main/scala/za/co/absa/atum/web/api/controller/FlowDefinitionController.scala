@@ -17,22 +17,12 @@
 package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.{HttpStatus, ResponseEntity}
-import org.springframework.web.bind.annotation._
-import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.api.implicits._
-import za.co.absa.atum.web.api.payload.MessagePayload
-import za.co.absa.atum.web.api.service.{FlowService, SegmentationService}
-import za.co.absa.atum.web.model.{Flow, Segmentation}
-
-import java.net.URI
-import java.util.concurrent.CompletableFuture
-import java.util.{Optional, UUID}
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.springframework.web.bind.annotation.{RequestMapping, RestController}
+import za.co.absa.atum.web.api.service.FlowDefinitionService
 
 @RestController
-@RequestMapping(Array("/api/segmentations"))
-class SegmentationController @Autowired()(segmentationService: SegmentationService)
-  extends BaseApiController(segmentationService) {
+@RequestMapping(Array("/api/flowdefs"))
+class FlowDefinitionController @Autowired()(flowDefService: FlowDefinitionService)
+  extends BaseApiController(flowDefService) {
 
 }

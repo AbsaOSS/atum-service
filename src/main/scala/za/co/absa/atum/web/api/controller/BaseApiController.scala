@@ -19,7 +19,7 @@ package za.co.absa.atum.web.api.controller
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import za.co.absa.atum.web.api.NotFoundException
+import za.co.absa.atum.web.api.controller.BaseApiController.{DefaultLimit, DefaultOffset, LimitParamName, OffsetParamName}
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.BaseApiService
@@ -29,16 +29,16 @@ import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.{Optional, UUID}
 import javax.servlet.http.HttpServletRequest
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiService[C]) {
 
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam limit: Optional[String], @RequestParam offset: Optional[String]): CompletableFuture[Seq[C]] = {
-    val actualLimit = limit.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultLimit)
-    val actualOffset = offset.toScalaOption.map(_.toInt).getOrElse(BaseApiController.DefaultOffset)
-    baseApiService.getList(limit = actualLimit, offset = actualOffset)
+  def getList(@RequestParam allParams: java.util.Map[String,String]): CompletableFuture[Seq[C]] = {
+    val scalaParams = allParams.asScala.toMap
+    baseApiService.getList(limit = getLimitFromParams(scalaParams), offset = getOffsetFromParams(scalaParams))
   }
 
   @GetMapping(Array("/{id}"))
@@ -58,12 +58,26 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
         .toUri() // will create location e.g. /api/controlmeasures/someIdHere
 
       ResponseEntity.created(location)
-        .body[MessagePayload](MessagePayload(s"Successfully created control measure with id $id"))
+        .body[MessagePayload](MessagePayload(s"Successfully created ${baseApiService.entityName} with id $id"))
     }
+  }
+
+  val entityName: String = baseApiService.entityName
+
+  protected def getLimitFromParams(params: Map[String, String], defaultValue: Int = DefaultLimit): Int = {
+    params.get(LimitParamName).map(_.toInt).getOrElse(defaultValue)
+  }
+
+  protected def getOffsetFromParams(params: Map[String, String], defaultValue: Int = DefaultOffset): Int = {
+    params.get(OffsetParamName).map(_.toInt).getOrElse(defaultValue)
   }
 }
 
 object BaseApiController {
+  val LimitParamName = "limit"
   val DefaultLimit: Int = 20
+
+  val OffsetParamName = "offset"
   val DefaultOffset: Int = 0
+
 }

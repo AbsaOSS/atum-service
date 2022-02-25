@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.model
+package za.co.absa.atum.web.api.service
 
-import java.util.UUID
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
+import za.co.absa.atum.web.dao.ApiModelDao
+import za.co.absa.atum.web.model.FlowDefinition
 
-case class Segmentation(id: Option[UUID],
-                        flowId: UUID) extends BaseApiModel {
 
-  override def withId(uuid: UUID): Segmentation = copy(id = Some(uuid))
+@Service
+class FlowDefinitionService @Autowired()(dao: ApiModelDao[FlowDefinition]) extends BaseApiService[FlowDefinition](dao) {
+  override val entityName: String = "FlowDefinition"
+
 }
