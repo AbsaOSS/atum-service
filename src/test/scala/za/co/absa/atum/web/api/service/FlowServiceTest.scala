@@ -45,7 +45,6 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
   private val flowDefId1 = UUID.fromString("f101d000-6b8a-4fad-81c5-d303fb805a7b")
 
 
-
   // custom mock due to being hard to mock by-name params or lambdas in scalaMockito
   private def setupMockedFlowDefService(flowDefExists: Boolean, requiredSegmentation: Set[String] = Set.empty) = new FlowDefinitionService(null) {
     var mockCalledCnt = 0
@@ -360,7 +359,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
       Checkpoint(Some(cpId1), "myCheckpoint1", Some("processingSw1"), Some("1.2.3-RC6+build.456"), "01-01-2020 07:00:00",
         "01-01-2020 07:00:10", "workflow1", order = 1, status = CheckpointStatus.Open)
     ))
-    val checkpointUpdate = CheckpointUpdate(Some("myCheckpoint2"), None, Some("1.2.4-RC1"),Some("01-01-2020 07:00:01"),
+    val checkpointUpdate = CheckpointUpdate(Some("myCheckpoint2"), None, Some("1.2.4-RC1"), Some("01-01-2020 07:00:01"),
       None, Some("workflow2"), None, status = Some(CheckpointStatus.Closed))
 
     val expectedUpdatedFlow = existingFlow.copy(checkpoints = List( // just some fields updated - only those defined in the update
@@ -418,8 +417,8 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
 
   it should "getMeasurements: happy path" in {
     val existingMeasurements = List(
-      Measurement("controlName1", "controlType1", "controCol1", controlValue = 123L),
-      Measurement("controlName2", "controlType2", "controCol2", controlValue = "ABC123")
+      Measurement("controlName1", "controlType1", "controlCol1", controlValue = 123L),
+      Measurement("controlName2", "controlType2", "controlCol2", controlValue = "ABC123")
     )
     val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
       Checkpoint(Some(cpId1), "myCheckpoint1", None, None, null, null, null, order = 1, status = CheckpointStatus.Closed, existingMeasurements)
@@ -434,6 +433,99 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
     }
 
     verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check + cp data
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "getMeasurements: failing on failing on cp-not-found" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List.empty)
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check/retrieval
+
+    whenReady(flowService.getMeasurements(flowId1, cpId1).failed) { exception =>
+      exception shouldBe a[NotFoundException]
+      exception.getMessage shouldBe s"Checkpoint referenced by id=${cpId1.toString} was not found in Flow id=${flowId1.toString}"
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "getMeasurements: failing on flow-not-found" in {
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(None)) // flow existence check failing
+
+    whenReady(flowService.getMeasurements(flowId1, cpId1).failed) { exception =>
+      exception shouldBe a[NotFoundException]
+      exception.getMessage shouldBe s"Flow referenced by id=${flowId1.toString} was not found."
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "addMeasurement: happy path" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
+      Checkpoint(Some(cpId1), "myCheckpoint1", None, None, null, null, null, order = 1, status = CheckpointStatus.Closed, List(
+        Measurement("controlName1", "controlType1", "controlCol1", controlValue = 123L)
+      ))
+    ))
+
+    val freshMeasurement = Measurement("controlName2", "controlType2", "controlCol2", controlValue = "ABC123")
+
+    val expectedUpdatedFlow = existingFlow.copy(checkpoints =
+      List(existingFlow.checkpoints.head.copy(measurements =
+        existingFlow.checkpoints.head.measurements :+ freshMeasurement // i.e. freshMeasurement added after existing
+      ))
+    )
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check
+    when(mockedFlowDao.update(expectedUpdatedFlow)).thenReturn(Future.successful(true)) // flow-cp update
+
+    whenReady(flowService.addMeasurement(flowId1, cpId1, freshMeasurement))(_ shouldBe true)
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verify(mockedFlowDao, times(1)).update(expectedUpdatedFlow) // dao update call
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "addMeasurement: failing on cp-not-found" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List())
+    val freshMeasurement = Measurement("controlName2", "controlType2", "controlCol2", controlValue = "ABC123")
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check/retrieval
+
+    whenReady(flowService.addMeasurement(flowId1, cpId1, freshMeasurement).failed) { exception =>
+      exception shouldBe a[NotFoundException]
+      exception.getMessage shouldBe s"Checkpoint referenced by id=${cpId1.toString} was not found in Flow id=${flowId1.toString}"
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verify(mockedFlowDao, times(0)).update(any[Flow]) // update not reached due to an error
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "addMeasurement: failing on flow-not-found" in {
+    val freshMeasurement = Measurement("controlName2", "controlType2", "controlCol2", controlValue = "ABC123")
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(None)) // flow existence check failing
+
+    whenReady(flowService.addMeasurement(flowId1, cpId1, freshMeasurement).failed) { exception =>
+      exception shouldBe a[NotFoundException]
+      exception.getMessage shouldBe s"Flow referenced by id=${flowId1.toString} was not found."
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verify(mockedFlowDao, times(0)).update(any[Flow]) // update not reached due to an error
     verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
   }
 
