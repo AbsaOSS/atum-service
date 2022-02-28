@@ -26,7 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.dao.ApiModelDao
 import za.co.absa.atum.web.model.Checkpoint.CheckpointStatus
-import za.co.absa.atum.web.model.{Checkpoint, Flow, FlowDefinition, FlowMetadata}
+import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, Flow, FlowDefinition, FlowMetadata}
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -44,11 +44,12 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
   private val flowId1 = UUID.fromString("f1d00000-6b8a-4fad-81c5-d303fb805a7b")
   private val flowDefId1 = UUID.fromString("f101d000-6b8a-4fad-81c5-d303fb805a7b")
 
-  private val existingFlowDef = FlowDefinition(Some(flowDefId1), "Test FD", Set("reqSeg1"))
+
 
   // custom mock due to being hard to mock by-name params or lambdas in scalaMockito
-  private def setupMockedFlowDefService(flowDefExists: Boolean) = new FlowDefinitionService(null) {
+  private def setupMockedFlowDefService(flowDefExists: Boolean, requiredSegmentation: Set[String] = Set.empty) = new FlowDefinitionService(null) {
     var mockCalledCnt = 0
+    val existingFlowDef = FlowDefinition(Some(flowDefId1), "Test FD", requiredSegmentation)
 
     override def withExistingEntityF[S](id: UUID)(fn: FlowDefinition => Future[S]): Future[S] = synchronized {
       mockCalledCnt += 1
@@ -63,7 +64,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
   // not covering what BaseApiService(Test) has already covered
   "FlowService" should "add: add a flow with flowDef dependency check and segmentation check both passing" in {
     val freshFlow = Flow(None, flowDefId1, segmentation = Map("reqSeg1" -> "someValue"), null)
-    val mockedFlowDefService1 = setupMockedFlowDefService(true)
+    val mockedFlowDefService1 = setupMockedFlowDefService(flowDefExists = true, requiredSegmentation = Set("reqSeg1"))
 
     val flowService = new FlowService(mockedFlowDefService1, mockedFlowDao)
     when(mockedFlowDao.add(freshFlow)).thenReturn(Future.successful(flowId1)) // flow saved & gets an id assigned
@@ -77,7 +78,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
 
   it should "add: prevent adding a flow with segmentation check failing" in {
     val freshFlow = Flow(None, flowDefId1, segmentation = Map("notConformingToRequired" -> "someValue"), null)
-    val mockedFlowDefService1 = setupMockedFlowDefService(true)
+    val mockedFlowDefService1 = setupMockedFlowDefService(flowDefExists = true, requiredSegmentation = Set("reqSeg1"))
 
     val flowService = new FlowService(mockedFlowDefService1, mockedFlowDao)
 
@@ -92,7 +93,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
 
   it should "add: prevent adding a flow with referenced by flowDef not found" in {
     val freshFlow = Flow(None, flowDefId1, Map.empty, null)
-    val mockedFlowDefService1 = setupMockedFlowDefService(false) // flowDef will not be found and the test case will fail on that
+    val mockedFlowDefService1 = setupMockedFlowDefService(flowDefExists = false) // flowDef will not be found and the test case will fail on that
 
     val flowService = new FlowService(mockedFlowDefService1, mockedFlowDao)
 
@@ -108,7 +109,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
   it should "update: update a flow with flowDef dependency check and segmentation check both passing" in {
     val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map("reqSeg1" -> "someValue"), null)
     val flowUpdate = Flow(Some(flowId1), flowDefId1, segmentation = Map("reqSeg1" -> "someNewValue"), null)
-    val mockedFlowDefService1 = setupMockedFlowDefService(true)
+    val mockedFlowDefService1 = setupMockedFlowDefService(flowDefExists = true)
 
     val flowService = new FlowService(mockedFlowDefService1, mockedFlowDao)
     when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow)))
@@ -123,7 +124,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
   it should "update: prevent updating a flow with segmentation check failing" in {
     val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map("reqSeg1" -> "someValue"), null)
     val flowUpdate = Flow(Some(flowId1), flowDefId1, segmentation = Map("notConformingToRequired" -> "someNewValue"), null)
-    val mockedFlowDefService1 = setupMockedFlowDefService(true)
+    val mockedFlowDefService1 = setupMockedFlowDefService(flowDefExists = true, requiredSegmentation = Set("reqSeg1"))
 
     val flowService = new FlowService(mockedFlowDefService1, mockedFlowDao)
     when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow)))
@@ -141,7 +142,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
   it should "update: prevent updating a flow with referenced by flowDef not found" in {
     val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map("reqSeg1" -> "someValue"), null)
     val flowUpdate = Flow(Some(flowId1), flowDefId1, segmentation = Map("notConformingToRequired" -> "someNewValue"), null)
-    val mockedFlowDefService1 = setupMockedFlowDefService(false) // flowDef will not be found and the test case will fail on that
+    val mockedFlowDefService1 = setupMockedFlowDefService(flowDefExists = false) // flowDef will not be found and the test case will fail on that
 
     val flowService = new FlowService(mockedFlowDefService1, mockedFlowDao)
     when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow)))
@@ -209,25 +210,26 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
     verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
   }
 
+  private val cpId1 = UUID.fromString("c43c41d0-6b8a-4fad-81c5-d303fb805a7b")
   it should "addCheckpoint: happy path" in {
     val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
-      Checkpoint(Some(UUID.randomUUID()), "myCheckpoint1", Some("processingSw1"), Some("1.2.3-RC6+build.456"), null, null, null,
+      Checkpoint(Some(cpId1), "myCheckpoint1", Some("processingSw1"), Some("1.2.3-RC6+build.456"), null, null, null,
         order = 1, status = CheckpointStatus.Closed)
     ))
     val freshCheckpoint = Checkpoint(None, "myCheckpoint2", Some("processingSw2"), Some("1.2.4-RC1"), null, null, null,
       order = 2, status = CheckpointStatus.Open)
-    val checkpoint2Id = UUID.randomUUID()
+    val cpId2 = UUID.randomUUID()
 
-    val expectedUpdatedFlow = existingFlow.copy(checkpoints = existingFlow.checkpoints :+ freshCheckpoint.withId(checkpoint2Id)) // flow with added CP with a new cpId assigned
+    val expectedUpdatedFlow = existingFlow.copy(checkpoints = existingFlow.checkpoints :+ freshCheckpoint.withId(cpId2)) // flow with added CP with a new cpId assigned
     val mockedFlowDefService = mock[FlowDefinitionService]
 
     val flowService = new FlowService(mockedFlowDefService, mockedFlowDao) {
-      override def generateRandomId(): UUID = checkpoint2Id // control id generation for fresh CP in test
+      override def generateRandomId(): UUID = cpId2 // control id generation for fresh CP in test
     }
     when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check
     when(mockedFlowDao.update(expectedUpdatedFlow)).thenReturn(Future.successful(true)) // flow-cp added
 
-    whenReady(flowService.addCheckpoint(flowId1, freshCheckpoint))(_ shouldBe checkpoint2Id)
+    whenReady(flowService.addCheckpoint(flowId1, freshCheckpoint))(_ shouldBe cpId2)
 
     verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
     verify(mockedFlowDao, times(1)).update(expectedUpdatedFlow) // dao update call
@@ -236,7 +238,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
 
   it should "addCheckpoint: invalid order" in {
     val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
-      Checkpoint(Some(UUID.randomUUID()), "myCheckpoint1", None, None, null, null, null, order = 4, status = CheckpointStatus.Closed)
+      Checkpoint(Some(cpId1), "myCheckpoint1", None, None, null, null, null, order = 4, status = CheckpointStatus.Closed)
     ))
     val freshCheckpoint = Checkpoint(None, "cpWithInvalidOrder", None, None, null, null, null, order = 2, status = CheckpointStatus.Open)
     val mockedFlowDefService = mock[FlowDefinitionService]
@@ -247,7 +249,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
     whenReady(flowService.addCheckpoint(flowId1, freshCheckpoint).failed) { exception =>
       exception shouldBe a[IllegalArgumentException]
       exception.getMessage should startWith("Checkpoint order is invalid!")
-      exception.getMessage should include ("2 is not larger than 4")
+      exception.getMessage should include("2 is not larger than 4")
     }
 
     verify(mockedFlowDao, times(1)).getById(flowId1)
@@ -274,7 +276,7 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
 
   it should "getCheckpointList: happy path" in {
     val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
-      Checkpoint(Some(UUID.randomUUID()), "myCheckpoint1", None, None, null, null, null, order = 1, status = CheckpointStatus.Closed),
+      Checkpoint(Some(cpId1), "myCheckpoint1", None, None, null, null, null, order = 1, status = CheckpointStatus.Closed),
       Checkpoint(Some(UUID.randomUUID()), "myCheckpoint2", None, None, null, null, null, order = 2, status = CheckpointStatus.Open)
     ))
     val mockedFlowDefService = mock[FlowDefinitionService]
@@ -302,6 +304,70 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
     }
 
     verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  // todo get checkpoint by id
+
+  it should "updateCheckpoint: happy path" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
+      Checkpoint(Some(cpId1), "myCheckpoint1", Some("processingSw1"), Some("1.2.3-RC6+build.456"), "01-01-2020 07:00:00",
+        "01-01-2020 07:00:10", "workflow1", order = 1, status = CheckpointStatus.Open)
+    ))
+    val checkpointUpdate = CheckpointUpdate(Some("myCheckpoint2"), None, Some("1.2.4-RC1"),Some("01-01-2020 07:00:01"),
+      None, Some("workflow2"), None, status = Some(CheckpointStatus.Closed))
+
+    val expectedUpdatedFlow = existingFlow.copy(checkpoints = List( // just some fields updated - only those defined in the update
+      Checkpoint(Some(cpId1),
+        "myCheckpoint2", Some("processingSw1"), Some("1.2.4-RC1"), "01-01-2020 07:00:01", // upd, orig, upd, upd
+        "01-01-2020 07:00:10", "workflow2", order = 1, status = CheckpointStatus.Closed) // orig, upd, orig, upd
+    ))
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check
+    when(mockedFlowDao.update(expectedUpdatedFlow)).thenReturn(Future.successful(true)) // flow-cp update
+
+    whenReady(flowService.updateCheckpoint(flowId1, cpId1, checkpointUpdate))(_ shouldBe true)
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verify(mockedFlowDao, times(1)).update(expectedUpdatedFlow) // dao update call
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "updateCheckpoint: failing on cp-not-found" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List())
+    val checkpointUpdate = CheckpointUpdate(status = Some(CheckpointStatus.Closed))
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check
+
+    whenReady(flowService.updateCheckpoint(flowId1, cpId1, checkpointUpdate).failed) { exception =>
+      exception shouldBe a[NotFoundException]
+      exception.getMessage shouldBe s"Checkpoint referenced by id=${cpId1.toString} was not found in Flow id=${flowId1.toString}"
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verify(mockedFlowDao, times(0)).update(any[Flow]) // update not reached due to an error
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "updateCheckpoint: failing on flow-not-found" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List())
+    val checkpointUpdate = CheckpointUpdate(status = Some(CheckpointStatus.Closed))
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(None)) // flow existence check failing
+
+    whenReady(flowService.updateCheckpoint(flowId1, cpId1, checkpointUpdate).failed) { exception =>
+      exception shouldBe a[NotFoundException]
+      exception.getMessage shouldBe s"Flow referenced by id=${flowId1.toString} was not found."
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verify(mockedFlowDao, times(0)).update(any[Flow]) // update not reached due to an error
     verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
   }
 

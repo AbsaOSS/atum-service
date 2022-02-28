@@ -117,7 +117,7 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
 
     withExistingEntityF(flowId) { existingFlow =>
       existingFlow.checkpoints.find(_.id.contains(cpId)) match {
-        case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in $entityName id=$flowId")
+        case None => Future.failed(NotFoundException(s"Checkpoint referenced by id=$cpId was not found in $entityName id=$flowId"))
         case Some(existingCp) =>
           val updatedCps = existingFlow.checkpoints.map {
             case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.withUpdate(checkpointUpdate) // reflects the update
@@ -125,7 +125,7 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
           }
 
           val updatedFlow = existingFlow.copy(checkpoints = updatedCps)
-          update(updatedFlow)
+          super.update(updatedFlow)
       }
     }
   }
@@ -140,7 +140,7 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
   def addMeasurement(flowId: UUID, cpId: UUID, measurement: Measurement): Future[Boolean] = {
     withExistingEntityF(flowId) { existingFlow =>
       existingFlow.checkpoints.find(_.id.contains(cpId)) match {
-        case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in $entityName id=$flowId")
+        case None => Future.failed(NotFoundException(s"Checkpoint referenced by id=$cpId was not found in $entityName id=$flowId"))
         case Some(existingCp) =>
           val updatedCps = existingFlow.checkpoints.map {
             case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
@@ -148,7 +148,7 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
           }
 
           val updatedFlow = existingFlow.copy(checkpoints = updatedCps)
-          update(updatedFlow)
+          super.update(updatedFlow)
       }
     }
   }
