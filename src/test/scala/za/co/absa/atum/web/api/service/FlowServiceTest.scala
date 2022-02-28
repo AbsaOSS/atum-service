@@ -26,7 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.dao.ApiModelDao
 import za.co.absa.atum.web.model.Checkpoint.CheckpointStatus
-import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, Flow, FlowDefinition, FlowMetadata}
+import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, Flow, FlowDefinition, FlowMetadata, Measurement}
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -400,7 +400,6 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
   }
 
   it should "updateCheckpoint: failing on flow-not-found" in {
-    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List())
     val checkpointUpdate = CheckpointUpdate(status = Some(CheckpointStatus.Closed))
     val mockedFlowDefService = mock[FlowDefinitionService]
 
@@ -414,6 +413,27 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
 
     verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
     verify(mockedFlowDao, times(0)).update(any[Flow]) // update not reached due to an error
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "getMeasurements: happy path" in {
+    val existingMeasurements = List(
+      Measurement("controlName1", "controlType1", "controCol1", controlValue = 123L),
+      Measurement("controlName2", "controlType2", "controCol2", controlValue = "ABC123")
+    )
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
+      Checkpoint(Some(cpId1), "myCheckpoint1", None, None, null, null, null, order = 1, status = CheckpointStatus.Closed, existingMeasurements)
+    ))
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check + checkpoint retrieval
+    whenReady(flowService.getMeasurements(flowId1, cpId1)) {
+      _ shouldBe existingMeasurements
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check + cp data
     verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
   }
 
