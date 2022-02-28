@@ -83,11 +83,18 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
     require(checkpoint.id.isEmpty, "A new Checkpoint payload must not have id!")
 
     withExistingEntityF(flowId) { existingFlow =>
-      val newId = UUID.randomUUID()
+      val newId = generateRandomId()
       val newCheckpointWithId = checkpoint.withId(newId)
-      val updatedFlow = existingFlow.copy(checkpoints = (existingFlow.checkpoints ++ List(newCheckpointWithId)))
-
-      super.update(updatedFlow).map(_ => newId)
+      existingFlow.checkpoints.lastOption match {
+        case Some(lastCheckpoint) if checkpoint.order <= lastCheckpoint.order =>
+          Future.failed(new IllegalArgumentException(
+            s"Checkpoint order is invalid! Order of the added CP must be larger than the last existing, " +
+              s"but ${checkpoint.order} is not larger than ${lastCheckpoint.order}."
+          ))
+        case _ => // ok: lastCp.order > cp.order or no CPs
+          val updatedFlow = existingFlow.copy(checkpoints = (existingFlow.checkpoints :+ newCheckpointWithId))
+          super.update(updatedFlow).map(_ => newId)
+      }
     }
   }
 
@@ -145,6 +152,8 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
       }
     }
   }
+
+  private[service] def generateRandomId(): UUID = UUID.randomUUID()
 
 
   override val entityName: String = "Flow"

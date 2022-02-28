@@ -25,7 +25,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.dao.ApiModelDao
-import za.co.absa.atum.web.model.{Flow, FlowDefinition, FlowMetadata}
+import za.co.absa.atum.web.model.Checkpoint.CheckpointStatus
+import za.co.absa.atum.web.model.{Checkpoint, Flow, FlowDefinition, FlowMetadata}
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -205,6 +206,102 @@ class FlowServiceTest extends AnyFlatSpec with ScalaFutures with PatienceConfigu
     }
 
     verify(mockedFlowDao, times(1)).getList(1, 2, aFilter)
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "addCheckpoint: happy path" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
+      Checkpoint(Some(UUID.randomUUID()), "myCheckpoint1", Some("processingSw1"), Some("1.2.3-RC6+build.456"), null, null, null,
+        order = 1, status = CheckpointStatus.Closed)
+    ))
+    val freshCheckpoint = Checkpoint(None, "myCheckpoint2", Some("processingSw2"), Some("1.2.4-RC1"), null, null, null,
+      order = 2, status = CheckpointStatus.Open)
+    val checkpoint2Id = UUID.randomUUID()
+
+    val expectedUpdatedFlow = existingFlow.copy(checkpoints = existingFlow.checkpoints :+ freshCheckpoint.withId(checkpoint2Id)) // flow with added CP with a new cpId assigned
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao) {
+      override def generateRandomId(): UUID = checkpoint2Id // control id generation for fresh CP in test
+    }
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check
+    when(mockedFlowDao.update(expectedUpdatedFlow)).thenReturn(Future.successful(true)) // flow-cp added
+
+    whenReady(flowService.addCheckpoint(flowId1, freshCheckpoint))(_ shouldBe checkpoint2Id)
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verify(mockedFlowDao, times(1)).update(expectedUpdatedFlow) // dao update call
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed for cp update
+  }
+
+  it should "addCheckpoint: invalid order" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
+      Checkpoint(Some(UUID.randomUUID()), "myCheckpoint1", None, None, null, null, null, order = 4, status = CheckpointStatus.Closed)
+    ))
+    val freshCheckpoint = Checkpoint(None, "cpWithInvalidOrder", None, None, null, null, null, order = 2, status = CheckpointStatus.Open)
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check
+
+    whenReady(flowService.addCheckpoint(flowId1, freshCheckpoint).failed) { exception =>
+      exception shouldBe a[IllegalArgumentException]
+      exception.getMessage should startWith("Checkpoint order is invalid!")
+      exception.getMessage should include ("2 is not larger than 4")
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1)
+    verify(mockedFlowDao, times(0)).update(any[Flow]) // update not reached due to an error
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed for cp update
+  }
+
+  it should "addCheckpointeMetadata: failing on flow-not-found" in {
+    val freshCheckpoint = Checkpoint(None, "someCp2", None, None, null, null, null, order = 2, status = CheckpointStatus.Open)
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(None)) // flow existence check failing
+
+    whenReady(flowService.addCheckpoint(flowId1, freshCheckpoint).failed) { exception =>
+      exception shouldBe a[NotFoundException]
+      exception.getMessage shouldBe s"Flow referenced by id=${flowId1.toString} was not found."
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
+    verify(mockedFlowDao, times(0)).update(any[Flow]) // update not reached due to an error
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed for cp update
+  }
+
+  it should "getCheckpointList: happy path" in {
+    val existingFlow = Flow(Some(flowId1), flowDefId1, segmentation = Map(), null, checkpoints = List(
+      Checkpoint(Some(UUID.randomUUID()), "myCheckpoint1", None, None, null, null, null, order = 1, status = CheckpointStatus.Closed),
+      Checkpoint(Some(UUID.randomUUID()), "myCheckpoint2", None, None, null, null, null, order = 2, status = CheckpointStatus.Open)
+    ))
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(Some(existingFlow))) // flow existence check + checkpoint retrieval
+    whenReady(flowService.getCheckpointList(flowId1)) {
+      _ shouldBe existingFlow.checkpoints
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check + cp data
+    verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
+  }
+
+  it should "getCheckpointList: failing on flow-not-found" in {
+    val mockedFlowDefService = mock[FlowDefinitionService]
+
+    val flowService = new FlowService(mockedFlowDefService, mockedFlowDao)
+    when(mockedFlowDao.getById(flowId1)).thenReturn(Future.successful(None)) // flow existence check failing
+
+    whenReady(flowService.getCheckpointList(flowId1).failed) { exception =>
+      exception shouldBe a[NotFoundException]
+      exception.getMessage shouldBe s"Flow referenced by id=${flowId1.toString} was not found."
+    }
+
+    verify(mockedFlowDao, times(1)).getById(flowId1) // flow existence check
     verifyNoInteractions(mockedFlowDefService) // flowdefs are not checked - not needed
   }
 
