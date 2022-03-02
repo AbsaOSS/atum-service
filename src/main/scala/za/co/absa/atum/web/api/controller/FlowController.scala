@@ -77,53 +77,53 @@ class FlowController @Autowired()(flowService: FlowService) extends BaseApiContr
     flowService.getCheckpointList(id)
   }
 
-  @PostMapping(Array("/{cmId}/checkpoints"))
+  @PostMapping(Array("/{flowId}/checkpoints"))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@PathVariable cmId: UUID, @RequestBody cp: Checkpoint, request: HttpServletRequest): CompletableFuture[ResponseEntity[MessagePayload]] = {
-    flowService.addCheckpoint(cmId, cp).map { cpId =>
+  def create(@PathVariable flowId: UUID, @RequestBody cp: Checkpoint, request: HttpServletRequest): CompletableFuture[ResponseEntity[MessagePayload]] = {
+    flowService.addCheckpoint(flowId, cp).map { cpId =>
       val location: URI = ServletUriComponentsBuilder
         .fromRequest(request)
         .path("/{cpId}")
         .buildAndExpand(cpId)
-        .toUri() // will create location e.g. /api/controlmeasures/{cmId}/checkpoints/{cpId}
+        .toUri() // will create location e.g. /api/flows/{flowId}/checkpoints/{cpId}
 
       ResponseEntity.created(location)
-        .body[MessagePayload](MessagePayload(s"Successfully added Checkpoint id=$cpId, for $entityName id=$cmId"))
+        .body[MessagePayload](MessagePayload(s"Successfully added Checkpoint id=$cpId, for $entityName id=$flowId"))
     }
   }
 
-  @GetMapping(Array("/{cmId}/checkpoints/{cpId}"))
+  @GetMapping(Array("/{flowId}/checkpoints/{cpId}"))
   @ResponseStatus(HttpStatus.OK)
-  def getOneCheckpoint(@PathVariable cmId: UUID, @PathVariable cpId: UUID): CompletableFuture[Checkpoint] = {
-    flowService.getCheckpointById(cmId, cpId)
+  def getOneCheckpoint(@PathVariable flowId: UUID, @PathVariable cpId: UUID): CompletableFuture[Checkpoint] = {
+    flowService.getCheckpointById(flowId, cpId)
   }
 
   // todo change PUTs payload to have all-optional fields so that updates can be partial only
   // (not overwrite/unnecessarily repeat the whole entity)
 
-  @PutMapping(Array("/{cmId}/checkpoints/{cpId}"))
+  @PutMapping(Array("/{flowId}/checkpoints/{cpId}"))
   @ResponseStatus(HttpStatus.OK)
-  def updateCheckpoint(@PathVariable cmId: UUID, @PathVariable cpId: UUID, @RequestBody cpUpdate: CheckpointUpdate): CompletableFuture[MessagePayload] = {
-    flowService.updateCheckpoint(cmId, cpId, cpUpdate).map(_ => MessagePayload(s"Successfully updated Checkpoint id=$cpId"))
+  def updateCheckpoint(@PathVariable flowId: UUID, @PathVariable cpId: UUID, @RequestBody cpUpdate: CheckpointUpdate): CompletableFuture[MessagePayload] = {
+    flowService.updateCheckpoint(flowId, cpId, cpUpdate).map(_ => MessagePayload(s"Successfully updated Checkpoint id=$cpId"))
   }
 
-  @GetMapping(Array("/{cmId}/checkpoints/{cpId}/measurements"))
+  @GetMapping(Array("/{flowId}/checkpoints/{cpId}/measurements"))
   @ResponseStatus(HttpStatus.OK)
-  def getMeasurements(@PathVariable cmId: UUID, @PathVariable cpId: UUID): CompletableFuture[List[Measurement]] = {
-    flowService.getMeasurements(cmId, cpId)
+  def getMeasurements(@PathVariable flowId: UUID, @PathVariable cpId: UUID): CompletableFuture[List[Measurement]] = {
+    flowService.getMeasurements(flowId, cpId)
   }
 
-  @PostMapping(Array("/{cmId}/checkpoints/{cpId}/measurements"))
+  @PostMapping(Array("/{flowId}/checkpoints/{cpId}/measurements"))
   @ResponseStatus(HttpStatus.CREATED)
-  def createMeasurement(@PathVariable cmId: UUID, @PathVariable cpId: UUID, @RequestBody measurement: Measurement, request: HttpServletRequest): CompletableFuture[ResponseEntity[MessagePayload]] = {
-    flowService.addMeasurement(cmId, cpId, measurement).map { _ =>
+  def createMeasurement(@PathVariable flowId: UUID, @PathVariable cpId: UUID, @RequestBody measurement: Measurement, request: HttpServletRequest): CompletableFuture[ResponseEntity[MessagePayload]] = {
+    flowService.addMeasurement(flowId, cpId, measurement).map { _ =>
       val location: URI = ServletUriComponentsBuilder
         .fromRequest(request)
         .build()
         .toUri()
 
       ResponseEntity.created(location)
-        .body[MessagePayload](MessagePayload(s"Successfully added Measurement to CP id=$cpId, for $entityName id=$cmId"))
+        .body[MessagePayload](MessagePayload(s"Successfully added Measurement to CP id=$cpId, for $entityName id=$flowId"))
     }
   }
 
