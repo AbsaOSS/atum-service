@@ -55,7 +55,7 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
     }
   }
 
-  private def whenSegmentationsRequirementsAreMet[S](flow: Flow, requiredSegmentations: Set[String])(fn: => Future[S]): Future[S] = {
+  private[service] def whenSegmentationsRequirementsAreMet[S](flow: Flow, requiredSegmentations: Set[String])(fn: => Future[S]): Future[S] = {
     flow.missingSegmentationsOf(requiredSegmentations) match {
       case missingSet if missingSet.nonEmpty =>
         Future.failed(new IllegalArgumentException(s"Required segmentation was not present in the $entityName, " +
@@ -83,11 +83,18 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
     require(checkpoint.id.isEmpty, "A new Checkpoint payload must not have id!")
 
     withExistingEntityF(flowId) { existingFlow =>
-      val newId = UUID.randomUUID()
+      val newId = generateRandomId()
       val newCheckpointWithId = checkpoint.withId(newId)
-      val updatedFlow = existingFlow.copy(checkpoints = (existingFlow.checkpoints ++ List(newCheckpointWithId)))
-
-      super.update(updatedFlow).map(_ => newId)
+      existingFlow.checkpoints.lastOption match {
+        case Some(lastCheckpoint) if checkpoint.order <= lastCheckpoint.order =>
+          Future.failed(new IllegalArgumentException(
+            s"Checkpoint order is invalid! Order of the added CP must be larger than the last existing, " +
+              s"but ${checkpoint.order} is not larger than ${lastCheckpoint.order}."
+          ))
+        case _ => // ok: lastCp.order > cp.order or no CPs
+          val updatedFlow = existingFlow.copy(checkpoints = (existingFlow.checkpoints :+ newCheckpointWithId))
+          super.update(updatedFlow).map(_ => newId)
+      }
     }
   }
 
@@ -106,21 +113,26 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
     }
   }
 
-  def updateCheckpoint(flowId: UUID, cpId: UUID, checkpointUpdate: CheckpointUpdate): Future[Boolean] = {
-
+  // internal for common use - by flowId and replacementCp.id
+  private def updateCheckpointByFn(flowId: UUID, cpId: UUID, updateCpFn: Checkpoint => Checkpoint): Future[Boolean] = {
     withExistingEntityF(flowId) { existingFlow =>
       existingFlow.checkpoints.find(_.id.contains(cpId)) match {
-        case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in $entityName id=$flowId")
+        case None => Future.failed(NotFoundException(s"Checkpoint referenced by id=$cpId was not found in $entityName id=$flowId"))
         case Some(existingCp) =>
           val updatedCps = existingFlow.checkpoints.map {
-            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.withUpdate(checkpointUpdate) // reflects the update
+            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => updateCpFn(cp) // reflects the update
             case cp => cp // other CPs untouched
           }
 
           val updatedFlow = existingFlow.copy(checkpoints = updatedCps)
-          update(updatedFlow)
+          super.update(updatedFlow)
       }
     }
+
+  }
+
+  def updateCheckpoint(flowId: UUID, cpId: UUID, checkpointUpdate: CheckpointUpdate): Future[Boolean] = {
+    updateCheckpointByFn(flowId, cpId, _.withUpdate(checkpointUpdate))
   }
 
   // measurements:
@@ -131,20 +143,10 @@ class FlowService @Autowired()(flowDefService: FlowDefinitionService, dao: ApiMo
   }
 
   def addMeasurement(flowId: UUID, cpId: UUID, measurement: Measurement): Future[Boolean] = {
-    withExistingEntityF(flowId) { existingFlow =>
-      existingFlow.checkpoints.find(_.id.contains(cpId)) match {
-        case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in $entityName id=$flowId")
-        case Some(existingCp) =>
-          val updatedCps = existingFlow.checkpoints.map {
-            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
-            case cp => cp // other CPs untouched
-          }
-
-          val updatedFlow = existingFlow.copy(checkpoints = updatedCps)
-          update(updatedFlow)
-      }
-    }
+    updateCheckpointByFn(flowId, cpId, cp => cp.copy(measurements = cp.measurements :+ measurement))
   }
+
+  private[service] def generateRandomId(): UUID = UUID.randomUUID()
 
 
   override val entityName: String = "Flow"
