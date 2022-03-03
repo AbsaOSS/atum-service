@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.{RequestMapping, RestController}
 import za.co.absa.atum.web.api.service.FlowDefinitionService
 
 @RestController
-@RequestMapping(Array("/api/flowdefs"))
+@RequestMapping(Array("/api/flow-definitions"))
 class FlowDefinitionController @Autowired()(flowDefService: FlowDefinitionService)
   extends BaseApiController(flowDefService) {
 

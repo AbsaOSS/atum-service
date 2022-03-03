@@ -130,5 +130,5 @@ class FlowController @Autowired()(flowService: FlowService) extends BaseApiContr
 }
 
 object FlowController {
-  val FlowDefParamName = "flowdef"
+  val FlowDefParamName = "flow-definition"
 }
