@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,20 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS runs.measures;
+-- DROP TABLE IF EXISTS runs.measurements;
 
-CREATE TABLE runs.measures
+CREATE TABLE runs.measurements
 (
-    id_measure                          UUID NOT NULL,
+    id_measurement                      UUID NOT NULL,
     key_checkpoint_measure_definition   BIGINT NOT NULL,
     key_checkpoint                      UUID NOT NULL,
-    value                               TEXT,
-    value_whole_number                  BIGINT,
-    CONSTRAINT measures_pk PRIMARY KEY (id_measure)
+    value                               JSON NOT NULL,
+    CONSTRAINT measurements_pk PRIMARY KEY (id_measurement)
 );
 
-ALTER TABLE runs.measures
-    ADD CONSTRAINT measures_unq UNIQUE (key_checkpoint, key_checkpoint_measure_definition);
+ALTER TABLE runs.measurements
+    ADD CONSTRAINT measurements_unq UNIQUE (key_checkpoint, key_checkpoint_measure_definition);
 
-CREATE INDEX measures_idx1 ON runs.measures (key_checkpoint_measure_definition);
+CREATE INDEX measurements_idx1 ON runs.measurements (key_checkpoint_measure_definition);
 
-ALTER TABLE runs.measures OWNER to atum_owner;
+ALTER TABLE runs.measurements OWNER to atum_owner;

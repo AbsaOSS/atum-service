@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ CREATE TABLE runs.additional_data
     id_additional_data      BIGINT NOT NULL DEFAULT global_id(),
     key_segmentation        BIGINT NOT NULL,
     ad_name                 TEXT NOT NULL,
-    ad_type                 TEXT NOT NULL,
     ad_value                TEXT,
     created_by              TEXT NOT NULL,
     created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
