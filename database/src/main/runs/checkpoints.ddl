@@ -24,7 +24,7 @@ CREATE TABLE runs.checkpoints
     process_start_time      TIMESTAMP WITH TIME ZONE NOT NULL,
     process_end_time        TIMESTAMP WITH TIME ZONE,
     created_by              TEXT NOT NULL,
-    created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT segments_pk PRIMARY KEY (id_checkpoint)
 );
 

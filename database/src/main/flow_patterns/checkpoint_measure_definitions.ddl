@@ -22,9 +22,9 @@ CREATE TABLE flow_patterns.checkpoint_measure_definitions
     measure_type                        TEXT NOT NULL,
     measure_fields                      TEXT[] NOT NULL,
     created_by                          TEXT NOT NULL,
-    created_when                        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at                          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_by                          TEXT NOT NULL,
-    updated_when                        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated_at                          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT fp_checkpoint_definitions_pk PRIMARY KEY (id_fp_checkpoint_measure_definition)
 );
 

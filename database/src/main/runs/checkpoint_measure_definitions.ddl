@@ -22,7 +22,7 @@ CREATE TABLE runs.checkpoint_measure_definitions
     measure_type                        TEXT NOT NULL,
     measure_fields                      TEXT[] NOT NULL,
     created_by                          TEXT NOT NULL,
-    created_when                        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at                          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT checkpoint_definitions_pk PRIMARY KEY (id_checkpoint_measure_definition)
 );
 

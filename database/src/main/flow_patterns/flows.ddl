@@ -21,7 +21,7 @@ CREATE TABLE flow_patterns.flows
     flow_name           TEXT NOT NULL,
     flow_description    TEXT,
     created_by          TEXT NOT NULL,
-    created_when        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT fp_flow_pk PRIMARY KEY (id_fp_flow)
 );
 

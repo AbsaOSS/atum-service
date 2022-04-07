@@ -130,8 +130,8 @@ BEGIN
         FROM runs.segmentation_to_flow STF
         WHERE STF.key_segmentation = _key_parent_segmentation;
 
-        INSERT INTO runs.checkpoint_measure_definitions (key_segmentation, measure_type, measure_fields, created_by, created_when)
-        SELECT _id_segmentation, CMD.measure_type, CMD.measure_fields, CMD.created_by, CMD.created_when
+        INSERT INTO runs.checkpoint_measure_definitions (key_segmentation, measure_type, measure_fields, created_by, created_at)
+        SELECT _id_segmentation, CMD.measure_type, CMD.measure_fields, CMD.created_by, CMD.created_at
         FROM runs.checkpoint_measure_definitions CMD
         WHERE CMD.key_segmentation = _key_parent_segmentation
         ON CONFLICT DO NOTHING;
@@ -139,6 +139,7 @@ BEGIN
         status := 10;
         status_text := 'OK';
     ELSE
+        -- segmentation already exists, so only adding parent it to parent's flows
         INSERT INTO runs.segmentation_to_flow (key_flow, key_segmentation, created_by)
         SELECT STF.key_flow, _id_segmentation, i_by_user
         FROM runs.segmentation_to_flow STF
@@ -152,6 +153,9 @@ BEGIN
             status := 14;
             status_text := 'Flow already exists';
         END IF;
+
+        -- maybe there are some child segmentations for the segmentation too, at the moment they are not added to the
+        -- parent flows; can be extended if the case would emerge
     END IF;
 
     RETURN;

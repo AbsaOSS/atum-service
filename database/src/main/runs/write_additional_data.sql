@@ -68,7 +68,7 @@ BEGIN
     UPDATE runs.additional_data
     SET ad_value = i_ad_value,
         updated_by = i_by_user,
-        updated_when = now()
+        updated_at = now()
     WHERE key_segmentation = _key_segmentation AND
           ad_name = i_ad_name AND
           ad_value IS NULL;

@@ -20,7 +20,7 @@ CREATE TABLE runs.segmentation_to_flow
     key_flow                BIGINT NOT NULL,
     key_segmentation        BIGINT NOT NULL,
     created_by              TEXT NOT NULL,
-    created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT segmentation_to_flow_pk PRIMARY KEY (key_flow, key_segmentation)
 );
 

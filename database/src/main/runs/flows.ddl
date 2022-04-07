@@ -22,7 +22,7 @@ CREATE TABLE runs.flows
     flow_description        TEXT,
     from_pattern            BOOLEAN NOT NULL,
     created_by              TEXT NOT NULL,
-    created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT flows_pk PRIMARY KEY (id_flow)
 );
 

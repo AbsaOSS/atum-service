@@ -55,8 +55,8 @@ DECLARE
     _key_fp_flow        BIGINT;
 BEGIN
 
-    INSERT INTO runs.segmentations (segmentation, key_parent_segmentation, created_by)
-    VALUES (i_segmentation, i_key_parent_segmentation,i_by_user)
+    INSERT INTO runs.segmentations (segmentation, created_by)
+    VALUES (i_segmentation, i_by_user)
     RETURNING runs.segmentations.id_segmentation
     INTO _id_segmentation;
 
@@ -83,8 +83,8 @@ BEGIN
             WHERE CMD.key_fp_flow = _key_fp_flow;
 
             IF i_take_pattern_additional_data THEN
-                INSERT INTO runs.additional_data (key_segmentation, ad_name, ad_value, created_by, updated_by, updated_when)
-                SELECT _id_segmentation, AD.ad_name, AD.ad_default_value, i_by_user, AD.updated_by, AD.updated_when
+                INSERT INTO runs.additional_data (key_segmentation, ad_name, ad_value, created_by, updated_by, updated_at)
+                SELECT _id_segmentation, AD.ad_name, AD.ad_default_value, i_by_user, AD.updated_by, AD.updated_at
                 FROM flow_patterns.additional_data AD
                 WHERE AD.key_fp_flow = _key_fp_flow;
             END IF;

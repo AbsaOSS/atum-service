@@ -22,9 +22,9 @@ CREATE TABLE flow_patterns.additional_data
     ad_name                 TEXT NOT NULL,
     ad_default_value        TEXT,
     created_by              TEXT NOT NULL,
-    created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_by              TEXT NOT NULL,
-    updated_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT fp_additional_data_pk PRIMARY KEY (id_fp_additional_data)
 );
 

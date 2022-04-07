@@ -22,9 +22,9 @@ CREATE TABLE runs.additional_data
     ad_name                 TEXT NOT NULL,
     ad_value                TEXT,
     created_by              TEXT NOT NULL,
-    created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_by              TEXT NOT NULL,
-    updated_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT additional_data_pk PRIMARY KEY (id_additional_data)
 );
 

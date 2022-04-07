@@ -19,9 +19,8 @@ CREATE TABLE runs.segmentations
 (
     id_segmentation         BIGINT NOT NULL DEFAULT global_id(),
     segmentation            HSTORE NOT NULL,
-    key_parent_segmentation BIGINT,
     created_by              TEXT NOT NULL,
-    created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT segmentations_pk PRIMARY KEY (id_segmentation)
 );
 
