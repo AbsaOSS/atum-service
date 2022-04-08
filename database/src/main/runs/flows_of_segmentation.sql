@@ -31,7 +31,7 @@ $$
 --      Returns all the flows the given segmentation belongs to
 --
 -- Parameters:
---      i_segmentation - segmentation which flows to get
+--      i_segmentation      - segmentation which flows to get
 --
 -- Returns:
 --      status              - Status code

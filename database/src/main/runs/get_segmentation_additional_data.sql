@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_additional_data(
     IN  i_segmentation      HSTORE,
     OUT status              INTEGER,
     OUT status_text         TEXT,
-    OUT ad_anme             TEXT,
+    OUT ad_name             TEXT,
     OUT ad_value            TEXT,
     OUT created_by          TEXT,
     OUT created_at          TIMESTAMP WITH TIME ZONE,
@@ -32,11 +32,17 @@ $$
 --      If the given segmentation does not exist, exactly one record is returned with the error status.
 --
 -- Parameters:
---      i_parameter         -
+--      i_segmentation      - segmentation for which the data are bound to
 --
 -- Returns:
 --      status              - Status code
 --      status_text         - Status text
+--      ad_name             - name of the additional data entry
+--      ad_value            - value of the additional data entry
+--      created_by          - who created the entry
+--      created_at          - when was the entry created
+--      updated_by          - who lsat updated the entry
+--      updated_at          - when was the entry last updated
 --
 -- Status codes:
 --      10                  - OK
