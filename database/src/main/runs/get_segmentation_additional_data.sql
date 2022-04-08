@@ -21,9 +21,9 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_additional_data(
     OUT ad_value            TEXT,
     OUT created_by          TEXT,
     OUT created_at          TIMESTAMP WITH TIME ZONE,
-    OUT created_by          TEXT,
-    OUT created_at          TIMESTAMP WITH TIME ZONE,
-) RETURNS record AS
+    OUT updated_by          TEXT,
+    OUT updated_at          TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
 --
@@ -66,4 +66,4 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION runs.get_segmentation_additional_data() TO [user];
+GRANT EXECUTE ON FUNCTION runs.get_segmentation_additional_data(HSTORE) TO atum_user;
