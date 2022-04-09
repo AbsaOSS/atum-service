@@ -22,7 +22,8 @@ CREATE OR REPLACE FUNCTION runs.flows_of_segmentation(
     OUT flow_description    TEXT,
     OUT from_pattern        BOOLEAN,
     OUT created_by          TEXT,
-    OUT created_at          TIMESTAMP WITH TIME ZONE
+    OUT created_at          TIMESTAMP WITH TIME ZONE,
+    OUT segmentation_count  INTEGER
 ) RETURNS SETOF record AS
 $$
     -------------------------------------------------------------------------------
@@ -61,8 +62,9 @@ BEGIN
     END IF;
 
     RETURN QUERY
-        SELECT 10, 'OK', stf.key_flow, F.flow_name,
-               F.flow_description, F.from_pattern, F.created_by, F.created_at
+        SELECT 10, 'OK', STF.key_flow, F.flow_name,
+               F.flow_description, F.from_pattern, F.created_by, F.created_at,
+               (SELECT count(*) FROM runs.segmentation_to_flow STF2 WHERE STF2.key_flow = STF.key_flow)
         FROM runs.segmentation_to_flow STF INNER JOIN
              runs.flows F ON STF.key_flow = F.id_flow
         WHERE STF.key_segmentation = _key_segmentation;
