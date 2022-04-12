@@ -15,6 +15,8 @@
 
 CREATE OR REPLACE FUNCTION runs.get_segmentation_measure_definitions(
     IN  i_segmentation                          HSTORE,
+    OUT status                                  INTEGER,
+    OUT status_text                             TEXT,
     OUT id_checkpoint_measure_definition        BIGINT,
     OUT measure_type                            TEXT,
     OUT measure_fields                          TEXT[],
@@ -25,14 +27,13 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_measure_definitions(
  -------------------------------------------------------------------------------
  --
  -- Function: runs.get_segmentation_measure_definitions(1)
- --     Return's all measure definitions, that are associated with the give segmentation.Return's all additional data, that are associated with the give segmentation.
+ --      Return's all measure definitions, that are associated with the given segmentation.
  --      If the given segmentation does not exist, exactly one record is returned with the error status.
  --
  -- Parameters:
  --      i_segmentation      - segmentation for which the data are bound to
  --
  -- Returns:
-  --     key_segmentation
  --      measure_type        - Measure type
  --      measure_fields      - Measure fields
  --      created_by          - who created the entry
@@ -58,10 +59,11 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_measure_definitions(
      RETURN QUERY
      SELECT 10,
             'OK',
-            CMD.measure_type AS checkpoint_measure_type,
-            CMD.measure_fields AS checkpoint_measure_fields,
-            CMD.created_by AS checkpoint_created_by,
-            CMD.created_at AS checkpoint_created_at
+            CMD.id_checkpoint_measure_definition,
+            CMD.measure_type,
+            CMD.measure_fields,
+            CMD.created_by,
+            CMD.created_at
      FROM runs.checkpoint_measure_definitions CMD
      WHERE CMD.key_segmentation = _key_segmentation;
 
@@ -70,4 +72,4 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_measure_definitions(
  $$
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
- GRANT EXECUTE ON FUNCTION runs.get_segmentation_additional_data(HSTORE) TO atum_user;
+ GRANT EXECUTE ON FUNCTION runs.get_segmentation_measure_definitions(HSTORE) TO atum_user;
