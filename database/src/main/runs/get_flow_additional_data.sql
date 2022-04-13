@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0 *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@ CREATE OR REPLACE FUNCTION runs.get_flow_additional_data(
     IN  i_id_flow             BIGINT,
     OUT status                INTEGER,
     OUT status_text           TEXT,
-    OUT flow_name             TEXT,
-    OUT id_segmentation       BIGINT,
     OUT segmentation          HSTORE,
     OUT id_additional_data    BIGINT,
     OUT ad_name               TEXT,
@@ -40,8 +38,6 @@ $$
 -- Returns:
 --      status              - Status code
 --      status_text         - Status text
---      flow_name           - Flow name
---      id_segmentation     - Segmentation id
 --      segmentation        - Segmentation
 --      id_additional_data  - Additional data id
 --      ad_name             - Additional data name
@@ -59,9 +55,13 @@ $$
 DECLARE
     _flow_name   TEXT;
 BEGIN
-    _flow_name = (SELECT flow_name FROM runs.flows WHERE id_flow = i_id_flow);
 
-    IF _flow_name IS NULL THEN
+    SELECT flow_name
+    FROM runs.flows
+    WHERE id_flow = i_id_flow
+    INTO _flow_name;
+
+    IF NOT found THEN
         status := 41;
         status_text := 'Flow not found';
         RETURN NEXT;
@@ -69,8 +69,8 @@ BEGIN
     END IF;
 
     RETURN QUERY
-    SELECT 10, 'OK', _flow_name AS flow_name, sgm.id_segmentation, sgm.segmentation, ad.id_additional_data,
-    ad.ad_name, ad.ad_value, ad.created_by, ad.created_at, ad.updated_by, ad.updated_at
+    SELECT 10, 'OK', sgm.segmentation, ad.id_additional_data, ad.ad_name,
+      ad.ad_value, ad.created_by, ad.created_at, ad.updated_by, ad.updated_at
     FROM runs.segmentation_to_flow sgmtf
     INNER JOIN runs.segmentations sgm
       ON sgmtf.key_segmentation = sgm.id_segmentation
@@ -78,6 +78,7 @@ BEGIN
       ON sgm.id_segmentation = ad.key_segmentation
     WHERE sgmtf.key_flow = i_id_flow;
 
+    RETURN;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
