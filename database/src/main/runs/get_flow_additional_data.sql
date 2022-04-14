@@ -5,6 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,16 +53,12 @@ $$
 --      41                  - Flow not found
 --
 -------------------------------------------------------------------------------
-DECLARE
-    _flow_name   TEXT;
 BEGIN
-
-    SELECT flow_name
+    PERFORM 1
     FROM runs.flows
-    WHERE id_flow = i_id_flow
-    INTO _flow_name;
+    WHERE id_flow = i_id_flow;
 
-    IF NOT found THEN
+    IF NOT FOUND THEN
         status := 41;
         status_text := 'Flow not found';
         RETURN NEXT;
