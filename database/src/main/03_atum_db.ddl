@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-CREATE DATABASE atum_db
-    WITH
-    ENCODING = 'UTF8'
-    CONNECTION LIMIT = -1;
+ALTER DATABASE atum_db OWNER TO atum_owner;
+
+CREATE EXTENSION IF NOT EXISTS hstore;
+
