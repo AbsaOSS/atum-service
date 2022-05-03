@@ -18,15 +18,9 @@ package za.co.absa.atum.web.model
 
 import java.util.UUID
 
-case class ControlMeasure(id: Option[UUID],
-                          flowId: UUID,
-                          segmentationId: UUID,
-                          metadata: ControlMeasureMetadata,
-                          runUniqueId: Option[String] = None,
-                          checkpoints: List[Checkpoint] = List.empty) extends BaseApiModel {
+case class FlowDefinition(id: Option[UUID],
+                          name: String,
+                          requiredSegmentations: Set[String] = Set()) extends BaseApiModel {
 
-  override def withId(uuid: UUID): ControlMeasure = copy(id = Some(uuid))
+  override def withId(uuid: UUID): FlowDefinition = copy(id = Some(uuid))
 }
-
-
-
