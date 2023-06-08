@@ -46,9 +46,9 @@ lazy val server = project
 lazy val agent = project
   .settings(
   name := "atum-agent",
-    libraryDependencies ++= (
-      AgentDependencies.rootDependencies(scalaVersion.value) ++
-        AgentDependencies.coreDependencies(scalaVersion.value)),
+    /*libraryDependencies ++= (
+     // AgentDependencies.rootDependencies(scalaVersion.value) ++
+        AgentDependencies.coreDependencies(scalaVersion.value)),*/
     scalaVersion := scala212
   )
 
