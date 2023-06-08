@@ -16,36 +16,45 @@
 import sbt._
 
 object Dependencies {
-  val springVersion = "2.6.1"
-  val springOrg = "org.springframework.boot"
 
-  lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.9"
-  lazy val springBootWeb = springOrg % "spring-boot-starter-web" % springVersion
-  lazy val springBootConfiguration = springOrg % "spring-boot-configuration-processor" % springVersion
-  lazy val springBootTomcat = springOrg % "spring-boot-starter-tomcat" % springVersion
-  lazy val springBootTest = springOrg % "spring-boot-starter-test" % springVersion
-  lazy val servletApi = "javax.servlet" % "javax.servlet-api" % "3.0.1"
-  lazy val springFoxSwagger = "io.springfox" % "springfox-swagger2" % "3.0.0"
-  lazy val springFoxBoot = "io.springfox" % "springfox-boot-starter" % "3.0.0"
-  lazy val springFoxSwaggerUI = "io.springfox" % "springfox-swagger-ui" % "3.0.0"
+  //Todo this dependencies should be
 
-  // controller implicits:  java CompletableFuture -> scala Future
-  lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
-  // object mapper serialization
-  lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.1"
+  val serverDependencies: Seq[ModuleID] = {
+    val springVersion = "2.6.1"
+    val springOrg = "org.springframework.boot"
+
+    lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.9"
+    lazy val springBootWeb = springOrg % "spring-boot-starter-web" % springVersion
+    lazy val springBootConfiguration = springOrg % "spring-boot-configuration-processor" % springVersion
+    lazy val springBootTomcat = springOrg % "spring-boot-starter-tomcat" % springVersion
+    lazy val springBootTest = springOrg % "spring-boot-starter-test" % springVersion
+    lazy val servletApi = "javax.servlet" % "javax.servlet-api" % "3.0.1"
+    lazy val springFoxSwagger = "io.springfox" % "springfox-swagger2" % "3.0.0"
+    lazy val springFoxBoot = "io.springfox" % "springfox-boot-starter" % "3.0.0"
+    lazy val springFoxSwaggerUI = "io.springfox" % "springfox-swagger-ui" % "3.0.0"
+
+    // controller implicits:  java CompletableFuture -> scala Future
+    lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
+    // object mapper serialization
+    lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.1"
 
 
-  lazy val dependencies: Seq[ModuleID] = Seq(
-    scalaTest % Test,
-    springBootTest % Test,
-    springBootWeb,
-    springBootConfiguration,
-    springBootTomcat % Provided,
-    servletApi % Provided,
-    springFoxSwagger,
-    springFoxSwaggerUI,
-    springFoxBoot,
-    scalaJava8Compat,
-    jacksonModuleScala
-  )
+    Seq(
+      scalaTest % Test,
+      springBootTest % Test,
+      springBootWeb,
+      springBootConfiguration,
+      springBootTomcat /*% Provided*/,
+      servletApi /*% Provided*/,
+      springFoxSwagger,
+      springFoxSwaggerUI,
+      springFoxBoot,
+      scalaJava8Compat,
+      jacksonModuleScala
+    )
+  }
+
 }
+
+
+
