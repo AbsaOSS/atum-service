@@ -29,7 +29,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "atum-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-  )//.aggregate(server, agent)
+  )
 
 lazy val server = project
 .settings(
