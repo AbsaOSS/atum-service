@@ -1,4 +1,4 @@
-package pipelines
+package test.pipelines
 
 case class Person(
                    id: String,

@@ -1,4 +1,4 @@
-package pipelines
+package test.pipelines
 
 import org.apache.spark.sql.SparkSession
 import za.co.absa.atum.agent.AtumContext
