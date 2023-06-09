@@ -25,6 +25,8 @@ Test / parallelExecution := false
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+
+
 lazy val root = (project in file("."))
   .settings(
     name := "atum-root",
@@ -46,7 +48,8 @@ lazy val server = project
 lazy val agent = project
   .settings(
   name := "atum-agent",
-  scalaVersion := scala212
+  scalaVersion := scala212,
+    libraryDependencies ++= Dependencies.agentDependencies
   )
 
 

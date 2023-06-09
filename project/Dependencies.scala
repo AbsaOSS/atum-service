@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-import sbt._
+
+import sbt.*
 
 object Dependencies {
-
-  //Todo this dependencies should be
 
   val serverDependencies: Seq[ModuleID] = {
     val springVersion = "2.6.1"
@@ -54,7 +53,29 @@ object Dependencies {
     )
   }
 
-}
+
+  val agentDependencies: Seq[ModuleID] = {
+
+    val spark3Version = "3.2.2"
+    val scala212 = "2.12.12"
+    val scalatestVersion = "3.2.15"
+    val specs2Version = "4.19.2"
+    val typesafeConfigVersion = "1.4.2"
+
+    lazy val sparkCore = "org.apache.spark" %% "spark-core" % spark3Version /*% Provided*/ /*exclude(
+        "com.fasterxml.jackson.core", "jackson-databind"
+      ) exclude(
+        "com.fasterxml.jackson.module", "jackson-module-scala_" + scala212.substring(0, 4) // e.g. 2.11
+      )*/
+
+    lazy val sparkSql ="org.apache.spark" %% "spark-sql" %  spark3Version
+    lazy val scalaTest = "org.scalatest" %% "scalatest" % scalatestVersion % Test
+    lazy val specs2core = "org.specs2" %% "specs2-core" % specs2Version % Test
+    lazy val typeSafeConfig = "com.typesafe" % "config" % typesafeConfigVersion
+
+    Seq(sparkCore, sparkSql, scalaTest, specs2core, typeSafeConfig)
+
+  }}
 
 
 
