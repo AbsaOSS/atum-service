@@ -1,19 +1,15 @@
 package za.co.absa.atum.agent
 
-import org.apache.spark.sql.{SQLContext, SQLImplicits, SparkSession}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.{ SQLContext, SQLImplicits, SparkSession }
+import org.apache.spark.{ SparkConf, SparkContext }
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach }
 import za.co.absa.atum.agent.AtumContext.DatasetWrapper
 import za.co.absa.atum.agent.core.MeasurementProcessorImplementation
 import za.co.absa.atum.agent.model._
 
-class AtumContextSpec
-    extends AnyFlatSpec
-    with Matchers
-    with BeforeAndAfterEach
-    with BeforeAndAfterAll { self =>
+class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll { self =>
 
   @transient var ss: SparkSession = null
   @transient var sc: SparkContext = null
@@ -37,9 +33,8 @@ class AtumContextSpec
 
   }
 
-  override def afterAll(): Unit = {
+  override def afterAll(): Unit =
     ss.stop()
-  }
 
   "setCheckpoint method" should "measures based on the dataframe" in {
 

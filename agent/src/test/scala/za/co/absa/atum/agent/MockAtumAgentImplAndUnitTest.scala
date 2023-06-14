@@ -29,8 +29,8 @@ class MockAtumAgentImplAndUnitTest extends AtumAgent {
 }
 
 object MockMeasureNames {
-  val recordCount1 = "record count"
+  val recordCount1           = "record count"
   val absSumOfValuesOfSalary = "salary abs sum"
-  val sumOfValuesOfSalary = "salary sum"
-  val hashSumOfNames = "name hash sum"
+  val sumOfValuesOfSalary    = "salary sum"
+  val hashSumOfNames         = "name hash sum"
 }

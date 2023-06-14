@@ -1,8 +1,8 @@
 package za.co.absa.atum.agent.core
 
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
-import org.apache.spark.sql.{Column, DataFrame, Dataset, Row}
+import org.apache.spark.sql.types.{ DecimalType, LongType, StringType }
+import org.apache.spark.sql.{ Column, DataFrame, Dataset, Row }
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.agent.utils.controlmeasure.ControlMeasureUtils
 
@@ -23,14 +23,12 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
   override def getFunction(
       ds: Dataset[Row],
       measurement: Measurement
-  ): MeasurementFunction = {
-
+  ): MeasurementFunction =
     measurement match {
       case RecordCount(_, controlCol, _) =>
         (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
       case DistinctRecordCount(_, controlCol, _) =>
-        (ds: Dataset[Row]) =>
-          ds.select(col(controlCol)).distinct().count().toString
+        (ds: Dataset[Row]) => ds.select(col(controlCol)).distinct().count().toString
       case SumOfValuesOfColumn(_, controlCol, _) =>
         (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
       case AbsSumOfValuesOfColumn(_, controlCol, _) =>
@@ -48,7 +46,6 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
           if (v == null) "" else v.toString
 
     }
-  }
 
   private def aggregateColumn(
       ds: Dataset[Row],
@@ -79,9 +76,9 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
           if (collected == null) new java.math.BigDecimal(0)
           else collected.asInstanceOf[java.math.BigDecimal]
         value.stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
-          .toPlainString // converts to normal string (6E+2 -> "600")
+          .toPlainString         // converts to normal string (6E+2 -> "600")
       case _ =>
-        val ds2 = ds.select(col(measureColumn).as(valueColumnName))
+        val ds2       = ds.select(col(measureColumn).as(valueColumnName))
         val collected = ds2.agg(aggExpression).collect()(0)(0)
         if (collected == null) 0 else collected
     }
@@ -89,21 +86,20 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
     workaroundBigDecimalIssues(aggregatedValue)
   }
 
-  private def workaroundBigDecimalIssues(value: Any): String = {
+  private def workaroundBigDecimalIssues(value: Any): String =
     // If aggregated value is java.math.BigDecimal, convert it to scala.math.BigDecimal
     value match {
       case v: java.math.BigDecimal =>
         // Convert the value to string to workaround different serializers generate different JSONs for BigDecimal
         v.stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
-          .toPlainString // converts to normal string (6E+2 -> "600")
+          .toPlainString     // converts to normal string (6E+2 -> "600")
       case v: BigDecimal =>
         // Convert the value to string to workaround different serializers generate different JSONs for BigDecimal
         new java.math.BigDecimal(
           v.toString()
         ).stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
-          .toPlainString // converts to normal string (6E+2 -> "600")
+          .toPlainString     // converts to normal string (6E+2 -> "600")
       case a => a.toString
     }
-  }
 
 }

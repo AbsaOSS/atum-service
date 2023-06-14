@@ -10,9 +10,8 @@ trait AtumAgent {
 }
 
 class AtumAgentImpl extends AtumAgent {
-  override def measurePublish(measure: Measurement): Unit = {
+  override def measurePublish(measure: Measurement): Unit =
     println("Enqueued measurement: " + (measure))
-  }
 
 }
 

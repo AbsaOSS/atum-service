@@ -1,10 +1,7 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.core.{
-  MeasurementProcessor,
-  MeasurementProcessorImplementation
-}
+import za.co.absa.atum.agent.core.{ MeasurementProcessor, MeasurementProcessorImplementation }
 import za.co.absa.atum.agent.model.Measurement
 
 case class AtumContext(
@@ -13,9 +10,8 @@ case class AtumContext(
 )(implicit atumAgent: AtumAgent) {
   def withMeasureAddedOrOverwritten(
       measure: Measurement
-  ): AtumContext = {
+  ): AtumContext =
     this.copy(measurements = measurements + (measure.name -> measure))
-  }
 
   def withMeasureAddedOrOverwritten(
       measures: Iterable[Measurement]
