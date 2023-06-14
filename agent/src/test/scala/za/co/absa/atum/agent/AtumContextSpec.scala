@@ -84,26 +84,10 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     val dfExtraPersonWithNegativeSalary = ss
       .createDataFrame(
         Seq(
-          (
-            "id",
-            "firstName",
-            "lastName",
-            "email",
-            "email2",
-            "profession",
-            "-1000"
-          )
+          ("id", "firstName", "lastName", "email", "email2", "profession", "-1000")
         )
       )
-      .toDF(
-        "id",
-        "firstName",
-        "lastName",
-        "email",
-        "email2",
-        "profession",
-        "salary"
-      )
+      .toDF("id", "firstName", "lastName", "email", "email2", "profession", "salary")
 
     val dfExtraPersons = dfExtraPersonWithNegativeSalary.union(dfPersons)
 
