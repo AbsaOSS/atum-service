@@ -1,8 +1,8 @@
 package za.co.absa.atum.agent.core
 
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{ DecimalType, LongType, StringType }
-import org.apache.spark.sql.{ Column, DataFrame, Dataset, Row }
+import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
+import org.apache.spark.sql.{Column, DataFrame, Dataset, Row}
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.agent.utils.controlmeasure.ControlMeasureUtils
 

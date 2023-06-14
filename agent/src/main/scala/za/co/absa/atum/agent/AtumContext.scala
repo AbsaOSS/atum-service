@@ -1,7 +1,7 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.core.{ MeasurementProcessor, MeasurementProcessorImplementation }
+import za.co.absa.atum.agent.core.{MeasurementProcessor, MeasurementProcessorImplementation}
 import za.co.absa.atum.agent.model.Measurement
 
 case class AtumContext(
