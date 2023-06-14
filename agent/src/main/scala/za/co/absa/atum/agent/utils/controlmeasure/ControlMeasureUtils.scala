@@ -28,12 +28,17 @@ object ControlMeasureUtils {
     * @return
     *   An column name as a string
     */
-  def getTemporaryColumnName(df: DataFrame, namePrefix: String = "tmp"): String = {
-    val r              = scala.util.Random
+  def getTemporaryColumnName(
+      df: DataFrame,
+      namePrefix: String = "tmp"
+  ): String = {
+    val r = scala.util.Random
     var tempColumnName = ""
     do {
       tempColumnName = s"${namePrefix}_${r.nextInt(10000).toString}"
-    } while (df.schema.fields.exists(field => field.name.compareToIgnoreCase(tempColumnName) == 0))
+    } while (df.schema.fields.exists(field =>
+      field.name.compareToIgnoreCase(tempColumnName) == 0
+    ))
     tempColumnName
   }
 

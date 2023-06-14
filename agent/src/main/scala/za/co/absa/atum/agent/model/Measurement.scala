@@ -13,7 +13,8 @@ case class RecordCount(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def withResult(s: Option[String]): Measurement = this.copy(resultValue = s)
+  override def withResult(s: Option[String]): Measurement =
+    this.copy(resultValue = s)
 }
 
 case class DistinctRecordCount(
@@ -21,7 +22,8 @@ case class DistinctRecordCount(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def withResult(s: Option[String]): Measurement = this.copy(resultValue = s)
+  override def withResult(s: Option[String]): Measurement =
+    this.copy(resultValue = s)
 }
 
 case class SumOfValuesOfColumn(
@@ -29,7 +31,8 @@ case class SumOfValuesOfColumn(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def withResult(s: Option[String]): Measurement = this.copy(resultValue = s)
+  override def withResult(s: Option[String]): Measurement =
+    this.copy(resultValue = s)
 }
 
 case class AbsSumOfValuesOfColumn(
@@ -37,7 +40,8 @@ case class AbsSumOfValuesOfColumn(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def withResult(s: Option[String]): Measurement = this.copy(resultValue = s)
+  override def withResult(s: Option[String]): Measurement =
+    this.copy(resultValue = s)
 }
 
 case class SumOfHashesOfColumn(
@@ -45,5 +49,6 @@ case class SumOfHashesOfColumn(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def withResult(s: Option[String]): Measurement = this.copy(resultValue = s)
+  override def withResult(s: Option[String]): Measurement =
+    this.copy(resultValue = s)
 }

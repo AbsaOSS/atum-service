@@ -29,7 +29,8 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
       case RecordCount(_, controlCol, _) =>
         (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
       case DistinctRecordCount(_, controlCol, _) =>
-        (ds: Dataset[Row]) => ds.select(col(controlCol)).distinct().count().toString
+        (ds: Dataset[Row]) =>
+          ds.select(col(controlCol)).distinct().count().toString
       case SumOfValuesOfColumn(_, controlCol, _) =>
         (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
       case AbsSumOfValuesOfColumn(_, controlCol, _) =>
@@ -80,7 +81,7 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
         value.stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
           .toPlainString // converts to normal string (6E+2 -> "600")
       case _ =>
-        val ds2       = ds.select(col(measureColumn).as(valueColumnName))
+        val ds2 = ds.select(col(measureColumn).as(valueColumnName))
         val collected = ds2.agg(aggExpression).collect()(0)(0)
         if (collected == null) 0 else collected
     }

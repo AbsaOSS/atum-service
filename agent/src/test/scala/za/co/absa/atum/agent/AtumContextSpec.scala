@@ -9,7 +9,11 @@ import za.co.absa.atum.agent.AtumContext.DatasetWrapper
 import za.co.absa.atum.agent.core.MeasurementProcessorImplementation
 import za.co.absa.atum.agent.model._
 
-class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll { self =>
+class AtumContextSpec
+    extends AnyFlatSpec
+    with Matchers
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll { self =>
 
   @transient var ss: SparkSession = null
   @transient var sc: SparkContext = null
@@ -85,10 +89,26 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     val dfExtraPersonWithNegativeSalary = ss
       .createDataFrame(
         Seq(
-          ("id", "firstName", "lastName", "email", "email2", "profession", "-1000")
+          (
+            "id",
+            "firstName",
+            "lastName",
+            "email",
+            "email2",
+            "profession",
+            "-1000"
+          )
         )
       )
-      .toDF("id", "firstName", "lastName", "email", "email2", "profession", "salary")
+      .toDF(
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "email2",
+        "profession",
+        "salary"
+      )
 
     val dfExtraPersons = dfExtraPersonWithNegativeSalary.union(dfPersons)
 
@@ -103,12 +123,14 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
 
   "withMeasureAddedOrOverwritten" should "add a new measure if not exists, overwrite it otherwise" in {
 
-    implicit val atumAgent: MockAtumAgentImplAndUnitTest = new MockAtumAgentImplAndUnitTest
-    val atumContext                                      = AtumContext.context
+    implicit val atumAgent: MockAtumAgentImplAndUnitTest =
+      new MockAtumAgentImplAndUnitTest
+    val atumContext = AtumContext.context
 
     assert(atumContext.measurements.isEmpty)
 
-    val atumContextWithRecordCount = atumContext.withMeasureAddedOrOverwritten(RecordCount("name 1", "id"))
+    val atumContextWithRecordCount =
+      atumContext.withMeasureAddedOrOverwritten(RecordCount("name 1", "id"))
     assert(atumContextWithRecordCount.measurements.size == 1)
 
     val atumContextWithTwoRecordCount =
@@ -124,12 +146,19 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     assert(atumContextWithTwoDistinctRecordCount.measurements.size == 2)
 
     val editedAtumContextWithTwoDistinctRecordCount =
-      atumContextWithTwoDistinctRecordCount.withMeasureAddedOrOverwritten(RecordCount("name 1", "changed"))
-    assert(editedAtumContextWithTwoDistinctRecordCount.measurements("name 1").controlCol == "changed")
+      atumContextWithTwoDistinctRecordCount.withMeasureAddedOrOverwritten(
+        RecordCount("name 1", "changed")
+      )
+    assert(
+      editedAtumContextWithTwoDistinctRecordCount
+        .measurements("name 1")
+        .controlCol == "changed"
+    )
   }
 
   "withMeasureRemoved" should "remove a measure if exists" in {
-    implicit val atumAgent: MockAtumAgentImplAndUnitTest = new MockAtumAgentImplAndUnitTest
+    implicit val atumAgent: MockAtumAgentImplAndUnitTest =
+      new MockAtumAgentImplAndUnitTest
 
     val atumContext = AtumContext.context
     assert(atumContext.measurements.isEmpty)

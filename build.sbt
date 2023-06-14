@@ -45,5 +45,6 @@ lazy val agent = project
   .settings(
     name         := "atum-agent",
     scalaVersion := scala212,
-    libraryDependencies ++= Dependencies.agentDependencies
-  )
+    libraryDependencies ++= Dependencies.agentDependencies,
+    scalafmtOnCompile := true
+  ).enablePlugins(ScalafmtPlugin)
