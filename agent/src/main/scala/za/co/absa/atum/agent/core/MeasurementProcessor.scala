@@ -4,6 +4,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row}
 import za.co.absa.atum.agent.model._
+import za.co.absa.atum.agent.utils.controlmeasure.ControlMeasureUtils
 
 trait MeasurementProcessor {
 
@@ -12,7 +13,7 @@ trait MeasurementProcessor {
   def getFunction(
       dataset: Dataset[Row],
       measurement: Measurement
-  ): MeasurementFunction //todo this could be an implicit
+  ): MeasurementFunction
 
 }
 
@@ -28,12 +29,9 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
       case RecordCount(_, controlCol, _) =>
         (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
       case DistinctRecordCount(_, controlCol, _) =>
-        (ds: Dataset[Row]) =>
-          ds.select(col(controlCol)).distinct().count().toString
-
+        (ds: Dataset[Row]) => ds.select(col(controlCol)).distinct().count().toString
       case SumOfValuesOfColumn(_, controlCol, _) =>
-        (ds: Dataset[Row]) =>
-          ds.select(col(controlCol)).count().toString //todo este no es
+        (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
       case AbsSumOfValuesOfColumn(_, controlCol, _) =>
         (ds: Dataset[Row]) =>
           val aggCol = sum(abs(col(valueColumnName)))
@@ -41,8 +39,7 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
 
       case SumOfHashesOfColumn(_, controlCol, _) =>
         (ds: Dataset[Row]) =>
-          //val aggColName = ControlMeasureUtils.getTemporaryColumnName(ds) todo
-          val aggColName = "aggColName"
+          val aggColName = ControlMeasureUtils.getTemporaryColumnName(ds)
           val v = ds
             .withColumn(aggColName, crc32(col(controlCol).cast("String")))
             .agg(sum(col(aggColName)))
@@ -64,8 +61,8 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
         //   scala> sc.parallelize(List(Long.MaxValue, 1)).toDF.agg(sum("value")).take(1)(0)(0)
         //   res11: Any = -9223372036854775808
         // Converting to BigDecimal fixes the issue
-        //val ds2 = ds.select(col(measurement.controlCol).cast(DecimalType(38, 0)).as("value"))
-        //ds2.agg(sum(abs($"value"))).collect()(0)(0)
+        // val ds2 = ds.select(col(measurement.controlCol).cast(DecimalType(38, 0)).as("value"))
+        // ds2.agg(sum(abs($"value"))).collect()(0)(0)
         val ds2 = ds.select(
           col(measureColumn).cast(DecimalType(38, 0)).as(valueColumnName)
         )
@@ -83,11 +80,11 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
         value.stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
           .toPlainString // converts to normal string (6E+2 -> "600")
       case _ =>
-        val ds2 = ds.select(col(measureColumn).as(valueColumnName))
+        val ds2       = ds.select(col(measureColumn).as(valueColumnName))
         val collected = ds2.agg(aggExpression).collect()(0)(0)
         if (collected == null) 0 else collected
     }
-    //check if total is required to be presented as larger type - big decimal
+    // check if total is required to be presented as larger type - big decimal
     workaroundBigDecimalIssues(aggregatedValue)
   }
 

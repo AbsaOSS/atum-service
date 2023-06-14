@@ -1,4 +1,4 @@
-package test.pipelines
+package za.co.absa.atum.agent.dao
 
 case class Person(
                    id: String,
@@ -11,6 +11,6 @@ case class Person(
 
 
 case class Enrichment(
-                   id: String,
-                   birthday: String,
-                   description: String)
+                       id: String,
+                       birthday: String,
+                       description: String)

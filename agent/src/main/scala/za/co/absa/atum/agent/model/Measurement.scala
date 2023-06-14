@@ -1,16 +1,11 @@
 package za.co.absa.atum.agent.model
 
-/** record count
-  * average on column
-  * sum of values
-  * sum of hashes of columns
-  */
 trait Measurement {
   val name: String
   val controlCol: String
   val resultValue: Option[String]
 
-  def setResult(s: Option[String]): Measurement //todo
+  def setResult(s: Option[String]): Measurement
 }
 
 case class RecordCount(
@@ -18,8 +13,7 @@ case class RecordCount(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def setResult(s: Option[String]): Measurement =
-    this.copy(resultValue = s)
+  override def setResult(s: Option[String]): Measurement = this.copy(resultValue = s)
 }
 
 case class DistinctRecordCount(
@@ -27,8 +21,7 @@ case class DistinctRecordCount(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def setResult(s: Option[String]): Measurement =
-    this.copy(resultValue = s)
+  override def setResult(s: Option[String]): Measurement = this.copy(resultValue = s)
 }
 
 case class SumOfValuesOfColumn(
@@ -36,8 +29,7 @@ case class SumOfValuesOfColumn(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def setResult(s: Option[String]): Measurement =
-    this.copy(resultValue = s)
+  override def setResult(s: Option[String]): Measurement = this.copy(resultValue = s)
 }
 
 case class AbsSumOfValuesOfColumn(
@@ -45,8 +37,7 @@ case class AbsSumOfValuesOfColumn(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def setResult(s: Option[String]): Measurement =
-    this.copy(resultValue = s)
+  override def setResult(s: Option[String]): Measurement = this.copy(resultValue = s)
 }
 
 case class SumOfHashesOfColumn(
@@ -54,6 +45,5 @@ case class SumOfHashesOfColumn(
     controlCol: String,
     resultValue: Option[String] = None
 ) extends Measurement {
-  override def setResult(s: Option[String]): Measurement =
-    this.copy(resultValue = s)
+  override def setResult(s: Option[String]): Measurement = this.copy(resultValue = s)
 }
