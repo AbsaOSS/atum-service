@@ -31,7 +31,7 @@ object AtumContext {
     ): DataFrame = {
 
       val result = processor.getFunction(df, measure)(df)
-      atumAgent.measurePublish(measure.setResult(Some(result)))
+      atumAgent.measurePublish(measure.withResult(Some(result)))
       df
     }
 
