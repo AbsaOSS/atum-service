@@ -7,11 +7,7 @@ class MockAtumAgentImplAndUnitTest extends AtumAgent {
     case RecordCount(MockMeasureNames.recordCount1, _, result) =>
       assert(result.contains("1000"))
 
-    case AbsSumOfValuesOfColumn(
-          MockMeasureNames.`absSumOfValuesOfSalary`,
-          _,
-          result
-        ) =>
+    case AbsSumOfValuesOfColumn(MockMeasureNames.absSumOfValuesOfSalary, _, result) =>
       assert(result.contains("2987144"))
 
     case SumOfHashesOfColumn(MockMeasureNames.hashSumOfNames, _, result) => assert(result.contains("2044144307532"))

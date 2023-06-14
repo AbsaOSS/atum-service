@@ -85,26 +85,10 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     val dfExtraPersonWithNegativeSalary = ss
       .createDataFrame(
         Seq(
-          (
-            "id",
-            "firstName",
-            "lastName",
-            "email",
-            "email2",
-            "profession",
-            "-1000"
-          )
+          ("id", "firstName", "lastName", "email", "email2", "profession", "-1000")
         )
       )
-      .toDF(
-        "id",
-        "firstName",
-        "lastName",
-        "email",
-        "email2",
-        "profession",
-        "salary"
-      )
+      .toDF("id", "firstName", "lastName", "email", "email2", "profession", "salary")
 
     val dfExtraPersons = dfExtraPersonWithNegativeSalary.union(dfPersons)
 
@@ -120,32 +104,27 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
   "withMeasureAddedOrOverwritten" should "add a new measure if not exists, overwrite it otherwise" in {
 
     implicit val atumAgent: MockAtumAgentImplAndUnitTest = new MockAtumAgentImplAndUnitTest
-
-    val atumContext = AtumContext.context
+    val atumContext                                      = AtumContext.context
 
     assert(atumContext.measurements.isEmpty)
 
     val atumContextWithRecordCount = atumContext.withMeasureAddedOrOverwritten(RecordCount("name 1", "id"))
-
     assert(atumContextWithRecordCount.measurements.size == 1)
 
     val atumContextWithTwoRecordCount =
       atumContextWithRecordCount.withMeasureAddedOrOverwritten(
         Seq(RecordCount("same name", "id"), RecordCount("same name", "x"))
       )
-
     assert(atumContextWithTwoRecordCount.measurements.size == 2)
 
     val atumContextWithTwoDistinctRecordCount =
       atumContextWithRecordCount.withMeasureAddedOrOverwritten(
         Seq(RecordCount("name 1", "id"), RecordCount("name 2", "one"))
       )
-
     assert(atumContextWithTwoDistinctRecordCount.measurements.size == 2)
 
     val editedAtumContextWithTwoDistinctRecordCount =
       atumContextWithTwoDistinctRecordCount.withMeasureAddedOrOverwritten(RecordCount("name 1", "changed"))
-
     assert(editedAtumContextWithTwoDistinctRecordCount.measurements("name 1").controlCol == "changed")
   }
 
@@ -153,17 +132,14 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     implicit val atumAgent: MockAtumAgentImplAndUnitTest = new MockAtumAgentImplAndUnitTest
 
     val atumContext = AtumContext.context
-
     assert(atumContext.measurements.isEmpty)
 
     val atumContext1 = atumContext.withMeasureAddedOrOverwritten(
       Seq(RecordCount("name 1", "id"), RecordCount("name 2", "id"))
     )
-
     assert(atumContext1.measurements.size == 2)
 
     val atumContextRemoved = atumContext1.withMeasureRemoved("name 1")
-
     assert(atumContextRemoved.measurements.size == 1)
     assert(atumContextRemoved.measurements.keys.head == "name 2")
   }
