@@ -18,27 +18,23 @@ package za.co.absa.atum.agent.utils.controlmeasure
 
 import org.apache.spark.sql.DataFrame
 
-/**
- * This object contains utilities used in Control Measurements processing
- */
+/** This object contains utilities used in Control Measurements processing
+  */
 
 object ControlMeasureUtils {
 
-
-
-  /**
-    * The method generates a temporary column name which does not exist in the specified `DataFrame`.
+  /** The method generates a temporary column name which does not exist in the specified `DataFrame`.
     *
-    * @return An column name as a string
+    * @return
+    *   An column name as a string
     */
   def getTemporaryColumnName(df: DataFrame, namePrefix: String = "tmp"): String = {
-    val r = scala.util.Random
+    val r              = scala.util.Random
     var tempColumnName = ""
     do {
       tempColumnName = s"${namePrefix}_${r.nextInt(10000).toString}"
     } while (df.schema.fields.exists(field => field.name.compareToIgnoreCase(tempColumnName) == 0))
     tempColumnName
   }
-
 
 }

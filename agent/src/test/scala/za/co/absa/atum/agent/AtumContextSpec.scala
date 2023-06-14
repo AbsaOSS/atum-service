@@ -137,7 +137,9 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     assert(atumContextWithTwoRecordCount.measurements.size == 2)
 
     val atumContextWithTwoDistinctRecordCount =
-      atumContextWithRecordCount.withMeasureAddedOrOverwritten(Seq(RecordCount("name 1", "id"), RecordCount("name 2", "one")))
+      atumContextWithRecordCount.withMeasureAddedOrOverwritten(
+        Seq(RecordCount("name 1", "id"), RecordCount("name 2", "one"))
+      )
 
     assert(atumContextWithTwoDistinctRecordCount.measurements.size == 2)
 
@@ -146,7 +148,6 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
 
     assert(editedAtumContextWithTwoDistinctRecordCount.measurements("name 1").controlCol == "changed")
   }
-
 
   "withMeasureRemoved" should "remove a measure if exists" in {
     implicit val atumAgent: MockAtumAgentImplAndUnitTest = new MockAtumAgentImplAndUnitTest
@@ -157,7 +158,6 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
 
     val atumContext1 = atumContext.withMeasureAddedOrOverwritten(
       Seq(RecordCount("name 1", "id"), RecordCount("name 2", "id"))
-
     )
 
     assert(atumContext1.measurements.size == 2)
