@@ -37,7 +37,7 @@ class AtumContextSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
 
   "setCheckpoint method" should "measures based on the dataframe" in {
 
-    //Assertion are going to be done in this mock agent
+    // Assertion are going to be done in this mock agent
     implicit val agent: AtumAgent = new MockAtumAgentImplAndUnitTest
 
     val atumContextInstanceWithRecordCount = AtumContext(processor = processor)
