@@ -1,5 +1,9 @@
 package za.co.absa.atum.agent.model
 
+
+/**
+ * Type of different measures to be applied to the columns.
+ */
 trait Measurement {
   val name: String
   val controlCol: String

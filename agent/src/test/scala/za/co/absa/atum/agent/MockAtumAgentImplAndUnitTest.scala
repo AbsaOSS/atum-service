@@ -3,6 +3,10 @@ import za.co.absa.atum.agent.model._
 
 class MockAtumAgentImplAndUnitTest extends AtumAgent {
 
+  /**
+   * Mock method `measure publish` to do assertions based on the name and type
+   * @param measure
+   */
   override def measurePublish(measure: Measurement): Unit = measure match {
     case RecordCount(MockMeasureNames.recordCount1, _, result) =>
       assert(result.contains("1000"))

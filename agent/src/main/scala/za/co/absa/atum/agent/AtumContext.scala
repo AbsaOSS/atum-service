@@ -4,6 +4,14 @@ import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.core.{MeasurementProcessor, MeasurementProcessorImplementation}
 import za.co.absa.atum.agent.model.Measurement
 
+
+/**
+ * AtumContext: This class provides the methods to measure Spark `Dataframe`. Also allows to add/edit/remove measures.
+ * @param processor: Provide a calculation function based on the control column and the type of calculation
+ * @param measurements: A sequences of measurements.
+ * @param atumAgent: Communicates with the API the results
+ */
+
 case class AtumContext(
   processor: MeasurementProcessor = new MeasurementProcessorImplementation,
   measurements: Map[String, Measurement] = Map()
