@@ -9,45 +9,45 @@ trait Measurement {
 }
 
 case class RecordCount(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+  name: String,
+  controlCol: String,
+  resultValue: Option[String] = None
 ) extends Measurement {
   override def withResult(s: Option[String]): Measurement =
     this.copy(resultValue = s)
 }
 
 case class DistinctRecordCount(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+  name: String,
+  controlCol: String,
+  resultValue: Option[String] = None
 ) extends Measurement {
   override def withResult(s: Option[String]): Measurement =
     this.copy(resultValue = s)
 }
 
 case class SumOfValuesOfColumn(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+  name: String,
+  controlCol: String,
+  resultValue: Option[String] = None
 ) extends Measurement {
   override def withResult(s: Option[String]): Measurement =
     this.copy(resultValue = s)
 }
 
 case class AbsSumOfValuesOfColumn(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+  name: String,
+  controlCol: String,
+  resultValue: Option[String] = None
 ) extends Measurement {
   override def withResult(s: Option[String]): Measurement =
     this.copy(resultValue = s)
 }
 
 case class SumOfHashesOfColumn(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+  name: String,
+  controlCol: String,
+  resultValue: Option[String] = None
 ) extends Measurement {
   override def withResult(s: Option[String]): Measurement =
     this.copy(resultValue = s)

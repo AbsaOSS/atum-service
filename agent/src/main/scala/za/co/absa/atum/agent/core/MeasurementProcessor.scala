@@ -11,8 +11,8 @@ trait MeasurementProcessor {
   type MeasurementFunction = DataFrame => String
 
   def getFunction(
-      dataset: Dataset[Row],
-      measurement: Measurement
+    dataset: Dataset[Row],
+    measurement: Measurement
   ): MeasurementFunction
 
 }
@@ -21,8 +21,8 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
 
   private val valueColumnName: String = "value"
   override def getFunction(
-      ds: Dataset[Row],
-      measurement: Measurement
+    ds: Dataset[Row],
+    measurement: Measurement
   ): MeasurementFunction =
     measurement match {
       case RecordCount(_, controlCol, _) =>
@@ -48,9 +48,9 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
     }
 
   private def aggregateColumn(
-      ds: Dataset[Row],
-      measureColumn: String,
-      aggExpression: Column
+    ds: Dataset[Row],
+    measureColumn: String,
+    aggExpression: Column
   ): String = {
     val dataType = ds.select(measureColumn).schema.fields(0).dataType
     val aggregatedValue = dataType match {
@@ -76,9 +76,9 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
           if (collected == null) new java.math.BigDecimal(0)
           else collected.asInstanceOf[java.math.BigDecimal]
         value.stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
-          .toPlainString         // converts to normal string (6E+2 -> "600")
+          .toPlainString // converts to normal string (6E+2 -> "600")
       case _ =>
-        val ds2       = ds.select(col(measureColumn).as(valueColumnName))
+        val ds2 = ds.select(col(measureColumn).as(valueColumnName))
         val collected = ds2.agg(aggExpression).collect()(0)(0)
         if (collected == null) 0 else collected
     }
@@ -92,13 +92,13 @@ class MeasurementProcessorImplementation extends MeasurementProcessor {
       case v: java.math.BigDecimal =>
         // Convert the value to string to workaround different serializers generate different JSONs for BigDecimal
         v.stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
-          .toPlainString     // converts to normal string (6E+2 -> "600")
+          .toPlainString // converts to normal string (6E+2 -> "600")
       case v: BigDecimal =>
         // Convert the value to string to workaround different serializers generate different JSONs for BigDecimal
         new java.math.BigDecimal(
           v.toString()
         ).stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
-          .toPlainString     // converts to normal string (6E+2 -> "600")
+          .toPlainString // converts to normal string (6E+2 -> "600")
       case a => a.toString
     }
 

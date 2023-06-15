@@ -5,16 +5,16 @@ import za.co.absa.atum.agent.core.{MeasurementProcessor, MeasurementProcessorImp
 import za.co.absa.atum.agent.model.Measurement
 
 case class AtumContext(
-    processor: MeasurementProcessor = new MeasurementProcessorImplementation,
-    measurements: Map[String, Measurement] = Map()
+  processor: MeasurementProcessor = new MeasurementProcessorImplementation,
+  measurements: Map[String, Measurement] = Map()
 )(implicit atumAgent: AtumAgent) {
   def withMeasureAddedOrOverwritten(
-      measure: Measurement
+    measure: Measurement
   ): AtumContext =
     this.copy(measurements = measurements + (measure.name -> measure))
 
   def withMeasureAddedOrOverwritten(
-      measures: Iterable[Measurement]
+    measures: Iterable[Measurement]
   ): AtumContext =
     this.copy(measurements = measurements ++ measures.map(m => m.name -> m))
 
@@ -27,10 +27,10 @@ object AtumContext {
   implicit class DatasetWrapper(df: DataFrame) {
 
     def executeMeasure(
-        measure: Measurement,
-        processor: MeasurementProcessor = new MeasurementProcessorImplementation
+      measure: Measurement,
+      processor: MeasurementProcessor = new MeasurementProcessorImplementation
     )(implicit
-        atumAgent: AtumAgent
+      atumAgent: AtumAgent
     ): DataFrame = {
 
       val result = processor.getFunction(df, measure)(df)
@@ -39,15 +39,15 @@ object AtumContext {
     }
 
     def executeMeasures(
-        measures: Iterable[Measurement],
-        processor: MeasurementProcessor = new MeasurementProcessorImplementation
+      measures: Iterable[Measurement],
+      processor: MeasurementProcessor = new MeasurementProcessorImplementation
     )(implicit atumAgent: AtumAgent): DataFrame = {
       measures.foreach(m => executeMeasure(m, processor))
       df
     }
 
     def setCheckpoint(
-        atumContext: AtumContext
+      atumContext: AtumContext
     )(implicit atumAgent: AtumAgent): DataFrame = {
       atumContext.measurements.values.foreach(
         executeMeasure(_, atumContext.processor)
@@ -60,12 +60,12 @@ object AtumContext {
   def context(implicit atumAgent: AtumAgent): AtumContext = AtumContext()
 
   def context(measurement: Iterable[Measurement])(implicit
-      atumAgent: AtumAgent
+    atumAgent: AtumAgent
   ): AtumContext =
     AtumContext(measurements = measurement.map(m => m.name -> m).toMap)
 
   def context(measurement: Measurement)(implicit
-      atumAgent: AtumAgent
+    atumAgent: AtumAgent
   ): AtumContext =
     AtumContext(measurements = Map(measurement.name -> measurement))
 

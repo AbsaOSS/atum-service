@@ -2,8 +2,9 @@ package za.co.absa.atum.agent
 
 import za.co.absa.atum.agent.model.Measurement
 
-/** Place holder for the agent that communicate with the API
-  */
+/**
+ *  Place holder for the agent that communicate with the API
+ */
 trait AtumAgent {
 
   def measurePublish(measure: Measurement): Unit
