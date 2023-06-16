@@ -11,7 +11,7 @@ trait MeasurementProcessor {
   type MeasurementFunction = DataFrame => String
 
   def getFunction(
-    dataset: Dataset[Row],
+    dataset: DataFrame,
     measurement: Measurement
   ): MeasurementFunction
 
