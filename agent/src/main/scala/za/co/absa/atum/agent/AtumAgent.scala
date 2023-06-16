@@ -5,18 +5,11 @@ import za.co.absa.atum.agent.model.Measurement
 /**
  *  Place holder for the agent that communicate with the API.
  */
-trait AtumAgent {
-
-  def measurePublish(measure: Measurement): Unit
-}
-
-class AtumAgentImpl extends AtumAgent {
-  override def measurePublish(measure: Measurement): Unit =
+object AtumAgent {
+  def measurePublish(measure: Measurement): Unit =
     println("Enqueued measurement: " + (measure))
 
-}
+  def publish(context: AtumContext): Unit =
+    println("Enqueued measurement: " + (context.measurements.mkString))
 
-object AtumAgentImpl {
-
-  def agent = new AtumAgentImpl
 }
