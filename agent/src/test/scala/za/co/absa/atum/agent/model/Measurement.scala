@@ -72,8 +72,6 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
       .join(dsEnrichment, Seq("id"))
       .createCheckpoint(atumContextWithSalaryAbsMeasure)
 
-    println(dfFull.count)
-
     val dfExtraPersonWithNegativeSalary = ss
       .createDataFrame(
         Seq(
