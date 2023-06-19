@@ -32,15 +32,20 @@ lazy val root = (project in file("."))
   )//.aggregate(server, agent)
 
 lazy val server = project
-.settings(
-  name := "atum-server",
-  scalaVersion := scala212,
-  libraryDependencies ++= Dependencies.serverDependencies,
-  webappWebInfClasses := true,
-  inheritJarManifest := true
-)
+  .settings(
+    name := "atum-server",
+    scalaVersion := scala212,
+    libraryDependencies ++= Dependencies.serverDependencies,
+    webappWebInfClasses := true,
+    inheritJarManifest := true,
+    dockerBaseImage := "openjdk:11-jre",
+    dockerExposedPorts := Seq (8080)
+  )
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(JavaAppPackaging)
+  .enablePlugins(DockerPlugin)
+
 
 
 lazy val agent = project
