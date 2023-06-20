@@ -35,7 +35,7 @@ object AtumContext {
      */
     def executeMeasure(checkpointName: String, measure: Measurement): DataFrame = {
 
-      val result = MeasureResult(measure, measure.getMeasureFunction(df))
+      val result = MeasureResult(measure, measure.f(df))
       AtumAgent.measurePublish(checkpointName, result)
       df
     }
