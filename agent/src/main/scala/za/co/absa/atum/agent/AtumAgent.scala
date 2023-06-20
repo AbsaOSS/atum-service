@@ -1,16 +1,17 @@
 package za.co.absa.atum.agent
 
-import za.co.absa.atum.agent.model.Measurement
+import za.co.absa.atum.agent.model.MeasureResult
 
 /**
  *  Place holder for the agent that communicate with the API.
  */
 object AtumAgent {
 
-  def measurePublish(measure: Measurement): Unit =
+  def measurePublish(checkpointKey: String, measure: MeasureResult): Unit =
     println("Enqueued measurement: " + (measure))
 
-  def publish(context: AtumContext): Unit =
-    println("Enqueued measurement: " + (context.measurements.mkString))
+  def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit = println(
+    Seq(checkpointKey, context, measureResult).mkString(" || ")
+  )
 
 }

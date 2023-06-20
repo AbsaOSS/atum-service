@@ -1,7 +1,7 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.model.Measurement
+import za.co.absa.atum.agent.model.{MeasureResult, Measurement}
 
 /**
  *  AtumContext: This class provides the methods to measure Spark `Dataframe`. Also allows to add/edit/remove measures.
@@ -33,17 +33,15 @@ object AtumContext {
      *  @param measure the measure to be calculated
      *  @return
      */
-    def executeMeasure(
-      measure: Measurement
-    ): DataFrame = {
+    def executeMeasure(checkpointName: String, measure: Measurement): DataFrame = {
 
-      val result = measure.getMeasureFunction(df)
-      AtumAgent.measurePublish(measure.withResult(Some(result)))
+      val result = MeasureResult(measure, measure.getMeasureFunction(df))
+      AtumAgent.measurePublish(checkpointName, result)
       df
     }
 
-    def executeMeasures(measures: Iterable[Measurement]): DataFrame = {
-      measures.foreach(m => executeMeasure(m))
+    def executeMeasures(checkpointName: String, measures: Iterable[Measurement]): DataFrame = {
+      measures.foreach(m => executeMeasure(checkpointName, m))
       df
     }
 
@@ -52,10 +50,14 @@ object AtumContext {
      *  @param atumContext Contains the calculations to be done and publish the result
      *  @return
      */
-    def createCheckpoint(
-      atumContext: AtumContext
-    ): DataFrame = {
-      executeMeasures(atumContext.measurements.values)
+    def createCheckpoint(checkpointName: String, atumContext: AtumContext): DataFrame = {
+      atumContext.measurements.values.map { measure =>
+        val result = MeasureResult(measure, measure.f(df))
+        AtumAgent.publish(checkpointName, atumContext, result)
+
+        executeMeasures(checkpointName, atumContext.measurements.values)
+      }
+
       df
     }
 

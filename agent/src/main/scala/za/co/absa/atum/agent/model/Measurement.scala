@@ -13,20 +13,15 @@ import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancem
 trait Measurement extends MeasurementProcessor {
   val name: String
   val controlCol: String
-  val resultValue: Option[String]
-
-  def withResult(s: Option[String]): Measurement
 }
 
 object Measurement {
 
   case class RecordCount(
     name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+    controlCol: String
   ) extends Measurement {
-    override def withResult(s: Option[String]): Measurement =
-      this.copy(resultValue = s)
+
     override def getMeasureFunction: MeasurementFunction =
       (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
 
@@ -37,8 +32,6 @@ object Measurement {
     controlCol: String,
     resultValue: Option[String] = None
   ) extends Measurement {
-    override def withResult(s: Option[String]): Measurement =
-      this.copy(resultValue = s)
 
     override def getMeasureFunction: MeasurementFunction =
       (ds: Dataset[Row]) => ds.select(col(controlCol)).distinct().count().toString
@@ -48,8 +41,6 @@ object Measurement {
     controlCol: String,
     resultValue: Option[String] = None
   ) extends Measurement {
-    override def withResult(s: Option[String]): Measurement =
-      this.copy(resultValue = s)
 
     override def getMeasureFunction: MeasurementFunction = (ds: Dataset[Row]) => {
       val aggCol = sum(col(valueColumnName))
@@ -63,8 +54,6 @@ object Measurement {
     controlCol: String,
     resultValue: Option[String] = None
   ) extends Measurement {
-    override def withResult(s: Option[String]): Measurement =
-      this.copy(resultValue = s)
 
     override def getMeasureFunction: MeasurementFunction = (ds: Dataset[Row]) => {
       val aggCol = sum(abs(col(valueColumnName)))
@@ -77,8 +66,6 @@ object Measurement {
     controlCol: String,
     resultValue: Option[String] = None
   ) extends Measurement {
-    override def withResult(s: Option[String]): Measurement =
-      this.copy(resultValue = s)
 
     override def getMeasureFunction: MeasurementFunction = (ds: Dataset[Row]) => {
 
