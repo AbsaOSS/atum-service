@@ -128,14 +128,3 @@ object Measurement {
     }
 
 }
-
-object TestMEasy extends App {
-
-  val m1 = RecordCount("1").asInstanceOf[Measurement]
-  val m2 = RecordCount("1").asInstanceOf[Measurement]
-  val m3 = RecordCount("diff").asInstanceOf[Measurement]
-
-  println(m1 == m2)
-  println(m3 == m1)
-
-}
