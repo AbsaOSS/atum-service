@@ -13,29 +13,25 @@ class AtumContextSpec extends AnyFlatSpec with Matchers {
     assert(atumContext.measurements.isEmpty)
 
     val atumContextWithRecordCount =
-      atumContext.withMeasureAddedOrOverwritten(RecordCount("name 1", "id"))
+      atumContext.withMeasuresAdded(RecordCount("id"))
     assert(atumContextWithRecordCount.measurements.size == 1)
 
     val atumContextWithTwoRecordCount =
-      atumContextWithRecordCount.withMeasureAddedOrOverwritten(
-        Seq(RecordCount("same name", "id"), RecordCount("same name", "x"))
+      atumContextWithRecordCount.withMeasuresAdded(
+        Seq(RecordCount("id"), RecordCount("x"))
       )
     assert(atumContextWithTwoRecordCount.measurements.size == 2)
 
     val atumContextWithTwoDistinctRecordCount =
-      atumContextWithRecordCount.withMeasureAddedOrOverwritten(
-        Seq(RecordCount("name 1", "id"), RecordCount("name 2", "one"))
+      atumContextWithRecordCount.withMeasuresAdded(
+        Seq(RecordCount("id"), RecordCount("one"))
       )
     assert(atumContextWithTwoDistinctRecordCount.measurements.size == 2)
 
-    val editedAtumContextWithTwoDistinctRecordCount =
-      atumContextWithTwoDistinctRecordCount.withMeasureAddedOrOverwritten(
-        RecordCount("name 1", "changed")
-      )
+    val overwrittenAtumContextWithRecordCount =
+      atumContextWithTwoDistinctRecordCount.withMeasures(RecordCount("other"))
     assert(
-      editedAtumContextWithTwoDistinctRecordCount
-        .measurements("name 1")
-        .controlCol == "changed"
+      overwrittenAtumContextWithRecordCount.measurements.head.controlCol == "other"
     )
   }
 
@@ -44,14 +40,14 @@ class AtumContextSpec extends AnyFlatSpec with Matchers {
     val atumContext = AtumContext()
     assert(atumContext.measurements.isEmpty)
 
-    val atumContext1 = atumContext.withMeasureAddedOrOverwritten(
-      Seq(RecordCount("name 1", "id"), RecordCount("name 2", "id"))
+    val atumContext1 = atumContext.withMeasuresAdded(
+      Seq(RecordCount("id"), RecordCount("id"), RecordCount("other"))
     )
     assert(atumContext1.measurements.size == 2)
 
-    val atumContextRemoved = atumContext1.withMeasureRemoved("name 1")
+    val atumContextRemoved = atumContext1.withMeasureRemoved(RecordCount("id"))
     assert(atumContextRemoved.measurements.size == 1)
-    assert(atumContextRemoved.measurements.keys.head == "name 2")
+    assert(atumContextRemoved.measurements.head == RecordCount("other"))
   }
 
 }

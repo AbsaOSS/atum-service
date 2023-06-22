@@ -34,21 +34,20 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
   "Measurement" should "measures based on the dataframe" in {
 
     // Measures
-    val measureIds: Measurement = RecordCount(MockMeasureNames.recordCount1, controlCol = "id")
+    val measureIds: Measurement = RecordCount(controlCol = "id")
     val salaryAbsSum: Measurement = AbsSumOfValuesOfColumn(
-      MockMeasureNames.absSumOfValuesOfSalary,
       controlCol = "salary"
     )
-    val salarySum = SumOfValuesOfColumn(MockMeasureNames.absSumOfValuesOfSalary, controlCol = "salary")
-    val sumOfHashes: Measurement = SumOfHashesOfColumn(MockMeasureNames.hashSumOfNames, controlCol = "id")
+    val salarySum = SumOfValuesOfColumn(controlCol = "salary")
+    val sumOfHashes: Measurement = SumOfHashesOfColumn(controlCol = "id")
 
     // AtumContext contains `Measurement`
     val atumContextInstanceWithRecordCount = AtumContext()
-      .withMeasureAddedOrOverwritten(measureIds)
+      .withMeasuresAdded(measureIds)
     val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
-      .withMeasureAddedOrOverwritten(salaryAbsSum)
+      .withMeasuresAdded(salaryAbsSum)
     val atumContextWithNameHashSum = AtumContext()
-      .withMeasureAddedOrOverwritten(sumOfHashes)
+      .withMeasuresAdded(sumOfHashes)
 
     // Pipeline
     val dfPersons = ss.read
@@ -64,7 +63,7 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
       .load("agent/src/test/resources/random-dataset/persons-enriched.csv")
       .createCheckpoint("name3",
                         atumContextWithSalaryAbsMeasure.withMeasureRemoved(
-                          MockMeasureNames.absSumOfValuesOfSalary
+                          salaryAbsSum
                         )
       )
 
@@ -85,25 +84,18 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     dfExtraPerson.createCheckpoint(
       "a checkpoint name",
       atumContextWithSalaryAbsMeasure
-        .withMeasureRemoved(MockMeasureNames.recordCount1)
-        .withMeasureRemoved(MockMeasureNames.absSumOfValuesOfSalary)
+        .withMeasureRemoved(measureIds)
+        .withMeasureRemoved(salaryAbsSum)
     )
 
     // Assertions
-    assert(measureIds.measurementFunction(dfPersons) == "1000")
-    assert(measureIds.measurementFunction(dfFull) == "1000")
-    assert(salaryAbsSum.measurementFunction(dfFull) == "2987144")
-    assert(sumOfHashes.measurementFunction(dfFull) == "2044144307532")
-    assert(salarySum.measurementFunction(dfExtraPerson) == "2986144")
-    assert(salarySum.measurementFunction(dfFull) == "2987144")
+    assert(measureIds.function(dfPersons) == "1000")
+    assert(measureIds.function(dfFull) == "1000")
+    assert(salaryAbsSum.function(dfFull) == "2987144")
+    assert(sumOfHashes.function(dfFull) == "2044144307532")
+    assert(salarySum.function(dfExtraPerson) == "2986144")
+    assert(salarySum.function(dfFull) == "2987144")
 
   }
 
-}
-
-object MockMeasureNames {
-  val recordCount1 = "record count"
-  val absSumOfValuesOfSalary = "salary abs sum"
-  val sumOfValuesOfSalary = "salary sum"
-  val hashSumOfNames = "name hash sum"
 }
