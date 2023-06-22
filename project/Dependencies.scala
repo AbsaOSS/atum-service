@@ -14,7 +14,7 @@
  */
 
 
-import sbt.*
+import sbt._
 
 object Dependencies {
 
