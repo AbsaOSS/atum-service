@@ -90,12 +90,12 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     )
 
     // Assertions
-    assert(measureIds.getMeasureFunction(dfPersons) == "1000")
-    assert(measureIds.getMeasureFunction(dfFull) == "1000")
-    assert(salaryAbsSum.getMeasureFunction(dfFull) == "2987144")
-    assert(sumOfHashes.getMeasureFunction(dfFull) == "2044144307532")
-    assert(salarySum.getMeasureFunction(dfExtraPerson) == "2986144")
-    assert(salarySum.getMeasureFunction(dfFull) == "2987144")
+    assert(measureIds.measurementFunction(dfPersons) == "1000")
+    assert(measureIds.measurementFunction(dfFull) == "1000")
+    assert(salaryAbsSum.measurementFunction(dfFull) == "2987144")
+    assert(sumOfHashes.measurementFunction(dfFull) == "2044144307532")
+    assert(salarySum.measurementFunction(dfExtraPerson) == "2986144")
+    assert(salarySum.measurementFunction(dfFull) == "2987144")
 
   }
 

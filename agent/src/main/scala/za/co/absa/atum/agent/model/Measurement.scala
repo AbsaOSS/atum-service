@@ -5,6 +5,7 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
 import za.co.absa.atum.agent.core.MeasurementProcessor
 import org.apache.spark.sql.functions._
+import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 /**
@@ -22,7 +23,7 @@ object Measurement {
     controlCol: String
   ) extends Measurement {
 
-    override def getMeasureFunction: MeasurementFunction =
+    override def measurementFunction: MeasurementFunction =
       (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
 
   }
@@ -33,7 +34,7 @@ object Measurement {
     resultValue: Option[String] = None
   ) extends Measurement {
 
-    override def getMeasureFunction: MeasurementFunction =
+    override def measurementFunction: MeasurementFunction =
       (ds: Dataset[Row]) => ds.select(col(controlCol)).distinct().count().toString
   }
   case class SumOfValuesOfColumn(
@@ -42,7 +43,7 @@ object Measurement {
     resultValue: Option[String] = None
   ) extends Measurement {
 
-    override def getMeasureFunction: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def measurementFunction: MeasurementFunction = (ds: Dataset[Row]) => {
       val aggCol = sum(col(valueColumnName))
       aggregateColumn(ds, controlCol, aggCol)
     }
@@ -55,7 +56,7 @@ object Measurement {
     resultValue: Option[String] = None
   ) extends Measurement {
 
-    override def getMeasureFunction: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def measurementFunction: MeasurementFunction = (ds: Dataset[Row]) => {
       val aggCol = sum(abs(col(valueColumnName)))
       aggregateColumn(ds, controlCol, aggCol)
     }
@@ -67,7 +68,7 @@ object Measurement {
     resultValue: Option[String] = None
   ) extends Measurement {
 
-    override def getMeasureFunction: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def measurementFunction: MeasurementFunction = (ds: Dataset[Row]) => {
 
       val aggregatedColumnName = ds.schema.getClosestUniqueName("sum_of_hashes")
       val value = ds
