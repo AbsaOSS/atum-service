@@ -62,11 +62,7 @@ object Dependencies {
     val specs2Version = "4.19.2"
     val typesafeConfigVersion = "1.4.2"
 
-    lazy val sparkCore = "org.apache.spark" %% "spark-core" % spark3Version /*% Provided*/ /*exclude(
-        "com.fasterxml.jackson.core", "jackson-databind"
-      ) exclude(
-        "com.fasterxml.jackson.module", "jackson-module-scala_" + scala212.substring(0, 4) // e.g. 2.11
-      )*/
+    lazy val sparkCore = "org.apache.spark" %% "spark-core" % spark3Version
 
     lazy val sparkCommons = "za.co.absa" % "spark-commons-spark3.3_2.12" % "0.5.0"
 
