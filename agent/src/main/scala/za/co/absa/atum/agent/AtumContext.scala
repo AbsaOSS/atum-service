@@ -57,10 +57,11 @@ object AtumContext {
 
     /**
      *  Set a point in the pipeline to execute calculation.
+     *  @param checkpointName The key assigned to this checkpoint
      *  @param atumContext Contains the calculations to be done and publish the result
      *  @return
      */
-    def createCheckpoint(checkpointName: String, atumContext: AtumContext): DataFrame = {
+    def createCheckpoint(checkpointName: String)(implicit atumContext: AtumContext): DataFrame = {
       atumContext.measurements.map { measure =>
         val result = MeasureResult(measure, measure.function(df))
         AtumAgent.publish(checkpointName, atumContext, result)

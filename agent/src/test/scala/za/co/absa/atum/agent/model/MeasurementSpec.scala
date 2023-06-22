@@ -54,22 +54,22 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
       .format("csv")
       .option("header", "true")
       .load("agent/src/test/resources/random-dataset/persons.csv")
-      .createCheckpoint("name1", atumContextInstanceWithRecordCount)
-      .createCheckpoint("name2", atumContextWithNameHashSum)
+      .createCheckpoint("name1")(atumContextInstanceWithRecordCount)
+      .createCheckpoint("name2")(atumContextWithNameHashSum)
 
     val dsEnrichment = ss.read
       .format("csv")
       .option("header", "true")
       .load("agent/src/test/resources/random-dataset/persons-enriched.csv")
-      .createCheckpoint("name3",
-                        atumContextWithSalaryAbsMeasure.withMeasureRemoved(
-                          salaryAbsSum
-                        )
+      .createCheckpoint("name3")(
+        atumContextWithSalaryAbsMeasure.withMeasureRemoved(
+          salaryAbsSum
+        )
       )
 
     val dfFull = dfPersons
       .join(dsEnrichment, Seq("id"))
-      .createCheckpoint("other different name", atumContextWithSalaryAbsMeasure)
+      .createCheckpoint("other different name")(atumContextWithSalaryAbsMeasure)
 
     val dfExtraPersonWithNegativeSalary = ss
       .createDataFrame(
@@ -81,8 +81,7 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
 
     val dfExtraPerson = dfExtraPersonWithNegativeSalary.union(dfPersons)
 
-    dfExtraPerson.createCheckpoint(
-      "a checkpoint name",
+    dfExtraPerson.createCheckpoint("a checkpoint name")(
       atumContextWithSalaryAbsMeasure
         .withMeasureRemoved(measureIds)
         .withMeasureRemoved(salaryAbsSum)
