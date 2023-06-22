@@ -8,20 +8,30 @@ import za.co.absa.atum.agent.model.{MeasureResult, Measurement}
  *  @param measurements: A sequences of measurements.
  */
 
-case class AtumContext(measurements: Map[String, Measurement] = Map()) {
+case class AtumContext(measurements: Set[Measurement] = Set()) {
 
-  def withMeasureAddedOrOverwritten(
+  def withMeasures(
     measure: Measurement
   ): AtumContext =
-    this.copy(measurements = measurements + (measure.name -> measure))
+    this.copy(measurements = Set(measure))
 
-  def withMeasureAddedOrOverwritten(
+  def withMeasures(
     measures: Iterable[Measurement]
   ): AtumContext =
-    this.copy(measurements = measurements ++ measures.map(m => m.name -> m))
+    this.copy(measurements = measures.toSet)
 
-  def withMeasureRemoved(name: String): AtumContext =
-    this.copy(measurements = measurements.filterNot(_._1 == name))
+  def withMeasuresAdded(
+    measure: Measurement
+  ): AtumContext =
+    this.copy(measurements = measurements + measure)
+
+  def withMeasuresAdded(
+    measures: Iterable[Measurement]
+  ): AtumContext =
+    this.copy(measurements = measurements ++ measures)
+
+  def withMeasureRemoved(measurement: Measurement): AtumContext =
+    this.copy(measurements = measurements.filterNot(_ == measurement))
 
 }
 
@@ -35,7 +45,7 @@ object AtumContext {
      */
     def executeMeasure(checkpointName: String, measure: Measurement): DataFrame = {
 
-      val result = MeasureResult(measure, measure.measurementFunction(df))
+      val result = MeasureResult(measure, measure.function(df))
       AtumAgent.measurePublish(checkpointName, result)
       df
     }
@@ -51,11 +61,11 @@ object AtumContext {
      *  @return
      */
     def createCheckpoint(checkpointName: String, atumContext: AtumContext): DataFrame = {
-      atumContext.measurements.values.map { measure =>
-        val result = MeasureResult(measure, measure.measurementFunction(df))
+      atumContext.measurements.map { measure =>
+        val result = MeasureResult(measure, measure.function(df))
         AtumAgent.publish(checkpointName, atumContext, result)
 
-        executeMeasures(checkpointName, atumContext.measurements.values)
+        executeMeasures(checkpointName, atumContext.measurements)
       }
 
       df

@@ -6,44 +6,40 @@ import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
 import za.co.absa.atum.agent.core.MeasurementProcessor
 import org.apache.spark.sql.functions._
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
+import za.co.absa.atum.agent.model.Measurement.RecordCount
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 /**
  *  Type of different measures to be applied to the columns.
  */
 trait Measurement extends MeasurementProcessor {
-  val name: String
+
   val controlCol: String
 }
 
 object Measurement {
 
   case class RecordCount(
-    name: String,
     controlCol: String
   ) extends Measurement {
 
-    override def measurementFunction: MeasurementFunction =
+    override def function: MeasurementFunction =
       (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
 
   }
 
   case class DistinctRecordCount(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+    controlCol: String
   ) extends Measurement {
 
-    override def measurementFunction: MeasurementFunction =
+    override def function: MeasurementFunction =
       (ds: Dataset[Row]) => ds.select(col(controlCol)).distinct().count().toString
   }
   case class SumOfValuesOfColumn(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+    controlCol: String
   ) extends Measurement {
 
-    override def measurementFunction: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def function: MeasurementFunction = (ds: Dataset[Row]) => {
       val aggCol = sum(col(valueColumnName))
       aggregateColumn(ds, controlCol, aggCol)
     }
@@ -51,24 +47,20 @@ object Measurement {
   }
 
   case class AbsSumOfValuesOfColumn(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+    controlCol: String
   ) extends Measurement {
 
-    override def measurementFunction: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def function: MeasurementFunction = (ds: Dataset[Row]) => {
       val aggCol = sum(abs(col(valueColumnName)))
       aggregateColumn(ds, controlCol, aggCol)
     }
   }
 
   case class SumOfHashesOfColumn(
-    name: String,
-    controlCol: String,
-    resultValue: Option[String] = None
+    controlCol: String
   ) extends Measurement {
 
-    override def measurementFunction: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def function: MeasurementFunction = (ds: Dataset[Row]) => {
 
       val aggregatedColumnName = ds.schema.getClosestUniqueName("sum_of_hashes")
       val value = ds
@@ -134,5 +126,16 @@ object Measurement {
           .toPlainString // converts to normal string (6E+2 -> "600")
       case a => a.toString
     }
+
+}
+
+object TestMEasy extends App {
+
+  val m1 = RecordCount("1").asInstanceOf[Measurement]
+  val m2 = RecordCount("1").asInstanceOf[Measurement]
+  val m3 = RecordCount("diff").asInstanceOf[Measurement]
+
+  println(m1 == m2)
+  println(m3 == m1)
 
 }

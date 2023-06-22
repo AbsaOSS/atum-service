@@ -5,10 +5,11 @@ import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 
 trait MeasurementProcessor {
 
-  def measurementFunction: MeasurementFunction
+  def function: MeasurementFunction
 
 }
 
 object MeasurementProcessor {
   type MeasurementFunction = DataFrame => String
+
 }
