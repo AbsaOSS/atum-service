@@ -8,28 +8,9 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import za.co.absa.atum.agent.AtumContext
 import za.co.absa.atum.agent.AtumContext.DatasetWrapper
 import za.co.absa.atum.agent.model.Measurement._
+import za.co.absa.spark.commons.test.SparkTestBase
 
-class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll { self =>
-
-  @transient var ss: SparkSession = null
-  @transient var sc: SparkContext = null
-
-  private object testImplicits extends SQLImplicits {
-    protected override def _sqlContext: SQLContext = self.ss.sqlContext
-  }
-
-  override def beforeAll(): Unit = {
-    val sparkConfig = new SparkConf()
-    sparkConfig.set("spark.broadcast.compress", "false")
-    sparkConfig.set("spark.shuffle.compress", "false")
-    sparkConfig.set("spark.shuffle.spill.compress", "false")
-    sparkConfig.set("spark.master", "local")
-
-    ss = SparkSession.builder().config(sparkConfig).getOrCreate()
-
-  }
-
-  override def afterAll(): Unit = ss.stop()
+class MeasurementSpec extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
   "Measurement" should "measures based on the dataframe" in {
 
@@ -50,14 +31,14 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
       .withMeasuresAdded(sumOfHashes)
 
     // Pipeline
-    val dfPersons = ss.read
+    val dfPersons = spark.read
       .format("csv")
       .option("header", "true")
       .load("agent/src/test/resources/random-dataset/persons.csv")
       .createCheckpoint("name1")(atumContextInstanceWithRecordCount)
       .createCheckpoint("name2")(atumContextWithNameHashSum)
 
-    val dsEnrichment = ss.read
+    val dsEnrichment = spark.read
       .format("csv")
       .option("header", "true")
       .load("agent/src/test/resources/random-dataset/persons-enriched.csv")
@@ -71,7 +52,7 @@ class MeasurementSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
       .join(dsEnrichment, Seq("id"))
       .createCheckpoint("other different name")(atumContextWithSalaryAbsMeasure)
 
-    val dfExtraPersonWithNegativeSalary = ss
+    val dfExtraPersonWithNegativeSalary = spark
       .createDataFrame(
         Seq(
           ("id", "firstName", "lastName", "email", "email2", "profession", "-1000")
