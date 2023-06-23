@@ -11,12 +11,12 @@ import za.co.absa.atum.agent.model.{MeasureResult, Measurement}
 case class AtumContext(measurements: Set[Measurement] = Set()) {
 
   def withMeasuresReplaced(
-                            byMeasure: Measurement
+    byMeasure: Measurement
   ): AtumContext =
     this.copy(measurements = Set(byMeasure))
 
   def withMeasuresReplaced(
-                            byMeasures: Iterable[Measurement]
+    byMeasures: Iterable[Measurement]
   ): AtumContext =
     this.copy(measurements = byMeasures.toSet)
 

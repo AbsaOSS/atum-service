@@ -2,7 +2,7 @@ package za.co.absa.atum.agent.model
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
-import org.apache.spark.sql.{Column, Dataset, Row}
+import org.apache.spark.sql.{Column, DataFrame, Row}
 import za.co.absa.atum.agent.core.MeasurementProcessor
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
@@ -22,7 +22,7 @@ object Measurement {
   ) extends Measurement {
 
     override def function: MeasurementFunction =
-      (ds: Dataset[Row]) => ds.select(col(controlCol)).count().toString
+      (ds: DataFrame) => ds.select(col(controlCol)).count().toString
 
   }
 
@@ -31,13 +31,13 @@ object Measurement {
   ) extends Measurement {
 
     override def function: MeasurementFunction =
-      (ds: Dataset[Row]) => ds.select(col(controlCol)).distinct().count().toString
+      (ds: DataFrame) => ds.select(col(controlCol)).distinct().count().toString
   }
   case class SumOfValuesOfColumn(
     controlCol: String
   ) extends Measurement {
 
-    override def function: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
       aggregateColumn(ds, controlCol, aggCol)
     }
@@ -48,7 +48,7 @@ object Measurement {
     controlCol: String
   ) extends Measurement {
 
-    override def function: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
       aggregateColumn(ds, controlCol, aggCol)
     }
@@ -58,7 +58,7 @@ object Measurement {
     controlCol: String
   ) extends Measurement {
 
-    override def function: MeasurementFunction = (ds: Dataset[Row]) => {
+    override def function: MeasurementFunction = (ds: DataFrame) => {
 
       val aggregatedColumnName = ds.schema.getClosestUniqueName("sum_of_hashes")
       val value = ds
@@ -71,7 +71,7 @@ object Measurement {
 
   private val valueColumnName: String = "value"
   private def aggregateColumn(
-    ds: Dataset[Row],
+    ds: DataFrame,
     measureColumn: String,
     aggExpression: Column
   ): String = {
