@@ -17,6 +17,8 @@ trait Measurement extends MeasurementProcessor {
 
 object Measurement {
 
+  private val valueColumnName: String = "value"
+
   case class RecordCount(
     controlCol: String
   ) extends Measurement {
@@ -69,7 +71,6 @@ object Measurement {
     }
   }
 
-  private val valueColumnName: String = "value"
   private def aggregateColumn(
     ds: DataFrame,
     measureColumn: String,
