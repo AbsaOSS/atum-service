@@ -29,7 +29,7 @@ class AtumContextSpec extends AnyFlatSpec with Matchers {
     assert(atumContextWithTwoDistinctRecordCount.measurements.size == 2)
 
     val overwrittenAtumContextWithRecordCount =
-      atumContextWithTwoDistinctRecordCount.withMeasures(RecordCount("other"))
+      atumContextWithTwoDistinctRecordCount.withMeasuresReplaced(RecordCount("other"))
     assert(
       overwrittenAtumContextWithRecordCount.measurements.head.controlCol == "other"
     )
