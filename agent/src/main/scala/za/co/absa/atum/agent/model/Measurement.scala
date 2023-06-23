@@ -1,12 +1,10 @@
 package za.co.absa.atum.agent.model
 
-import org.apache.spark.sql.{Column, DataFrame, Dataset, Row}
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
-import za.co.absa.atum.agent.core.MeasurementProcessor
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
+import org.apache.spark.sql.{Column, Dataset, Row}
+import za.co.absa.atum.agent.core.MeasurementProcessor
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
-import za.co.absa.atum.agent.model.Measurement.RecordCount
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 /**

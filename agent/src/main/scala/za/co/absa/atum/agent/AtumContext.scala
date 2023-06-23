@@ -10,15 +10,15 @@ import za.co.absa.atum.agent.model.{MeasureResult, Measurement}
 
 case class AtumContext(measurements: Set[Measurement] = Set()) {
 
-  def withMeasures(
-    measure: Measurement
+  def withMeasuresReplaced(
+                            byMeasure: Measurement
   ): AtumContext =
-    this.copy(measurements = Set(measure))
+    this.copy(measurements = Set(byMeasure))
 
-  def withMeasures(
-    measures: Iterable[Measurement]
+  def withMeasuresReplaced(
+                            byMeasures: Iterable[Measurement]
   ): AtumContext =
-    this.copy(measurements = measures.toSet)
+    this.copy(measurements = byMeasures.toSet)
 
   def withMeasuresAdded(
     measure: Measurement
@@ -62,7 +62,7 @@ object AtumContext {
      *  @return
      */
     def createCheckpoint(checkpointName: String)(implicit atumContext: AtumContext): DataFrame = {
-      atumContext.measurements.map { measure =>
+      atumContext.measurements.foreach { measure =>
         val result = MeasureResult(measure, measure.function(df))
         AtumAgent.publish(checkpointName, atumContext, result)
 
