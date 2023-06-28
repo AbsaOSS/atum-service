@@ -30,6 +30,6 @@ case class AtumPartitions(name: String, reportDate: LocalDate, metadata: Partiti
 
 object AtumPartitions {
 
+  // Each element represent a data partition.
   type Partitions = ListMap[String, String]
 }
-
