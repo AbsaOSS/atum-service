@@ -1,10 +1,7 @@
 package za.co.absa.atum.agent.model
 
-import org.apache.spark.sql.{SQLContext, SQLImplicits, SparkSession}
-import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import za.co.absa.atum.agent.AtumContext
 import za.co.absa.atum.agent.AtumContext.DatasetWrapper
 import za.co.absa.atum.agent.model.Measurement._
