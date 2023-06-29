@@ -1,14 +1,14 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.model.{MeasureResult, Measurement}
+import za.co.absa.atum.agent.model.{AtumPartitions, MeasureResult, Measurement}
 
 /**
  *  AtumContext: This class provides the methods to measure Spark `Dataframe`. Also allows to add/edit/remove measures.
  *  @param measurements: A sequences of measurements.
  */
 
-case class AtumContext(measurements: Set[Measurement] = Set()) {
+case class AtumContext(measurements: Set[Measurement] = Set(), atumPartitions: AtumPartitions = AtumPartitions()) {
 
   def withMeasuresReplaced(
     byMeasure: Measurement

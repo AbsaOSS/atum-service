@@ -11,7 +11,7 @@ class AtumPartitionsSpec extends AnyFlatSpec with Matchers {
 
   "withPartitions" should "replace or create partitions if not exists" in {
 
-    val atumPartitions = AtumPartitions("partition-name", LocalDate.MIN)
+    val atumPartitions = AtumPartitions()
     val partitions: Partitions = ListMap("country" -> "South Africa", "gender" -> "female")
 
     val result = atumPartitions
@@ -29,7 +29,7 @@ class AtumPartitionsSpec extends AnyFlatSpec with Matchers {
 
   "addPartitions" should "add more partitions preserving the order" in {
 
-    val atumPartitions = AtumPartitions("partition-name", LocalDate.MIN, ListMap("pA" -> "a", "pB" -> "b"))
+    val atumPartitions = AtumPartitions(ListMap("pA" -> "a", "pB" -> "b"))
 
     val result = atumPartitions
       .addPartition("pC", "c")
@@ -37,7 +37,7 @@ class AtumPartitionsSpec extends AnyFlatSpec with Matchers {
     assert(result.partitions.head == "pA" -> "a")
     assert(result.partitions.tail.tail.head == "pC" -> "c")
 
-    val result1 = AtumPartitions("partition-name", LocalDate.MIN, ListMap("pA" -> "a", "pB" -> "b"))
+    val result1 = AtumPartitions(ListMap("pA" -> "a", "pB" -> "b"))
       .addPartitions(Map("pA" -> "last"))
 
     assert(result1.partitions.head == "pB" -> "b")

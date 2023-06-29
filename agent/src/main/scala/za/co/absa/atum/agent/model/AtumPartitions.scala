@@ -5,7 +5,7 @@ import za.co.absa.atum.agent.model.AtumPartitions.Partitions
 import java.time.LocalDate
 import scala.collection.immutable.ListMap
 
-case class AtumPartitions(name: String, reportDate: LocalDate, partitions: Partitions = ListMap()) {
+case class AtumPartitions(partitions: Partitions = ListMap()) {
 
   /**
    *  Creates a new `AtumPartitions` instance with the given metadata
