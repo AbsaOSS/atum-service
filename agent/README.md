@@ -38,7 +38,6 @@ Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAge
 
 ```scala
     val atumContext1 = AtumAgent.createAtumContext(atumPartition)
-
 ```
 
 #### AtumPartitions
@@ -61,7 +60,6 @@ Control measures can also be overwritten, added or removed.
     assert(atumContextRemoved.measurements.head == RecordCount("salary"))
 ```
 
-
 Set a checkpoint on a `Dataframe` with an `AtumContext` associated.
 ```scala
 val dfPersons: DataFrame = ss.read
@@ -79,5 +77,3 @@ val sequenceOfMeasures = Seq(RecordCount("columnName"), RecordCount("other colum
       .format("CSV")
       .executeMeasures("checkpoint name")(sequenceOfMeasures)
 ```
-
-Despite the above, the main case 
