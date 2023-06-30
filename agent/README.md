@@ -9,19 +9,7 @@
 
 ## Usage
 
-Include `AtumAgent` as an implicit in the scope for use by the `AtumContext`.
-
-
-```scala
-import za.co.absa.atum.agent.AtumContext.DatasetWrapper
-import za.co.absa.atum.agent.model._
-```
-
-```scala
-implicit val agent: AtumAgent = new AgentImpl
-```
-
-Create multiple `AtumContext` with different control measures
+Create multiple `AtumContext` with different control measures the be applied 
 
 ### Option 1
 ```scala
@@ -32,10 +20,8 @@ val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
   .withMeasureAdded(AbsSumOfValuesOfColumn(controlCol = "salary"))
 ```
 
-### Option 2
-
+### Option 2 
 Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAgent`.
-
 ```scala
     val atumContext1 = AtumAgent.createAtumContext(atumPartition)
 ```

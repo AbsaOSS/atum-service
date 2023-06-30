@@ -4,7 +4,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.model.AtumPartitions.Partitions
 
-import java.time.LocalDate
 import scala.collection.immutable.ListMap
 
 class AtumPartitionsSpec extends AnyFlatSpec with Matchers {
