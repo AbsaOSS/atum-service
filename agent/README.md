@@ -11,6 +11,7 @@
 
 Include `AtumAgent` as an implicit in the scope for use by the `AtumContext`.
 
+
 ```scala
 import za.co.absa.atum.agent.AtumContext.DatasetWrapper
 import za.co.absa.atum.agent.model._
@@ -21,12 +22,31 @@ implicit val agent: AtumAgent = new AgentImpl
 ```
 
 Create multiple `AtumContext` with different control measures
+
+### Option 1
 ```scala
 val atumContextInstanceWithRecordCount = AtumContext(processor = processor)
   .withMeasureAdded(RecordCount(MockMeasureNames.recordCount1, controlCol = "id"))
 
 val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
   .withMeasureAdded(AbsSumOfValuesOfColumn(controlCol = "salary"))
+```
+
+### Option 2
+
+Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAgent`.
+
+```scala
+    val atumContext1 = AtumAgent.createAtumContext(atumPartition)
+
+```
+
+#### AtumPartitions
+A list of key values that maintains the order of arrival of the items, the `AtumService` is able to deliver the correct `AtumContext` according to the `AtumPartitions` we give it. 
+```scala
+    val atumPartitions = AtumPartitions().withPartitions(ListMap("name" -> "partition-name", "country" -> "SA", "gender" -> "female" ))
+
+    val subPartition = atumPartitions.addPartition("otherKey", "otherValue")
 ```
 
 Control measures can also be overwritten, added or removed.
@@ -40,6 +60,7 @@ Control measures can also be overwritten, added or removed.
     assert(atumContextRemoved.measurements.size == 1)
     assert(atumContextRemoved.measurements.head == RecordCount("salary"))
 ```
+
 
 Set a checkpoint on a `Dataframe` with an `AtumContext` associated.
 ```scala
@@ -58,3 +79,5 @@ val sequenceOfMeasures = Seq(RecordCount("columnName"), RecordCount("other colum
       .format("CSV")
       .executeMeasures("checkpoint name")(sequenceOfMeasures)
 ```
+
+Despite the above, the main case 

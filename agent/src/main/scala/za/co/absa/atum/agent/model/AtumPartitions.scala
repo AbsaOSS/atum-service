@@ -2,7 +2,6 @@ package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.agent.model.AtumPartitions.Partitions
 
-import java.time.LocalDate
 import scala.collection.immutable.ListMap
 
 case class AtumPartitions(partitions: Partitions = ListMap()) {
