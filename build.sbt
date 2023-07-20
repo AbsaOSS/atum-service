@@ -19,6 +19,8 @@ ThisBuild / organization := "za.co.absa"
 
 lazy val scala211 = "2.11.12"
 lazy val scala212 = "2.12.12"
+lazy val spark2 = "2.4.7"
+lazy val spark3 = "3.3.1"
 
 Test / parallelExecution := false
 

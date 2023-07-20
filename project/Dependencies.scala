@@ -76,7 +76,9 @@ object Dependencies {
 
     Seq(sparkCore, sparkCommons, sparkCommonsTest, sparkSql, scalaTest, specs2core, typeSafeConfig)
 
-  }}
+  }
+
+}
 
 
 
