@@ -17,6 +17,7 @@
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.6.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
+addSbtPlugin("com.eed3si9n"       % "sbt-projectmatrix" % "0.9.1")
 
 // sbt-jacoco dependency downloading
 lazy val ow2Version = "9.5"
