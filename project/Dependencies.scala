@@ -64,18 +64,20 @@ object Dependencies {
     )
   }
 
-
   def agentDependencies(sparkVersion: String): Seq[ModuleID] = {
 
-    val sparkMinorVersion = getSparkVersionUpToMinor(sparkVersion)
+    val typesafeVersion     = "1.4.2"
+    val sparkCommonsVersion = "0.6.6"
+    val sparkMinorVersion   = getSparkVersionUpToMinor(sparkVersion)
+    val specs2CoreVersion   = "4.19.2"
 
     Seq(
-        "org.apache.spark" %% "spark-core" % sparkVersion % Provided,
-        "org.apache.spark" %% "spark-sql" %  sparkVersion % Provided,
-        "com.typesafe" % "config" % "1.4.2", // to check if used
-        "za.co.absa" %% s"spark-commons-$sparkMinorVersion" % "0.6.0",
-        "za.co.absa" %% "spark-commons-test" % "0.6.0" % Test,
-        "org.specs2" %% "specs2-core" % "4.19.2" % Test, // to check
+        "org.apache.spark" %% "spark-core"                        % sparkVersion % Provided,
+        "org.apache.spark" %% "spark-sql"                         % sparkVersion % Provided,
+        "com.typesafe"      % "config"                            % typesafeVersion, // to check if used
+        "za.co.absa"       %% s"spark-commons-$sparkMinorVersion" % sparkCommonsVersion,
+        "za.co.absa"       %% "spark-commons-test"                % sparkCommonsVersion % Test,
+        "org.specs2"       %% "specs2-core"                       % specs2CoreVersion % Test, // to check
     )
 
   }

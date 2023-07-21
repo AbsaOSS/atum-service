@@ -16,7 +16,6 @@
 import Dependencies._
 import SparkVersionAxis._
 
-ThisBuild / name := "atum-service"
 ThisBuild / organization := "za.co.absa"
 
 lazy val scala211 = "2.11.12"
@@ -47,7 +46,6 @@ lazy val atumAgent = (projectMatrix in file("agent"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-agent",
-      libraryDependencies ++= Dependencies.agentDependencies(???),
       scalafmtOnCompile := true
     )
   )

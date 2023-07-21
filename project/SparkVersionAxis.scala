@@ -13,15 +13,18 @@
  * limitations under the License.
  */
 
-//import Dependencies.sparkCommonsDependencies
-import JacocoSetup.{jacocoProjectExcludes, jacocoSettings}
-import sbt.Keys.{libraryDependencies, moduleName, name}
-import sbt.{Def, VirtualAxis}
+import sbt._
+import sbt.Keys._
 import sbt.internal.ProjectMatrix
+import Dependencies._
+//import JacocoSetup._
+//import com.github.sbt.jacoco.JacocoKeys.{jacocoExcludes, jacocoReportSettings}
+
 
 case class SparkVersionAxis(sparkVersion: String) extends sbt.VirtualAxis.WeakAxis {
-  val sparkVersionMinor: String = sparkVersion.split("\\.", 3).take(2).mkString(".")
-  override val directorySuffix = s"-spark${sparkVersionMinor}"
+
+  val sparkVersionMajor: String = sparkVersion.split("\\.", 2).take(1).mkString(".")
+  override val directorySuffix = s"-spark${sparkVersionMajor}"
   override val idSuffix: String = directorySuffix.replaceAll("""\W+""", "_")
 }
 
@@ -42,9 +45,9 @@ object SparkVersionAxis {
           axisValues = Seq(sparkAxis, VirtualAxis.jvm),
           _.settings(
             moduleName := camelCaseToLowerDashCase(name.value + sparkAxis.directorySuffix),
-            libraryDependencies ++= sparkCommonsDependencies(sparkAxis.sparkVersion),
-            jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion),
-            jacocoExcludes := jacocoProjectExcludes(sparkVersion, scalaVersion)
+            libraryDependencies ++= agentDependencies(sparkAxis.sparkVersion),
+//            jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion),
+//            jacocoExcludes := jacocoProjectExcludes(sparkVersion, scalaVersion)
           ).settings(settings: _*)
         )
       )
