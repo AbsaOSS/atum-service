@@ -23,7 +23,7 @@ import Dependencies._
 
 case class SparkVersionAxis(sparkVersion: String) extends sbt.VirtualAxis.WeakAxis {
 
-  val sparkVersionMajor: String = sparkVersion.split("\\.", 2).take(1).mkString(".")
+  val sparkVersionMajor: String = Dependencies.getVersionUpToMajor(sparkVersion)
   override val directorySuffix = s"-spark${sparkVersionMajor}"
   override val idSuffix: String = directorySuffix.replaceAll("""\W+""", "_")
 }

@@ -17,10 +17,16 @@
 import sbt._
 
 object Dependencies {
-  private def getSparkVersionUpToMinor(sparkVersion: String): String = {
-    val pattern = "([0-9]+)\\.([0-9]+)\\.([0-9]+)".r
-    val pattern(major, minor, patch) = sparkVersion
-    s"$major.$minor"
+  private def limitVersion(version: String, parts: Int): String = {
+    version.split("\\.", parts + 1).take(parts).mkString(".")
+  }
+
+  def getVersionUpToMinor(version: String): String = {
+    limitVersion(version, 2)
+  }
+
+  def getVersionUpToMajor(version: String): String = {
+    limitVersion(version, 1)
   }
 
   def commonDependencies: Seq[ModuleID] = Seq(
@@ -67,17 +73,16 @@ object Dependencies {
   def agentDependencies(sparkVersion: String): Seq[ModuleID] = {
 
     val typesafeVersion     = "1.4.2"
-    val sparkCommonsVersion = "0.6.6"
-    val sparkMinorVersion   = getSparkVersionUpToMinor(sparkVersion)
+    val sparkCommonsVersion = "0.6.0"
+    val sparkMinorVersion   = getVersionUpToMinor(sparkVersion)
     val specs2CoreVersion   = "4.19.2"
 
     Seq(
-        "org.apache.spark" %% "spark-core"                        % sparkVersion % Provided,
-        "org.apache.spark" %% "spark-sql"                         % sparkVersion % Provided,
-        "com.typesafe"      % "config"                            % typesafeVersion, // to check if used
-        "za.co.absa"       %% s"spark-commons-$sparkMinorVersion" % sparkCommonsVersion,
-        "za.co.absa"       %% "spark-commons-test"                % sparkCommonsVersion % Test,
-        "org.specs2"       %% "specs2-core"                       % specs2CoreVersion % Test, // to check
+        "org.apache.spark" %% "spark-core"                               % sparkVersion % Provided,
+        "org.apache.spark" %% "spark-sql"                                % sparkVersion % Provided,
+        "com.typesafe"      % "config"                                   % typesafeVersion, //TODO to check if used
+        "za.co.absa"       %% s"spark-commons-spark${sparkMinorVersion}" % sparkCommonsVersion,
+        "za.co.absa"       %% "spark-commons-test"                       % sparkCommonsVersion % Test,
     )
 
   }
