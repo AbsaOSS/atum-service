@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2021 ABSA Group Limited
  *
@@ -13,4 +14,18 @@
  * limitations under the License.
  */
 
-object JacocoSetup
+
+
+import com.github.sbt.jacoco.JacocoKeys.JacocoReportFormats
+import com.github.sbt.jacoco.report.JacocoReportSettings
+
+import java.time.format.DateTimeFormatter
+import java.time.{ZoneId, ZonedDateTime}
+
+object JacocoSetup {
+
+  private val jacocoReportCommonSettings: JacocoReportSettings = JacocoReportSettings(
+    formats = Seq(JacocoReportFormats.HTML, JacocoReportFormats.XML)
+  )
+
+}
