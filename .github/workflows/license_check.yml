@@ -17,11 +17,9 @@
 name: License Check
 
 on:
-  push:
-    branches: [ main, develop, master ]
   pull_request:
     branches: [ master ]
-    types: [ assigned, opened, synchronize, reopened, labeled ]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   license-test:
