@@ -28,7 +28,7 @@ object JacocoSetup {
   def jacocoSettings(sparkVersion: String, scalaVersion: String): JacocoReportSettings = {
     val utcDateTime = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC"))
     val now = s"as of ${DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm Z z").format(utcDateTime)}"
-    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `spark-commons` for spark:$sparkVersion - scala:$scalaVersion [$now]")
+    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `atum-service` for spark:$sparkVersion - scala:$scalaVersion [$now]")
   }
 
   def jacocoProjectExcludes(sparkVersion: String, scalaVersion: String): Seq[String] = {
