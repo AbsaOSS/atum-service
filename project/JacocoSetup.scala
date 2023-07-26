@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2021 ABSA Group Limited
  *
@@ -14,8 +13,6 @@
  * limitations under the License.
  */
 
-
-
 import com.github.sbt.jacoco.JacocoKeys.JacocoReportFormats
 import com.github.sbt.jacoco.report.JacocoReportSettings
 
@@ -27,5 +24,18 @@ object JacocoSetup {
   private val jacocoReportCommonSettings: JacocoReportSettings = JacocoReportSettings(
     formats = Seq(JacocoReportFormats.HTML, JacocoReportFormats.XML)
   )
+
+  def jacocoSettings(sparkVersion: String, scalaVersion: String): JacocoReportSettings = {
+    val utcDateTime = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC"))
+    val now = s"as of ${DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm Z z").format(utcDateTime)}"
+    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `spark-commons` for spark:$sparkVersion - scala:$scalaVersion [$now]")
+  }
+
+  def jacocoProjectExcludes(sparkVersion: String, scalaVersion: String): Seq[String] = {
+    Seq(
+      "za.co.absa.atum.service.adapters.CallUdfAdapter",
+      "za.co.absa.atum.service.adapters.TransformAdapter"
+    )
+  }
 
 }

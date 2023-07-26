@@ -66,10 +66,4 @@ lazy val atumServer = (projectMatrix in file("server"))
   .enablePlugins(AutomateHeaderPlugin)
   .jvmPlatform(scalaVersions = Seq(scala212))
 
-//lazy val agent = project
-//  .settings(
-//    name         := "atum-agent",
-//    scalaVersion := scala212,
-//    libraryDependencies ++= Dependencies.agentDependencies,
-//    scalafmtOnCompile := true
-//  ).enablePlugins(ScalafmtPlugin)
+

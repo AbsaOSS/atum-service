@@ -17,9 +17,8 @@ import sbt._
 import sbt.Keys._
 import sbt.internal.ProjectMatrix
 import Dependencies._
-//import JacocoSetup._
-//import com.github.sbt.jacoco.JacocoKeys.{jacocoExcludes, jacocoReportSettings}
-
+import JacocoSetup._
+import com.github.sbt.jacoco.JacocoKeys.{jacocoExcludes, jacocoReportSettings}
 
 case class SparkVersionAxis(sparkVersion: String) extends sbt.VirtualAxis.WeakAxis {
 
@@ -46,8 +45,8 @@ object SparkVersionAxis {
           _.settings(
             moduleName := camelCaseToLowerDashCase(name.value + sparkAxis.directorySuffix),
             libraryDependencies ++= agentDependencies(sparkAxis.sparkVersion),
-//            jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion),
-//            jacocoExcludes := jacocoProjectExcludes(sparkVersion, scalaVersion)
+            jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion),
+            jacocoExcludes := jacocoProjectExcludes(sparkVersion, scalaVersion)
           ).settings(settings: _*)
         )
       )
