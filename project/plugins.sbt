@@ -15,7 +15,7 @@
  */
 
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
-addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.6.0")
+addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
 
 
