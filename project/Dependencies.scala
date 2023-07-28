@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
+
 import sbt._
 
 object Dependencies {
-
-  //Todo this dependencies should be
 
   val serverDependencies: Seq[ModuleID] = {
     val springVersion = "2.6.1"
@@ -54,7 +53,30 @@ object Dependencies {
     )
   }
 
-}
+
+  val agentDependencies: Seq[ModuleID] = {
+
+    val spark3Version = "3.3.2"
+    val scala212 = "2.12.12"
+    val scalatestVersion = "3.2.15"
+    val specs2Version = "4.19.2"
+    val typesafeConfigVersion = "1.4.2"
+
+    lazy val sparkCore = "org.apache.spark" %% "spark-core" % spark3Version
+
+    lazy val sparkCommons = "za.co.absa" % "spark-commons-spark3.3_2.12" % "0.5.0"
+
+    lazy val sparkCommonsTest = "za.co.absa" %% "spark-commons-test" % "0.5.0" % Test
+
+    lazy val sparkSql ="org.apache.spark" %% "spark-sql" %  spark3Version
+    lazy val scalaTest = "org.scalatest" %% "scalatest" % scalatestVersion % Test
+    lazy val specs2core = "org.specs2" %% "specs2-core" % specs2Version % Test
+    lazy val typeSafeConfig = "com.typesafe" % "config" % typesafeConfigVersion
+
+
+    Seq(sparkCore, sparkCommons, sparkCommonsTest, sparkSql, scalaTest, specs2core, typeSafeConfig)
+
+  }}
 
 
 
