@@ -36,5 +36,5 @@ addSbtPlugin("org.ow2.asm" % "asm" % ow2Version from ow2Url("asm"))
 addSbtPlugin("org.ow2.asm" % "asm-commons" % ow2Version from ow2Url("asm-commons"))
 addSbtPlugin("org.ow2.asm" % "asm-tree" % ow2Version from ow2Url("asm-tree"))
 
-addSbtPlugin("za.co.absa.sbt" % "sbt-jacoco" % "3.4.1-absa.3" from "https://github.com/AbsaOSS/sbt-jacoco/releases/download/3.4.1-absa.3/sbt-jacoco-3.4.1-absa.3.jar")
+addSbtPlugin("za.co.absa.sbt" % "sbt-jacoco" % "3.4.1-absa.4" from "https://github.com/AbsaOSS/sbt-jacoco/releases/download/3.4.1-absa.4/sbt-jacoco-3.4.1-absa.4.jar")
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.2")
