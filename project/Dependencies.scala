@@ -80,7 +80,7 @@ object Dependencies {
     Seq(
         "org.apache.spark" %% "spark-core"                               % sparkVersion % Provided,
         "org.apache.spark" %% "spark-sql"                                % sparkVersion % Provided,
-        "com.typesafe"      % "config"                                   % typesafeVersion, //TODO to check if used
+        "com.typesafe"      % "config"                                   % typesafeVersion, //TODO - check if used
         "za.co.absa"       %% s"spark-commons-spark${sparkMinorVersion}" % sparkCommonsVersion,
         "za.co.absa"       %% "spark-commons-test"                       % sparkCommonsVersion % Test,
     )
