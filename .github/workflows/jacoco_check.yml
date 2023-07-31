@@ -37,7 +37,7 @@ jobs:
         id: jacoco211
         uses: madrapps/jacoco-report@v1.3
         with:
-          paths: ${{ github.workspace }}/atum-service/target/spark2.4-jvm-2.11/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/target/spark2.4-jvm-2.11/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 0.0
           min-coverage-changed-files: 80.0
