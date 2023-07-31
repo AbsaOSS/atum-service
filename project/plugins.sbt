@@ -40,4 +40,5 @@ addSbtPlugin("za.co.absa.sbt" % "sbt-jacoco" % "3.4.1-absa.4" from "https://gith
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.2")
 
 // To add release plugin
+addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 
