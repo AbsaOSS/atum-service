@@ -25,13 +25,19 @@ object JacocoSetup {
     formats = Seq(JacocoReportFormats.HTML, JacocoReportFormats.XML)
   )
 
-  def jacocoSettings(sparkVersion: String, scalaVersion: String): JacocoReportSettings = {
+  def jacocoSettings(sparkVersion: String, scalaVersion: String, moduleName: String): JacocoReportSettings = {
     val utcDateTime = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC"))
     val now = s"as of ${DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm Z z").format(utcDateTime)}"
-    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `atum-service` for spark:$sparkVersion - scala:$scalaVersion [$now]")
+    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `$moduleName` for spark:$sparkVersion - scala:$scalaVersion [$now]")
   }
 
-  def jacocoProjectExcludes(sparkVersion: String, scalaVersion: String): Seq[String] = {
+  def jacocoSettings(scalaVersion: String, moduleName: String): JacocoReportSettings = {
+    val utcDateTime = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC"))
+    val now = s"as of ${DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm Z z").format(utcDateTime)}"
+    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `$moduleName` for scala:$scalaVersion [$now]")
+  }
+
+  def jacocoProjectExcludes(): Seq[String] = {
     Seq(
       "za.co.absa.atum.service.adapters.CallUdfAdapter",
       "za.co.absa.atum.service.adapters.TransformAdapter"

@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-import sbt.*
-import sbt.Keys.*
+import sbt.{Def, VirtualAxis}
+import sbt.Keys.{libraryDependencies, moduleName}
 import sbt.internal.ProjectMatrix
-import Dependencies.*
-import JacocoSetup.*
+import Dependencies.agentDependencies
+import JacocoSetup.{jacocoProjectExcludes, jacocoSettings}
 import com.github.sbt.jacoco.JacocoKeys.{jacocoExcludes, jacocoReportSettings}
 
 case class SparkVersionAxis(sparkVersion: String) extends sbt.VirtualAxis.WeakAxis {
@@ -45,8 +45,8 @@ object SparkVersionAxis {
           _.settings(
             moduleName := camelCaseToLowerDashCase(name.value + sparkAxis.directorySuffix),
             libraryDependencies ++= agentDependencies(sparkAxis.sparkVersion),
-            jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion),
-            jacocoExcludes := jacocoProjectExcludes(sparkVersion, scalaVersion)
+            jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion, "atum-agent"),
+            jacocoExcludes := jacocoProjectExcludes()
           ).settings(settings: _*)
         )
       )

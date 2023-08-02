@@ -1,6 +1,7 @@
 
 import Dependencies._
 import SparkVersionAxis._
+import JacocoSetup._
 
 ThisBuild / organization := "za.co.absa"
 
@@ -47,6 +48,10 @@ lazy val atumServer = (projectMatrix in file("server"))
       webappWebInfClasses := true,
       inheritJarManifest := true
     ): _*
+  )
+  .settings(
+    jacocoReportSettings := jacocoSettings( scalaVersion.value, "atum-server"),
+    jacocoExcludes := jacocoProjectExcludes()
   )
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
