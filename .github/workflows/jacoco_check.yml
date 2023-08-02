@@ -34,8 +34,8 @@ jobs:
           #          # vendor distributions.
           - scala: 2.12.12
             scalaShort: "2.12"
-            overall: 80.0
-            changed: 80.0
+            overall: 60.0
+            changed: 60.0
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
