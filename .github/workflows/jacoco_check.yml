@@ -45,9 +45,9 @@ jobs:
           java-version: "adopt@1.8"
       - name: Build and run tests
         run: sbt ++${{matrix.scala}} jacoco
-#     Agent and server module code coverage
+     #  Agent and server module code coverage
       - name: Add coverage to PR
-        id: jacoco
+        id: jacoco-agent
         uses: madrapps/jacoco-report@v1.3
         with:
           paths: |
@@ -58,9 +58,9 @@ jobs:
           min-coverage-changed-file: ${{ matrix.changed }}
           title: JaCoCo agent module code coverage report - scala ${{ matrix.scala }}
           updated-comment: true
-#     server module code coverage
+     #  server module code coverage
       - name: Add coverage to PR
-        id: jacoco
+        id: jacoco-server
         uses: madrapps/jacoco-report@v1.3
         with:
           paths: ${{ github.workspace }}/server/target/jvm-2.12/jacoco/report/jacoco.xml
@@ -71,10 +71,14 @@ jobs:
           updated-comment: true
       - name: Get the Coverage info
         run: |
-          echo "Total coverage ${{ steps.jacoco.outputs.coverage-overall }}"
-          echo "Changed Files coverage ${{ steps.jacoco.outputs.coverage-changed-files }}"
+          echo "Total agent module coverage ${{ steps.jacoco-agent.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
+          echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ matrix.changed }}%
-        if: ${{ steps.jacoco.outputs.coverage-changed-files < 60.0 }}
+        if: |
+          ${{ steps.jacoco.outputs.coverage-changed-files < 60.0 }} &&
+          ${{ steps.jacoco-server.outputs.coverage-changed-files < 60.0 }}
         uses: actions/github-script@v6
         with:
           script: |
