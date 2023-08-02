@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-import sbt.{Def, VirtualAxis}
-import sbt.Keys.{libraryDependencies, moduleName}
+import sbt.{Def, Keys, VirtualAxis}
+import sbt.Keys.{libraryDependencies, moduleName, name}
 import sbt.internal.ProjectMatrix
 import Dependencies.agentDependencies
 import JacocoSetup.{jacocoProjectExcludes, jacocoSettings}
