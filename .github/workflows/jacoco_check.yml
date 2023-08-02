@@ -34,8 +34,8 @@ jobs:
           #          # vendor distributions.
           - scala: 2.12.12
             scalaShort: "2.12"
-            overall: 60.0
-            changed: 60.0
+            overall: 80.0
+            changed: 80.0
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -77,8 +77,8 @@ jobs:
           echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ matrix.changed }}%
         if: |
-          ${{ steps.jacoco.outputs.coverage-changed-files < 60.0 }} &&
-          ${{ steps.jacoco-server.outputs.coverage-changed-files < 60.0 }}
+          ${{ steps.jacoco.outputs.coverage-changed-files < 80.0 }} &&
+          ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }}
         uses: actions/github-script@v6
         with:
           script: |
