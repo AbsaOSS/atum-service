@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-import sbt._
-import sbt.Keys._
+import sbt.*
+import sbt.Keys.*
 import sbt.internal.ProjectMatrix
-import Dependencies._
-import JacocoSetup._
+import Dependencies.*
+import JacocoSetup.*
 import com.github.sbt.jacoco.JacocoKeys.{jacocoExcludes, jacocoReportSettings}
 
 case class SparkVersionAxis(sparkVersion: String) extends sbt.VirtualAxis.WeakAxis {

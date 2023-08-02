@@ -45,16 +45,30 @@ jobs:
           java-version: "adopt@1.8"
       - name: Build and run tests
         run: sbt ++${{matrix.scala}} jacoco
+#     Agent and server module code coverage
       - name: Add coverage to PR
         id: jacoco
         uses: madrapps/jacoco-report@v1.3
         with:
-          paths: ${{ github.workspace }}/agent/target/spark2-jvm-2.12/jacoco/report/jacoco.xml
+          paths: |
+            ${{ github.workspace }}/agent/target/spark2-jvm-2.12/jacoco/report/jacoco.xml
+            ${{ github.workspace }}/server/target/jvm-2.12/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
-          title: JaCoCo code coverage report - scala ${{ matrix.scala }}
+          title: JaCoCo agent module code coverage report - scala ${{ matrix.scala }}
           updated-comment: true
+#     server module code coverage
+#      - name: Add coverage to PR
+#        id: jacoco
+#        uses: madrapps/jacoco-report@v1.3
+#        with:
+#          paths: ${{ github.workspace }}/server/target/jvm-2.12/jacoco/report/jacoco.xml
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          min-coverage-overall: ${{matrix.overall }}
+#          min-coverage-changed-file: ${{ matrix.changed }}
+#          title: JaCoCo server module code coverage report - scala ${{ matrix.scala }}
+#          updated-comment: true
       - name: Get the Coverage info
         run: |
           echo "Total coverage ${{ steps.jacoco.outputs.coverage-overall }}"
