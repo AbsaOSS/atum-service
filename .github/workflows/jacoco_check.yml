@@ -52,7 +52,7 @@ jobs:
         uses: madrapps/jacoco-report@v1.3
         with:
           name: agent-jacoco-report
-          paths: ${{ github.workspace }}/agent/target/spark2-jvm-2.12/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
@@ -64,7 +64,7 @@ jobs:
         uses: madrapps/jacoco-report@v1.3
         with:
           name: server-jacoco-report
-          paths: ${{ github.workspace }}/server/target/jvm-2.12/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/server/target/jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
