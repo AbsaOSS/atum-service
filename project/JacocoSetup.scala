@@ -38,10 +38,7 @@ object JacocoSetup {
   }
 
   def jacocoProjectExcludes(): Seq[String] = {
-    Seq(
-      "za.co.absa.atum.service.adapters.CallUdfAdapter",
-      "za.co.absa.atum.service.adapters.TransformAdapter"
-    )
+    Seq()
   }
 
 }
