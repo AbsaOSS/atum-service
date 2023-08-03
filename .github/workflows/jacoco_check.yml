@@ -55,6 +55,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
+          title: JaCoCo agent module code coverage report - spark:2 - scala ${{ matrix.scala }}
           updated-comment: true
      #  server module code coverage
       - name: Add coverage to PR
@@ -66,6 +67,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
+          title: JaCoCo server module code coverage report - scala ${{ matrix.scala }}
           updated-comment: true
       - name: Get the Coverage info
         run: |
