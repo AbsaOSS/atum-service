@@ -19,7 +19,7 @@ name: License Check
 on:
   pull_request:
     branches: [ master ]
-    types: [ opened, synchronize, reopened ]
+    types: [ opened, edited, synchronize, reopened ]
 
 jobs:
   license-test:
