@@ -14,6 +14,47 @@
  * limitations under the License.
  */
 
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    browseUrl = url("https://github.com/AbsaOSS/atum-service/tree/master"),
+    connection = "scm:git:git://github.com/AbsaOSS/atum-service.git",
+    devConnection = "scm:git:ssh://github.com/AbsaOSS/atum-service.git"
+  )
+)
+
+ThisBuild / developers := List(
+  Developer(
+    id = "Zejnilovic",
+    name = "Saša Zejnilović",
+    email = "sasa.zejnilovic@absa.africa",
+    url = url("https://github.com/Zejnilovic")
+  ),
+  Developer(
+    id    = "benedeki",
+    name  = "David Benedeki",
+    email = "david.benedeki@absa.africa",
+    url   = url("https://github.com/benedeki")
+  ),
+  Developer(
+    id = "miroslavpojer",
+    name = "Miroslav Pojer",
+    email = "miroslav.pojer@absa.africa",
+    url = url("https://github.com/miroslavpojer")
+  ),
+  Developer(
+    id = "lsulak",
+    name = "Ladislav Sulak",
+    email = "ladislav.sulak@absa.africa",
+    url = url("https://github.com/lsulak")
+  ),
+  Developer(
+    id = "TebaleloS",
+    name = "Tebalelo Sekhula",
+    email = "tebalelo.sekhula@absa.africa",
+    url = url("https://github.com/TebaleloS")
+  )
+)
+
 ThisBuild / organizationName := "ABSA Group Limited"
 ThisBuild / organizationHomepage := Some(url("https://www.absa.africa"))
 
