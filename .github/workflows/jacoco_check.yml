@@ -55,7 +55,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
-          title: JaCoCo agent module code coverage report - scala ${{ matrix.scala }}
           updated-comment: true
      #  server module code coverage
       - name: Add coverage to PR
@@ -67,7 +66,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
-          title: JaCoCo server module code coverage report - scala ${{ matrix.scala }}
           updated-comment: true
       - name: Get the Coverage info
         run: |
@@ -77,7 +75,7 @@ jobs:
           echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ matrix.changed }}%
         if: |
-          ${{ steps.jacoco.outputs.coverage-changed-files < 80.0 }} &&
+          ${{ steps.jacoco-agent.outputs.coverage-changed-files < 80.0 }} &&
           ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }}
         uses: actions/github-script@v6
         with:
