@@ -46,7 +46,7 @@ jobs:
           java-version: "adopt@1.8"
       - name: Build and run tests
         run: sbt ++${{matrix.scala}} jacoco
-     #  Agent and server module code coverage
+     #  Agent module code coverage
       - name: Add coverage to PR
         id: jacoco-agent
         uses: madrapps/jacoco-report@v1.3
@@ -57,7 +57,6 @@ jobs:
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
           title: JaCoCo agent module code coverage report - spark:2 - scala ${{ matrix.scala }}
-          updated-comment: true
      #  server module code coverage
       - name: Add coverage to PR
         id: jacoco-server
@@ -69,7 +68,6 @@ jobs:
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
           title: JaCoCo server module code coverage report - scala ${{ matrix.scala }}
-          updated-comment: true
       - name: Get the Coverage info
         run: |
           echo "Total agent module coverage ${{ steps.jacoco-agent.outputs.coverage-overall }}"
