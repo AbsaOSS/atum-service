@@ -18,6 +18,9 @@ addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
 
+addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.0")
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
 
 

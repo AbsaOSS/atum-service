@@ -17,6 +17,8 @@ import Dependencies._
 
 ThisBuild / organization := "za.co.absa"
 
+enablePlugins(JettyPlugin)
+
 lazy val scala211 = "2.11.12"
 lazy val scala212 = "2.12.12"
 
@@ -36,8 +38,18 @@ lazy val server = project
     scalaVersion := scala212,
     libraryDependencies ++= Dependencies.serverDependencies,
     webappWebInfClasses := true,
-    inheritJarManifest  := true
+    inheritJarManifest  := true,
+    Compile / packageBin / publishArtifact := false, // disable .jar publishing
+    // create an Artifact for publishing the .war file
+//    Compile / packageWar / artifact := {
+//      val prev: Artifact = (Compile / packageWar / artifact).value
+//      prev.withType("war").withExtension("war")
+//    },
+//
+//    // add the .war file to what gets published
+//    addArtifact(Compile / packageWar / artifact, packageWar)
   )
+  .enablePlugins(JettyPlugin)
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
 
