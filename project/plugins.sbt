@@ -19,6 +19,9 @@ addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
 addSbtPlugin("com.eed3si9n"       % "sbt-projectmatrix" % "0.9.1")
 
+// To add release plugin
+addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
+
 // sbt-jacoco dependency downloading
 lazy val ow2Version = "9.5"
 lazy val jacocoVersion = "0.8.11-absa.1"
@@ -39,6 +42,5 @@ addSbtPlugin("org.ow2.asm" % "asm-tree" % ow2Version from ow2Url("asm-tree"))
 addSbtPlugin("za.co.absa.sbt" % "sbt-jacoco" % "3.4.1-absa.4" from "https://github.com/AbsaOSS/sbt-jacoco/releases/download/3.4.1-absa.4/sbt-jacoco-3.4.1-absa.4.jar")
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.2")
 
-// To add release plugin
-addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
+
 
