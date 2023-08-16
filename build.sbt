@@ -41,17 +41,8 @@ lazy val server = (project in file("server"))
     libraryDependencies ++= Dependencies.serverDependencies,
     webappWebInfClasses := true,
     inheritJarManifest  := true,
-//    Compile / packageBin / publishArtifact := false, // disable .jar publishing
-    // create an Artifact for publishing the .war file
-//    Compile / packageWar / artifact := {
-//      val prev: Artifact = (Compile / packageWar / artifact).value
-//      prev.withType("war").withExtension("war")
-//    },
-//
-//    // add the .war file to what gets published
-//    addArtifact(Compile / packageWar / artifact, packageWar)
-//    resourceDirectory in Compile := (webappResources in Compile).value,
-//    artifactPath in (Compile, packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war"
+    resourceDirectory in Compile := (webappResources in Compile).value,
+    artifactPath in (Compile, packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war"
   )
   .enablePlugins(JettyPlugin)
   .enablePlugins(TomcatPlugin)
