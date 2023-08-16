@@ -15,11 +15,12 @@
  */
 
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
+//addSbtPlugin("com.github.earldouglas" % "xsbt-web-plugin" % "5.1.1")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
 
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.0")
-addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2")
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
 

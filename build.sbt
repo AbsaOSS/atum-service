@@ -27,12 +27,14 @@ Test / parallelExecution := false
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 lazy val root = (project in file("."))
+  .aggregate(server, agent)
   .settings(
     name := "atum-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
   )
 
-lazy val server = project
+lazy val server = (project in file("server"))
+//  .enablePlugins(SbtWeb)
   .settings(
     name         := "atum-server",
     scalaVersion := scala212,
@@ -48,12 +50,14 @@ lazy val server = project
 //
 //    // add the .war file to what gets published
 //    addArtifact(Compile / packageWar / artifact, packageWar)
+//    resourceDirectory in Compile := (webappResources in Compile).value,
+//    artifactPath in (Compile, packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war"
   )
   .enablePlugins(JettyPlugin)
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
 
-lazy val agent = project
+lazy val agent = (project in file("agent"))
   .settings(
     name         := "atum-agent",
     scalaVersion := scala212,
