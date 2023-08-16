@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
-//addSbtPlugin("com.github.earldouglas" % "xsbt-web-plugin" % "5.1.1")
+//addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
+addSbtPlugin("com.github.earldouglas" % "xsbt-web-plugin" % "5.1.1")
+addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.5.3")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
 

@@ -34,14 +34,14 @@ lazy val root = (project in file("."))
   )
 
 lazy val server = (project in file("server"))
-//  .enablePlugins(SbtWeb)
+  .enablePlugins(SbtWeb)
   .settings(
     name         := "atum-server",
     scalaVersion := scala212,
     libraryDependencies ++= Dependencies.serverDependencies,
     webappWebInfClasses := true,
     inheritJarManifest  := true,
-    Compile / packageBin / publishArtifact := false, // disable .jar publishing
+//    Compile / packageBin / publishArtifact := false, // disable .jar publishing
     // create an Artifact for publishing the .war file
 //    Compile / packageWar / artifact := {
 //      val prev: Artifact = (Compile / packageWar / artifact).value
