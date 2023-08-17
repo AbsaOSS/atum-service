@@ -17,9 +17,25 @@
 import sbt._
 
 object Dependencies {
+  private def limitVersion(version: String, parts: Int): String = {
+    version.split("\\.", parts + 1).take(parts).mkString(".")
+  }
 
-  val serverDependencies: Seq[ModuleID] = {
-    val springVersion = "3.1.0"
+  def getVersionUpToMinor(version: String): String = {
+    limitVersion(version, 2)
+  }
+
+  def getVersionUpToMajor(version: String): String = {
+    limitVersion(version, 1)
+  }
+
+  def commonDependencies: Seq[ModuleID] = Seq(
+    "org.scalatest" %% "scalatest" % "3.2.2" % Test,
+    "org.mockito" %% "mockito-scala" % "1.17.12" % Test
+  )
+
+  def serverDependencies: Seq[ModuleID] = {
+    val springVersion = "2.6.1"
     val springOrg = "org.springframework.boot"
 
     lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.15"
@@ -53,30 +69,24 @@ object Dependencies {
     )
   }
 
+  def agentDependencies(sparkVersion: String): Seq[ModuleID] = {
 
-  val agentDependencies: Seq[ModuleID] = {
+    val typesafeVersion     = "1.4.2"
+    val sparkCommonsVersion = "0.6.0"
+    val sparkMinorVersion   = getVersionUpToMinor(sparkVersion)
+    val specs2CoreVersion   = "4.19.2"
 
-    val spark3Version = "3.3.2"
-    val scala212 = "2.12.12"
-    val scalatestVersion = "3.2.15"
-    val specs2Version = "4.19.2"
-    val typesafeConfigVersion = "1.4.2"
+    Seq(
+        "org.apache.spark" %% "spark-core"                               % sparkVersion % Provided,
+        "org.apache.spark" %% "spark-sql"                                % sparkVersion % Provided,
+        "com.typesafe"      % "config"                                   % typesafeVersion,
+        "za.co.absa"       %% s"spark-commons-spark${sparkMinorVersion}" % sparkCommonsVersion,
+        "za.co.absa"       %% "spark-commons-test"                       % sparkCommonsVersion % Test,
+    )
 
-    lazy val sparkCore = "org.apache.spark" %% "spark-core" % spark3Version
+  }
 
-    lazy val sparkCommons = "za.co.absa" % "spark-commons-spark3.3_2.12" % "0.5.0"
-
-    lazy val sparkCommonsTest = "za.co.absa" %% "spark-commons-test" % "0.5.0" % Test
-
-    lazy val sparkSql ="org.apache.spark" %% "spark-sql" %  spark3Version
-    lazy val scalaTest = "org.scalatest" %% "scalatest" % scalatestVersion % Test
-    lazy val specs2core = "org.specs2" %% "specs2-core" % specs2Version % Test
-    lazy val typeSafeConfig = "com.typesafe" % "config" % typesafeConfigVersion
-
-
-    Seq(sparkCore, sparkCommons, sparkCommonsTest, sparkSql, scalaTest, specs2core, typeSafeConfig)
-
-  }}
+}
 
 
 

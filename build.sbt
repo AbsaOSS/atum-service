@@ -4,6 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,44 +15,76 @@
  */
 
 import Dependencies._
+import SparkVersionAxis._
+import JacocoSetup._
+import sbt.Keys.name
 
-ThisBuild / organization := "za.co.absa"
-
-enablePlugins(JettyPlugin)
+ThisBuild / organization := "za.co.absa.atum-service"
 
 lazy val scala211 = "2.11.12"
 lazy val scala212 = "2.12.12"
+lazy val spark2 = "2.4.7"
+lazy val spark3 = "3.3.1"
 
-Test / parallelExecution := false
+ThisBuild / crossScalaVersions := Seq(scala211, scala212)
+ThisBuild / scalaVersion := scala212
+
+ThisBuild / versionScheme := Some("early-semver")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-lazy val root = (project in file("."))
-  .aggregate(server, agent)
+lazy val printScalaVersion = taskKey[Unit]("Print Scala versions for atum-service is being built for.")
+
+ThisBuild / printScalaVersion := {
+  val log = streams.value.log
+  log.info(s"Building with Scala ${scalaVersion.value}")
+}
+
+lazy val commonSettings = Seq(
+  libraryDependencies ++= commonDependencies,
+  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
+  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
+  Test / parallelExecution := false
+)
+
+lazy val parent = (project in file("."))
+  .aggregate(atumServer.projectRefs ++ atumAgent.projectRefs: _*)
   .settings(
-    name := "atum-root",
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+    name := "atum-service-parent",
+    publish / skip := true
   )
 
-lazy val server = (project in file("server"))
-  .enablePlugins(SbtWeb)
+lazy val atumAgent = (projectMatrix in file("agent"))
   .settings(
-    name         := "atum-server",
-    scalaVersion := scala212,
-    libraryDependencies ++= Dependencies.serverDependencies,
-    webappWebInfClasses := true,
-    inheritJarManifest  := true,
-    resourceDirectory in Compile := (webappResources in Compile).value,
-    artifactPath in (Compile, packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war"
+    commonSettings ++ Seq(
+      name := "atum-agent",
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
+      scalafmtOnCompile := true
+    )
   )
-  .enablePlugins(JettyPlugin)
+  .enablePlugins(ScalafmtPlugin)
+  .sparkRow(SparkVersionAxis(spark2), scalaVersions = Seq(scala211, scala212))
+  .sparkRow(SparkVersionAxis(spark3), scalaVersions = Seq(scala212))
+
+lazy val atumServer = (projectMatrix in file("server"))
+  .enablePlugins(AssemblyPlugin)
+  .settings(
+    commonSettings ++ Seq(
+      name := "atum-server",
+      libraryDependencies ++= Dependencies.serverDependencies,
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
+      packageBin := (assembly in  Compile).value,
+      artifactPath in (Compile, packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
+//      assemblyOutputPath / assembly := baseDirectory.value / s"target/${name.value}-${version.value}.war",
+      webappWebInfClasses := true,
+      inheritJarManifest := true
+    ): _*
+  )
+  .settings(
+    jacocoReportSettings := jacocoSettings( scalaVersion.value, "atum-server"),
+    jacocoExcludes := jacocoProjectExcludes()
+  )
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
+  .jvmPlatform(scalaVersions = Seq(scala212))
 
-lazy val agent = (project in file("agent"))
-  .settings(
-    name         := "atum-agent",
-    scalaVersion := scala212,
-    libraryDependencies ++= Dependencies.agentDependencies,
-    scalafmtOnCompile := true
-  ).enablePlugins(ScalafmtPlugin)
