@@ -67,7 +67,6 @@ lazy val atumAgent = (projectMatrix in file("agent"))
   .sparkRow(SparkVersionAxis(spark3), scalaVersions = Seq(scala212))
 
 lazy val atumServer = (projectMatrix in file("server"))
-  .enablePlugins(AssemblyPlugin)
   .settings(
     commonSettings ++ Seq(
       name := "atum-server",
@@ -75,7 +74,6 @@ lazy val atumServer = (projectMatrix in file("server"))
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       packageBin := (assembly in  Compile).value,
       artifactPath in (Compile, packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
-//      assemblyOutputPath / assembly := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
       inheritJarManifest := true
     ): _*
@@ -84,6 +82,7 @@ lazy val atumServer = (projectMatrix in file("server"))
     jacocoReportSettings := jacocoSettings( scalaVersion.value, "atum-server"),
     jacocoExcludes := jacocoProjectExcludes()
   )
+  .enablePlugins(AssemblyPlugin)
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
   .jvmPlatform(scalaVersions = Seq(scala212))

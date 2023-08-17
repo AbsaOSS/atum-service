@@ -24,8 +24,6 @@ addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 
 // Plugin to build the server module as a war file
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
-//addSbtPlugin("com.github.earldouglas" % "xsbt-web-plugin" % "5.1.1")
-//addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.5.3")
 
 // sbt-jacoco dependency downloading
 lazy val ow2Version = "9.5"
