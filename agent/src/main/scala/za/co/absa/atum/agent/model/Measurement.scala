@@ -2,7 +2,7 @@ package za.co.absa.atum.agent.model
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
-import org.apache.spark.sql.{Column, DataFrame, Row}
+import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements

@@ -21,7 +21,6 @@ object AtumAgent {
    *  Sends a single `MeasureResult` to the AtumService API. With not AtumContext involve.
    *
    *  @param checkpointKey
-   *  @param context
    *  @param measureResult
    */
   def measurePublish(checkpointKey: String, measure: MeasureResult): Unit =

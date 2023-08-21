@@ -1,15 +1,13 @@
 # Atum Agent
 
-
-`Atum Agent` module has two main features
-`AtumAgent`: Retrieves the configurations and reports the measures.
-`AtumContext`:  Provides a library for calculating control measures over a `Spark` `Dataframe`.
-
+`Atum Agent` module has two main parts:
+* `AtumAgent`: Retrieves the configurations and reports the measures.
+* `AtumContext`:  Provides a library for calculating control measures over a `Spark` `Dataframe`.
 
 
 ## Usage
 
-Create multiple `AtumContext` with different control measures the be applied 
+Create multiple `AtumContext` with different control measures to be applied 
 
 ### Option 1
 ```scala
@@ -27,7 +25,8 @@ Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAge
 ```
 
 #### AtumPartitions
-A list of key values that maintains the order of arrival of the items, the `AtumService` is able to deliver the correct `AtumContext` according to the `AtumPartitions` we give it. 
+A list of key values that maintains the order of arrival of the items, the `AtumService` 
+is able to deliver the correct `AtumContext` according to the `AtumPartitions` we give it. 
 ```scala
     val atumPartitions = AtumPartitions().withPartitions(ListMap("name" -> "partition-name", "country" -> "SA", "gender" -> "female" ))
 
