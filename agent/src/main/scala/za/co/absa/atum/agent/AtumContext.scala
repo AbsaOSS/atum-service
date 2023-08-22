@@ -24,26 +24,18 @@ import za.co.absa.atum.agent.model.{AtumPartitions, MeasureResult, Measurement}
  *  @param measurements: A sequences of measurements.
  */
 
-case class AtumContext(measurements: Set[Measurement] = Set(), atumPartitions: AtumPartitions = AtumPartitions()) {
+case class AtumContext(measurements: Set[Measurement] = Set.empty, atumPartitions: AtumPartitions = AtumPartitions()) {
 
-  def withMeasuresReplaced(
-    byMeasure: Measurement
-  ): AtumContext =
+  def withMeasuresReplaced(byMeasure: Measurement): AtumContext =
     this.copy(measurements = Set(byMeasure))
 
-  def withMeasuresReplaced(
-    byMeasures: Iterable[Measurement]
-  ): AtumContext =
+  def withMeasuresReplaced(byMeasures: Iterable[Measurement]): AtumContext =
     this.copy(measurements = byMeasures.toSet)
 
-  def withMeasuresAdded(
-    measure: Measurement
-  ): AtumContext =
+  def withMeasuresAdded(measure: Measurement): AtumContext =
     this.copy(measurements = measurements + measure)
 
-  def withMeasuresAdded(
-    measures: Iterable[Measurement]
-  ): AtumContext =
+  def withMeasuresAdded(measures: Iterable[Measurement]): AtumContext =
     this.copy(measurements = measurements ++ measures)
 
   def withMeasureRemoved(measurement: Measurement): AtumContext =
@@ -55,12 +47,11 @@ object AtumContext {
   implicit class DatasetWrapper(df: DataFrame) {
 
     /**
-     *  Executes the measure directly with not AtumContext.
+     *  Executes the measure directly (without AtumContext).
      *  @param measure the measure to be calculated
      *  @return
      */
     def executeMeasure(checkpointName: String, measure: Measurement): DataFrame = {
-
       val result = MeasureResult(measure, measure.function(df))
       AtumAgent.measurePublish(checkpointName, result)
       df
