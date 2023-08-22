@@ -72,13 +72,14 @@ lazy val atumServer = (projectMatrix in file("server"))
       name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
-      packageBin := (assembly in  Compile).value,
-      artifactPath in (Compile, packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
+      packageBin := (assembly in Compile).value,
+//      artifactPath in (Compile, packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
       inheritJarManifest := true
     ): _*
   )
   .settings(
+    assemblyOutputPath / assembly := baseDirectory.value / s"target/${name.value}-${version.value}.war",
     jacocoReportSettings := jacocoSettings( scalaVersion.value, "atum-server"),
     jacocoExcludes := jacocoProjectExcludes()
   )

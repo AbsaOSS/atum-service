@@ -22,7 +22,9 @@ addSbtPlugin("com.eed3si9n"       % "sbt-projectmatrix" % "0.9.1")
 // To add release plugin
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 
-// Plugin to build the server module as a war file
+// Plugins to build the server module as a war file
+addSbtPlugin("org.scalatra" %% "scalatra" % "2.8.4")
+addSbtPlugin("org.scalatra" %% "scalatra-scalatest" % "2.8.4" % "test")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
 // sbt-jacoco dependency downloading
