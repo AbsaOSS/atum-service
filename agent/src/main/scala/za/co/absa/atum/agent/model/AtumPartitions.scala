@@ -16,32 +16,32 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.model.AtumPartitions.Partitions
+import za.co.absa.atum.agent.model.AtumPartitionsOld.Partitions
 
 import scala.collection.immutable.ListMap
 
-case class AtumPartitions(partitions: Partitions = ListMap()) {
+case class AtumPartitionsOld(partitions: Partitions = ListMap()) {
 
   /**
    *  Creates a new `AtumPartitions` instance with the given metadata
    *  @param partitions metadata key value map that preserves the order of arrival of the elements.
    *  @return
    */
-  def withPartitions(partitions: Partitions): AtumPartitions = this.copy(partitions = partitions)
+  def withPartitions(partitions: Partitions): AtumPartitionsOld = this.copy(partitions = partitions)
 
   /**
    *  Creates a new `AtumPartitions` instance with new metadata key values added known as a sub-Partition
    *  @param partitions metadata key value map to be added to the existing metadata
    *  @return
    */
-  def addPartitions(partitions: Partitions): AtumPartitions = this.copy(partitions = this.partitions ++ partitions)
+  def addPartitions(partitions: Partitions): AtumPartitionsOld = this.copy(partitions = this.partitions ++ partitions)
 
   /**
    *  Creates a new Partition instance with new metadata key values added known as a sub-Partition
    *  @param partitions key value map to be added to the existing metadata
    *  @return
    */
-  def addPartitions(partitions: Map[String, String]): AtumPartitions = {
+  def addPartitions(partitions: Map[String, String]): AtumPartitionsOld = {
     val typedPartitions: Partitions = ListMap(partitions.toList: _*)
     addPartitions(typedPartitions)
   }
@@ -52,17 +52,17 @@ case class AtumPartitions(partitions: Partitions = ListMap()) {
    *  @param value new partition value
    *  @return
    */
-  def addPartition(key: String, value: String): AtumPartitions =
+  def addPartition(key: String, value: String): AtumPartitionsOld =
     this.copy(partitions = this.partitions + (key -> value))
 
   /**
    *  An alias for `addPartitions`
    */
-  def subPartitions(partitions: Partitions): AtumPartitions = addPartitions(partitions)
+  def subPartitions(partitions: Partitions): AtumPartitionsOld = addPartitions(partitions)
 
 }
 
-object AtumPartitions {
+object AtumPartitionsOld {
 
   // Each element represent a data partition. The order is preserved as a list.
   type Partitions = ListMap[String, String]

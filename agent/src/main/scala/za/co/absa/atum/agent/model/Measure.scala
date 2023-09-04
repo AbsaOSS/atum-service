@@ -26,18 +26,18 @@ import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancem
 /**
  *  Type of different measures to be applied to the columns.
  */
-trait Measurement extends MeasurementProcessor {
+trait Measure extends MeasurementProcessor {
 
   val controlCol: String
 }
 
-object Measurement {
+object Measure {
 
   private val valueColumnName: String = "value"
 
   case class RecordCount(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).count().toString
@@ -46,14 +46,14 @@ object Measurement {
 
   case class DistinctRecordCount(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).distinct().count().toString
   }
   case class SumOfValuesOfColumn(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
@@ -64,7 +64,7 @@ object Measurement {
 
   case class AbsSumOfValuesOfColumn(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
@@ -74,7 +74,7 @@ object Measurement {
 
   case class SumOfHashesOfColumn(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
 

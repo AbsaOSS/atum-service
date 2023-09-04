@@ -16,12 +16,13 @@
 
 package za.co.absa.atum.agent
 
-import za.co.absa.atum.agent.model.{AtumPartitions, MeasureResult}
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
+import za.co.absa.atum.agent.model.MeasureResult
 
 /**
  *  Place holder for the agent that communicate with the API.
  */
-object AtumAgent {
+class AtumAgent private() {
 
   /**
    *  Sends a single `MeasureResult` to the AtumService API along with an extra data from a given `AtumContext`.
@@ -48,12 +49,28 @@ object AtumAgent {
    *  @param atumPartitions
    *  @return
    */
-  def createAtumContext(atumPartitions: AtumPartitions): AtumContext = {
-
-    /**
-     *  TODO: This is a place holder
-     */
-    AtumContext()
+  def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
+    contexts.getOrElse(atumPartitions, new AtumContext(atumPartitions, this))
   }
 
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit atumContext: AtumContext): AtumContext = {
+    val newPartitions: AtumPartitions = atumContext.atumPartitions ++ subPartitions
+    getContextOrElse(newPartitions, atumContext.copy(atumPartitions = newPartitions, parentAgent = this))
+  }
+
+  private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: =>AtumContext): AtumContext = {
+    synchronized{
+      contexts.getOrElse(atumPartitions, {
+        val result = creationMethod
+        contexts = contexts + (atumPartitions -> result)
+        result
+      })
+    }
+  }
+
+
+  private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
+
 }
+
+object AtumAgent extends AtumAgent
