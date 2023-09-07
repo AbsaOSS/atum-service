@@ -69,9 +69,9 @@ object Checkpoint {
   }
 }
 
-private[model] class CheckpointStatusTypeRef extends TypeReference[CheckpointStatus.type]
+class CheckpointStatusTypeRef extends TypeReference[CheckpointStatus.type]
 
-private[model] case class CheckpointUpdate(
+case class CheckpointUpdate(
   name: Option[String] = None,
   software: Option[String] = None,
   version: Option[String] = None,
