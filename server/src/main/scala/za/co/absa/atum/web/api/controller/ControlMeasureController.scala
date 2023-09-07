@@ -24,7 +24,7 @@ import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.ControlMeasureService
-import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, ControlMeasure, ControlMeasureMetadata, Measurement}
+import za.co.absa.atum.model.{Checkpoint, CheckpointUpdate, ControlMeasure, ControlMeasureMetadata, Measurement}
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture

@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.model
+package za.co.absa.atum.model
 
-case class ControlMeasureMetadata(sourceApplication: String,
-                                  country: String,
-                                  historyType: String,
-                                  dataFilename: String,
-                                  sourceType: String,
-                                  version: Int,
-                                  informationDate: String,
-                                  additionalInfo: Map[String, String] = Map.empty)
+import java.util.UUID
+
+case class Flow(
+  id: Option[UUID],
+  description: Option[String],
+  properties: Map[String, String] = Map.empty
+) extends BaseApiModel {
+
+  def apply(desc: Option[String] = None): Flow = Flow(None, desc)
+
+  override def withId(uuid: UUID): Flow = copy(id = Some(uuid))
+}

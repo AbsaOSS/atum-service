@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.model
+package za.co.absa.atum.model
 
-import java.util.UUID
-
-case class Segmentation(id: Option[UUID],
-                        flowId: UUID) extends BaseApiModel {
-
-  override def withId(uuid: UUID): Segmentation = copy(id = Some(uuid))
-}
+case class ControlMeasureMetadata(
+  sourceApplication: String,
+  country: String,
+  historyType: String,
+  dataFilename: String,
+  sourceType: String,
+  version: Int,
+  informationDate: String,
+  additionalInfo: Map[String, String] = Map.empty
+)

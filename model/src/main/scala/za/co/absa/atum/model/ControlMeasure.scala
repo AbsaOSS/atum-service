@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.model
+package za.co.absa.atum.model
 
 import java.util.UUID
 
-trait BaseApiModel {
-  def id: Option[UUID]
+case class ControlMeasure(
+  id: Option[UUID],
+  flowId: UUID,
+  partitionId: UUID,
+  metadata: ControlMeasureMetadata,
+  runUniqueId: Option[String] = None, // todo why not UUID?
+  checkpoints: List[Checkpoint] = List.empty
+) extends BaseApiModel {
 
-  //todo def withId[T <: BaseApiModel](uuid: UUID): T or even def withId[T <: BaseApiModel[T]](uuid: UUID): T ?
-  def withId(uuid: UUID): BaseApiModel
-
-  def entityName: String = this.getClass.getSimpleName
+  override def withId(uuid: UUID): ControlMeasure = copy(id = Some(uuid))
 }
-

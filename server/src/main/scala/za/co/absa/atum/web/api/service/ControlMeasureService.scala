@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.dao.ApiModelDao
-import za.co.absa.atum.web.model._
+import za.co.absa.atum.model._
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global

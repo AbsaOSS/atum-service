@@ -23,7 +23,7 @@ import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.BaseApiService
-import za.co.absa.atum.web.model.BaseApiModel
+import za.co.absa.atum.model.BaseApiModel
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture

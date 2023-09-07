@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.model
+package za.co.absa.atum.model
 
-case class Measurement(controlName: String,
-                       controlType: String,
-                       controlCol: String,
-                       controlValue: Any)
+case class Measurement(
+  controlName: String,
+  controlType: String,
+  controlCol: String,
+  controlValue: Any
+)

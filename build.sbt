@@ -16,15 +16,18 @@
 import Dependencies._
 
 ThisBuild / organization := "za.co.absa"
+ThisBuild / name := "atum-service"
 
 lazy val scala211 = "2.11.12"
 lazy val scala212 = "2.12.12"
+ThisBuild / crossScalaVersions := Seq(scala211, scala212)
 
 Test / parallelExecution := false
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 lazy val root = (project in file("."))
+  .aggregate(model, server, agent)
   .settings(
     name := "atum-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
@@ -40,11 +43,21 @@ lazy val server = project
   )
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
+  .dependsOn(model)
 
 lazy val agent = project
   .settings(
     name         := "atum-agent",
     scalaVersion := scala212,
     libraryDependencies ++= Dependencies.agentDependencies,
+    scalafmtOnCompile := true
+  ).enablePlugins(ScalafmtPlugin)
+  .dependsOn(model)
+
+lazy val model = project
+  .settings(
+    name         := "atum-model",
+    scalaVersion := scala212,
+    libraryDependencies ++= Dependencies.modelDependencies,
     scalafmtOnCompile := true
   ).enablePlugins(ScalafmtPlugin)

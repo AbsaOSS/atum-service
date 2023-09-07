@@ -18,7 +18,7 @@ package za.co.absa.atum.web.dao
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
-import za.co.absa.atum.web.model.{BaseApiModel, ControlMeasure, Flow, Segmentation}
+import za.co.absa.atum.model.{BaseApiModel, ControlMeasure, Flow, Partition}
 
 import java.util.UUID
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
@@ -33,7 +33,7 @@ object InMemoryApiModelDao {
   class InMemoryFlowDao @Autowired()() extends InMemoryApiModelDao[Flow]
 
   @Repository
-  class InMemorySegmentationDao @Autowired()() extends InMemoryApiModelDao[Segmentation]
+  class InMemorySegmentationDao @Autowired()() extends InMemoryApiModelDao[Partition]
 
   @Repository
   class InMemoryControlMeasureDao @Autowired()() extends InMemoryApiModelDao[ControlMeasure]
