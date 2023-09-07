@@ -71,6 +71,7 @@ lazy val atumServer = (projectMatrix in file("server"))
     commonSettings ++ Seq(
       name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
+      Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       packageBin := (assembly in Compile).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
