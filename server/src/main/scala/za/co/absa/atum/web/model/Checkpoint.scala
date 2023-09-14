@@ -24,6 +24,8 @@ import java.util.UUID
 
 class CheckpointStatusTypeRef extends TypeReference[CheckpointStatus.type]
 
+
+// To check
 case class Checkpoint(id: Option[UUID],
                       name: String,
                       software: Option[String] = None,
