@@ -25,7 +25,7 @@ import java.util.UUID
 class CheckpointStatusTypeRef extends TypeReference[CheckpointStatus.type]
 
 
-// To check
+// To check By Forgiveness
 case class Checkpoint(id: Option[UUID],
                       name: String,
                       software: Option[String] = None,
