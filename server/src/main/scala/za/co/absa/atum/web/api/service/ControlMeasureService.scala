@@ -83,11 +83,13 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
     withExistingEntityF(cmId) { cm =>
       val newId = UUID.randomUUID()
       val newCheckpointWithId = checkpoint.withId(newId)
-      val updatedCm = cm.copy(checkpoints = (cm.checkpoints ++ List(newCheckpointWithId)))
+      val updatedCm = cm.copy(checkpoints = cm.checkpoints ++ List(newCheckpointWithId))
 
       super.update(updatedCm).map(_ => newId)
     }
   }
+
+
 
   def getCheckpointList(cmId: UUID): Future[List[Checkpoint]] = {
     withExistingEntity(cmId) {
