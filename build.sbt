@@ -47,7 +47,7 @@ lazy val commonSettings = Seq(
   Test / parallelExecution := false
 )
 
-val mergeStrategy: Def.SettingsDefinition = assemblyMergeStrategy / assembly := {
+val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := {
   case PathList("META-INF", _) => MergeStrategy.discard
   case "application.conf"      => MergeStrategy.concat
   case "reference.conf"        => MergeStrategy.concat
