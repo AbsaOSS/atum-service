@@ -47,11 +47,19 @@ lazy val commonSettings = Seq(
   Test / parallelExecution := false
 )
 
+val mergeStrategy: Def.SettingsDefinition = assemblyMergeStrategy / assembly := {
+  case PathList("META-INF", _) => MergeStrategy.discard
+  case "application.conf"      => MergeStrategy.concat
+  case "reference.conf"        => MergeStrategy.concat
+  case _                       => MergeStrategy.first
+}
+
 lazy val parent = (project in file("."))
   .aggregate(atumServer.projectRefs ++ atumAgent.projectRefs: _*)
   .settings(
     name := "atum-service-parent",
-    publish / skip := true
+    publish / skip := true,
+    mergeStrategy
   )
 
 lazy val atumAgent = (projectMatrix in file("agent"))
@@ -60,7 +68,8 @@ lazy val atumAgent = (projectMatrix in file("agent"))
       name := "atum-agent",
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       scalafmtOnCompile := true
-    )
+    ),
+    mergeStrategy
   )
   .enablePlugins(ScalafmtPlugin)
   .sparkRow(SparkVersionAxis(spark2), scalaVersions = Seq(scala211, scala212))
@@ -76,7 +85,8 @@ lazy val atumServer = (projectMatrix in file("server"))
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
-      inheritJarManifest := true
+      inheritJarManifest := true,
+      mergeStrategy
     ): _*
   )
   .settings(
