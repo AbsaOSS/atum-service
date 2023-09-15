@@ -19,16 +19,20 @@ import sbt._
 object Dependencies {
 
   object Versions {
+    val spark2 = "2.4.8"
     val spark3 = "3.3.2"
 
+    val scala211 = "2.11.12"
     val scala212 = "2.12.12"
+    val supportedScalaVersions: Seq[String] = Seq(scala211, scala212)
+
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
     val scalaLangJava8Compat = "1.0.2"
 
     val jacksonModuleScala = "2.13.1"
 
-    val specs2 = "4.19.2"
+    val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
 
     val spring = "2.6.1"
@@ -36,7 +40,7 @@ object Dependencies {
     val javaxServlet = "3.0.1"
     val springfox = "3.0.0"
 
-    val sparkCommons = "0.6.0"
+    val sparkCommons = "0.6.1"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -56,12 +60,20 @@ object Dependencies {
     "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
   )
 
+  // this is just for the compile-depended printing task
+  def sparkVersionForScala(scalaVersion: String): String = {
+    scalaVersion match {
+      case _ if scalaVersion.startsWith("2.11") => Versions.spark2
+      case _ if scalaVersion.startsWith("2.12") => Versions.spark3
+      case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
+    }
+  }
+
   def serverDependencies: Seq[ModuleID] = {
 
     val springVersion = "2.6.1"
     val springOrg = "org.springframework.boot"
 
-    lazy val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalatest
     lazy val springBootWeb = springOrg % "spring-boot-starter-web" % Versions.spring
     lazy val springBootConfiguration = springOrg % "spring-boot-configuration-processor" % Versions.spring
     lazy val springBootTomcat = springOrg % "spring-boot-starter-tomcat" % Versions.spring
@@ -77,7 +89,6 @@ object Dependencies {
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
 
     Seq(
-      scalaTest % Test,
       springBootTest % Test,
       springBootWeb,
       springBootConfiguration,
@@ -91,16 +102,17 @@ object Dependencies {
     )
   }
 
-  def agentDependencies(sparkVersion: String): Seq[ModuleID] = {
+  def agentDependencies(sparkVersion: String, scalaVersion: String): Seq[ModuleID] = {
 
-    val sparkMinorVersion   = getVersionUpToMinor(sparkVersion)
+    val sparkMinorVersion = getVersionUpToMinor(sparkVersion)
+    val scalaMinorVersion = getVersionUpToMinor(scalaVersion)
 
-    lazy val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark3 % Provided
-    lazy val sparkSql = "org.apache.spark" %% "spark-sql" % Versions.spark3 % Provided
+    lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion % Provided
+    lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
     lazy val typeSafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
-    lazy val sparkCommons = "za.co.absa" % s"spark-commons-spark${sparkMinorVersion}" % Versions.sparkCommons
-    lazy val sparkCommonsTest = "za.co.absa" % "spark-commons-test" % Versions.sparkCommons % Test
+    lazy val sparkCommons = "za.co.absa" % s"spark-commons-spark${sparkMinorVersion}_$scalaMinorVersion" % Versions.sparkCommons
+    lazy val sparkCommonsTest = "za.co.absa" % s"spark-commons-test_$scalaMinorVersion" % Versions.sparkCommons % Test
 
     Seq(
       sparkCore,
@@ -112,13 +124,12 @@ object Dependencies {
   }
 
   def modelDependencies: Seq[ModuleID] = {
-    lazy val scalaTest =      "org.scalatest"   %% "scalatest"    % Versions.scalatest % Test
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
 
-    Seq(scalaTest, specs2core, typeSafeConfig, jacksonModuleScala)
+    Seq(specs2core, typeSafeConfig, jacksonModuleScala)
   }
 
 }
