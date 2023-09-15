@@ -16,12 +16,8 @@
 
 package za.co.absa.atum.model
 
-import java.util.UUID
-
-case class Partition(
-  id: Option[UUID],
-  flowId: UUID
-) extends BaseApiModel {
-
-  override def withId(uuid: UUID): Partition = copy(id = Some(uuid))
-}
+case class Measure(
+    name: String,
+    measureFunction: String,
+    controlColumn: List[String] = List.empty
+)

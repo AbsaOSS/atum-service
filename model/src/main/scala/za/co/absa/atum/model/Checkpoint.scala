@@ -16,68 +16,13 @@
 
 package za.co.absa.atum.model
 
-import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.module.scala.JsonScalaEnumeration
-import za.co.absa.atum.model.Checkpoint.CheckpointStatus
-
-import java.util.UUID
+import scala.collection.immutable.ListMap
 
 case class Checkpoint(
-  id: Option[UUID],
-  name: String,
-  software: Option[String] = None,
-  version: Option[String] = None,
-  processStartTime: String,
-  processEndTime: String,
-  workflowName: String,
-  order: Int,
-  @JsonScalaEnumeration(classOf[CheckpointStatusTypeRef]) status: CheckpointStatus.Value = CheckpointStatus.Open,
-  measures: List[Measurement] = List.empty
-) extends BaseApiModel {
-
-  override def withId(uuid: UUID): Checkpoint = copy(id = Some(uuid))
-
-  def withUpdate(update: CheckpointUpdate): Checkpoint = {
-    this
-      .updateIfDefined(update.name) { case (field, cp) => cp.copy(name = field) }
-      .updateIfDefined(update.software) { case (field, cp) => cp.copy(software = Some(field)) } // cannot be unset atm
-      .updateIfDefined(update.version) { case (field, cp) => cp.copy(version = Some(field)) }
-      .updateIfDefined(update.processStartTime) { case (field, cp) => cp.copy(processStartTime = field) }
-      .updateIfDefined(update.processEndTime) { case (field, cp) => cp.copy(processEndTime = field) }
-      .updateIfDefined(update.workflowName) { case (field, cp) => cp.copy(workflowName = field) }
-      .updateIfDefined(update.order) { case (field, cp) => cp.copy(order = field) }
-      .updateIfDefined(update.status) { case (field, cp) => cp.copy(status = field) }
-    // TODO why not measures as well?
-  }
-
-  def updateIfDefined[T](optField: Option[T])(updateFn: (T, Checkpoint) => Checkpoint): Checkpoint = {
-    optField match {
-      case None        => this
-      case Some(field) => updateFn(field, this)
-    }
-  }
-
-}
-
-object Checkpoint {
-
-  object CheckpointStatus extends Enumeration {
-
-    val Open: CheckpointStatus.Value = Value("open")
-    val Closed: CheckpointStatus.Value = Value("closed")
-
-  }
-}
-
-class CheckpointStatusTypeRef extends TypeReference[CheckpointStatus.type]
-
-case class CheckpointUpdate(
-  name: Option[String] = None,
-  software: Option[String] = None,
-  version: Option[String] = None,
-  processStartTime: Option[String] = None,
-  processEndTime: Option[String] = None,
-  workflowName: Option[String] = None,
-  order: Option[Int] = None,
-  @JsonScalaEnumeration(classOf[CheckpointStatusTypeRef]) status: Option[CheckpointStatus.Value] = None
+    name: String,
+    partitioning: ListMap[String, String],
+    processStartTime: String,
+    processEndTime: String,
+    measurement: Measurement,
+    additionalData: Map[String, String]
 )
