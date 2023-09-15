@@ -23,7 +23,7 @@ import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.{FlowService, SegmentationService}
-import za.co.absa.atum.model.{Flow, Partition}
+import za.co.absa.atum.web.model.{Flow, Partition}
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture

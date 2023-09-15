@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.web.dao
 
-import za.co.absa.atum.model.BaseApiModel
+import za.co.absa.atum.web.model.BaseApiModel
 
 import java.util.UUID
 import scala.concurrent.Future

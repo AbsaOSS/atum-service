@@ -18,7 +18,7 @@ package za.co.absa.atum.web.dao
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
-import za.co.absa.atum.model.{BaseApiModel, ControlMeasure, Flow, Partition}
+import za.co.absa.atum.web.model.{BaseApiModel, ControlMeasure, Flow, Partition}
 
 import java.util.UUID
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}

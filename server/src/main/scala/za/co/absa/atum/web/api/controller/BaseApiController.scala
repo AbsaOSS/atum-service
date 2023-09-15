@@ -19,11 +19,10 @@ package za.co.absa.atum.web.api.controller
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.BaseApiService
-import za.co.absa.atum.model.BaseApiModel
+import za.co.absa.atum.web.model.BaseApiModel
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture
