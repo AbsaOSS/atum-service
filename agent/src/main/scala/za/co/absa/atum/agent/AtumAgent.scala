@@ -16,18 +16,27 @@
 
 package za.co.absa.atum.agent
 
+import com.typesafe.config.{Config, ConfigFactory}
+import za.co.absa.atum.agent.dispacther.{ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.agent.model.MeasureResult
 
 /**
- *  Place holder for the agent that communicate with the API.
+ * Place holder for the agent that communicate with the API.
  */
 object AtumAgent {
 
-  def measurePublish(checkpointKey: String, measure: MeasureResult): Unit =
-    println(s"Enqueued measurement: $checkpointKey, " + (measure))
+  val config: Config = ConfigFactory.load()
 
-  def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit = println(
-    Seq(checkpointKey, context, measureResult).mkString(" || ")
-  )
+  private val dispatcher = config.getString("atum.dispatcher.type") match {
+    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
+    case "console" => new ConsoleDispatcher
+    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+  }
+
+  def measurePublish(checkpointKey: String, measureResult: MeasureResult): Unit =
+    dispatcher.publish(checkpointKey, measureResult)
+
+  def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit =
+    dispatcher.publish(checkpointKey, context, measureResult)
 
 }
