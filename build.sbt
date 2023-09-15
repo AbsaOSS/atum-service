@@ -51,6 +51,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "atum-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+  )
 
 lazy val server = (projectMatrix in file("server"))
   .settings(
@@ -75,7 +76,7 @@ lazy val agent = (projectMatrix in file("agent"))
     commonSettings ++ Seq(
       name := "atum-agent",
       scalaVersion := scala212,
-      libraryDependencies ++= Dependencies.agentDependencies,
+      libraryDependencies ++= Dependencies.agentDependencies(spark3),
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       scalafmtOnCompile := true
     )
