@@ -47,10 +47,12 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = (project in file("."))
-  .aggregate(model, server, agent)
+//  .aggregate(model, server, agent)
+  .aggregate(server.projectRefs ++ agent.projectRefs: _*)
   .settings(
     name := "atum-root",
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
+    publish / skip := true
   )
 
 lazy val server = (projectMatrix in file("server"))
@@ -61,10 +63,12 @@ lazy val server = (projectMatrix in file("server"))
       libraryDependencies ++= Dependencies.serverDependencies,
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       webappWebInfClasses := true,
-      inheritJarManifest := true,
-      jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-server"),
-      jacocoExcludes := jacocoProjectExcludes()
+      inheritJarManifest := true
     ): _*
+  )
+  .settings(
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-server"),
+    jacocoExcludes := jacocoProjectExcludes()
   )
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
@@ -79,7 +83,11 @@ lazy val agent = (projectMatrix in file("agent"))
       libraryDependencies ++= Dependencies.agentDependencies(spark3),
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       scalafmtOnCompile := true
-    )
+    ): _*
+  )
+  .settings(
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent"),
+    jacocoExcludes := jacocoProjectExcludes()
   )
   .enablePlugins(ScalafmtPlugin)
   .sparkRow(SparkVersionAxis(spark2), scalaVersions = Seq(scala211, scala212))
@@ -94,5 +102,10 @@ lazy val model = project
       libraryDependencies ++= Dependencies.modelDependencies,
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       scalafmtOnCompile := true
-    )
-  ).enablePlugins(ScalafmtPlugin)
+    ): _*
+  )
+  .settings(
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent"),
+    jacocoExcludes := jacocoProjectExcludes()
+  )
+  .enablePlugins(ScalafmtPlugin)
