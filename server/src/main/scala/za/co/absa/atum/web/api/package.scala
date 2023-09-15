@@ -19,8 +19,8 @@ package za.co.absa.atum.web
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import scala.concurrent.Future
-
 import scala.compat.java8.FutureConverters._
+import scala.language.implicitConversions
 
 
 package object api {

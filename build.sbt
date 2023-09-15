@@ -14,50 +14,84 @@
  */
 
 import Dependencies._
+import SparkVersionAxis._
+import JacocoSetup._
 
 ThisBuild / organization := "za.co.absa"
 ThisBuild / name := "atum-service"
 
 lazy val scala211 = "2.11.12"
 lazy val scala212 = "2.12.12"
-ThisBuild / crossScalaVersions := Seq(scala211, scala212)
+lazy val spark2 = "2.4.7"
+lazy val spark3 = "3.3.1"
 
-Test / parallelExecution := false
+ThisBuild / crossScalaVersions := Seq(scala211, scala212)
+ThisBuild / scalaVersion := scala212
+
+ThisBuild / versionScheme := Some("early-semver")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
+
+lazy val printScalaVersion = taskKey[Unit]("Print Scala versions for atum-service is being built for.")
+
+ThisBuild / printScalaVersion := {
+  val log = streams.value.log
+  log.info(s"Building with Scala ${scalaVersion.value}")
+}
+
+lazy val commonSettings = Seq(
+  libraryDependencies ++= commonDependencies,
+  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
+  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
+  Test / parallelExecution := false
+)
 
 lazy val root = (project in file("."))
   .aggregate(model, server, agent)
   .settings(
     name := "atum-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
-  )
 
-lazy val server = project
+lazy val server = (projectMatrix in file("server"))
   .settings(
-    name         := "atum-server",
-    scalaVersion := scala212,
-    libraryDependencies ++= Dependencies.serverDependencies,
-    webappWebInfClasses := true,
-    inheritJarManifest  := true
+    commonSettings ++ Seq(
+      name := "atum-server",
+      scalaVersion := scala212,
+      libraryDependencies ++= Dependencies.serverDependencies,
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
+      webappWebInfClasses := true,
+      inheritJarManifest := true,
+      jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-server"),
+      jacocoExcludes := jacocoProjectExcludes()
+    ): _*
   )
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
+  .jvmPlatform(scalaVersions = Seq(scala212))
   .dependsOn(model)
 
-lazy val agent = project
+lazy val agent = (projectMatrix in file("agent"))
   .settings(
-    name         := "atum-agent",
-    scalaVersion := scala212,
-    libraryDependencies ++= Dependencies.agentDependencies,
-    scalafmtOnCompile := true
-  ).enablePlugins(ScalafmtPlugin)
+    commonSettings ++ Seq(
+      name := "atum-agent",
+      scalaVersion := scala212,
+      libraryDependencies ++= Dependencies.agentDependencies,
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
+      scalafmtOnCompile := true
+    )
+  )
+  .enablePlugins(ScalafmtPlugin)
+  .sparkRow(SparkVersionAxis(spark2), scalaVersions = Seq(scala211, scala212))
+  .sparkRow(SparkVersionAxis(spark3), scalaVersions = Seq(scala212))
   .dependsOn(model)
 
 lazy val model = project
   .settings(
-    name         := "atum-model",
-    scalaVersion := scala212,
-    libraryDependencies ++= Dependencies.modelDependencies,
-    scalafmtOnCompile := true
+    commonSettings ++ Seq(
+      name         := "atum-model",
+      scalaVersion := scala212,
+      libraryDependencies ++= Dependencies.modelDependencies,
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
+      scalafmtOnCompile := true
+    )
   ).enablePlugins(ScalafmtPlugin)

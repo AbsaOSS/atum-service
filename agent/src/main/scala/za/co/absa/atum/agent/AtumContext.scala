@@ -17,16 +17,17 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.model.{MeasureNew, MeasureResult, Measure}
+import za.co.absa.atum.agent.model.{MeasureResult, Measure}
 import AtumContext.AtumPartitions
 
 import scala.collection.immutable.ListMap
 
 /**
- *  AtumContext: This class provides the methods to measure Spark `Dataframe`. Also allows to add/edit/remove measures.
- *  @param measurements: A sequences of measurements.
+ * This class provides the methods to measure Spark `Dataframe`. Also allows to add and remove measures.
+ * @param atumPartitions
+ * @param parentAgent
+ * @param measures
  */
-
 class AtumContext private[agent](
                                   val atumPartitions: AtumPartitions,
                                   val parentAgent: AtumAgent,
@@ -42,7 +43,7 @@ class AtumContext private[agent](
     ??? //TODO #26
   }
 
-  def saveCheckpointMeasurements(checkpointName: String, measurements: Seq[MeasureNew]) = {
+  def saveCheckpointMeasurements(checkpointName: String, measurements: Seq[Measure]) = {
     ??? //TODO #55
   }
 
