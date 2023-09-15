@@ -95,7 +95,7 @@ lazy val agent = (projectMatrix in file("agent"))
   .sparkRow(SparkVersionAxis(spark3), scalaVersions = Seq(scala212))
   .dependsOn(model)
 
-lazy val model = project
+lazy val model = (projectMatrix in file("model"))
   .settings(
     commonSettings ++ Seq(
       name         := "atum-model",
