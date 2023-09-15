@@ -80,14 +80,12 @@ lazy val agent = (projectMatrix in file("agent"))
         scalaVersion.value
       ),
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
-      scalafmtOnCompile := true
     ): _*
   )
   .settings(
     jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent"),
     jacocoExcludes := jacocoProjectExcludes()
   )
-  .enablePlugins(ScalafmtPlugin)
   .sparkRow(SparkVersionAxis(Versions.spark2), scalaVersions = Seq(Versions.scala211, Versions.scala212))
   .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212))
   .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
@@ -99,7 +97,6 @@ lazy val model = (projectMatrix in file("model"))
       name         := "atum-model",
       libraryDependencies ++= Dependencies.modelDependencies,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
-      scalafmtOnCompile := true
     ): _*
   )
   .settings(
@@ -107,4 +104,3 @@ lazy val model = (projectMatrix in file("model"))
     jacocoExcludes := jacocoProjectExcludes()
   )
   .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
-  .enablePlugins(ScalafmtPlugin)
