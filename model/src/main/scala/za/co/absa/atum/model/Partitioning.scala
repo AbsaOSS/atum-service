@@ -18,7 +18,7 @@ package za.co.absa.atum.model
 
 case class Partitioning(
     partitioning: List[Partition],  // rather ListMap ? Can it be serialized so that Spring understands it? TODO discuss
-    additionalData: Map[String, String]
+    additionalData: Map[String, String]  // or a separated class? Used elsewhere / on a checkpoint level? TODO discuss
 )
 
 // perhaps not for the model, since this is not for agent<->server, but server<->db...so this is, in
