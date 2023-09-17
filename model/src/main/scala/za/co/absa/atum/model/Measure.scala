@@ -17,7 +17,7 @@
 package za.co.absa.atum.model
 
 case class Measure(
-    name: String,
+    measureName: String,
     measureFunction: String,
     controlColumn: List[String] = List.empty
 )

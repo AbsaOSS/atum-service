@@ -16,10 +16,7 @@
 
 package za.co.absa.atum.model
 
-case class Checkpoint(
-    name: String,
-    partitioning: Partitioning,
-    processStartTime: String,
-    processEndTime: String,
-    measurement: Measurement
+case class Partitioning(
+   partitioning: List[Partition],
+   additionalData: Map[String, String]
 )
