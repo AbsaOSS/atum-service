@@ -1,0 +1,6 @@
+
+# dispatcher to be used (http or console)
+atum.dispatcher.type="console"
+
+# The REST API URI of the atum server
+atum.dispatcher.http.url="localhost:8080"

@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigFactory}
-import za.co.absa.atum.agent.dispacther.{ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.agent.model.MeasureResult
 
 /**

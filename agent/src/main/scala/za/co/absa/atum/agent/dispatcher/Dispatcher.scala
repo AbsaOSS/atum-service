@@ -14,24 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.agent.dispacther
+package za.co.absa.atum.agent.dispatcher
 
-import com.typesafe.config.Config
-import org.apache.spark.internal.Logging
 import za.co.absa.atum.agent.AtumContext
 import za.co.absa.atum.agent.model.MeasureResult
 
-/**
- *  dispatcher useful for development, testing and debugging
- */
-class ConsoleDispatcher extends Dispatcher with Logging {
+trait Dispatcher {
+  def publish(checkpointKey: String, measureResult: MeasureResult): Unit
 
-  logInfo("using console dispatcher")
-
-  override def publish(checkpointKey: String, measureResult: MeasureResult): Unit =
-    println(s"Publishing $checkpointKey $measureResult")
-
-  override def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit =
-    println(s"Publishing $checkpointKey $context $measureResult")
-
+  def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.agent.dispacther
+package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
 import org.apache.spark.internal.Logging
