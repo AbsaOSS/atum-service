@@ -112,8 +112,6 @@ object AtumContext {
       atumContext.measures.foreach { measure =>
         val result = MeasureResult(measure, measure.function(df))
         AtumAgent.publish(checkpointName, atumContext, result)
-
-        executeMeasures(checkpointName, atumContext.measures)
       }
 
       df
