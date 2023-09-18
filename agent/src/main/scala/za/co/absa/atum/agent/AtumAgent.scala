@@ -16,18 +16,61 @@
 
 package za.co.absa.atum.agent
 
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.MeasureResult
 
 /**
  *  Place holder for the agent that communicate with the API.
  */
-object AtumAgent {
+class AtumAgent private() {
 
-  def measurePublish(checkpointKey: String, measure: MeasureResult): Unit =
-    println(s"Enqueued measurement: $checkpointKey, " + (measure))
+  /**
+   *  Sends a single `MeasureResult` to the AtumService API along with an extra data from a given `AtumContext`.
+   *  @param checkpointKey
+   *  @param atumContext
+   *  @param measureResult
+   */
+  def publish(checkpointKey: String, atumContext: AtumContext, measureResult: MeasureResult): Unit =
+    println(
+      s"Enqueued measurement: ${Seq(checkpointKey, atumContext, measureResult).mkString(" || ")}"
+    )
 
-  def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit = println(
-    Seq(checkpointKey, context, measureResult).mkString(" || ")
-  )
+  /**
+   *  Sends a single `MeasureResult` to the AtumService API. It doesn't involve AtumContext.
+   *
+   *  @param checkpointKey
+   *  @param measureResult
+   */
+  def measurePublish(checkpointKey: String, measureResult: MeasureResult): Unit =
+    println(s"Enqueued measurement: $checkpointKey || $measureResult")
+
+  /**
+   *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
+   *  @param atumPartitions
+   *  @return
+   */
+  def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
+    contexts.getOrElse(atumPartitions, new AtumContext(atumPartitions, this))
+  }
+
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit atumContext: AtumContext): AtumContext = {
+    val newPartitions: AtumPartitions = atumContext.atumPartitions ++ subPartitions
+    getContextOrElse(newPartitions, atumContext.copy(atumPartitions = newPartitions, parentAgent = this))
+  }
+
+  private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: =>AtumContext): AtumContext = {
+    synchronized{
+      contexts.getOrElse(atumPartitions, {
+        val result = creationMethod
+        contexts = contexts + (atumPartitions -> result)
+        result
+      })
+    }
+  }
+
+
+  private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
 }
+
+object AtumAgent extends AtumAgent
