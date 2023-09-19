@@ -28,7 +28,7 @@ It provides functionality for computing and pushing control metrics to the API l
 For more information, see the [Vocabulary section](#Vocabulary) or `agent/README.md` for more technical documentation.
 
 ### Server `server/`
-An API under construction that communicates with the Agent and with the persisting storage. It also provides measure 
+An API under construction that communicates with the Agent and with the persistent storage. It also provides measure 
 configuration to the agent.
 
 The server accepts metrics potentially from several agents and saves them into database. In the future, it will be also 
