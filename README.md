@@ -32,7 +32,7 @@ An API under construction that communicates with the Agent and with the persisti
 configuration to the agent.
 
 The server accepts metrics potentially from several agents and saves them into database. In the future, it will be also 
-able to send the metrics back if requested. 
+able to send the metrics definitions back if requested. 
 
 Important note: the server never receives any real data - it only works with the metadata and metrics defined 
 by the agent! 
