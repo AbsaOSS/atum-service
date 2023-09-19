@@ -1,6 +1,6 @@
 # Atum Service
 
-Atum Service is a data completeness and accuracy application meant to be used for data processed being by Apache Spark.
+Atum Service is a data completeness and accuracy application meant to be used for data being processed by Apache Spark.
 
 One of the challenges regulated industries face is the requirement to track and prove that their systems preserve
 the accuracy and completeness of data. In an attempt to solve this data processing problem in Apache Spark applications,
