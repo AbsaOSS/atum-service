@@ -23,7 +23,7 @@ and debugging of your Spark-based data processing.
 
 ### Agent `agent/`
 This module is intended to replace the current [Atum](https://github.com/AbsaOSS/atum) repository. 
-It provides functionality for establishing and pushing control metrics to the API located in `server/`.
+It provides functionality for computing and pushing control metrics to the API located in `server/`.
 
 For more information, see the [Vocabulary section](#Vocabulary) or `agent/README.md` for more technical documentation.
 
