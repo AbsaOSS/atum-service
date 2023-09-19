@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.model
 
-case class Measurement(
-    measure: Measure,
-    measureResult: String
+case class AdditionalData(
+    additionalData: Map[String, String]
 )

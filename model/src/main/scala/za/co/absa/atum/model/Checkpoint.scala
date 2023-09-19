@@ -16,10 +16,12 @@
 
 package za.co.absa.atum.model
 
+import java.time.ZonedDateTime
+
 case class Checkpoint(
     name: String,
     partitioning: Partitioning,
-    processStartTime: String,
-    processEndTime: String,
-    measurement: Measurement
+    processStartTime: ZonedDateTime,
+    processEndTime: ZonedDateTime,
+    measurements: Seq[Measurement]
 )

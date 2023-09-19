@@ -17,16 +17,5 @@
 package za.co.absa.atum.model
 
 case class Partitioning(
-    partitioning: List[Partition],  // rather ListMap ? Can it be serialized so that Spring understands it? TODO discuss
-    additionalData: Map[String, String]  // or a separated class? Used elsewhere / on a checkpoint level? TODO discuss
-)
-
-// perhaps not for the model, since this is not for agent<->server, but server<->db...so this is, in
-// slickpg terms, called 'Composite Type' that the PG can directly load with adding appropriate slickpg plugin
-// or, can it be used for DTO as well? TODO discuss
-case class PartitioningToDB(
-    version: Int,
-    keys: List[String],
-    keyToValuesMap: Map[String, String],
-    additionalData: Map[String, String]
+    partitioning: Seq[Partition]
 )

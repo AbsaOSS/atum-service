@@ -19,5 +19,5 @@ package za.co.absa.atum.model
 case class Measure(
     measureName: String,
     measureFunction: String,
-    controlColumn: List[String] = List.empty
+    controlColumns: Seq[String]
 )
