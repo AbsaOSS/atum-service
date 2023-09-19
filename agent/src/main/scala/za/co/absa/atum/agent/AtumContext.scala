@@ -17,56 +17,87 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.model.{MeasureResult, Measurement}
+import za.co.absa.atum.agent.model.{MeasureResult, Measure}
+import AtumContext.AtumPartitions
+
+import scala.collection.immutable.ListMap
 
 /**
- *  AtumContext: This class provides the methods to measure Spark `Dataframe`. Also allows to add/edit/remove measures.
- *  @param measurements: A sequences of measurements.
+ * This class provides the methods to measure Spark `Dataframe`. Also allows to add and remove measures.
+ * @param atumPartitions
+ * @param parentAgent
+ * @param measures
  */
+class AtumContext private[agent](
+                                  val atumPartitions: AtumPartitions,
+                                  val parentAgent: AtumAgent,
+                                  private var measures: Set[Measure] = Set.empty) {
 
-case class AtumContext(measurements: Set[Measurement] = Set()) {
+  def currentMeasures: Set[Measure] = measures
 
-  def withMeasuresReplaced(
-    byMeasure: Measurement
-  ): AtumContext =
-    this.copy(measurements = Set(byMeasure))
+  def subPartitionContext(subPartitions: AtumPartitions): AtumContext = {
+    parentAgent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
+  }
 
-  def withMeasuresReplaced(
-    byMeasures: Iterable[Measurement]
-  ): AtumContext =
-    this.copy(measurements = byMeasures.toSet)
+  def createCheckpoint(checkpointName: String, dataToMeasure: DataFrame) = {
+    ??? //TODO #26
+  }
 
-  def withMeasuresAdded(
-    measure: Measurement
-  ): AtumContext =
-    this.copy(measurements = measurements + measure)
+  def saveCheckpointMeasurements(checkpointName: String, measurements: Seq[Measure]) = {
+    ??? //TODO #55
+  }
 
-  def withMeasuresAdded(
-    measures: Iterable[Measurement]
-  ): AtumContext =
-    this.copy(measurements = measurements ++ measures)
+  def addAdditionalData(key: String, value: String) = {
+    ??? //TODO #60
+  }
 
-  def withMeasureRemoved(measurement: Measurement): AtumContext =
-    this.copy(measurements = measurements.filterNot(_ == measurement))
+  def addMeasure(newMeasure: Measure): AtumContext = {
+    measures = measures + newMeasure
+    this
+  }
 
+  def addMeasures(newMeasures: Set[Measure]): AtumContext = {
+    measures = measures ++ newMeasures
+    this
+  }
+
+  def removeMeasure(measureToRemove: Measure): AtumContext = {
+    measures = measures - measureToRemove
+    this
+  }
+
+  private[agent] def copy(
+                           atumPartitions: AtumPartitions = this.atumPartitions,
+                           parentAgent: AtumAgent = this.parentAgent,
+                           measures: Set[Measure] = this.measures
+    ): AtumContext = {
+    new AtumContext(atumPartitions, parentAgent, measures)
+  }
 }
 
 object AtumContext {
+  type AtumPartitions = ListMap[String, String]
+
+  object AtumPartitions {
+    def apply(elems: (String, String)): AtumPartitions = {
+      ListMap(elems)
+    }
+  }
+
   implicit class DatasetWrapper(df: DataFrame) {
 
     /**
-     *  Executes the measure directly with not AtumContext.
+     *  Executes the measure directly (without AtumContext).
      *  @param measure the measure to be calculated
      *  @return
      */
-    def executeMeasure(checkpointName: String, measure: Measurement): DataFrame = {
-
+    def executeMeasure(checkpointName: String, measure: Measure): DataFrame = {
       val result = MeasureResult(measure, measure.function(df))
       AtumAgent.measurePublish(checkpointName, result)
       df
     }
 
-    def executeMeasures(checkpointName: String, measures: Iterable[Measurement]): DataFrame = {
+    def executeMeasures(checkpointName: String, measures: Iterable[Measure]): DataFrame = {
       measures.foreach(m => executeMeasure(checkpointName, m))
       df
     }
@@ -78,11 +109,9 @@ object AtumContext {
      *  @return
      */
     def createCheckpoint(checkpointName: String)(implicit atumContext: AtumContext): DataFrame = {
-      atumContext.measurements.foreach { measure =>
+      atumContext.measures.foreach { measure =>
         val result = MeasureResult(measure, measure.function(df))
         AtumAgent.publish(checkpointName, atumContext, result)
-
-        executeMeasures(checkpointName, atumContext.measurements)
       }
 
       df
