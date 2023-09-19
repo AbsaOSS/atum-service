@@ -64,9 +64,9 @@ want to apply particular metrics on. It's similar to data partitioning in HDFS o
 The order of individual `Partitions` in a given `Partitioning` matters. It's a map-like structure in which the order
 of keys (partition names) matters.
 
-Each `Partitioning` may define an additional metadata - as a map-like structure with which you can store various
-attributes associated with a given `Partitioning`, that you can potentially use later in your application.
-Just to give you some ideas for these: 
+It's possible to define an additional metadata along with `Partitioning` - as a map-like structure with which 
+you can store various attributes associated with a given `Partitioning`, that you can potentially 
+use later in your application. Just to give you some ideas for these: 
 * a name of your application, ETL Pipeline, or your Spark job
 * a list of owners of your application or your dataset
 * source system of a given dataset
@@ -89,18 +89,18 @@ particular column), and some require more columns (such as `hash` function).
 
 ### Measurement 
 
-Practically speaking, it's a map-like structure of `Measures` and their results. 
+Practically speaking, a single `Measurement` contains a `Measure` and result associated with it. 
 
 ### Checkpoint
 
-Each `Checkpoint` defines a `Measurement` (containing individual `Measures` and their results) that is associated with 
-certain `Partitioning`.
+Each `Checkpoint` defines a sequence of `Measurements` (containing individual `Measures` and their results) that are 
+associated with certain `Partitioning`.
 
 A `Checkpoint` is defined on the agent side, the server only accepts it.
 
 `Atum Context` stores information about a set of `Measures` associated with specific `Partitioning`, but the
 calculations of individual metrics are performed only after the `Checkpoint` operation is being called.
-We can even say, that `Checkpoint` is a result of particular `Measurement` (verb).
+We can even say, that `Checkpoint` is a result of particular `Measurements` (verb).
 
 ### Data Flow
 
