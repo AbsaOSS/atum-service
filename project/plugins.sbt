@@ -22,6 +22,9 @@ addSbtPlugin("com.eed3si9n"       % "sbt-projectmatrix" % "0.9.1")
 // To add release plugin
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 
+// Plugins to build the server module as a war file
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
+
 // sbt-jacoco dependency downloading
 lazy val ow2Version = "9.5"
 lazy val jacocoVersion = "0.8.11-absa.1"
