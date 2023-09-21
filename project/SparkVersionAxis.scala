@@ -44,7 +44,7 @@ object SparkVersionAxis {
           axisValues = Seq(sparkAxis, VirtualAxis.jvm),
           _.settings(
             moduleName := camelCaseToLowerDashCase(name.value + sparkAxis.directorySuffix),
-            libraryDependencies ++= agentDependencies(sparkAxis.sparkVersion),
+            libraryDependencies ++= agentDependencies(sparkAxis.sparkVersion, scalaVersion),
             jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion, "atum-agent"),
             jacocoExcludes := jacocoProjectExcludes()
           ).settings(settings: _*)
