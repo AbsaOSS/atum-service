@@ -126,7 +126,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
   // measurements:
   def getMeasurements(cmId: UUID, cpId: UUID): Future[List[Measurement]] = {
     getCheckpointById(cmId, cpId).map {
-      _.measures
+      _.measurements
     }
   }
 
@@ -136,7 +136,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
         case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
         case Some(existingCp) =>
           val updatedCps = existingCm.checkpoints.map {
-            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measures = existingCp.measures ++ List(measurement))
+            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
             case cp => cp // other CPs untouched
           }
 
