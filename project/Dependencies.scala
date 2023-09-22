@@ -59,8 +59,8 @@ object Dependencies {
       springBootTest % Test,
       springBootWeb,
       springBootConfiguration,
-      springBootTomcat /*% Provided*/,
-      servletApi /*% Provided*/,
+      springBootTomcat /*% Provided*/ ,
+      servletApi /*% Provided*/ ,
       springFoxSwagger,
       springFoxSwaggerUI,
       springFoxBoot,
@@ -71,22 +71,19 @@ object Dependencies {
 
   def agentDependencies(sparkVersion: String): Seq[ModuleID] = {
 
-    val typesafeVersion     = "1.4.2"
+    val typesafeVersion = "1.4.2"
     val sparkCommonsVersion = "0.6.0"
-    val sparkMinorVersion   = getVersionUpToMinor(sparkVersion)
-    val specs2CoreVersion   = "4.19.2"
+    val sparkMinorVersion = getVersionUpToMinor(sparkVersion)
+    val specs2CoreVersion = "4.19.2"
 
     Seq(
-        "org.apache.spark" %% "spark-core"                               % sparkVersion % Provided,
-        "org.apache.spark" %% "spark-sql"                                % sparkVersion % Provided,
-        "com.typesafe"      % "config"                                   % typesafeVersion,
-        "za.co.absa"       %% s"spark-commons-spark${sparkMinorVersion}" % sparkCommonsVersion,
-        "za.co.absa"       %% "spark-commons-test"                       % sparkCommonsVersion % Test,
+      "org.apache.spark" %% "spark-core" % sparkVersion % Provided,
+      "org.apache.spark" %% "spark-sql" % sparkVersion % Provided,
+      "com.typesafe" % "config" % typesafeVersion,
+      "za.co.absa" %% s"spark-commons-spark${sparkMinorVersion}" % sparkCommonsVersion,
+      "com.softwaremill.sttp.client3" %% "core" % "3.5.2",
+      "za.co.absa" %% "spark-commons-test" % sparkCommonsVersion % Test
     )
-
   }
 
 }
-
-
-
