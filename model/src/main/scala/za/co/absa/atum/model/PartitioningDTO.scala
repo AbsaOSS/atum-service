@@ -16,8 +16,6 @@
 
 package za.co.absa.atum.model
 
-case class Measure(
-    measureName: String,
-    measureFunction: String,
-    controlColumns: Seq[String]
+case class PartitioningDTO(
+    partitioning: Seq[PartitionDTO]
 )

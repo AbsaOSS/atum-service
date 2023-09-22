@@ -16,6 +16,6 @@
 
 package za.co.absa.atum.model
 
-case class AdditionalData(
+case class AdditionalDataDTO(
     additionalData: Map[String, String]
 )

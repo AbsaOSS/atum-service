@@ -16,7 +16,13 @@
 
 package za.co.absa.atum.model
 
-case class Measurement(
-    measure: Measure,
-    measureResult: String
+import java.time.ZonedDateTime
+
+case class CheckpointDTO(
+    name: String,
+    author: String,
+    partitioning: PartitioningDTO,
+    processStartTime: ZonedDateTime,
+    processEndTime: ZonedDateTime,
+    measurements: Seq[MeasurementDTO]
 )

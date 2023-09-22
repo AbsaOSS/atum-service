@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.model
 
-case class Partition(
-    key: String,
-    value: String
+case class MeasurementDTO(
+    measure: MeasureDTO,
+    measureResult: String
 )

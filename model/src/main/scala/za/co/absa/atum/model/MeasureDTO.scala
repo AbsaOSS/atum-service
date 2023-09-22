@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.model
 
-case class AtumContext(
-    partitions: Partitioning,
-    measures: Set[Measure] = Set.empty
+case class MeasureDTO(
+    functionName: String,
+    controlColumns: Seq[String]
 )
