@@ -15,14 +15,23 @@
  */
 
 package za.co.absa.atum.agent
-
+import com.typesafe.config.{Config, ConfigFactory}
+import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.MeasureResult
 
 /**
- *  Place holder for the agent that communicate with the API.
+ * Place holder for the agent that communicate with the API.
  */
 class AtumAgent private() {
+
+  val config: Config = ConfigFactory.load()
+
+  private val dispatcher = config.getString("atum.dispatcher.type") match {
+    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
+    case "console" => new ConsoleDispatcher
+    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+  }
 
   /**
    *  Sends a single `MeasureResult` to the AtumService API along with an extra data from a given `AtumContext`.
@@ -31,9 +40,7 @@ class AtumAgent private() {
    *  @param measureResult
    */
   def publish(checkpointKey: String, atumContext: AtumContext, measureResult: MeasureResult): Unit =
-    println(
-      s"Enqueued measurement: ${Seq(checkpointKey, atumContext, measureResult).mkString(" || ")}"
-    )
+    dispatcher.publish(checkpointKey, atumContext, measureResult)
 
   /**
    *  Sends a single `MeasureResult` to the AtumService API. It doesn't involve AtumContext.
@@ -42,7 +49,7 @@ class AtumAgent private() {
    *  @param measureResult
    */
   def measurePublish(checkpointKey: String, measureResult: MeasureResult): Unit =
-    println(s"Enqueued measurement: $checkpointKey || $measureResult")
+    dispatcher.publish(checkpointKey, measureResult)
 
   /**
    *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.

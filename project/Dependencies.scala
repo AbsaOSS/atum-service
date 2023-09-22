@@ -41,6 +41,8 @@ object Dependencies {
     val springfox = "3.0.0"
 
     val sparkCommons = "0.6.1"
+
+    val sttp = "3.5.2"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -91,8 +93,8 @@ object Dependencies {
       springBootTest % Test,
       springBootWeb,
       springBootConfiguration,
-      springBootTomcat /*% Provided*/,
-      servletApi /*% Provided*/,
+      springBootTomcat /*% Provided*/ ,
+      servletApi /*% Provided*/ ,
       springFoxSwagger,
       springFoxSwaggerUI,
       springFoxBoot,
@@ -113,12 +115,16 @@ object Dependencies {
     lazy val sparkCommons = "za.co.absa" % s"spark-commons-spark${sparkMinorVersion}_$scalaMinorVersion" % Versions.sparkCommons
     lazy val sparkCommonsTest = "za.co.absa" % s"spark-commons-test_$scalaMinorVersion" % Versions.sparkCommons % Test
 
+    lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
+
+
     Seq(
       sparkCore,
       sparkSql,
       typeSafeConfig,
       sparkCommons,
-      sparkCommonsTest
+      sparkCommonsTest,
+      sttp
     )
   }
 
