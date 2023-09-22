@@ -70,7 +70,6 @@ object Dependencies {
   }
 
   def serverDependencies: Seq[ModuleID] = {
-
     val springVersion = "2.6.1"
     val springOrg = "org.springframework.boot"
 

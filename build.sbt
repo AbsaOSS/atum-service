@@ -17,6 +17,7 @@
 import Dependencies._
 import SparkVersionAxis._
 import JacocoSetup._
+import sbt.Keys.name
 
 
 ThisBuild / organization := "za.co.absa"
@@ -44,12 +45,20 @@ lazy val commonSettings = Seq(
   Test / parallelExecution := false
 )
 
+val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", _) => MergeStrategy.discard
+  case "application.conf"      => MergeStrategy.concat
+  case "reference.conf"        => MergeStrategy.concat
+  case _                       => MergeStrategy.first
+}
+
 lazy val root = (projectMatrix in file("."))
   .aggregate(model, server, agent)
   .settings(
-    name := "atum-root",
+    name := "atum-service-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-    publish / skip := true
+    publish / skip := true,
+    mergeStrategy
   )
 
 lazy val server = (projectMatrix in file("server"))
@@ -57,15 +66,20 @@ lazy val server = (projectMatrix in file("server"))
     commonSettings ++ Seq(
       name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
+      Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      packageBin := (Compile / assembly).value,
+      artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
-      inheritJarManifest := true
+      inheritJarManifest := true,
+      mergeStrategy
     ): _*
   )
   .settings(
     jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-server"),
     jacocoExcludes := jacocoProjectExcludes()
   )
+  .enablePlugins(AssemblyPlugin)
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
   .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
@@ -80,6 +94,7 @@ lazy val agent = (projectMatrix in file("agent"))
         scalaVersion.value
       ),
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      mergeStrategy
     ): _*
   )
   .settings(
