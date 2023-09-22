@@ -23,8 +23,9 @@ object Dependencies {
     val spark3 = "3.3.2"
 
     val scala211 = "2.11.12"
-    val scala212 = "2.12.12"
-    val supportedScalaVersions: Seq[String] = Seq(scala211, scala212)
+    val scala212 = "2.12.18"
+    val scala213 = "2.13.11"
+    val supportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
@@ -65,7 +66,8 @@ object Dependencies {
     scalaVersion match {
       case _ if scalaVersion.startsWith("2.11") => Versions.spark2
       case _ if scalaVersion.startsWith("2.12") => Versions.spark3
-      case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
+      case _ if scalaVersion.startsWith("2.13") => Versions.spark3
+      case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
     }
   }
 

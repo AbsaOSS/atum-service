@@ -22,7 +22,6 @@ import za.co.absa.atum.web.model.{BaseApiModel, ControlMeasure, Flow, Partition}
 
 import java.util.UUID
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
-import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -40,12 +39,12 @@ object InMemoryApiModelDao {
 
 }
 
-class InMemoryApiModelDao[T <: BaseApiModel] extends ApiModelDao[T] {
+class InMemoryApiModelDao[T <: BaseApiModel] extends ApiModelDao[T] with JavaConvertersWrapper {
 
   private val inmemory: ConcurrentMap[UUID, T] = new ConcurrentHashMap[UUID, T]()
 
   def getList(limit: Int, offset: Int, filter: T => Boolean): Future[List[T]] = Future {
-    inmemory.values.asScala
+    asScala(inmemory.values)
       .filter(filter)
       .slice(offset, offset + limit).toList // limiting, todo pagination or similar
   }

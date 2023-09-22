@@ -68,6 +68,15 @@ lazy val server = (projectMatrix in file("server"))
       libraryDependencies ++= Dependencies.serverDependencies,
       Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      Compile / unmanagedSourceDirectories += {
+        val sourceDir = (Compile / sourceDirectory).value
+        if (scalaVersion.value.startsWith("2.13")) {
+          sourceDir / "scala_2.13+"
+        }
+        else {
+          sourceDir / "scala_2.12-"
+        }
+      },
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
@@ -102,7 +111,7 @@ lazy val agent = (projectMatrix in file("agent"))
     jacocoExcludes := jacocoProjectExcludes()
   )
   .sparkRow(SparkVersionAxis(Versions.spark2), scalaVersions = Seq(Versions.scala211, Versions.scala212))
-  .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212))
+  .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212, Versions.scala213))
   .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
   .dependsOn(model)
 
