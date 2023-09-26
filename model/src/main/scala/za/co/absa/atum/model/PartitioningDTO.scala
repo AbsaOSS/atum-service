@@ -17,5 +17,5 @@
 package za.co.absa.atum.model
 
 case class PartitioningDTO(
-    partitioning: Seq[PartitionDTO]
+  partitioning: Seq[PartitionDTO]
 )

@@ -17,12 +17,14 @@
 package za.co.absa.atum.model
 
 import java.time.ZonedDateTime
+import java.util.UUID
 
 case class CheckpointDTO(
-    name: String,
-    author: String,
-    partitioning: PartitioningDTO,
-    processStartTime: ZonedDateTime,
-    processEndTime: ZonedDateTime,
-    measurements: Seq[MeasurementDTO]
+  id: UUID,
+  name: String,
+  author: String,
+  partitioning: PartitioningDTO,
+  processStartTime: ZonedDateTime,
+  processEndTime: ZonedDateTime,
+  measurements: Seq[MeasurementDTO]
 )
