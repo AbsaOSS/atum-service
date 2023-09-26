@@ -16,11 +16,20 @@
 
 package za.co.absa.atum.web.api.service
 
-import za.co.absa.atum.web.api.repositories.CheckPointsRepository
-import za.co.absa.atum.web.model.Checkpoint
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
+import za.co.absa.atum.model.Checkpoint
+import za.co.absa.atum.web.api.repositories.CheckpointRepository
 
-class CheckPointService (private val repository: CheckPointsRepository) {
-  def addCheckPoint(checkPoint: Checkpoint): Checkpoint = {
-    repository.save(checkPoint)
+trait CheckpointService {
+  def saveCheckpoint(checkpointData: Checkpoint): Checkpoint
+}
+
+@Service()
+class CheckPointServiceImpl @Autowired() (val checkpointsRepository: CheckpointRepository) extends CheckpointService {
+  override def saveCheckpoint(checkpoint: Checkpoint): Checkpoint = {
+    checkpointsRepository.saveCheckpoint(checkpoint)
+    checkpoint
   }
+
 }
