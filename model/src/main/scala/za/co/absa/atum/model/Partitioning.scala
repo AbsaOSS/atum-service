@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.model
 
-case class PartitionDTO(
-  key: String,
-  value: String
+case class Partitioning(
+  partitioning: Seq[Partition]
 )

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
 case class AtumContextDTO(
-  partitioning: PartitioningDTO,
-  measures: Set[MeasureDTO] = Set.empty,
-  additionalData: AdditionalDataDTO = AdditionalDataDTO(additionalData = Map.empty)
+  partitioning: Partitioning,
+  measures: Set[Measure] = Set.empty,
+  additionalData: AdditionalDataDTO = AdditionalData(additionalData = Map.empty)
 )

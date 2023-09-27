@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.model
 
-case class MeasureDTO(
-  functionName: String,
-  controlColumns: Seq[String]
+case class Measurement(
+  measure: Measure,
+  result: MeasureResult
 )

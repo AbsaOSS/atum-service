@@ -16,6 +16,4 @@
 
 package za.co.absa.atum.model
 
-case class PartitioningDTO(
-  partitioning: Seq[PartitionDTO]
-)
+trait MeasureResult[T]
