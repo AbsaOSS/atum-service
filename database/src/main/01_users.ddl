@@ -13,26 +13,69 @@
  * limitations under the License.
  */
 
-CREATE ROLE atum_owner WITH
-    LOGIN
-    NOSUPERUSER
-    INHERIT
-    NOCREATEDB
-    NOCREATEROLE
-    NOREPLICATION;
 
-CREATE ROLE atum_user WITH
-    LOGIN
-    NOSUPERUSER
-    INHERIT
-    NOCREATEDB
-    NOCREATEROLE
-    NOREPLICATION;
 
-CREATE ROLE atum_configurator WITH
-    LOGIN
-    NOSUPERUSER
-    INHERIT
-    NOCREATEDB
-    NOCREATEROLE
-    NOREPLICATION;
+DO
+$do$
+    BEGIN
+        IF EXISTS (
+                SELECT FROM pg_catalog.pg_roles
+                WHERE  rolname = 'atum_owner') THEN
+
+            RAISE NOTICE 'Role "atum_owner" already exists. Skipping.';
+        ELSE
+            CREATE ROLE atum_owner WITH
+                LOGIN
+                NOSUPERUSER
+                INHERIT
+                NOCREATEDB
+                NOCREATEROLE
+                NOREPLICATION
+                LOGIN PASSWORD 'changeme';
+        END IF;
+    END
+$do$;
+
+
+DO
+$do$
+    BEGIN
+        IF EXISTS (
+                SELECT FROM pg_catalog.pg_roles
+                WHERE  rolname = 'atum_user') THEN
+
+            RAISE NOTICE 'Role "atum_user" already exists. Skipping.';
+        ELSE
+            CREATE ROLE atum_user WITH
+                LOGIN
+                NOSUPERUSER
+                INHERIT
+                NOCREATEDB
+                NOCREATEROLE
+                NOREPLICATION
+                LOGIN PASSWORD 'changeme';
+        END IF;
+    END
+$do$;
+
+
+DO
+$do$
+    BEGIN
+        IF EXISTS (
+                SELECT FROM pg_catalog.pg_roles
+                WHERE  rolname = 'atum_configurator') THEN
+
+            RAISE NOTICE 'Role "atum_configurator" already exists. Skipping.';
+        ELSE
+            CREATE ROLE atum_configurator WITH
+                LOGIN
+                NOSUPERUSER
+                INHERIT
+                NOCREATEDB
+                NOCREATEROLE
+                NOREPLICATION
+                LOGIN PASSWORD 'changeme';
+        END IF;
+    END
+$do$;

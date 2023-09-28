@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS runs.flows;
-
 CREATE TABLE runs.flows
 (
     id_flow                 BIGINT NOT NULL DEFAULT global_id(),

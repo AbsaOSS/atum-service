@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
+
 CREATE OR REPLACE FUNCTION runs.write_measurement(
-    IN  i_segmentation          HSTORE,
-    IN  i_id_measurement        UUID,
+    IN  i_segmentation          JSONB,
     IN  i_id_checkpoint         UUID,
-    IN  i_measure_type          TEXT,
-    IN  i_measure_fields        TEXT[],
-    IN  i_value                 JSON,
+    IN  i_measure_type          TEXT[],
+    IN  i_measure_fields        TEXT[][],
+    IN  i_value                 JSONB[],
     IN  i_by_user               TEXT,
     OUT status              INTEGER,
     OUT status_text         TEXT
@@ -123,4 +123,4 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION runs.write_measurement(HSTORE, UUID, UUID, TEXT, TEXT[], JSON, TEXT) TO atum_user;
+GRANT EXECUTE ON FUNCTION runs.write_measurement(JSONB, UUID, TEXT, TEXT[], JSON, TEXT) TO atum_user;

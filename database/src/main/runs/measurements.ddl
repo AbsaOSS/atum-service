@@ -13,20 +13,18 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS runs.measurements;
-
 CREATE TABLE runs.measurements
 (
-    id_measurement                      UUID NOT NULL,
-    key_checkpoint_measure_definition   BIGINT NOT NULL,
-    key_checkpoint                      UUID NOT NULL,
-    value                               JSON NOT NULL,
+    id_measurement                      BIGINT NOT NULL DEFAULT global_id(),
+    fk_checkpoint_measure_definition    BIGINT NOT NULL,
+    fk_checkpoint                       UUID NOT NULL,
+    measurement_value                   JSONB NOT NULL,
     CONSTRAINT measurements_pk PRIMARY KEY (id_measurement)
 );
 
 ALTER TABLE runs.measurements
-    ADD CONSTRAINT measurements_unq UNIQUE (key_checkpoint, key_checkpoint_measure_definition);
+    ADD CONSTRAINT measurements_unq UNIQUE (fk_checkpoint, fk_checkpoint_measure_definition);
 
-CREATE INDEX measurements_idx1 ON runs.measurements (key_checkpoint_measure_definition);
+CREATE INDEX measurements_idx1 ON runs.measurements (fk_checkpoint_measure_definition);
 
 ALTER TABLE runs.measurements OWNER to atum_owner;

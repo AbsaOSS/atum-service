@@ -13,14 +13,11 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS runs.checkpoints;
-
 CREATE TABLE runs.checkpoints
 (
     id_checkpoint           UUID NOT NULL,
-    key_segmentation        BIGINT NOT NULL,
+    fk_partitioning         BIGINT NOT NULL,
     checkpoint_name         TEXT NOT NULL,
-    workflow_name           TEXT,
     process_start_time      TIMESTAMP WITH TIME ZONE NOT NULL,
     process_end_time        TIMESTAMP WITH TIME ZONE,
     created_by              TEXT NOT NULL,
@@ -28,6 +25,8 @@ CREATE TABLE runs.checkpoints
     CONSTRAINT segments_pk PRIMARY KEY (id_checkpoint)
 );
 
-CREATE INDEX checkpoints_idx1 ON runs.checkpoints (key_segmentation);
+COMMENT ON COLUMN runs.checkpoints.id_checkpoint is 'The UUID is coming from outside world to distinguish repeated entry from a re-run checkpoint';
+
+CREATE INDEX checkpoints_idx1 ON runs.checkpoints (fk_partitioning);
 
 ALTER TABLE runs.checkpoints OWNER to atum_owner;

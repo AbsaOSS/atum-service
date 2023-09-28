@@ -55,4 +55,4 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flow_patterns.get_flow() TO atum_configurator;
+GRANT EXECUTE ON FUNCTION flow_patterns.list_flows() TO atum_configurator;

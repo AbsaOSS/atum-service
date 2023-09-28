@@ -13,12 +13,10 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS runs.additional_data;
-
 CREATE TABLE runs.additional_data
 (
     id_additional_data      BIGINT NOT NULL DEFAULT global_id(),
-    key_segmentation        BIGINT NOT NULL,
+    fk_partitioning         BIGINT NOT NULL,
     ad_name                 TEXT NOT NULL,
     ad_value                TEXT,
     created_by              TEXT NOT NULL,
@@ -29,6 +27,6 @@ CREATE TABLE runs.additional_data
 );
 
 ALTER TABLE runs.additional_data
-    ADD CONSTRAINT flows_unq UNIQUE (key_segmentation, ad_name);
+    ADD CONSTRAINT flows_unq UNIQUE (fk_partitioning, ad_name);
 
 ALTER TABLE runs.additional_data OWNER to atum_owner;

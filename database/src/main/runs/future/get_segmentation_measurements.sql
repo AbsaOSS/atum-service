@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs.get_segmentation_measurements(
-    IN  i_segmentation                               HSTORE,
+CREATE OR REPLACE FUNCTION runs.get_partitioning_measurements(
+    IN  i_partitioning                               JSONB,
     OUT status                                       INTEGER,
     OUT status_text                                  TEXT,
     OUT id_measurement                               UUID,
@@ -24,17 +24,17 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_measurements(
     OUT checkpoint_process_end_time                  TIMESTAMP WITH TIME ZONE,
     OUT measure_type                                 TEXT,
     OUT measure_fields                               TEXT[],
-    OUT value                                        JSON
+    OUT value                                        JSONB
 ) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.get_segmentation_measurements(1)
+-- Function: runs.get_partitioning_measurements(1)
 --      Returns all measurements (together with checkpoints and checkpoint measure definitions info) that are associated with the given segmentation.
 --      If the given segmentation does not exist, exactly one record is returned with the error status.
 --
 -- Parameters:
---      i_segmentation                                      - segmentation for which the data are bound to
+--      i_partitioning                                      - segmentation for which the data are bound to
 --
 -- Returns:
 --      status                                              - Status code
@@ -56,7 +56,7 @@ $$
 DECLARE
     _key_segmentation   BIGINT;
 BEGIN
-    _key_segmentation = runs._get_key_segmentation(i_segmentation);
+    _key_segmentation = runs._get_key_segmentation(i_partitioning);
 
     IF _key_segmentation IS NULL THEN
         status := 41;
@@ -89,4 +89,5 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION runs.get_segmentation_measurements(HSTORE) TO atum_user;
+ALTER FUNCTION runs.get_partitioning_measurements(JSONB) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_measurements(JSONB) TO atum_user;

@@ -13,20 +13,18 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS runs.checkpoint_measure_definitions;
-
 CREATE TABLE runs.checkpoint_measure_definitions
 (
     id_checkpoint_measure_definition    BIGINT NOT NULL DEFAULT global_id(),
-    key_segmentation                    BIGINT NOT NULL,
-    measure_type                        TEXT NOT NULL,
-    measure_fields                      TEXT[] NOT NULL,
+    fk_partitioning                     BIGINT NOT NULL,
+    function_name                       TEXT NOT NULL,
+    control_columns                     TEXT[] NOT NULL,
     created_by                          TEXT NOT NULL,
     created_at                          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT checkpoint_definitions_pk PRIMARY KEY (id_checkpoint_measure_definition)
 );
 
 ALTER TABLE runs.checkpoint_measure_definitions
-    ADD CONSTRAINT checkpoint_measure_definitions_unq UNIQUE (key_segmentation, measure_type, measure_fields);
+    ADD CONSTRAINT checkpoint_measure_definitions_unq UNIQUE (fk_partitioning, function_name, control_columns);
 
 ALTER TABLE runs.checkpoint_measure_definitions OWNER to atum_owner;

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs.get_segmentation_measure_definitions(
-    IN  i_segmentation                          HSTORE,
+CREATE OR REPLACE FUNCTION runs.get_partitioning_measure_definitions(
+    IN  i_partitioning                          JSONB,
     OUT status                                  INTEGER,
     OUT status_text                             TEXT,
     OUT id_checkpoint_measure_definition        BIGINT,
@@ -26,12 +26,12 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_measure_definitions(
  $$
  -------------------------------------------------------------------------------
  --
- -- Function: runs.get_segmentation_measure_definitions(1)
+ -- Function: runs.get_partitioning_measure_definitions(1)
  --      Return's all measure definitions, that are associated with the given segmentation.
  --      If the given segmentation does not exist, exactly one record is returned with the error status.
  --
  -- Parameters:
- --      i_segmentation      - segmentation for which the data are bound to
+ --      i_partitioning      - segmentation for which the data are bound to
  --
  -- Returns:
  --      measure_type        - Measure type
@@ -45,11 +45,11 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_measure_definitions(
  --
  -------------------------------------------------------------------------------
  DECLARE
-     _key_segmentation   BIGINT;
+     _fk_partitioning    BIGINT;
  BEGIN
-     _key_segmentation = runs._get_key_segmentation(i_segmentation);
+     _fk_partitioning = runs._get_key_segmentation(i_partitioning);
 
-     IF _key_segmentation IS NULL THEN
+     IF _fk_partitioning IS NULL THEN
          status := 41;
          status_text := 'Segmentation not found';
          RETURN NEXT;
@@ -65,11 +65,12 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_measure_definitions(
             CMD.created_by,
             CMD.created_at
      FROM runs.checkpoint_measure_definitions CMD
-     WHERE CMD.key_segmentation = _key_segmentation;
+     WHERE CMD.fk_partitioning = _fk_partitioning;
 
      RETURN;
  END;
  $$
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
- GRANT EXECUTE ON FUNCTION runs.get_segmentation_measure_definitions(HSTORE) TO atum_user;
+ALTER FUNCTION runs.get_partitioning_measure_definitions(JSONB) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_measure_definitions(JSONB) TO atum_user;

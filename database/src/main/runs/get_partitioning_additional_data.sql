@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs.get_segmentation_additional_data(
-    IN  i_segmentation      HSTORE,
+CREATE OR REPLACE FUNCTION runs.get_partitioning_additional_data(
+    IN  i_partitioning      JSONB,
     OUT status              INTEGER,
     OUT status_text         TEXT,
     OUT ad_name             TEXT,
@@ -27,12 +27,12 @@ CREATE OR REPLACE FUNCTION runs.get_segmentation_additional_data(
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.get_segmentation_additional_data(1)
+-- Function: runs.get_partitioning_additional_data(1)
 --      Return's all additional data, that are associated with the give segmentation.
 --      If the given segmentation does not exist, exactly one record is returned with the error status.
 --
 -- Parameters:
---      i_segmentation      - segmentation for which the data are bound to
+--      i_partitioning      - segmentation for which the data are bound to
 --
 -- Returns:
 --      status              - Status code
@@ -50,13 +50,13 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _key_segmentation   BIGINT;
+    _fk_partitioning    BIGINT;
 BEGIN
-    _key_segmentation = runs._get_key_segmentation(i_segmentation);
+    _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
-    IF _key_segmentation IS NULL THEN
+    IF _fk_partitioning IS NULL THEN
         status := 41;
-        status_text := 'Segmentation not found';
+        status_text := 'Partitioning not found';
         RETURN NEXT;
         RETURN;
     END IF;
@@ -65,11 +65,12 @@ BEGIN
     SELECT 10, 'OK', AD.ad_name, AD.ad_value,
            AD.created_by, AD.created_at, AD.updated_by, AD.updated_at
     FROM runs.additional_data AD
-    WHERE AD.key_segmentation = _key_segmentation;
+    WHERE AD.fk_partitioning = _fk_partitioning;
 
     RETURN;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION runs.get_segmentation_additional_data(HSTORE) TO atum_user;
+ALTER FUNCTION runs.get_partitioning_additional_data(JSONB) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_additional_data(JSONB) TO atum_user;

@@ -13,18 +13,4 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS runs.segmentations;
-
-CREATE TABLE runs.segmentations
-(
-    id_segmentation         BIGINT NOT NULL DEFAULT global_id(),
-    segmentation            HSTORE NOT NULL,
-    created_by              TEXT NOT NULL,
-    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT segmentations_pk PRIMARY KEY (id_segmentation)
-);
-
-ALTER TABLE runs.segmentations
-    ADD CONSTRAINT segmentations_unq UNIQUE (segmentation);
-
-ALTER TABLE runs.segmentations OWNER to atum_owner;
+ALTER DATABASE atum_db OWNER TO atum_owner;

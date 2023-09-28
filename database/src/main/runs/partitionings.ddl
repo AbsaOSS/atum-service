@@ -13,7 +13,16 @@
  * limitations under the License.
  */
 
-ALTER DATABASE atum_db OWNER TO atum_owner;
+CREATE TABLE runs.partitionings
+(
+    id_partitioning         BIGINT NOT NULL DEFAULT global_id(),
+    partitioning            JSONB NOT NULL,
+    created_by              TEXT NOT NULL,
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT segmentations_pk PRIMARY KEY (id_partitioning)
+);
 
-CREATE EXTENSION IF NOT EXISTS hstore;
+ALTER TABLE runs.partitionings
+    ADD CONSTRAINT segmentations_unq UNIQUE (partitioning);
 
+ALTER TABLE runs.partitionings OWNER to atum_owner;

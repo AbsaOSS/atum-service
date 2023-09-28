@@ -13,15 +13,13 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS runs.segmentation_to_flow;
-
-CREATE TABLE runs.segmentation_to_flow
+CREATE TABLE runs.partitioning_to_flow
 (
-    key_flow                BIGINT NOT NULL,
-    key_segmentation        BIGINT NOT NULL,
+    fk_flow                 BIGINT NOT NULL,
+    fk_partitioning         BIGINT NOT NULL,
     created_by              TEXT NOT NULL,
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT segmentation_to_flow_pk PRIMARY KEY (key_flow, key_segmentation)
+    CONSTRAINT partitioning_to_flow_pk PRIMARY KEY (fk_flow, fk_partitioning)
 );
 
-ALTER TABLE runs.segmentation_to_flow OWNER to atum_owner;
+ALTER TABLE runs.partitioning_to_flow OWNER to atum_owner;

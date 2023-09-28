@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs._get_key_segmentation(
-    IN  i_segmentation      HSTORE,
-    OUT key_segmentation    BIGINT
+CREATE OR REPLACE FUNCTION runs._get_id_partitioning(
+    IN  i_partitioning      JSONB,
+    OUT id_partitioning     BIGINT
 ) RETURNS BIGINT AS
 $$
 -------------------------------------------------------------------------------
@@ -24,22 +24,22 @@ $$
 --      Gets the id of the provided segmentation, if it exits
 --
 -- Parameters:
---      i_segmentation      - segmentation to look for
+--      i_partitioning      - partitioning to look for
 --
 -- Returns:
---      key_segmentation    - id of the segmentation if it exists, NULL otherwise
+--      id_partitioning     - id of the segmentation if it exists, NULL otherwise
 --
 -------------------------------------------------------------------------------
 DECLARE
 BEGIN
-    SELECT SEG.id_segmentation
-    FROM runs.segmentations SEG
-    WHERE SEG.segmentation = i_segmentation
-    INTO key_segmentation;
+    SELECT PAR.id_partitioning
+    FROM runs.partitionings PAR
+    WHERE PAR.partitioning = i_partitioning
+    INTO id_partitioning;
 
     RETURN;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION runs._get_key_segmentation(hstore) TO atum_user;
+ALTER FUNCTION runs._get_id_partitioning(JSONB) OWNER TO atum_owner;

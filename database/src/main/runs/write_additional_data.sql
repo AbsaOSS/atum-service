@@ -14,7 +14,7 @@
  */
 
 CREATE OR REPLACE FUNCTION runs.write_additional_data(
-    IN  i_segmentation      HSTORE,
+    IN  i_partitioning      JSONB,
     IN  i_ad_name           TEXT,
     IN  i_ad_value          TEXT,
     IN  i_by_user           TEXT,
@@ -30,7 +30,7 @@ $$
 --      the segmentation, the value is updated.
 --
 -- Parameters:
---      i_segmentation      - segmentation to add the additional data for
+--      i_partitioning      - segmentation to add the additional data for
 --      i_ad_name           - name of the additional data entry
 --      i_ad_value          - value of the additional data entry
 --      i_by_user           - user behind the change
@@ -47,7 +47,7 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _key_segmentation   BIGINT;
+    _fk_partitioning   BIGINT;
 BEGIN
 
     IF i_ad_value IS NULL THEN
@@ -56,9 +56,9 @@ BEGIN
         RETURN;
     END IF;
 
-    _key_segmentation := runs._get_key_segmentation(i_segmentation);
+    _fk_partitioning := runs._get_id_partitioning(i_partitioning);
 
-    IF _key_segmentation IS NULL THEN
+    IF _fk_partitioning IS NULL THEN
         status := 41;
         status_text := 'Segmentation not found';
         RETURN;
@@ -69,7 +69,7 @@ BEGIN
     SET ad_value = i_ad_value,
         updated_by = i_by_user,
         updated_at = now()
-    WHERE key_segmentation = _key_segmentation AND
+    WHERE key_segmentation = _fk_partitioning AND
           ad_name = i_ad_name AND
           ad_value IS NULL;
 
@@ -78,7 +78,7 @@ BEGIN
         status_text := 'Pattern based additional data updated';
     ELSE
         INSERT INTO runs.additional_data (key_segmentation, ad_name, ad_value, created_by, updated_by)
-        VALUES (_key_segmentation, i_ad_name, i_ad_value, i_by_user, i_by_user);
+        VALUES (_fk_partitioning, i_ad_name, i_ad_value, i_by_user, i_by_user);
 
         status := 11;
         status_text := 'Additional data has been added';
@@ -89,4 +89,5 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION runs.write_additional_data(HSTORE, TEXT, TEXT, TEXT) TO atum_user;
+ALTER FUNCTION runs.write_additional_data(JSONB, TEXT, TEXT, TEXT) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.write_additional_data(JSONB, TEXT, TEXT, TEXT) TO atum_user;
