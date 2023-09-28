@@ -16,28 +16,23 @@
 
 package za.co.absa.atum.web.api.repositories
 
-import za.co.absa.atum.model.Checkpoint
-import za.co.absa.atum.web.api.service.CheckpointService
+import org.springframework.jdbc.core.JdbcTemplate
+import za.co.absa.atum.model.dto.CheckpointDTO
 
 
-trait CheckpointRepository {
-  def saveCheckpoint(checkpoint: Checkpoint): Unit
-}
+class CheckpointRepository {
 
-class PostgresCheckpointRepository(checkpointService: CheckpointService) extends CheckpointRepository {
-  private val db = DatabaseConnection.getConnection()
-
-  override def saveCheckpoint(checkpoint: Checkpoint): Unit = {
-    val sqlQuery = "INSERT INTO checkpoint (name, partitioning, processStartTime, processEndTime, measurements) VALUES (?, ?, ?, ?, ?)"
-    val preparedStatement = db.prepareStatement(sqlQuery)
-
-    preparedStatement.setString(1, checkpoint.name)
-    preparedStatement.setString(2, checkpoint.partitioning.toString)
-    preparedStatement.setString(3, checkpoint.processStartTime.toString)
-    preparedStatement.setString(4, checkpoint.processEndTime.toString)
-    preparedStatement.setObject(5, checkpoint.measurements)
-    preparedStatement.executeUpdate()
-//    checkpointService.saveCheckpoint(checkpoint)
+  private val jdbcTemplate: JdbcTemplate = null
+  def createCheckout(checkpoint: CheckpointDTO): Unit = {
+    jdbcTemplate.execute(
+      "SELECT runs.open_checkpoint(?, ?, ?, ?, ?, ?)",
+      checkpoint.id,
+      checkpoint.name,
+      checkpoint.author,
+      checkpoint.partitioning,
+      checkpoint.processStartTime,
+      checkpoint.processEndTime,
+      checkpoint.measurements
+    )
   }
 }
-

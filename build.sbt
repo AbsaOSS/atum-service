@@ -82,6 +82,7 @@ lazy val server = (projectMatrix in file("server"))
   .enablePlugins(AssemblyPlugin)
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins()
   .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
   .dependsOn(model)
 

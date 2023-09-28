@@ -35,9 +35,9 @@ object Dependencies {
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
 
-    val spring = "2.6.1"
+    val spring = "3.1.0"
 
-    val javaxServlet = "3.0.1"
+    val javaxServlet = "4.0.1"
     val springfox = "3.0.0"
 
     val sparkCommons = "0.6.1"
@@ -76,6 +76,7 @@ object Dependencies {
     val springOrg = "org.springframework.boot"
 
     lazy val springBootWeb = springOrg % "spring-boot-starter-web" % Versions.spring
+    lazy val springBootJpa = springOrg % "spring-boot-starter-data-jpa" % Versions.spring
     lazy val springBootConfiguration = springOrg % "spring-boot-configuration-processor" % Versions.spring
     lazy val springBootTomcat = springOrg % "spring-boot-starter-tomcat" % Versions.spring
     lazy val springBootTest = springOrg % "spring-boot-starter-test" % Versions.spring
@@ -92,6 +93,7 @@ object Dependencies {
     Seq(
       springBootTest % Test,
       springBootWeb,
+      springBootJpa,
       springBootConfiguration,
       springBootTomcat /*% Provided*/ ,
       servletApi /*% Provided*/ ,

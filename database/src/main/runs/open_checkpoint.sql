@@ -14,7 +14,7 @@
  */
 
 CREATE OR REPLACE FUNCTION runs.open_checkpoint(
-    IN  i_segmentation          HSTORE,
+    IN  i_segmentation          jsonb,
     IN  i_id_checkpoint         UUID,
     IN  i_checkpoint_name       TEXT,
     IN  i_workflow_name         TEXT,
