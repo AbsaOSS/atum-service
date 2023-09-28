@@ -16,7 +16,4 @@
 
 package za.co.absa.atum.model
 
-case class AtumContext(
-    partitions: Partitioning,
-    measures: Set[Measure] = Set.empty
-)
+trait MeasureResult[T]

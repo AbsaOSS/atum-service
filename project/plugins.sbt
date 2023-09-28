@@ -22,9 +22,8 @@ addSbtPlugin("com.eed3si9n"       % "sbt-projectmatrix" % "0.9.1")
 // To add release plugin
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 
-// Postgres...
-addSbtPlugin("org.springframework.boot" %% "spring-boot-jpa" % "3.0.3")
-addSbtPlugin("org.postgresql" % "postgresql" % "42.5.4")
+// Plugins to build the server module as a war file
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
 // sbt-jacoco dependency downloading
 lazy val ow2Version = "9.5"

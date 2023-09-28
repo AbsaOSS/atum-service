@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
-import java.time.ZonedDateTime
-
-case class Checkpoint(
-    name: String,
-    partitioning: Partitioning,
-    processStartTime: ZonedDateTime,
-    processEndTime: ZonedDateTime,
-    measurements: Seq[Measurement]
+case class CheckpointDTO(
+  id: UUID,
+  name: String,
+  author: String,
+  partitioning: Partitioning,
+  processStartTime: ZonedDateTime,
+  processEndTime: ZonedDateTime,
+  measurements: Seq[Measurement]
 )

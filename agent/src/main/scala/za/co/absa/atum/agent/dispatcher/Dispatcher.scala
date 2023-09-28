@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.agent.dispatcher
 
-case class Partitioning(
-  partitioning: Seq[Partition]
-)
+import za.co.absa.atum.agent.AtumContext
+import za.co.absa.atum.agent.model.MeasureResult
+
+trait Dispatcher {
+  def publish(checkpointKey: String, measureResult: MeasureResult): Unit
+
+  def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit
+}
