@@ -25,7 +25,7 @@ case class CheckpointDTO(
   id: UUID,
   name: String,
   author: String,
-  measurementsProvidedManually: Boolean = false,
+  measuredByAtumAgent: Boolean = false,
   partitioning: Partitioning,
   processStartTime: ZonedDateTime,
   processEndTime: Option[ZonedDateTime],
