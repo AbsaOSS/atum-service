@@ -19,8 +19,18 @@ package za.co.absa.atum.web.api.repositories
 import org.springframework.jdbc.core.JdbcTemplate
 import za.co.absa.atum.model.dto.CheckpointDTO
 
+import slick.jdbc.{GetResult, PositionedResult, SQLActionBuilder}
+import za.co.absa.fadb.DBFunction._
+import za.co.absa.fadb.DBSchema
+import za.co.absa.fadb.slick.{SlickFunction, SlickFunctionWithStatusSupport, SlickPgEngine}
+import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
+import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 
-class CheckpointRepository {
+
+class CheckpointRepository extends
+  DBSingleResultFunction[CheckpointDTO, Unit, SlickPgEngine]
+  with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
+  with StandardStatusHandling {
 
   private val jdbcTemplate: JdbcTemplate = null
   def createCheckout(checkpoint: CheckpointDTO): Unit = {
