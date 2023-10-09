@@ -16,33 +16,56 @@
 
 package za.co.absa.atum.web.api.repositories
 
-import org.springframework.jdbc.core.JdbcTemplate
 import za.co.absa.atum.model.dto.CheckpointDTO
 
-import slick.jdbc.{GetResult, PositionedResult, SQLActionBuilder}
-import za.co.absa.fadb.DBFunction._
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.slick.{SlickFunction, SlickFunctionWithStatusSupport, SlickPgEngine}
-import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
-import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
+//import slick.jdbc.{GetResult, PositionedResult, SQLActionBuilder}
+//import za.co.absa.fadb.DBFunction._
+//import za.co.absa.fadb.DBSchema
+//import za.co.absa.fadb.slick.{SlickFunction, SlickFunctionWithStatusSupport, SlickPgEngine}
+//import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
+//import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 
+class Checkpoint (implicit dBEngine: SlickPgEngine) extends DBSchema{
+  import CheckpointDTO._
+  val createCheckpoint = new CreateCheckpoint
+}
 
-class CheckpointRepository extends
-  DBSingleResultFunction[CheckpointDTO, Unit, SlickPgEngine]
-  with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
-  with StandardStatusHandling {
+class CreateCheckpoint //extends
+//  DBSingleResultFunction[CheckpointDTO, Unit, SlickPgEngine]
+//  with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
+//  with StandardStatusHandling
+{
 
-  private val jdbcTemplate: JdbcTemplate = null
-  def createCheckout(checkpoint: CheckpointDTO): Unit = {
-    jdbcTemplate.execute(
-      "SELECT runs.open_checkpoint(?, ?, ?, ?, ?, ?)",
-      checkpoint.id,
-      checkpoint.name,
-      checkpoint.author,
-      checkpoint.partitioning,
-      checkpoint.processStartTime,
-      checkpoint.processEndTime,
-      checkpoint.measurements
-    )
+//  private val jdbcTemplate: JdbcTemplate = null
+//  def createCheckout(checkpoint: CheckpointDTO): Unit = {
+//    jdbcTemplate.execute(
+//      "SELECT runs.open_checkpoint(?, ?, ?, ?, ?, ?)",
+//      checkpoint.id,
+//      checkpoint.name,
+//      checkpoint.author,
+//      checkpoint.partitioning,
+//      checkpoint.processStartTime,
+//      checkpoint.processEndTime,
+//      checkpoint.measurements
+//    )
+//  }
+
+  override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
+    val about = JacksonHelper.objectMapper.writeValueAsString(values.about)
+    val checkpointData = JacksonHelper.objectMapper.writeValueAsString(values)
+    sql"""SELECT #$selectEntry
+            FROM #$functionName(
+              ${values.id},
+              ${values.name},
+              ${values.author},
+              ${values.partitioning},
+              ${values.processStartTime},
+              ${values.processEndTime},
+              ${values.measurements},
+              $about::JSONB,
+              $checkpointData::JSONB
+            ) #$alias;"""
   }
+
+  override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
 }
