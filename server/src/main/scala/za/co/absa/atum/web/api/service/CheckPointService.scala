@@ -18,15 +18,15 @@ package za.co.absa.atum.web.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
 import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.web.api.repositories.CheckpointRepository
+import za.co.absa.atum.web.api.repositories.Checkpoint
 
 
 class CheckPointService {
   @Autowired
-  private val checkpointRepository: CheckpointRepository = null
+  private val checkpointRepository: Checkpoint = null
 
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    this.checkpointRepository.createCheckout(checkpoint)
+    this.checkpointRepository.createCheckpoint(checkpoint)
   }
 
 }

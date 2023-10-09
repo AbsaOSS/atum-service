@@ -25,10 +25,6 @@ addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 // Plugins to build the server module as a war file
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
-// FaDB plugin for communication with the database functions
-addSbtPlugin("za.co.absa.fa-db" %% "core"  % "0.4.0")
-addSbtPlugin("za.co.absa.fa-db" %% "slick" % "0.4.0")
-
 // sbt-jacoco dependency downloading
 lazy val ow2Version = "9.5"
 lazy val jacocoVersion = "0.8.11-absa.1"

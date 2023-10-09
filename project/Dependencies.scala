@@ -30,7 +30,7 @@ object Dependencies {
     val scalaMockito = "1.17.12"
     val scalaLangJava8Compat = "1.0.2"
 
-    val jacksonModuleScala = "2.13.1"
+    val jacksonModuleScala = "2.14.2"
 
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
@@ -43,6 +43,8 @@ object Dependencies {
     val sparkCommons = "0.6.1"
 
     val sttp = "3.5.2"
+
+    val fadb = "0.2.0"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -85,6 +87,10 @@ object Dependencies {
     lazy val springFoxBoot = "io.springfox" % "springfox-boot-starter" % Versions.springfox
     lazy val springFoxSwaggerUI = "io.springfox" % "springfox-swagger-ui" % Versions.springfox
 
+    // Fa-db dependency
+    lazy val fadb = "za.co.absa.fa-db" %% "core"  % Versions.fadb
+    lazy val slick = "za.co.absa.fa-db" %% "slick"  % Versions.fadb
+
     // controller implicits:  java CompletableFuture -> scala Future
     lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % Versions.scalaLangJava8Compat
     // object mapper serialization
@@ -101,7 +107,9 @@ object Dependencies {
       springFoxSwaggerUI,
       springFoxBoot,
       scalaJava8Compat,
-      jacksonModuleScala
+      jacksonModuleScala,
+      fadb,
+      slick
     )
   }
 
