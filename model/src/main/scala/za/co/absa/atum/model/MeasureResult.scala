@@ -16,4 +16,6 @@
 
 package za.co.absa.atum.model
 
-trait MeasureResult[T]
+trait MeasureResultBase[T] extends Any { def result: T }
+
+case class MeasureResult[T](result: T) extends AnyVal with MeasureResultBase[T]

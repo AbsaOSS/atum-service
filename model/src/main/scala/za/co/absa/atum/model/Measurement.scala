@@ -18,5 +18,5 @@ package za.co.absa.atum.model
 
 case class Measurement(
   measure: Measure,
-  result: MeasureResult
+  result: MeasureResult[String]
 )
