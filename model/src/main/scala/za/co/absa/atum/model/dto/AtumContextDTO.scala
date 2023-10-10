@@ -16,6 +16,8 @@
 
 package za.co.absa.atum.model.dto
 
+import za.co.absa.atum.model.{Measure, Partitioning}
+
 case class AtumContextDTO(
   partitioning: Partitioning,
   measures: Set[Measure] = Set.empty,
