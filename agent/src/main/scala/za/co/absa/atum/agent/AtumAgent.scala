@@ -19,6 +19,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.MeasureResult
+import za.co.absa.atum.model.dto.AtumContextDTO
 
 /**
  * Place holder for the agent that communicate with the API.
@@ -57,15 +58,53 @@ class AtumAgent private() {
    *  @return
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
-    contexts.getOrElse(atumPartitions, new AtumContext(atumPartitions, this))
+    fetchOrGetOrCreateContext(atumPartitions)
   }
 
-  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit atumContext: AtumContext): AtumContext = {
-    val newPartitions: AtumPartitions = atumContext.atumPartitions ++ subPartitions
-    getContextOrElse(newPartitions, atumContext.copy(atumPartitions = newPartitions, parentAgent = this))
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+    fetchOrGetOrCreateSubContext(subPartitions)
   }
 
-  private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: =>AtumContext): AtumContext = {
+  private def fetchOrGetOrCreateContext(atumPartitions: AtumPartitions): AtumContext = {
+    synchronized {
+      val maybeAtumContextDTO = dispatcher.fetchAtumContext(atumPartitions)
+      createContextIfNotFetched(maybeAtumContextDTO, atumPartitions)
+    }
+  }
+
+  private def fetchOrGetOrCreateSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+    synchronized {
+      val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
+      val maybeAtumContextDTO = dispatcher.fetchAtumContext(newPartitions, Some(parentAtumContext.atumPartitions))
+      createSubContextIfNotFetched(maybeAtumContextDTO, newPartitions)
+    }
+  }
+
+  private def createContextIfNotFetched(maybeAtumContextDTO: Option[AtumContextDTO], atumPartitions: AtumPartitions): AtumContext = {
+    maybeAtumContextDTO match {
+      case Some(atumContextDTO) =>
+        createContextFromDTO(atumContextDTO, atumPartitions)
+      case None =>
+        getContextOrElse(atumPartitions, new AtumContext(atumPartitions, this))
+    }
+  }
+
+  private def createSubContextIfNotFetched(maybeAtumContextDTO: Option[AtumContextDTO], atumPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+    maybeAtumContextDTO match {
+      case Some(atumContextDTO) =>
+        createContextFromDTO(atumContextDTO, atumPartitions)
+      case None =>
+        getContextOrElse(atumPartitions, parentAtumContext.copy(atumPartitions = atumPartitions, this))
+    }
+  }
+
+  private def createContextFromDTO(atumContextDTO: AtumContextDTO, atumPartitions: AtumPartitions): AtumContext = {
+    val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    contexts = contexts + (atumPartitions -> atumContext)
+    atumContext
+  }
+
+  private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: => AtumContext): AtumContext = {
     synchronized{
       contexts.getOrElse(atumPartitions, {
         val result = creationMethod

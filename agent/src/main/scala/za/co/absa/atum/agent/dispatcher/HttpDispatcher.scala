@@ -22,6 +22,8 @@ import za.co.absa.atum.agent.model.MeasureResult
 import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.agent.AtumContext
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
+import za.co.absa.atum.model.dto.AtumContextDTO
 
 class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
@@ -44,4 +46,6 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
       .post(serverUri)
       .send(backend)
   }
+
+  override def fetchAtumContext(atumPartitions: AtumPartitions, atumParentPartitions: Option[AtumPartitions]): Option[AtumContextDTO] = None
 }

@@ -17,10 +17,14 @@
 package za.co.absa.atum.agent.dispatcher
 
 import za.co.absa.atum.agent.AtumContext
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.MeasureResult
+import za.co.absa.atum.model.dto.AtumContextDTO
 
 trait Dispatcher {
   def publish(checkpointKey: String, measureResult: MeasureResult): Unit
 
   def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit
+
+  def fetchAtumContext(atumPartitions: AtumPartitions, atumParentPartitions: Option[AtumPartitions] = None): Option[AtumContextDTO] // AtumPartitions to be replaced by DTO object once created
 }

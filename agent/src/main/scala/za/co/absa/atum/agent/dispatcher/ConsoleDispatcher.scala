@@ -18,7 +18,9 @@ package za.co.absa.atum.agent.dispatcher
 
 import org.apache.spark.internal.Logging
 import za.co.absa.atum.agent.AtumContext
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.MeasureResult
+import za.co.absa.atum.model.dto.AtumContextDTO
 
 /**
  *  dispatcher useful for development, testing and debugging
@@ -33,4 +35,5 @@ class ConsoleDispatcher extends Dispatcher with Logging {
   override def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit =
     println(s"Publishing $checkpointKey $context $measureResult")
 
+  override def fetchAtumContext(atumPartitions: AtumPartitions, atumParentPartitions: Option[AtumPartitions]): Option[AtumContextDTO] = None
 }

@@ -17,8 +17,9 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.model.{MeasureResult, Measure}
+import za.co.absa.atum.agent.model.{Measure, MeasureResult}
 import AtumContext.AtumPartitions
+import za.co.absa.atum.model.dto.AtumContextDTO
 
 import scala.collection.immutable.ListMap
 
@@ -82,6 +83,10 @@ object AtumContext {
     def apply(elems: (String, String)): AtumPartitions = {
       ListMap(elems)
     }
+  }
+
+  private[agent] def fromDTO(atumContextDTO: AtumContextDTO, parentAgent: AtumAgent): AtumContext = {
+    ???
   }
 
   implicit class DatasetWrapper(df: DataFrame) {
