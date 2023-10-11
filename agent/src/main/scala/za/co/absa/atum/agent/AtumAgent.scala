@@ -68,7 +68,7 @@ class AtumAgent private() {
   private def fetchOrGetOrCreateContext(atumPartitions: AtumPartitions): AtumContext = {
     synchronized {
       val maybeAtumContextDTO = dispatcher.fetchAtumContext(atumPartitions)
-      createContextIfNotFetched(maybeAtumContextDTO, atumPartitions)
+      getOrCreateContextIfNotFetched(maybeAtumContextDTO, atumPartitions)
     }
   }
 
@@ -76,25 +76,25 @@ class AtumAgent private() {
     synchronized {
       val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
       val maybeAtumContextDTO = dispatcher.fetchAtumContext(newPartitions, Some(parentAtumContext.atumPartitions))
-      createSubContextIfNotFetched(maybeAtumContextDTO, newPartitions)
+      getOrCreateSubContextIfNotFetched(maybeAtumContextDTO, newPartitions)
     }
   }
 
-  private def createContextIfNotFetched(maybeAtumContextDTO: Option[AtumContextDTO], atumPartitions: AtumPartitions): AtumContext = {
+  private def getOrCreateContextIfNotFetched(maybeAtumContextDTO: Option[AtumContextDTO], atumPartitions: AtumPartitions): AtumContext = {
     maybeAtumContextDTO match {
       case Some(atumContextDTO) =>
         createContextFromDTO(atumContextDTO, atumPartitions)
       case None =>
-        getContextOrElse(atumPartitions, new AtumContext(atumPartitions, this))
+        getOrCreateContext(atumPartitions, new AtumContext(atumPartitions, this))
     }
   }
 
-  private def createSubContextIfNotFetched(maybeAtumContextDTO: Option[AtumContextDTO], atumPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+  private def getOrCreateSubContextIfNotFetched(maybeAtumContextDTO: Option[AtumContextDTO], atumPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
     maybeAtumContextDTO match {
       case Some(atumContextDTO) =>
         createContextFromDTO(atumContextDTO, atumPartitions)
       case None =>
-        getContextOrElse(atumPartitions, parentAtumContext.copy(atumPartitions = atumPartitions, this))
+        getOrCreateContext(atumPartitions, parentAtumContext.copy(atumPartitions = atumPartitions, this))
     }
   }
 
@@ -104,7 +104,7 @@ class AtumAgent private() {
     atumContext
   }
 
-  private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: => AtumContext): AtumContext = {
+  private def getOrCreateContext(atumPartitions: AtumPartitions, creationMethod: => AtumContext): AtumContext = {
     synchronized{
       contexts.getOrElse(atumPartitions, {
         val result = creationMethod
