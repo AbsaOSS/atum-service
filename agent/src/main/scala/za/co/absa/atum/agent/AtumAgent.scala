@@ -21,21 +21,21 @@ import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.model.dto.CheckpointDTO
 
 /**
- *  Place holder for the agent that communicate with the API.
+ * Place holder for the agent that communicate with the API.
  */
-class AtumAgent private[agent] () {
+class AtumAgent private() {
 
   val config: Config = ConfigFactory.load()
 
   private val dispatcher = config.getString("atum.dispatcher.type") match {
-    case "http"    => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
+    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
     case "console" => new ConsoleDispatcher
-    case dt        => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
   }
 
   /**
-   *  Sends `CheckpointDTO` to the AtumService API
-   *  @param checkpoint
+   * Sends `CheckpointDTO` to the AtumService API
+   * @param checkpoint
    */
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     dispatcher.saveCheckpoint(checkpoint)
