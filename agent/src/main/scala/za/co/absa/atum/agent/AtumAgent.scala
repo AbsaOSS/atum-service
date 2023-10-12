@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
-import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.MeasureResult
+import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.model.dto.CheckpointDTO
 
 /**
  * Place holder for the agent that communicate with the API.
@@ -34,22 +34,12 @@ class AtumAgent private() {
   }
 
   /**
-   *  Sends a single `MeasureResult` to the AtumService API along with an extra data from a given `AtumContext`.
-   *  @param checkpointKey
-   *  @param atumContext
-   *  @param measureResult
+   * Sends `CheckpointDTO` to the AtumService API
+   * @param checkpoint
    */
-  def publish(checkpointKey: String, atumContext: AtumContext, measureResult: MeasureResult): Unit =
-    dispatcher.publish(checkpointKey, atumContext, measureResult)
-
-  /**
-   *  Sends a single `MeasureResult` to the AtumService API. It doesn't involve AtumContext.
-   *
-   *  @param checkpointKey
-   *  @param measureResult
-   */
-  def measurePublish(checkpointKey: String, measureResult: MeasureResult): Unit =
-    dispatcher.publish(checkpointKey, measureResult)
+  def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+    dispatcher.saveCheckpoint(checkpoint)
+  }
 
   /**
    *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
@@ -60,9 +50,9 @@ class AtumAgent private() {
     contexts.getOrElse(atumPartitions, new AtumContext(atumPartitions, this))
   }
 
-  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit atumContext: AtumContext): AtumContext = {
-    val newPartitions: AtumPartitions = atumContext.atumPartitions ++ subPartitions
-    getContextOrElse(newPartitions, atumContext.copy(atumPartitions = newPartitions, parentAgent = this))
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+    val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
+    getContextOrElse(newPartitions, parentAtumContext.copy(atumPartitions = newPartitions, parentAgent = this))
   }
 
   private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: =>AtumContext): AtumContext = {
