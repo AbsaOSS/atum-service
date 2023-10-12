@@ -16,11 +16,11 @@
 
 package za.co.absa.atum.agent.dispatcher
 
-import za.co.absa.atum.agent.AtumContext
-import za.co.absa.atum.agent.model.MeasureResult
+import za.co.absa.atum.model.Partitioning
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO}
 
 trait Dispatcher {
-  def publish(checkpointKey: String, measureResult: MeasureResult): Unit
+  def getOrCreateAtumContext(partitioning: Partitioning, parentPartitioning: Option[Partitioning]): AtumContextDTO
 
-  def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit
+  def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 }
