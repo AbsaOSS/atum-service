@@ -20,7 +20,7 @@ import za.co.absa.atum.model.Partitioning
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO}
 
 trait Dispatcher {
-  def fetchAtumContext(partitioning: Partitioning, parentPartitioning: Option[Partitioning]): Option[AtumContextDTO]
+  def fetchAtumContext(partitioning: Partitioning, parentPartitioning: Option[Partitioning] = None): Option[AtumContextDTO]
 
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 }

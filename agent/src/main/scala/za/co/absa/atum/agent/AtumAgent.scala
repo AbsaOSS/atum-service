@@ -18,25 +18,24 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.model.dto.AtumContextDTO
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO}
 
 /**
- * Place holder for the agent that communicate with the API.
+ *  Place holder for the agent that communicate with the API.
  */
-class AtumAgent private() {
+class AtumAgent private[agent] () {
 
   val config: Config = ConfigFactory.load()
 
   private val dispatcher = config.getString("atum.dispatcher.type") match {
-    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
+    case "http"    => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
     case "console" => new ConsoleDispatcher
-    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+    case dt        => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
   }
 
   /**
-   * Sends `CheckpointDTO` to the AtumService API
-   * @param checkpoint
+   *  Sends `CheckpointDTO` to the AtumService API
+   *  @param checkpoint
    */
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     dispatcher.saveCheckpoint(checkpoint)
@@ -57,20 +56,28 @@ class AtumAgent private() {
 
   private def fetchOrGetOrCreateContext(atumPartitions: AtumPartitions): AtumContext = {
     synchronized {
-      val maybeAtumContextDTO = dispatcher.fetchAtumContext(atumPartitions)
+      val maybeAtumContextDTO = dispatcher.fetchAtumContext(AtumPartitions.toPartitioning(atumPartitions))
       getOrCreateContextIfNotFetched(maybeAtumContextDTO, atumPartitions)
     }
   }
 
-  private def fetchOrGetOrCreateSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+  private def fetchOrGetOrCreateSubContext(
+    subPartitions: AtumPartitions
+  )(implicit parentAtumContext: AtumContext): AtumContext = {
     synchronized {
       val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
-      val maybeAtumContextDTO = dispatcher.fetchAtumContext(newPartitions, Some(parentAtumContext.atumPartitions))
+      val maybeAtumContextDTO = dispatcher.fetchAtumContext(
+        AtumPartitions.toPartitioning(newPartitions),
+        Some(AtumPartitions.toPartitioning(parentAtumContext.atumPartitions))
+      )
       getOrCreateSubContextIfNotFetched(maybeAtumContextDTO, newPartitions)
     }
   }
 
-  private def getOrCreateContextIfNotFetched(maybeAtumContextDTO: Option[AtumContextDTO], atumPartitions: AtumPartitions): AtumContext = {
+  private def getOrCreateContextIfNotFetched(
+    maybeAtumContextDTO: Option[AtumContextDTO],
+    atumPartitions: AtumPartitions
+  ): AtumContext = {
     maybeAtumContextDTO match {
       case Some(atumContextDTO) =>
         createContextFromDTO(atumContextDTO, atumPartitions)
@@ -79,7 +86,10 @@ class AtumAgent private() {
     }
   }
 
-  private def getOrCreateSubContextIfNotFetched(maybeAtumContextDTO: Option[AtumContextDTO], atumPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+  private def getOrCreateSubContextIfNotFetched(
+    maybeAtumContextDTO: Option[AtumContextDTO],
+    atumPartitions: AtumPartitions
+  )(implicit parentAtumContext: AtumContext): AtumContext = {
     maybeAtumContextDTO match {
       case Some(atumContextDTO) =>
         createContextFromDTO(atumContextDTO, atumPartitions)
@@ -95,15 +105,15 @@ class AtumAgent private() {
   }
 
   private def getOrCreateContext(atumPartitions: AtumPartitions, creationMethod: => AtumContext): AtumContext = {
-    synchronized{
+    synchronized {
       contexts.getOrElse(atumPartitions, {
-        val result = creationMethod
-        contexts = contexts + (atumPartitions -> result)
-        result
-      })
+                           val result = creationMethod
+                           contexts = contexts + (atumPartitions -> result)
+                           result
+                         }
+      )
     }
   }
-
 
   private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
