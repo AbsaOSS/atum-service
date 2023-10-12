@@ -23,7 +23,7 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 /**
  * Place holder for the agent that communicate with the API.
  */
-class AtumAgent private() {
+class AtumAgent private[agent] () {
 
   val config: Config = ConfigFactory.load()
 
