@@ -17,10 +17,13 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.{Measure, MeasuresMapper}
-import AtumContext.AtumPartitions
-import za.co.absa.atum.model.dto.{AtumContextDTO, PartitionDTO}
+import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
+import za.co.absa.atum.model.dto._
 
+import java.time.ZonedDateTime
+import java.util.UUID
 import scala.collection.immutable.ListMap
 
 /**
@@ -41,8 +44,43 @@ class AtumContext private[agent] (
     agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
   }
 
-  def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame) = {
-    ??? // TODO #26
+  def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): AtumContext = {
+    val startTime = ZonedDateTime.now()
+    val measurements = takeMeasurements(dataToMeasure)
+    val endTime = ZonedDateTime.now()
+
+    val partitions = atumPartitions.map { case (key, value) => PartitionDTO(key, value) }
+
+    val checkpoint = CheckpointDTO(
+      id = UUID.randomUUID(),
+      name = checkpointName,
+      author = author,
+      measuredByAtumAgent = true,
+      partitioning = partitions.toSeq,
+      processStartTime = startTime,
+      processEndTime = Some(endTime),
+      measurements = measurements.toSeq
+    )
+
+    agent.saveCheckpoint(checkpoint)
+    this
+  }
+
+  private def takeMeasurements(df: DataFrame): Set[MeasurementDTO] = {
+    measures.map { m =>
+      val result = m.function(df)
+      val measureResultDto = MeasureResultDTO(TypedValue(result, ResultValueType.String))
+
+      val measureDto = MeasureDTO(
+        functionName = m.getClass().getName,
+        controlColumns = Seq(m.controlCol)
+      )
+
+      MeasurementDTO(
+        measure = measureDto,
+        result = measureResultDto
+      )
+    }
   }
 
   def saveCheckpointMeasurements(checkpointName: String, measurements: Seq[Measure]) = {

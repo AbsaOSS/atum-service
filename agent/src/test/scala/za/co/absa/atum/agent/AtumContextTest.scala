@@ -16,10 +16,14 @@
 
 package za.co.absa.atum.agent
 
+import org.apache.spark.sql.SparkSession
+import org.mockito.Mockito.{mock, verify}
+import org.mockito.ArgumentCaptor
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.Measure.RecordCount
+import za.co.absa.atum.model.dto._
 
 class AtumContextTest extends AnyFlatSpec with Matchers {
 
@@ -61,6 +65,34 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumContextRemoved = atumContext1.removeMeasure(RecordCount("id"))
     assert(atumContextRemoved.currentMeasures.size == 1)
     assert(atumContextRemoved.currentMeasures.head == RecordCount("other"))
+  }
+
+  "createCheckpoint" should "take measurements and create  a checkpoints" in {
+    val mockAgent = mock(classOf[AtumAgent])
+
+    val atumContext = new AtumContext(AtumPartitions("foo2" -> "bar"), mockAgent)
+      .addMeasure(RecordCount("letter"))
+
+    val spark = SparkSession.builder
+      .master("local")
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.enabled", "false")
+      .getOrCreate()
+
+    import spark.implicits._
+
+    val rdd = spark.sparkContext.parallelize(Seq("A", "B", "C"))
+    val df = rdd.toDF("letter")
+
+    atumContext.createCheckpoint("testCheckpoint", "Hans", df)
+
+    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent).saveCheckpoint(argument.capture())
+
+    assert(argument.getValue.name == "testCheckpoint")
+    assert(argument.getValue.author == "Hans")
+    assert(argument.getValue.partitioning == Seq(PartitionDTO("foo2", "bar")))
+    assert(argument.getValue.measurements.head.result.mainValue.value == "3")
   }
 
 }
