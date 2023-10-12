@@ -17,39 +17,40 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.model.{Measure, MeasureResult}
+import za.co.absa.atum.agent.model.Measure
 import AtumContext.AtumPartitions
 import za.co.absa.atum.model.dto.AtumContextDTO
 
 import scala.collection.immutable.ListMap
 
 /**
- * This class provides the methods to measure Spark `Dataframe`. Also allows to add and remove measures.
- * @param atumPartitions
- * @param parentAgent
- * @param measures
+ *  This class provides the methods to measure Spark `Dataframe`. Also allows to add and remove measures.
+ *  @param atumPartitions
+ *  @param agent
+ *  @param measures
  */
-class AtumContext private[agent](
-                                  val atumPartitions: AtumPartitions,
-                                  val parentAgent: AtumAgent,
-                                  private var measures: Set[Measure] = Set.empty) {
+class AtumContext private[agent] (
+  val atumPartitions: AtumPartitions,
+  val agent: AtumAgent,
+  private var measures: Set[Measure] = Set.empty
+) {
 
   def currentMeasures: Set[Measure] = measures
 
   def subPartitionContext(subPartitions: AtumPartitions): AtumContext = {
-    parentAgent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
+    agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
   }
 
-  def createCheckpoint(checkpointName: String, dataToMeasure: DataFrame) = {
-    ??? //TODO #26
+  def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame) = {
+    ??? // TODO #26
   }
 
   def saveCheckpointMeasurements(checkpointName: String, measurements: Seq[Measure]) = {
-    ??? //TODO #55
+    ??? // TODO #55
   }
 
   def addAdditionalData(key: String, value: String) = {
-    ??? //TODO #60
+    ??? // TODO #60
   }
 
   def addMeasure(newMeasure: Measure): AtumContext = {
@@ -68,11 +69,11 @@ class AtumContext private[agent](
   }
 
   private[agent] def copy(
-                           atumPartitions: AtumPartitions = this.atumPartitions,
-                           parentAgent: AtumAgent = this.parentAgent,
-                           measures: Set[Measure] = this.measures
-    ): AtumContext = {
-    new AtumContext(atumPartitions, parentAgent, measures)
+    atumPartitions: AtumPartitions = this.atumPartitions,
+    agent: AtumAgent = this.agent,
+    measures: Set[Measure] = this.measures
+  ): AtumContext = {
+    new AtumContext(atumPartitions, agent, measures)
   }
 }
 
@@ -92,33 +93,13 @@ object AtumContext {
   implicit class DatasetWrapper(df: DataFrame) {
 
     /**
-     *  Executes the measure directly (without AtumContext).
-     *  @param measure the measure to be calculated
-     *  @return
-     */
-    def executeMeasure(checkpointName: String, measure: Measure): DataFrame = {
-      val result = MeasureResult(measure, measure.function(df))
-      AtumAgent.measurePublish(checkpointName, result)
-      df
-    }
-
-    def executeMeasures(checkpointName: String, measures: Iterable[Measure]): DataFrame = {
-      measures.foreach(m => executeMeasure(checkpointName, m))
-      df
-    }
-
-    /**
      *  Set a point in the pipeline to execute calculation.
      *  @param checkpointName The key assigned to this checkpoint
      *  @param atumContext Contains the calculations to be done and publish the result
      *  @return
      */
-    def createCheckpoint(checkpointName: String)(implicit atumContext: AtumContext): DataFrame = {
-      atumContext.measures.foreach { measure =>
-        val result = MeasureResult(measure, measure.function(df))
-        AtumAgent.publish(checkpointName, atumContext, result)
-      }
-
+    def createCheckpoint(checkpointName: String, author: String)(implicit atumContext: AtumContext): DataFrame = {
+      // todo: implement checkpoint creation
       df
     }
 

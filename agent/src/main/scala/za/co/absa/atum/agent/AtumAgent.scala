@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
-import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.MeasureResult
+import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.AtumContextDTO
 
 /**
@@ -35,22 +35,12 @@ class AtumAgent private() {
   }
 
   /**
-   *  Sends a single `MeasureResult` to the AtumService API along with an extra data from a given `AtumContext`.
-   *  @param checkpointKey
-   *  @param atumContext
-   *  @param measureResult
+   * Sends `CheckpointDTO` to the AtumService API
+   * @param checkpoint
    */
-  def publish(checkpointKey: String, atumContext: AtumContext, measureResult: MeasureResult): Unit =
-    dispatcher.publish(checkpointKey, atumContext, measureResult)
-
-  /**
-   *  Sends a single `MeasureResult` to the AtumService API. It doesn't involve AtumContext.
-   *
-   *  @param checkpointKey
-   *  @param measureResult
-   */
-  def measurePublish(checkpointKey: String, measureResult: MeasureResult): Unit =
-    dispatcher.publish(checkpointKey, measureResult)
+  def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+    dispatcher.saveCheckpoint(checkpoint)
+  }
 
   /**
    *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.

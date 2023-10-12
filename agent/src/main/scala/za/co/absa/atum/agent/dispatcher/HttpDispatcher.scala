@@ -18,12 +18,10 @@ package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
 import org.apache.spark.internal.Logging
-import za.co.absa.atum.agent.model.MeasureResult
 import sttp.client3._
 import sttp.model.Uri
-import za.co.absa.atum.agent.AtumContext
-import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.model.dto.AtumContextDTO
+import za.co.absa.atum.model.Partitioning
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO}
 
 class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
@@ -33,19 +31,17 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   logInfo("using http dispatcher")
   logInfo(s"serverUri $serverUri")
 
-  override def publish(checkpointKey: String, measureResult: MeasureResult): Unit = {
+  override def fetchAtumContext(
+    partitioning: Partitioning,
+    parentPartitioning: Option[Partitioning]
+  ): Option[AtumContextDTO] = {
+    ???
+  }
+
+  override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     basicRequest
-      .body(s"$checkpointKey $measureResult")
+      .body(s"$checkpoint")
       .post(serverUri)
       .send(backend)
   }
-
-  override def publish(checkpointKey: String, context: AtumContext, measureResult: MeasureResult): Unit = {
-    basicRequest
-      .body(s"$checkpointKey $context $measureResult")
-      .post(serverUri)
-      .send(backend)
-  }
-
-  override def fetchAtumContext(atumPartitions: AtumPartitions, atumParentPartitions: Option[AtumPartitions]): Option[AtumContextDTO] = None
 }
