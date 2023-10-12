@@ -31,17 +31,17 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   logInfo("using http dispatcher")
   logInfo(s"serverUri $serverUri")
 
-  override def fetchAtumContext(
+  override def getOrCreateAtumContext(
     partitioning: Partitioning,
     parentPartitioning: Option[Partitioning]
-  ): Option[AtumContextDTO] = {
+  ): AtumContextDTO = {
     val partitioningDTO = PartitioningDTO(partitioning, parentPartitioning)
     basicRequest
       .body(s"$partitioningDTO")
-      .get(serverUri)
+      .post(serverUri)
       .send(backend)
 
-    None // todo: implement request
+    AtumContextDTO(partitioning = partitioning) // todo: implement request
   }
 
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
