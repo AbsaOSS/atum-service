@@ -52,7 +52,7 @@ class AtumAgent private() {
 
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
-    getContextOrElse(newPartitions, parentAtumContext.copy(atumPartitions = newPartitions, parentAgent = this))
+    getContextOrElse(newPartitions, parentAtumContext.copy(atumPartitions = newPartitions, agent = this))
   }
 
   private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: =>AtumContext): AtumContext = {
