@@ -24,76 +24,17 @@ import za.co.absa.atum.web.api.database.Runs
 import za.co.absa.atum.web.api.service.utils.ExecutorsProvider
 import za.co.absa.fadb.slick.SlickPgEngine
 
-//import scala.beans.BeanProperty
-//import scala.util.Try
 
 @Component
 class PostgresAccessProvider@Autowired()( executors: ExecutorsProvider ) {
 
-//  private val secretsSection = "fromSecrets"
+  private val config = ConfigFactory.load("application.properties")
 
-//  private val connectionPool = "connectionPool"
-//  private val dataSourceClass = "dataSourceClass"
-//  private val serverName = "serverName"
-//  private val portNumber = "portNumber"
-//  private val databaseName = "databaseName"
-//  private val user = "user"
-//  private val password = "password"
-
-//  private val extraProperties = JacksonHelper
-//    .objectMapper
-//    .readValue(extraPropertiesJson, classOf[AWSServiceExtraProperties])
-//  private val aws = AWSFactory.build(extraProperties, executors)
-
-//  private def getKeysForSecrets(secretsConfig: Config): Map[String, String] = {
-//    import PostgresAccessProvider._
-//
-//    Map
-//      .empty[String, String]
-//      .addSecretName(secretsConfig, connectionPool)
-//      .addSecretName(secretsConfig, dataSourceClass)
-//      .addSecretName(secretsConfig, serverName)
-//      .addSecretName(secretsConfig, portNumber)
-//      .addSecretName(secretsConfig, databaseName)
-//      .addSecretName(secretsConfig, user)
-//      .addSecretName(secretsConfig, password)
-//  }
-
-//  def overrideWithSecret(oldConfig: Config, path: String, secretName: String): Config = {
-//
-//    val overrideValue: Try[String] = aws.getSecretValue(secretName)
-//
-//    overrideValue
-//      .map(value => oldConfig.withValue(path, ConfigValueFactory.fromAnyRef(value)))
-//      .getOrElse(oldConfig)
-//  }
-
-  private val config = ConfigFactory
-    .load("application.properties")
-
-  def dbConfig: Config = {
+  private def dbConfig: Config = {
     val conf = config.getConfig("postgres")
     print("Configs:", conf)
     conf
   }
-
-//  private def databaseConfig: Config = {
-//    val baseConfig = AtumServiceConfig.dbConfig
-//    val keysForSecretes = if (baseConfig.hasPath(secretsSection)) {
-//      getKeysForSecrets(baseConfig.getConfig(secretsSection))
-//    } else {
-//      Map.empty
-//    }
-//    print(keysForSecretes)
-//    keysForSecretes
-////    keysForSecretes.foldLeft(baseConfig) {case (acc, (path, secretName)) =>
-////      overrideWithSecret(acc, path, secretName)
-////    }
-//  }
-
-//  new SlickPgEngine(
-//    PostgresProfile.api.Database.forConfig("", getPostgresConfig())
-//  )(CatsEffectGlobal.compute)
 
   private val db: Database =  Database.forConfig("", dbConfig)
 
@@ -101,5 +42,3 @@ class PostgresAccessProvider@Autowired()( executors: ExecutorsProvider ) {
   val runs: Runs = new Runs()
 
 }
-
-

@@ -88,17 +88,18 @@ object Dependencies {
     lazy val springFoxBoot = "io.springfox" % "springfox-boot-starter" % Versions.springfox
     lazy val springFoxSwaggerUI = "io.springfox" % "springfox-swagger-ui" % Versions.springfox
 
-    // Fa-db dependency
-    lazy val fadb = "za.co.absa.fa-db" %% "core"  % Versions.fadb
-    lazy val slick = "za.co.absa.fa-db" %% "slick"  % Versions.fadb
-
-    // Slick-PG dependency
-    lazy val slickpg = "com.github.tminglei" %% "slick-pg" % "0.20.4"
-
     // controller implicits:  java CompletableFuture -> scala Future
     lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % Versions.scalaLangJava8Compat
+
     // object mapper serialization
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
+
+    // Fa-db dependency
+    lazy val fa_db = "za.co.absa.fa-db" %% "core" % Versions.fadb
+    lazy val slick = "za.co.absa.fa-db" %% "slick" % Versions.fadb
+
+    // Slick-PG dependency
+    lazy val slick_pg = "com.github.tminglei" %% "slick-pg" % Versions.slickpg
 
     Seq(
       springBootTest % Test,
@@ -112,9 +113,9 @@ object Dependencies {
       springFoxBoot,
       scalaJava8Compat,
       jacksonModuleScala,
-      fadb,
+      fa_db,
       slick,
-      slickpg
+      slick_pg
     )
   }
 

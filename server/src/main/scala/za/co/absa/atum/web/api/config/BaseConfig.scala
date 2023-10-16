@@ -18,7 +18,6 @@ package za.co.absa.atum.web.api.config
 
 import org.springframework.boot.context.properties.{ConfigurationProperties}
 
-
 @ConfigurationProperties(prefix = "atum.web.api.config")
 class BaseConfig(
                 val someKey: String

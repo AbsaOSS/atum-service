@@ -16,8 +16,6 @@
 
 package za.co.absa.atum.web.api.database
 
-
-//import slick.jdbc.PostgresProfile.api._
 import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import slick.jdbc.{GetResult, SQLActionBuilder}
 import za.co.absa.atum.model.dto.CheckpointDTO
@@ -42,9 +40,8 @@ object Runs {
   {
 
     override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
-//      val about = JacksonHelper.objectMapper.writeValueAsString(values.about)
-//      val checkpointData = JacksonHelper.objectMapper.writeValueAsString(values)
-      // ToDo serialize the partitioning and measurement columns
+
+      // ToDo serialize the partitioning and measurement columns into JSON object
       sql"""SELECT #$selectEntry
             FROM #$functionName(
               ${values.id},
