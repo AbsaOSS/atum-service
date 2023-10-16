@@ -47,36 +47,27 @@ class AtumAgent private[agent] () {
    *  @return
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
-    getContextOrElse(
-      atumPartitions,
-      AtumContext.fromDTO(
-        dispatcher.getOrCreateAtumContext(AtumPartitions.toPartitioning(atumPartitions), None),
-        this
-      )
-    )
+    val atumContextDTO = dispatcher.getOrCreateAtumContext(AtumPartitions.toPartitioning(atumPartitions), None)
+    lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    getContextOrElse(atumPartitions, atumContext)
   }
 
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
-    getContextOrElse(
-      newPartitions,
-      AtumContext.fromDTO(
-        dispatcher.getOrCreateAtumContext(
-          AtumPartitions.toPartitioning(newPartitions),
-          Some(AtumPartitions.toPartitioning(parentAtumContext.atumPartitions))
-        ),
-        this
-      )
+    val atumContextDTO = dispatcher.getOrCreateAtumContext(
+      AtumPartitions.toPartitioning(newPartitions),
+      Some(AtumPartitions.toPartitioning(parentAtumContext.atumPartitions))
     )
+    lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    getContextOrElse(newPartitions, atumContext)
   }
 
-  private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: => AtumContext): AtumContext = {
+  private def getContextOrElse(atumPartitions: AtumPartitions, atumContext: => AtumContext): AtumContext = {
     synchronized {
       contexts.getOrElse(
         atumPartitions, {
-          val result = creationMethod
-          contexts = contexts + (atumPartitions -> result)
-          result
+          contexts = contexts + (atumPartitions -> atumContext)
+          atumContext
         }
       )
     }
