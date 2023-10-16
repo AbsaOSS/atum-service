@@ -94,7 +94,7 @@ object AtumContext {
       Partitioning(atumPartitions.toSeq.map{ case (key, value) => Partition(key, value) })
     }
 
-    private[agent] def fromPartitioning(partitioning: Partitioning): AtumPartitions= {
+    private[agent] def fromPartitioning(partitioning: Partitioning): AtumPartitions = {
       AtumPartitions(partitioning.partitioning.map(partition => partition.key -> partition.value))
     }
   }

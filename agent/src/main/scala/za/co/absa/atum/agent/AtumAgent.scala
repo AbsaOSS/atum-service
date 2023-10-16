@@ -49,7 +49,7 @@ class AtumAgent private[agent] () {
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
     val atumContextDTO = dispatcher.getOrCreateAtumContext(AtumPartitions.toPartitioning(atumPartitions), None)
     lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
-    getContextOrElse(atumPartitions, atumContext)
+    getExistingOrNewContext(atumPartitions, atumContext)
   }
 
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
@@ -59,15 +59,15 @@ class AtumAgent private[agent] () {
       Some(AtumPartitions.toPartitioning(parentAtumContext.atumPartitions))
     )
     lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
-    getContextOrElse(newPartitions, atumContext)
+    getExistingOrNewContext(newPartitions, atumContext)
   }
 
-  private def getContextOrElse(atumPartitions: AtumPartitions, atumContext: => AtumContext): AtumContext = {
+  private def getExistingOrNewContext(atumPartitions: AtumPartitions, newAtumContext: => AtumContext): AtumContext = {
     synchronized {
       contexts.getOrElse(
         atumPartitions, {
-          contexts = contexts + (atumPartitions -> atumContext)
-          atumContext
+          contexts = contexts + (atumPartitions -> newAtumContext)
+          newAtumContext
         }
       )
     }
