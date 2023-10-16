@@ -22,6 +22,9 @@ import org.springframework.stereotype.Component
 import slick.jdbc.JdbcBackend.Database
 import za.co.absa.atum.web.api.repositories.Checkpoint
 import za.co.absa.atum.web.api.service.utils.ExecutorsProvider
+import com.github.tminglei.slickpg._
+import za.co.absa.fadb.slick.FaDbPostgresProfile
+import za.co.absa.fadb.slick.support.PgUUIDSupport
 import za.co.absa.fadb.slick.SlickPgEngine
 
 import scala.beans.BeanProperty
@@ -95,9 +98,46 @@ class PostgresAccessProvider@Autowired()(
 ////    }
 //  }
 
-  private val db: Database = Database.forConfig("", dbConfig)
+//  new SlickPgEngine(
+//    PostgresProfile.api.Database.forConfig("", getPostgresConfig())
+//  )(CatsEffectGlobal.compute)
+
+  private val db: Database =  PostgresProfile.api.Database.forConfig("", dbConfig)
+
   private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executors.cpuBoundExecutionContext)
   val checkpoint: Checkpoint = new Checkpoint
+
+  private trait PostgresProfile
+    extends ExPostgresProfile
+      with PgArraySupport
+      with PgNetSupport
+      with PgRangeSupport
+      with PgLTreeSupport
+      with PgHStoreSupport
+      with PgSearchSupport
+      with PgUUIDSupport {
+
+
+    trait API
+      extends super.API
+        with ArrayImplicits
+        with NetImplicits
+        with RangeImplicits
+        with LTreeImplicits
+        with HStoreImplicits
+        with SimpleArrayPlainImplicits
+        with SimpleNetPlainImplicits
+        with SimpleRangePlainImplicits
+        with SimpleLTreePlainImplicits
+        with SimpleHStorePlainImplicits
+        with UUIDPlainImplicits
+
+
+    override val api: API = new API {}
+  }
+
+
+  private object PostgresProfile extends PostgresProfile
 }
 
 object PostgresAccessProvider {

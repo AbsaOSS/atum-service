@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.web.api.repositories
 
+
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, SQLActionBuilder}
 import za.co.absa.atum.model.dto.CheckpointDTO
@@ -28,12 +29,12 @@ import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 class Checkpoint (implicit dBEngine: SlickPgEngine) extends DBSchema{
   import CheckpointImpl._
 
-  val createCheckpoint = new CreateCheckpoint
+  val createCheckpoint = new OpenCheckpoint
 }
 
 object CheckpointImpl {
-
-  class CreateCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine) extends
+  import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
+  class OpenCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine) extends
     DBSingleResultFunction[CheckpointDTO, Unit, SlickPgEngine]
     with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
     with StandardStatusHandling

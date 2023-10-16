@@ -30,7 +30,7 @@ class CheckPointController {
   @Autowired
   private val checkpointService: CheckPointService = null
 
-  @PostMapping("/create-checkpoint")
+  @PostMapping(Array("/create-checkpoint"))
   def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
     checkpointService.saveCheckpoint(checkpoint)
     ResponseEntity.status(HttpStatus.CREATED).build()
