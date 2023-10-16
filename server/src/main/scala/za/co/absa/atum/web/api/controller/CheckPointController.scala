@@ -24,7 +24,6 @@ import za.co.absa.atum.web.api.service.CheckPointService
 
 
 @RestController
-@RestController
 class CheckPointController {
 
   @Autowired

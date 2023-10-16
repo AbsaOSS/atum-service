@@ -14,28 +14,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.config
+package za.co.absa.atum.web.api.service
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import slick.jdbc.JdbcBackend.Database
-import za.co.absa.atum.web.api.repositories.Checkpoint
+import za.co.absa.atum.web.api.database.Runs
 import za.co.absa.atum.web.api.service.utils.ExecutorsProvider
-import com.github.tminglei.slickpg._
-import za.co.absa.fadb.slick.FaDbPostgresProfile
-import za.co.absa.fadb.slick.support.PgUUIDSupport
 import za.co.absa.fadb.slick.SlickPgEngine
 
-import scala.beans.BeanProperty
+//import scala.beans.BeanProperty
 //import scala.util.Try
 
 @Component
-class PostgresAccessProvider@Autowired()(
-                                          @BeanProperty @Value("${postgres:{}}")
-                                          var extraPropertiesJson: String,
-                                          executors: ExecutorsProvider
-                                        ) {
+class PostgresAccessProvider@Autowired()( executors: ExecutorsProvider ) {
 
 //  private val secretsSection = "fromSecrets"
 
@@ -102,52 +95,11 @@ class PostgresAccessProvider@Autowired()(
 //    PostgresProfile.api.Database.forConfig("", getPostgresConfig())
 //  )(CatsEffectGlobal.compute)
 
-  private val db: Database =  PostgresProfile.api.Database.forConfig("", dbConfig)
+  private val db: Database =  Database.forConfig("", dbConfig)
 
   private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executors.cpuBoundExecutionContext)
-  val checkpoint: Checkpoint = new Checkpoint
+  val runs: Runs = new Runs()
 
-  private trait PostgresProfile
-    extends ExPostgresProfile
-      with PgArraySupport
-      with PgNetSupport
-      with PgRangeSupport
-      with PgLTreeSupport
-      with PgHStoreSupport
-      with PgSearchSupport
-      with PgUUIDSupport {
-
-
-    trait API
-      extends super.API
-        with ArrayImplicits
-        with NetImplicits
-        with RangeImplicits
-        with LTreeImplicits
-        with HStoreImplicits
-        with SimpleArrayPlainImplicits
-        with SimpleNetPlainImplicits
-        with SimpleRangePlainImplicits
-        with SimpleLTreePlainImplicits
-        with SimpleHStorePlainImplicits
-        with UUIDPlainImplicits
-
-
-    override val api: API = new API {}
-  }
-
-
-  private object PostgresProfile extends PostgresProfile
 }
 
-object PostgresAccessProvider {
-  private implicit class MapAddingSecret(val map: Map[String, String]) extends AnyVal {
-    def addSecretName(config: Config, path: String): Map[String, String] = {
-      if (config.hasPath(path)) {
-        map + (path -> config.getString(path))
-      } else {
-        map
-      }
-    }
-  }
-}
+

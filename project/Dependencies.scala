@@ -93,7 +93,7 @@ object Dependencies {
     lazy val slick = "za.co.absa.fa-db" %% "slick"  % Versions.fadb
 
     // Slick-PG dependency
-    lazy val slickpg = "com.github.tminglei" %% "slick-pg" % Versions.fadb
+    lazy val slickpg = "com.github.tminglei" %% "slick-pg" % "0.20.4"
 
     // controller implicits:  java CompletableFuture -> scala Future
     lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % Versions.scalaLangJava8Compat

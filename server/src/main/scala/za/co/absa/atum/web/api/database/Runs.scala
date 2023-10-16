@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.repositories
+package za.co.absa.atum.web.api.database
 
 
-import slick.jdbc.PostgresProfile.api._
+//import slick.jdbc.PostgresProfile.api._
+import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import slick.jdbc.{GetResult, SQLActionBuilder}
 import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.web.api.database.Runs.WriteCheckpoint
 import za.co.absa.fadb.DBFunction._
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 import za.co.absa.fadb.slick.{SlickFunctionWithStatusSupport, SlickPgEngine}
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 
-class Checkpoint (implicit dBEngine: SlickPgEngine) extends DBSchema{
-  import CheckpointImpl._
+class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
-  val createCheckpoint = new SaveCheckpoint
+  val writeCheckpoint = new WriteCheckpoint
 }
 
-object CheckpointImpl {
-  import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
-  class SaveCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine) extends
+object Runs {
+
+  class WriteCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine) extends
     DBSingleResultFunction[CheckpointDTO, Unit, SlickPgEngine]
     with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
     with StandardStatusHandling
@@ -43,15 +44,16 @@ object CheckpointImpl {
     override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
 //      val about = JacksonHelper.objectMapper.writeValueAsString(values.about)
 //      val checkpointData = JacksonHelper.objectMapper.writeValueAsString(values)
+      // ToDo serialize the partitioning and measurement columns
       sql"""SELECT #$selectEntry
             FROM #$functionName(
               ${values.id},
               ${values.name},
               ${values.author},
-              ${values.partitioning},
+              '{}'::JSON,
               ${values.processStartTime},
               ${values.processEndTime},
-              ${values.measurements},
+              '{}'::JSON
             ) #$alias;"""
     }
 

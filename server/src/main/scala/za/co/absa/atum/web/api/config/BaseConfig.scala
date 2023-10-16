@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.web.api.config
 
-import org.springframework.boot.context.properties.{ConfigurationProperties, ConstructorBinding}
+import org.springframework.boot.context.properties.{ConfigurationProperties}
 
-@ConstructorBinding
+
 @ConfigurationProperties(prefix = "atum.web.api.config")
 class BaseConfig(
                 val someKey: String
