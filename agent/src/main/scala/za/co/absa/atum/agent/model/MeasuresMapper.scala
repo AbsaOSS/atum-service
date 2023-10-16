@@ -17,24 +17,26 @@
 package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.agent.model.Measure._
+import za.co.absa.atum.model.dto
 
 case class UnsupportedMeasureException(msg: String) extends Exception(msg)
 
 object MeasuresMapper {
 
-  def mapToMeasures(measures: Set[za.co.absa.atum.model.Measure]): Set[za.co.absa.atum.agent.model.Measure] = {
+  def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {
     measures.map(createMeasure)
   }
 
-  private def createMeasure(measure: za.co.absa.atum.model.Measure): za.co.absa.atum.agent.model.Measure = {
+  private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.Measure = {
     val controlColumn = measure.controlColumns.head
     measure.functionName match {
-      case "RecordCount" => RecordCount(controlColumn)
-      case "DistinctRecordCount"    => DistinctRecordCount(controlColumn)
-      case "SumOfValuesOfColumn"    => SumOfValuesOfColumn(controlColumn)
-      case "AbsSumOfValuesOfColumn" => AbsSumOfValuesOfColumn(controlColumn)
-      case "SumOfHashesOfColumn"    => SumOfHashesOfColumn(controlColumn)
-      case unsupportedMeasure       => throw UnsupportedMeasureException(s"Measure not supported: $unsupportedMeasure")
+      case RecordCount.getClass.getSimpleName            => RecordCount(controlColumn)
+      case DistinctRecordCount.getClass.getSimpleName    => DistinctRecordCount(controlColumn)
+      case SumOfValuesOfColumn.getClass.getSimpleName    => SumOfValuesOfColumn(controlColumn)
+      case AbsSumOfValuesOfColumn.getClass.getSimpleName => AbsSumOfValuesOfColumn(controlColumn)
+      case SumOfHashesOfColumn.getClass.getSimpleName    => SumOfHashesOfColumn(controlColumn)
+      case unsupportedMeasure                            =>
+        throw UnsupportedMeasureException(s"Measure not supported: $unsupportedMeasure")
     }
   }
 

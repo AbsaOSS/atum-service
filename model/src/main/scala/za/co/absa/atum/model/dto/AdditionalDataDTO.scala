@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
-case class Partitioning(
-  partitioning: Seq[Partition]
+case class AdditionalDataDTO(
+  additionalData: Map[String, Option[String]]
 )

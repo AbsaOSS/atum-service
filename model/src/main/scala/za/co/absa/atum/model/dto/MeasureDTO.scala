@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
-case class AdditionalData(
-  additionalData: Map[String, Option[String]]
+case class MeasureDTO(
+  functionName: String,
+  controlColumns: Seq[String]
 )
