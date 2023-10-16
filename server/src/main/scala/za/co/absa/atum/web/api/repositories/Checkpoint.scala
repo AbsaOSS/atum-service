@@ -29,12 +29,12 @@ import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 class Checkpoint (implicit dBEngine: SlickPgEngine) extends DBSchema{
   import CheckpointImpl._
 
-  val createCheckpoint = new OpenCheckpoint
+  val createCheckpoint = new SaveCheckpoint
 }
 
 object CheckpointImpl {
   import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
-  class OpenCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine) extends
+  class SaveCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine) extends
     DBSingleResultFunction[CheckpointDTO, Unit, SlickPgEngine]
     with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
     with StandardStatusHandling

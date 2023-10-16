@@ -45,7 +45,7 @@ object Dependencies {
     val sttp = "3.5.2"
 
     val fadb = "0.2.0"
-    val slickpg = "0.19.0"
+    val slickpg = "0.20.4"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -93,7 +93,7 @@ object Dependencies {
     lazy val slick = "za.co.absa.fa-db" %% "slick"  % Versions.fadb
 
     // Slick-PG dependency
-    lazy val slickpg = "com.github.tminglei" %% "slick-pg" % Versions.slickpg
+    lazy val slickpg = "com.github.tminglei" %% "slick-pg" % Versions.fadb
 
     // controller implicits:  java CompletableFuture -> scala Future
     lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % Versions.scalaLangJava8Compat
