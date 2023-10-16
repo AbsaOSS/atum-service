@@ -25,7 +25,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
   "withMeasureAddedOrOverwritten" should "add a new measure if not exists, overwrite it otherwise" in {
 
-    val atumContext = AtumAgent.getOrCreateAtumContext(AtumPartitions("foo"->"bar"))
+    val atumContext = AtumAgent.getOrCreateAtumContext(AtumPartitions("foo1"->"bar"))
 
     assert(atumContext.currentMeasures.isEmpty)
 

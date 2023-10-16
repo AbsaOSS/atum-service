@@ -23,7 +23,7 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 /**
  * Place holder for the agent that communicate with the API.
  */
-class AtumAgent private() {
+class AtumAgent private[agent] () {
 
   val config: Config = ConfigFactory.load()
 
@@ -47,24 +47,31 @@ class AtumAgent private() {
    *  @return
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
-    contexts.getOrElse(atumPartitions, new AtumContext(atumPartitions, this))
+    val atumContextDTO = dispatcher.getOrCreateAtumContext(AtumPartitions.toPartitioning(atumPartitions), None)
+    lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    getExistingOrNewContext(atumPartitions, atumContext)
   }
 
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
-    getContextOrElse(newPartitions, parentAtumContext.copy(atumPartitions = newPartitions, agent = this))
+    val atumContextDTO = dispatcher.getOrCreateAtumContext(
+      AtumPartitions.toPartitioning(newPartitions),
+      Some(AtumPartitions.toPartitioning(parentAtumContext.atumPartitions))
+    )
+    lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    getExistingOrNewContext(newPartitions, atumContext)
   }
 
-  private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: =>AtumContext): AtumContext = {
-    synchronized{
-      contexts.getOrElse(atumPartitions, {
-        val result = creationMethod
-        contexts = contexts + (atumPartitions -> result)
-        result
-      })
+  private def getExistingOrNewContext(atumPartitions: AtumPartitions, newAtumContext: => AtumContext): AtumContext = {
+    synchronized {
+      contexts.getOrElse(
+        atumPartitions, {
+          contexts = contexts + (atumPartitions -> newAtumContext)
+          newAtumContext
+        }
+      )
     }
   }
-
 
   private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
