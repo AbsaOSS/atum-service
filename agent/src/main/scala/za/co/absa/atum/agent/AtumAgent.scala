@@ -57,7 +57,7 @@ class AtumAgent private[agent] () {
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
 
     val newPartitionsDTO = AtumPartitions.toSeqPartitionDTO(newPartitions)
-    val maybeParentPartitionsDTO = Some(AtumPartitions.toSeqPartitionDTO(parentAtumContext.atumPartitions))
+    val parentPartitionsDTO = Some(AtumPartitions.toSeqPartitionDTO(parentAtumContext.atumPartitions))
     val partitioningDTO = PartitioningDTO(newPartitionsDTO, maybeParentPartitionsDTO)
 
     val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
