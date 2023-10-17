@@ -35,25 +35,29 @@ object Measure {
 
   private val valueColumnName: String = "value"
 
-  case class RecordCount(
-    controlCol: String
-  ) extends Measure {
+  val supportedMeasures: Seq[MeasureType] = Seq(
+    RecordCount, DistinctRecordCount, SumOfValuesOfColumn, AbsSumOfValuesOfColumn, SumOfHashesOfColumn
+  )
+
+  class MeasureType(val measureName: String, val onlyForNumeric: Boolean)
+
+  case object RecordCount extends MeasureType("count", false)
+  case class RecordCount(controlCol: String) extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).count().toString
 
   }
 
-  case class DistinctRecordCount(
-    controlCol: String
-  ) extends Measure {
+  case object DistinctRecordCount extends MeasureType("distinctCount", false)
+  case class DistinctRecordCount(controlCol: String) extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).distinct().count().toString
   }
-  case class SumOfValuesOfColumn(
-    controlCol: String
-  ) extends Measure {
+
+  case object SumOfValuesOfColumn extends MeasureType("aggregatedTotal", true)
+  case class SumOfValuesOfColumn(controlCol: String) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
@@ -62,9 +66,8 @@ object Measure {
 
   }
 
-  case class AbsSumOfValuesOfColumn(
-    controlCol: String
-  ) extends Measure {
+  case object AbsSumOfValuesOfColumn extends MeasureType("absAggregatedTotal", true)
+  case class AbsSumOfValuesOfColumn(controlCol: String) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
@@ -72,9 +75,8 @@ object Measure {
     }
   }
 
-  case class SumOfHashesOfColumn(
-    controlCol: String
-  ) extends Measure {
+  case object SumOfHashesOfColumn extends MeasureType("hashCrc32", true)
+  case class SumOfHashesOfColumn(controlCol: String) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
 
