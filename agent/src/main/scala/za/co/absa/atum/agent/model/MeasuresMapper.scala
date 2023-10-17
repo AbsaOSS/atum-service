@@ -29,12 +29,12 @@ object MeasuresMapper {
   private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.Measure = {
     val controlColumn = measure.controlColumns.head
     measure.functionName match {
-      case RecordCount.getClass.getSimpleName            => RecordCount(controlColumn)
-      case DistinctRecordCount.getClass.getSimpleName    => DistinctRecordCount(controlColumn)
-      case SumOfValuesOfColumn.getClass.getSimpleName    => SumOfValuesOfColumn(controlColumn)
-      case AbsSumOfValuesOfColumn.getClass.getSimpleName => AbsSumOfValuesOfColumn(controlColumn)
-      case SumOfHashesOfColumn.getClass.getSimpleName    => SumOfHashesOfColumn(controlColumn)
-      case unsupportedMeasure                            =>
+      case "RecordCount"            => RecordCount(controlColumn)
+      case "DistinctRecordCount"    => DistinctRecordCount(controlColumn)
+      case "SumOfValuesOfColumn"    => SumOfValuesOfColumn(controlColumn)
+      case "AbsSumOfValuesOfColumn" => AbsSumOfValuesOfColumn(controlColumn)
+      case "SumOfHashesOfColumn"    => SumOfHashesOfColumn(controlColumn)
+      case unsupportedMeasure       =>
         throw UnsupportedMeasureException(s"Measure not supported: $unsupportedMeasure")
     }
   }
