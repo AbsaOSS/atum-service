@@ -19,8 +19,7 @@ package za.co.absa.atum.agent
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.model.{Measure, MeasuresMapper}
 import AtumContext.AtumPartitions
-import za.co.absa.atum.model.{Partition, Partitioning}
-import za.co.absa.atum.model.dto.AtumContextDTO
+import za.co.absa.atum.model.dto.{AtumContextDTO, PartitionDTO}
 
 import scala.collection.immutable.ListMap
 
@@ -90,12 +89,12 @@ object AtumContext {
       ListMap(elems:_*)
     }
 
-    private[agent] def toPartitioning(atumPartitions: AtumPartitions): Partitioning = {
-      Partitioning(atumPartitions.toSeq.map{ case (key, value) => Partition(key, value) })
+    private[agent] def toSeqPartitionDTO(atumPartitions: AtumPartitions): Seq[PartitionDTO] = {
+      atumPartitions.map { case (key, value) => PartitionDTO(key, value) }.toSeq
     }
 
-    private[agent] def fromPartitioning(partitioning: Partitioning): AtumPartitions = {
-      AtumPartitions(partitioning.partitioning.map(partition => partition.key -> partition.value))
+    private[agent] def fromPartitioning(partitioning: Seq[PartitionDTO]): AtumPartitions = {
+      AtumPartitions(partitioning.map(partition => partition.key -> partition.value))
     }
   }
 

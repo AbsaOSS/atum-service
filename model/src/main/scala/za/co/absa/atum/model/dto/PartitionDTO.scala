@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
-trait MeasureResultBase[T] extends Any { def result: T }
-
-case class MeasureResult[T](result: T) extends AnyVal with MeasureResultBase[T]
+case class PartitionDTO(
+  key: String,
+  value: String
+)

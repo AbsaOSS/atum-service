@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.agent.exception
 
-case class Partitioning(
-  partitioning: Seq[Partition]
-)
+case class UnsupportedMeasureException(msg: String) extends Exception(msg)

@@ -16,25 +16,26 @@
 
 package za.co.absa.atum.agent.model
 
+import za.co.absa.atum.agent.exception.UnsupportedMeasureException
 import za.co.absa.atum.agent.model.Measure._
-
-case class UnsupportedMeasureException(msg: String) extends Exception(msg)
+import za.co.absa.atum.model.dto
 
 object MeasuresMapper {
 
-  def mapToMeasures(measures: Set[za.co.absa.atum.model.Measure]): Set[za.co.absa.atum.agent.model.Measure] = {
+  def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {
     measures.map(createMeasure)
   }
 
-  private def createMeasure(measure: za.co.absa.atum.model.Measure): za.co.absa.atum.agent.model.Measure = {
+  private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.Measure = {
     val controlColumn = measure.controlColumns.head
     measure.functionName match {
-      case "RecordCount" => RecordCount(controlColumn)
+      case "RecordCount"            => RecordCount(controlColumn)
       case "DistinctRecordCount"    => DistinctRecordCount(controlColumn)
       case "SumOfValuesOfColumn"    => SumOfValuesOfColumn(controlColumn)
       case "AbsSumOfValuesOfColumn" => AbsSumOfValuesOfColumn(controlColumn)
       case "SumOfHashesOfColumn"    => SumOfHashesOfColumn(controlColumn)
-      case unsupportedMeasure       => throw UnsupportedMeasureException(s"Measure not supported: $unsupportedMeasure")
+      case unsupportedMeasure       =>
+        throw UnsupportedMeasureException(s"Measure not supported: $unsupportedMeasure")
     }
   }
 
