@@ -24,7 +24,6 @@ ThisBuild / organization := "za.co.absa"
 ThisBuild / name         := "atum-service"
 
 ThisBuild / scalaVersion := Versions.scala212  // default version
-ThisBuild / crossScalaVersions := Versions.supportedScalaVersions
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -58,6 +57,7 @@ lazy val root = (projectMatrix in file("."))
     name := "atum-service-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
     publish / skip := true,
+    crossScalaVersions := Nil,
     mergeStrategy
   )
 
@@ -68,15 +68,7 @@ lazy val server = (projectMatrix in file("server"))
       libraryDependencies ++= Dependencies.serverDependencies,
       Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
-      Compile / unmanagedSourceDirectories += {
-        val sourceDir = (Compile / sourceDirectory).value
-        if (scalaVersion.value.startsWith("2.13")) {
-          sourceDir / "scala_2.13+"
-        }
-        else {
-          sourceDir / "scala_2.12-"
-        }
-      },
+      crossScalaVersions := Seq(Versions.serverScalaVersion),
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
@@ -91,7 +83,7 @@ lazy val server = (projectMatrix in file("server"))
   .enablePlugins(AssemblyPlugin)
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
-  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .jvmPlatform(scalaVersions = Seq(Versions.serverScalaVersion))
   .dependsOn(model)
 
 lazy val agent = (projectMatrix in file("agent"))
@@ -112,7 +104,7 @@ lazy val agent = (projectMatrix in file("agent"))
   )
   .sparkRow(SparkVersionAxis(Versions.spark2), scalaVersions = Seq(Versions.scala211, Versions.scala212))
   .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212, Versions.scala213))
-  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .jvmPlatform(scalaVersions = Versions.agentSupportedScalaVersions)
   .dependsOn(model)
 
 lazy val model = (projectMatrix in file("model"))
@@ -127,4 +119,4 @@ lazy val model = (projectMatrix in file("model"))
     jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent: model"),
     jacocoExcludes := jacocoProjectExcludes()
   )
-  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .jvmPlatform(scalaVersions = Versions.agentSupportedScalaVersions)

@@ -24,7 +24,7 @@ import java.util.UUID
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
+import scala.collection.JavaConverters._
 
 object InMemoryApiModelDao {
 
@@ -39,12 +39,12 @@ object InMemoryApiModelDao {
 
 }
 
-class InMemoryApiModelDao[T <: BaseApiModel] extends ApiModelDao[T] with JavaConvertersWrapper {
+class InMemoryApiModelDao[T <: BaseApiModel] extends ApiModelDao[T] {
 
   private val inmemory: ConcurrentMap[UUID, T] = new ConcurrentHashMap[UUID, T]()
 
   def getList(limit: Int, offset: Int, filter: T => Boolean): Future[List[T]] = Future {
-    asScala(inmemory.values)
+    inmemory.values.asScala
       .filter(filter)
       .slice(offset, offset + limit).toList // limiting, todo pagination or similar
   }

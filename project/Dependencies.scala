@@ -25,7 +25,9 @@ object Dependencies {
     val scala211 = "2.11.12"
     val scala212 = "2.12.18"
     val scala213 = "2.13.11"
-    val supportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
+
+    val serverScalaVersion: String = scala212
+    val agentSupportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
