@@ -38,6 +38,7 @@ object Measure {
   val supportedMeasures: Seq[MeasureType] = Seq(
     RecordCount, DistinctRecordCount, SumOfValuesOfColumn, AbsSumOfValuesOfColumn, SumOfHashesOfColumn
   )
+  val supportedMeasureNames: Seq[String] = supportedMeasures.map(_.measureName)
 
   class MeasureType(val measureName: String, val onlyForNumeric: Boolean)
 

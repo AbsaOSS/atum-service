@@ -37,7 +37,7 @@ object MeasuresMapper {
       case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(controlColumn)
       case unsupportedMeasure =>
         throw UnsupportedMeasureException(
-          s"Measure not supported: $unsupportedMeasure. Supported measures are: ${Measure.supportedMeasures}"
+          s"Measure not supported: $unsupportedMeasure. Supported measures are: ${Measure.supportedMeasureNames}"
         )
     }
   }
