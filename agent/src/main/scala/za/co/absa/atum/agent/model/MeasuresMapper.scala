@@ -16,10 +16,9 @@
 
 package za.co.absa.atum.agent.model
 
+import za.co.absa.atum.agent.exception.UnsupportedMeasureException
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto
-
-case class UnsupportedMeasureException(msg: String) extends Exception(msg)
 
 object MeasuresMapper {
 
