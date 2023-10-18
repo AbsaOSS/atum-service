@@ -21,28 +21,41 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 object MeasurementBuilder {
 
-  def buildLongMeasurement(functionName: String, controlCols: Seq[String], resultValue: Long): MeasurementDTO = {
+  def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = { // todo: refactor once #89 is merged
+    measurement.result match {
+      case l: Long =>
+        buildLongMeasurement(measurement.measure.getClass.getSimpleName, Seq(measurement.measure.controlCol), l)
+      case d: Double =>
+        buildDoubleMeasureResult(measurement.measure.getClass.getSimpleName, Seq(measurement.measure.controlCol), d)
+      case bd: BigDecimal =>
+        buildBigDecimalMeasureResult(measurement.measure.getClass.getSimpleName, Seq(measurement.measure.controlCol), bd)
+      case s: String =>
+        buildStringMeasureResult(measurement.measure.getClass.getSimpleName, Seq(measurement.measure.controlCol), s)
+    }
+  }
+
+  private def buildLongMeasurement(functionName: String, controlCols: Seq[String], resultValue: Long): MeasurementDTO = {
     MeasurementDTO(
       MeasureDTO(functionName, controlCols),
       MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.Long))
     )
   }
 
-  def buildDoubleMeasureResult(functionName: String, controlCols: Seq[String], resultValue: Double): MeasurementDTO = {
+  private def buildDoubleMeasureResult(functionName: String, controlCols: Seq[String], resultValue: Double): MeasurementDTO = {
     MeasurementDTO(
       MeasureDTO(functionName, controlCols),
       MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.Double))
     )
   }
 
-  def buildBigDecimalMeasureResult(functionName: String, controlCols: Seq[String], resultValue: BigDecimal): MeasurementDTO = {
+  private def buildBigDecimalMeasureResult(functionName: String, controlCols: Seq[String], resultValue: BigDecimal): MeasurementDTO = {
     MeasurementDTO(
       MeasureDTO(functionName, controlCols),
       MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.BigDecimal))
     )
   }
 
-  def buildStringMeasureResult(functionName: String, controlCols: Seq[String], resultValue: String): MeasurementDTO = {
+  private def buildStringMeasureResult(functionName: String, controlCols: Seq[String], resultValue: String): MeasurementDTO = {
     MeasurementDTO(
       MeasureDTO(functionName, controlCols),
       MeasureResultDTO(TypedValue(resultValue, ResultValueType.String))
