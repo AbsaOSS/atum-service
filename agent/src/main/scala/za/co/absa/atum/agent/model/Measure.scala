@@ -1,8 +1,24 @@
+/*
+ * Copyright 2021 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package za.co.absa.atum.agent.model
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
-import org.apache.spark.sql.{Column, DataFrame, Row}
+import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
@@ -10,18 +26,18 @@ import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancem
 /**
  *  Type of different measures to be applied to the columns.
  */
-trait Measurement extends MeasurementProcessor {
+trait Measure extends MeasurementProcessor {
 
   val controlCol: String
 }
 
-object Measurement {
+object Measure {
 
   private val valueColumnName: String = "value"
 
   case class RecordCount(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).count().toString
@@ -30,14 +46,14 @@ object Measurement {
 
   case class DistinctRecordCount(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).distinct().count().toString
   }
   case class SumOfValuesOfColumn(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
@@ -48,7 +64,7 @@ object Measurement {
 
   case class AbsSumOfValuesOfColumn(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
@@ -58,7 +74,7 @@ object Measurement {
 
   case class SumOfHashesOfColumn(
     controlCol: String
-  ) extends Measurement {
+  ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
 

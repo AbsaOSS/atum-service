@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.web.api.NotFoundException
 import za.co.absa.atum.web.dao.ApiModelDao
-import za.co.absa.atum.web.model.Segmentation
+import za.co.absa.atum.web.model.Partition
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,16 +29,16 @@ import scala.concurrent.Future
 
 
 @Service
-class SegmentationService @Autowired()(flowService: FlowService, dao: ApiModelDao[Segmentation]) extends BaseApiService[Segmentation](dao) {
+class SegmentationService @Autowired()(flowService: FlowService, dao: ApiModelDao[Partition]) extends BaseApiService[Partition](dao) {
 
-  override def add(seg: Segmentation): Future[UUID] = {
+  override def add(seg: Partition): Future[UUID] = {
     require(seg.id.isEmpty, "A new Segmentation payload must not have id!")
     flowService.withFlowExistsF(seg.flowId) {
       super.add(seg)
     }
   }
 
-  override def update(seg: Segmentation): Future[Boolean] = {
+  override def update(seg: Partition): Future[Boolean] = {
     require(seg.id.nonEmpty, "Updated segmentation must have id!")
     flowService.withFlowExistsF(seg.flowId) {
       super.update(seg)

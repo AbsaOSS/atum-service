@@ -1,32 +1,36 @@
 # Atum Agent
 
-
-`Atum Agent` module has two main features
-`AtumAgent`: Retrieves the configurations and reports the measures.
-`AtumContext`:  Provides a library for calculating control measures over a `Spark` `Dataframe`.
-
+`Atum Agent` module has two main parts:
+* `AtumAgent`: Retrieves the configurations and reports the measures.
+* `AtumContext`:  Provides a library for calculating control measures over a `Spark` `Dataframe`.
 
 
 ## Usage
 
-Include `AtumAgent` as an implicit in the scope for use by the `AtumContext`.
+Create multiple `AtumContext` with different control measures to be applied 
 
-```scala
-import za.co.absa.atum.agent.AtumContext.DatasetWrapper
-import za.co.absa.atum.agent.model._
-```
-
-```scala
-implicit val agent: AtumAgent = new AgentImpl
-```
-
-Create multiple `AtumContext` with different control measures
+### Option 1
 ```scala
 val atumContextInstanceWithRecordCount = AtumContext(processor = processor)
   .withMeasureAdded(RecordCount(MockMeasureNames.recordCount1, controlCol = "id"))
 
 val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
   .withMeasureAdded(AbsSumOfValuesOfColumn(controlCol = "salary"))
+```
+
+### Option 2 
+Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAgent`.
+```scala
+    val atumContext1 = AtumAgent.createAtumContext(atumPartition)
+```
+
+#### AtumPartitions
+A list of key values that maintains the order of arrival of the items, the `AtumService` 
+is able to deliver the correct `AtumContext` according to the `AtumPartitions` we give it. 
+```scala
+    val atumPartitions = AtumPartitions().withPartitions(ListMap("name" -> "partition-name", "country" -> "SA", "gender" -> "female" ))
+
+    val subPartition = atumPartitions.addPartition("otherKey", "otherValue")
 ```
 
 Control measures can also be overwritten, added or removed.
