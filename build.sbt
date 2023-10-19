@@ -40,8 +40,6 @@ lazy val server = project
   )
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
-  .enablePlugins(JavaAppPackaging)
-  .enablePlugins(DockerPlugin)
 
 
 lazy val agent = project
