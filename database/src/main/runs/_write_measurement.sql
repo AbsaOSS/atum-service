@@ -44,7 +44,7 @@ $$
 --
 -- Status codes:
 --      10                  - OK
---      11                  - Measurement added including measurement defintion'
+--      11                  - Measurement added including measurement definition
 --
 -------------------------------------------------------------------------------
 DECLARE

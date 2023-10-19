@@ -30,7 +30,7 @@ CREATE OR REPLACE FUNCTION runs.write_checkpoint(
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.write_measurement(9)
+-- Function: runs.write_checkpoint(9)
 --      Creates a checkpoint and adds all the measurements that it consists of
 --
 -- Parameters:
