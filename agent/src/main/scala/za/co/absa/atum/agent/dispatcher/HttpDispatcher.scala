@@ -20,8 +20,7 @@ import com.typesafe.config.Config
 import org.apache.spark.internal.Logging
 import sttp.client3._
 import sttp.model.Uri
-import za.co.absa.atum.model.Partitioning
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO}
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningDTO}
 
 class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
@@ -31,11 +30,13 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   logInfo("using http dispatcher")
   logInfo(s"serverUri $serverUri")
 
-  override def fetchAtumContext(
-    partitioning: Partitioning,
-    parentPartitioning: Option[Partitioning]
-  ): Option[AtumContextDTO] = {
-    ???
+  override def getOrCreateAtumContext(partitioning: PartitioningDTO): AtumContextDTO = {
+    basicRequest
+      .body(s"$partitioning")
+      .post(serverUri)
+      .send(backend)
+
+    AtumContextDTO(partitioning = partitioning.partitioning) // todo: implement request
   }
 
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {

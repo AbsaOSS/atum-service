@@ -18,12 +18,12 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningDTO}
 
 /**
  * Place holder for the agent that communicate with the API.
  */
-class AtumAgent private() {
+class AtumAgent private[agent] () {
 
   val config: Config = ConfigFactory.load()
 
@@ -47,24 +47,34 @@ class AtumAgent private() {
    *  @return
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
-    contexts.getOrElse(atumPartitions, new AtumContext(atumPartitions, this))
+    val partitioningDTO = PartitioningDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None)
+    val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
+    lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    getExistingOrNewContext(atumPartitions, atumContext)
   }
 
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
-    getContextOrElse(newPartitions, parentAtumContext.copy(atumPartitions = newPartitions, agent = this))
+
+    val newPartitionsDTO = AtumPartitions.toSeqPartitionDTO(newPartitions)
+    val parentPartitionsDTO = Some(AtumPartitions.toSeqPartitionDTO(parentAtumContext.atumPartitions))
+    val partitioningDTO = PartitioningDTO(newPartitionsDTO, parentPartitionsDTO)
+
+    val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
+    lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    getExistingOrNewContext(newPartitions, atumContext)
   }
 
-  private def getContextOrElse(atumPartitions: AtumPartitions, creationMethod: =>AtumContext): AtumContext = {
-    synchronized{
-      contexts.getOrElse(atumPartitions, {
-        val result = creationMethod
-        contexts = contexts + (atumPartitions -> result)
-        result
-      })
+  private def getExistingOrNewContext(atumPartitions: AtumPartitions, newAtumContext: => AtumContext): AtumContext = {
+    synchronized {
+      contexts.getOrElse(
+        atumPartitions, {
+          contexts = contexts + (atumPartitions -> newAtumContext)
+          newAtumContext
+        }
+      )
     }
   }
-
 
   private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
