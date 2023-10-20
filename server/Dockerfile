@@ -14,7 +14,7 @@
 #
 
 
-# LS docker file
+# Atum Service docker file
 
 # build via (docker root = project root):
 # docker build -t absaoss/atum-service:latest \
