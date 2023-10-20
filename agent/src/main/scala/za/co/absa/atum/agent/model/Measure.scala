@@ -102,8 +102,8 @@ object Measure {
   }
 
   object AbsSumOfValuesOfColumn extends MeasureType {
-    def apply(controlCol: String): SumOfValuesOfColumn = {
-      SumOfValuesOfColumn(controlCol, measureName, onlyForNumeric)
+    def apply(controlCol: String): AbsSumOfValuesOfColumn = {
+      AbsSumOfValuesOfColumn(controlCol, measureName, onlyForNumeric)
     }
 
     override val measureName: String = "absAggregatedTotal"
@@ -125,8 +125,8 @@ object Measure {
   }
 
   object SumOfHashesOfColumn extends MeasureType {
-    def apply(controlCol: String): SumOfValuesOfColumn = {
-      SumOfValuesOfColumn(controlCol, measureName, onlyForNumeric)
+    def apply(controlCol: String): SumOfHashesOfColumn = {
+      SumOfHashesOfColumn(controlCol, measureName, onlyForNumeric)
     }
 
     override val measureName: String = "hashCrc32"
