@@ -16,21 +16,26 @@
 
 package za.co.absa.atum.agent.model
 
+import za.co.absa.atum.agent.exception.UnsupportedMeasureResultType
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 object MeasurementBuilder {
 
-  def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = { // todo: refactor once #89 is merged
+  def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = { // todo: test
+    val measureName = measurement.measure.measureName
     measurement.result match {
       case l: Long =>
-        buildLongMeasurement(measurement.measure.getClass.getSimpleName, Seq(measurement.measure.controlCol), l)
+        buildLongMeasurement(measureName, Seq(measurement.measure.controlCol), l)
       case d: Double =>
-        buildDoubleMeasureResult(measurement.measure.getClass.getSimpleName, Seq(measurement.measure.controlCol), d)
+        buildDoubleMeasureResult(measureName, Seq(measurement.measure.controlCol), d)
       case bd: BigDecimal =>
-        buildBigDecimalMeasureResult(measurement.measure.getClass.getSimpleName, Seq(measurement.measure.controlCol), bd)
+        buildBigDecimalMeasureResult(measureName, Seq(measurement.measure.controlCol), bd)
       case s: String =>
-        buildStringMeasureResult(measurement.measure.getClass.getSimpleName, Seq(measurement.measure.controlCol), s)
+        buildStringMeasureResult(measureName, Seq(measurement.measure.controlCol), s)
+      case unsupportedType  =>
+        val className = unsupportedType.getClass.getSimpleName
+        throw UnsupportedMeasureResultType(s"Unsupported type of measure $measureName: $className")
     }
   }
 
