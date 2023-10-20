@@ -47,6 +47,8 @@ ARG LDAP_SSL_CERTS_PATH
 # ARG SSL_DNAME is defined below in the SSL-enabled image
 # In case you build the Dockerfile from another location than the default 'service' dir, provide a prefix to reach it
 ARG AS_PREFIX=.
+# Version of scala that server was built against
+ARG SCALA_VERSION=2.12
 
 LABEL org.opencontainers.image.authors="ABSA"
 
@@ -54,7 +56,7 @@ LABEL org.opencontainers.image.authors="ABSA"
 COPY $CONFIG /opt/application.yaml
 
 # deploy as root application in tomcat
-COPY ${AS_PREFIX}/target/scala-2.12/*.war /usr/local/tomcat/webapps/ROOT.war
+COPY ${AS_PREFIX}/target/scala-${SCALA_VERSION}/*.war /usr/local/tomcat/webapps/ROOT.war
 
 ENV SPRING_CONFIG_LOCATION=/opt/application.yaml
 
