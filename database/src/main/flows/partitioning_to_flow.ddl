@@ -13,15 +13,13 @@
  * limitations under the License.
  */
 
-CREATE TABLE runs.flows
+CREATE TABLE flows.partitioning_to_flow
 (
-    id_flow                 BIGINT NOT NULL DEFAULT global_id(),
-    flow_name               TEXT NOT NULL,
-    flow_description        TEXT,
-    from_pattern            BOOLEAN NOT NULL,
+    fk_flow                 BIGINT NOT NULL,
+    fk_partitioning         BIGINT NOT NULL,
     created_by              TEXT NOT NULL,
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT flows_pk PRIMARY KEY (id_flow)
+    CONSTRAINT partitioning_to_flow_pk PRIMARY KEY (fk_flow, fk_partitioning)
 );
 
-ALTER TABLE runs.flows OWNER to atum_owner;
+ALTER TABLE flows.partitioning_to_flow OWNER to atum_owner;

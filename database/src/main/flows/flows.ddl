@@ -13,16 +13,15 @@
  * limitations under the License.
  */
 
-CREATE TABLE runs.partitionings
+CREATE TABLE flows.flows
 (
-    id_partitioning         BIGINT NOT NULL DEFAULT global_id(),
-    partitioning            JSONB NOT NULL, -- TODO add  partitioning validity check #69
+    id_flow                 BIGINT NOT NULL DEFAULT global_id(),
+    flow_name               TEXT NOT NULL,
+    flow_description        TEXT,
+    from_pattern            BOOLEAN NOT NULL,
     created_by              TEXT NOT NULL,
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT segmentations_pk PRIMARY KEY (id_partitioning)
+    CONSTRAINT flows_pk PRIMARY KEY (id_flow)
 );
 
-ALTER TABLE runs.partitionings
-    ADD CONSTRAINT segmentations_unq UNIQUE (partitioning);
-
-ALTER TABLE runs.partitionings OWNER to atum_owner;
+ALTER TABLE flows.flows OWNER to atum_owner;

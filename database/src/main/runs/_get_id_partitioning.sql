@@ -15,16 +15,18 @@
 
 CREATE OR REPLACE FUNCTION runs._get_id_partitioning(
     IN  i_partitioning      JSONB,
+    IN  i_blocking          BOOLEAN = false,
     OUT id_partitioning     BIGINT
 ) RETURNS BIGINT AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs._get_key_segmentation(1)
---      Gets the id of the provided segmentation, if it exits
+-- Function: runs._get_id_partitioning(3)
+--      Gets the id of the provided partitioning, if it exits
 --
 -- Parameters:
 --      i_partitioning      - partitioning to look for
+--      i_blocking          - flag signaling if to put a lock on the record
 --
 -- Returns:
 --      id_partitioning     - id of the segmentation if it exists, NULL otherwise
@@ -32,14 +34,22 @@ $$
 -------------------------------------------------------------------------------
 DECLARE
 BEGIN
-    SELECT PAR.id_partitioning
-    FROM runs.partitionings PAR
-    WHERE PAR.partitioning = i_partitioning
-    INTO id_partitioning;
+    IF i_blocking THEN
+        SELECT PAR.id_partitioning
+        FROM runs.partitionings PAR
+        WHERE PAR.partitioning = i_partitioning
+        FOR UPDATE
+        INTO _get_id_partitioning.id_partitioning;
+    ELSE
+        SELECT PAR.id_partitioning
+        FROM runs.partitionings PAR
+        WHERE PAR.partitioning = i_partitioning
+        INTO _get_id_partitioning.id_partitioning;
+    END IF;
 
     RETURN;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs._get_id_partitioning(JSONB) OWNER TO atum_owner;
+ALTER FUNCTION runs._get_id_partitioning(JSONB, BOOLEAN) OWNER TO atum_owner;

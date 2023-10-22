@@ -13,13 +13,7 @@
  * limitations under the License.
  */
 
-CREATE TABLE runs.partitioning_to_flow
-(
-    fk_flow                 BIGINT NOT NULL,
-    fk_partitioning         BIGINT NOT NULL,
-    created_by              TEXT NOT NULL,
-    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT partitioning_to_flow_pk PRIMARY KEY (fk_flow, fk_partitioning)
-);
+CREATE SCHEMA IF NOT EXISTS flows;
+ALTER  SCHEMA flows OWNER TO atum_owner;
 
-ALTER TABLE runs.partitioning_to_flow OWNER to atum_owner;
+GRANT USAGE ON SCHEMA flows TO atum_user;

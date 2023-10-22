@@ -31,9 +31,9 @@ $do$
                 NOCREATEDB
                 NOCREATEROLE
                 NOREPLICATION
-                LOGIN PASSWORD 'changeme';
+                PASSWORD 'changeme';
         END IF;
-    END
+    END;
 $do$;
 
 
@@ -53,7 +53,7 @@ $do$
                 NOCREATEDB
                 NOCREATEROLE
                 NOREPLICATION
-                LOGIN PASSWORD 'changeme';
+                PASSWORD 'changeme';
         END IF;
     END
 $do$;
@@ -75,7 +75,7 @@ $do$
                 NOCREATEDB
                 NOCREATEROLE
                 NOREPLICATION
-                LOGIN PASSWORD 'changeme';
+                PASSWORD 'changeme';
         END IF;
     END
 $do$;
