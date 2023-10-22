@@ -19,25 +19,23 @@ import SparkVersionAxis._
 import JacocoSetup._
 import sbt.Keys.name
 
-ThisBuild / organization := "za.co.absa.atum-service"
 
-lazy val scala211 = "2.11.12"
-lazy val scala212 = "2.12.12"
-lazy val spark2 = "2.4.7"
-lazy val spark3 = "3.3.1"
+ThisBuild / organization := "za.co.absa"
+ThisBuild / name         := "atum-service"
 
-ThisBuild / crossScalaVersions := Seq(scala211, scala212)
-ThisBuild / scalaVersion := scala212
+ThisBuild / scalaVersion := Versions.scala212  // default version
+ThisBuild / crossScalaVersions := Versions.supportedScalaVersions
 
 ThisBuild / versionScheme := Some("early-semver")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-lazy val printScalaVersion = taskKey[Unit]("Print Scala versions for atum-service is being built for.")
 
-ThisBuild / printScalaVersion := {
+lazy val printSparkScalaVersion = taskKey[Unit]("Print Spark and Scala versions for atum-service is being built for.")
+ThisBuild / printSparkScalaVersion := {
   val log = streams.value.log
-  log.info(s"Building with Scala ${scalaVersion.value}")
+  val sparkVer = sparkVersionForScala(scalaVersion.value)
+  log.info(s"Building with Spark $sparkVer, Scala ${scalaVersion.value}")
 }
 
 lazy val commonSettings = Seq(
@@ -54,34 +52,22 @@ val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := 
   case _                       => MergeStrategy.first
 }
 
-lazy val parent = (project in file("."))
-  .aggregate(atumServer.projectRefs ++ atumAgent.projectRefs: _*)
+lazy val root = (projectMatrix in file("."))
+  .aggregate(model, server, agent)
   .settings(
-    name := "atum-service-parent",
+    name := "atum-service-root",
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
     publish / skip := true,
     mergeStrategy
   )
 
-lazy val atumAgent = (projectMatrix in file("agent"))
-  .settings(
-    commonSettings ++ Seq(
-      name := "atum-agent",
-      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
-      scalafmtOnCompile := true
-    ),
-    mergeStrategy
-  )
-  .enablePlugins(ScalafmtPlugin)
-  .sparkRow(SparkVersionAxis(spark2), scalaVersions = Seq(scala211, scala212))
-  .sparkRow(SparkVersionAxis(spark3), scalaVersions = Seq(scala212))
-
-lazy val atumServer = (projectMatrix in file("server"))
+lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
       Compile / packageBin / publishArtifact := false,
-      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
+      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
@@ -90,11 +76,46 @@ lazy val atumServer = (projectMatrix in file("server"))
     ): _*
   )
   .settings(
-    jacocoReportSettings := jacocoSettings( scalaVersion.value, "atum-server"),
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-server"),
     jacocoExcludes := jacocoProjectExcludes()
   )
   .enablePlugins(AssemblyPlugin)
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
-  .jvmPlatform(scalaVersions = Seq(scala212))
+  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .dependsOn(model)
 
+lazy val agent = (projectMatrix in file("agent"))
+  .settings(
+    commonSettings ++ Seq(
+      name := "atum-agent",
+      libraryDependencies ++= Dependencies.agentDependencies(
+        if (scalaVersion.value == Versions.scala211) Versions.spark2 else Versions.spark3,
+        scalaVersion.value
+      ),
+      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      mergeStrategy
+    ): _*
+  )
+  .settings(
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent"),
+    jacocoExcludes := jacocoProjectExcludes()
+  )
+  .sparkRow(SparkVersionAxis(Versions.spark2), scalaVersions = Seq(Versions.scala211, Versions.scala212))
+  .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212))
+  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .dependsOn(model)
+
+lazy val model = (projectMatrix in file("model"))
+  .settings(
+    commonSettings ++ Seq(
+      name         := "atum-model",
+      libraryDependencies ++= Dependencies.modelDependencies,
+      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+    ): _*
+  )
+  .settings(
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent: model"),
+    jacocoExcludes := jacocoProjectExcludes()
+  )
+  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)

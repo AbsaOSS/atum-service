@@ -56,7 +56,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
 
   def withFlowAndSegExistF[S](cm: ControlMeasure)(fn: => Future[S]): Future[S] = {
     flowService.withFlowExistsF(cm.flowId) {
-      segmentationService.withSegmentationExistsF(cm.segmentationId) {
+      segmentationService.withSegmentationExistsF(cm.partitionId) {
         fn
       }
     }
@@ -71,7 +71,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
 
   def getListByFlowAndSegIds(flowId: UUID, segId: UUID, limit: Int, offset: Int): Future[List[ControlMeasure]] = {
     val filter: ControlMeasure => Boolean = {
-      cm => cm.flowId.equals(flowId) && cm.segmentationId.equals(segId)
+      cm => cm.flowId.equals(flowId) && cm.partitionId.equals(segId)
     }
     super.getList(offset, limit, filter)
   }
@@ -124,7 +124,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
   // measurements:
   def getMeasurements(cmId: UUID, cpId: UUID): Future[List[Measurement]] = {
     getCheckpointById(cmId, cpId).map {
-      _.measurements
+      _.measures
     }
   }
 
@@ -134,7 +134,7 @@ class ControlMeasureService @Autowired()(flowService: FlowService, segmentationS
         case None => throw NotFoundException(s"Checkpoint referenced by id=$cpId was not found in ControlMeasure id=$cmId")
         case Some(existingCp) =>
           val updatedCps = existingCm.checkpoints.map {
-            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measurements = existingCp.measurements ++ List(measurement))
+            case cp@Checkpoint(Some(`cpId`), _, _, _, _, _, _, _, _, _) => cp.copy(measures = existingCp.measures ++ List(measurement))
             case cp => cp // other CPs untouched
           }
 
