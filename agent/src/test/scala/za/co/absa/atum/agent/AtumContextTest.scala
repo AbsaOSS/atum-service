@@ -22,8 +22,9 @@ import org.mockito.ArgumentCaptor
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.Measure.RecordCount
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
+import za.co.absa.atum.agent.model.Measurement
 
 class AtumContextTest extends AnyFlatSpec with Matchers {
 
@@ -93,6 +94,27 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     assert(argument.getValue.author == "Hans")
     assert(argument.getValue.partitioning == Seq(PartitionDTO("foo2", "bar")))
     assert(argument.getValue.measurements.head.result.mainValue.value == "3")
+  }
+
+  "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
+    val atumAgent = new AtumAgent
+    val atumPartitions = AtumPartitions("key" -> "value")
+    val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
+
+    val measurements = Seq(Measurement(RecordCount("col"), "1"), Measurement(SumOfValuesOfColumn("col"), 1))
+
+    val checkpoint = atumContext.createCheckpointOnProvidedData(
+      checkpointName = "name",
+      author = "author",
+      measurements = measurements
+    )
+
+    assert(checkpoint.name == "name")
+    assert(checkpoint.author == "author")
+    assert(!checkpoint.measuredByAtumAgent)
+    assert(checkpoint.atumPartitions == atumPartitions)
+    assert(checkpoint.processStartTime == checkpoint.processEndTime.get)
+    assert(checkpoint.measurements == measurements)
   }
 
 }

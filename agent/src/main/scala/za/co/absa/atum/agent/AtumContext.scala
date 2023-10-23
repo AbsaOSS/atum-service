@@ -18,7 +18,7 @@ package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.{Measure, MeasuresMapper}
+import za.co.absa.atum.agent.model.{Checkpoint, Measure, Measurement, MeasuresMapper}
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
 
@@ -83,8 +83,20 @@ class AtumContext private[agent] (
     }
   }
 
-  def saveCheckpointMeasurements(checkpointName: String, measurements: Seq[Measure]) = {
-    ??? // TODO #55
+  def createCheckpointOnProvidedData(
+                                      checkpointName: String,
+                                      author: String,
+                                      measurements: Seq[Measurement]
+                                    ): Checkpoint = {
+    val zonedDateTimeNow = ZonedDateTime.now()
+    Checkpoint(
+      name = checkpointName,
+      author = author,
+      atumPartitions = this.atumPartitions,
+      processStartTime = zonedDateTimeNow,
+      processEndTime = Some(zonedDateTimeNow),
+      measurements = measurements
+    )
   }
 
   def addAdditionalData(key: String, value: String) = {
