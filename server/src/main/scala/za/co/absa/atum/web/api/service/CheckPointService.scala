@@ -17,10 +17,13 @@
 package za.co.absa.atum.web.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
+import org.springframework.stereotype.Service
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.database.Runs
 
-
+@Service
+@Bean
 class CheckPointService {
   @Autowired
   private val checkpointRepository: Runs = null

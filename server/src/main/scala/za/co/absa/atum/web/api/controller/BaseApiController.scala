@@ -24,15 +24,9 @@ import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.BaseApiService
 import za.co.absa.atum.web.model.BaseApiModel
-
 import java.net.URI
 import java.util.{Optional, UUID}
 import java.util.concurrent.CompletableFuture
-//import javax.servlet.http.HttpServletRequest
-
-//import java.net.URI
-//import java.util.concurrent.CompletableFuture
-//import java.util.{Optional, UUID}
 //import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
 

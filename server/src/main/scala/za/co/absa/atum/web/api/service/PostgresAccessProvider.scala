@@ -24,7 +24,6 @@ import za.co.absa.atum.web.api.database.Runs
 import za.co.absa.atum.web.api.service.utils.ExecutorsProvider
 import za.co.absa.fadb.slick.SlickPgEngine
 
-
 @Component
 class PostgresAccessProvider@Autowired()( executors: ExecutorsProvider ) {
 

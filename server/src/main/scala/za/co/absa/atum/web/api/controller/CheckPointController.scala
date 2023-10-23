@@ -26,7 +26,7 @@ import za.co.absa.atum.web.api.service.CheckPointService
 @RestController
 class CheckPointController {
 
-  @Autowired
+  @Autowired()
   private val checkpointService: CheckPointService = null
 
   @PostMapping(Array("/save-checkpoint"))
