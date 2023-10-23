@@ -22,7 +22,7 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 object MeasurementBuilder {
 
-  def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = { // todo: test
+  def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {
     val measureName = measurement.measure.measureName
     measurement.result match {
       case l: Long =>
