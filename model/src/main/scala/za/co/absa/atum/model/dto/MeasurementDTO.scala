@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.agent.model
+package za.co.absa.atum.model.dto
 
-case class MeasureResult(measurement: Measure, result: String)
+case class MeasurementDTO(
+                        measure: MeasureDTO,
+                        result: MeasureResultDTO
+)

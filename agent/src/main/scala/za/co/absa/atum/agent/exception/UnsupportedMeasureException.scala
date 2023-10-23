@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.agent.exception
 
-case class AdditionalData(
-  additionalData: Map[String, Option[String]]
-)
+case class UnsupportedMeasureException(msg: String) extends Exception(msg)

@@ -18,7 +18,7 @@ package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.atum.agent.{AtumAgent, AtumContext}
+import za.co.absa.atum.agent.AtumAgent
 import za.co.absa.atum.agent.AtumContext.{AtumPartitions, DatasetWrapper}
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.spark.commons.test.SparkTestBase
@@ -48,21 +48,21 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
       .format("csv")
       .option("header", "true")
       .load("agent/src/test/resources/random-dataset/persons.csv")
-      .createCheckpoint("name1")(atumContextInstanceWithRecordCount)
-      .createCheckpoint("name2")(atumContextWithNameHashSum)
+      .createCheckpoint("name1", "author")(atumContextInstanceWithRecordCount)
+      .createCheckpoint("name2", "author")(atumContextWithNameHashSum)
 
     val dsEnrichment = spark.read
       .format("csv")
       .option("header", "true")
       .load("agent/src/test/resources/random-dataset/persons-enriched.csv")
-      .createCheckpoint("name3")(
+      .createCheckpoint("name3", "author")(
         atumContextWithSalaryAbsMeasure
           .removeMeasure(salaryAbsSum)
       )
 
     val dfFull = dfPersons
       .join(dsEnrichment, Seq("id"))
-      .createCheckpoint("other different name")(atumContextWithSalaryAbsMeasure)
+      .createCheckpoint("other different name", "author")(atumContextWithSalaryAbsMeasure)
 
     val dfExtraPersonWithNegativeSalary = spark
       .createDataFrame(
@@ -74,7 +74,7 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
     val dfExtraPerson = dfExtraPersonWithNegativeSalary.union(dfPersons)
 
-    dfExtraPerson.createCheckpoint("a checkpoint name")(
+    dfExtraPerson.createCheckpoint("a checkpoint name", "author")(
       atumContextWithSalaryAbsMeasure
         .removeMeasure(measureIds)
         .removeMeasure(salaryAbsSum)
