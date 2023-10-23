@@ -44,7 +44,7 @@ object Measure {
   )
   val supportedMeasureNames: Seq[String] = supportedMeasures.map(_.measureName)
 
-  case class RecordCount private (controlCol: String, measureName: String, onlyForNumeric: Boolean) extends Measure { // extends MeasureType
+  case class RecordCount private (controlCol: String, measureName: String, onlyForNumeric: Boolean) extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).count().toString
