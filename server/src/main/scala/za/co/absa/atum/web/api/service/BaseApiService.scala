@@ -39,8 +39,13 @@ abstract class BaseApiService[C <: BaseApiModel](dao: ApiModelDao[C]) {
     // default implementation that will work, but specific services may override it for optimization
     dao.getById(uuid).map(_.nonEmpty)
   }
+
   /**
-   * Finds entity by `id` and applies method `fn`. Throws NotFoundException when not found
+   * Could not autowire. No beans of 'CheckPointService' type found. Throws NotFoundException when not found
+   * @param id
+   * @param fn
+   * @tparam S
+   * @return
    */
   def withExistingEntity[S](id: UUID)(fn: C => S): Future[S] = {
     withExistingEntityF(id) { c =>

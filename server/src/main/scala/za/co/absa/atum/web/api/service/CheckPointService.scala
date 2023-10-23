@@ -28,6 +28,10 @@ class CheckPointService {
   @Autowired
   private val checkpointRepository: Runs = null
 
+  /**
+   * this service function saves the checkpoint into the database.
+   * @param checkpoint
+   */
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     this.checkpointRepository.writeCheckpoint(checkpoint)
   }

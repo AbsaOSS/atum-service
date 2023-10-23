@@ -26,6 +26,10 @@ import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 import za.co.absa.fadb.slick.{SlickFunctionWithStatusSupport, SlickPgEngine}
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 
+/**
+ *
+ * @param dBEngine
+ */
 class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
   val writeCheckpoint = new WriteCheckpoint
@@ -33,12 +37,22 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
 object Runs {
 
+  /**
+   *
+   * @param schema
+   * @param dbEngine
+   */
   class WriteCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine) extends
     DBSingleResultFunction[CheckpointDTO, Unit, SlickPgEngine]
     with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
     with StandardStatusHandling
   {
 
+    /**
+     *
+     * @param values
+     * @return
+     */
     override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
 
       // ToDo serialize the partitioning and measurement columns into JSON object
@@ -54,6 +68,10 @@ object Runs {
             ) #$alias;"""
     }
 
+    /**
+     *
+     * @return
+     */
     override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
   }
 }

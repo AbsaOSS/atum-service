@@ -24,11 +24,19 @@ import za.co.absa.atum.web.api.database.Runs
 import za.co.absa.atum.web.api.service.utils.ExecutorsProvider
 import za.co.absa.fadb.slick.SlickPgEngine
 
+/**
+ *
+ * @param executors
+ */
 @Component
 class PostgresAccessProvider@Autowired()( executors: ExecutorsProvider ) {
 
   private val config = ConfigFactory.load("application.properties")
 
+  /**
+   *
+   * @return
+   */
   private def dbConfig: Config = {
     val conf = config.getConfig("postgres")
     print("Configs:", conf)

@@ -29,6 +29,11 @@ class CheckPointController {
   @Autowired()
   private val checkpointService: CheckPointService = null
 
+  /**
+   *
+   * @param checkpoint
+   * @return
+   */
   @PostMapping(Array("/save-checkpoint"))
   def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
     checkpointService.saveCheckpoint(checkpoint)

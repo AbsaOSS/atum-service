@@ -20,12 +20,20 @@ import com.typesafe.config.{Config, ConfigFactory}
 
 trait AtumConfig {
 
+  /**
+   *
+   * @return
+   */
   def dbConfig: Config
 
 }
 
 object AtumConfig extends AtumConfig {
 
+  /**
+   *
+   * @return
+   */
   override def dbConfig: Config = {
     config.getConfig("postgres")
   }
