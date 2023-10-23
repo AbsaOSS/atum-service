@@ -20,7 +20,7 @@ import za.co.absa.atum.agent.exception.UnsupportedMeasureResultType
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
-object MeasurementBuilder {
+private [agent] object MeasurementBuilder {
 
   def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {
     val measureName = measurement.measure.measureName

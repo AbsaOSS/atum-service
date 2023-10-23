@@ -20,7 +20,7 @@ import za.co.absa.atum.agent.exception.UnsupportedMeasureException
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto
 
-object MeasuresMapper {
+private [agent] object MeasuresMapper {
 
   def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {
     measures.map(createMeasure)
