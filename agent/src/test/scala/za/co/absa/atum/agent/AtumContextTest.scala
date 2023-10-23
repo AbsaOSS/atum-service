@@ -19,7 +19,8 @@ package za.co.absa.atum.agent
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.Measure.RecordCount
+import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
+import za.co.absa.atum.agent.model.Measurement
 
 class AtumContextTest extends AnyFlatSpec with Matchers {
 
@@ -61,6 +62,27 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumContextRemoved = atumContext1.removeMeasure(RecordCount("id"))
     assert(atumContextRemoved.currentMeasures.size == 1)
     assert(atumContextRemoved.currentMeasures.head == RecordCount("other"))
+  }
+
+  "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
+    val atumAgent = new AtumAgent
+    val atumPartitions = AtumPartitions("key" -> "value")
+    val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
+
+    val measurements = Seq(Measurement(RecordCount("col"), "1"), Measurement(SumOfValuesOfColumn("col"), 1))
+
+    val checkpoint = atumContext.createCheckpointOnProvidedData(
+      checkpointName = "name",
+      author = "author",
+      measurements = measurements
+    )
+
+    assert(checkpoint.name == "name")
+    assert(checkpoint.author == "author")
+    assert(!checkpoint.measuredByAtumAgent)
+    assert(checkpoint.atumPartitions == atumPartitions)
+    assert(checkpoint.processStartTime == checkpoint.processEndTime.get)
+    assert(checkpoint.measurements == measurements)
   }
 
 }
