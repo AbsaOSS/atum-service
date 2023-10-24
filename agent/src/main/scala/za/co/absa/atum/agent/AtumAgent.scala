@@ -36,7 +36,8 @@ class AtumAgent private[agent] () {
 
   /**
    * Sends `CheckpointDTO` to the AtumService API
-   * @param checkpoint
+   *
+   * @param checkpoint Already initialized Checkpoint object to store
    */
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     dispatcher.saveCheckpoint(checkpoint)
@@ -45,7 +46,7 @@ class AtumAgent private[agent] () {
   /**
    * Sends `Checkpoint` to the AtumService API
    *
-   * @param checkpoint
+   * @param checkpoint Already initialized Checkpoint object to store
    */
   def saveCheckpoint(checkpoint: Checkpoint): Unit = {
     dispatcher.saveCheckpoint(checkpoint.toCheckpointDTO)
@@ -53,6 +54,7 @@ class AtumAgent private[agent] () {
 
   /**
    *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
+   *
    *  @param atumPartitions
    *  @return
    */

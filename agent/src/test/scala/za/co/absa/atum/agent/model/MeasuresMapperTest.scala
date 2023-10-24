@@ -18,7 +18,7 @@ package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.agent.exception.UnsupportedMeasureException
-import za.co.absa.atum.agent.model.Measure.{AbsSumOfValuesOfColumn, DistinctRecordCount, RecordCount, SumOfHashesOfColumn, SumOfValuesOfColumn}
+import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto.MeasureDTO
 
 class MeasuresMapperTest extends AnyFlatSpecLike {

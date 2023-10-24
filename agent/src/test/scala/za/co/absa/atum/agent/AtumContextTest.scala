@@ -16,15 +16,18 @@
 
 package za.co.absa.atum.agent
 
-import org.apache.spark.sql.SparkSession
-import org.mockito.Mockito.{mock, verify}
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.{Row, SparkSession}
+import org.mockito.Mockito.{mock, times, verify}
 import org.mockito.ArgumentCaptor
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.model.dto._
 import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
-import za.co.absa.atum.agent.model.Measurement
+import za.co.absa.atum.agent.model.MeasurementProvided
+import za.co.absa.atum.model.dto._
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 class AtumContextTest extends AnyFlatSpec with Matchers {
 
@@ -68,7 +71,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     assert(atumContextRemoved.currentMeasures.head == RecordCount("other"))
   }
 
-  "createCheckpoint" should "take measurements and create  a checkpoints" in {
+  "createCheckpoint" should "take measurements and create a Checkpoint" in {
     val mockAgent = mock(classOf[AtumAgent])
 
     val atumContext = new AtumContext(AtumPartitions("foo2" -> "bar"), mockAgent)
@@ -85,15 +88,12 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val rdd = spark.sparkContext.parallelize(Seq("A", "B", "C"))
     val df = rdd.toDF("letter")
 
-    atumContext.createCheckpoint("testCheckpoint", "Hans", df)
+    val checkpoint = atumContext.createCheckpoint("testCheckpoint", "Hans", df)
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent).saveCheckpoint(argument.capture())
-
-    assert(argument.getValue.name == "testCheckpoint")
-    assert(argument.getValue.author == "Hans")
-    assert(argument.getValue.partitioning == Seq(PartitionDTO("foo2", "bar")))
-    assert(argument.getValue.measurements.head.result.mainValue.value == "3")
+    assert(checkpoint.name == "testCheckpoint")
+    assert(checkpoint.author == "Hans")
+    assert(checkpoint.atumPartitions == AtumPartitions("foo2", "bar"))
+    assert(checkpoint.measurements.head.result == "3")
   }
 
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
@@ -101,7 +101,10 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumPartitions = AtumPartitions("key" -> "value")
     val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
 
-    val measurements = Seq(Measurement(RecordCount("col"), "1"), Measurement(SumOfValuesOfColumn("col"), 1))
+    val measurements = Seq(
+      MeasurementProvided(RecordCount("col"), "1"),
+      MeasurementProvided(SumOfValuesOfColumn("col"), 1)
+    )
 
     val checkpoint = atumContext.createCheckpointOnProvidedData(
       checkpointName = "name",
@@ -115,6 +118,57 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     assert(checkpoint.atumPartitions == atumPartitions)
     assert(checkpoint.processStartTime == checkpoint.processEndTime.get)
     assert(checkpoint.measurements == measurements)
+  }
+
+  "createAndSaveCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
+    val mockAgent = mock(classOf[AtumAgent])
+
+    implicit val atumContext: AtumContext = new AtumContext(AtumPartitions("foo2" -> "bar"), mockAgent)
+      .addMeasure(RecordCount("notImportantColumn"))
+
+    val spark = SparkSession.builder
+      .master("local")
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.enabled", "false")
+      .getOrCreate()
+
+    val rdd = spark.sparkContext.parallelize(
+      Seq(
+        Row("A", 8.0),
+        Row("B", 2.9),
+        Row("C", 9.1),
+        Row("D", 2.5)
+      )
+    )
+    val schema = new StructType()
+      .add(StructField("notImportantColumn", StringType))
+      .add(StructField("columnForSum", DoubleType))
+
+    import AtumContext._
+
+    val df = spark.createDataFrame(rdd, schema)
+      .createAndSaveCheckpoint("checkPointNameCount", "authorOfCount")
+
+    val argumentFirst = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent, times(1)).saveCheckpoint(argumentFirst.capture())
+
+    assert(argumentFirst.getValue.name == "checkPointNameCount")
+    assert(argumentFirst.getValue.author == "authorOfCount")
+    assert(argumentFirst.getValue.partitioning == Seq(PartitionDTO("foo2", "bar")))
+    assert(argumentFirst.getValue.measurements.head.result.mainValue.value == "4")
+    assert(argumentFirst.getValue.measurements.head.result.mainValue.valueType == ResultValueType.Long)
+
+    atumContext.addMeasure(SumOfValuesOfColumn("columnForSum"))
+    df.createAndSaveCheckpoint("checkPointNameSum", "authorOfSum")
+
+    val argumentSecond = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent, times(2)).saveCheckpoint(argumentSecond.capture())
+
+    assert(argumentSecond.getValue.name == "checkPointNameSum")
+    assert(argumentSecond.getValue.author == "authorOfSum")
+    assert(argumentSecond.getValue.partitioning == Seq(PartitionDTO("foo2", "bar")))
+    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.value == "22.5")
+    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.valueType == ResultValueType.BigDecimal)
   }
 
 }

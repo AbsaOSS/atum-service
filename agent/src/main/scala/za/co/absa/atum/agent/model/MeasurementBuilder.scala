@@ -22,49 +22,40 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 private [agent] object MeasurementBuilder {
 
-  def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {
+  private [agent] def buildMeasurementDTO(measurement: MeasurementByAtum): MeasurementDTO = {
     val measureName = measurement.measure.measureName
-    measurement.result match {
+    val controlCols = Seq(measurement.measure.controlCol)
+
+    MeasurementDTO(
+      MeasureDTO(measureName, controlCols),
+      MeasureResultDTO(TypedValue(measurement.result, measurement.resultType))
+    )
+  }
+
+  private [agent] def buildMeasurementDTO(measurement: MeasurementProvided): MeasurementDTO = {
+    val measureName = measurement.measure.measureName
+    val controlCols = Seq(measurement.measure.controlCol)
+
+    MeasurementDTO(
+      MeasureDTO(measureName, controlCols),
+      buildMeasureResultDTO(measureName, measurement.result)
+    )
+  }
+
+  private [agent] def buildMeasureResultDTO(measureName: String, result: Any): MeasureResultDTO = {
+    result match {
       case l: Long =>
-        buildLongMeasurement(measureName, Seq(measurement.measure.controlCol), l)
+        MeasureResultDTO(TypedValue(l.toString, ResultValueType.Long))
       case d: Double =>
-        buildDoubleMeasureResult(measureName, Seq(measurement.measure.controlCol), d)
+        MeasureResultDTO(TypedValue(d.toString, ResultValueType.Double))
       case bd: BigDecimal =>
-        buildBigDecimalMeasureResult(measureName, Seq(measurement.measure.controlCol), bd)
+        MeasureResultDTO(TypedValue(bd.toString, ResultValueType.BigDecimal))
       case s: String =>
-        buildStringMeasureResult(measureName, Seq(measurement.measure.controlCol), s)
-      case unsupportedType  =>
+        MeasureResultDTO(TypedValue(s, ResultValueType.String))
+      case unsupportedType =>
         val className = unsupportedType.getClass.getSimpleName
-        throw UnsupportedMeasureResultType(s"Unsupported type of measure $measureName: $className")
+        throw UnsupportedMeasureResultType(s"Unsupported type of measure $measureName: $className for result: $result")
     }
-  }
-
-  private def buildLongMeasurement(functionName: String, controlCols: Seq[String], resultValue: Long): MeasurementDTO = {
-    MeasurementDTO(
-      MeasureDTO(functionName, controlCols),
-      MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.Long))
-    )
-  }
-
-  private def buildDoubleMeasureResult(functionName: String, controlCols: Seq[String], resultValue: Double): MeasurementDTO = {
-    MeasurementDTO(
-      MeasureDTO(functionName, controlCols),
-      MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.Double))
-    )
-  }
-
-  private def buildBigDecimalMeasureResult(functionName: String, controlCols: Seq[String], resultValue: BigDecimal): MeasurementDTO = {
-    MeasurementDTO(
-      MeasureDTO(functionName, controlCols),
-      MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.BigDecimal))
-    )
-  }
-
-  private def buildStringMeasureResult(functionName: String, controlCols: Seq[String], resultValue: String): MeasurementDTO = {
-    MeasurementDTO(
-      MeasureDTO(functionName, controlCols),
-      MeasureResultDTO(TypedValue(resultValue, ResultValueType.String))
-    )
   }
 
 }

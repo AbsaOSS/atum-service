@@ -20,7 +20,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
 import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
-import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
+import za.co.absa.atum.agent.core.MeasurementProcessor.{MeasurementFunction, ResultOfMeasurement}
+import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 /**
@@ -47,7 +48,10 @@ object Measure {
   case class RecordCount private (controlCol: String, measureName: String, onlyForNumeric: Boolean) extends Measure {
 
     override def function: MeasurementFunction =
-      (ds: DataFrame) => ds.select(col(controlCol)).count().toString
+      (ds: DataFrame) => {
+        val result = ds.select(col(controlCol)).count().toString
+        ResultOfMeasurement(result, ResultValueType.Long)
+      }
   }
   object RecordCount extends MeasureType {
     def apply(controlCol: String): RecordCount = {
@@ -62,7 +66,10 @@ object Measure {
       extends Measure {
 
     override def function: MeasurementFunction =
-      (ds: DataFrame) => ds.select(col(controlCol)).distinct().count().toString
+      (ds: DataFrame) => {
+        val result = ds.select(col(controlCol)).distinct().count().toString
+        ResultOfMeasurement(result, ResultValueType.Long)
+      }
   }
 
   object DistinctRecordCount extends MeasureType {
@@ -79,7 +86,8 @@ object Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
-      aggregateColumn(ds, controlCol, aggCol)
+      val result = aggregateColumn(ds, controlCol, aggCol)
+      ResultOfMeasurement(result, ResultValueType.BigDecimal)
     }
   }
 
@@ -97,7 +105,8 @@ object Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
-      aggregateColumn(ds, controlCol, aggCol)
+      val result = aggregateColumn(ds, controlCol, aggCol)
+      ResultOfMeasurement(result, ResultValueType.Double)
     }
   }
 
@@ -120,7 +129,8 @@ object Measure {
         .withColumn(aggregatedColumnName, crc32(col(controlCol).cast("String")))
         .agg(sum(col(aggregatedColumnName)))
         .collect()(0)(0)
-      if (value == null) "" else value.toString
+      val result = if (value == null) "" else value.toString
+      ResultOfMeasurement(result, ResultValueType.String)
     }
   }
 

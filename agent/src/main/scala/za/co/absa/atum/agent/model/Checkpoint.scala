@@ -23,15 +23,22 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 case class Checkpoint(
-                       name: String,
-                       author: String,
-                       measuredByAtumAgent: Boolean = false,
-                       atumPartitions: AtumPartitions,
-                       processStartTime: ZonedDateTime,
-                       processEndTime: Option[ZonedDateTime],
-                       measurements: Seq[Measurement]
-                        ) {
+  name: String,
+  author: String,
+  measuredByAtumAgent: Boolean = false,
+  atumPartitions: AtumPartitions,
+  processStartTime: ZonedDateTime,
+  processEndTime: Option[ZonedDateTime],
+  measurements: Seq[Measurement]
+) {
   private [agent] def toCheckpointDTO: CheckpointDTO = {
+    val measurementDTOs = measurements.map {
+      case provided: MeasurementProvided =>
+        MeasurementBuilder.buildMeasurementDTO(provided)
+      case byAtum: MeasurementByAtum =>
+        MeasurementBuilder.buildMeasurementDTO(byAtum)
+    }
+
     CheckpointDTO(
       id = UUID.randomUUID(),
       name = name,
@@ -40,7 +47,7 @@ case class Checkpoint(
       partitioning = AtumPartitions.toSeqPartitionDTO(atumPartitions),
       processStartTime = processStartTime,
       processEndTime = processEndTime,
-      measurements = measurements.map(MeasurementBuilder.buildMeasurementDTO)
+      measurements = measurementDTOs
     )
   }
 }

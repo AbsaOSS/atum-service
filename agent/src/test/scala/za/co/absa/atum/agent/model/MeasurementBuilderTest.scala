@@ -24,9 +24,9 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 class MeasurementBuilderTest extends AnyFlatSpec {
 
-  "buildMeasurementDTO" should "build expected MeasurementDTO for Long type of result value" in {
+  "buildMeasurementDTO" should "build MeasurementDTO for Long type of result value when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, 1L)
+    val measurement = MeasurementProvided(measure, 1L)
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
     val expectedMeasureDTO = MeasureDTO("aggregatedTotal", Seq("col"))
@@ -39,9 +39,9 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result == expectedMeasureResultDTO)
   }
 
-  "buildMeasurementDTO" should "build MeasurementDTO with expected TypedValue for Double type of result value" in {
+  "buildMeasurementDTO" should "build MeasurementDTO for Double type of result value when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, 3.14)
+    val measurement = MeasurementProvided(measure, 3.14)
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
     val expectedTypedValue = TypedValue("3.14", ResultValueType.Double)
@@ -49,9 +49,9 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementDTO" should "build MeasurementDTO with expected TypedValue for BigDecimal type of result value" in {
+  "buildMeasurementDTO" should "build MeasurementDTO for BigDecimal type of result value when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, BigDecimal(3.14))
+    val measurement = MeasurementProvided(measure, BigDecimal(3.14))
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
     val expectedTypedValue = TypedValue("3.14", ResultValueType.BigDecimal)
@@ -59,9 +59,9 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementDTO" should "build MeasurementDTO with expected TypedValue for String type of result value" in {
+  "buildMeasurementDTO" should "build MeasurementDTO for String type of result value when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, "stringValue")
+    val measurement = MeasurementProvided(measure, "stringValue")
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
     val expectedTypedValue = TypedValue("stringValue", ResultValueType.String)
@@ -69,11 +69,26 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementDTO" should "throw exception for unsupported result value type" in {
+  "buildMeasurementDTO" should "throw exception for unsupported result value type when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, 1)
+    val measurement = MeasurementProvided(measure, 1)
 
     assertThrows[UnsupportedMeasureResultType](MeasurementBuilder.buildMeasurementDTO(measurement))
+  }
+
+  "buildMeasurementDTO" should "build MeasurementDTO for Long type of result value when measured by Agent" in {
+    val measure = SumOfValuesOfColumn("col")
+    val measurement = MeasurementByAtum(measure, "1", ResultValueType.Long)
+    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
+
+    val expectedMeasureDTO = MeasureDTO("aggregatedTotal", Seq("col"))
+
+    val expectedMeasureResultDTO = MeasureResultDTO(
+      TypedValue("1", ResultValueType.Long)
+    )
+
+    assert(measurementDTO.measure == expectedMeasureDTO)
+    assert(measurementDTO.result == expectedMeasureResultDTO)
   }
 
 }
