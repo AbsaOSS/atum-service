@@ -14,7 +14,7 @@
  */
 
 
-import sbt._
+import sbt.*
 
 object Dependencies {
 
@@ -43,6 +43,9 @@ object Dependencies {
     val sparkCommons = "0.6.1"
 
     val sttp = "3.5.2"
+
+    val json4s_spark2 = "3.5.3"
+    val json4s_spark3 = "3.7.0-M11"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -67,6 +70,24 @@ object Dependencies {
     scalaVersion match {
       case _ if scalaVersion.startsWith("2.11") => Versions.spark2
       case _ if scalaVersion.startsWith("2.12") => Versions.spark3
+      case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
+    }
+  }
+
+  def json4sVersionForScala(scalaVersion: String): String = {
+    scalaVersion match {
+      case _ if scalaVersion.startsWith("2.11") => Versions.json4s_spark2
+      case _ if scalaVersion.startsWith("2.12") => Versions.json4s_spark3
+      case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
+    }
+  }
+
+  def moduleByScala(moduleIdWithoutVersion: String => ModuleID)
+                   (scala211Version: String, scala212Version: String)
+                   (actualScalaVersion: String): ModuleID = {
+    actualScalaVersion match {
+      case _ if actualScalaVersion.startsWith("2.11") => moduleIdWithoutVersion.apply(scala211Version)
+      case _ if actualScalaVersion.startsWith("2.12") => moduleIdWithoutVersion.apply(scala212Version)
       case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
     }
   }
@@ -128,13 +149,21 @@ object Dependencies {
     )
   }
 
-  def modelDependencies: Seq[ModuleID] = {
+  def modelDependencies(scalaVersion: String): Seq[ModuleID] = {
+    val scalaMinorVersion = getVersionUpToMinor(scalaVersion)
+    val json4sVersion = json4sVersionForScala(scalaVersion)
+
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
 
-    Seq(specs2core, typeSafeConfig, jacksonModuleScala)
+    lazy val json4sExt = "org.json4s" %% "json4s-ext" % json4sVersion
+    lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion % Provided
+    lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion % Provided
+    lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
+
+    Seq(specs2core, typeSafeConfig, jacksonModuleScala, json4sExt, json4sCore, json4sJackson, json4sNative)
   }
 
 }
