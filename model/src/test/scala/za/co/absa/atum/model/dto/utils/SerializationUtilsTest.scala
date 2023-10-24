@@ -130,7 +130,6 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     val uuid = UUID.randomUUID()
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneId.systemDefault())
-    println(timeWithZone)
 
     val seqMeasurementDTO = Seq(
       MeasurementDTO(
@@ -154,8 +153,6 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     val expectedCheckpointDTOJson = "{\"id\":\"" + uuid + "\",\"name\":\"checkpoint\",\"author\":\"author\",\"measuredByAtumAgent\":true,\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"processStartTime\":\"2023-10-24 10:20:59.005000+02\",\"processEndTime\":\"2023-10-24 10:20:59.005000+02\",\"measurements\":[{\"measure\":{\"functionName\":\"count\",\"controlColumns\":[\"col\"]},\"result\":{\"mainValue\":{\"value\":\"1\",\"valueType\":\"Long\"},\"supportValues\":{}}}]}"
     val actualCheckpointDTOJson = SerializationUtils.asJson(checkpointDTO)
 
-    println(expectedCheckpointDTOJson)
-    println(actualCheckpointDTOJson)
     assert(expectedCheckpointDTOJson == actualCheckpointDTOJson)
   }
 
@@ -163,7 +160,6 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     val uuid = UUID.randomUUID()
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneId.systemDefault())
-    println(timeWithZone)
 
     val checkpointDTOJson = "{\"id\":\"" + uuid + "\",\"name\":\"checkpoint\",\"author\":\"author\",\"measuredByAtumAgent\":true,\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"processStartTime\":\"2023-10-24 10:20:59.005000+02\",\"processEndTime\":\"2023-10-24 10:20:59.005000+02\",\"measurements\":[{\"measure\":{\"functionName\":\"count\",\"controlColumns\":[\"col\"]},\"result\":{\"mainValue\":{\"value\":\"1\",\"valueType\":\"Long\"},\"supportValues\":{}}}]}"
 
@@ -189,8 +185,6 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     val actualCheckpointDTO = SerializationUtils.fromJson[CheckpointDTO](checkpointDTOJson)
 
     assert(expectedCheckpointDTO == actualCheckpointDTO)
-    println(expectedCheckpointDTO)
-    println(actualCheckpointDTO)
   }
 
   // MeasureDTO
