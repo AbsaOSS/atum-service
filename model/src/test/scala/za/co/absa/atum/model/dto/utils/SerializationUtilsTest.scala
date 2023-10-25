@@ -20,7 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
 
-import java.time.{OffsetDateTime, ZoneId, ZonedDateTime}
+import java.time.{OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
 class SerializationUtilsTest extends AnyFlatSpecLike {
@@ -129,7 +129,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
   "asJson" should "serialize CheckpointDTO into json string" in {
     val uuid = UUID.randomUUID()
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
-    val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneId.systemDefault()).toOffsetDateTime
+    val timeWithZone = OffsetDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneOffset.ofHours(2))
 
     val seqMeasurementDTO = Seq(
       MeasurementDTO(
@@ -159,7 +159,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
   "fromJson" should "deserialize CheckpointDTO from json string" in {
     val uuid = UUID.randomUUID()
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
-    val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneId.systemDefault()).toOffsetDateTime
+    val timeWithZone = OffsetDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneOffset.ofHours(2))
 
     val checkpointDTOJson = "{\"id\":\"" + uuid + "\",\"name\":\"checkpoint\",\"author\":\"author\",\"measuredByAtumAgent\":true,\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"processStartTime\":\"2023-10-24 10:20:59.005000+02\",\"processEndTime\":\"2023-10-24 10:20:59.005000+02\",\"measurements\":[{\"measure\":{\"functionName\":\"count\",\"controlColumns\":[\"col\"]},\"result\":{\"mainValue\":{\"value\":\"1\",\"valueType\":\"Long\"},\"supportValues\":{}}}]}"
 
