@@ -56,7 +56,7 @@ LABEL org.opencontainers.image.authors="ABSA"
 COPY $CONFIG /opt/application.yaml
 
 # deploy as root application in tomcat
-COPY ${AS_PREFIX}/target/scala-${SCALA_VERSION}/*.war /usr/local/tomcat/webapps/ROOT.war
+COPY ${AS_PREFIX}/target/jvm-${SCALA_VERSION}/*.war /usr/local/tomcat/webapps/ROOT.war
 
 ENV SPRING_CONFIG_LOCATION=/opt/application.yaml
 
