@@ -25,7 +25,7 @@ case object ZonedDateTimeSerializer extends CustomSerializer[ZonedDateTime](form
   {
     case JString(s) =>
       val zdtWithZoneOffset = ZonedDateTime.parse(s, SerializationUtils.timestampFormat)
-      zdtWithZoneOffset.withZoneSameInstant(ZoneId.systemDefault())
+      zdtWithZoneOffset.withZoneSameInstant(ZoneId.systemDefault().normalized())
     case JNull => null
   },
   {
