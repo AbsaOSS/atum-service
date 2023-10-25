@@ -19,17 +19,16 @@ package za.co.absa.atum.model.dto.utils
 import org.json4s.JsonAST.JString
 import org.json4s.{CustomSerializer, JNull}
 
-import java.time.{ZoneId, ZonedDateTime}
+import java.time.OffsetDateTime
 
-case object ZonedDateTimeSerializer extends CustomSerializer[ZonedDateTime](formats => (
+case object OffsetDateTimeSerializer extends CustomSerializer[OffsetDateTime](formats => (
   {
     case JString(s) =>
-      val zdtWithZoneOffset = ZonedDateTime.parse(s, SerializationUtils.timestampFormat)
-      zdtWithZoneOffset.withZoneSameInstant(ZoneId.systemDefault().normalized())
+      OffsetDateTime.parse(s, SerializationUtils.timestampFormat)
     case JNull => null
   },
   {
-    case d: ZonedDateTime =>
+    case d: OffsetDateTime =>
       JString(SerializationUtils.timestampFormat.format(d))
   }
 ))

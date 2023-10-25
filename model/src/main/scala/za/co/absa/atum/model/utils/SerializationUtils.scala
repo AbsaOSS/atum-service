@@ -27,7 +27,7 @@ object SerializationUtils {
 
   implicit private val formatsJson: Formats =
     Serialization.formats(NoTypeHints).withBigDecimal + new ext.EnumNameSerializer(ResultValueType) +
-      ext.UUIDSerializer + ZonedDateTimeSerializer
+      ext.UUIDSerializer + OffsetDateTimeSerializer
 
   val timestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSX")
 
