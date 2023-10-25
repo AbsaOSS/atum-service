@@ -16,18 +16,20 @@
 
 package za.co.absa.atum.agent
 
-import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
-import org.mockito.Mockito.{mock, times, verify}
 import org.mockito.ArgumentCaptor
+import org.mockito.IdiomaticMockito.StubbingOps
+import org.mockito.Mockito.{mock, times, verify}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.slf4s
+import org.slf4j.{Logger => Underlying}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.MeasurementProvided
-import za.co.absa.atum.model.dto._
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
+import za.co.absa.atum.model.dto._
 
 class AtumContextTest extends AnyFlatSpec with Matchers {
 
@@ -169,6 +171,81 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     assert(argumentSecond.getValue.partitioning == Seq(PartitionDTO("foo2", "bar")))
     assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.value == "22.5")
     assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.valueType == ResultValueType.BigDecimal)
+  }
+
+  "createCheckpoint" should "take measurements and fail because numeric measure is defined on non-numeric column" in {
+    val mockAgent = mock(classOf[AtumAgent])
+    val mockLogger = mock(classOf[Underlying])
+    mockLogger.isWarnEnabled returns true
+
+    implicit val atumContext: AtumContext = new AtumContext(AtumPartitions("foo2" -> "bar"), mockAgent) {
+      override val log: slf4s.Logger = slf4s.Logger(mockLogger)
+    }.addMeasure(SumOfValuesOfColumn("nonNumericalColumn"))
+
+    val spark = SparkSession.builder
+      .master("local")
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.enabled", "false")
+      .getOrCreate()
+
+    val rdd = spark.sparkContext.parallelize(
+      Seq(
+        Row("A", 8.0),
+        Row("B", 2.9),
+        Row("C", 9.1),
+        Row("D", 2.5)
+      )
+    )
+    val schema = new StructType()
+      .add(StructField("nonNumericalColumn", StringType))
+      .add(StructField("numericalColumn", DoubleType))
+
+    import AtumContext._
+
+    val df = spark.createDataFrame(rdd, schema)
+    df.createAndSaveCheckpoint("checkPointNameCountInvalid", "authorOfCount")
+
+    verify(mockLogger).warn(
+      "Column nonNumericalColumn measurement aggregatedTotal requested, " +
+        "but the field is not numeric! Found: string datatype."
+    )
+  }
+
+  "createCheckpoint" should "take measurements and fail because column doesn't exist" in {
+    val mockAgent = mock(classOf[AtumAgent])
+
+    implicit val atumContext: AtumContext = new AtumContext(AtumPartitions("foo2" -> "bar"), mockAgent)
+      .addMeasure(RecordCount("nonExistingColumn"))
+
+    val spark = SparkSession.builder
+      .master("local")
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.enabled", "false")
+      .getOrCreate()
+
+    val rdd = spark.sparkContext.parallelize(
+      Seq(
+        Row("A", 8.0),
+        Row("B", 2.9),
+        Row("C", 9.1),
+        Row("D", 2.5)
+      )
+    )
+    val schema = new StructType()
+      .add(StructField("nonNumericalColumn", StringType))
+      .add(StructField("numericalColumn", DoubleType))
+
+    import AtumContext._
+
+    val df = spark.createDataFrame(rdd, schema)
+
+    val caughtException = the[IllegalArgumentException] thrownBy {
+      df.createAndSaveCheckpoint("checkPointNameCountColNonExisting", "authorOfCount")
+    }
+    caughtException.getMessage should include(
+      "Column(s) 'nonExistingColumn' must be present in dataframe, but it's not. " +
+        s"Columns in the dataframe: nonNumericalColumn, numericalColumn."
+    )
   }
 
 }

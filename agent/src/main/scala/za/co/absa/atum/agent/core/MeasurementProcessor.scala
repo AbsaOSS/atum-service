@@ -32,7 +32,7 @@ object MeasurementProcessor {
    * (overflows, consistent representation of numbers - whether they are coming from Java or Scala world, and more),
    * but the actual type is stored alongside the computation because we don't want to lost this information.
    */
-  final case class ResultOfMeasurement(result: String, resultType: ResultValueType.ResultValueType)
+  final case class ResultOfMeasurement(resultValue: String, resultType: ResultValueType.ResultValueType)
 
   type MeasurementFunction = DataFrame => ResultOfMeasurement
 

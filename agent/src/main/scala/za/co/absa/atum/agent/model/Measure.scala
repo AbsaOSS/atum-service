@@ -49,8 +49,8 @@ object Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => {
-        val result = ds.select(col(controlCol)).count().toString
-        ResultOfMeasurement(result, ResultValueType.Long)
+        val resultValue = ds.select(col(controlCol)).count().toString
+        ResultOfMeasurement(resultValue, ResultValueType.Long)
       }
   }
   object RecordCount extends MeasureType {
@@ -67,8 +67,8 @@ object Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => {
-        val result = ds.select(col(controlCol)).distinct().count().toString
-        ResultOfMeasurement(result, ResultValueType.Long)
+        val resultValue = ds.select(col(controlCol)).distinct().count().toString
+        ResultOfMeasurement(resultValue, ResultValueType.Long)
       }
   }
 
@@ -86,8 +86,8 @@ object Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
-      val result = aggregateColumn(ds, controlCol, aggCol)
-      ResultOfMeasurement(result, ResultValueType.BigDecimal)
+      val resultValue = aggregateColumn(ds, controlCol, aggCol)
+      ResultOfMeasurement(resultValue, ResultValueType.BigDecimal)
     }
   }
 
@@ -105,8 +105,8 @@ object Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
-      val result = aggregateColumn(ds, controlCol, aggCol)
-      ResultOfMeasurement(result, ResultValueType.Double)
+      val resultValue = aggregateColumn(ds, controlCol, aggCol)
+      ResultOfMeasurement(resultValue, ResultValueType.Double)
     }
   }
 
@@ -129,8 +129,8 @@ object Measure {
         .withColumn(aggregatedColumnName, crc32(col(controlCol).cast("String")))
         .agg(sum(col(aggregatedColumnName)))
         .collect()(0)(0)
-      val result = if (value == null) "" else value.toString
-      ResultOfMeasurement(result, ResultValueType.String)
+      val resultValue = if (value == null) "" else value.toString
+      ResultOfMeasurement(resultValue, ResultValueType.String)
     }
   }
 

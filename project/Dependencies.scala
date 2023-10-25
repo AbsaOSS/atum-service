@@ -43,6 +43,9 @@ object Dependencies {
     val sparkCommons = "0.6.1"
 
     val sttp = "3.5.2"
+
+    val slf4s = "1.7.25"
+    val logback = "1.3.0"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -58,6 +61,8 @@ object Dependencies {
   }
 
   def commonDependencies: Seq[ModuleID] = Seq(
+    "org.slf4s" %% "slf4s-api" % Versions.slf4s,
+    "ch.qos.logback" % "logback-classic" % Versions.logback,
     "org.scalatest" %% "scalatest" % Versions.scalatest % Test,
     "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
   )

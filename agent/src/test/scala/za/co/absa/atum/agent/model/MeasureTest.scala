@@ -91,17 +91,17 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
     val dfFullSalarySumResult         = salarySum.function(dfFull)
 
     // Assertions
-    assert(dfPersonCntResult.result == "1000")
+    assert(dfPersonCntResult.resultValue == "1000")
     assert(dfPersonCntResult.resultType == ResultValueType.Long)
-    assert(dfFullCntResult.result == "1000")
+    assert(dfFullCntResult.resultValue == "1000")
     assert(dfFullCntResult.resultType == ResultValueType.Long)
-    assert(dfFullSalaryAbsSumResult.result == "2987144")
+    assert(dfFullSalaryAbsSumResult.resultValue == "2987144")
     assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.Double)
-    assert(dfFullHashResult.result == "2044144307532")
+    assert(dfFullHashResult.resultValue == "2044144307532")
     assert(dfFullHashResult.resultType == ResultValueType.String)
-    assert(dfExtraPersonSalarySumResult.result == "2986144")
+    assert(dfExtraPersonSalarySumResult.resultValue == "2986144")
     assert(dfExtraPersonSalarySumResult.resultType == ResultValueType.BigDecimal)
-    assert(dfFullSalarySumResult.result == "2987144")
+    assert(dfFullSalarySumResult.resultValue == "2987144")
     assert(dfFullSalarySumResult.resultType == ResultValueType.BigDecimal)
   }
 
