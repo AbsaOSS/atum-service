@@ -26,9 +26,13 @@ import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancem
 /**
  *  Type of different measures to be applied to the columns.
  */
-trait Measure extends MeasurementProcessor {
-
+sealed trait Measure extends MeasurementProcessor with MeasureType {
   val controlCol: String
+}
+
+trait MeasureType {
+  val measureName: String
+  val onlyForNumeric: Boolean
 }
 
 object Measure {
@@ -40,35 +44,56 @@ object Measure {
   )
   val supportedMeasureNames: Seq[String] = supportedMeasures.map(_.measureName)
 
-  class MeasureType(val measureName: String, val onlyForNumeric: Boolean)
-
-  case object RecordCount extends MeasureType("count", false)
-  case class RecordCount(controlCol: String) extends Measure {
+  case class RecordCount private (controlCol: String, measureName: String, onlyForNumeric: Boolean) extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).count().toString
+  }
+  object RecordCount extends MeasureType {
+    def apply(controlCol: String): RecordCount = {
+      RecordCount(controlCol, measureName, onlyForNumeric)
+    }
 
+    override val measureName: String = "count"
+    override val onlyForNumeric: Boolean = false
   }
 
-  case object DistinctRecordCount extends MeasureType("distinctCount", false)
-  case class DistinctRecordCount(controlCol: String) extends Measure {
+  case class DistinctRecordCount private (controlCol: String, measureName: String, onlyForNumeric: Boolean)
+      extends Measure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => ds.select(col(controlCol)).distinct().count().toString
   }
 
-  case object SumOfValuesOfColumn extends MeasureType("aggregatedTotal", true)
-  case class SumOfValuesOfColumn(controlCol: String) extends Measure {
+  object DistinctRecordCount extends MeasureType {
+    def apply(controlCol: String): DistinctRecordCount = {
+      DistinctRecordCount(controlCol, measureName, onlyForNumeric)
+    }
+
+    override val measureName: String = "distinctCount"
+    override val onlyForNumeric: Boolean = false
+  }
+
+  case class SumOfValuesOfColumn private (controlCol: String, measureName: String, onlyForNumeric: Boolean)
+      extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
       aggregateColumn(ds, controlCol, aggCol)
     }
-
   }
 
-  case object AbsSumOfValuesOfColumn extends MeasureType("absAggregatedTotal", true)
-  case class AbsSumOfValuesOfColumn(controlCol: String) extends Measure {
+  object SumOfValuesOfColumn extends MeasureType {
+    def apply(controlCol: String): SumOfValuesOfColumn = {
+      SumOfValuesOfColumn(controlCol, measureName, onlyForNumeric)
+    }
+
+    override val measureName: String = "aggregatedTotal"
+    override val onlyForNumeric: Boolean = true
+  }
+
+  case class AbsSumOfValuesOfColumn private (controlCol: String, measureName: String, onlyForNumeric: Boolean)
+      extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
@@ -76,8 +101,17 @@ object Measure {
     }
   }
 
-  case object SumOfHashesOfColumn extends MeasureType("hashCrc32", true)
-  case class SumOfHashesOfColumn(controlCol: String) extends Measure {
+  object AbsSumOfValuesOfColumn extends MeasureType {
+    def apply(controlCol: String): AbsSumOfValuesOfColumn = {
+      AbsSumOfValuesOfColumn(controlCol, measureName, onlyForNumeric)
+    }
+
+    override val measureName: String = "absAggregatedTotal"
+    override val onlyForNumeric: Boolean = true
+  }
+
+  case class SumOfHashesOfColumn private (controlCol: String, measureName: String, onlyForNumeric: Boolean)
+      extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
 
@@ -88,6 +122,15 @@ object Measure {
         .collect()(0)(0)
       if (value == null) "" else value.toString
     }
+  }
+
+  object SumOfHashesOfColumn extends MeasureType {
+    def apply(controlCol: String): SumOfHashesOfColumn = {
+      SumOfHashesOfColumn(controlCol, measureName, onlyForNumeric)
+    }
+
+    override val measureName: String = "hashCrc32"
+    override val onlyForNumeric: Boolean = false
   }
 
   private def aggregateColumn(
