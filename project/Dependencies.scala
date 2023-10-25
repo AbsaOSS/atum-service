@@ -78,17 +78,8 @@ object Dependencies {
     scalaVersion match {
       case _ if scalaVersion.startsWith("2.11") => Versions.json4s_spark2
       case _ if scalaVersion.startsWith("2.12") => Versions.json4s_spark3
-      case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
-    }
-  }
-
-  def moduleByScala(moduleIdWithoutVersion: String => ModuleID)
-                   (scala211Version: String, scala212Version: String)
-                   (actualScalaVersion: String): ModuleID = {
-    actualScalaVersion match {
-      case _ if actualScalaVersion.startsWith("2.11") => moduleIdWithoutVersion.apply(scala211Version)
-      case _ if actualScalaVersion.startsWith("2.12") => moduleIdWithoutVersion.apply(scala212Version)
-      case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
+      case _ if scalaVersion.startsWith("2.13") => Versions.json4s_spark3
+      case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
     }
   }
 
@@ -150,7 +141,6 @@ object Dependencies {
   }
 
   def modelDependencies(scalaVersion: String): Seq[ModuleID] = {
-    val scalaMinorVersion = getVersionUpToMinor(scalaVersion)
     val json4sVersion = json4sVersionForScala(scalaVersion)
 
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test

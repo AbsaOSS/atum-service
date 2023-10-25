@@ -17,11 +17,11 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.{Checkpoint, Measure, Measurement, MeasuresMapper}
-import AtumContext.AtumPartitions
 import za.co.absa.atum.model.dto.{AtumContextDTO, PartitionDTO}
 
-import java.time.{OffsetDateTime, ZonedDateTime}
+import java.time.OffsetDateTime
 import scala.collection.immutable.ListMap
 
 /**

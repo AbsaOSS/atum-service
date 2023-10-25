@@ -20,7 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
 
-import java.time.{OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.{OffsetDateTime, ZoneOffset}
 import java.util.UUID
 
 class SerializationUtilsTest extends AnyFlatSpecLike {
