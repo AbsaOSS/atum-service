@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
 case class PartitionDTO(
-    key: String,
-    value: String
+  key: String,
+  value: String
 )

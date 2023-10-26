@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
 case class AdditionalDataDTO(
-    additionalData: Map[String, String]
+  additionalData: Map[String, Option[String]]
 )

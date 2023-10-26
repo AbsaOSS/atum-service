@@ -44,6 +44,11 @@ object Dependencies {
     val springfox = "3.0.0"
 
     val sparkCommons = "0.6.1"
+
+    val sttp = "3.5.2"
+
+    val json4s_spark2 = "3.5.3"
+    val json4s_spark3 = "3.7.0-M11"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -73,6 +78,15 @@ object Dependencies {
     }
   }
 
+  def json4sVersionForScala(scalaVersion: String): String = {
+    scalaVersion match {
+      case _ if scalaVersion.startsWith("2.11") => Versions.json4s_spark2
+      case _ if scalaVersion.startsWith("2.12") => Versions.json4s_spark3
+      case _ if scalaVersion.startsWith("2.13") => Versions.json4s_spark3
+      case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
+    }
+  }
+
   def serverDependencies: Seq[ModuleID] = {
     val springVersion = "2.6.1"
     val springOrg = "org.springframework.boot"
@@ -95,8 +109,8 @@ object Dependencies {
       springBootTest % Test,
       springBootWeb,
       springBootConfiguration,
-      springBootTomcat /*% Provided*/,
-      servletApi /*% Provided*/,
+      springBootTomcat /*% Provided*/ ,
+      servletApi /*% Provided*/ ,
       springFoxSwagger,
       springFoxSwaggerUI,
       springFoxBoot,
@@ -117,22 +131,33 @@ object Dependencies {
     lazy val sparkCommons = "za.co.absa" % s"spark-commons-spark${sparkMinorVersion}_$scalaMinorVersion" % Versions.sparkCommons
     lazy val sparkCommonsTest = "za.co.absa" % s"spark-commons-test_$scalaMinorVersion" % Versions.sparkCommons % Test
 
+    lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
+
+
     Seq(
       sparkCore,
       sparkSql,
       typeSafeConfig,
       sparkCommons,
-      sparkCommonsTest
+      sparkCommonsTest,
+      sttp
     )
   }
 
-  def modelDependencies: Seq[ModuleID] = {
+  def modelDependencies(scalaVersion: String): Seq[ModuleID] = {
+    val json4sVersion = json4sVersionForScala(scalaVersion)
+
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
 
-    Seq(specs2core, typeSafeConfig, jacksonModuleScala)
+    lazy val json4sExt = "org.json4s" %% "json4s-ext" % json4sVersion
+    lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion % Provided
+    lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion % Provided
+    lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
+
+    Seq(specs2core, typeSafeConfig, jacksonModuleScala, json4sExt, json4sCore, json4sJackson, json4sNative)
   }
 
 }
