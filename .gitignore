@@ -67,6 +67,10 @@ _productMT
 _nestedStructs
 myTestCheckpoints
 
+**/main/resources/application.properties
+**/main/resources/application.conf
+**/main/resources/application.yaml
+**/main/resources/application.yml
 
 *.config
 *.keytab

@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
-case class AtumContextDTO(
-    partitions: PartitioningDTO,
-    measures: Set[MeasureDTO] = Set.empty,
-    additionalData: AdditionalDataDTO = AdditionalDataDTO(additionalData=Map.empty)
+import java.time.OffsetDateTime
+import java.util.UUID
+
+case class CheckpointDTO(
+                          id: UUID,
+                          name: String,
+                          author: String,
+                          measuredByAtumAgent: Boolean = false,
+                          partitioning: Seq[PartitionDTO],
+                          processStartTime: OffsetDateTime,
+                          processEndTime: Option[OffsetDateTime],
+                          measurements: Seq[MeasurementDTO]
 )

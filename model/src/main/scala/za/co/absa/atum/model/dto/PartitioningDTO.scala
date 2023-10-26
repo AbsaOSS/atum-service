@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
-case class MeasurementDTO(
-    measure: MeasureDTO,
-    measureResult: String
+case class PartitioningDTO (
+  partitioning: Seq[PartitionDTO],
+  parentPartitioning: Option[Seq[PartitionDTO]]
 )

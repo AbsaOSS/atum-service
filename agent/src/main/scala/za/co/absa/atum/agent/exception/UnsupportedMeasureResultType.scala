@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.agent.exception
 
-import java.time.ZonedDateTime
-
-case class CheckpointDTO(
-    name: String,
-    author: String,
-    partitioning: PartitioningDTO,
-    processStartTime: ZonedDateTime,
-    processEndTime: ZonedDateTime,
-    measurements: Seq[MeasurementDTO]
-)
+case class UnsupportedMeasureResultType(msg: String) extends Exception(msg)
