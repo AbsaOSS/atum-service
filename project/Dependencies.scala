@@ -43,6 +43,9 @@ object Dependencies {
     val sparkCommons = "0.6.1"
 
     val sttp = "3.5.2"
+
+    val json4s_spark2 = "3.5.3"
+    val json4s_spark3 = "3.7.0-M11"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -68,6 +71,15 @@ object Dependencies {
       case _ if scalaVersion.startsWith("2.11") => Versions.spark2
       case _ if scalaVersion.startsWith("2.12") => Versions.spark3
       case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
+    }
+  }
+
+  def json4sVersionForScala(scalaVersion: String): String = {
+    scalaVersion match {
+      case _ if scalaVersion.startsWith("2.11") => Versions.json4s_spark2
+      case _ if scalaVersion.startsWith("2.12") => Versions.json4s_spark3
+      case _ if scalaVersion.startsWith("2.13") => Versions.json4s_spark3
+      case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
     }
   }
 
@@ -128,13 +140,20 @@ object Dependencies {
     )
   }
 
-  def modelDependencies: Seq[ModuleID] = {
+  def modelDependencies(scalaVersion: String): Seq[ModuleID] = {
+    val json4sVersion = json4sVersionForScala(scalaVersion)
+
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
 
-    Seq(specs2core, typeSafeConfig, jacksonModuleScala)
+    lazy val json4sExt = "org.json4s" %% "json4s-ext" % json4sVersion
+    lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion % Provided
+    lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion % Provided
+    lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
+
+    Seq(specs2core, typeSafeConfig, jacksonModuleScala, json4sExt, json4sCore, json4sJackson, json4sNative)
   }
 
 }
