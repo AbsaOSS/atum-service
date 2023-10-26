@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.controller
+package za.co.absa.atum.web.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.{HttpStatus, ResponseEntity}
-import org.springframework.web.bind.annotation.{PostMapping, RequestBody, RestController}
+import org.springframework.context.annotation.Bean
+import org.springframework.stereotype.Service
 import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.web.api.service.CheckPointService
+import za.co.absa.atum.web.api.provider.PostgresAccessProvider
 
-
-@RestController
-class CheckPointController {
-
-  @Autowired()
-  private val checkpointService: CheckPointService = null
+@Service
+@Bean
+class DatabaseService @Autowired()(postgresAccessProvider: PostgresAccessProvider) {
 
   /**
-   *
+   * this service function saves the checkpoint into the database.
    * @param checkpoint
-   * @return
    */
-  @PostMapping(Array("/save-checkpoint"))
-  def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
-    checkpointService.saveCheckpoint(checkpoint)
-    ResponseEntity.status(HttpStatus.CREATED).build()
+  def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+    postgresAccessProvider.runs.writeCheckpoint(checkpoint)
   }
+
 }

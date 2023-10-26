@@ -27,7 +27,6 @@ import za.co.absa.atum.web.model.BaseApiModel
 import java.net.URI
 import java.util.{Optional, UUID}
 import java.util.concurrent.CompletableFuture
-//import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiService[C]) {

@@ -55,7 +55,7 @@ object Runs {
      */
     override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
 
-      // ToDo serialize the partitioning and measurement columns into JSON object
+      // ToDo serialize the partitioning and measurement columns into JSON object, #71
       sql"""SELECT #$selectEntry
             FROM #$functionName(
               ${values.id},

@@ -18,21 +18,23 @@ package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
-import org.springframework.web.bind.annotation._
-import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.api.implicits._
-import za.co.absa.atum.web.api.payload.MessagePayload
-import za.co.absa.atum.web.api.service.{FlowService, SegmentationService}
-import za.co.absa.atum.web.model.{Flow, Partition}
+import org.springframework.web.bind.annotation.{PostMapping, RequestBody, RestController}
+import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.web.api.service.DatabaseService
 
-import java.net.URI
-import java.util.concurrent.CompletableFuture
-import java.util.{Optional, UUID}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @RestController
-@RequestMapping(Array("/api/segmentations"))
-class SegmentationController @Autowired()(segmentationService: SegmentationService)
-  extends BaseApiController(segmentationService) {
+class PrototypeController @Autowired()(databaseService: DatabaseService){
 
+  /**
+   * Saves a checkpoint.
+   *
+   * @param checkpoint The checkpoint to save.
+   * @return A ResponseEntity with the status code CREATED.
+   */
+  @PostMapping(Array("/api/v1/checkpoint"))
+  def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
+    databaseService.saveCheckpoint(checkpoint)
+    ResponseEntity.status(HttpStatus.CREATED).build()
+  }
 }

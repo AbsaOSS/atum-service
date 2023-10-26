@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.service
+package za.co.absa.atum.web.api.provider
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import slick.jdbc.JdbcBackend.Database
 import za.co.absa.atum.web.api.database.Runs
-import za.co.absa.atum.web.api.service.utils.ExecutorsProvider
 import za.co.absa.fadb.slick.SlickPgEngine
+
+import scala.concurrent.ExecutionContext
 
 /**
  *
  * @param executors
  */
 @Component
-class PostgresAccessProvider@Autowired()( executors: ExecutorsProvider ) {
+class PostgresAccessProvider @Autowired()(executor: ExecutionContext = ExecutionContext.Implicits.global) {
 
   private val config = ConfigFactory.load("application.properties")
 
@@ -45,7 +46,7 @@ class PostgresAccessProvider@Autowired()( executors: ExecutorsProvider ) {
 
   private val db: Database =  Database.forConfig("", dbConfig)
 
-  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executors.cpuBoundExecutionContext)
+  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executor)
   val runs: Runs = new Runs()
 
 }

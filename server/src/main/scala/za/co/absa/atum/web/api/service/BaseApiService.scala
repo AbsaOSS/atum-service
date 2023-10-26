@@ -41,7 +41,7 @@ abstract class BaseApiService[C <: BaseApiModel](dao: ApiModelDao[C]) {
   }
 
   /**
-   * Could not autowire. No beans of 'CheckPointService' type found. Throws NotFoundException when not found
+   * Could not autowire. No beans of 'DatabaseService' type found. Throws NotFoundException when not found
    * @param id
    * @param fn
    * @tparam S
