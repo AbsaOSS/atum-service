@@ -310,8 +310,6 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     val expectedPartitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"parentPartitioning\":[{\"key\":\"parentKey\",\"value\":\"parentVal\"}]}"
     val actualPartitioningDTOJson = SerializationUtils.asJson(partitioningDTO)
 
-    println(actualPartitioningDTOJson)
-
     assert(expectedPartitioningDTOJson == actualPartitioningDTOJson)
   }
 
