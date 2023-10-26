@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.model.utils
 
-case class MeasureDTO(
-  measureName: String,
-  controlColumns: Seq[String]
-)
+import org.json4s.JsonAST.JString
+import org.json4s.{CustomSerializer, JNull}
+
+import java.time.OffsetDateTime
+
+case object OffsetDateTimeSerializer extends CustomSerializer[OffsetDateTime](_ => (
+  {
+    case JString(s) => OffsetDateTime.parse(s, SerializationUtils.timestampFormat)
+    case JNull => null
+  },
+  {
+    case d: OffsetDateTime => JString(SerializationUtils.timestampFormat.format(d))
+  }
+))

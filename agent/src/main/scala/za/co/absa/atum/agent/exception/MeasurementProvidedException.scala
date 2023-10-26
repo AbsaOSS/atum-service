@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.agent.exception
 
-case class MeasureDTO(
-  measureName: String,
-  controlColumns: Seq[String]
-)
+case class MeasurementProvidedException(msg: String) extends Exception(msg)

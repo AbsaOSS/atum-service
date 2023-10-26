@@ -19,7 +19,7 @@ package za.co.absa.atum.agent.model
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.model.dto.CheckpointDTO
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.util.UUID
 
 case class Checkpoint(
@@ -27,17 +27,12 @@ case class Checkpoint(
   author: String,
   measuredByAtumAgent: Boolean = false,
   atumPartitions: AtumPartitions,
-  processStartTime: ZonedDateTime,
-  processEndTime: Option[ZonedDateTime],
+  processStartTime: OffsetDateTime,
+  processEndTime: Option[OffsetDateTime],
   measurements: Seq[Measurement]
 ) {
   private [agent] def toCheckpointDTO: CheckpointDTO = {
-    val measurementDTOs = measurements.map {
-      case provided: MeasurementProvided =>
-        MeasurementBuilder.buildMeasurementDTO(provided)
-      case byAtum: MeasurementByAtum =>
-        MeasurementBuilder.buildMeasurementDTO(byAtum)
-    }
+    val measurementDTOs = measurements.map(MeasurementBuilder.buildMeasurementDTO)
 
     CheckpointDTO(
       id = UUID.randomUUID(),

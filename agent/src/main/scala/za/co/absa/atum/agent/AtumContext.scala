@@ -20,10 +20,10 @@ import org.slf4s.Logging
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.NumericType
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.{Checkpoint, Measure, Measurement, MeasurementByAtum, MeasuresMapper}
+import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import scala.collection.immutable.ListMap
 
 /**
@@ -54,14 +54,14 @@ class AtumContext private[agent] (
     val colDataType = df.select(measure.controlCol).schema.fields(0).dataType
     val isColDataTypeNumeric = colDataType.isInstanceOf[NumericType]
     if (measure.onlyForNumeric && !isColDataTypeNumeric) {
-      log.warn(  // TODO: discuss, throw exception or warn message? Or both, parametrized?
+      log.warn( // TODO: discuss, throw exception or warn message? Or both, parametrized?
         s"Column ${measure.controlCol} measurement ${measure.measureName} requested, but the field is not numeric! " +
           s"Found: ${colDataType.simpleString} datatype."
       )
     }
   }
 
-  private def takeMeasurements(df: DataFrame): Set[Measurement] = {
+  private def takeMeasurements(df: DataFrame): Set[MeasurementByAtum] = {
     measures.map { m =>
       validateMeasureApplicability(m, df)
 
@@ -70,10 +70,10 @@ class AtumContext private[agent] (
     }
   }
 
-  def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): Checkpoint = {
-    val startTime = ZonedDateTime.now()
+  private [agent] def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): Checkpoint = {
+    val startTime = OffsetDateTime.now()
     val measurements = takeMeasurements(dataToMeasure)
-    val endTime = ZonedDateTime.now()
+    val endTime = OffsetDateTime.now()
 
     Checkpoint(
       name = checkpointName,
@@ -86,19 +86,37 @@ class AtumContext private[agent] (
     )
   }
 
-  def createCheckpointOnProvidedData(
+  def createAndSaveCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): AtumContext = {
+    val checkpoint = createCheckpoint(checkpointName, author, dataToMeasure)
+    val checkpointDTO = checkpoint.toCheckpointDTO
+
+    agent.saveCheckpoint(checkpointDTO)
+    this
+  }
+
+  private [agent] def createCheckpointOnProvidedData(
     checkpointName: String, author: String, measurements: Seq[Measurement]
   ): Checkpoint = {
-    val zonedDateTimeNow = ZonedDateTime.now()
+    val offsetDateTimeNow = OffsetDateTime.now()
 
     Checkpoint(
       name = checkpointName,
       author = author,
       atumPartitions = this.atumPartitions,
-      processStartTime = zonedDateTimeNow,
-      processEndTime = Some(zonedDateTimeNow),
+      processStartTime = offsetDateTimeNow,
+      processEndTime = Some(offsetDateTimeNow),
       measurements = measurements
     )
+  }
+
+  def createAndSaveCheckpointOnProvidedData(
+    checkpointName: String, author: String, measurements: Seq[Measurement]
+  ): AtumContext = {
+    val checkpoint = createCheckpointOnProvidedData(checkpointName, author, measurements)
+    val checkpointDTO = checkpoint.toCheckpointDTO
+
+    agent.saveCheckpoint(checkpointDTO)
+    this
   }
 
   def addAdditionalData(key: String, value: String) = {
@@ -168,9 +186,7 @@ object AtumContext {
      *  @return
      */
     def createAndSaveCheckpoint(checkpointName: String, author: String)(implicit atumContext: AtumContext): DataFrame = {
-      val checkpoint = atumContext.createCheckpoint(checkpointName, author, df)
-      val checkpointDTO = checkpoint.toCheckpointDTO
-      atumContext.agent.saveCheckpoint(checkpointDTO)
+      atumContext.createAndSaveCheckpoint(checkpointName, author, df)
       df
     }
 

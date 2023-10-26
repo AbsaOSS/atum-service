@@ -55,7 +55,6 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
       )
 
     assert(atumContextWithTwoDistinctRecordCount.currentMeasures.size == 3)
-
   }
 
   "withMeasureRemoved" should "remove a measure if exists" in {
@@ -95,7 +94,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     assert(checkpoint.name == "testCheckpoint")
     assert(checkpoint.author == "Hans")
     assert(checkpoint.atumPartitions == AtumPartitions("foo2", "bar"))
-    assert(checkpoint.measurements.head.result == "3")
+    assert(checkpoint.measurements.head.resultValue == "3")
   }
 
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
@@ -104,8 +103,8 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
 
     val measurements = Seq(
-      MeasurementProvided(RecordCount("col"), "1"),
-      MeasurementProvided(SumOfValuesOfColumn("col"), 1)
+      MeasurementProvided(RecordCount("col"), 1L),
+      MeasurementProvided(SumOfValuesOfColumn("col"), BigDecimal(1))
     )
 
     val checkpoint = atumContext.createCheckpointOnProvidedData(
