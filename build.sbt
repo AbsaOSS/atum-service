@@ -110,7 +110,7 @@ lazy val model = (projectMatrix in file("model"))
   .settings(
     commonSettings ++ Seq(
       name         := "atum-model",
-      libraryDependencies ++= Dependencies.modelDependencies,
+      libraryDependencies ++= Dependencies.modelDependencies(scalaVersion.value),
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
     ): _*
   )
