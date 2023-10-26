@@ -103,7 +103,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
     val measurements = Seq(
       MeasurementProvided(RecordCount("col"), "1"),
-      MeasurementProvided(SumOfValuesOfColumn("col"), 1)
+      MeasurementProvided(SumOfValuesOfColumn("col"), 1L)
     )
 
     val checkpoint = atumContext.createCheckpointOnProvidedData(

@@ -18,7 +18,7 @@ package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.{Checkpoint, Measure, Measurement, MeasurementByAtum, MeasuresMapper}
+import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
 import java.time.ZonedDateTime
@@ -42,14 +42,14 @@ class AtumContext private[agent] (
     agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
   }
 
-  private def takeMeasurements(df: DataFrame): Set[Measurement] = {
+  private def takeMeasurements(df: DataFrame): Set[MeasurementByAtum] = {
     measures.map { m =>
       val measurementResult = m.function(df)
       MeasurementByAtum(m, measurementResult.result, measurementResult.resultType)
     }
   }
 
-  def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): Checkpoint = {
+  private [agent] def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): Checkpoint = {
     val startTime = ZonedDateTime.now()
     val measurements = takeMeasurements(dataToMeasure)
     val endTime = ZonedDateTime.now()
@@ -65,7 +65,15 @@ class AtumContext private[agent] (
     )
   }
 
-  def createCheckpointOnProvidedData(
+  def createAndSaveCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): AtumContext = {
+    val checkpoint = createCheckpoint(checkpointName, author, dataToMeasure)
+    val checkpointDTO = checkpoint.toCheckpointDTO
+
+    agent.saveCheckpoint(checkpointDTO)
+    this
+  }
+
+  private [agent] def createCheckpointOnProvidedData(
     checkpointName: String, author: String, measurements: Seq[Measurement]
   ): Checkpoint = {
     val zonedDateTimeNow = ZonedDateTime.now()
@@ -78,6 +86,16 @@ class AtumContext private[agent] (
       processEndTime = Some(zonedDateTimeNow),
       measurements = measurements
     )
+  }
+
+  def createAndSaveCheckpointOnProvidedData(
+    checkpointName: String, author: String, measurements: Seq[Measurement]
+  ): AtumContext = {
+    val checkpoint = createCheckpointOnProvidedData(checkpointName, author, measurements)
+    val checkpointDTO = checkpoint.toCheckpointDTO
+
+    agent.saveCheckpoint(checkpointDTO)
+    this
   }
 
   def addAdditionalData(key: String, value: String) = {
@@ -147,9 +165,7 @@ object AtumContext {
      *  @return
      */
     def createAndSaveCheckpoint(checkpointName: String, author: String)(implicit atumContext: AtumContext): DataFrame = {
-      val checkpoint = atumContext.createCheckpoint(checkpointName, author, df)
-      val checkpointDTO = checkpoint.toCheckpointDTO
-      atumContext.agent.saveCheckpoint(checkpointDTO)
+      atumContext.createAndSaveCheckpoint(checkpointName, author, df)
       df
     }
 

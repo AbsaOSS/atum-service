@@ -26,7 +26,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
 
   "buildMeasurementDTO" should "build MeasurementDTO for Long type of result value when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = MeasurementProvided(measure, 1L)
+    val measurement = MeasurementProvided[Long](measure, 1L)
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
     val expectedMeasureDTO = MeasureDTO("aggregatedTotal", Seq("col"))
@@ -71,9 +71,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
 
   "buildMeasurementDTO" should "throw exception for unsupported result value type when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = MeasurementProvided(measure, 1)
-
-    assertThrows[UnsupportedMeasureResultType](MeasurementBuilder.buildMeasurementDTO(measurement))
+    assertThrows[UnsupportedMeasureResultType](MeasurementProvided(measure, 1))
   }
 
   "buildMeasurementDTO" should "build MeasurementDTO for Long type of result value when measured by Agent" in {

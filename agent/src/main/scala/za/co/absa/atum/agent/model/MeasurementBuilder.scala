@@ -22,24 +22,19 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 private [agent] object MeasurementBuilder {
 
-  private [agent] def buildMeasurementDTO(measurement: MeasurementByAtum): MeasurementDTO = {
+  private [agent] def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {
     val measureName = measurement.measure.measureName
     val controlCols = Seq(measurement.measure.controlCol)
+    val measureDTO = MeasureDTO(measureName, controlCols)
 
-    MeasurementDTO(
-      MeasureDTO(measureName, controlCols),
-      MeasureResultDTO(TypedValue(measurement.result, measurement.resultType))
-    )
-  }
+    val measureResultDTO = measurement match {
+      case m: MeasurementByAtum =>
+        MeasureResultDTO(TypedValue(m.result, m.resultType))
+      case m: Measurement =>
+        buildMeasureResultDTO(measureName, m.result)
+    }
 
-  private [agent] def buildMeasurementDTO(measurement: MeasurementProvided): MeasurementDTO = {
-    val measureName = measurement.measure.measureName
-    val controlCols = Seq(measurement.measure.controlCol)
-
-    MeasurementDTO(
-      MeasureDTO(measureName, controlCols),
-      buildMeasureResultDTO(measureName, measurement.result)
-    )
+    MeasurementDTO(measureDTO, measureResultDTO)
   }
 
   private [agent] def buildMeasureResultDTO(measureName: String, result: Any): MeasureResultDTO = {

@@ -32,12 +32,7 @@ case class Checkpoint(
   measurements: Seq[Measurement]
 ) {
   private [agent] def toCheckpointDTO: CheckpointDTO = {
-    val measurementDTOs = measurements.map {
-      case provided: MeasurementProvided =>
-        MeasurementBuilder.buildMeasurementDTO(provided)
-      case byAtum: MeasurementByAtum =>
-        MeasurementBuilder.buildMeasurementDTO(byAtum)
-    }
+    val measurementDTOs = measurements.map(MeasurementBuilder.buildMeasurementDTO)
 
     CheckpointDTO(
       id = UUID.randomUUID(),
