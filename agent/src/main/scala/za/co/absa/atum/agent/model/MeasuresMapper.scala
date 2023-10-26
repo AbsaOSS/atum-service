@@ -29,7 +29,7 @@ private [agent] object MeasuresMapper {
   private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.Measure = {
     val controlColumn = measure.controlColumns.head
 
-    measure.functionName match {
+    measure.measureName match {
       case RecordCount.measureName            => RecordCount(controlColumn)
       case DistinctRecordCount.measureName    => DistinctRecordCount(controlColumn)
       case SumOfValuesOfColumn.measureName    => SumOfValuesOfColumn(controlColumn)
