@@ -21,7 +21,6 @@ import sbt.Keys.name
 
 
 ThisBuild / organization := "za.co.absa"
-ThisBuild / name         := "atum-service"
 
 ThisBuild / scalaVersion := Versions.scala212  // default version
 
