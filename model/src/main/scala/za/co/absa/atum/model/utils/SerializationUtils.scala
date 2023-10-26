@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto.utils
+package za.co.absa.atum.model.utils
 
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{write, writePretty}

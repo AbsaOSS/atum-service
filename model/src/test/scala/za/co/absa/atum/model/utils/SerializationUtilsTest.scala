@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto.utils
+package za.co.absa.atum.model.utils
 
 import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
