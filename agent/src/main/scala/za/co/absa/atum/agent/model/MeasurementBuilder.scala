@@ -16,9 +16,8 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.UnsupportedMeasureResultType
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
-import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
+import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 
 private [agent] object MeasurementBuilder {
 
@@ -27,30 +26,8 @@ private [agent] object MeasurementBuilder {
     val controlCols = Seq(measurement.measure.controlCol)
     val measureDTO = MeasureDTO(measureName, controlCols)
 
-    val measureResultDTO = measurement match {
-      case m: MeasurementByAtum =>
-        MeasureResultDTO(TypedValue(m.result, m.resultType))
-      case m: Measurement =>
-        buildMeasureResultDTO(measureName, m.result)
-    }
+    val measureResultDTO = MeasureResultDTO(TypedValue(measurement.resultValue.toString, measurement.resultType))
 
     MeasurementDTO(measureDTO, measureResultDTO)
   }
-
-  private [agent] def buildMeasureResultDTO(measureName: String, result: Any): MeasureResultDTO = {
-    result match {
-      case l: Long =>
-        MeasureResultDTO(TypedValue(l.toString, ResultValueType.Long))
-      case d: Double =>
-        MeasureResultDTO(TypedValue(d.toString, ResultValueType.Double))
-      case bd: BigDecimal =>
-        MeasureResultDTO(TypedValue(bd.toString, ResultValueType.BigDecimal))
-      case s: String =>
-        MeasureResultDTO(TypedValue(s, ResultValueType.String))
-      case unsupportedType =>
-        val className = unsupportedType.getClass.getSimpleName
-        throw UnsupportedMeasureResultType(s"Unsupported type of measure $measureName: $className for result: $result")
-    }
-  }
-
 }

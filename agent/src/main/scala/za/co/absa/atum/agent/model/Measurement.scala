@@ -16,47 +16,53 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.UnsupportedMeasureResultType
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType.ResultValueType
+import za.co.absa.atum.agent.exception.MeasurementProvidedException
+import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 trait Measurement {
   val measure: Measure
-  val result: Any
+  val resultValue: Any
+  val resultType: ResultValueType.ResultValueType
 }
 
 /**
  * When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
  * to do any adjustments.
  */
-abstract class MeasurementProvided[T](measure: Measure, result: T) extends Measurement
-
-private case class MeasurementProvidedAsLong (override val measure: Measure, override val result: Long)
-  extends MeasurementProvided[Long](measure, result)
-
-private case class MeasurementProvidedAsDouble (override val measure: Measure, override val result: Double)
-  extends MeasurementProvided[Double](measure, result)
-
-private case class MeasurementProvidedAsBigDecimal(override val measure: Measure, override val result: BigDecimal)
-  extends MeasurementProvided[BigDecimal](measure, result)
-
-private case class MeasurementProvidedAsString(override val measure: Measure, override val result: String)
-  extends MeasurementProvided[String](measure, result)
+case class MeasurementProvided[T](measure: Measure, resultValue: T, resultType: ResultValueType.ResultValueType)
+  extends Measurement
 
 object MeasurementProvided {
-  def apply[T](measure: Measure, result: T): Measurement = {
-    result match {
+
+  def handleSpecificType[T](
+   measure: Measure, resultValue: T, requiredType: ResultValueType.ResultValueType
+  ): MeasurementProvided[T] = {
+
+    val actualType = measure.resultValueType
+    if (actualType != requiredType)
+      throw MeasurementProvidedException(
+        s"Type of a given provided measurement result and type that a given measure supports are not compatible! " +
+          s"Got $actualType but should be $requiredType"
+      )
+    MeasurementProvided[T](measure, resultValue, requiredType)
+  }
+
+  def apply[T](measure: Measure, resultValue: T): Measurement = {
+    resultValue match {
       case l: Long =>
-        MeasurementProvidedAsLong(measure, l)
+        handleSpecificType[Long](measure, l, ResultValueType.Long)
       case d: Double =>
-        MeasurementProvidedAsDouble(measure, d)
+        handleSpecificType[Double](measure, d, ResultValueType.Double)
       case bd: BigDecimal =>
-        MeasurementProvidedAsBigDecimal(measure, bd)
+        handleSpecificType[BigDecimal](measure, bd, ResultValueType.BigDecimal)
       case s: String =>
-        MeasurementProvidedAsString(measure, s)
+        handleSpecificType[String](measure, s, ResultValueType.String)
+
       case unsupportedType =>
         val className = unsupportedType.getClass.getSimpleName
-        throw UnsupportedMeasureResultType(
-          s"Unsupported type of measurement for measure ${measure.measureName}: $className for provided result: $result"
+        throw MeasurementProvidedException(
+          s"Unsupported type of measurement for measure ${measure.measureName}: $className " +
+            s"for provided result: $resultValue"
         )
     }
   }
@@ -67,4 +73,5 @@ object MeasurementProvided {
  * needed - thus we are converting the results to strings always - but we need to keep the information about
  * the actual type as well.
  */
-case class MeasurementByAtum(measure: Measure, result: String, resultType: ResultValueType) extends Measurement
+case class MeasurementByAtum(measure: Measure, resultValue: String, resultType: ResultValueType.ResultValueType)
+  extends Measurement
