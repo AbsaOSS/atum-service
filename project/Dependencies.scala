@@ -30,14 +30,14 @@ object Dependencies {
     val scalaMockito = "1.17.12"
     val scalaLangJava8Compat = "1.0.2"
 
-    val jacksonModuleScala = "2.14.2"
+    val jacksonModuleScala = "2.13.1"//"2.14.2"
 
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
 
-    val spring = "3.1.0"
+    val spring = "2.6.1"//"3.1.0"
 
-    val javaxServlet = "4.0.1"
+    val javaxServlet = "4.0.1" // "3.0.1"//
     val springfox = "3.0.0"
 
     val sparkCommons = "0.6.1"
@@ -46,6 +46,7 @@ object Dependencies {
 
     val fadb = "0.2.0"
     val slickpg = "0.20.4"
+    val hikaricp = "3.3.3"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -79,7 +80,8 @@ object Dependencies {
     val springOrg = "org.springframework.boot"
 
     lazy val springBootWeb = springOrg % "spring-boot-starter-web" % Versions.spring
-    lazy val springBootJpa = springOrg % "spring-boot-starter-data-jpa" % Versions.spring
+    lazy val springBootJdbc = springOrg % "spring-boot-starter-jdbc" % Versions.spring
+//    lazy val springBootJpa = springOrg % "spring-boot-starter-data-jpa" % Versions.spring
     lazy val springBootConfiguration = springOrg % "spring-boot-configuration-processor" % Versions.spring
     lazy val springBootTomcat = springOrg % "spring-boot-starter-tomcat" % Versions.spring
     lazy val springBootTest = springOrg % "spring-boot-starter-test" % Versions.spring
@@ -101,10 +103,14 @@ object Dependencies {
     // Slick-PG dependency
     lazy val slick_pg = "com.github.tminglei" %% "slick-pg" % Versions.slickpg
 
+    // HirakiCP
+    lazy val hikariCP = "com.typesafe.slick" %% "slick-hikaricp" % Versions.hikaricp
+//    lazy val hikariCP = "com.zaxxer" % "HikariCP" % "4.0.3"
+
     Seq(
       springBootTest % Test,
       springBootWeb,
-      springBootJpa,
+//      springBootJpa,
       springBootConfiguration,
       springBootTomcat /*% Provided*/ ,
       servletApi /*% Provided*/ ,
@@ -115,7 +121,8 @@ object Dependencies {
       jacksonModuleScala,
       fa_db,
       slick,
-      slick_pg
+      slick_pg,
+      hikariCP//springBootJdbc
     )
   }
 

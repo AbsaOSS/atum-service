@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext
  * @param executors
  */
 @Component
-class PostgresAccessProvider @Autowired()(executor: ExecutionContext = ExecutionContext.Implicits.global) {
+class PostgresAccessProvider @Autowired()(executor: ExecutionContext) {
 
   private val config = ConfigFactory.load("application.properties")
 

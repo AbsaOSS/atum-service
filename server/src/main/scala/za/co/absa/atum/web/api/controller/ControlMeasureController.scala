@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.web.api.controller
 
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
@@ -25,9 +24,11 @@ import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.ControlMeasureService
 import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, ControlMeasure, ControlMeasureMetadata, Measurement}
+
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.{Optional, UUID}
+import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @RestController
