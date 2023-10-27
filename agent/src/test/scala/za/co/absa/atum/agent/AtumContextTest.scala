@@ -94,9 +94,9 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val additionalDataValue = "additionalVal"
     val expectedAdditionalData =  Map(additionalDataKey -> Some(additionalDataValue))
 
-    val newAtumContext = atumContext.addAdditionalData(additionalDataKey, additionalDataValue)
+    atumContext.addAdditionalData(additionalDataKey, additionalDataValue)
 
-    assert(newAtumContext.additionalData == expectedAdditionalData)
+    assert(atumContext.currentAdditionalData == expectedAdditionalData)
   }
 
 }
