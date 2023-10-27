@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.model.utils
+
+import org.json4s.JsonAST.JString
+import org.json4s.{CustomSerializer, JNull}
 
 import java.time.OffsetDateTime
-import java.util.UUID
 
-case class CheckpointDTO(
-                          id: UUID,
-                          name: String,
-                          author: String,
-                          measuredByAtumAgent: Boolean = false,
-                          partitioning: Seq[PartitionDTO],
-                          processStartTime: OffsetDateTime,
-                          processEndTime: Option[OffsetDateTime],
-                          measurements: Seq[MeasurementDTO]
-)
+case object OffsetDateTimeSerializer extends CustomSerializer[OffsetDateTime](_ => (
+  {
+    case JString(s) => OffsetDateTime.parse(s, SerializationUtils.timestampFormat)
+    case JNull => null
+  },
+  {
+    case d: OffsetDateTime => JString(SerializationUtils.timestampFormat.format(d))
+  }
+))
