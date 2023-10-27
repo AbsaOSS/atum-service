@@ -47,7 +47,6 @@ object Dependencies {
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"
 
-    val slf4j = "1.7.25"
     val slf4s = "1.7.25"
     val logback = "1.2.3"
   }
@@ -65,7 +64,6 @@ object Dependencies {
   }
 
   def commonDependencies: Seq[ModuleID] = Seq(
-    "org.slf4j" % "slf4j-api" % Versions.slf4j,
     "org.slf4s" %% "slf4s-api" % Versions.slf4s,
     "ch.qos.logback" % "logback-classic" % Versions.logback,
     "org.scalatest" %% "scalatest" % Versions.scalatest % Test,
