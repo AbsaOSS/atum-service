@@ -90,7 +90,7 @@ class AtumContext private[agent] (
     atumPartitions: AtumPartitions = this.atumPartitions,
     agent: AtumAgent = this.agent,
     measures: Set[Measure] = this.measures,
-    additionalData: Map[String, Option[String]]
+    additionalData: Map[String, Option[String]] = this.additionalData
   ): AtumContext = {
     new AtumContext(atumPartitions, agent, measures, additionalData)
   }
