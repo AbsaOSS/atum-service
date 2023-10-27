@@ -18,7 +18,6 @@ package za.co.absa.atum.agent
 
 import org.slf4s.Logging
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.NumericType
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
@@ -44,26 +43,9 @@ class AtumContext private[agent] (
     agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
   }
 
-  private def validateMeasureApplicability(measure: Measure, df: DataFrame): Unit = {
-    require(
-      df.columns.contains(measure.controlCol),
-      s"Column(s) '${measure.controlCol}' must be present in dataframe, but it's not. " +
-        s"Columns in the dataframe: ${df.columns.mkString(", ")}."
-    )
-
-    val colDataType = df.select(measure.controlCol).schema.fields(0).dataType
-    val isColDataTypeNumeric = colDataType.isInstanceOf[NumericType]
-    if (measure.onlyForNumeric && !isColDataTypeNumeric) {
-      log.warn( // TODO: discuss, throw exception or warn message? Or both, parametrized?
-        s"Column ${measure.controlCol} measurement ${measure.measureName} requested, but the field is not numeric! " +
-          s"Found: ${colDataType.simpleString} datatype."
-      )
-    }
-  }
-
   private def takeMeasurements(df: DataFrame): Set[MeasurementByAtum] = {
     measures.map { m =>
-      validateMeasureApplicability(m, df)
+      m.validateMeasureApplicability(df)
 
       val measurementResult = m.function(df)
       MeasurementByAtum(m, measurementResult.resultValue, measurementResult.resultType)

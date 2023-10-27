@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent.model
 
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
+import org.apache.spark.sql.types.{DecimalType, LongType, NumericType, StringType}
 import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
 import za.co.absa.atum.agent.core.MeasurementProcessor.{MeasurementFunction, ResultOfMeasurement}
@@ -29,6 +29,24 @@ import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancem
  */
 sealed trait Measure extends MeasurementProcessor with MeasureType {
   val controlCol: String
+
+  def validateMeasureApplicability(df: DataFrame): Unit = {
+    require(
+      df.columns.contains(controlCol),
+      s"Column(s) '$controlCol' must be present in dataframe, but it's not. " +
+        s"Columns in the dataframe: ${df.columns.mkString(", ")}."
+    )
+
+    if (onlyForNumeric) {
+      val colDataType = df.select(controlCol).schema.fields(0).dataType
+      val isColDataTypeNumeric = colDataType.isInstanceOf[NumericType]
+      require(
+        isColDataTypeNumeric,
+        s"Column $controlCol measurement $measureName requested, but the field is not numeric! " +
+          s"Found: ${colDataType.simpleString} datatype."
+      )
+    }
+  }
 }
 
 trait MeasureType {

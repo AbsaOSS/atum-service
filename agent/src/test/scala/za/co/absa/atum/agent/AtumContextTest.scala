@@ -19,12 +19,9 @@ package za.co.absa.atum.agent
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
 import org.mockito.ArgumentCaptor
-import org.mockito.IdiomaticMockito.StubbingOps
 import org.mockito.Mockito.{mock, times, verify}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.slf4s
-import org.slf4j.{Logger => Underlying}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.MeasurementProvided
@@ -174,12 +171,9 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
   "createCheckpoint" should "take measurements and fail because numeric measure is defined on non-numeric column" in {
     val mockAgent = mock(classOf[AtumAgent])
-    val mockLogger = mock(classOf[Underlying])
-    mockLogger.isWarnEnabled returns true
 
-    implicit val atumContext: AtumContext = new AtumContext(AtumPartitions("foo2" -> "bar"), mockAgent) {
-      override val log: slf4s.Logger = slf4s.Logger(mockLogger)
-    }.addMeasure(SumOfValuesOfColumn("nonNumericalColumn"))
+    implicit val atumContext: AtumContext = new AtumContext(AtumPartitions("foo2" -> "bar"), mockAgent)
+      .addMeasure(SumOfValuesOfColumn("nonNumericalColumn"))
 
     val spark = SparkSession.builder
       .master("local")
@@ -202,9 +196,11 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     import AtumContext._
 
     val df = spark.createDataFrame(rdd, schema)
-    df.createAndSaveCheckpoint("checkPointNameCountInvalid", "authorOfCount")
 
-    verify(mockLogger).warn(
+    val caughtException = the[IllegalArgumentException] thrownBy {
+      df.createAndSaveCheckpoint("checkPointNameCountInvalid", "authorOfCount")
+    }
+    caughtException.getMessage should include(
       "Column nonNumericalColumn measurement aggregatedTotal requested, " +
         "but the field is not numeric! Found: string datatype."
     )
