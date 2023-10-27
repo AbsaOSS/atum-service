@@ -17,11 +17,11 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.{Checkpoint, Measure, Measurement, MeasuresMapper}
-import AtumContext.AtumPartitions
 import za.co.absa.atum.model.dto.{AtumContextDTO, PartitionDTO}
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import scala.collection.immutable.ListMap
 
 /**
@@ -51,13 +51,13 @@ class AtumContext private[agent] (
                                       author: String,
                                       measurements: Seq[Measurement]
                                     ): Checkpoint = {
-    val zonedDateTimeNow = ZonedDateTime.now()
+    val offsetDateTimeNow = OffsetDateTime.now()
     Checkpoint(
       name = checkpointName,
       author = author,
       atumPartitions = this.atumPartitions,
-      processStartTime = zonedDateTimeNow,
-      processEndTime = Some(zonedDateTimeNow),
+      processStartTime = offsetDateTimeNow,
+      processEndTime = Some(offsetDateTimeNow),
       measurements = measurements
     )
   }
