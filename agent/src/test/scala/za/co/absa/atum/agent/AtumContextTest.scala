@@ -85,4 +85,18 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     assert(checkpoint.measurements == measurements)
   }
 
+  "addAdditionalData" should "add key/value pair to map for additional data" in {
+    val atumAgent = new AtumAgent
+    val atumPartitions = AtumPartitions("key" -> "val")
+    val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
+
+    val additionalDataKey = "additionalKey"
+    val additionalDataValue = "additionalVal"
+    val expectedAdditionalData =  Map(additionalDataKey -> Some(additionalDataValue))
+
+    val newAtumContext = atumContext.addAdditionalData(additionalDataKey, additionalDataValue)
+
+    assert(newAtumContext.additionalData == expectedAdditionalData)
+  }
+
 }

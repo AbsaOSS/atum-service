@@ -32,6 +32,7 @@ import scala.collection.immutable.ListMap
  */
 class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
+  val additionalData: Map[String, Option[String]],
   val agent: AtumAgent,
   private var measures: Set[Measure] = Set.empty
 ) {
@@ -62,8 +63,8 @@ class AtumContext private[agent] (
     )
   }
 
-  def addAdditionalData(key: String, value: String) = {
-    ??? // TODO #60
+  def addAdditionalData(key: String, value: String): AtumContext = {
+    this.copy(additionalData = this.additionalData + (key -> Some(value)))
   }
 
   def addMeasure(newMeasure: Measure): AtumContext = {
@@ -83,10 +84,11 @@ class AtumContext private[agent] (
 
   private[agent] def copy(
     atumPartitions: AtumPartitions = this.atumPartitions,
+    additionalData: Map[String, Option[String]],
     agent: AtumAgent = this.agent,
     measures: Set[Measure] = this.measures
   ): AtumContext = {
-    new AtumContext(atumPartitions, agent, measures)
+    new AtumContext(atumPartitions, additionalData, agent, measures)
   }
 }
 
@@ -114,6 +116,7 @@ object AtumContext {
   private[agent] def fromDTO(atumContextDTO: AtumContextDTO, agent: AtumAgent): AtumContext = {
     new AtumContext(
       AtumPartitions.fromPartitioning(atumContextDTO.partitioning),
+      atumContextDTO.additionalData.additionalData,
       agent,
       MeasuresMapper.mapToMeasures(atumContextDTO.measures)
     )
