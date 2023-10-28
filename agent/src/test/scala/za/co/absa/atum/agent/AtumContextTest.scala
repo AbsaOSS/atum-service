@@ -206,7 +206,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val df = spark.createDataFrame(rdd, schema)
 
     val caughtException = the[IllegalArgumentException] thrownBy {
-      df.createAndSaveCheckpoint("checkPointNameCountInvalid", "authorOfCount")
+      df.createCheckpoint("checkPointNameCountInvalid", "authorOfCount")
     }
     caughtException.getMessage should include(
       "Column nonNumericalColumn measurement aggregatedTotal requested, " +
@@ -243,7 +243,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val df = spark.createDataFrame(rdd, schema)
 
     val caughtException = the[IllegalArgumentException] thrownBy {
-      df.createAndSaveCheckpoint("checkPointNameCountColNonExisting", "authorOfCount")
+      df.createCheckpoint("checkPointNameCountColNonExisting", "authorOfCount")
     }
     caughtException.getMessage should include(
       "Column(s) 'nonExistingColumn' must be present in dataframe, but it's not. " +
