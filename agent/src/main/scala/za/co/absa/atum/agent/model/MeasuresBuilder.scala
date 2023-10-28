@@ -16,11 +16,11 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.UnsupportedMeasureException
+import za.co.absa.atum.agent.exception.MeasureException
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto
 
-private [agent] object MeasuresMapper {
+private [agent] object MeasuresBuilder {
 
   private [agent] def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {
     measures.map(createMeasure)
@@ -36,7 +36,7 @@ private [agent] object MeasuresMapper {
       case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(controlColumn)
       case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(controlColumn)
       case unsupportedMeasure =>
-        throw UnsupportedMeasureException(
+        throw MeasureException(
           s"Measure not supported: $unsupportedMeasure. Supported measures are: ${Measure.supportedMeasureNames}"
         )
     }

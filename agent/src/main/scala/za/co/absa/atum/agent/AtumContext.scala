@@ -23,6 +23,7 @@ import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
 import java.time.OffsetDateTime
+import java.util.UUID
 import scala.collection.immutable.ListMap
 
 /**
@@ -52,50 +53,38 @@ class AtumContext private[agent] (
     }
   }
 
-  private [agent] def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): Checkpoint = {
+  def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): AtumContext = {
     val startTime = OffsetDateTime.now()
     val measurements = takeMeasurements(dataToMeasure)
     val endTime = OffsetDateTime.now()
 
-    Checkpoint(
+    val checkpointDTO = CheckpointDTO(
+      id = UUID.randomUUID(),
       name = checkpointName,
       author = author,
       measuredByAtumAgent = true,
-      atumPartitions = this.atumPartitions,
+      partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
       processStartTime = startTime,
       processEndTime = Some(endTime),
-      measurements = measurements.toSeq
+      measurements = measurements.map(MeasurementBuilder.buildMeasurementDTO).toSeq
     )
-  }
-
-  def createAndSaveCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): AtumContext = {
-    val checkpoint = createCheckpoint(checkpointName, author, dataToMeasure)
-    val checkpointDTO = checkpoint.toCheckpointDTO
 
     agent.saveCheckpoint(checkpointDTO)
     this
   }
 
-  private [agent] def createCheckpointOnProvidedData(
-    checkpointName: String, author: String, measurements: Seq[Measurement]
-  ): Checkpoint = {
+  def createCheckpointOnProvidedData(checkpointName: String, author: String, measurements: Seq[Measurement]): AtumContext = {
     val offsetDateTimeNow = OffsetDateTime.now()
 
-    Checkpoint(
+    val checkpointDTO = CheckpointDTO(
+      id = UUID.randomUUID(),
       name = checkpointName,
       author = author,
-      atumPartitions = this.atumPartitions,
+      partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
       processStartTime = offsetDateTimeNow,
       processEndTime = Some(offsetDateTimeNow),
-      measurements = measurements
+      measurements = measurements.map(MeasurementBuilder.buildMeasurementDTO)
     )
-  }
-
-  def createAndSaveCheckpointOnProvidedData(
-    checkpointName: String, author: String, measurements: Seq[Measurement]
-  ): AtumContext = {
-    val checkpoint = createCheckpointOnProvidedData(checkpointName, author, measurements)
-    val checkpointDTO = checkpoint.toCheckpointDTO
 
     agent.saveCheckpoint(checkpointDTO)
     this
@@ -154,7 +143,7 @@ object AtumContext {
     new AtumContext(
       AtumPartitions.fromPartitioning(atumContextDTO.partitioning),
       agent,
-      MeasuresMapper.mapToMeasures(atumContextDTO.measures)
+      MeasuresBuilder.mapToMeasures(atumContextDTO.measures)
     )
   }
 
@@ -167,8 +156,8 @@ object AtumContext {
      *  @param atumContext Contains the calculations to be done and publish the result
      *  @return
      */
-    def createAndSaveCheckpoint(checkpointName: String, author: String)(implicit atumContext: AtumContext): DataFrame = {
-      atumContext.createAndSaveCheckpoint(checkpointName, author, df)
+    def createCheckpoint(checkpointName: String, author: String)(implicit atumContext: AtumContext): DataFrame = {
+      atumContext.createCheckpoint(checkpointName, author, df)
       df
     }
 
