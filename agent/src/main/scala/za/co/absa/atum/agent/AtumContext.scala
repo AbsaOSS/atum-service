@@ -68,9 +68,7 @@ class AtumContext private[agent] (
     this
   }
 
-  def createCheckpointOnProvidedData(
-    checkpointName: String, author: String, measurements: Seq[Measurement]
-  ): AtumContext = {
+  def createCheckpointOnProvidedData(checkpointName: String, author: String, measurements: Seq[Measurement]): AtumContext = {
     val offsetDateTimeNow = OffsetDateTime.now()
 
     val checkpoint = Checkpoint(

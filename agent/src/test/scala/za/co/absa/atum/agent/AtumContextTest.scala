@@ -25,7 +25,6 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.{Checkpoint, MeasurementProvided}
-import za.co.absa.atum.model.dto._
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
@@ -101,7 +100,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
     val mockAgent = mock(classOf[AtumAgent])
     val atumPartitions = AtumPartitions("key" -> "value")
-    val atumContext = mockAgent.getOrCreateAtumContext(atumPartitions)
+    val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
 
     val measurements = Seq(
       MeasurementProvided(RecordCount("col"), 1L),
