@@ -24,8 +24,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
-import za.co.absa.atum.agent.model.{Checkpoint, MeasurementProvided}
+import za.co.absa.atum.agent.model.{MeasurementBuilder, MeasurementProvided}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 class AtumContextTest extends AnyFlatSpec with Matchers {
@@ -71,8 +72,9 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
   "createCheckpoint" should "take measurements and create a Checkpoint" in {
     val mockAgent = mock(classOf[AtumAgent])
+    val atumPartitions = AtumPartitions("foo2" -> "bar")
 
-    val atumContext = new AtumContext(AtumPartitions("foo2" -> "bar"), mockAgent)
+    val atumContext = new AtumContext(atumPartitions, mockAgent)
       .addMeasure(RecordCount("letter"))
 
     val spark = SparkSession.builder
@@ -88,13 +90,14 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
     atumContext.createCheckpoint("testCheckpoint", "Hans", df)
 
-    val argument = ArgumentCaptor.forClass(classOf[Checkpoint])
+    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
 
     assert(argument.getValue.name == "testCheckpoint")
     assert(argument.getValue.author == "Hans")
-    assert(argument.getValue.atumPartitions == AtumPartitions("foo2", "bar"))
-    assert(argument.getValue.measurements.head.resultValue == "3")
+    assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
+    assert(argument.getValue.measurements.head.result.mainValue.value == "3")
+    assert(argument.getValue.measurements.head.result.mainValue.valueType == ResultValueType.Long)
   }
 
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
@@ -113,15 +116,15 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
       measurements = measurements
     )
 
-    val argument = ArgumentCaptor.forClass(classOf[Checkpoint])
+    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
 
     assert(argument.getValue.name == "name")
     assert(argument.getValue.author == "author")
     assert(!argument.getValue.measuredByAtumAgent)
-    assert(argument.getValue.atumPartitions == atumPartitions)
+    assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
     assert(argument.getValue.processStartTime == argument.getValue.processEndTime.get)
-    assert(argument.getValue.measurements == measurements)
+    assert(argument.getValue.measurements == measurements.map(MeasurementBuilder.buildMeasurementDTO))
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
@@ -153,26 +156,26 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val df = spark.createDataFrame(rdd, schema)
       .createCheckpoint("checkPointNameCount", "authorOfCount")
 
-    val argumentFirst = ArgumentCaptor.forClass(classOf[Checkpoint])
+    val argumentFirst = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent, times(1)).saveCheckpoint(argumentFirst.capture())
 
     assert(argumentFirst.getValue.name == "checkPointNameCount")
     assert(argumentFirst.getValue.author == "authorOfCount")
-    assert(argumentFirst.getValue.atumPartitions == atumPartitions)
-    assert(argumentFirst.getValue.measurements.head.resultValue == "4")
-    assert(argumentFirst.getValue.measurements.head.resultType == ResultValueType.Long)
+    assert(argumentFirst.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
+    assert(argumentFirst.getValue.measurements.head.result.mainValue.value == "4")
+    assert(argumentFirst.getValue.measurements.head.result.mainValue.valueType == ResultValueType.Long)
 
     atumContext.addMeasure(SumOfValuesOfColumn("columnForSum"))
     df.createCheckpoint("checkPointNameSum", "authorOfSum")
 
-    val argumentSecond = ArgumentCaptor.forClass(classOf[Checkpoint])
+    val argumentSecond = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent, times(2)).saveCheckpoint(argumentSecond.capture())
 
     assert(argumentSecond.getValue.name == "checkPointNameSum")
     assert(argumentSecond.getValue.author == "authorOfSum")
-    assert(argumentSecond.getValue.atumPartitions == atumPartitions)
-    assert(argumentSecond.getValue.measurements.tail.head.resultValue == "22.5")
-    assert(argumentSecond.getValue.measurements.tail.head.resultType == ResultValueType.BigDecimal)
+    assert(argumentSecond.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
+    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.value == "22.5")
+    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.valueType == ResultValueType.BigDecimal)
   }
 
 }

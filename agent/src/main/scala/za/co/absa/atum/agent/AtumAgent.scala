@@ -18,7 +18,6 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
-import za.co.absa.atum.agent.model.Checkpoint
 import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningDTO}
 
 /**
@@ -41,15 +40,6 @@ class AtumAgent private[agent] () {
    */
   private [agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     dispatcher.saveCheckpoint(checkpoint)
-  }
-
-  /**
-   * Sends `Checkpoint` to the AtumService API
-   *
-   * @param checkpoint Already initialized Checkpoint object to store
-   */
-  private [agent] def saveCheckpoint(checkpoint: Checkpoint): Unit = {
-    dispatcher.saveCheckpoint(checkpoint.toCheckpointDTO)
   }
 
   /**

@@ -20,7 +20,7 @@ import za.co.absa.atum.agent.exception.MeasureException
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto
 
-private [agent] object MeasuresMapper {
+private [agent] object MeasuresBuilder {
 
   private [agent] def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {
     measures.map(createMeasure)
