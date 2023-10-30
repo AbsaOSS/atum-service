@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.agent.model
+package za.co.absa.atum.model.dto
 
-case class MeasureResult(measurement: Measure, result: String)
+case class AtumContextDTO(
+                           partitioning: Seq[PartitionDTO],
+                           measures: Set[MeasureDTO] = Set.empty,
+                           additionalData: AdditionalDataDTO = AdditionalDataDTO(additionalData = Map.empty)
+)
