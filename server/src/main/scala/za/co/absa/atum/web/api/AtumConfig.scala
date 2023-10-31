@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.config
+package za.co.absa.atum.web.api
 
 import com.typesafe.config.{Config, ConfigFactory}
 
 trait AtumConfig {
 
-  /**
-   *
-   * @return
-   */
   def dbConfig: Config
-
 }
 
 object AtumConfig extends AtumConfig {
 
-  /**
-   *
-   * @return
-   */
-  override def dbConfig: Config = {
-    config.getConfig("postgres")
-  }
-
   private val config = ConfigFactory.load("application.properties")
 
+  override def dbConfig: Config = config.getConfig("postgres")
+  def testEndpointConfig: Config = config.getConfig("atum.web.api.config")
 }

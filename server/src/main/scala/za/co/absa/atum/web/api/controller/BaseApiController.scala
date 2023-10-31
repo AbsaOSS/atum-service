@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.web.api.controller
 
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
@@ -24,9 +23,11 @@ import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.BaseApiService
 import za.co.absa.atum.web.model.BaseApiModel
+
 import java.net.URI
-import java.util.{Optional, UUID}
 import java.util.concurrent.CompletableFuture
+import java.util.{Optional, UUID}
+import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiService[C]) {
@@ -53,7 +54,7 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
         .fromRequest(request)
         .path("/{id}")
         .buildAndExpand(id)
-        .toUri() // will create location e.g. /api/controlmeasures/someIdHere
+        .toUri // will create location e.g. /api/controlmeasures/someIdHere
 
       ResponseEntity.created(location)
         .body[MessagePayload](MessagePayload(s"Successfully created control measure with id $id"))

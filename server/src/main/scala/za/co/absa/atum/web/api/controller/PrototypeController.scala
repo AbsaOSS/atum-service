@@ -18,12 +18,13 @@ package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
-import org.springframework.web.bind.annotation.{PostMapping, RequestBody, RestController}
+import org.springframework.web.bind.annotation.{PostMapping, RequestBody, RequestMapping, RestController}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.service.DatabaseService
 
 
 @RestController
+@RequestMapping(Array("/api"))
 class PrototypeController @Autowired()(databaseService: DatabaseService){
 
   /**
@@ -32,7 +33,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    * @param checkpoint The checkpoint to save.
    * @return A ResponseEntity with the status code CREATED.
    */
-  @PostMapping(Array("/api/v1/checkpoint"))
+  @PostMapping(Array("/v1/checkpoint"))
   def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
     databaseService.saveCheckpoint(checkpoint)
     ResponseEntity.status(HttpStatus.CREATED).build()
