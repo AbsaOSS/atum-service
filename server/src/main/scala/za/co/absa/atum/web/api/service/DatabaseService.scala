@@ -22,8 +22,9 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.provider.PostgresAccessProvider
 
 @Service
-class DatabaseService @Autowired()(postgresAccessProvider: PostgresAccessProvider) {
+class DatabaseService @Autowired()() {
 
+  val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
   /**
    * this service function saves the checkpoint into the database.
    * @param checkpoint

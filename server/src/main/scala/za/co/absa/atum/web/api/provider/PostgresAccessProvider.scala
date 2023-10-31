@@ -16,40 +16,27 @@
 
 package za.co.absa.atum.web.api.provider
 
-import com.typesafe.config.{Config, ConfigFactory}
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.{Bean, Configuration}
-import slick.jdbc.JdbcBackend.Database
+import com.typesafe.config.{Config, ConfigValueFactory}
+import za.co.absa.atum.web.api.AtumConfig
 import za.co.absa.atum.web.api.database.Runs
+import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import za.co.absa.fadb.slick.SlickPgEngine
 
 import scala.concurrent.ExecutionContext
 
-/**
- *
- * @param executors
- */
-@Configuration
-class PostgresAccessProvider @Autowired()() {
+class PostgresAccessProvider {
 
-  private val config = ConfigFactory.load("application.properties")
+  val executor: ExecutionContext = ExecutionContext.Implicits.global
 
-  /**
-   *
-   * @return
-   */
-  private def dbConfig: Config = {
-    val conf = config.getConfig("postgres")
-    print("Configs:", conf)
-    conf
+  private def databaseConfig: Config = {
+    val baseConfig = AtumConfig.dbConfig
+    Map.empty.foldLeft(baseConfig) { case (acc, (configPath, configVal)) =>
+      acc.withValue(configPath, ConfigValueFactory.fromAnyRef(configVal))
+    }
   }
 
-  @Bean
-  def getExecutionContext(): ExecutionContext = ExecutionContext.Implicits.global
+  private val db = Database.forConfig("", databaseConfig)
 
-  private val db: Database =  Database.forConfig("", dbConfig)
-
-  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(getExecutionContext())
+  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executor)
   val runs: Runs = new Runs()
-
 }
