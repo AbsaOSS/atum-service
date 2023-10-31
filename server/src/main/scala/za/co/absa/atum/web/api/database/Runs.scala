@@ -48,7 +48,7 @@ object Runs {
     with StandardStatusHandling
   {
 
-    /**
+    /** Call the database function that create a checkpoint to the db
      *
      * @param values
      * @return

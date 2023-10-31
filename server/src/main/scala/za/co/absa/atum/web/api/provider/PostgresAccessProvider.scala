@@ -18,7 +18,7 @@ package za.co.absa.atum.web.api.provider
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
+import org.springframework.context.annotation.{Bean, Configuration}
 import slick.jdbc.JdbcBackend.Database
 import za.co.absa.atum.web.api.database.Runs
 import za.co.absa.fadb.slick.SlickPgEngine
@@ -29,8 +29,8 @@ import scala.concurrent.ExecutionContext
  *
  * @param executors
  */
-@Component
-class PostgresAccessProvider @Autowired()(executor: ExecutionContext = ExecutionContext.Implicits.global) {
+@Configuration
+class PostgresAccessProvider @Autowired()() {
 
   private val config = ConfigFactory.load("application.properties")
 
@@ -44,9 +44,12 @@ class PostgresAccessProvider @Autowired()(executor: ExecutionContext = Execution
     conf
   }
 
+  @Bean
+  def getExecutionContext(): ExecutionContext = ExecutionContext.Implicits.global
+
   private val db: Database =  Database.forConfig("", dbConfig)
 
-  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executor)
+  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(getExecutionContext())
   val runs: Runs = new Runs()
 
 }
