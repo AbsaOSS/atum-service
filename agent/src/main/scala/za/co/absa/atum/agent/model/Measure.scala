@@ -51,6 +51,7 @@ sealed trait Measure extends MeasurementProcessor with MeasureType {
 
 trait MeasureType {
   val measureName: String
+  val onlyForNumeric: Boolean
   val resultValueType: ResultValueType.ResultValueType
 }
 
@@ -70,6 +71,7 @@ object Measure {
   case class RecordCount private (
     controlCol: String,
     measureName: String,
+    onlyForNumeric: Boolean,
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
@@ -80,15 +82,17 @@ object Measure {
       }
   }
   object RecordCount extends MeasureType {
-    def apply(controlCol: String): RecordCount = RecordCount(controlCol, measureName, resultValueType)
+    def apply(controlCol: String): RecordCount = RecordCount(controlCol, measureName, onlyForNumeric, resultValueType)
 
     override val measureName: String = "count"
+    override val onlyForNumeric: Boolean = false
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
 
   case class DistinctRecordCount private (
     controlCol: String,
     measureName: String,
+    onlyForNumeric: Boolean,
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
@@ -100,16 +104,18 @@ object Measure {
   }
   object DistinctRecordCount extends MeasureType {
     def apply(controlCol: String): DistinctRecordCount = {
-      DistinctRecordCount(controlCol, measureName, resultValueType)
+      DistinctRecordCount(controlCol, measureName, onlyForNumeric, resultValueType)
     }
 
     override val measureName: String = "distinctCount"
+    override val onlyForNumeric: Boolean = false
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
 
   case class SumOfValuesOfColumn private (
     controlCol: String,
     measureName: String,
+    onlyForNumeric: Boolean,
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
@@ -121,16 +127,18 @@ object Measure {
   }
   object SumOfValuesOfColumn extends MeasureType {
     def apply(controlCol: String): SumOfValuesOfColumn = {
-      SumOfValuesOfColumn(controlCol, measureName, resultValueType)
+      SumOfValuesOfColumn(controlCol, measureName, onlyForNumeric, resultValueType)
     }
 
     override val measureName: String = "aggregatedTotal"
+    override val onlyForNumeric: Boolean = true
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
   }
 
   case class AbsSumOfValuesOfColumn private (
     controlCol: String,
     measureName: String,
+    onlyForNumeric: Boolean,
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
@@ -142,16 +150,18 @@ object Measure {
   }
   object AbsSumOfValuesOfColumn extends MeasureType {
     def apply(controlCol: String): AbsSumOfValuesOfColumn = {
-      AbsSumOfValuesOfColumn(controlCol, measureName, resultValueType)
+      AbsSumOfValuesOfColumn(controlCol, measureName, onlyForNumeric, resultValueType)
     }
 
     override val measureName: String = "absAggregatedTotal"
+    override val onlyForNumeric: Boolean = true
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Double
   }
 
   case class SumOfHashesOfColumn private (
     controlCol: String,
     measureName: String,
+    onlyForNumeric: Boolean,
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
@@ -168,10 +178,11 @@ object Measure {
   }
   object SumOfHashesOfColumn extends MeasureType {
     def apply(controlCol: String): SumOfHashesOfColumn = {
-      SumOfHashesOfColumn(controlCol, measureName, resultValueType)
+      SumOfHashesOfColumn(controlCol, measureName, onlyForNumeric, resultValueType)
     }
 
     override val measureName: String = "hashCrc32"
+    override val onlyForNumeric: Boolean = false
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.String
   }
 
