@@ -33,7 +33,8 @@ import scala.collection.immutable.ListMap
 class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
   val agent: AtumAgent,
-  private var measures: Set[Measure] = Set.empty
+  private var measures: Set[Measure] = Set.empty,
+  private var additionalData: Map[String, Option[String]] = Map.empty
 ) {
 
   def currentMeasures: Set[Measure] = measures
@@ -62,8 +63,12 @@ class AtumContext private[agent] (
     )
   }
 
-  def addAdditionalData(key: String, value: String) = {
-    ??? // TODO #60
+  def addAdditionalData(key: String, value: String): Unit = {
+    additionalData += (key -> Some(value))
+  }
+
+  def currentAdditionalData: Map[String, Option[String]] = {
+    this.additionalData
   }
 
   def addMeasure(newMeasure: Measure): AtumContext = {
@@ -84,9 +89,10 @@ class AtumContext private[agent] (
   private[agent] def copy(
     atumPartitions: AtumPartitions = this.atumPartitions,
     agent: AtumAgent = this.agent,
-    measures: Set[Measure] = this.measures
+    measures: Set[Measure] = this.measures,
+    additionalData: Map[String, Option[String]] = this.additionalData
   ): AtumContext = {
-    new AtumContext(atumPartitions, agent, measures)
+    new AtumContext(atumPartitions, agent, measures, additionalData)
   }
 }
 
@@ -115,7 +121,8 @@ object AtumContext {
     new AtumContext(
       AtumPartitions.fromPartitioning(atumContextDTO.partitioning),
       agent,
-      MeasuresMapper.mapToMeasures(atumContextDTO.measures)
+      MeasuresMapper.mapToMeasures(atumContextDTO.measures),
+      atumContextDTO.additionalData.additionalData
     )
   }
 
