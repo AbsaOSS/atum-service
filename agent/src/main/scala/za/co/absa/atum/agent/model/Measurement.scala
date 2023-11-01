@@ -37,8 +37,8 @@ object Measurement {
   object MeasurementProvided {
 
     private def handleSpecificType[T](
-                               measure: Measure, resultValue: T, requiredType: ResultValueType.ResultValueType
-                             ): MeasurementProvided[T] = {
+                                       measure: AtumMeasure, resultValue: T, requiredType: ResultValueType.ResultValueType
+                                     ): MeasurementProvided[T] = {
 
       val actualType = measure.resultValueType
       if (actualType != requiredType)
@@ -49,7 +49,7 @@ object Measurement {
       MeasurementProvided[T](measure, resultValue, requiredType)
     }
 
-    def apply[T](measure: Measure, resultValue: T): Measurement = {
+    def apply[T](measure: AtumMeasure, resultValue: T): Measurement = {
       resultValue match {
         case l: Long =>
           handleSpecificType[Long](measure, l, ResultValueType.Long)
@@ -68,13 +68,32 @@ object Measurement {
           )
       }
     }
-  }
 
-  /**
-   * When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
-   * needed - thus we are converting the results to strings always - but we need to keep the information about
-   * the actual type as well.
-   */
-  case class MeasurementByAtum(measure: Measure, resultValue: String, resultType: ResultValueType.ResultValueType)
-    extends Measurement
+    def forCustomMeasure[T](measureName: String, controlCol: String, resultValue: T): MeasurementProvided[T] = {
+      resultValue match {
+        case _: Long =>
+          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Long)
+        case _: Double =>
+          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Double)
+        case _: BigDecimal =>
+          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.BigDecimal)
+        case _: String =>
+          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue,  ResultValueType.String)
+        case unsupportedType =>
+          val className = unsupportedType.getClass.getSimpleName
+          throw MeasurementProvidedException(
+            s"Unsupported type of measurement for measure ${measureName}: $className " +
+              s"for provided result: $resultValue"
+          )
+      }
+    }
+
+    /**
+     * When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
+     * needed - thus we are converting the results to strings always - but we need to keep the information about
+     * the actual type as well.
+     */
+    case class MeasurementByAtum(measure: AtumMeasure, resultValue: String, resultType: ResultValueType.ResultValueType)
+      extends Measurement
+  }
 }

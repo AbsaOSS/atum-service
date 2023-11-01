@@ -20,21 +20,21 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumAgent
 import za.co.absa.atum.agent.AtumContext.{AtumPartitions, DatasetWrapper}
-import za.co.absa.atum.agent.model.Measure._
+import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase
 
-class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
+class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
   "Measure" should "be based on the dataframe" in {
 
     // Measures
-    val measureIds: Measure = RecordCount(controlCol = "id")
-    val salaryAbsSum: Measure = AbsSumOfValuesOfColumn(
+    val measureIds: AtumMeasure = RecordCount(controlCol = "id")
+    val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn(
       controlCol = "salary"
     )
     val salarySum = SumOfValuesOfColumn(controlCol = "salary")
-    val sumOfHashes: Measure = SumOfHashesOfColumn(controlCol = "id")
+    val sumOfHashes: AtumMeasure = SumOfHashesOfColumn(controlCol = "id")
 
     // AtumContext contains `Measurement`
     val atumContextInstanceWithRecordCount = AtumAgent

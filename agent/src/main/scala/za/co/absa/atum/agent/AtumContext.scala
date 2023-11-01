@@ -18,7 +18,7 @@ package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.Measurement.MeasurementByAtum
+import za.co.absa.atum.agent.model.Measurement.MeasurementProvided.MeasurementByAtum
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
@@ -35,11 +35,11 @@ import scala.collection.immutable.ListMap
 class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
   val agent: AtumAgent,
-  private var measures: Set[Measure] = Set.empty,
+  private var measures: Set[AtumMeasure] = Set.empty,
   private var additionalData: Map[String, Option[String]] = Map.empty
 ) {
 
-  def currentMeasures: Set[Measure] = measures
+  def currentMeasures: Set[AtumMeasure] = measures
 
   def subPartitionContext(subPartitions: AtumPartitions): AtumContext = {
     agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
@@ -72,7 +72,11 @@ class AtumContext private[agent] (
     this
   }
 
-  def createCheckpointOnProvidedData(checkpointName: String, author: String, measurements: Seq[Measurement]): AtumContext = {
+  def createCheckpointOnProvidedData(
+    checkpointName: String,
+    author: String,
+    measurements: Seq[Measurement]
+  ): AtumContext = {
     val offsetDateTimeNow = OffsetDateTime.now()
 
     val checkpointDTO = CheckpointDTO(
@@ -97,17 +101,17 @@ class AtumContext private[agent] (
     this.additionalData
   }
 
-  def addMeasure(newMeasure: Measure): AtumContext = {
+  def addMeasure(newMeasure: AtumMeasure): AtumContext = {
     measures = measures + newMeasure
     this
   }
 
-  def addMeasures(newMeasures: Set[Measure]): AtumContext = {
+  def addMeasures(newMeasures: Set[AtumMeasure]): AtumContext = {
     measures = measures ++ newMeasures
     this
   }
 
-  def removeMeasure(measureToRemove: Measure): AtumContext = {
+  def removeMeasure(measureToRemove: AtumMeasure): AtumContext = {
     measures = measures - measureToRemove
     this
   }
@@ -115,7 +119,7 @@ class AtumContext private[agent] (
   private[agent] def copy(
     atumPartitions: AtumPartitions = this.atumPartitions,
     agent: AtumAgent = this.agent,
-    measures: Set[Measure] = this.measures,
+    measures: Set[AtumMeasure] = this.measures,
     additionalData: Map[String, Option[String]] = this.additionalData
   ): AtumContext = {
     new AtumContext(atumPartitions, agent, measures, additionalData)
@@ -131,7 +135,7 @@ object AtumContext {
     }
 
     def apply(elems: Seq[(String, String)]): AtumPartitions = {
-      ListMap(elems:_*)
+      ListMap(elems: _*)
     }
 
     private[agent] def toSeqPartitionDTO(atumPartitions: AtumPartitions): Seq[PartitionDTO] = {

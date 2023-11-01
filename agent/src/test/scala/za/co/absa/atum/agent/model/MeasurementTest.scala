@@ -19,7 +19,7 @@ package za.co.absa.atum.agent.model
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.exception.MeasurementProvidedException
-import za.co.absa.atum.agent.model.Measure._
+import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase

@@ -17,16 +17,16 @@
 package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.agent.exception.MeasureException
-import za.co.absa.atum.agent.model.Measure._
+import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto
 
 private [agent] object MeasuresBuilder {
 
-  private [agent] def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {
+  private [agent] def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.AtumMeasure] = {
     measures.map(createMeasure)
   }
 
-  private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.Measure = {
+  private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.AtumMeasure = {
     val controlColumn = measure.controlColumns.head
 
     measure.measureName match {
@@ -37,7 +37,7 @@ private [agent] object MeasuresBuilder {
       case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(controlColumn)
       case unsupportedMeasure =>
         throw MeasureException(
-          s"Measure not supported: $unsupportedMeasure. Supported measures are: ${Measure.supportedMeasureNames}"
+          s"Measure not supported: $unsupportedMeasure. Supported measures are: ${AtumMeasure.supportedMeasureNames}"
         )
     }
   }

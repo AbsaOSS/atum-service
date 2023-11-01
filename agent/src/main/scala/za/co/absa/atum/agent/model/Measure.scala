@@ -27,20 +27,27 @@ import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancem
 /**
  *  Type of different measures to be applied to the columns.
  */
-sealed trait Measure extends MeasurementProcessor with MeasureType {
+sealed trait Measure {
+  val measureName: String
   val controlCol: String
 }
 
-trait MeasureType {
+sealed trait NamedMeasure {
   val measureName: String
+}
+sealed trait TypedMeasure {
   val resultValueType: ResultValueType.ResultValueType
 }
 
-object Measure {
+case class CustomMeasure private [agent] (measureName: String, controlCol: String) extends Measure
+
+sealed trait AtumMeasure extends Measure with TypedMeasure with MeasurementProcessor
+
+object AtumMeasure {
 
   private val valueColumnName: String = "value"
 
-  val supportedMeasures: Seq[MeasureType] = Seq(
+  val supportedMeasures: Seq[NamedMeasure] = Seq(
     RecordCount,
     DistinctRecordCount,
     SumOfValuesOfColumn,
@@ -53,7 +60,7 @@ object Measure {
     controlCol: String,
     measureName: String,
     resultValueType: ResultValueType.ResultValueType
-  ) extends Measure {
+  ) extends AtumMeasure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => {
@@ -61,7 +68,7 @@ object Measure {
         ResultOfMeasurement(resultValue, resultValueType)
       }
   }
-  object RecordCount extends MeasureType {
+  object RecordCount extends NamedMeasure with TypedMeasure {
     def apply(controlCol: String): RecordCount = RecordCount(controlCol, measureName, resultValueType)
 
     override val measureName: String = "count"
@@ -72,7 +79,7 @@ object Measure {
     controlCol: String,
     measureName: String,
     resultValueType: ResultValueType.ResultValueType
-  ) extends Measure {
+  ) extends AtumMeasure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => {
@@ -80,7 +87,7 @@ object Measure {
         ResultOfMeasurement(resultValue, resultValueType)
       }
   }
-  object DistinctRecordCount extends MeasureType {
+  object DistinctRecordCount extends NamedMeasure with TypedMeasure {
     def apply(controlCol: String): DistinctRecordCount = {
       DistinctRecordCount(controlCol, measureName, resultValueType)
     }
@@ -93,7 +100,7 @@ object Measure {
     controlCol: String,
     measureName: String,
     resultValueType: ResultValueType.ResultValueType
-  ) extends Measure {
+  ) extends AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
@@ -101,7 +108,7 @@ object Measure {
       ResultOfMeasurement(resultValue, resultValueType)
     }
   }
-  object SumOfValuesOfColumn extends MeasureType {
+  object SumOfValuesOfColumn extends NamedMeasure with TypedMeasure {
     def apply(controlCol: String): SumOfValuesOfColumn = {
       SumOfValuesOfColumn(controlCol, measureName, resultValueType)
     }
@@ -114,7 +121,7 @@ object Measure {
     controlCol: String,
     measureName: String,
     resultValueType: ResultValueType.ResultValueType
-  ) extends Measure {
+  ) extends AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
@@ -122,7 +129,7 @@ object Measure {
       ResultOfMeasurement(resultValue, resultValueType)
     }
   }
-  object AbsSumOfValuesOfColumn extends MeasureType {
+  object AbsSumOfValuesOfColumn extends NamedMeasure with TypedMeasure {
     def apply(controlCol: String): AbsSumOfValuesOfColumn = {
       AbsSumOfValuesOfColumn(controlCol, measureName, resultValueType)
     }
@@ -135,7 +142,7 @@ object Measure {
     controlCol: String,
     measureName: String,
     resultValueType: ResultValueType.ResultValueType
-  ) extends Measure {
+  ) extends AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
 
@@ -148,7 +155,7 @@ object Measure {
       ResultOfMeasurement(resultValue, ResultValueType.String)
     }
   }
-  object SumOfHashesOfColumn extends MeasureType {
+  object SumOfHashesOfColumn extends NamedMeasure with TypedMeasure {
     def apply(controlCol: String): SumOfHashesOfColumn = {
       SumOfHashesOfColumn(controlCol, measureName, resultValueType)
     }
