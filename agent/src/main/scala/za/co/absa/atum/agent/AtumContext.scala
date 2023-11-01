@@ -18,6 +18,7 @@ package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
+import za.co.absa.atum.agent.model.Measurement.MeasurementByAtum
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
