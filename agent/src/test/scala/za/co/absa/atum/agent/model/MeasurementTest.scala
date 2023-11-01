@@ -58,4 +58,17 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val measure = SumOfValuesOfColumn("col")
     assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
   }
+
+  "forCustomMeasure" should "create MeasurementProvided for custom measure" in {
+    val measureName = "myCustomMeasure"
+    val controlCol = "columnName"
+    val resultValue = "abc"
+
+    val expectedMeasurementProvided = MeasurementProvided(
+      CustomMeasure(measureName, controlCol), resultValue, ResultValueType.String
+    )
+    val actualMeasurementProvided = MeasurementProvided.forCustomMeasure(measureName, controlCol, "abc")
+
+    assert(expectedMeasurementProvided == actualMeasurementProvided)
+  }
 }
