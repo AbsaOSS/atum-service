@@ -131,7 +131,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val timeWithZone = OffsetDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneOffset.ofHours(2))
 
-    val seqMeasurementDTO = Seq(
+    val setMeasurementDTO = Set(
       MeasurementDTO(
         measure = MeasureDTO("count", Seq("col")), result = MeasureResultDTO(
           mainValue = TypedValue("1", ResultValueType.Long)
@@ -147,7 +147,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
       partitioning = seqPartitionDTO,
       processStartTime = timeWithZone,
       processEndTime = Some(timeWithZone),
-      measurements = seqMeasurementDTO
+      measurements = setMeasurementDTO
     )
 
     val expectedCheckpointDTOJson = "{\"id\":\"" + uuid + "\",\"name\":\"checkpoint\",\"author\":\"author\",\"measuredByAtumAgent\":true,\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"processStartTime\":\"2023-10-24 10:20:59.005000+02\",\"processEndTime\":\"2023-10-24 10:20:59.005000+02\",\"measurements\":[{\"measure\":{\"measureName\":\"count\",\"controlColumns\":[\"col\"]},\"result\":{\"mainValue\":{\"value\":\"1\",\"valueType\":\"Long\"},\"supportValues\":{}}}]}"
@@ -163,7 +163,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
 
     val checkpointDTOJson = "{\"id\":\"" + uuid + "\",\"name\":\"checkpoint\",\"author\":\"author\",\"measuredByAtumAgent\":true,\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"processStartTime\":\"2023-10-24 10:20:59.005000+02\",\"processEndTime\":\"2023-10-24 10:20:59.005000+02\",\"measurements\":[{\"measure\":{\"measureName\":\"count\",\"controlColumns\":[\"col\"]},\"result\":{\"mainValue\":{\"value\":\"1\",\"valueType\":\"Long\"},\"supportValues\":{}}}]}"
 
-    val seqMeasurementDTO = Seq(
+    val setMeasurementDTO = Set(
       MeasurementDTO(
         measure = MeasureDTO("count", Seq("col")), result = MeasureResultDTO(
           mainValue = TypedValue("1", ResultValueType.Long)
@@ -179,7 +179,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
       partitioning = seqPartitionDTO,
       processStartTime = timeWithZone,
       processEndTime = Some(timeWithZone),
-      measurements = seqMeasurementDTO
+      measurements = setMeasurementDTO
     )
 
     val actualCheckpointDTO = SerializationUtils.fromJson[CheckpointDTO](checkpointDTOJson)

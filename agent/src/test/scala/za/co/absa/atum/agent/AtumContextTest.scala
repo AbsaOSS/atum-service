@@ -105,7 +105,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumPartitions = AtumPartitions("key" -> "value")
     val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
 
-    val measurements = Seq(
+    val measurements = Set(
       Measurement(RecordCount("col"), MeasureResult(1L)),
       Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1)))
     )

@@ -118,14 +118,14 @@ class MeasurementBuilderTest extends AnyFlatSpec {
   }
 
   "buildMeasurementDTO" should "build Seq[MeasurementDTO] for multiple measures, all unique" in {
-    val measurements = Seq(
+    val measurements = Set(
       Measurement(DistinctRecordCount("col"), MeasureResult("1", ResultValueType.Long)),
       Measurement(SumOfValuesOfColumn("col1"), MeasureResult(BigDecimal(1.2))),
       Measurement(SumOfValuesOfColumn("col2"), MeasureResult(BigDecimal(1.3)))
     )
     val measurementDTOs = MeasurementBuilder.buildMeasurementDTO(measurements)
 
-    val expectedMeasurementDTO = Seq(
+    val expectedMeasurementDTO = Set(
       MeasurementDTO(
         MeasureDTO("distinctCount", Seq("col")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))
       ),
@@ -141,7 +141,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
   }
 
   "buildMeasurementDTO" should "throw exception for multiple measures, some of them repetitive" in {
-    val measurements = Seq(
+    val measurements = Set(
       Measurement(DistinctRecordCount("col"), MeasureResult("1")),
       Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1.2))),
       Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1.3)))
