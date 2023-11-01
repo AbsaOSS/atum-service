@@ -32,118 +32,85 @@ sealed trait Measure {
   val controlCol: String
 }
 
-sealed trait NamedMeasure {
-  val measureName: String
-}
-
-sealed trait TypedMeasure {
-  val resultValueType: ResultValueType.ResultValueType
-}
-
 case class CustomMeasure private [agent] (measureName: String, controlCol: String) extends Measure
 
-sealed trait AtumMeasure extends Measure with TypedMeasure with MeasurementProcessor
+abstract class AtumMeasure extends Measure with MeasurementProcessor {
+  val resultValueType: ResultValueType.ResultValueType
+}
 
 object AtumMeasure {
 
   private val valueColumnName: String = "value"
 
-  val supportedMeasures: Seq[NamedMeasure] = Seq(
-    RecordCount,
-    DistinctRecordCount,
-    SumOfValuesOfColumn,
-    AbsSumOfValuesOfColumn,
-    SumOfHashesOfColumn
+  val supportedMeasureNames: Seq[String] = Seq(
+    RecordCount.measureName,
+    DistinctRecordCount.measureName,
+    SumOfValuesOfColumn.measureName,
+    AbsSumOfValuesOfColumn.measureName,
+    SumOfHashesOfColumn.measureName
   )
-  val supportedMeasureNames: Seq[String] = supportedMeasures.map(_.measureName)
 
-  case class RecordCount private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
-  ) extends AtumMeasure {
+  case class RecordCount private (measureName: String, controlCol: String) extends AtumMeasure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => {
         val resultValue = ds.select(col(controlCol)).count().toString
         ResultOfMeasurement(resultValue, resultValueType)
       }
-  }
-  object RecordCount extends NamedMeasure with TypedMeasure {
-    def apply(controlCol: String): RecordCount = RecordCount(controlCol, measureName, resultValueType)
 
-    override val measureName: String = "count"
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
+  object RecordCount {
+    private [agent] val measureName: String = "count"
+    def apply(controlCol: String): RecordCount = RecordCount(measureName, controlCol)
+  }
 
-  case class DistinctRecordCount private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
-  ) extends AtumMeasure {
+  case class DistinctRecordCount private (measureName: String, controlCol: String) extends AtumMeasure {
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => {
         val resultValue = ds.select(col(controlCol)).distinct().count().toString
         ResultOfMeasurement(resultValue, resultValueType)
       }
-  }
-  object DistinctRecordCount extends NamedMeasure with TypedMeasure {
-    def apply(controlCol: String): DistinctRecordCount = {
-      DistinctRecordCount(controlCol, measureName, resultValueType)
-    }
 
-    override val measureName: String = "distinctCount"
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
+  object DistinctRecordCount {
+    private [agent] val measureName: String = "distinctCount"
+    def apply(controlCol: String): DistinctRecordCount = DistinctRecordCount(measureName, controlCol)
+  }
 
-  case class SumOfValuesOfColumn private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
-  ) extends AtumMeasure {
+  case class SumOfValuesOfColumn private (measureName: String, controlCol: String) extends AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
       val resultValue = aggregateColumn(ds, controlCol, aggCol)
       ResultOfMeasurement(resultValue, resultValueType)
     }
-  }
-  object SumOfValuesOfColumn extends NamedMeasure with TypedMeasure {
-    def apply(controlCol: String): SumOfValuesOfColumn = {
-      SumOfValuesOfColumn(controlCol, measureName, resultValueType)
-    }
 
-    override val measureName: String = "aggregatedTotal"
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
   }
+  object SumOfValuesOfColumn {
+    private [agent] val measureName: String = "aggregatedTotal"
+    def apply(controlCol: String): SumOfValuesOfColumn = SumOfValuesOfColumn(measureName, controlCol)
+  }
 
-  case class AbsSumOfValuesOfColumn private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
-  ) extends AtumMeasure {
+  case class AbsSumOfValuesOfColumn private (measureName: String, controlCol: String) extends AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
       val resultValue = aggregateColumn(ds, controlCol, aggCol)
       ResultOfMeasurement(resultValue, resultValueType)
     }
-  }
-  object AbsSumOfValuesOfColumn extends NamedMeasure with TypedMeasure {
-    def apply(controlCol: String): AbsSumOfValuesOfColumn = {
-      AbsSumOfValuesOfColumn(controlCol, measureName, resultValueType)
-    }
 
-    override val measureName: String = "absAggregatedTotal"
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Double
   }
+  object AbsSumOfValuesOfColumn  {
+    private [agent] val measureName: String = "absAggregatedTotal"
+    def apply(controlCol: String): AbsSumOfValuesOfColumn = AbsSumOfValuesOfColumn(measureName, controlCol)
+  }
 
-  case class SumOfHashesOfColumn private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
-  ) extends AtumMeasure {
+  case class SumOfHashesOfColumn private (measureName: String, controlCol: String) extends AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
 
@@ -155,14 +122,12 @@ object AtumMeasure {
       val resultValue = if (value == null) "" else value.toString
       ResultOfMeasurement(resultValue, ResultValueType.String)
     }
-  }
-  object SumOfHashesOfColumn extends NamedMeasure with TypedMeasure {
-    def apply(controlCol: String): SumOfHashesOfColumn = {
-      SumOfHashesOfColumn(controlCol, measureName, resultValueType)
-    }
 
-    override val measureName: String = "hashCrc32"
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.String
+  }
+  object SumOfHashesOfColumn {
+    private [agent] val measureName: String = "hashCrc32"
+    def apply(controlCol: String): SumOfHashesOfColumn = SumOfHashesOfColumn(measureName, controlCol)
   }
 
   private def aggregateColumn(
