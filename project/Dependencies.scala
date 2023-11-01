@@ -37,7 +37,7 @@ object Dependencies {
 
     val spring = "2.6.6"
 
-    val javaxServlet = "3.0.1"
+    val javaxServlet = "4.0.1"
 
     val springfox = "3.0.0"
 
