@@ -25,10 +25,8 @@ import za.co.absa.atum.web.api.provider.PostgresAccessProvider
 class DatabaseService @Autowired()() {
 
   val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
-  /**
-   * this service function saves the checkpoint into the database.
-   * @param checkpoint
-   */
+
+  /** This service function saves the checkpoint into the database. */
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     postgresAccessProvider.runs.writeCheckpoint(checkpoint)
   }

@@ -24,17 +24,17 @@ import za.co.absa.atum.web.api.service.DatabaseService
 
 
 @RestController
-@RequestMapping(Array("/api"))
-class PrototypeController @Autowired()(databaseService: DatabaseService){
+@RequestMapping(Array("/api/v1/checkpoint"))
+class CheckpointController @Autowired()(databaseService: DatabaseService){
 
   /**
-   * Saves a checkpoint.
+   * Creates a checkpoint in a DB.
    *
-   * @param checkpoint The checkpoint to save.
+   * @param checkpoint The checkpoint to create.
    * @return A ResponseEntity with the status code CREATED.
    */
-  @PostMapping(Array("/v1/checkpoint"))
-  def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
+  @PostMapping(Array("/create"))
+  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
     databaseService.saveCheckpoint(checkpoint)
     ResponseEntity.status(HttpStatus.CREATED).build()
   }
