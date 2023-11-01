@@ -35,6 +35,7 @@ sealed trait Measure {
 sealed trait NamedMeasure {
   val measureName: String
 }
+
 sealed trait TypedMeasure {
   val resultValueType: ResultValueType.ResultValueType
 }
