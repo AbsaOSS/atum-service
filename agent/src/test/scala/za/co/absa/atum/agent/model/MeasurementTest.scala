@@ -18,44 +18,28 @@ package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.atum.agent.exception.MeasurementProvidedException
+import za.co.absa.atum.agent.exception.MeasurementException
 import za.co.absa.atum.agent.model.Measure._
-import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase
 
 class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
-  "MeasurementProvided" should "be able to be converted to MeasurementProvided object when the result is Double" in {
+  "Measurement" should "be able derive correct result type when the result is Double" in {
     val measure = AbsSumOfValuesOfColumn("col")
-    val actualMeasurement = MeasurementProvided(measure, 1.0)
+    val actualMeasurement = Measurement(measure, MeasureResult(1.0))
 
-    assert(actualMeasurement.resultValue == 1.0)
-    assert(actualMeasurement.resultType == ResultValueType.Double)
+    assert(actualMeasurement.result.resultValue == 1.0)
+    assert(actualMeasurement.result.resultType == ResultValueType.Double)
   }
 
-  "MeasurementProvided" should "throw exception for unsupported result value - BigDecimal instead of Double" in {
-    val measure = AbsSumOfValuesOfColumn("col")
-    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, BigDecimal(1.0)))
-  }
-
-  "MeasurementProvided" should "throw exception for unsupported result value type in general (scalar)" in {
+  "Measurement" should "throw exception for unsupported result value type in general (scalar)" in {
     val measure = SumOfValuesOfColumn("col")
-    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1))
+    assertThrows[MeasurementException](Measurement(measure, MeasureResult(1)))
   }
 
-  "MeasurementProvided" should "throw exception for unsupported result value type in general (composite)" in {
+  "Measurement" should "throw exception for unsupported result value type in general (composite)" in {
     val measure = SumOfHashesOfColumn("col")
-    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, Map(1 -> "no-go")))
-  }
-
-  "MeasurementProvided" should "throw exception for unsupported result value type for a given Measure" in {
-    val measure = DistinctRecordCount("col")
-    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, "1"))
-  }
-
-  "MeasurementProvided" should "throw exception for unsupported (slightly different FPN) result value type for a given Measure" in {
-    val measure = SumOfValuesOfColumn("col")
-    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
+    assertThrows[MeasurementException](Measurement(measure, MeasureResult(Map(1 -> "no-go"))))
   }
 }

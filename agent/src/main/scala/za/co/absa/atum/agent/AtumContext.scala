@@ -18,7 +18,6 @@ package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.Measurement.MeasurementByAtum
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
@@ -28,9 +27,6 @@ import scala.collection.immutable.ListMap
 
 /**
  *  This class provides the methods to measure Spark `Dataframe`. Also allows to add and remove measures.
- *  @param atumPartitions
- *  @param agent
- *  @param measures
  */
 class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
@@ -45,16 +41,16 @@ class AtumContext private[agent] (
     agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
   }
 
-  private def takeMeasurements(df: DataFrame): Set[MeasurementByAtum] = {
+  private def takeMeasurements(df: DataFrame): Set[MeasurementDTO] = {
     measures.map { m =>
-      val measurementResult = m.function(df)
-      MeasurementByAtum(m, measurementResult.result, measurementResult.resultType)
+      val measureResult = m.function(df)
+      MeasurementBuilder.buildMeasurementDTO(m, measureResult)
     }
   }
 
   def createCheckpoint(checkpointName: String, author: String, dataToMeasure: DataFrame): AtumContext = {
     val startTime = OffsetDateTime.now()
-    val measurements = takeMeasurements(dataToMeasure)
+    val measurementDTOs = takeMeasurements(dataToMeasure)
     val endTime = OffsetDateTime.now()
 
     val checkpointDTO = CheckpointDTO(
@@ -65,7 +61,7 @@ class AtumContext private[agent] (
       partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
       processStartTime = startTime,
       processEndTime = Some(endTime),
-      measurements = measurements.map(MeasurementBuilder.buildMeasurementDTO).toSeq
+      measurements = measurementDTOs.toSeq
     )
 
     agent.saveCheckpoint(checkpointDTO)
@@ -82,7 +78,7 @@ class AtumContext private[agent] (
       partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
       processStartTime = offsetDateTimeNow,
       processEndTime = Some(offsetDateTimeNow),
-      measurements = measurements.map(MeasurementBuilder.buildMeasurementDTO)
+      measurements = MeasurementBuilder.buildMeasurementDTO(measurements)
     )
 
     agent.saveCheckpoint(checkpointDTO)

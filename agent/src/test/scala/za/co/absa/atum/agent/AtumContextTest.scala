@@ -24,8 +24,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
-import za.co.absa.atum.agent.model.MeasurementBuilder
-import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
+import za.co.absa.atum.agent.model.{Measurement, MeasurementBuilder, MeasureResult}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
@@ -107,8 +106,8 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
 
     val measurements = Seq(
-      MeasurementProvided(RecordCount("col"), 1L),
-      MeasurementProvided(SumOfValuesOfColumn("col"), BigDecimal(1))
+      Measurement(RecordCount("col"), MeasureResult(1L)),
+      Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1)))
     )
 
     atumContext.createCheckpointOnProvidedData(
@@ -192,5 +191,4 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
     assert(atumContext.currentAdditionalData == expectedAdditionalData)
   }
-
 }

@@ -20,7 +20,6 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DecimalType, LongType, StringType}
 import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
-import za.co.absa.atum.agent.core.MeasurementProcessor.{MeasurementFunction, ResultOfMeasurement}
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
@@ -55,10 +54,10 @@ object Measure {
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
-    override def function: MeasurementFunction =
+    override def function: MeasurementProcessor.MeasurementFunction =
       (ds: DataFrame) => {
         val resultValue = ds.select(col(controlCol)).count().toString
-        ResultOfMeasurement(resultValue, resultValueType)
+        MeasureResult(resultValue, resultValueType)
       }
   }
   object RecordCount extends MeasureType {
@@ -74,10 +73,10 @@ object Measure {
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
-    override def function: MeasurementFunction =
+    override def function: MeasurementProcessor.MeasurementFunction =
       (ds: DataFrame) => {
         val resultValue = ds.select(col(controlCol)).distinct().count().toString
-        ResultOfMeasurement(resultValue, resultValueType)
+        MeasureResult(resultValue, resultValueType)
       }
   }
   object DistinctRecordCount extends MeasureType {
@@ -95,10 +94,10 @@ object Measure {
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
-    override def function: MeasurementFunction = (ds: DataFrame) => {
+    override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
       val resultValue = aggregateColumn(ds, controlCol, aggCol)
-      ResultOfMeasurement(resultValue, resultValueType)
+      MeasureResult(resultValue, resultValueType)
     }
   }
   object SumOfValuesOfColumn extends MeasureType {
@@ -116,10 +115,10 @@ object Measure {
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
-    override def function: MeasurementFunction = (ds: DataFrame) => {
+    override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
       val resultValue = aggregateColumn(ds, controlCol, aggCol)
-      ResultOfMeasurement(resultValue, resultValueType)
+      MeasureResult(resultValue, resultValueType)
     }
   }
   object AbsSumOfValuesOfColumn extends MeasureType {
@@ -137,7 +136,7 @@ object Measure {
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
-    override def function: MeasurementFunction = (ds: DataFrame) => {
+    override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
 
       val aggregatedColumnName = ds.schema.getClosestUniqueName("sum_of_hashes")
       val value = ds
@@ -145,7 +144,7 @@ object Measure {
         .agg(sum(col(aggregatedColumnName)))
         .collect()(0)(0)
       val resultValue = if (value == null) "" else value.toString
-      ResultOfMeasurement(resultValue, ResultValueType.String)
+      MeasureResult(resultValue, ResultValueType.String)
     }
   }
   object SumOfHashesOfColumn extends MeasureType {
