@@ -21,6 +21,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumAgent
 import za.co.absa.atum.agent.AtumContext.{AtumPartitions, DatasetWrapper}
 import za.co.absa.atum.agent.model.Measure._
+import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase
 
 class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
@@ -36,11 +37,14 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
     val sumOfHashes: Measure = SumOfHashesOfColumn(controlCol = "id")
 
     // AtumContext contains `Measurement`
-    val atumContextInstanceWithRecordCount = AtumAgent.getOrCreateAtumContext(AtumPartitions("foo"->"bar"))
+    val atumContextInstanceWithRecordCount = AtumAgent
+      .getOrCreateAtumContext(AtumPartitions("foo"->"bar"))
       .addMeasure(measureIds)
-    val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount.subPartitionContext(AtumPartitions("sub"->"partition"))
+    val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
+      .subPartitionContext(AtumPartitions("sub"->"partition"))
       .addMeasure(salaryAbsSum)
-    val atumContextWithNameHashSum = atumContextInstanceWithRecordCount.subPartitionContext(AtumPartitions("another"->"partition"))
+    val atumContextWithNameHashSum = atumContextInstanceWithRecordCount
+      .subPartitionContext(AtumPartitions("another"->"partition"))
       .addMeasure(sumOfHashes)
 
     // Pipeline
@@ -56,8 +60,7 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
       .option("header", "true")
       .load("agent/src/test/resources/random-dataset/persons-enriched.csv")
       .createCheckpoint("name3", "author")(
-        atumContextWithSalaryAbsMeasure
-          .removeMeasure(salaryAbsSum)
+        atumContextWithSalaryAbsMeasure.removeMeasure(salaryAbsSum)
       )
 
     val dfFull = dfPersons
@@ -80,14 +83,26 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
         .removeMeasure(salaryAbsSum)
     )
 
-    // Assertions
-    assert(measureIds.function(dfPersons) == "1000")
-    assert(measureIds.function(dfFull) == "1000")
-    assert(salaryAbsSum.function(dfFull) == "2987144")
-    assert(sumOfHashes.function(dfFull) == "2044144307532")
-    assert(salarySum.function(dfExtraPerson) == "2986144")
-    assert(salarySum.function(dfFull) == "2987144")
+    val dfPersonCntResult             = measureIds.function(dfPersons)
+    val dfFullCntResult               = measureIds.function(dfFull)
+    val dfFullSalaryAbsSumResult      = salaryAbsSum.function(dfFull)
+    val dfFullHashResult              = sumOfHashes.function(dfFull)
+    val dfExtraPersonSalarySumResult  = salarySum.function(dfExtraPerson)
+    val dfFullSalarySumResult         = salarySum.function(dfFull)
 
+    // Assertions
+    assert(dfPersonCntResult.result == "1000")
+    assert(dfPersonCntResult.resultType == ResultValueType.Long)
+    assert(dfFullCntResult.result == "1000")
+    assert(dfFullCntResult.resultType == ResultValueType.Long)
+    assert(dfFullSalaryAbsSumResult.result == "2987144")
+    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.Double)
+    assert(dfFullHashResult.result == "2044144307532")
+    assert(dfFullHashResult.resultType == ResultValueType.String)
+    assert(dfExtraPersonSalarySumResult.result == "2986144")
+    assert(dfExtraPersonSalarySumResult.resultType == ResultValueType.BigDecimal)
+    assert(dfFullSalarySumResult.result == "2987144")
+    assert(dfFullSalarySumResult.resultType == ResultValueType.BigDecimal)
   }
 
 }

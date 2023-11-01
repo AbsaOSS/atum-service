@@ -17,41 +17,31 @@
 package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpec
-import za.co.absa.atum.agent.exception.UnsupportedMeasureResultType
 import za.co.absa.atum.agent.model.Measure.SumOfValuesOfColumn
+import za.co.absa.atum.agent.model.Measurement.{MeasurementProvided, MeasurementByAtum}
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO}
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 class MeasurementBuilderTest extends AnyFlatSpec {
 
-  "buildMeasurementDTO" should "build expected MeasurementDTO for Long type of result value" in {
+  "buildMeasurementDTO" should "build MeasurementDTO for Long type of result value when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, 1L)
+    val measurement = MeasurementProvided(measure, BigDecimal(1))
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
     val expectedMeasureDTO = MeasureDTO("aggregatedTotal", Seq("col"))
 
     val expectedMeasureResultDTO = MeasureResultDTO(
-      TypedValue("1", ResultValueType.Long)
+      TypedValue("1", ResultValueType.BigDecimal)
     )
 
     assert(measurementDTO.measure == expectedMeasureDTO)
     assert(measurementDTO.result == expectedMeasureResultDTO)
   }
 
-  "buildMeasurementDTO" should "build MeasurementDTO with expected TypedValue for Double type of result value" in {
+  "buildMeasurementDTO" should "build MeasurementDTO for BigDecimal type of result value when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, 3.14)
-    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
-
-    val expectedTypedValue = TypedValue("3.14", ResultValueType.Double)
-
-    assert(measurementDTO.result.mainValue == expectedTypedValue)
-  }
-
-  "buildMeasurementDTO" should "build MeasurementDTO with expected TypedValue for BigDecimal type of result value" in {
-    val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, BigDecimal(3.14))
+    val measurement = MeasurementProvided(measure, BigDecimal(3.14))
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
     val expectedTypedValue = TypedValue("3.14", ResultValueType.BigDecimal)
@@ -59,9 +49,10 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementDTO" should "build MeasurementDTO with expected TypedValue for String type of result value" in {
+  "buildMeasurementDTO" should "not build MeasurementDTO for incompatible String type of result value when Measurement provided" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, "stringValue")
+    val measurement = MeasurementByAtum(measure, "stringValue", ResultValueType.String)
+
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
     val expectedTypedValue = TypedValue("stringValue", ResultValueType.String)
@@ -69,11 +60,19 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementDTO" should "throw exception for unsupported result value type" in {
+  "buildMeasurementDTO" should "build MeasurementDTO for BigDecimal type of result value when measured by Agent" in {
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, 1)
+    val measurement = MeasurementByAtum(measure, "1", ResultValueType.BigDecimal)
+    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
 
-    assertThrows[UnsupportedMeasureResultType](MeasurementBuilder.buildMeasurementDTO(measurement))
+    val expectedMeasureDTO = MeasureDTO("aggregatedTotal", Seq("col"))
+
+    val expectedMeasureResultDTO = MeasureResultDTO(
+      TypedValue("1", ResultValueType.BigDecimal)
+    )
+
+    assert(measurementDTO.measure == expectedMeasureDTO)
+    assert(measurementDTO.result == expectedMeasureResultDTO)
   }
 
 }

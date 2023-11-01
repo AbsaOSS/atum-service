@@ -17,11 +17,11 @@
 package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpecLike
-import za.co.absa.atum.agent.exception.UnsupportedMeasureException
-import za.co.absa.atum.agent.model.Measure.{AbsSumOfValuesOfColumn, DistinctRecordCount, RecordCount, SumOfHashesOfColumn, SumOfValuesOfColumn}
+import za.co.absa.atum.agent.exception.MeasureException
+import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto.MeasureDTO
 
-class MeasuresMapperTest extends AnyFlatSpecLike {
+class MeasuresBuilderTest extends AnyFlatSpecLike {
 
   "mapToMeasures" should "map MeasureDTO into Measure for supported measures" in {
     val supportedMeasures = Set(
@@ -40,7 +40,7 @@ class MeasuresMapperTest extends AnyFlatSpecLike {
       SumOfHashesOfColumn("hashCrc32Col")
     )
 
-    val actualMeasures = MeasuresMapper.mapToMeasures(supportedMeasures)
+    val actualMeasures = MeasuresBuilder.mapToMeasures(supportedMeasures)
 
     assert(expectedMeasures == actualMeasures)
   }
@@ -50,7 +50,7 @@ class MeasuresMapperTest extends AnyFlatSpecLike {
       MeasureDTO("unsupportedMeasure", Seq("col"))
     )
 
-    assertThrows[UnsupportedMeasureException](MeasuresMapper.mapToMeasures(unsupportedMeasure))
+    assertThrows[MeasureException](MeasuresBuilder.mapToMeasures(unsupportedMeasure))
   }
 
 }
