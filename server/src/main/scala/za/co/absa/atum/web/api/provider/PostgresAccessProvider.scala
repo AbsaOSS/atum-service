@@ -30,6 +30,7 @@ class PostgresAccessProvider {
 
   private def databaseConfig: Config = {
     val baseConfig = AtumConfig.dbConfig
+    // TODO: https://github.com/AbsaOSS/atum-service/issues/107
     Map.empty.foldLeft(baseConfig) { case (acc, (configPath, configVal)) =>
       acc.withValue(configPath, ConfigValueFactory.fromAnyRef(configVal))
     }
