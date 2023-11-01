@@ -33,4 +33,5 @@ class ConsoleDispatcher extends Dispatcher with Logging {
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     println(s"Saving checkpoint to server. $checkpoint")
   }
+
 }
