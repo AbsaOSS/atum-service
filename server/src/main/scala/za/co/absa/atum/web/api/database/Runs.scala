@@ -34,16 +34,10 @@ import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
   val writeCheckpoint = new WriteCheckpoint
-//  val readCheckpoint = new ReadCheckpoint
 }
 
 
 object Runs {
-
-  private val checkpointFields = Seq("checkpoint_data")
-
-//  Todo - To discus
-//  private val positionedCheckpointResults = GetResult()
 
   /**
    *
@@ -78,48 +72,9 @@ object Runs {
 
     /**
      *
-     * @return
+     * @return results after after performing the function call
      */
     override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
   }
-
-  /** GetByPartitioningUserAndParentPartitioning
-   *
-   * @param schema
-   * @param dbEngine
-   */
-//  class ReadCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
-//    extends DBSingleResultFunction[(UUID, Int), CheckpointDTO, SlickPgEngine]
-//      with SlickFunctionWithStatusSupport[(UUID, Int), CheckpointDTO]
-//      with StandardStatusHandling {
-//
-//    /**
-//     *
-//     * @return
-//     */
-//    protected override def fieldsToSelect: Seq[String] = {
-//      super.fieldsToSelect ++ checkpointFields
-//    }
-//
-//    /**
-//     *
-//     * @param values
-//     * @return
-//     */
-//    override protected def sql(values: CheckpointFilterCriteria): SQLActionBuilder = {
-//      sql"""SELECT #$selectEntry
-//              FROM #$functionName(
-//                ${values.partitioning},
-//                ${values.byUser},
-//                ${values.parentPartitioning}
-//              ) #$alias;"""
-//    }
-//
-//    /**
-//     *
-//     * @return
-//     */
-//    override protected def slickConverter: GetResult[CheckpointDTO] = positionedCheckpointResults
-//  }
 
 }

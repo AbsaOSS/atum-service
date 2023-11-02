@@ -23,9 +23,12 @@ import za.co.absa.atum.model.CheckpointFilterCriteria
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.service.DatabaseService
 
+import java.util.concurrent.CompletableFuture
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 @RestController
-@RequestMapping(Array("/api"))
+@RequestMapping(Array("/api/v1"))
 class PrototypeController @Autowired()(databaseService: DatabaseService){
 
   /**
@@ -34,16 +37,24 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    * @param checkpoint The checkpoint to save.
    * @return A ResponseEntity with the status code CREATED.
    */
-  @PostMapping(Array("/v1/checkpoint"))
+  @PostMapping(Array("/checkpoint"))
   def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
     databaseService.saveCheckpoint(checkpoint)
     ResponseEntity.status(HttpStatus.CREATED).build()
   }
 
-  @GetMapping(Array("/v1/checkpoint"))
+  /**
+   * endpoint to retrieve checkpoint from the database
+   * @param filterCriteria JSON object containing fields that will be used to filter the checkpoint
+   * @return
+   */
+  @PostMapping(Array("/read_checkpoint"))
   @ResponseStatus(HttpStatus.OK)
-  def readCheckpoint(@RequestBody filterCriteria: CheckpointFilterCriteria): ResponseEntity[ResponseBody] = {
-    databaseService.readCheckpoint(filterCriteria)
-    ResponseEntity.status(HttpStatus.OK).body()
+  def readCheckpoint(@RequestBody filterCriteria: CheckpointFilterCriteria): ResponseEntity[CheckpointDTO] = {
+    val results = databaseService.readCheckpoint(filterCriteria)
+    results match {
+      case Some(entity) => ResponseEntity.status(HttpStatus.OK).body(entity)
+      case None => ResponseEntity.status(HttpStatus.NOT_FOUND).body(None)
+    }
   }
 }
