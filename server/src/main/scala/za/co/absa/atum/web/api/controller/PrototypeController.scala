@@ -44,6 +44,6 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
   @ResponseStatus(HttpStatus.OK)
   def readCheckpoint(@RequestBody filterCriteria: CheckpointFilterCriteria): ResponseEntity[ResponseBody] = {
     databaseService.readCheckpoint(filterCriteria)
-    ResponseEntity.ok(HttpStatus.)
+    ResponseEntity.status(HttpStatus.OK).body()
   }
 }
