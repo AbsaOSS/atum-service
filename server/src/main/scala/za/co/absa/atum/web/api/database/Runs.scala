@@ -19,14 +19,13 @@ package za.co.absa.atum.web.api.database
 import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import slick.jdbc.{GetResult, SQLActionBuilder}
 import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.web.api.database.Runs.{ReadCheckpoint, WriteCheckpoint}
+import za.co.absa.atum.web.api.database.Runs.{ WriteCheckpoint }
 import za.co.absa.fadb.DBFunction._
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 import za.co.absa.fadb.slick.{SlickFunctionWithStatusSupport, SlickPgEngine}
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 
-import java.util.UUID
 
 /**
  *
@@ -35,7 +34,7 @@ import java.util.UUID
 class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
   val writeCheckpoint = new WriteCheckpoint
-  val readCheckpoint = new ReadCheckpoint
+//  val readCheckpoint = new ReadCheckpoint
 }
 
 
@@ -44,7 +43,7 @@ object Runs {
   private val checkpointFields = Seq("checkpoint_data")
 
 //  Todo - To discus
-  private val positionedCheckpointResults = GetResult()
+//  private val positionedCheckpointResults = GetResult()
 
   /**
    *
@@ -84,42 +83,43 @@ object Runs {
     override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
   }
 
-  /**
+  /** GetByPartitioningUserAndParentPartitioning
    *
    * @param schema
    * @param dbEngine
    */
-  class ReadCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
-    extends DBSingleResultFunction[(UUID, Int), CheckpointDTO, SlickPgEngine]
-      with SlickFunctionWithStatusSupport[(UUID, Int), CheckpointDTO]
-      with StandardStatusHandling {
-
-    /**
-     *
-     * @return
-     */
-    protected override def fieldsToSelect: Seq[String] = {
-      super.fieldsToSelect ++ checkpointFields
-    }
-
-    /**
-     *
-     * @param values
-     * @return
-     */
-    override protected def sql(values: (UUID, Int)): SQLActionBuilder = {
-      sql"""SELECT #$selectEntry
-              FROM #$functionName(
-                ${values._1},
-                ${values._2}
-              ) #$alias;"""
-    }
-
-    /**
-     *
-     * @return
-     */
-    override protected def slickConverter: GetResult[CheckpointDTO] = positionedCheckpointResults
-  }
+//  class ReadCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
+//    extends DBSingleResultFunction[(UUID, Int), CheckpointDTO, SlickPgEngine]
+//      with SlickFunctionWithStatusSupport[(UUID, Int), CheckpointDTO]
+//      with StandardStatusHandling {
+//
+//    /**
+//     *
+//     * @return
+//     */
+//    protected override def fieldsToSelect: Seq[String] = {
+//      super.fieldsToSelect ++ checkpointFields
+//    }
+//
+//    /**
+//     *
+//     * @param values
+//     * @return
+//     */
+//    override protected def sql(values: CheckpointFilterCriteria): SQLActionBuilder = {
+//      sql"""SELECT #$selectEntry
+//              FROM #$functionName(
+//                ${values.partitioning},
+//                ${values.byUser},
+//                ${values.parentPartitioning}
+//              ) #$alias;"""
+//    }
+//
+//    /**
+//     *
+//     * @return
+//     */
+//    override protected def slickConverter: GetResult[CheckpointDTO] = positionedCheckpointResults
+//  }
 
 }

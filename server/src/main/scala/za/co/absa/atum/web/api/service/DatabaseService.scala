@@ -18,13 +18,16 @@ package za.co.absa.atum.web.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import za.co.absa.atum.model.CheckpointFilterCriteria
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.provider.PostgresAccessProvider
+
 
 @Service
 class DatabaseService @Autowired()() {
 
   val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
+
   /**
    * this service function saves the checkpoint into the database.
    * @param checkpoint
@@ -32,5 +35,11 @@ class DatabaseService @Autowired()() {
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     postgresAccessProvider.runs.writeCheckpoint(checkpoint)
   }
+
+  /**
+   *
+   * @param filterCriteria
+   */
+  def readCheckpoint(filterCriteria: CheckpointFilterCriteria): Unit = ???
 
 }

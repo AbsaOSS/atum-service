@@ -18,7 +18,8 @@ package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
-import org.springframework.web.bind.annotation.{PostMapping, RequestBody, RequestMapping, RestController}
+import org.springframework.web.bind.annotation._
+import za.co.absa.atum.model.CheckpointFilterCriteria
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.service.DatabaseService
 
@@ -37,5 +38,12 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
   def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
     databaseService.saveCheckpoint(checkpoint)
     ResponseEntity.status(HttpStatus.CREATED).build()
+  }
+
+  @GetMapping(Array("/v1/checkpoint"))
+  @ResponseStatus(HttpStatus.OK)
+  def readCheckpoint(@RequestBody filterCriteria: CheckpointFilterCriteria): ResponseEntity[ResponseBody] = {
+    databaseService.readCheckpoint(filterCriteria)
+    ResponseEntity.ok(HttpStatus.)
   }
 }
