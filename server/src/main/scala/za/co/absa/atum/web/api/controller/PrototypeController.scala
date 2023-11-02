@@ -23,9 +23,6 @@ import za.co.absa.atum.model.CheckpointFilterCriteria
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.service.DatabaseService
 
-import java.util.concurrent.CompletableFuture
-import scala.concurrent.ExecutionContext.Implicits.global
-
 
 @RestController
 @RequestMapping(Array("/api/v1"))
