@@ -18,6 +18,7 @@ package za.co.absa.atum.web.api.database
 
 import slick.jdbc.{GetResult, SQLActionBuilder}
 import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.utils.SerializationUtils
 import za.co.absa.fadb.DBFunction._
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
@@ -41,22 +42,32 @@ object Runs {
 
     /** Call the database function that create a checkpoint to the db **/
     override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
+      val partitioningAsJsonString = SerializationUtils.asJson( values.partitioning)
+
       val measureNames = values.measurements.map(_.measure.measureName)
       val controlColumns = values.measurements.map(_.measure.controlColumns)
       val measureResults = values.measurements.map(_.result)
-      // val measureResultsAsJson = JacksonHelper.objectMapper.writeValueAsString(measureResults)
 
-      // ToDo serialize the partitioning and measurement columns into JSON object, #71
-      // $measureNames::TEXT[],
-      // $controlColumns::TEXT[],
+      // val measureResultsAsJson = JacksonHelper.objectMapper.writeValueAsString(measureResults)
+      val measureNamesAsJsonString = SerializationUtils.asJson(measureNames)
+      val controlColumnsAsJsonString = SerializationUtils.asJson(controlColumns)
+      val measureResultsAsJsonString = SerializationUtils.asJson(measureResults)
+
+      println(partitioningAsJsonString)
+      println(measureNamesAsJsonString)
+      println(controlColumnsAsJsonString)
+      println(measureResultsAsJsonString)
+
       sql"""SELECT #$selectEntry
             FROM #$functionName(
-              '{}'::JSONB,
+              $partitioningAsJsonString::JSONB,
               ${values.id},
               ${values.name},
               ${values.processStartTime},
               ${values.processEndTime},
-              '{}'::JSONB,
+              $measureNamesAsJsonString::TEXT[],
+              $controlColumnsAsJsonString::TEXT[][],
+              $measureResultsAsJsonString::JSONB[],
               ${values.author}
             ) #$alias;"""
     }
