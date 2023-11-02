@@ -40,6 +40,6 @@ class DatabaseService @Autowired()() {
    * Function to retrieve checkpoint based on the provided fields
    * @param filterCriteria JSON object containing the fields for filtering the checkpoint
    */
-  def readCheckpoint(filterCriteria: CheckpointFilterCriteria): Option[CheckpointDTO] = ???
+  def readCheckpoint(filterCriteria: CheckpointFilterCriteria): Option[Unit] = ???
 
 }

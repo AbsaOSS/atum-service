@@ -47,7 +47,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    */
   @PostMapping(Array("/read_checkpoint"))
   @ResponseStatus(HttpStatus.OK)
-  def readCheckpoint(@RequestBody filterCriteria: CheckpointFilterCriteria): ResponseEntity[CheckpointDTO] = {
+  def readCheckpoint(@RequestBody filterCriteria: CheckpointFilterCriteria): ResponseEntity[Unit] = {
     val results = databaseService.readCheckpoint(filterCriteria)
     results match {
       case Some(entity) => ResponseEntity.status(HttpStatus.OK).body(entity)
