@@ -47,6 +47,8 @@ object Runs {
       // val measureResultsAsJson = JacksonHelper.objectMapper.writeValueAsString(measureResults)
 
       // ToDo serialize the partitioning and measurement columns into JSON object, #71
+      // $measureNames::TEXT[],
+      // $controlColumns::TEXT[],
       sql"""SELECT #$selectEntry
             FROM #$functionName(
               '{}'::JSONB,
@@ -54,8 +56,6 @@ object Runs {
               ${values.name},
               ${values.processStartTime},
               ${values.processEndTime},
-              $measureNames,
-              $controlColumns,
               '{}'::JSONB,
               ${values.author}
             ) #$alias;"""
