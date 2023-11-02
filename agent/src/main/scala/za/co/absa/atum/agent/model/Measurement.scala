@@ -72,13 +72,13 @@ object Measurement {
     def forCustomMeasure[T](measureName: String, controlCol: String, resultValue: T): MeasurementProvided[T] = {
       resultValue match {
         case _: Long =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Long)
+          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.Long)
         case _: Double =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Double)
+          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.Double)
         case _: BigDecimal =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.BigDecimal)
+          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.BigDecimal)
         case _: String =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue,  ResultValueType.String)
+          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue,  ResultValueType.String)
         case unsupportedType =>
           val className = unsupportedType.getClass.getSimpleName
           throw MeasurementProvidedException(

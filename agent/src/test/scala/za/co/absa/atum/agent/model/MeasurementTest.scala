@@ -28,15 +28,15 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
 
   "MeasurementProvided" should "be able to be converted to MeasurementProvided object when the result is Double" in {
     val measure = AbsSumOfValuesOfColumn("col")
-    val actualMeasurement = MeasurementProvided(measure, 1.0)
+    val actualMeasurement = MeasurementProvided(measure, BigDecimal(1.0))
 
     assert(actualMeasurement.resultValue == 1.0)
-    assert(actualMeasurement.resultType == ResultValueType.Double)
+    assert(actualMeasurement.resultType == ResultValueType.BigDecimal)
   }
 
-  "MeasurementProvided" should "throw exception for unsupported result value - BigDecimal instead of Double" in {
+  "MeasurementProvided" should "throw exception for unsupported result value - Double instead of BigDecimal" in {
     val measure = AbsSumOfValuesOfColumn("col")
-    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, BigDecimal(1.0)))
+    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
   }
 
   "MeasurementProvided" should "throw exception for unsupported result value type in general (scalar)" in {
@@ -50,13 +50,8 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
   }
 
   "MeasurementProvided" should "throw exception for unsupported result value type for a given Measure" in {
-    val measure = DistinctRecordCount("col")
+    val measure = DistinctRecordCount(Seq("col"))
     assertThrows[MeasurementProvidedException](MeasurementProvided(measure, "1"))
-  }
-
-  "MeasurementProvided" should "throw exception for unsupported (slightly different FPN) result value type for a given Measure" in {
-    val measure = SumOfValuesOfColumn("col")
-    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
   }
 
   "forCustomMeasure" should "create MeasurementProvided for custom measure" in {
@@ -65,7 +60,7 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val resultValue = "abc"
 
     val expectedMeasurementProvided = MeasurementProvided(
-      CustomMeasure(measureName, controlCol), resultValue, ResultValueType.String
+      CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.String
     )
     val actualMeasurementProvided = MeasurementProvided.forCustomMeasure(measureName, controlCol, "abc")
 

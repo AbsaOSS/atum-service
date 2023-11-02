@@ -27,14 +27,14 @@ private [agent] object MeasuresBuilder {
   }
 
   private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.AtumMeasure = {
-    val controlColumn = measure.controlColumns.head
+    val controlColumns = measure.controlColumns
 
     measure.measureName match {
-      case RecordCount.measureName            => RecordCount(controlColumn)
-      case DistinctRecordCount.measureName    => DistinctRecordCount(controlColumn)
-      case SumOfValuesOfColumn.measureName    => SumOfValuesOfColumn(controlColumn)
-      case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(controlColumn)
-      case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(controlColumn)
+      case RecordCount.measureName            => RecordCount()
+      case DistinctRecordCount.measureName    => DistinctRecordCount(controlColumns)
+      case SumOfValuesOfColumn.measureName    => SumOfValuesOfColumn(controlColumns.head)
+      case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(controlColumns.head)
+      case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(controlColumns.head)
       case unsupportedMeasure =>
         throw MeasureException(
           s"Measure not supported: $unsupportedMeasure. Supported measures are: ${AtumMeasure.supportedMeasureNames}"

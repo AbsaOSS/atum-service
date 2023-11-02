@@ -16,6 +16,8 @@
 
 package za.co.absa.atum.agent.model
 
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumAgent
@@ -29,7 +31,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
   "Measure" should "be based on the dataframe" in {
 
     // Measures
-    val measureIds: AtumMeasure = RecordCount(controlCol = "id")
+    val measureIds: AtumMeasure = RecordCount()
     val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn(
       controlCol = "salary"
     )
@@ -38,13 +40,13 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
 
     // AtumContext contains `Measurement`
     val atumContextInstanceWithRecordCount = AtumAgent
-      .getOrCreateAtumContext(AtumPartitions("foo"->"bar"))
+      .getOrCreateAtumContext(AtumPartitions("foo" -> "bar"))
       .addMeasure(measureIds)
     val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
-      .subPartitionContext(AtumPartitions("sub"->"partition"))
+      .subPartitionContext(AtumPartitions("sub" -> "partition"))
       .addMeasure(salaryAbsSum)
     val atumContextWithNameHashSum = atumContextInstanceWithRecordCount
-      .subPartitionContext(AtumPartitions("another"->"partition"))
+      .subPartitionContext(AtumPartitions("another" -> "partition"))
       .addMeasure(sumOfHashes)
 
     // Pipeline
@@ -83,12 +85,12 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
         .removeMeasure(salaryAbsSum)
     )
 
-    val dfPersonCntResult             = measureIds.function(dfPersons)
-    val dfFullCntResult               = measureIds.function(dfFull)
-    val dfFullSalaryAbsSumResult      = salaryAbsSum.function(dfFull)
-    val dfFullHashResult              = sumOfHashes.function(dfFull)
-    val dfExtraPersonSalarySumResult  = salarySum.function(dfExtraPerson)
-    val dfFullSalarySumResult         = salarySum.function(dfFull)
+    val dfPersonCntResult = measureIds.function(dfPersons)
+    val dfFullCntResult = measureIds.function(dfFull)
+    val dfFullSalaryAbsSumResult = salaryAbsSum.function(dfFull)
+    val dfFullHashResult = sumOfHashes.function(dfFull)
+    val dfExtraPersonSalarySumResult = salarySum.function(dfExtraPerson)
+    val dfFullSalarySumResult = salarySum.function(dfFull)
 
     // Assertions
     assert(dfPersonCntResult.result == "1000")
@@ -96,13 +98,92 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     assert(dfFullCntResult.result == "1000")
     assert(dfFullCntResult.resultType == ResultValueType.Long)
     assert(dfFullSalaryAbsSumResult.result == "2987144")
-    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.Double)
+    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.BigDecimal)
     assert(dfFullHashResult.result == "2044144307532")
     assert(dfFullHashResult.resultType == ResultValueType.String)
     assert(dfExtraPersonSalarySumResult.result == "2986144")
     assert(dfExtraPersonSalarySumResult.resultType == ResultValueType.BigDecimal)
     assert(dfFullSalarySumResult.result == "2987144")
     assert(dfFullSalarySumResult.resultType == ResultValueType.BigDecimal)
+  }
+
+  "AbsSumOfValuesOfColumn" should "return expected value" in {
+    val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn("salary")
+
+    val data = List(Row("-100.10"), Row("200.20"))
+    val rdd = spark.sparkContext.parallelize(data)
+
+    val schema = StructType(Array(StructField("salary", StringType)))
+    val df = spark.createDataFrame(rdd, schema)
+
+    val result = salaryAbsSum.function(df)
+
+    assert(result.result == "300.3")
+    assert(result.resultType == ResultValueType.BigDecimal)
+  }
+
+  "AbsSumOfValuesOfColumn" should "return expected value for null result" in {
+    val salaryAbsSum = AbsSumOfValuesOfColumn("salary")
+
+    val data = List(Row(null), Row(null))
+    val rdd = spark.sparkContext.parallelize(data)
+
+    val schema = StructType(Array(StructField("salary", StringType)))
+    val df = spark.createDataFrame(rdd, schema)
+
+    val result = salaryAbsSum.function(df)
+
+    assert(result.result == "0")
+    assert(result.resultType == ResultValueType.BigDecimal)
+  }
+
+  "RecordCount" should "return expected value" in {
+    val distinctCount = RecordCount()
+
+    val data = List(Row("a1", "b1"), Row("a1", "b2"), Row("a2", "b2"), Row("a2", "b2"))
+    val rdd = spark.sparkContext.parallelize(data)
+
+    val schema = StructType(Array(StructField("colA", StringType), StructField("colB", StringType)))
+    val df = spark.createDataFrame(rdd, schema)
+
+    val result = distinctCount.function(df)
+
+    assert(result.result == "4")
+    assert(result.resultType == ResultValueType.Long)
+  }
+
+  "DistinctRecordCount" should "return expected value for multiple columns" in {
+    val distinctCount = DistinctRecordCount(Seq("colA", "colB"))
+
+    val data = List(Row("a1", "b1"), Row("a1", "b2"), Row("a2", "b2"), Row("a2", "b2"))
+    val rdd = spark.sparkContext.parallelize(data)
+
+    val schema = StructType(Array(StructField("colA", StringType), StructField("colB", StringType)))
+    val df = spark.createDataFrame(rdd, schema)
+
+    val result = distinctCount.function(df)
+
+    assert(result.result == "3")
+    assert(result.resultType == ResultValueType.Long)
+  }
+
+  "DistinctRecordCount" should "fail requirements when no control columns given" in {
+    assertThrows[java.lang.IllegalArgumentException](DistinctRecordCount(controlCols = Seq.empty))
+  }
+
+  "SumOfValuesOfColumn" should "return expected value" in {
+    val distinctCount = SumOfValuesOfColumn("colA")
+
+    val data = List(Row(1, "b1"), Row(1, "b2"), Row(1, "b2"), Row(1, "b2"))
+    val rdd = spark.sparkContext.parallelize(data)
+
+    val schema = StructType(Array(StructField("colA", IntegerType), StructField("colB", StringType)))
+    val df = spark.createDataFrame(rdd, schema)
+
+    val result = distinctCount.function(df)
+
+    assert(result.result == "4")
+    assert(result.resultType == ResultValueType.BigDecimal)
   }
 
 }
