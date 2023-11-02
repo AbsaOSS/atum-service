@@ -16,8 +16,8 @@
 
 CREATE OR REPLACE FUNCTION runs.create_partitioning_if_not_exists(
     IN  i_partitioning          JSONB,
-    IN  i_parent_partitioning   JSONB,
     IN  i_by_user               TEXT,
+    IN  i_parent_partitioning   JSONB = NULL,
     OUT status                  INTEGER,
     OUT status_text             TEXT,
     OUT id_partitioning         BIGINT
@@ -30,8 +30,8 @@ $$
 --
 -- Parameters:
 --      i_partitioning          - partitioning which existence to check
---      i_parent_partitioning   - parent partitioning of the provided partitioning, optional
 --      i_by_user               - user behind the change
+--      i_parent_partitioning   - parent partitioning of the provided partitioning, optional
 --
 -- Returns:
 --      status              - Status code
