@@ -30,8 +30,8 @@ $$
 --
 -- Parameters:
 --      i_partitioning          - partitioning which existence to check
---      i_parent_partitioning   - parent partitioning of the provided partitioning, optional
 --      i_by_user               - user behind the change
+--      i_parent_partitioning   - parent partitioning of the provided partitioning, optional
 --
 -- Returns:
 --      status              - Status code
