@@ -17,7 +17,7 @@
 package za.co.absa.atum.web.api
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.springframework.boot.SpringApplication
@@ -42,6 +42,7 @@ class AtumService extends SpringBootServletInitializer {
     new ObjectMapper()
       .registerModule(DefaultScalaModule)
       .registerModule(new JavaTimeModule())
+      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
       .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
   }
 }

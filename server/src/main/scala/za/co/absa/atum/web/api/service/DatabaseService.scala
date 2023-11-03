@@ -19,7 +19,11 @@ package za.co.absa.atum.web.api.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.web.api.implicits.scalaToJavaFuture
 import za.co.absa.atum.web.api.provider.PostgresAccessProvider
+
+import java.lang.Boolean.TRUE
+import java.util.concurrent.CompletableFuture
 
 @Service
 class DatabaseService @Autowired()() {
@@ -27,8 +31,9 @@ class DatabaseService @Autowired()() {
   val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
 
   /** This service function saves the checkpoint into the database. */
-  def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    postgresAccessProvider.runs.writeCheckpoint(checkpoint)
+  def saveCheckpoint(checkpoint: CheckpointDTO): CompletableFuture[Boolean] = {
+    val wroteCheckpointFuture = postgresAccessProvider.runs.writeCheckpoint(checkpoint)
+    wroteCheckpointFuture.thenApply[Boolean](_ => TRUE)
   }
 
 }

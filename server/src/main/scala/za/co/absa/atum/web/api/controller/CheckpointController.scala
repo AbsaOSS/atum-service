@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.service.DatabaseService
 
+import java.util.concurrent.CompletableFuture
+
 
 @RestController
 @RequestMapping(Array("/api/v1/checkpoint"))
@@ -34,9 +36,8 @@ class CheckpointController @Autowired()(databaseService: DatabaseService){
    * @return A ResponseEntity with the status code CREATED.
    */
   @PostMapping(path = Array("/create"))
-  @ResponseStatus(value = HttpStatus.CREATED)
-  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
+  @ResponseStatus(HttpStatus.CREATED)
+  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[Boolean] = {
     databaseService.saveCheckpoint(checkpoint)
-    ResponseEntity.noContent().build()
   }
 }
