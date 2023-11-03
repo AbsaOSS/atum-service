@@ -34,6 +34,12 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
 object Runs {
 
+  private def scalaIterableToSQLArray(toConvert: Seq[Any]): String = {
+    SerializationUtils.asJson(toConvert)
+      .replace("[", "{")
+      .replace("]", "}")
+  }
+
   class WriteCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
     extends DBSingleResultFunction[CheckpointDTO, Unit, SlickPgEngine]
       with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
@@ -42,20 +48,17 @@ object Runs {
 
     /** Call the database function that create a checkpoint to the db **/
     override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
-      val partitioningAsJsonString = SerializationUtils.asJson( values.partitioning)
+      val partitioningAsJsonString = SerializationUtils.asJson(values.partitioning)
 
-      val measureNames = values.measurements.map(_.measure.measureName)
-      val controlColumns = values.measurements.map(_.measure.controlColumns)
+      val measureNames = scalaIterableToSQLArray(values.measurements.map(_.measure.measureName))
+      val controlColumns = scalaIterableToSQLArray(values.measurements.map(_.measure.controlColumns))
+
       val measureResults = values.measurements.map(_.result)
-
-      // val measureResultsAsJson = JacksonHelper.objectMapper.writeValueAsString(measureResults)
-      val measureNamesAsJsonString = SerializationUtils.asJson(measureNames)
-      val controlColumnsAsJsonString = SerializationUtils.asJson(controlColumns)
       val measureResultsAsJsonString = SerializationUtils.asJson(measureResults)
-
-      println(partitioningAsJsonString)
-      println(measureNamesAsJsonString)
-      println(controlColumnsAsJsonString)
+        .replace("[", "{")
+        .replace("]", "}")
+      println(measureResults)
+      println(SerializationUtils.asJson(measureResults))
       println(measureResultsAsJsonString)
 
       sql"""SELECT #$selectEntry
@@ -63,11 +66,11 @@ object Runs {
               $partitioningAsJsonString::JSONB,
               ${values.id},
               ${values.name},
-              ${values.processStartTime},
-              ${values.processEndTime},
-              $measureNamesAsJsonString::TEXT[],
-              $controlColumnsAsJsonString::TEXT[][],
-              $measureResultsAsJsonString::JSONB[],
+              ${values.processStartTime}::TIMESTAMPTZ,
+              ${values.processEndTime}::TIMESTAMPTZ,
+              $measureNames::TEXT[],
+              $controlColumns::TEXT[][],
+              '{}'::JSONB[],
               ${values.author}
             ) #$alias;"""
     }
