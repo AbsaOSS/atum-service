@@ -30,8 +30,8 @@ $$
 --
 -- Parameters:
 --      i_partitioning          - partitioning which existence to check
---      i_by_user               - user behind the change
 --      i_parent_partitioning   - parent partitioning of the provided partitioning, optional
+--      i_by_user               - user behind the change
 --
 -- Returns:
 --      status              - Status code
@@ -66,8 +66,8 @@ BEGIN
     IF _create_partitioning THEN
         INSERT INTO runs.partitionings (partitioning, created_by)
         VALUES (i_partitioning, i_by_user)
-        RETURNING id_partitioning
-        INTO id_partitioning;
+        RETURNING partitionings.id_partitioning
+        INTO create_partitioning_if_not_exists.id_partitioning;
 
         PERFORM 1
         FROM flows._create_flow(id_partitioning, i_by_user);
@@ -106,5 +106,5 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE  SECURITY DEFINER;
 
-ALTER FUNCTION runs.create_partitioning_if_not_exists(JSONB, JSONB, TEXT) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.create_partitioning_if_not_exists(JSONB, JSONB, TEXT) TO atum_user;
+ALTER FUNCTION runs.create_partitioning_if_not_exists(JSONB, TEXT, JSONB) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.create_partitioning_if_not_exists(JSONB, TEXT, JSONB) TO atum_user;
