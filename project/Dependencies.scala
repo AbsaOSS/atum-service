@@ -43,6 +43,8 @@ object Dependencies {
     val sparkCommons = "0.6.1"
 
     val sttp = "3.5.2"
+
+    val postgresql = "42.6.0"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -137,4 +139,12 @@ object Dependencies {
     Seq(specs2core, typeSafeConfig, jacksonModuleScala)
   }
 
+  def databaseDependencies: Seq[ModuleID] = {
+    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % "test,it"
+    lazy val postgresql = "org.postgresql"   % "postgresql" % Versions.postgresql % "test,it"
+    Seq(
+      scalaTest,
+      postgresql,
+    )
+  }
 }

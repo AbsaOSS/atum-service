@@ -71,6 +71,7 @@ myTestCheckpoints
 **/main/resources/application.conf
 **/main/resources/application.yaml
 **/main/resources/application.yml
+/database/src/it/resources/database.properties
 
 *.config
 *.keytab
@@ -87,3 +88,5 @@ _site
 utils/resources/*.conf
 
 .bsp
+
+/database/src/it/resources/database.properties

@@ -53,7 +53,7 @@ val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := 
 }
 
 lazy val root = (projectMatrix in file("."))
-  .aggregate(model, server, agent)
+  .aggregate(model, server, agent, database)
   .settings(
     name := "atum-service-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
@@ -115,7 +115,21 @@ lazy val model = (projectMatrix in file("model"))
     ): _*
   )
   .settings(
-    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent: model"),
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-model"),
     jacocoExcludes := jacocoProjectExcludes()
   )
   .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+
+lazy val database = (projectMatrix in file("database"))
+  .settings(
+    commonSettings ++ Seq(
+      name := "atum-database",
+      libraryDependencies ++= Dependencies.databaseDependencies,
+      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+    ): _*
+  )
+  .settings(
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-database"),
+    jacocoExcludes := jacocoProjectExcludes()
+  )
+  .jvmPlatform(scalaVersions = Seq(Versions.scala212))
