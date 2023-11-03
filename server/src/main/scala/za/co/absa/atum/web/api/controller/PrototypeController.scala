@@ -51,7 +51,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
     val results = databaseService.readCheckpoint(filterCriteria)
     results match {
       case Some(entity) => ResponseEntity.status(HttpStatus.OK).body(entity)
-      case None => ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+      case None => ResponseEntity.status(HttpStatus.NOT_FOUND).body(None)
     }
   }
 }
