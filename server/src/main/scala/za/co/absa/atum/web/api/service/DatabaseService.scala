@@ -22,8 +22,8 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.implicits.scalaToJavaFuture
 import za.co.absa.atum.web.api.provider.PostgresAccessProvider
 
-import java.lang.Boolean.TRUE
 import java.util.concurrent.CompletableFuture
+import scala.concurrent.ExecutionContext
 
 @Service
 class DatabaseService @Autowired()() {
@@ -31,9 +31,11 @@ class DatabaseService @Autowired()() {
   val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
 
   /** This service function saves the checkpoint into the database. */
-  def saveCheckpoint(checkpoint: CheckpointDTO): CompletableFuture[Boolean] = {
-    val wroteCheckpointFuture = postgresAccessProvider.runs.writeCheckpoint(checkpoint)
-    wroteCheckpointFuture.thenApply[Boolean](_ => TRUE)
+  def saveCheckpoint(checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
+    implicit val executionContext: ExecutionContext = postgresAccessProvider.executor
+    for {
+      _ <- postgresAccessProvider.runs.writeCheckpoint(checkpoint)
+    } yield checkpoint
   }
 
 }

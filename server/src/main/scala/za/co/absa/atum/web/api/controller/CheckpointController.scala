@@ -17,7 +17,7 @@
 package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.web.api.service.DatabaseService
@@ -37,7 +37,7 @@ class CheckpointController @Autowired()(databaseService: DatabaseService){
    */
   @PostMapping(path = Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
-  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[Boolean] = {
+  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
     databaseService.saveCheckpoint(checkpoint)
   }
 }
