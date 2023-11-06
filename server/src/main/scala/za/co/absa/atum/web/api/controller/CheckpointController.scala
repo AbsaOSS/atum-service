@@ -17,22 +17,27 @@
 package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.web.api.NotFoundException
-import za.co.absa.atum.web.api.implicits._
-import za.co.absa.atum.web.api.payload.MessagePayload
-import za.co.absa.atum.web.api.service.{FlowService, SegmentationService}
-import za.co.absa.atum.web.model.{Flow, Partition}
+import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.web.api.service.DatabaseService
 
-import java.net.URI
 import java.util.concurrent.CompletableFuture
-import java.util.{Optional, UUID}
-import scala.concurrent.ExecutionContext.Implicits.global
+
 
 @RestController
-@RequestMapping(Array("/api/segmentations"))
-class SegmentationController @Autowired()(segmentationService: SegmentationService)
-  extends BaseApiController(segmentationService) {
+@RequestMapping(Array("/api/v1/checkpoint"))
+class CheckpointController @Autowired()(databaseService: DatabaseService){
 
+  /**
+   * Creates a checkpoint in a DB.
+   *
+   * @param checkpoint The checkpoint to create.
+   * @return A ResponseEntity with the status code CREATED.
+   */
+  @PostMapping(path = Array("/create"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
+    databaseService.saveCheckpoint(checkpoint)
+  }
 }

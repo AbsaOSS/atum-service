@@ -54,7 +54,7 @@ abstract class BaseApiController[C <: BaseApiModel](baseApiService: BaseApiServi
         .fromRequest(request)
         .path("/{id}")
         .buildAndExpand(id)
-        .toUri() // will create location e.g. /api/controlmeasures/someIdHere
+        .toUri // will create location e.g. /api/controlmeasures/someIdHere
 
       ResponseEntity.created(location)
         .body[MessagePayload](MessagePayload(s"Successfully created control measure with id $id"))

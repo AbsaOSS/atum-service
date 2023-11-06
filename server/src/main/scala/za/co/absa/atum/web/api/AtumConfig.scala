@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.service
+package za.co.absa.atum.web.api
 
-import org.springframework.stereotype.Service
-import za.co.absa.atum.web.api.AtumConfig
+import com.typesafe.config.{Config, ConfigFactory}
 
-@Service
-class TestService {
-  def getMessage: String = {
-    val testConfigVal = AtumConfig.testEndpointConfig.getString("some-key")
-    s"The service says: alfa '$testConfigVal'"
-  }
+trait AtumConfig {
+
+  def dbConfig: Config
+}
+
+object AtumConfig extends AtumConfig {
+
+  private val config = ConfigFactory.load("application.properties")
+
+  override def dbConfig: Config = config.getConfig("postgres")
+  def testEndpointConfig: Config = config.getConfig("atum.web.api.config")
 }

@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.config
+package za.co.absa.atum.model.utils
 
-import org.springframework.boot.context.properties.{ConfigurationProperties, ConstructorBinding}
-
-@ConstructorBinding
-@ConfigurationProperties(prefix = "atum.web.api.config")
-class BaseConfig(
-                val someKey: String
-                )
+object OptionImplicits {
+  implicit class OptionEnhancements[T](val option: Option[T]) extends AnyVal {
+    /**
+      * Gets the `option` value or throws the provided exception
+      *
+      * @param exception the exception to throw in case the `option` is None
+      * @return
+      */
+    def getOrThrow(exception: => Throwable): T = {
+      option.getOrElse(throw exception)
+    }
+  }
+}

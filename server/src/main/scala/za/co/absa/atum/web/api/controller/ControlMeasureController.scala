@@ -23,7 +23,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.web.api.implicits._
 import za.co.absa.atum.web.api.payload.MessagePayload
 import za.co.absa.atum.web.api.service.ControlMeasureService
-import za.co.absa.atum.web.model.{Checkpoint, CheckpointUpdate, ControlMeasure, ControlMeasureMetadata, Measurement}
+import za.co.absa.atum.web.model._
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture
@@ -81,7 +81,7 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
         .fromRequest(request)
         .path("/{cpId}")
         .buildAndExpand(cpId)
-        .toUri() // will create location e.g. /api/controlmeasures/{cmId}/checkpoints/{cpId}
+        .toUri // will create location e.g. /api/controlmeasures/{cmId}/checkpoints/{cpId}
 
       ResponseEntity.created(location)
         .body[MessagePayload](MessagePayload(s"Successfully added Checkpoint id=$cpId, for ControlMeasure id=$cmId"))
@@ -116,7 +116,7 @@ class ControlMeasureController @Autowired()(controlMeasureService: ControlMeasur
       val location: URI = ServletUriComponentsBuilder
         .fromRequest(request)
         .build()
-        .toUri()
+        .toUri
 
       ResponseEntity.created(location)
         .body[MessagePayload](MessagePayload(s"Successfully added Measurement to CP id=$cpId, for ControlMeasure id=$cmId"))
