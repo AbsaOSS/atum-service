@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.database.balta.classes
 
-import za.co.absa.atum.database.balta.classes.setter.{Params, SetterFnc}
+import za.co.absa.atum.database.balta.classes.setter.{AllowedParamTypes, Params, SetterFnc}
 import za.co.absa.atum.database.balta.classes.setter.Params.NamedParams
 
 case class DBTable(tableName: String) extends DBQuerySupport{
@@ -31,42 +31,70 @@ case class DBTable(tableName: String) extends DBQuerySupport{
     runQuery(sql, values.setters){_.next()}
   }
 
-// TOOO
-//  def fieldValue[K: AllowedParamTypes, T](keyName: String, keyValue: K, fieldName: String)(implicit connection: DBConnection): Option[T] = {
-//    ???
-//  }
+  def fieldValue[K: AllowedParamTypes, T](keyName: String, keyValue: K, fieldName: String)
+                                         (implicit connection: DBConnection): Option[Option[T]] = {
+    where(Params.add(keyName, keyValue)){resultSet =>
+      if (resultSet.hasNext) {
+        Some(resultSet.next().getAs[T](fieldName))
+      } else {
+        None
+      }
+    }
+  }
 
   def where[R](params: NamedParams)(verify: QueryResult => R)(implicit connection: DBConnection): R = {
-    composeAndRun(strToOption(paramsToWhereCondition(params)), None, params.setters)(verify)
+    composeSelectAndRun(strToOption(paramsToWhereCondition(params)), None, params.setters)(verify)
   }
 
   def where[R](params: NamedParams, orderBy: String)(verify: QueryResult => R)(implicit connection: DBConnection): R = {
-    composeAndRun(strToOption(paramsToWhereCondition(params)), strToOption(orderBy), params.setters)(verify)
+    composeSelectAndRun(strToOption(paramsToWhereCondition(params)), strToOption(orderBy), params.setters)(verify)
   }
 
   def where[R](condition: String)(verify: QueryResult => R)(implicit connection: DBConnection): R = {
-    composeAndRun(strToOption(condition), None)(verify)
+    composeSelectAndRun(strToOption(condition), None)(verify)
   }
 
   def where[R](condition: String, orderBy: String)(verify: QueryResult => R)(implicit connection: DBConnection): R = {
-    composeAndRun(strToOption(condition), strToOption(orderBy))(verify)
+    composeSelectAndRun(strToOption(condition), strToOption(orderBy))(verify)
   }
 
   def all[R]()(verify: QueryResult => R)(implicit connection: DBConnection): R = {
-    composeAndRun(None, None)(verify)
+    composeSelectAndRun(None, None)(verify)
   }
 
   def all[R](orderBy: String)(verify: QueryResult => R)(implicit connection: DBConnection): R = {
-    composeAndRun(None, strToOption(orderBy))(verify)
+    composeSelectAndRun(None, strToOption(orderBy))(verify)
   }
 
-  private def composeAndRun[R](whereCondition: Option[String], orderByExpr: Option[String], setters: List[SetterFnc] = List.empty)
+  def count()(implicit connection: DBConnection): Long = {
+    composeCountAndRun(None)
+  }
+
+  def count(params: NamedParams)(implicit connection: DBConnection): Long = {
+    composeCountAndRun(strToOption(paramsToWhereCondition(params)), params.setters)
+  }
+
+  def count(condition: String)(implicit connection: DBConnection): Long = {
+    composeCountAndRun(strToOption(condition))
+  }
+
+  private def composeSelectAndRun[R](whereCondition: Option[String], orderByExpr: Option[String], setters: List[SetterFnc] = List.empty)
                               (verify: QueryResult => R)
                               (implicit connection: DBConnection): R = {
     val where = whereCondition.map("WHERE " + _).getOrElse("")
     val orderBy = orderByExpr.map("ORDER BY " + _).getOrElse("")
     val sql = s"SELECT * FROM $tableName $where $orderBy;"
     runQuery(sql, setters)(verify)
+  }
+
+  private def composeCountAndRun(whereCondition: Option[String], setters: List[SetterFnc] = List.empty)
+                                (implicit connection: DBConnection): Long = {
+    val where = whereCondition.map("WHERE " + _).getOrElse("")
+    val sql = s"SELECT count(1) AS cnt FROM $tableName $where;"
+    runQuery(sql, setters) {resultSet =>
+      resultSet.next().getLong("cnt").getOrElse(0)
+    }
+
   }
 
   private def strToOption(str: String): Option[String] = {

@@ -16,6 +16,8 @@
 
 package za.co.absa.atum.database.balta.classes
 
+import org.postgresql.util.PGobject
+
 import java.sql.ResultSet
 import java.time.{Instant, OffsetDateTime}
 import java.util.UUID
@@ -32,15 +34,30 @@ class QueryResultRow private[classes](val resultSet: ResultSet) extends AnyVal {
   }
 
   def getBoolean(columnLabel: String): Option[Boolean] = safe(resultSet.getBoolean(columnLabel))
+
   def getString(columnLabel: String): Option[String] = Option(resultSet.getString(columnLabel))
+
   def getInt(columnLabel: String): Option[Int] = safe(resultSet.getInt(columnLabel))
+
   def getLong(columnLabel: String): Option[Long] = safe(resultSet.getLong(columnLabel))
+
   def getUUID(columnLabel: String): Option[UUID] = Option(resultSet.getObject(columnLabel).asInstanceOf[UUID])
 
   def getOffsetDateTime(columnLabel: String): Option[OffsetDateTime] = Option(resultSet.getObject(columnLabel, classOf[OffsetDateTime]))
 
   def getInstant(columnLabel: String): Option[Instant] = getOffsetDateTime(columnLabel).map(_.toInstant)
 
-  def getAs[T](columnLabel: String): Option[T] = Option(resultSet.getObject(columnLabel).asInstanceOf[T])
+  def getJsonB(columnLabel: String): Option[JsonBString] = {
+    Option(resultSet.getObject(columnLabel).asInstanceOf[PGobject])map(pgo => JsonBString(pgo.toString))
+  }
+
+  def getAs[T](columnLabel: String): Option[T] = {
+    val result = resultSet.getObject(columnLabel).asInstanceOf[T]
+    if (resultSet.wasNull()) {
+      None
+    } else {
+      Option(result)
+    }
+  }
 
 }

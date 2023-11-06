@@ -20,15 +20,15 @@ import za.co.absa.atum.database.balta.DBTestSuite
 
 class WriteCheckpointTest extends DBTestSuite {
 
-  dbTest("Write new checkpoint"){
+  test("Write new checkpoint"){
 
   }
 
-  dbTest("Checkpoint already exists") {
+  test("Checkpoint already exists") {
 
   }
 
-  dbTest("Partitioning of the checkpoint does not exist") {
+  test("Partitioning of the checkpoint does not exist") {
     function("runs.write_checkpoint")
       .setParam[String]("Hello")
       .setParam[Int](1)

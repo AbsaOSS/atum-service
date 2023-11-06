@@ -24,7 +24,7 @@ import za.co.absa.atum.database.balta.classes.setter.{AllowedParamTypes, Params}
 import za.co.absa.atum.database.balta.classes.setter.Params.{NamedParams, OrderedParams}
 import za.co.absa.atum.database.balta.classes.{ConnectionInfo, DBConnection, DBFunction, DBTable, QueryResult}
 
-import java.sql.{Connection, DriverManager}
+import java.sql.DriverManager
 import java.time.OffsetDateTime
 import java.util.Properties
 
@@ -40,18 +40,22 @@ abstract class DBTestSuite extends AnyFunSuite with BeforeAndAfterAll{
 
   protected lazy val connectionInfo: ConnectionInfo = readConnectionInfoFromConfig
 
-  protected def dbTest(testName: String, testTags: Tag*)
+  override protected def test(testName: String, testTags: Tag*)
                       (testFun: => Any /* Assertion */)
                       (implicit pos: source.Position): Unit = {
-    try {
-      test(testName, testTags: _*)(testFun)
-    } finally {
-      if (connectionInfo.persistData) {
-        dbConnection.connection.commit()
-      } else {
-        dbConnection.connection.rollback()
+    val dbTestFun = {
+      try {
+        testFun
+      }
+      finally {
+        if (connectionInfo.persistData) {
+          dbConnection.connection.commit()
+        } else {
+          dbConnection.connection.rollback()
+        }
       }
     }
+    super.test(testName, testTags: _*)(dbTestFun)
   }
 
   protected def table(tableName: String): DBTable = {

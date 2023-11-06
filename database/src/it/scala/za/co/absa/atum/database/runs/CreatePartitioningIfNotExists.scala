@@ -51,7 +51,7 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
       |""".stripMargin
   )
 
-  dbTest("Partitioning created") {
+  test("Partitioning created") {
     val partitioningID = function(fncCreatePartitioningIfNotExists)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
@@ -64,7 +64,12 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
         row.getLong("id_partitioning").get
       }
 
-
+    table("runs.partitionings").where(add("id_partitioning", partitioningID)) {partitioningResult =>
+      val row = partitioningResult.next()
+      // assert(row.getJsonB("partitioning").contains(partitioning)) TODO keys are reordered in JsonB and whitespaces removed
+      assert(row.getString("created_by").contains("Fantômas"))
+      assert(row.getOffsetDateTime("created_at").contains(now()))
+    }
 
     val idFlow = table("flows.partitioning_to_flow").where(add("fk_partitioning", partitioningID)) { partToFlowResult =>
       assert(partToFlowResult.hasNext)
@@ -75,7 +80,7 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
       result.get
     }
 
-    val flowsResult = table("flows.flows").where(add("id_flow", idFlow)) {flowsResult =>
+    table("flows.flows").where(add("id_flow", idFlow)) {flowsResult =>
       assert(flowsResult.hasNext)
       val flowRow = flowsResult.next()
       assert(flowRow.getString("flow_name").exists(_.startsWith("Custom flow #")))
@@ -85,10 +90,12 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
       assert(flowRow.getOffsetDateTime("created_at").contains(now()))
       assert(!flowsResult.hasNext)
     }
+
+
   }
 
 
-  dbTest("Partitioning created with parent partitioning") {
+  ignore("Partitioning created with parent partitioning that already exists") {
 //    function(fncCreatePartitioningIfNotExists)
 //      .setParam("i_partitioning", partitioning)
 //      .setParam("i_by_user", "Phantomas")
@@ -100,5 +107,39 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
 //        assert(row.getString("status_text") == "Partitioning created")
 //        assert(Option(row.getLong("id_partitioning")).nonEmpty)
 //      }
+  }
+
+  test("Partitioning already exists") {
+    val partitioningID = function(fncCreatePartitioningIfNotExists)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_by_user", "Fantômas")
+      .setParamNull("i_parent_partitioning")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Partitioning created"))
+        row.getLong("id_partitioning").get
+      }
+
+    function(fncCreatePartitioningIfNotExists)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_by_user", "Fantômas")
+      .setParamNull("i_parent_partitioning")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(14))
+        assert(row.getString("status_text").contains("Partitioning already present"))
+        assert(row.getLong("id_partitioning").contains(partitioningID))
+      }
+
+    assert(
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", partitioningID)) == 1
+    )
+  }
+
+  ignore("Partitioning exists, but parent is updated") {
+
   }
 }
