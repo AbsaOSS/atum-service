@@ -27,7 +27,7 @@ case class DBTable(tableName: String) extends DBQuerySupport{
       s"($keysString)"
     }.getOrElse("")
     val paramStr = List.fill(values.size)("?").mkString(",")
-    val sql = s"INSERR INTO $tableName $columns VALUES($paramStr) RETURNING *;"
+    val sql = s"INSERT INTO $tableName $columns VALUES($paramStr) RETURNING *;"
     runQuery(sql, values.setters){_.next()}
   }
 
