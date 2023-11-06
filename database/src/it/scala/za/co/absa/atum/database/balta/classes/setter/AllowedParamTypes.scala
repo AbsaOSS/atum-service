@@ -18,6 +18,7 @@ package za.co.absa.atum.database.balta.classes.setter
 
 import za.co.absa.atum.database.balta.classes.JsonBString
 
+import java.sql.{Date, Time}
 import java.time.{Instant, ZonedDateTime}
 import java.util.UUID
 
@@ -31,6 +32,14 @@ object AllowedParamTypes {
 
   implicit object LongParamType extends AllowedParamTypes[Long]
 
+  implicit object DoubleParamType extends AllowedParamTypes[Double]
+
+  implicit object FloatParamType extends AllowedParamTypes[Float]
+
+  implicit object BigDecimalParamType extends AllowedParamTypes[BigDecimal]
+
+  implicit object CharParamType extends AllowedParamTypes[Char]
+
   implicit object StringParamType extends AllowedParamTypes[String]
 
   implicit object UUIDParamType extends AllowedParamTypes[UUID]
@@ -40,6 +49,10 @@ object AllowedParamTypes {
   implicit object InstantParamType extends AllowedParamTypes[Instant]
 
   implicit object ZonedDateTimeParamType extends AllowedParamTypes[ZonedDateTime]
+
+  implicit object TimeParamType extends AllowedParamTypes[Time]
+
+  implicit object DateParamType extends AllowedParamTypes[Date]
 
 
 }

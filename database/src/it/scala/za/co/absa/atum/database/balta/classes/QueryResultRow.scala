@@ -18,7 +18,7 @@ package za.co.absa.atum.database.balta.classes
 
 import org.postgresql.util.PGobject
 
-import java.sql.ResultSet
+import java.sql.{Date, ResultSet, Time}
 import java.time.{Instant, OffsetDateTime}
 import java.util.UUID
 
@@ -35,17 +35,36 @@ class QueryResultRow private[classes](val resultSet: ResultSet) extends AnyVal {
 
   def getBoolean(columnLabel: String): Option[Boolean] = safe(resultSet.getBoolean(columnLabel))
 
-  def getString(columnLabel: String): Option[String] = Option(resultSet.getString(columnLabel))
+  def getChar(columnLabel: String): Option[Char] = {
+    getString(columnLabel) match {
+      case Some(value) =>
+        if (value.isEmpty) None else Some(value.charAt(0))
+      case None =>
+        None
+    }
+  }
+
+  def getString(columnLabel: String): Option[String] = safe(resultSet.getString(columnLabel))
 
   def getInt(columnLabel: String): Option[Int] = safe(resultSet.getInt(columnLabel))
 
   def getLong(columnLabel: String): Option[Long] = safe(resultSet.getLong(columnLabel))
+
+  def getDouble(columnLabel: String): Option[Double] = safe(resultSet.getDouble(columnLabel))
+
+  def getFloat(columnLabel: String): Option[Float] = safe(resultSet.getFloat(columnLabel))
+
+  def getBigDecimal(columnLabel: String): Option[BigDecimal] = safe(resultSet.getBigDecimal(columnLabel))
 
   def getUUID(columnLabel: String): Option[UUID] = Option(resultSet.getObject(columnLabel).asInstanceOf[UUID])
 
   def getOffsetDateTime(columnLabel: String): Option[OffsetDateTime] = Option(resultSet.getObject(columnLabel, classOf[OffsetDateTime]))
 
   def getInstant(columnLabel: String): Option[Instant] = getOffsetDateTime(columnLabel).map(_.toInstant)
+
+  def getTime(columnLabel: String): Option[Time] = safe(resultSet.getTime(columnLabel))
+
+  def getDate(columnLabel: String): Option[Date] = safe(resultSet.getDate(columnLabel))
 
   def getJsonB(columnLabel: String): Option[JsonBString] = {
     Option(resultSet.getObject(columnLabel).asInstanceOf[PGobject])map(pgo => JsonBString(pgo.toString))
