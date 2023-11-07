@@ -27,8 +27,6 @@ import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import za.co.absa.fadb.slick.{SlickFunctionWithStatusSupport, SlickPgEngine}
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 
-import scala.util.matching.Regex
-
 class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
   import Runs._
 
@@ -37,14 +35,14 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
 object Runs {
 
-  private def nestedScalaSeqToPgArray(toConvert: Seq[Seq[String]]): String = {
+  private def nestedScalaSeqToPgArray[T](toConvert: Seq[Seq[T]]): String = {
     val scalaSeqJsonized = toConvert.map(scalaSeqToPgArray).mkString(",")
-    s"{$scalaSeqJsonized}"
+    "{" + scalaSeqJsonized + "}"
   }
 
-  private def scalaSeqToPgArray(toConvert: Seq[String]): String = {
+  private def scalaSeqToPgArray[T](toConvert: Seq[T]): String = {
     val scalaSeqJsonized = SerializationUtils.asJson(toConvert)  // this also correctly escapes double quotes
-    "{" + scalaSeqJsonized.substring(1, scalaSeqJsonized.length-1) + "}"
+    "{" + scalaSeqJsonized.substring(1, scalaSeqJsonized.length - 1) + "}"
   }
 
   class WriteCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
