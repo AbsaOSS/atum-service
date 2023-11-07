@@ -38,7 +38,7 @@ object Dependencies {
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
 
-    val spring = "2.6.1"
+    val spring = "2.6.15"
 
     val javaxServlet = "3.0.1"
     val springfox = "3.0.0"
