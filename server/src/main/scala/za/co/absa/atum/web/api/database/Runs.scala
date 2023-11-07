@@ -26,6 +26,8 @@ import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import za.co.absa.fadb.slick.{SlickFunctionWithStatusSupport, SlickPgEngine}
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 
+import scala.util.matching.Regex
+
 class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
   import Runs._
 
@@ -34,10 +36,18 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
 object Runs {
 
-  private def scalaIterableToSQLArray(toConvert: Seq[Any]): String = {
-    SerializationUtils.asJson(toConvert)
-      .replace("[", "{")
-      .replace("]", "}")
+  private def nestedScalaSeqToPgArray(toConvert: Seq[Seq[String]]): String = {
+    val scalaSeqJsonized = toConvert.map(scalaSeqToPgArray).mkString(",")
+    s"{$scalaSeqJsonized}"
+  }
+
+  private def scalaSeqToPgArray(toConvert: Seq[String]): String = {
+    val scalaArrayAndItsContent: Regex = "^\\[(.*)\\]$".r
+    val scalaSeqJsonized = SerializationUtils.asJson(toConvert)
+
+    scalaSeqJsonized match {
+      case scalaArrayAndItsContent(str) => s"{$str}"
+    }
   }
 
   class WriteCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
@@ -45,21 +55,18 @@ object Runs {
       with SlickFunctionWithStatusSupport[CheckpointDTO, Unit]
       with StandardStatusHandling
   {
-
     /** Call the database function that create a checkpoint to the db **/
     override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
       val partitioningAsJsonString = SerializationUtils.asJson(values.partitioning)
 
-      val measureNames = scalaIterableToSQLArray(values.measurements.map(_.measure.measureName))
-      val controlColumns = scalaIterableToSQLArray(values.measurements.map(_.measure.controlColumns))
+      val measureNames = values.measurements.map(_.measure.measureName)
+      val measureNamesNormalized = scalaSeqToPgArray(measureNames)
+
+      val controlColumns = values.measurements.map(_.measure.controlColumns)
+      val controlColumnsNormalized = nestedScalaSeqToPgArray(controlColumns)
 
       val measureResults = values.measurements.map(_.result)
-      val measureResultsAsJsonString = SerializationUtils.asJson(measureResults)
-        .replace("[", "{")
-        .replace("]", "}")
-      println(measureResults)
-      println(SerializationUtils.asJson(measureResults))
-      println(measureResultsAsJsonString)
+      val measureResultsNormalized = measureResults.map(SerializationUtils.asJson)
 
       sql"""SELECT #$selectEntry
             FROM #$functionName(
@@ -68,9 +75,9 @@ object Runs {
               ${values.name},
               ${values.processStartTime}::TIMESTAMPTZ,
               ${values.processEndTime}::TIMESTAMPTZ,
-              $measureNames::TEXT[],
-              $controlColumns::TEXT[][],
-              '{}'::JSONB[],
+              $measureNamesNormalized::TEXT[],
+              $controlColumnsNormalized::TEXT[][],
+              $measureResultsNormalized::JSONB[],
               ${values.author}
             ) #$alias;"""
     }
