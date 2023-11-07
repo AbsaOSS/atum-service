@@ -18,19 +18,19 @@ package za.co.absa.atum.web.model
 
 import za.co.absa.atum.model.dto.PartitionDTO
 
-case class Partitioning (
+private[server] case class PartitioningForDB private(
   version: Int = 1,
   keys: Seq[String],
   keysToValuesMap: Map[String, String]
 )
 
-object Partitioning {
+object PartitioningForDB {
 
-  def fromSeqPartitionDTO(partitioning: Seq[PartitionDTO]): Partitioning = {
+  def fromSeqPartitionDTO(partitioning: Seq[PartitionDTO]): PartitioningForDB = {
     val allKeys = partitioning.map(_.key)
     val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
 
-    Partitioning(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
+    PartitioningForDB(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
   }
 }
 

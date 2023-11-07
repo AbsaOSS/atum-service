@@ -19,7 +19,7 @@ package za.co.absa.atum.web.api.database
 import slick.jdbc.{GetResult, SQLActionBuilder}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.utils.SerializationUtils
-import za.co.absa.atum.web.model.Partitioning
+import za.co.absa.atum.web.model.PartitioningForDB
 import za.co.absa.fadb.DBFunction._
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
@@ -49,7 +49,7 @@ object Runs {
 
     /** Call the database function that create a checkpoint to the db **/
     override protected def sql(values: CheckpointDTO): SQLActionBuilder = {
-      val partitioning = Partitioning.fromSeqPartitionDTO(values.partitioning)
+      val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
       val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
       val measureNames = scalaIterableToSQLArray(values.measurements.map(_.measure.measureName))
