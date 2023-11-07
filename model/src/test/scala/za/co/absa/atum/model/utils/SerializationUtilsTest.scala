@@ -313,6 +313,20 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     assert(expectedPartitioningDTOJson == actualPartitioningDTOJson)
   }
 
+
+  "asJson" should "serialize Seq[PartitionDTO] into json string" in {
+    val partitionDTO = Seq(
+      PartitionDTO("key1", "val1"),
+      PartitionDTO("key2", "val2"),
+      PartitionDTO("key3", "val3")
+    )
+
+    val expectedPartitionDTOJson = "[{\"key\":\"key1\",\"value\":\"val1\"},{\"key\":\"key2\",\"value\":\"val2\"},{\"key\":\"key3\",\"value\":\"val3\"}]"
+    val actualPartitionDTOJson = SerializationUtils.asJson(partitionDTO)
+
+    assert(expectedPartitionDTOJson == actualPartitionDTOJson)
+  }
+
   "fromJson" should "deserialize PartitioningDTO with parent partitioning from json string" in {
     val partitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"parentPartitioning\":[{\"key\":\"parentKey\",\"value\":\"parentVal\"}]}"
 
