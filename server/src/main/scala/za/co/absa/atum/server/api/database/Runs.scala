@@ -27,6 +27,8 @@ import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import za.co.absa.fadb.slick.{SlickFunctionWithStatusSupport, SlickPgEngine}
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 
+import scala.reflect.ClassTag
+
 class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
   import Runs._
 
@@ -35,12 +37,12 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
 object Runs {
 
-  private def nestedScalaSeqToPgArray[T](toConvert: Seq[Seq[T]]): String = {
+  private def nestedScalaSeqToPgArray[T <: AnyRef: ClassTag](toConvert: Seq[Seq[T]]): String = {
     val scalaSeqJsonized = toConvert.map(scalaSeqToPgArray).mkString(",")
     "{" + scalaSeqJsonized + "}"
   }
 
-  private def scalaSeqToPgArray[T](toConvert: Seq[T]): String = {
+  private def scalaSeqToPgArray[T <: AnyRef: ClassTag](toConvert: Seq[T]): String = {
     val scalaSeqJsonized = SerializationUtils.asJson(toConvert)  // this also correctly escapes double quotes
     "{" + scalaSeqJsonized.substring(1, scalaSeqJsonized.length - 1) + "}"
   }
