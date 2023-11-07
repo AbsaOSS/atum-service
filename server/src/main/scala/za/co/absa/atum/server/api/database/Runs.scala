@@ -43,12 +43,8 @@ object Runs {
   }
 
   private def scalaSeqToPgArray(toConvert: Seq[String]): String = {
-    val scalaArrayAndItsContent: Regex = "^\\[(.*)\\]$".r
-    val scalaSeqJsonized = SerializationUtils.asJson(toConvert)
-
-    scalaSeqJsonized match {
-      case scalaArrayAndItsContent(str) => s"{$str}"
-    }
+    val scalaSeqJsonized = SerializationUtils.asJson(toConvert)  // this also correctly escapes double quotes
+    "{" + scalaSeqJsonized.substring(1, scalaSeqJsonized.length-1) + "}"
   }
 
   class WriteCheckpoint(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
