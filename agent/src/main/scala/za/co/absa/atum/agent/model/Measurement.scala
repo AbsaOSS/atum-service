@@ -28,17 +28,19 @@ trait Measurement {
 object Measurement {
 
   /**
-   * When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
-   * to do any adjustments.
+   *  When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
+   *  to do any adjustments.
    */
   case class MeasurementProvided[T](measure: Measure, resultValue: T, resultType: ResultValueType.ResultValueType)
-    extends Measurement
+      extends Measurement
 
   object MeasurementProvided {
 
     private def handleSpecificType[T](
-                                       measure: AtumMeasure, resultValue: T, requiredType: ResultValueType.ResultValueType
-                                     ): MeasurementProvided[T] = {
+      measure: AtumMeasure,
+      resultValue: T,
+      requiredType: ResultValueType.ResultValueType
+    ): MeasurementProvided[T] = {
 
       val actualType = measure.resultValueType
       if (actualType != requiredType)
@@ -78,7 +80,7 @@ object Measurement {
         case _: BigDecimal =>
           MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.BigDecimal)
         case _: String =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue,  ResultValueType.String)
+          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.String)
         case unsupportedType =>
           val className = unsupportedType.getClass.getSimpleName
           throw MeasurementProvidedException(
@@ -89,11 +91,11 @@ object Measurement {
     }
 
     /**
-     * When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
-     * needed - thus we are converting the results to strings always - but we need to keep the information about
-     * the actual type as well.
+     *  When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
+     *  needed - thus we are converting the results to strings always - but we need to keep the information about
+     *  the actual type as well.
      */
     case class MeasurementByAtum(measure: AtumMeasure, resultValue: String, resultType: ResultValueType.ResultValueType)
-      extends Measurement
+        extends Measurement
   }
 }
