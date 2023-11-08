@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.api.service
 
-case class MeasureDTO(
-  measureName: String,
-  controlColumns: Seq[String]
-)
+import org.springframework.stereotype.Service
+<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/web/api/service/TestService.scala
+import za.co.absa.atum.web.api.AtumConfig
+=======
+import za.co.absa.atum.server.api.AtumConfig
+>>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/api/service/TestService.scala
+
+@Service
+class TestService {
+  def getMessage: String = {
+    val testConfigVal = AtumConfig.testEndpointConfig.getString("some-key")
+    s"The service says: alfa '$testConfigVal'"
+  }
+}

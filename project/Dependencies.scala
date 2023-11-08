@@ -37,7 +37,7 @@ object Dependencies {
 
     val spring = "2.6.6"
 
-    val javaxServlet = "3.0.1"
+    val javaxServlet = "4.0.1"
 
     val springfox = "3.0.0"
 
@@ -92,6 +92,34 @@ object Dependencies {
     }
   }
 
+  def commonDependencies: Seq[ModuleID] = {
+    val json4sVersion = json4sVersionForScala(Versions.scala212)
+
+    lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
+
+    lazy val json4sExt = "org.json4s" %% "json4s-ext" % json4sVersion
+    lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion % Provided
+    lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion % Provided
+    lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
+
+    lazy val slf4s = "org.slf4s" %% "slf4s-api" % Versions.slf4s
+    lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
+    lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
+    lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
+
+    Seq(
+      jacksonModuleScala,
+      json4sExt,
+      json4sCore,
+      json4sJackson,
+      json4sNative,
+      slf4s,
+      logback,
+      scalatest,
+      mockito,
+    )
+  }
+
   def serverDependencies: Seq[ModuleID] = {
     val springOrg = "org.springframework.boot"
 
@@ -128,12 +156,11 @@ object Dependencies {
       jacksonModuleScala,
       faDbCore,
       faDbSlick,
-      slickPg,
+      slickPg
     )
   }
 
   def agentDependencies(sparkVersion: String, scalaVersion: String): Seq[ModuleID] = {
-
     val sparkMinorVersion = getVersionUpToMinor(sparkVersion)
     val scalaMinorVersion = getVersionUpToMinor(scalaVersion)
 
@@ -145,7 +172,6 @@ object Dependencies {
     lazy val sparkCommonsTest = "za.co.absa" % s"spark-commons-test_$scalaMinorVersion" % Versions.sparkCommons % Test
 
     lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
-
 
     Seq(
       sparkCore,
@@ -163,14 +189,7 @@ object Dependencies {
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
-    lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
-
-    lazy val json4sExt = "org.json4s" %% "json4s-ext" % json4sVersion
-    lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion % Provided
-    lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion % Provided
-    lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
-
-    Seq(specs2core, typeSafeConfig, jacksonModuleScala, json4sExt, json4sCore, json4sJackson, json4sNative)
+    Seq(specs2core, typeSafeConfig)
   }
 
 }

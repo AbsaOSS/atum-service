@@ -14,9 +14,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.dao
 
-case class MeasureDTO(
-  measureName: String,
-  controlColumns: Seq[String]
-)
+import za.co.absa.atum.server.model.BaseApiModel
+
+import java.util.UUID
+import scala.concurrent.Future
+
+trait ApiModelDao[T <: BaseApiModel] {
+
+  def getList(limit: Int, offset: Int, filter: T => Boolean = _ => true): Future[List[T]]
+
+  def getById(uuid: UUID): Future[Option[T]]
+
+  def add(entity: T): Future[UUID]
+
+  def update(entity: T): Future[Boolean]
+
+}
+

@@ -14,9 +14,23 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.model
 
-case class MeasureDTO(
-  measureName: String,
-  controlColumns: Seq[String]
+import za.co.absa.atum.model.dto.PartitionDTO
+
+private[server] case class PartitioningForDB private(
+  version: Int = 1,
+  keys: Seq[String],
+  keysToValuesMap: Map[String, String]
 )
+
+object PartitioningForDB {
+
+  def fromSeqPartitionDTO(partitioning: Seq[PartitionDTO]): PartitioningForDB = {
+    val allKeys = partitioning.map(_.key)
+    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
+
+    PartitioningForDB(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
+  }
+}
+

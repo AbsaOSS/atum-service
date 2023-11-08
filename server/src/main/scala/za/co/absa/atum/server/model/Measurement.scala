@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.model
 
-case class MeasureDTO(
-  measureName: String,
-  controlColumns: Seq[String]
+case class Measurement(
+  controlName: String,
+  controlType: String,
+  controlCol: String,
+  controlValue: Any
 )
