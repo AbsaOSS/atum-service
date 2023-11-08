@@ -44,6 +44,8 @@ object Runs {
 
   private def scalaSeqToPgArray[T <: AnyRef: ClassTag](toConvert: Seq[T]): String = {
     val scalaSeqJsonized = SerializationUtils.asJson(toConvert)  // this also correctly escapes double quotes
+
+    // only the square brackets (indicating Seq, after the 'jsonization') have to be replaced with curly ones
     "{" + scalaSeqJsonized.substring(1, scalaSeqJsonized.length - 1) + "}"
   }
 
