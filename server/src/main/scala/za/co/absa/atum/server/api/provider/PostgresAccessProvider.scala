@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/web/api/provider/PostgresAccessProvider.scala
-package za.co.absa.atum.web.api.provider
-
-import com.typesafe.config.{Config, ConfigValueFactory}
-import za.co.absa.atum.web.api.AtumConfig
-import za.co.absa.atum.web.api.database.Runs
-=======
 package za.co.absa.atum.server.api.provider
 
 import com.typesafe.config.{Config, ConfigValueFactory}
-import za.co.absa.atum.server.api.AtumConfig
+import za.co.absa.atum.server.api.config.AtumConfig
 import za.co.absa.atum.server.api.database.Runs
->>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/api/provider/PostgresAccessProvider.scala
 import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import za.co.absa.fadb.slick.SlickPgEngine
 
@@ -38,10 +30,7 @@ class PostgresAccessProvider {
 
   private def databaseConfig: Config = {
     val baseConfig = AtumConfig.dbConfig
-<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/web/api/provider/PostgresAccessProvider.scala
-=======
     // TODO: https://github.com/AbsaOSS/atum-service/issues/107
->>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/api/provider/PostgresAccessProvider.scala
     Map.empty.foldLeft(baseConfig) { case (acc, (configPath, configVal)) =>
       acc.withValue(configPath, ConfigValueFactory.fromAnyRef(configVal))
     }

@@ -14,30 +14,15 @@
  * limitations under the License.
  */
 
-<<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/server/api/service/utils/ExecutorsProvider.scala
-package za.co.absa.atum.web.api.service.utils
 
-import java.util.concurrent.Executor
-import scala.concurrent.ExecutionContext
-
-trait ExecutorsProvider {
-
-  def ioBoundExecutionContext: ExecutionContext
-  def ioBoundExecutor: Executor
-
-  def cpuBoundExecutionContext: ExecutionContext
-  def cpuBoundExecutor: Executor
-
-========
 package za.co.absa.atum.server.model
 
 import java.util.UUID
 
 case class Partition(
-  id: Option[UUID],
-  flowId: UUID
-) extends BaseApiModel {
+                      id: Option[UUID],
+                      flowId: UUID
+                    ) extends BaseApiModel {
 
   override def withId(uuid: UUID): Partition = copy(id = Some(uuid))
->>>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/model/Partition.scala
 }

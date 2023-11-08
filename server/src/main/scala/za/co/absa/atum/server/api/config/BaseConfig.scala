@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.web.api.config
+package za.co.absa.atum.server.api.config
 
-import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.{ConfigurationProperties, ConstructorBinding}
 
 /**
  *
  * @param someKey
  */
+@ConstructorBinding
 @ConfigurationProperties(prefix = "atum.web.api.config")
 class BaseConfig(
-                val someKey: String
+                  val someKey: String
                 )

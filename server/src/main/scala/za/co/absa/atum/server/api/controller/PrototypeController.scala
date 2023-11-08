@@ -14,42 +14,20 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
-<<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/server/api/controller/PrototypeController.scala
 import org.springframework.http.{HttpStatus, ResponseEntity}
-import org.springframework.web.bind.annotation.{PostMapping, RequestBody, RequestMapping, RestController}
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.web.api.service.DatabaseService
-
-
-@RestController
-@RequestMapping(Array("/api"))
-class PrototypeController @Autowired()(databaseService: DatabaseService){
-
-  /**
-   * Saves a checkpoint.
-   *
-   * @param checkpoint The checkpoint to save.
-   * @return A ResponseEntity with the status code CREATED.
-   */
-  @PostMapping(Array("/v1/checkpoint"))
-  def saveCheckpoint(@RequestBody checkpoint: CheckpointDTO): ResponseEntity[Unit] = {
-    databaseService.saveCheckpoint(checkpoint)
-    ResponseEntity.status(HttpStatus.CREATED).build()
-========
-import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
+import za.co.absa.atum.model.CheckpointFilterCriteria
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.service.DatabaseService
-
 import java.util.concurrent.CompletableFuture
 
 
 @RestController
 @RequestMapping(Array("/api/v1/checkpoint"))
-class CheckpointController @Autowired()(databaseService: DatabaseService){
+class PrototypeController @Autowired()(databaseService: DatabaseService){
 
   /**
    * Creates a checkpoint in a DB.
@@ -61,6 +39,21 @@ class CheckpointController @Autowired()(databaseService: DatabaseService){
   @ResponseStatus(HttpStatus.CREATED)
   def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
     databaseService.saveCheckpoint(checkpoint)
->>>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/api/controller/CheckpointController.scala
   }
+
+  /**
+   * endpoint to retrieve checkpoint from the database
+   * @param filterCriteria JSON object containing fields that will be used to filter the checkpoint
+   * @return
+   */
+  @PostMapping(Array("/read"))
+  @ResponseStatus(HttpStatus.OK)
+  def readCheckpoint(@RequestBody filterCriteria: CheckpointFilterCriteria): ResponseEntity[Unit] = {
+    val results = databaseService.readCheckpoint(filterCriteria)
+    results match {
+      case Some(entity) => ResponseEntity.status(HttpStatus.OK).body(entity)
+      case None => ResponseEntity.status(HttpStatus.NOT_FOUND).body(None)
+    }
+  }
+
 }

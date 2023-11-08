@@ -67,13 +67,6 @@ object Dependencies {
     limitVersion(version, 1)
   }
 
-  def commonDependencies: Seq[ModuleID] = Seq(
-    "org.slf4s" %% "slf4s-api" % Versions.slf4s,
-    "ch.qos.logback" % "logback-classic" % Versions.logback,
-    "org.scalatest" %% "scalatest" % Versions.scalatest % Test,
-    "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
-  )
-
   // this is just for the compile-depended printing task
   def sparkVersionForScala(scalaVersion: String): String = {
     scalaVersion match {

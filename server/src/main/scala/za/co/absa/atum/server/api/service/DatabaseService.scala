@@ -14,37 +14,22 @@
  * limitations under the License.
  */
 
-<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/web/api/service/DatabaseService.scala
-package za.co.absa.atum.web.api.service
-=======
 package za.co.absa.atum.server.api.service
->>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/api/service/DatabaseService.scala
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import za.co.absa.atum.model.CheckpointFilterCriteria
 import za.co.absa.atum.model.dto.CheckpointDTO
-<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/web/api/service/DatabaseService.scala
-import za.co.absa.atum.web.api.provider.PostgresAccessProvider
-=======
 import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 
 import java.util.concurrent.CompletableFuture
 import scala.concurrent.ExecutionContext
->>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/api/service/DatabaseService.scala
 
 @Service
 class DatabaseService @Autowired()() {
 
   val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
-<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/web/api/service/DatabaseService.scala
-  /**
-   * this service function saves the checkpoint into the database.
-   * @param checkpoint
-   */
-  def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    postgresAccessProvider.runs.writeCheckpoint(checkpoint)
-=======
 
   /** This service function saves the checkpoint into the database. */
   def saveCheckpoint(checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
@@ -52,7 +37,12 @@ class DatabaseService @Autowired()() {
     for {
       _ <- postgresAccessProvider.runs.writeCheckpoint(checkpoint)
     } yield checkpoint
->>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/api/service/DatabaseService.scala
   }
 
+  /**
+   * Function to retrieve checkpoint based on the provided fields
+   *
+   * @param filterCriteria JSON object containing the fields for filtering the checkpoint
+   */
+  def readCheckpoint(filterCriteria: CheckpointFilterCriteria): Option[Unit] = ???
 }

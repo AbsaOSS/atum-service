@@ -20,17 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-<<<<<<< HEAD:server/src/main/scala/za/co/absa/atum/web/api/controller/ControlMeasureController.scala
-import za.co.absa.atum.web.api.implicits._
-import za.co.absa.atum.web.api.payload.MessagePayload
-import za.co.absa.atum.web.api.service.ControlMeasureService
-import za.co.absa.atum.web.model._
-=======
 import za.co.absa.atum.server.api.implicits._
 import za.co.absa.atum.server.api.payload.MessagePayload
 import za.co.absa.atum.server.api.service.ControlMeasureService
 import za.co.absa.atum.server.model._
->>>>>>> origin:server/src/main/scala/za/co/absa/atum/server/api/controller/ControlMeasureController.scala
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture
