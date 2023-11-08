@@ -26,8 +26,8 @@ import java.util.concurrent.CompletableFuture
 
 
 @RestController
-@RequestMapping(Array("/api/v1/checkpoint"))
-class CheckpointController @Autowired()(databaseService: DatabaseService){
+@RequestMapping(Array("/api/v1"))
+class PrototypeController @Autowired()(databaseService: DatabaseService){
 
   /**
    * Creates a checkpoint in a DB.
@@ -35,7 +35,7 @@ class CheckpointController @Autowired()(databaseService: DatabaseService){
    * @param checkpoint The checkpoint to create.
    * @return A ResponseEntity with the status code CREATED.
    */
-  @PostMapping(path = Array("/create"))
+  @PostMapping(path = Array("/createCheckpoint"))
   @ResponseStatus(HttpStatus.CREATED)
   def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
     databaseService.saveCheckpoint(checkpoint)
