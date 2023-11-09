@@ -108,7 +108,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val measurements = Seq(
       MeasurementProvided(RecordCount("col"), 1L),
       MeasurementProvided(SumOfValuesOfColumn("col"), BigDecimal(1)),
-      MeasurementProvided.forCustomMeasure("customMeasureName", "col", BigDecimal(1))
+      MeasurementProvided("customMeasureName", "col", BigDecimal(1))
     )
 
     atumContext.createCheckpointOnProvidedData(

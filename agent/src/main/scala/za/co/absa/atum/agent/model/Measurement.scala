@@ -71,7 +71,7 @@ object Measurement {
       }
     }
 
-    def forCustomMeasure[T](measureName: String, controlCol: String, resultValue: T): MeasurementProvided[T] = {
+    def apply[T](measureName: String, controlCol: String, resultValue: T): MeasurementProvided[T] = {
       resultValue match {
         case _: Long =>
           MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Long)
