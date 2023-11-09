@@ -54,7 +54,6 @@ object Dependencies {
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"
 
-    val slf4s = "1.7.25"
     val logback = "1.2.3"
   }
 
@@ -99,7 +98,6 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion % Provided
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
-    lazy val slf4s = "org.slf4s" %% "slf4s-api" % Versions.slf4s
     lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
     lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
     lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
@@ -110,7 +108,6 @@ object Dependencies {
       json4sCore,
       json4sJackson,
       json4sNative,
-      slf4s,
       logback,
       scalatest,
       mockito,

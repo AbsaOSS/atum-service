@@ -56,7 +56,6 @@ lazy val root = (projectMatrix in file("."))
     name := "atum-service-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
     publish / skip := true,
-    crossScalaVersions := Nil,
     mergeStrategy
   )
 
@@ -67,12 +66,10 @@ lazy val server = (projectMatrix in file("server"))
       libraryDependencies ++= Dependencies.serverDependencies,
       Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
-      crossScalaVersions := Seq(Versions.serverScalaVersion),
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
-      inheritJarManifest := true,
-      mergeStrategy
+      inheritJarManifest := true
     ): _*
   )
   .settings(
