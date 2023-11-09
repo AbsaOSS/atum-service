@@ -18,15 +18,15 @@ package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.agent.exception.MeasureException
 import za.co.absa.atum.agent.model.AtumMeasure._
-import za.co.absa.atum.model.dto
+import za.co.absa.atum.model.dto.MeasureDTO
 
 private [agent] object MeasuresBuilder {
 
-  private [agent] def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.AtumMeasure] = {
+  private [agent] def mapToMeasures(measures: Set[MeasureDTO]): Set[za.co.absa.atum.agent.model.AtumMeasure] = {
     measures.map(createMeasure)
   }
 
-  private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.AtumMeasure = {
+  private def createMeasure(measure: MeasureDTO): za.co.absa.atum.agent.model.AtumMeasure = {
     val controlColumn = measure.controlColumns.head
 
     measure.measureName match {
