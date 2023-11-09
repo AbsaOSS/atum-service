@@ -80,7 +80,7 @@ object Measurement {
         case _: BigDecimal =>
           MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.BigDecimal)
         case _: String =>
-          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue,  ResultValueType.String)
+          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.String)
         case unsupportedType =>
           val className = unsupportedType.getClass.getSimpleName
           throw MeasurementProvidedException(
