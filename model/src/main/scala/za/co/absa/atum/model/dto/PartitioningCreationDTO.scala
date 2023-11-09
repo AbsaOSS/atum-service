@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.model.dto
 
 /**
  * Model defines the fields that will be used to retrieve the checkpoint from the database
@@ -22,8 +22,8 @@ package za.co.absa.atum.model
  * @param user the user that the measures belongs to
  * @param parentPartitioning the name of the parent partition that the checkpoint belongs to
  */
-case class CheckpointFilterCriteria (
-                                      partitioning: String,
-                                      byUser: String,
-                                      parentPartitioning: String
+case class PartitioningCreationDTO(
+                                      partitioning: Seq[PartitionDTO],
+                                      parentPartitioning: Option[Seq[PartitionDTO]],
+                                      byUser: String
                                     )

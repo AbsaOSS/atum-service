@@ -18,8 +18,7 @@ package za.co.absa.atum.server.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.atum.model.CheckpointFilterCriteria
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitionDTO, PartitioningCreationDTO}
 import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 
@@ -27,9 +26,9 @@ import java.util.concurrent.CompletableFuture
 import scala.concurrent.ExecutionContext
 
 @Service
-class DatabaseService @Autowired()() {
+class DatabaseService {
 
-  val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
+  private val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
 
   /** This service function saves the checkpoint into the database. */
   def saveCheckpoint(checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
@@ -44,5 +43,8 @@ class DatabaseService @Autowired()() {
    *
    * @param filterCriteria JSON object containing the fields for filtering the checkpoint
    */
-  def readCheckpoint(filterCriteria: CheckpointFilterCriteria): Option[Unit] = ???
+  def createPartitioningIfNotExists(partitioningInfo: PartitioningCreationDTO): Seq[PartitionDTO] = {
+    // Todo - implement the db function call in #23
+    Seq()
+  }
 }

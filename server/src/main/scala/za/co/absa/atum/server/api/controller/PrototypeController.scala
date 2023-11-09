@@ -17,16 +17,15 @@
 package za.co.absa.atum.web.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.http.{HttpStatus}
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.model.CheckpointFilterCriteria
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningCreationDTO}
 import za.co.absa.atum.server.api.service.DatabaseService
 import java.util.concurrent.CompletableFuture
 
 
 @RestController
-@RequestMapping(Array("/api/v1/checkpoint"))
+@RequestMapping(Array("/api/v1"))
 class PrototypeController @Autowired()(databaseService: DatabaseService){
 
   /**
@@ -46,14 +45,14 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    * @param filterCriteria JSON object containing fields that will be used to filter the checkpoint
    * @return
    */
-  @PostMapping(Array("/read"))
+  @PostMapping(Array("/createPartitioning"))
   @ResponseStatus(HttpStatus.OK)
-  def readCheckpoint(@RequestBody filterCriteria: CheckpointFilterCriteria): ResponseEntity[Unit] = {
-    val results = databaseService.readCheckpoint(filterCriteria)
-    results match {
-      case Some(entity) => ResponseEntity.status(HttpStatus.OK).body(entity)
-      case None => ResponseEntity.status(HttpStatus.NOT_FOUND).body(None)
-    }
+  def createPartitioningIfNotExists(@RequestBody partitioningInfo: PartitioningCreationDTO): AtumContextDTO = {
+    val partitioning = databaseService.createPartitioningIfNotExists(partitioningInfo)
+    val measures = Set.empty[MeasureDTO]
+    val additionalData = AdditionalDataDTO(additionalData = Map.empty)
+
+    AtumContextDTO(partitioning, measures, additionalData)
   }
 
 }
