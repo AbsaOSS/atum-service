@@ -59,13 +59,13 @@ object Runs {
       val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
       val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
-      val measureNames = values.measurements.map(_.measure.measureName)
+      val measureNames = values.measurements.map(_.measure.measureName).toSeq
       val measureNamesNormalized = scalaSeqToPgArray(measureNames)
 
-      val controlColumns = values.measurements.map(_.measure.controlColumns)
+      val controlColumns = values.measurements.map(_.measure.controlColumns).toSeq
       val controlColumnsNormalized = nestedScalaSeqToPgArray(controlColumns)
 
-      val measureResults = values.measurements.map(_.result)
+      val measureResults = values.measurements.map(_.result).toSeq
       val measureResultsNormalized = measureResults.map(SerializationUtils.asJson)
 
       sql"""SELECT #$selectEntry
