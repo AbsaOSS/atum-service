@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.provider
 
 import com.typesafe.config.{Config, ConfigValueFactory}
-import za.co.absa.atum.server.api.config.AtumConfig
+import za.co.absa.atum.server.api.AtumConfig
 import za.co.absa.atum.server.api.database.Runs
 import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import za.co.absa.fadb.slick.SlickPgEngine

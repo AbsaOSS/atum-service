@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.config
+package za.co.absa.atum.server.api
 
-import org.springframework.boot.context.properties.{ConfigurationProperties, ConstructorBinding}
+import com.typesafe.config.{Config, ConfigFactory}
 
-/**
- *
- * @param someKey
- */
-@ConstructorBinding
-@ConfigurationProperties(prefix = "atum.web.api.config")
-class BaseConfig(
-                  val someKey: String
-                )
+trait AtumConfig {
+
+  def dbConfig: Config
+}
+
+object AtumConfig extends AtumConfig {
+
+  private val config = ConfigFactory.load("application.properties")
+
+  override def dbConfig: Config = config.getConfig("postgres")
+  def testEndpointConfig: Config = config.getConfig("atum.server.api.config")
+}
