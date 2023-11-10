@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS flow_patterns.checkpoint_measure_definitions;
+-- DROP TABLE IF EXISTS flow_patterns.measure_definitions;
 
-CREATE TABLE flow_patterns.checkpoint_measure_definitions
+CREATE TABLE flow_patterns.measure_definitions
 (
-    id_fp_checkpoint_measure_definition BIGINT NOT NULL DEFAULT global_id(),
+    id_fp_measure_definition BIGINT NOT NULL DEFAULT global_id(),
     key_fp_flow                         BIGINT NOT NULL,
     measure_type                        TEXT NOT NULL,
     measure_fields                      TEXT[] NOT NULL,
@@ -25,10 +25,10 @@ CREATE TABLE flow_patterns.checkpoint_measure_definitions
     created_at                          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_by                          TEXT NOT NULL,
     updated_at                          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT fp_checkpoint_definitions_pk PRIMARY KEY (id_fp_checkpoint_measure_definition)
+    CONSTRAINT fp_checkpoint_definitions_pk PRIMARY KEY (id_fp_measure_definition)
 );
 
-ALTER TABLE flow_patterns.checkpoint_measure_definitions
-    ADD CONSTRAINT fp_checkpoint_measure_definitions_unq UNIQUE (key_fp_flow, measure_type, measure_fields);
+ALTER TABLE flow_patterns.measure_definitions
+    ADD CONSTRAINT fp_measure_definitions_unq UNIQUE (key_fp_flow, measure_type, measure_fields);
 
-ALTER TABLE flow_patterns.checkpoint_measure_definitions OWNER to atum_owner;
+ALTER TABLE flow_patterns.measure_definitions OWNER to atum_owner;

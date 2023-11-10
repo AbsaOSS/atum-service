@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION flow_patterns.get_flow_checkpoint_measure_definitions(
+CREATE OR REPLACE FUNCTION flow_patterns.get_flow_measure_definitions(
     IN  i_flow_name                         TEXT,
     OUT status                              INTEGER,
     OUT status_text                         TEXT,
-    OUT id_fp_checkpoint_measure_definition BIGINT,
+    OUT id_fp_measure_definition BIGINT,
     OUT measure_type                        TEXT,
     OUT measure_fields                      TEXT[],
     OUT created_by                          TEXT,
@@ -28,7 +28,7 @@ CREATE OR REPLACE FUNCTION flow_patterns.get_flow_checkpoint_measure_definitions
 $$
 -------------------------------------------------------------------------------
 --
--- Function: flow_patterns.get_flow_checkpoint_measure_definitions(1)
+-- Function: flow_patterns.get_flow_measure_definitions(1)
 --      Gets all the control measure definitions of the flow.
 --      If flow of the given name does not exists one record with status 40 is returned.
 --
@@ -38,7 +38,7 @@ $$
 -- Returns:
 --      status                              - Status code
 --      status_text                         - Status text
---      id_fp_checkpoint_measure_definition - Id of the additional data entry
+--      id_fp_measure_definition - Id of the additional data entry
 --      measure_type                        - type of the control measure
 --      measure_fields                      - dlist of the fields the measure is applied to
 --      created_by                          - user who created the entry
@@ -60,10 +60,10 @@ BEGIN
 
     IF status = 10 THEN
         RETURN QUERY
-            SELECT 10,'OK',CMD.id_fp_checkpoint_measure_definition,CMD.measure_type,
+            SELECT 10,'OK',CMD.id_fp_measure_definition,CMD.measure_type,
                    CMD.measure_fields,CMD.created_by,CMD.created_at,CMD.updated_by,
                    CMD.updated_at
-            FROM flow_patterns.checkpoint_measure_definitions CMD
+            FROM flow_patterns.measure_definitions CMD
             WHERE CMD.key_fp_flow = _key_fp_flow;
     ELSE
         RETURN NEXT;
@@ -74,4 +74,4 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flow_patterns.get_flow_checkpoint_measure_definitions(TEXT) TO atum_configurator;
+GRANT EXECUTE ON FUNCTION flow_patterns.get_flow_measure_definitions(TEXT) TO atum_configurator;

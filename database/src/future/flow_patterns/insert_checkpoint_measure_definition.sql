@@ -13,20 +13,20 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION flow_patterns.set_checkpoint_measure_definition(
+CREATE OR REPLACE FUNCTION flow_patterns.set_measure_definition(
     IN  i_flow_name                         TEXT,
     IN  i_measure_type                      TEXT,
     IN  i_measure_fields                    TEXT[],
     IN  i_by_user                           TEXT,
     OUT status                              INTEGER,
     OUT status_text                         TEXT,
-    OUT id_fp_checkpoint_measure_definition BIGINT,
+    OUT id_fp_measure_definition BIGINT,
     OUT key_fp_flow                         BIGINT
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: flow_patterns.set_checkpoint_measure_definition(4)
+-- Function: flow_patterns.set_measure_definition(4)
 --      Adds a measure definition pattern to the given flow.
 --
 -- Parameters:
@@ -38,7 +38,7 @@ $$
 -- Returns:
 --      status                              - Status code
 --      status_text                         - Status text
---      id_fp_checkpoint_measure_definition - id of the measure definition entry
+--      id_fp_measure_definition - id of the measure definition entry
 --      key_fp_flow                         - id of the flow the additional data pattern were added into
 --
 -- Status codes:
@@ -47,7 +47,7 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _id_fp_checkpoint_measure_definition    BIGINT;
+    _id_fp_measure_definition    BIGINT;
 BEGIN
     SELECT GF.status, GF.status_text, GF.id_fp_flow
     FROM flow_patterns.get_flow(i_flow_name) GF
@@ -55,10 +55,10 @@ BEGIN
 
     IF status = 10 THEN
 
-        INSERT INTO flow_patterns.checkpoint_measure_definitions(key_fp_flow, measure_type, measure_fields, created_by, updated_by)
+        INSERT INTO flow_patterns.measure_definitions(key_fp_flow, measure_type, measure_fields, created_by, updated_by)
         VALUES (key_fp_flow, i_measure_type, i_measure_fields, i_by_user, i_by_user)
-        RETURNING flow_patterns.checkpoint_measure_definitions.id_fp_checkpoint_measure_definition
-        INTO id_fp_checkpoint_measure_definition;
+        RETURNING flow_patterns.measure_definitions.id_fp_measure_definition
+        INTO id_fp_measure_definition;
 
         status := 11;
         status_text := 'Measure definition entry created';
@@ -72,4 +72,4 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flow_patterns.set_checkpoint_measure_definition(TEXT, TEXT, TEXT[], TEXT) TO atum_configurator;
+GRANT EXECUTE ON FUNCTION flow_patterns.set_measure_definition(TEXT, TEXT, TEXT[], TEXT) TO atum_configurator;

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION flow_patterns.update_checkpoint_measure_definition(
-    IN  i_id_fp_checkpoint_measure_definition   TEXT,
+CREATE OR REPLACE FUNCTION flow_patterns.update_measure_definition(
+    IN  i_id_fp_measure_definition   TEXT,
     IN  i_measure_type                          TEXT,
     IN  i_measure_fields                        TEXT[],
     IN  i_by_user                               TEXT,
@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION flow_patterns.update_checkpoint_measure_definition(
 $$
 -------------------------------------------------------------------------------
 --
--- Function: flow_patterns.update_checkpoint_measure_definition(4)
+-- Function: flow_patterns.update_measure_definition(4)
 --      Updates the measure definition pattern values
 --
 -- Parameters:
@@ -36,7 +36,7 @@ $$
 -- Returns:
 --      status                              - Status code
 --      status_text                         - Status text
---      id_fp_checkpoint_measure_definition - id of the measure definition entry
+--      id_fp_measure_definition - id of the measure definition entry
 --      key_fp_flow                         - id of the flow the additional data pattern were added into
 --
 -- Status codes:
@@ -50,8 +50,8 @@ DECLARE
     _measure_fields   TEXT;
 BEGIN
     SELECT CMD.measure_type, CMD.measure_fields
-    FROM flow_patterns.checkpoint_measure_definitions CMD
-    WHERE CMD.id_fp_checkpoint_measure_definition = i_id_fp_checkpoint_measure_definition
+    FROM flow_patterns.measure_definitions CMD
+    WHERE CMD.id_fp_measure_definition = i_id_fp_measure_definition
     FOR UPDATE
     INTO _measure_type, _measure_fields;
 
@@ -62,12 +62,12 @@ BEGIN
     END IF;
 
     IF (i_measure_type IS DISTINCT FROM _measure_type) OR (i_measure_fields IS DISTINCT FROM _measure_fields) THEN
-        UPDATE flow_patterns.checkpoint_measure_definitions
+        UPDATE flow_patterns.measure_definitions
         SET measure_type = i_measure_type,
             measure_fields = i_measure_fields,
             updated_by = i_by_user,
             updated_at = now()
-        WHERE id_fp_checkpoint_measure_definition = i_id_fp_checkpoint_measure_definition;
+        WHERE id_fp_measure_definition = i_id_fp_measure_definition;
 
         status := 12;
         status_text := 'Measure definition entry updated';
@@ -81,4 +81,4 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flow_patterns.update_checkpoint_measure_definition(TEXT, TEXT, TEXT[], TEXT) TO atum_configurator;
+GRANT EXECUTE ON FUNCTION flow_patterns.update_measure_definition(TEXT, TEXT, TEXT[], TEXT) TO atum_configurator;

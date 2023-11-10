@@ -16,10 +16,19 @@
 
 package za.co.absa.atum.agent
 
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.{Row, SparkSession}
+import org.mockito.Mockito.{mock, times, verify}
+import org.mockito.ArgumentCaptor
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.Measure.RecordCount
+import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
+import za.co.absa.atum.agent.model.MeasurementBuilder
+import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 class AtumContextTest extends AnyFlatSpec with Matchers {
 
@@ -45,7 +54,6 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
       )
 
     assert(atumContextWithTwoDistinctRecordCount.currentMeasures.size == 3)
-
   }
 
   "withMeasureRemoved" should "remove a measure if exists" in {
@@ -61,6 +69,128 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumContextRemoved = atumContext1.removeMeasure(RecordCount("id"))
     assert(atumContextRemoved.currentMeasures.size == 1)
     assert(atumContextRemoved.currentMeasures.head == RecordCount("other"))
+  }
+
+  "createCheckpoint" should "take measurements and create a Checkpoint" in {
+    val mockAgent = mock(classOf[AtumAgent])
+    val atumPartitions = AtumPartitions("foo2" -> "bar")
+
+    val atumContext = new AtumContext(atumPartitions, mockAgent)
+      .addMeasure(RecordCount("letter"))
+
+    val spark = SparkSession.builder
+      .master("local")
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.enabled", "false")
+      .getOrCreate()
+
+    import spark.implicits._
+
+    val rdd = spark.sparkContext.parallelize(Seq("A", "B", "C"))
+    val df = rdd.toDF("letter")
+
+    atumContext.createCheckpoint("testCheckpoint", "Hans", df)
+
+    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent).saveCheckpoint(argument.capture())
+
+    assert(argument.getValue.name == "testCheckpoint")
+    assert(argument.getValue.author == "Hans")
+    assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
+    assert(argument.getValue.measurements.head.result.mainValue.value == "3")
+    assert(argument.getValue.measurements.head.result.mainValue.valueType == ResultValueType.Long)
+  }
+
+  "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
+    val mockAgent = mock(classOf[AtumAgent])
+    val atumPartitions = AtumPartitions("key" -> "value")
+    val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
+
+    val measurements = Seq(
+      MeasurementProvided(RecordCount("col"), 1L),
+      MeasurementProvided(SumOfValuesOfColumn("col"), BigDecimal(1))
+    )
+
+    atumContext.createCheckpointOnProvidedData(
+      checkpointName = "name",
+      author = "author",
+      measurements = measurements
+    )
+
+    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent).saveCheckpoint(argument.capture())
+
+    assert(argument.getValue.name == "name")
+    assert(argument.getValue.author == "author")
+    assert(!argument.getValue.measuredByAtumAgent)
+    assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
+    assert(argument.getValue.processStartTime == argument.getValue.processEndTime.get)
+    assert(argument.getValue.measurements == measurements.map(MeasurementBuilder.buildMeasurementDTO))
+  }
+
+  "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
+    val mockAgent = mock(classOf[AtumAgent])
+    val atumPartitions = AtumPartitions("foo2" -> "bar")
+    implicit val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
+      .addMeasure(RecordCount("notImportantColumn"))
+
+    val spark = SparkSession.builder
+      .master("local")
+      .config("spark.driver.host", "localhost")
+      .config("spark.ui.enabled", "false")
+      .getOrCreate()
+
+    val rdd = spark.sparkContext.parallelize(
+      Seq(
+        Row("A", 8.0),
+        Row("B", 2.9),
+        Row("C", 9.1),
+        Row("D", 2.5)
+      )
+    )
+    val schema = new StructType()
+      .add(StructField("notImportantColumn", StringType))
+      .add(StructField("columnForSum", DoubleType))
+
+    import AtumContext._
+
+    val df = spark.createDataFrame(rdd, schema)
+      .createCheckpoint("checkPointNameCount", "authorOfCount")
+
+    val argumentFirst = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent, times(1)).saveCheckpoint(argumentFirst.capture())
+
+    assert(argumentFirst.getValue.name == "checkPointNameCount")
+    assert(argumentFirst.getValue.author == "authorOfCount")
+    assert(argumentFirst.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
+    assert(argumentFirst.getValue.measurements.head.result.mainValue.value == "4")
+    assert(argumentFirst.getValue.measurements.head.result.mainValue.valueType == ResultValueType.Long)
+
+    atumContext.addMeasure(SumOfValuesOfColumn("columnForSum"))
+    df.createCheckpoint("checkPointNameSum", "authorOfSum")
+
+    val argumentSecond = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent, times(2)).saveCheckpoint(argumentSecond.capture())
+
+    assert(argumentSecond.getValue.name == "checkPointNameSum")
+    assert(argumentSecond.getValue.author == "authorOfSum")
+    assert(argumentSecond.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
+    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.value == "22.5")
+    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.valueType == ResultValueType.BigDecimal)
+  }
+
+  "addAdditionalData" should "add key/value pair to map for additional data" in {
+    val atumAgent = new AtumAgent
+    val atumPartitions = AtumPartitions("key" -> "val")
+    val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
+
+    val additionalDataKey = "additionalKey"
+    val additionalDataValue = "additionalVal"
+    val expectedAdditionalData =  Map(additionalDataKey -> Some(additionalDataValue))
+
+    atumContext.addAdditionalData(additionalDataKey, additionalDataValue)
+
+    assert(atumContext.currentAdditionalData == expectedAdditionalData)
   }
 
 }

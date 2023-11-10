@@ -17,36 +17,17 @@
 package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
-import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
+import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 
-object MeasurementBuilder {
+private [agent] object MeasurementBuilder {
 
-  def buildLongMeasurement(functionName: String, controlCols: Seq[String], resultValue: Long): MeasurementDTO = {
-    MeasurementDTO(
-      MeasureDTO(functionName, controlCols),
-      MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.Long))
-    )
+  private [agent] def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {
+    val measureName = measurement.measure.measureName
+    val controlCols = Seq(measurement.measure.controlCol)
+    val measureDTO = MeasureDTO(measureName, controlCols)
+
+    val measureResultDTO = MeasureResultDTO(TypedValue(measurement.resultValue.toString, measurement.resultType))
+
+    MeasurementDTO(measureDTO, measureResultDTO)
   }
-
-  def buildDoubleMeasureResult(functionName: String, controlCols: Seq[String], resultValue: Double): MeasurementDTO = {
-    MeasurementDTO(
-      MeasureDTO(functionName, controlCols),
-      MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.Double))
-    )
-  }
-
-  def buildBigDecimalMeasureResult(functionName: String, controlCols: Seq[String], resultValue: BigDecimal): MeasurementDTO = {
-    MeasurementDTO(
-      MeasureDTO(functionName, controlCols),
-      MeasureResultDTO(TypedValue(resultValue.toString, ResultValueType.BigDecimal))
-    )
-  }
-
-  def buildStringMeasureResult(functionName: String, controlCols: Seq[String], resultValue: String): MeasurementDTO = {
-    MeasurementDTO(
-      MeasureDTO(functionName, controlCols),
-      MeasureResultDTO(TypedValue(resultValue, ResultValueType.String))
-    )
-  }
-
 }

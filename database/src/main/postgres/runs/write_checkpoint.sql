@@ -15,34 +15,39 @@
 
 
 CREATE OR REPLACE FUNCTION runs.write_checkpoint(
-    IN  i_partitioning          JSONB,
-    IN  i_id_checkpoint         UUID,
-    IN  i_checkpoint_name       TEXT,
-    IN  i_process_start_time    TIMESTAMP WITH TIME ZONE,
-    IN  i_process_end_time      TIMESTAMP WITH TIME ZONE,
-    IN  i_function_names        TEXT[],
-    IN  i_control_columns       TEXT[][],
-    IN  i_measure_values        JSONB[],
-    IN  i_by_user               TEXT,
-    OUT status                  INTEGER,
-    OUT status_text             TEXT
+    IN  i_partitioning              JSONB,
+    IN  i_id_checkpoint             UUID,
+    IN  i_checkpoint_name           TEXT,
+    IN  i_process_start_time        TIMESTAMP WITH TIME ZONE,
+    IN  i_process_end_time          TIMESTAMP WITH TIME ZONE,
+    IN  i_measurements              JSONB[],
+    in  i_measured_by_atum_agent    BOOLEAN,
+    IN  i_by_user                   TEXT,
+    OUT status                      INTEGER,
+    OUT status_text                 TEXT
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.write_checkpoint(9)
+-- Function: runs.write_checkpoint(10)
 --      Creates a checkpoint and adds all the measurements that it consists of
 --
 -- Parameters:
---      i_partitioning          - segmentation the measure belongs to
---      i_id_checkpoint         - reference to the checkpoint this measure belongs into
---      i_checkpoint_name       - name of the checkpoint
---      i_process_start_time    - the start of processing (measuring) of the checkpoint
---      i_i_process_end_time    - the end of the processing (measuring) of the checkpoint
---      i_function_names        - functions used for measurements
---      i_control_columns       - set of field set the measures are applied on
---      i_measure_values        - values of the measure
---      i_by_user               - user behind the change
+--      i_partitioning              - segmentation the measure belongs to
+--      i_id_checkpoint             - reference to the checkpoint this measure belongs into
+--      i_checkpoint_name           - name of the checkpoint
+--      i_process_start_time        - the start of processing (measuring) of the checkpoint
+--      i_i_process_end_time        - the end of the processing (measuring) of the checkpoint
+--      i_measurements              - array of JSON objects of the following format (values of the keys are examples only)
+--                                    {
+--                                      "measureName": "count",
+--                                      "measuredColumns": ["a","b"],
+--                                      "measurementValue":{
+--                                        whatever here
+--                                      }
+--                                    }
+--      i_measured_by_atum_agent    - flag it the checkpoint was measured by Atum or data provided by user
+--      i_by_user                   - user behind the change
 --
 -- Returns:
 --      status              - Status code
@@ -76,22 +81,24 @@ BEGIN
         RETURN;
     END IF;
 
-    INSERT INTO runs.checkpoints (id_checkpoint, fk_partitioning, checkpoint_name, process_start_time, process_end_time, created_by)
-    VALUES (i_id_checkpoint, _fk_partitioning, i_checkpoint_name, i_process_start_time, i_process_end_time, i_by_user);
+    INSERT INTO runs.checkpoints (id_checkpoint, fk_partitioning,
+                                  checkpoint_name, measured_by_atum_agent,
+                                  process_start_time, process_end_time, created_by)
+    VALUES (i_id_checkpoint, _fk_partitioning,
+            i_checkpoint_name, i_measured_by_atum_agent,
+            i_process_start_time, i_process_end_time, i_by_user);
 
+    -- maybe could use `jsonb_populate_record` function to be little bit more effective
     PERFORM runs._write_measurement(
         i_id_checkpoint,
         _fk_partitioning,
-        function_name,
-        control_columns,
-        measure_value,
+        UN.measurement->>'measureName',
+        jsonb_array_to_text_array(UN.measurement->'measuredColumns'),
+        UN.measurement->'measurementValue',
         i_by_user
         )
     FROM (
-        SELECT
-            unnest(i_function_names) AS function_name,
-            unnest(i_control_columns) AS control_columns,
-            unnest(i_measure_values) AS measure_value
+        SELECT unnest(i_measurements) AS measurement
         ) UN;
 
     status := 11;
@@ -101,5 +108,5 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, TEXT[], TEXT[][], JSONB[], TEXT) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, TEXT[], TEXT[][], JSONB[], TEXT) TO atum_user;
+ALTER FUNCTION runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) TO atum_user;
