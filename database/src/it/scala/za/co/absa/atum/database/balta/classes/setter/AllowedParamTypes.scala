@@ -18,8 +18,7 @@ package za.co.absa.atum.database.balta.classes.setter
 
 import za.co.absa.atum.database.balta.classes.JsonBString
 
-import java.sql.{Date, Time}
-import java.time.{Instant, ZonedDateTime}
+import java.time.{Instant, OffsetDateTime, LocalTime, LocalDate}
 import java.util.UUID
 
 sealed trait AllowedParamTypes[T]
@@ -48,11 +47,11 @@ object AllowedParamTypes {
 
   implicit object InstantParamType extends AllowedParamTypes[Instant]
 
-  implicit object ZonedDateTimeParamType extends AllowedParamTypes[ZonedDateTime]
+  implicit object OffsetDateTimeParamType extends AllowedParamTypes[OffsetDateTime]
 
-  implicit object TimeParamType extends AllowedParamTypes[Time]
+  implicit object LocalTimeParamType extends AllowedParamTypes[LocalTime]
 
-  implicit object DateParamType extends AllowedParamTypes[Date]
+  implicit object LocalDateParamType extends AllowedParamTypes[LocalDate]
 
-
+  implicit object CustomDBTypeParamType extends AllowedParamTypes[CustomDBType]
 }

@@ -70,12 +70,22 @@ class QueryResultRow private[classes](val resultSet: ResultSet) extends AnyVal {
     Option(resultSet.getObject(columnLabel).asInstanceOf[PGobject])map(pgo => JsonBString(pgo.toString))
   }
 
-  def getAs[T](columnLabel: String): Option[T] = {
-    val result = resultSet.getObject(columnLabel).asInstanceOf[T]
+  def getArray[T](columnLabel: String): Option[Array[T]] = {
+    val array = resultSet.getArray(columnLabel)
     if (resultSet.wasNull()) {
       None
     } else {
-      Option(result)
+      Option(array.getArray.asInstanceOf[Array[T]])
+    }
+  }
+
+  def getAs[T](columnLabel: String): Option[T] = {
+    val result = resultSet.getObject(columnLabel)
+    if (resultSet.wasNull()) {
+      None
+    } else {
+      val resultTyped = result.asInstanceOf[T]
+      Option(resultTyped)
     }
   }
 

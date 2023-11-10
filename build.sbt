@@ -128,8 +128,4 @@ lazy val database = (projectMatrix in file("database"))
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
     ): _*
   )
-  .settings(
-    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-database"),
-    jacocoExcludes := jacocoProjectExcludes()
-  )
   .jvmPlatform(scalaVersions = Seq(Versions.scala212))

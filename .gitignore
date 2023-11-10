@@ -88,5 +88,3 @@ _site
 utils/resources/*.conf
 
 .bsp
-
-/database/src/it/resources/database.properties

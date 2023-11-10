@@ -23,10 +23,10 @@ case class DBTable(tableName: String) extends DBQuerySupport{
 
   def insert(values: Params)(implicit connection: DBConnection): QueryResultRow = {
     val columns = values.keys.map {keys =>
-      val keysString = keys.mkString(",")
+      val keysString = keys.mkString(",") // TODO https://github.com/AbsaOSS/balta/issues/2
       s"($keysString)"
     }.getOrElse("")
-    val paramStr = List.fill(values.size)("?").mkString(",")
+    val paramStr = values.setters.map(_.sqlEntry).mkString(",")
     val sql = s"INSERT INTO $tableName $columns VALUES($paramStr) RETURNING *;"
     runQuery(sql, values.setters){_.next()}
   }
@@ -94,7 +94,6 @@ case class DBTable(tableName: String) extends DBQuerySupport{
     runQuery(sql, setters) {resultSet =>
       resultSet.next().getLong("cnt").getOrElse(0)
     }
-
   }
 
   private def strToOption(str: String): Option[String] = {
@@ -106,8 +105,8 @@ case class DBTable(tableName: String) extends DBQuerySupport{
   }
 
   private def paramsToWhereCondition(params: NamedParams): String = {
-    params.definedKeys.foldLeft(List.empty[String]) {(acc, fieldName) =>
-      s"$fieldName = ?" :: acc
+    params.pairs.foldLeft(List.empty[String]) {case (acc, (fieldName, setterFnc)) =>
+      s"$fieldName = ${setterFnc.sqlEntry}" :: acc // TODO https://github.com/AbsaOSS/balta/issues/2
     }.mkString(" AND ")
   }
 }

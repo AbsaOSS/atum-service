@@ -25,13 +25,13 @@ sealed abstract class DBFunction private(functionName: String,
                                          params: ListMap[Either[Int, String], SetterFnc]) extends DBQuerySupport {
 
   private def sql(orderBy: String): String = {
-    val paramEntries = params.map{case(key, _) =>
+    val paramEntries = params.map{case(key, setterFnc) =>
       key match {
-        case Left(_) => "?"
-        case Right(name) => s"$name := ?" // TODO safe name
+        case Left(_) => setterFnc.sqlEntry
+        case Right(name) => s"$name := ${setterFnc.sqlEntry}" // TODO https://github.com/AbsaOSS/balta/issues/2
       }
     }
-    val paramsLine =paramEntries.mkString(",")
+    val paramsLine = paramEntries.mkString(",")
     s"SELECT * FROM $functionName($paramsLine) $orderBy"
   }
 
@@ -45,13 +45,13 @@ sealed abstract class DBFunction private(functionName: String,
   }
 
   def setParam[T: AllowedParamTypes](paramName: String, value: T): DBFunctionWithNamedParamsToo = {
-    val key = Right(paramName) // TODO normalization
+    val key = Right(paramName) // TODO normalization TODO https://github.com/AbsaOSS/balta/issues/1
     val fnc = SetterFnc.createSetterFnc(value)
     DBFunctionWithNamedParamsToo(functionName, params + (key, fnc))
   }
 
   def setParamNull(paramName: String): DBFunctionWithPositionedParamsOnly = {
-    val key = Right(paramName) // TODO normalization
+    val key = Right(paramName) // TODO normalization TODO https://github.com/AbsaOSS/balta/issues/1
     val fnc = SetterFnc.nullSetterFnc
     DBFunctionWithPositionedParamsOnly(functionName, params + (key, fnc))
   }

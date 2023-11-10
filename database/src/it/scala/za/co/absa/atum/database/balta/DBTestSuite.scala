@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.balta
 
+import org.postgresql.util.PSQLException
 import org.scalactic.source
 import org.scalatest.{BeforeAndAfterAll, Tag}
 import org.scalatest.funsuite.AnyFunSuite

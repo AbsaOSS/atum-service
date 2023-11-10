@@ -95,18 +95,42 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
   }
 
 
-  ignore("Partitioning created with parent partitioning that already exists") {
-//    function(fncCreatePartitioningIfNotExists)
-//      .setParam("i_partitioning", partitioning)
-//      .setParam("i_by_user", "Phantomas")
-//      .setParam("i_parent_partitioning", parentPartitioning)
-//      .execute { queryResult =>
-//        assert(queryResult.hasNext)
-//        val row = queryResult.next()
-//        assert(row.getInt("status") == 11)
-//        assert(row.getString("status_text") == "Partitioning created")
-//        assert(Option(row.getLong("id_partitioning")).nonEmpty)
-//      }
+  test("Partitioning created with parent partitioning that already exists") {
+    val parentPartitioningID = function(fncCreatePartitioningIfNotExists)
+      .setParam("i_partitioning", parentPartitioning)
+      .setParam("i_by_user", "Albert Einstein")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Partitioning created"))
+        row.getLong("id_partitioning").get
+      }
+
+    assert(
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID)) == 1
+    )
+
+
+    val partitioningID = function(fncCreatePartitioningIfNotExists)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_by_user", "Fantômas")
+      .setParam("i_parent_partitioning", parentPartitioning)
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Partitioning created"))
+        row.getLong("id_partitioning").get
+      }
+
+    assert(
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID)) == 1
+    )
+    assert(
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", partitioningID)) == 2
+    )
+
   }
 
   test("Partitioning already exists") {
@@ -139,7 +163,37 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
     )
   }
 
-  ignore("Partitioning exists, but parent is updated") {
+  test("Partitioning exists, but parent is updated") {
+    val partitioningID = function(fncCreatePartitioningIfNotExists)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_by_user", "Fantômas")
+      .setParamNull("i_parent_partitioning")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Partitioning created"))
+        row.getLong("id_partitioning").get
+      }
 
+    assert(
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", partitioningID)) == 1
+    )
+
+    function(fncCreatePartitioningIfNotExists)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_by_user", "Fantômas")
+      .setParam("i_parent_partitioning", parentPartitioning)
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(12))
+        assert(row.getString("status_text").contains("Partitioning updated"))
+        assert(row.getLong("id_partitioning").contains(partitioningID))
+      }
+
+    assert(
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", partitioningID)) == 2
+    )
   }
 }

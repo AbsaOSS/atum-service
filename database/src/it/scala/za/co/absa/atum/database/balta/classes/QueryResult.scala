@@ -30,7 +30,13 @@ class QueryResult(resultSet: ResultSet) extends Iterator[QueryResultRow] {
   }
 
   override def next(): QueryResultRow = {
-    resultSetHasNext = None
-    new QueryResultRow(resultSet)
+    if (resultSetHasNext.isEmpty) {
+      resultSet.next()
+      new QueryResultRow(resultSet)
+    } else {
+      resultSetHasNext = None
+      new QueryResultRow(resultSet)
+
+    }
   }
 }

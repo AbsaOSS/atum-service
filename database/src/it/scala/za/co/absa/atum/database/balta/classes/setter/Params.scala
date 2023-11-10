@@ -50,16 +50,17 @@ object Params {
   sealed class NamedParams private[setter](items: ListMap[String, SetterFnc] = ListMap.empty) extends Params(items) {
     def add[T: AllowedParamTypes](paramName: String, value: T): NamedParams = {
       val setter = SetterFnc.createSetterFnc(value)
-      new NamedParams(items + (paramName, setter))
+      new NamedParams(items + (paramName, setter)) // TODO https://github.com/AbsaOSS/balta/issues/1
     }
 
     def addNull(paramName: String): NamedParams = {
       val setter = SetterFnc.nullSetterFnc
-      new NamedParams(items + (paramName, setter))
+      new NamedParams(items + (paramName, setter)) // TODO https://github.com/AbsaOSS/balta/issues/1
     }
 
-    def definedKeys:List[String] = items.keys.toList
-    override def keys: Option[List[String]] = Some(definedKeys)
+    def pairs: List[(String, SetterFnc)] = items.toList
+
+    override def keys: Option[List[String]] = Some(items.keys.toList)
   }
 
   sealed class OrderedParams private[setter](items: ListMap[String, SetterFnc] = ListMap.empty) extends Params(items) {
