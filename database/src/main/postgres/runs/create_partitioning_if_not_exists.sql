@@ -58,7 +58,7 @@ BEGIN
         -- TODO check if i_parent_partitioning is parent to i_partitioning #69
 
         SELECT CPINE.id_partitioning
-        FROM runs.create_partitioning_if_not_exists(i_parent_partitioning, NULL, i_by_user)   CPINE
+        FROM runs.create_partitioning_if_not_exists(i_parent_partitioning, i_by_user, NULL)   CPINE
         INTO _fk_parent_partitioning;
     END IF;
 
@@ -86,15 +86,13 @@ BEGIN
         INTO _status;
 
         IF _create_partitioning THEN
-          INSERT INTO runs.checkpoint_measure_definitions(fk_partitioning, function_name, control_columns, created_by, created_at)
-          SELECT id_partitioning, CMD.function_name, CMD.control_columns, CMD.created_by, CMD.created_at
-          FROM runs.checkpoint_measure_definitions CMD
+          -- copying measure definitions to establish continuity
+          INSERT INTO runs.measure_definitions(fk_partitioning, measure_name, measured_columns, created_by, created_at)
+          SELECT id_partitioning, CMD.measure_name, CMD.measured_columns, CMD.created_by, CMD.created_at
+          FROM runs.measure_definitions CMD
           WHERE CMD.fk_partitioning = _fk_parent_partitioning;
 
-          INSERT INTO runs.additional_data (fk_partitioning, ad_name, ad_value, created_by, created_at, updated_by, updated_at)
-          SELECT id_partitioning, AD.ad_name, AD.ad_value, AD.created_by, AD.created_at, AD.updated_by, AD.created_at
-          FROM runs.additional_data AD
-          WHERE AD.fk_partitioning = _fk_parent_partitioning;
+          -- additional data are not copied, they are specific for particular partitioning
         ELSIF (_status = 11) THEN
           status := 12;
           status_text := 'Partitioning updated';

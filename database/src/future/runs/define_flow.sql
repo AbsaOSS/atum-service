@@ -131,9 +131,9 @@ BEGIN
         FROM runs.segmentation_to_flow STF
         WHERE STF.key_segmentation = _key_parent_segmentation;
 
-        INSERT INTO runs.checkpoint_measure_definitions (key_segmentation, measure_type, measure_fields, created_by, created_at)
+        INSERT INTO runs.measure_definitions (key_segmentation, measure_type, measure_fields, created_by, created_at)
         SELECT _id_segmentation, CMD.measure_type, CMD.measure_fields, CMD.created_by, CMD.created_at
-        FROM runs.checkpoint_measure_definitions CMD
+        FROM runs.measure_definitions CMD
         WHERE CMD.key_segmentation = _key_parent_segmentation
         ON CONFLICT DO NOTHING;
 

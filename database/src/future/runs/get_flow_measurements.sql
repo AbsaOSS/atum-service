@@ -72,7 +72,7 @@ BEGIN
         runs.segmentations S ON S.id_segmentation = STF.key_segmentation INNER JOIN
         runs.checkpoints CP ON CP.key_segmentation = STF.key_segmentation INNER JOIN
         runs.measurements M ON M.key_checkpoint = CP.id_checkpoint INNER JOIN
-        runs.checkpoint_measure_definitions CMD ON CMD.id_checkpoint_measure_definition = M.key_checkpoint_measure_definition
+        runs.measure_definitions CMD ON CMD.id_measure_definition = M.key_measure_definition
     WHERE STF.key_flow = i_id_flow;
 
     RETURN;

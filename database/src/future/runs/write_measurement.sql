@@ -54,7 +54,7 @@ $$
 -------------------------------------------------------------------------------
 DECLARE
     _key_segmentation                   BIGINT;
-    _key_checkpoint_measure_definition  BIGINT;
+    _key_measure_definition  BIGINT;
     _checkpoint_closed                  BOOLEAN;
 BEGIN
 
@@ -94,18 +94,18 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT CMD.id_checkpoint_measure_definition
-    FROM runs.checkpoint_measure_definitions CMD
+    SELECT CMD.id_measure_definition
+    FROM runs.measure_definitions CMD
     WHERE CMD.key_segmentation = _key_segmentation AND
           CMD.measure_type = i_measure_type AND
           CMD.measure_fields = i_measure_fields
-    INTO _key_checkpoint_measure_definition;
+    INTO _key_measure_definition;
 
     IF NOT found THEN
-        INSERT INTO runs.checkpoint_measure_definitions (key_segmentation, measure_type, measure_fields, created_by)
+        INSERT INTO runs.measure_definitions (key_segmentation, measure_type, measure_fields, created_by)
         VALUES (_key_segmentation, i_measure_type, i_measure_fields, i_by_user)
-        RETURNING id_checkpoint_measure_definition
-        INTO _key_checkpoint_measure_definition;
+        RETURNING id_measure_definition
+        INTO _key_measure_definition;
 
         status := 11;
         status_text := 'Measurement added including measurement defintion';
@@ -115,8 +115,8 @@ BEGIN
         status_text := 'OK';
     END IF;
 
-    INSERT INTO runs.measurements (id_measurement, key_checkpoint_measure_definition, key_checkpoint, value)
-    VALUES (i_id_measurement, _key_checkpoint_measure_definition, i_id_checkpoint, i_value);
+    INSERT INTO runs.measurements (id_measurement, key_measure_definition, key_checkpoint, value)
+    VALUES (i_id_measurement, _key_measure_definition, i_id_checkpoint, i_value);
 
     RETURN;
 END;
