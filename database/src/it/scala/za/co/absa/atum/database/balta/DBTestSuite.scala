@@ -16,9 +16,8 @@
 
 package za.co.absa.atum.database.balta
 
-import org.postgresql.util.PSQLException
 import org.scalactic.source
-import org.scalatest.{BeforeAndAfterAll, Tag}
+import org.scalatest.Tag
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.atum.database.balta.classes.DBFunction.DBFunctionWithPositionedParamsOnly
 import za.co.absa.atum.database.balta.classes.setter.{AllowedParamTypes, Params}
@@ -29,7 +28,7 @@ import java.sql.DriverManager
 import java.time.OffsetDateTime
 import java.util.Properties
 
-abstract class DBTestSuite extends AnyFunSuite with BeforeAndAfterAll{
+abstract class DBTestSuite extends AnyFunSuite{
 
   protected lazy implicit val dbConnection: DBConnection = {
     createConnection(
