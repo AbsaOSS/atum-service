@@ -12,10 +12,10 @@ Create multiple `AtumContext` with different control measures to be applied
 ### Option 1
 ```scala
 val atumContextInstanceWithRecordCount = AtumContext(processor = processor)
-  .withMeasureAdded(RecordCount(MockMeasureNames.recordCount1, controlCol = "id"))
+  .withMeasureAdded(RecordCount(MockMeasureNames.recordCount1, measuredCol = "id"))
 
 val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
-  .withMeasureAdded(AbsSumOfValuesOfColumn(controlCol = "salary"))
+  .withMeasureAdded(AbsSumOfValuesOfColumn(measuredCol = "salary"))
 ```
 
 ### Option 2 
