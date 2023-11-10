@@ -44,7 +44,7 @@ $$
 --
 -- Status codes:
 --      10                  - OK
---      11                  - Measurement added including measurement definition
+--      11                  - Measurement added including measure definition
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -64,7 +64,7 @@ BEGIN
         INTO _fk_measure_definition;
 
         status := 11;
-        status_text := 'Measurement added including measurement definition';
+        status_text := 'Measurement added including measure definition';
     ELSE
         -- assuming ok result
         status := 10;

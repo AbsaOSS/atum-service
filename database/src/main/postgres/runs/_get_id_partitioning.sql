@@ -29,7 +29,7 @@ $$
 --      i_blocking          - flag signaling if to put a lock on the record
 --
 -- Returns:
---      id_partitioning     - id of the segmentation if it exists, NULL otherwise
+--      id_partitioning     - id of the partitioning if it exists, NULL otherwise
 --
 -------------------------------------------------------------------------------
 DECLARE

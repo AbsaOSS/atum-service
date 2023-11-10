@@ -45,7 +45,7 @@ DECLARE
     _id_flow        BIGINT;
     _flow_name      TEXT;
 BEGIN
-    --generating the id explicitly to use it it custom flow name if needed
+    --generating the id explicitly to use, if custom flow name if needed
     _id_flow := global_id();
     _flow_name := 'Custom flow #' || _id_flow;
 
