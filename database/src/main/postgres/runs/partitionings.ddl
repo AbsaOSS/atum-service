@@ -23,6 +23,6 @@ CREATE TABLE runs.partitionings
 );
 
 ALTER TABLE runs.partitionings
-    ADD CONSTRAINT segmentations_unq UNIQUE (partitioning);
+    ADD CONSTRAINT partitioning_unq UNIQUE (partitioning);
 
 ALTER TABLE runs.partitionings OWNER to atum_owner;
