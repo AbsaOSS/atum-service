@@ -78,7 +78,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumContext = new AtumContext(atumPartitions, mockAgent)
       .addMeasure(RecordCount("letter"))
 
-    val spark = SparkSession.builder
+    val spark = SparkSession.builder()
       .master("local")
       .config("spark.driver.host", "localhost")
       .config("spark.ui.enabled", "false")
@@ -134,7 +134,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     implicit val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
       .addMeasure(RecordCount("notImportantColumn"))
 
-    val spark = SparkSession.builder
+    val spark = SparkSession.builder()
       .master("local")
       .config("spark.driver.host", "localhost")
       .config("spark.ui.enabled", "false")

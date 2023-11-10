@@ -34,7 +34,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    * @param checkpoint The checkpoint to create.
    * @return A ResponseEntity with the status code CREATED.
    */
-  @PostMapping(path = Array("/create"))
+  @PostMapping(path = Array("/createCheckpoint"))
   @ResponseStatus(HttpStatus.CREATED)
   def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
     databaseService.saveCheckpoint(checkpoint)

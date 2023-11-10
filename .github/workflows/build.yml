@@ -24,8 +24,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
+      matrix:
+        scala: [2.11.12, 2.12.18, 2.13.11]
+
+    name: Scala ${{matrix.scala}}
 
     steps:
       - name: Checkout code
@@ -36,4 +41,4 @@ jobs:
         with:
           java-version: "adopt@1.8"
       - name: Build and run tests
-        run: sbt test doc
+        run: sbt ++${{matrix.scala}} test doc
