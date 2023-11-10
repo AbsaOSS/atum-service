@@ -23,7 +23,7 @@ CREATE TABLE runs.checkpoints
     measured_by_atum_agent  BOOLEAN,
     created_by              TEXT NOT NULL,
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT segments_pk PRIMARY KEY (id_checkpoint)
+    CONSTRAINT checkpoints_pk PRIMARY KEY (id_checkpoint)
 );
 
 COMMENT ON COLUMN runs.checkpoints.id_checkpoint is 'The UUID is coming from outside world to distinguish repeated entry from a re-run checkpoint';
