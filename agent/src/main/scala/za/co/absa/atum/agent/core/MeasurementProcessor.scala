@@ -18,6 +18,7 @@ package za.co.absa.atum.agent.core
 
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
+import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 trait MeasurementProcessor {
 
@@ -26,6 +27,13 @@ trait MeasurementProcessor {
 }
 
 object MeasurementProcessor {
-  type MeasurementFunction = DataFrame => String
+  /**
+   * The raw result of measurement is always gonna be string, because we want to avoid some floating point issues
+   * (overflows, consistent representation of numbers - whether they are coming from Java or Scala world, and more),
+   * but the actual type is stored alongside the computation because we don't want to lost this information.
+   */
+  final case class ResultOfMeasurement(result: String, resultType: ResultValueType.ResultValueType)
+
+  type MeasurementFunction = DataFrame => ResultOfMeasurement
 
 }

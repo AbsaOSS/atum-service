@@ -21,7 +21,7 @@ import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningDTO}
 
 /**
- * Place holder for the agent that communicate with the API.
+ * Entity that communicate with the API, primarily focused on spawning Atum Context(s).
  */
 class AtumAgent private[agent] () {
 
@@ -35,14 +35,16 @@ class AtumAgent private[agent] () {
 
   /**
    * Sends `CheckpointDTO` to the AtumService API
-   * @param checkpoint
+   *
+   * @param checkpoint Already initialized Checkpoint object to store
    */
-  def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+  private [agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     dispatcher.saveCheckpoint(checkpoint)
   }
 
   /**
    *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
+   *
    *  @param atumPartitions
    *  @return
    */

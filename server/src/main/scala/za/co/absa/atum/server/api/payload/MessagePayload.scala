@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.api.payload
 
-case class MeasureDTO(
-  measureName: String,
-  controlColumns: Seq[String]
-)
+case class MessagePayload(message: String)

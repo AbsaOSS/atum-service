@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.model
 
-case class MeasureDTO(
-  measureName: String,
-  controlColumns: Seq[String]
-)
+import java.util.UUID
+
+case class Partition(
+  id: Option[UUID],
+  flowId: UUID
+) extends BaseApiModel {
+
+  override def withId(uuid: UUID): Partition = copy(id = Some(uuid))
+}
