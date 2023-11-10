@@ -16,9 +16,8 @@
 
 package za.co.absa.atum.server.api.service
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitionDTO, PartitioningCreationDTO}
+import za.co.absa.atum.model.dto.{CheckpointDTO, PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 
@@ -43,7 +42,7 @@ class DatabaseService {
    *
    * @param filterCriteria JSON object containing the fields for filtering the checkpoint
    */
-  def createPartitioningIfNotExists(partitioningInfo: PartitioningCreationDTO): Seq[PartitionDTO] = {
+  def createPartitioningIfNotExists(partitioningInfo: PartitioningDTO): Seq[PartitionDTO] = {
     // Todo - implement the db function call in #23
     Seq()
   }
