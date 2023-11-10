@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_measure_definitions(
     IN  i_partitioning                          JSONB,
     OUT status                                  INTEGER,
     OUT status_text                             TEXT,
-    OUT id_checkpoint_measure_definition        BIGINT,
+    OUT id_measure_definition        BIGINT,
     OUT measure_type                            TEXT,
     OUT measure_fields                          TEXT[],
     OUT created_by                              TEXT,
@@ -59,12 +59,12 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_measure_definitions(
      RETURN QUERY
      SELECT 10,
             'OK',
-            CMD.id_checkpoint_measure_definition,
+            CMD.id_measure_definition,
             CMD.measure_type,
             CMD.measure_fields,
             CMD.created_by,
             CMD.created_at
-     FROM runs.checkpoint_measure_definitions CMD
+     FROM runs.measure_definitions CMD
      WHERE CMD.fk_partitioning = _fk_partitioning;
 
      RETURN;

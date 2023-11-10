@@ -81,7 +81,7 @@ BEGIN
     INNER JOIN runs.measurements m
       ON cp.id_checkpoint = m.key_checkpoint
     INNER JOIN runs.checkpoints_measure_definitions cpmd
-      ON m.key_checkpoint_measure_definition = cpmd.id_checkpoint_measure_definition
+      ON m.key_measure_definition = cpmd.id_measure_definition
     WHERE cp.key_segmentation = _key_segmentation;
 
     RETURN;

@@ -78,9 +78,9 @@ BEGIN
 
         IF (FOUND) THEN
             _from_pattern := TRUE;
-            INSERT INTO runs.checkpoint_measure_definitions (key_segmentation, measure_type, measure_fields, created_by)
+            INSERT INTO runs.measure_definitions (key_segmentation, measure_type, measure_fields, created_by)
             SELECT _id_segmentation, CMD.measure_type, CMD.measure_fields, CMD.updated_by
-            FROM flow_patterns.checkpoint_measure_definitions CMD
+            FROM flow_patterns.measure_definitions CMD
             WHERE CMD.key_fp_flow = _key_fp_flow;
 
             IF i_take_pattern_additional_data THEN

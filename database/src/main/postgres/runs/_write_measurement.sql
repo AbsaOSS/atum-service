@@ -17,8 +17,8 @@
 CREATE OR REPLACE FUNCTION runs._write_measurement(
     IN  i_fk_checkpoint     UUID,
     IN  i_fk_partitioning   BIGINT,
-    IN  i_function_name     TEXT,
-    IN  i_control_columns   TEXT[],
+    IN  i_measure_name      TEXT,
+    IN  i_measured_columns  TEXT[],
     IN  i_measurement_value JSONB,
     IN  i_by_user           TEXT,
     OUT status              INTEGER,
@@ -33,8 +33,8 @@ $$
 -- Parameters:
 --      i_fk_checkpoint         - reference to the checkpoint this measurement belongs into
 --      i_fk_partitioning       - partitioning the measure belongs to
---      i_function_name         - type of the measure
---      i_control_columns       - set of fields the measure is applied on
+--      i_measure_name          - type of the measure
+--      i_measured_columns      - set of fields the measure is applied on
 --      i_measurement_value     - value of the measure
 --      i_by_user               - user behind the change
 --
@@ -48,20 +48,20 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _fk_checkpoint_measure_definition   BIGINT;
+    _fk_measure_definition   BIGINT;
 BEGIN
-    SELECT CMD.id_checkpoint_measure_definition
-    FROM runs.checkpoint_measure_definitions CMD
+    SELECT CMD.id_measure_definition
+    FROM runs.measure_definitions CMD
     WHERE CMD.fk_partitioning = i_fk_partitioning AND
-          CMD.function_name = i_function_name AND
-          CMD.control_columns = i_control_columns
-    INTO _fk_checkpoint_measure_definition;
+          CMD.measure_name = i_measure_name AND
+          CMD.measured_columns = i_measured_columns
+    INTO _fk_measure_definition;
 
     IF NOT found THEN
-        INSERT INTO runs.checkpoint_measure_definitions (fk_partitioning, function_name, control_columns, created_by)
-        VALUES (i_fk_partitioning, i_function_name, i_control_columns, i_by_user)
-        RETURNING id_checkpoint_measure_definition
-        INTO _fk_checkpoint_measure_definition;
+        INSERT INTO runs.measure_definitions (fk_partitioning, measure_name, measured_columns, created_by)
+        VALUES (i_fk_partitioning, i_measure_name, i_measured_columns, i_by_user)
+        RETURNING id_measure_definition
+        INTO _fk_measure_definition;
 
         status := 11;
         status_text := 'Measurement added including measurement definition';
@@ -71,8 +71,8 @@ BEGIN
         status_text := 'OK';
     END IF;
 
-    INSERT INTO runs.measurements (fk_checkpoint_measure_definition, fk_checkpoint, measurement_value)
-    VALUES (_fk_checkpoint_measure_definition, i_fk_checkpoint, i_measurement_value);
+    INSERT INTO runs.measurements (fk_measure_definition, fk_checkpoint, measurement_value)
+    VALUES (_fk_measure_definition, i_fk_checkpoint, i_measurement_value);
 
     RETURN;
 END;

@@ -20,6 +20,7 @@ CREATE TABLE runs.checkpoints
     checkpoint_name         TEXT NOT NULL,
     process_start_time      TIMESTAMP WITH TIME ZONE NOT NULL,
     process_end_time        TIMESTAMP WITH TIME ZONE,
+    measured_by_atum_agent  BOOLEAN,
     created_by              TEXT NOT NULL,
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT segments_pk PRIMARY KEY (id_checkpoint)
