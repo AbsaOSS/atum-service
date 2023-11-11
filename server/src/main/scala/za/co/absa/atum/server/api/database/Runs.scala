@@ -17,8 +17,9 @@
 package za.co.absa.atum.server.api.database
 
 import slick.jdbc.{GetResult, SQLActionBuilder}
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
+import za.co.absa.atum.server.api.database.Runs.CreatePartitioningIfNotExists
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBFunction._
 import za.co.absa.fadb.DBSchema
@@ -33,6 +34,7 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
   import Runs._
 
   val writeCheckpoint = new WriteCheckpoint
+  val createPartitioningIfNotExists = new CreatePartitioningIfNotExists
 }
 
 object Runs {
@@ -83,5 +85,30 @@ object Runs {
     }
 
     override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
+  }
+
+  class CreatePartitioningIfNotExists(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
+    extends DBSingleResultFunction[PartitioningDTO, Long, SlickPgEngine]
+      with SlickFunctionWithStatusSupport[PartitioningDTO, Long]
+      with StandardStatusHandling {
+
+    override protected def sql(values: PartitioningDTO): SQLActionBuilder = {
+      val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
+      val partitioningNormalized = SerializationUtils.asJson(partitioning)
+
+      val parentPartitioningNormalized = values.parentPartitioning.map { parentPartitioning => {
+        val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
+        SerializationUtils.asJson(parentPartitioningForDB)
+      }}.getOrElse("{}")
+
+      sql"""SELECT #$selectEntry
+            FROM #$functionName(
+              $partitioningNormalized::JSONB,
+              ${values.byUser},
+              $parentPartitioningNormalized::JSONB
+            ) #$alias;"""
+    }
+
+    override protected def slickConverter: GetResult[Long] = GetResult(_.<<)
   }
 }
