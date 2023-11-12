@@ -62,7 +62,7 @@ object Measure {
       }
   }
   object RecordCount extends MeasureType {
-    def apply(measuredCol: String): RecordCount = RecordCount(measuredCol, measureName, resultValueType)
+    def apply(measuredColumn: String): RecordCount = RecordCount(measuredColumn, measureName, resultValueType)
 
     override val measureName: String = "count"
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
@@ -81,8 +81,8 @@ object Measure {
       }
   }
   object DistinctRecordCount extends MeasureType {
-    def apply(measuredCol: String): DistinctRecordCount = {
-      DistinctRecordCount(measuredCol, measureName, resultValueType)
+    def apply(measuredColumn: String): DistinctRecordCount = {
+      DistinctRecordCount(measuredColumn, measureName, resultValueType)
     }
 
     override val measureName: String = "distinctCount"
@@ -102,8 +102,8 @@ object Measure {
     }
   }
   object SumOfValuesOfColumn extends MeasureType {
-    def apply(measuredCol: String): SumOfValuesOfColumn = {
-      SumOfValuesOfColumn(measuredCol, measureName, resultValueType)
+    def apply(measuredColumn: String): SumOfValuesOfColumn = {
+      SumOfValuesOfColumn(measuredColumn, measureName, resultValueType)
     }
 
     override val measureName: String = "aggregatedTotal"
@@ -123,8 +123,8 @@ object Measure {
     }
   }
   object AbsSumOfValuesOfColumn extends MeasureType {
-    def apply(measuredCol: String): AbsSumOfValuesOfColumn = {
-      AbsSumOfValuesOfColumn(measuredCol, measureName, resultValueType)
+    def apply(measuredColumn: String): AbsSumOfValuesOfColumn = {
+      AbsSumOfValuesOfColumn(measuredColumn, measureName, resultValueType)
     }
 
     override val measureName: String = "absAggregatedTotal"
@@ -149,8 +149,8 @@ object Measure {
     }
   }
   object SumOfHashesOfColumn extends MeasureType {
-    def apply(measuredCol: String): SumOfHashesOfColumn = {
-      SumOfHashesOfColumn(measuredCol, measureName, resultValueType)
+    def apply(measuredColumn: String): SumOfHashesOfColumn = {
+      SumOfHashesOfColumn(measuredColumn, measureName, resultValueType)
     }
 
     override val measureName: String = "hashCrc32"
@@ -169,7 +169,7 @@ object Measure {
         //   scala> sc.parallelize(List(Long.MaxValue, 1)).toDF.agg(sum("value")).take(1)(0)(0)
         //   res11: Any = -9223372036854775808
         // Converting to BigDecimal fixes the issue
-        // val ds2 = ds.select(col(measurement.measuredCol).cast(DecimalType(38, 0)).as("value"))
+        // val ds2 = ds.select(col(measurement.measuredColumn).cast(DecimalType(38, 0)).as("value"))
         // ds2.agg(sum(abs($"value"))).collect()(0)(0)
         val ds2 = ds.select(
           col(measureColumn).cast(DecimalType(38, 0)).as(valueColumnName)
