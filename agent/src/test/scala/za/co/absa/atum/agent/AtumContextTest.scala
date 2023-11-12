@@ -34,7 +34,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
   "withMeasureAddedOrOverwritten" should "add a new measure if not exists, overwrite it otherwise" in {
 
-    val atumContext = AtumAgent.getOrCreateAtumContext(AtumPartitions("foo1"->"bar"))
+    val atumContext = AtumAgent.getOrCreateAtumContext(AtumPartitions("foo1"->"bar"), "authorTest")
 
     assert(atumContext.currentMeasures.isEmpty)
 
@@ -58,7 +58,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
   "withMeasureRemoved" should "remove a measure if exists" in {
 
-    val atumContext = AtumAgent.getOrCreateAtumContext(AtumPartitions("foo2"->"bar"))
+    val atumContext = AtumAgent.getOrCreateAtumContext(AtumPartitions("foo2"->"bar"), "authorTest1")
     assert(atumContext.currentMeasures.isEmpty)
 
     val atumContext1 = atumContext.addMeasures(
@@ -75,7 +75,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val mockAgent = mock(classOf[AtumAgent])
     val atumPartitions = AtumPartitions("foo2" -> "bar")
 
-    val atumContext = new AtumContext(atumPartitions, mockAgent)
+    val atumContext = new AtumContext(atumPartitions, "authorTest", mockAgent)
       .addMeasure(RecordCount("letter"))
 
     val spark = SparkSession.builder()
@@ -104,7 +104,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
     val mockAgent = mock(classOf[AtumAgent])
     val atumPartitions = AtumPartitions("key" -> "value")
-    val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
+    val atumContext: AtumContext = new AtumContext(atumPartitions, "authorTest", mockAgent)
 
     val measurements = Seq(
       MeasurementProvided(RecordCount("col"), 1L),
@@ -113,7 +113,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
     atumContext.createCheckpointOnProvidedData(
       checkpointName = "name",
-      author = "author",
+      author = "authorIfNew",
       measurements = measurements
     )
 
@@ -121,7 +121,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     verify(mockAgent).saveCheckpoint(argument.capture())
 
     assert(argument.getValue.name == "name")
-    assert(argument.getValue.author == "author")
+    assert(argument.getValue.author == "authorIfNew")
     assert(!argument.getValue.measuredByAtumAgent)
     assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
     assert(argument.getValue.processStartTime == argument.getValue.processEndTime.get)
@@ -131,7 +131,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
   "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
     val mockAgent = mock(classOf[AtumAgent])
     val atumPartitions = AtumPartitions("foo2" -> "bar")
-    implicit val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
+    implicit val atumContext: AtumContext = new AtumContext(atumPartitions, "authorTest", mockAgent)
       .addMeasure(RecordCount("notImportantColumn"))
 
     val spark = SparkSession.builder()
@@ -182,7 +182,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
   "addAdditionalData" should "add key/value pair to map for additional data" in {
     val atumAgent = new AtumAgent
     val atumPartitions = AtumPartitions("key" -> "val")
-    val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
+    val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions, "authorTest")
 
     val additionalDataKey = "additionalKey"
     val additionalDataValue = "additionalVal"

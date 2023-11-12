@@ -45,22 +45,27 @@ class AtumAgent private[agent] () {
   /**
    *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
    *
-   *  @param atumPartitions
-   *  @return
+   *  @param atumPartitions: Partitioning based on which an Atum Context will be created or obtained.
+   *  @param authorIfNew: If partitioning doesn't exist in the store yet, a new one will be created with the authorIfNew
+   *    specified in this parameter. If partitioning already exists, this attribute will be ignored because there
+   *    already is an authorIfNew.
+   *  @return Atum context object that's either newly created in the data store, or obtained because the input
+   *          partitioning already existed.
    */
-  def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
-    val partitioningDTO = PartitioningDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None)
+  def getOrCreateAtumContext(atumPartitions: AtumPartitions, authorIfNew: String): AtumContext = {
+    val partitioningDTO = PartitioningDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None, authorIfNew)
     val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
     lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
     getExistingOrNewContext(atumPartitions, atumContext)
   }
 
-  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions, authorIfNew: String)
+                               (implicit parentAtumContext: AtumContext): AtumContext = {
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
 
     val newPartitionsDTO = AtumPartitions.toSeqPartitionDTO(newPartitions)
     val parentPartitionsDTO = Some(AtumPartitions.toSeqPartitionDTO(parentAtumContext.atumPartitions))
-    val partitioningDTO = PartitioningDTO(newPartitionsDTO, parentPartitionsDTO)
+    val partitioningDTO = PartitioningDTO(newPartitionsDTO, parentPartitionsDTO, authorIfNew)
 
     val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
     lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)

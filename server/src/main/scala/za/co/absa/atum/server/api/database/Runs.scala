@@ -104,7 +104,7 @@ object Runs {
       sql"""SELECT #$selectEntry
             FROM #$functionName(
               $partitioningNormalized::JSONB,
-              ${values.byUser},
+              ${values.authorIfNew},
               $parentPartitioningNormalized::JSONB
             ) #$alias;"""
     }

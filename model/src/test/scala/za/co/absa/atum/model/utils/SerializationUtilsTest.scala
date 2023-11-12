@@ -79,23 +79,25 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
 
     val atumContextDTO = AtumContextDTO(
       partitioning = seqPartitionDTO,
+      partitioningAuthor = "authorTest",
       measures = seqMeasureDTO
     )
 
-    val expectedAdditionalDataJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"measures\":[{\"measureName\":\"count\",\"measuredColumns\":[\"col\"]}],\"additionalData\":{\"additionalData\":{}}}"
+    val expectedAdditionalDataJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"partitioningAuthor\":\"authorTest\",\"measures\":[{\"measureName\":\"count\",\"measuredColumns\":[\"col\"]}],\"additionalData\":{\"additionalData\":{}}}"
     val actualAdditionalDataJson = SerializationUtils.asJson(atumContextDTO)
 
     assert(expectedAdditionalDataJson == actualAdditionalDataJson)
   }
 
   "fromJson" should "deserialize AtumContextDTO from json string" in {
-    val atumContextDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"measures\":[{\"measureName\":\"count\",\"measuredColumns\":[\"col\"]}],\"additionalData\":{\"additionalData\":{}}}"
+    val atumContextDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"partitioningAuthor\":\"authorTest\",\"measures\":[{\"measureName\":\"count\",\"measuredColumns\":[\"col\"]}],\"additionalData\":{\"additionalData\":{}}}"
 
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val seqMeasureDTO = Set(MeasureDTO("count", Seq("col")))
 
     val expectedAtumContextDTO = AtumContextDTO(
       partitioning = seqPartitionDTO,
+      partitioningAuthor = "authorTest",
       measures = seqMeasureDTO
     )
     val actualAtumContextDTO = SerializationUtils.fromJson[AtumContextDTO](atumContextDTOJson)
@@ -106,20 +108,22 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
   "asJson" should "serialize AtumContextDTO without measures into json string" in {
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
 
-    val atumContextDTO = AtumContextDTO(partitioning = seqPartitionDTO)
+    val atumContextDTO = AtumContextDTO(partitioning = seqPartitionDTO, partitioningAuthor = "authorTest")
 
-    val expectedAdditionalDataJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"measures\":[],\"additionalData\":{\"additionalData\":{}}}"
+    val expectedAdditionalDataJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"partitioningAuthor\":\"authorTest\",\"measures\":[],\"additionalData\":{\"additionalData\":{}}}"
     val actualAdditionalDataJson = SerializationUtils.asJson(atumContextDTO)
 
     assert(expectedAdditionalDataJson == actualAdditionalDataJson)
   }
 
   "fromJson" should "deserialize AtumContextDTO without measures from json string" in {
-    val atumContextDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"measures\":[],\"additionalData\":{\"additionalData\":{}}}"
+    val atumContextDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"partitioningAuthor\":\"authorTest\",\"measures\":[],\"additionalData\":{\"additionalData\":{}}}"
 
     val expectedSeqPartitionDTO = Seq(PartitionDTO("key", "val"))
 
-    val expectedAtumContextDTO = AtumContextDTO(partitioning = expectedSeqPartitionDTO)
+    val expectedAtumContextDTO = AtumContextDTO(
+      partitioning = expectedSeqPartitionDTO, partitioningAuthor = "authorTest"
+    )
     val actualAtumContextDTO = SerializationUtils.fromJson[AtumContextDTO](atumContextDTOJson)
 
     assert(expectedAtumContextDTO == actualAtumContextDTO)
@@ -275,22 +279,24 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
 
     val partitioningDTO = PartitioningDTO(
       partitioning = Seq(partitionDTO),
-      parentPartitioning = None
+      parentPartitioning = None,
+      authorIfNew = "authorTest"
     )
 
-    val expectedPartitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}]}"
+    val expectedPartitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"authorIfNew\":\"authorTest\"}"
     val actualPartitioningDTOJson = SerializationUtils.asJson(partitioningDTO)
 
     assert(expectedPartitioningDTOJson == actualPartitioningDTOJson)
   }
 
   "fromJson" should "deserialize PartitioningDTO from json string" in {
-    val partitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}]}"
+    val partitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"authorIfNew\":\"authorTest\"}"
 
     val expectedPartitionDTO = PartitionDTO("key", "val")
     val expectedPartitioningDTO = PartitioningDTO(
       partitioning = Seq(expectedPartitionDTO),
-      parentPartitioning = None
+      parentPartitioning = None,
+      authorIfNew = "authorTest"
     )
 
     val actualPartitioningDTO = SerializationUtils.fromJson[PartitioningDTO](partitioningDTOJson)
@@ -304,10 +310,11 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
 
     val partitioningDTO = PartitioningDTO(
       partitioning = Seq(partitionDTO),
-      parentPartitioning = Some(Seq(parentPartitionDTO))
+      parentPartitioning = Some(Seq(parentPartitionDTO)),
+      authorIfNew = "authorTest"
     )
 
-    val expectedPartitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"parentPartitioning\":[{\"key\":\"parentKey\",\"value\":\"parentVal\"}]}"
+    val expectedPartitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"parentPartitioning\":[{\"key\":\"parentKey\",\"value\":\"parentVal\"}],\"authorIfNew\":\"authorTest\"}"
     val actualPartitioningDTOJson = SerializationUtils.asJson(partitioningDTO)
 
     assert(expectedPartitioningDTOJson == actualPartitioningDTOJson)
@@ -328,13 +335,14 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
   }
 
   "fromJson" should "deserialize PartitioningDTO with parent partitioning from json string" in {
-    val partitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"parentPartitioning\":[{\"key\":\"parentKey\",\"value\":\"parentVal\"}]}"
+    val partitioningDTOJson = "{\"partitioning\":[{\"key\":\"key\",\"value\":\"val\"}],\"parentPartitioning\":[{\"key\":\"parentKey\",\"value\":\"parentVal\"}],\"authorIfNew\":\"authorTest\"}"
 
     val expectedPartitionDTO = PartitionDTO("key", "val")
     val expectedParentPartitionDTO = PartitionDTO("parentKey", "parentVal")
     val expectedPartitioningDTO = PartitioningDTO(
       partitioning = Seq(expectedPartitionDTO),
-      parentPartitioning = Some(Seq(expectedParentPartitionDTO))
+      parentPartitioning = Some(Seq(expectedParentPartitionDTO)),
+      authorIfNew = "authorTest"
     )
 
     val actualPartitioningDTO = SerializationUtils.fromJson[PartitioningDTO](partitioningDTOJson)

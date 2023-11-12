@@ -53,7 +53,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
     val measures = Set.empty[MeasureDTO]
     val additionalData = AdditionalDataDTO(additionalData = Map.empty)
 
-    AtumContextDTO(partitioning, measures, additionalData)
+    AtumContextDTO(partitioning, partitioningInfo.authorIfNew, measures, additionalData)
   }
 
 }

@@ -28,7 +28,7 @@ class ConsoleDispatcher extends Dispatcher with Logging {
 
   override def getOrCreateAtumContext(partitioning: PartitioningDTO): AtumContextDTO = {
     println(s"Fetching AtumContext using ConsoleDispatcher with partitioning $partitioning")
-    AtumContextDTO(partitioning = partitioning.partitioning)
+    AtumContextDTO(partitioning = partitioning.partitioning, partitioningAuthor = partitioning.authorIfNew)
   }
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     println(s"Saving checkpoint to server. $checkpoint")

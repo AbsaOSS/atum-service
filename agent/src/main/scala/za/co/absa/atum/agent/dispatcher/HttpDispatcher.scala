@@ -36,7 +36,8 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
       .post(serverUri)
       .send(backend)
 
-    AtumContextDTO(partitioning = partitioning.partitioning) // todo: implement request
+    // todo: implement request
+    AtumContextDTO(partitioning = partitioning.partitioning, partitioningAuthor = partitioning.authorIfNew)
   }
 
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {

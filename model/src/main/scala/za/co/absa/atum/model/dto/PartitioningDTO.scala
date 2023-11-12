@@ -19,5 +19,5 @@ package za.co.absa.atum.model.dto
 case class PartitioningDTO (
   partitioning: Seq[PartitionDTO],
   parentPartitioning: Option[Seq[PartitionDTO]],
-  byUser: String
+  authorIfNew: String
 )
