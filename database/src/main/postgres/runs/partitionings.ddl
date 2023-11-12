@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,9 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+CREATE TABLE runs.partitionings
+(
+    id_partitioning         BIGINT NOT NULL DEFAULT global_id(),
+    partitioning            JSONB NOT NULL, -- TODO add  partitioning validity check #69
+    created_by              TEXT NOT NULL,
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT partitionings_pk PRIMARY KEY (id_partitioning)
+);
 
-case class MeasureDTO(
-  measureName: String,
-  measuredColumns: Seq[String]
-)
+ALTER TABLE runs.partitionings
+    ADD CONSTRAINT partitioning_unq UNIQUE (partitioning);
+
+ALTER TABLE runs.partitionings OWNER to atum_owner;
