@@ -23,8 +23,11 @@ object Dependencies {
     val spark3 = "3.3.2"
 
     val scala211 = "2.11.12"
-    val scala212 = "2.12.12"
-    val supportedScalaVersions: Seq[String] = Seq(scala211, scala212)
+    val scala212 = "2.12.18"
+    val scala213 = "2.13.11"
+
+    val serviceScalaVersion: String = scala212
+    val clientSupportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
@@ -35,7 +38,7 @@ object Dependencies {
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
 
-    val spring = "2.6.6"
+    val spring = "2.6.15"
 
     val javaxServlet = "4.0.1"
 
@@ -53,7 +56,6 @@ object Dependencies {
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"
 
-    val slf4s = "1.7.25"
     val logback = "1.2.3"
   }
 
@@ -74,7 +76,8 @@ object Dependencies {
     scalaVersion match {
       case _ if scalaVersion.startsWith("2.11") => Versions.spark2
       case _ if scalaVersion.startsWith("2.12") => Versions.spark3
-      case _ => throw new IllegalArgumentException("Only Scala 2.11 and 2.12 are currently supported.")
+      case _ if scalaVersion.startsWith("2.13") => Versions.spark3
+      case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
     }
   }
 
@@ -97,7 +100,6 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion % Provided
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
-    lazy val slf4s = "org.slf4s" %% "slf4s-api" % Versions.slf4s
     lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
     lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
     lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
@@ -108,7 +110,6 @@ object Dependencies {
       json4sCore,
       json4sJackson,
       json4sNative,
-      slf4s,
       logback,
       scalatest,
       mockito,

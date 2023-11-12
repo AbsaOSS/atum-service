@@ -33,7 +33,7 @@ $$
 --      Creates a checkpoint and adds all the measurements that it consists of
 --
 -- Parameters:
---      i_partitioning              - segmentation the measure belongs to
+--      i_partitioning              - partitioning the measure belongs to
 --      i_id_checkpoint             - reference to the checkpoint this measure belongs into
 --      i_checkpoint_name           - name of the checkpoint
 --      i_process_start_time        - the start of processing (measuring) of the checkpoint

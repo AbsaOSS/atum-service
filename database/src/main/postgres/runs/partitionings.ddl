@@ -19,10 +19,10 @@ CREATE TABLE runs.partitionings
     partitioning            JSONB NOT NULL, -- TODO add  partitioning validity check #69
     created_by              TEXT NOT NULL,
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT segmentations_pk PRIMARY KEY (id_partitioning)
+    CONSTRAINT partitionings_pk PRIMARY KEY (id_partitioning)
 );
 
 ALTER TABLE runs.partitionings
-    ADD CONSTRAINT segmentations_unq UNIQUE (partitioning);
+    ADD CONSTRAINT partitioning_unq UNIQUE (partitioning);
 
 ALTER TABLE runs.partitionings OWNER to atum_owner;

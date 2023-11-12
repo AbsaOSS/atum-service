@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ DECLARE
     _id_flow        BIGINT;
     _flow_name      TEXT;
 BEGIN
-    --generating the id explicitly to use it it custom flow name if needed
+    --generating the id explicitly to use, if custom flow name if needed
     _id_flow := global_id();
     _flow_name := 'Custom flow #' || _id_flow;
 

@@ -22,10 +22,9 @@ import za.co.absa.atum.server.model.{BaseApiModel, ControlMeasure, Flow, Partiti
 
 import java.util.UUID
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
-import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
+import scala.collection.JavaConverters._
 
 object InMemoryApiModelDao {
 
