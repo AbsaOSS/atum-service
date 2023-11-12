@@ -64,8 +64,8 @@ object Runs {
       val measureNames = values.measurements.map(_.measure.measureName).toSeq
       val measureNamesNormalized = scalaSeqToPgArray(measureNames)
 
-      val controlColumns = values.measurements.map(_.measure.controlColumns).toSeq
-      val controlColumnsNormalized = nestedScalaSeqToPgArray(controlColumns)
+      val measuredColumns = values.measurements.map(_.measure.measuredColumns).toSeq
+      val measuredColumnsNormalized = nestedScalaSeqToPgArray(measuredColumns)
 
       val measureResults = values.measurements.map(_.result).toSeq
       val measureResultsNormalized = measureResults.map(SerializationUtils.asJson)
@@ -78,7 +78,7 @@ object Runs {
               ${values.processStartTime}::TIMESTAMPTZ,
               ${values.processEndTime}::TIMESTAMPTZ,
               $measureNamesNormalized::TEXT[],
-              $controlColumnsNormalized::TEXT[][],
+              $measuredColumnsNormalized::TEXT[][],
               $measureResultsNormalized::JSONB[],
               ${values.author}
             ) #$alias;"""

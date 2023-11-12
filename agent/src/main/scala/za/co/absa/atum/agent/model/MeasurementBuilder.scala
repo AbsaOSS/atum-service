@@ -23,8 +23,8 @@ private [agent] object MeasurementBuilder {
 
   private [agent] def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {
     val measureName = measurement.measure.measureName
-    val controlCols = Seq(measurement.measure.controlCol)
-    val measureDTO = MeasureDTO(measureName, controlCols)
+    val measuredColumns = Seq(measurement.measure.measuredColumn)
+    val measureDTO = MeasureDTO(measureName, measuredColumns)
 
     val measureResultDTO = MeasureResultDTO(TypedValue(measurement.resultValue.toString, measurement.resultType))
 
