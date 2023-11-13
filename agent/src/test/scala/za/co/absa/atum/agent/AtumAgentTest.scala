@@ -26,15 +26,15 @@ class AtumAgentTest extends AnyFunSuiteLike {
     val atumPartitions = AtumPartitions("abc" -> "def")
     val subPartitions = AtumPartitions("ghi", "jkl")
 
-    val atumContext1 = atumAgent.getOrCreateAtumContext(atumPartitions, "authorTest1")
-    val atumContext2 = atumAgent.getOrCreateAtumContext(atumPartitions, "authorTest1")
+    val atumContext1 = atumAgent.getOrCreateAtumContext(atumPartitions)
+    val atumContext2 = atumAgent.getOrCreateAtumContext(atumPartitions)
 
     // AtumAgent returns expected instance of AtumContext
-    assert(atumAgent.getOrCreateAtumContext(atumPartitions, "authorTest1") == atumContext1)
+    assert(atumAgent.getOrCreateAtumContext(atumPartitions) == atumContext1)
     assert(atumContext1 == atumContext2)
 
     // AtumSubContext contains expected AtumPartitions
-    val atumSubContext = atumAgent.getOrCreateAtumSubContext(subPartitions, "authorTest1")(atumContext1)
+    val atumSubContext = atumAgent.getOrCreateAtumSubContext(subPartitions)(atumContext1)
     assert(atumSubContext.atumPartitions == (atumPartitions ++ subPartitions))
 
     // AtumContext contains reference to expected AtumAgent
