@@ -19,7 +19,6 @@ package za.co.absa.atum.server.api.database
 import slick.jdbc.{GetResult, SQLActionBuilder}
 import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
-import za.co.absa.atum.server.api.database.Runs.CreatePartitioningIfNotExists
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBFunction._
 import za.co.absa.fadb.DBSchema
