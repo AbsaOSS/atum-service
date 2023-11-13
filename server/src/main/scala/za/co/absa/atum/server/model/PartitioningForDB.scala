@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.model
 
-import za.co.absa.atum.model.dto.PartitionDTO
+import za.co.absa.atum.model.dto.PartitioningDTO
 
 private[server] case class PartitioningForDB private(
   version: Int = 1,
@@ -26,7 +26,7 @@ private[server] case class PartitioningForDB private(
 
 object PartitioningForDB {
 
-  def fromSeqPartitionDTO(partitioning: Seq[PartitionDTO]): PartitioningForDB = {
+  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
     val allKeys = partitioning.map(_.key)
     val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
 

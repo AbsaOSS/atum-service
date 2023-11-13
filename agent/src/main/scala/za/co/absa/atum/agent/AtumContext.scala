@@ -29,14 +29,12 @@ import scala.collection.immutable.ListMap
 /**
  *  This class provides the methods to measure Spark `Dataframe`. Also allows to add and remove measures.
  *  @param atumPartitions: Atum partitions associated with a given Atum Context.
- *  @param partitioningAutor: Author who originally created the partitioning.
  *  @param agent: Reference to an Atum Agent object that will be used within the current Atum Contedt.
  *  @param measures: Variable set of measures associated with a given partitions / context.
  *  @param additionalData: Additional metadata or tags, associated with a given context.
  */
 class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
-  val partitioningAutor: String,
   val agent: AtumAgent,
   private var measures: Set[Measure] = Set.empty,
   private var additionalData: Map[String, Option[String]] = Map.empty
@@ -117,12 +115,11 @@ class AtumContext private[agent] (
 
   private[agent] def copy(
     atumPartitions: AtumPartitions = this.atumPartitions,
-    partitioningAutor: String = this.partitioningAutor,
     agent: AtumAgent = this.agent,
     measures: Set[Measure] = this.measures,
     additionalData: Map[String, Option[String]] = this.additionalData
   ): AtumContext = {
-    new AtumContext(atumPartitions, partitioningAutor, agent, measures, additionalData)
+    new AtumContext(atumPartitions, agent, measures, additionalData)
   }
 }
 
@@ -138,19 +135,19 @@ object AtumContext {
       ListMap(elems:_*)
     }
 
-    private[agent] def toSeqPartitionDTO(atumPartitions: AtumPartitions): Seq[PartitionDTO] = {
+    private[agent] def toSeqPartitionDTO(atumPartitions: AtumPartitions): PartitioningDTO = {
       atumPartitions.map { case (key, value) => PartitionDTO(key, value) }.toSeq
     }
 
-    private[agent] def fromPartitioning(partitioning: Seq[PartitionDTO]): AtumPartitions = {
-      AtumPartitions(partitioning.map(partition => partition.key -> partition.value))
+    private[agent] def fromPartitioning(partitioning: PartitioningDTO): AtumPartitions = {
+      val test = partitioning.map(partition => Tuple2(partition.key, partition.value))
+      AtumPartitions(test)
     }
   }
 
   private[agent] def fromDTO(atumContextDTO: AtumContextDTO, agent: AtumAgent): AtumContext = {
     new AtumContext(
       AtumPartitions.fromPartitioning(atumContextDTO.partitioning),
-      atumContextDTO.partitioningAuthor,
       agent,
       MeasuresBuilder.mapToMeasures(atumContextDTO.measures),
       atumContextDTO.additionalData.additionalData

@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database
 
 import slick.jdbc.{GetResult, SQLActionBuilder}
-import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningDTO}
+import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBFunction._
@@ -87,11 +87,11 @@ object Runs {
   }
 
   class CreatePartitioningIfNotExists(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
-    extends DBSingleResultFunction[PartitioningDTO, Long, SlickPgEngine]
-      with SlickFunctionWithStatusSupport[PartitioningDTO, Long]
+    extends DBSingleResultFunction[PartitioningSubmitDTO, Unit, SlickPgEngine]
+      with SlickFunctionWithStatusSupport[PartitioningSubmitDTO, Unit]
       with StandardStatusHandling {
 
-    override protected def sql(values: PartitioningDTO): SQLActionBuilder = {
+    override protected def sql(values: PartitioningSubmitDTO): SQLActionBuilder = {
       val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
       val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
@@ -108,6 +108,6 @@ object Runs {
             ) #$alias;"""
     }
 
-    override protected def slickConverter: GetResult[Long] = GetResult(_.<<)
+    override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
   }
 }

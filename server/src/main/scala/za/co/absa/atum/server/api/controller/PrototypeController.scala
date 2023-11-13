@@ -19,9 +19,11 @@ package za.co.absa.atum.server.api.controller
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.service.DatabaseService
+
 import java.util.concurrent.CompletableFuture
+import scala.collection.immutable.Seq
 
 
 @RestController
@@ -41,19 +43,23 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
   }
 
   /**
-   * Creates a partitioning in a DB and returns an Atum Context out of it.
+   * Creates a partitioning in a DB and returns an Atum Context out of it, or return an existing one if it already
+   * exists in a DB.
    *
-   * @param partitioningInfo DTO (JSON-like) object containing fields that will be used for creating a partitioning.
+   * @param partitioning DTO (JSON-like) object containing fields that will be used for creating a partitioning.
    * @return A new AtumContext object that uses newly obtained partitioning.
    */
   @PostMapping(Array("/createPartitioning"))
   @ResponseStatus(HttpStatus.OK)
-  def createPartitioningIfNotExists(@RequestBody partitioningInfo: PartitioningDTO): AtumContextDTO = {
-    val partitioning = databaseService.createPartitioningIfNotExists(partitioningInfo)
-    val measures = Set.empty[MeasureDTO]
+  def createPartitioning(@RequestBody partitioning: PartitioningSubmitDTO): AtumContextDTO = {
+    val partitioningObtained = databaseService.createPartitioningIfNotExists(partitioning)
+    val measures: Set[MeasureDTO] = Set(
+      // TODO #120, get measures from DB, this solution is temporary - we need record count always for now
+      MeasureDTO("count", Seq("countCol"))
+    )
     val additionalData = AdditionalDataDTO(additionalData = Map.empty)
 
-    AtumContextDTO(partitioning, partitioningInfo.authorIfNew, measures, additionalData)
+    AtumContextDTO(partitioningObtained.get().partitioning, measures, additionalData)  // TODO that get()
   }
 
 }

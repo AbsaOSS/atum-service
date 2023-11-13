@@ -17,8 +17,7 @@
 package za.co.absa.atum.model.dto
 
 case class AtumContextDTO(
-  partitioning: Seq[PartitionDTO],
-  partitioningAuthor: String,
+  partitioning: PartitioningDTO,
   measures: Set[MeasureDTO] = Set.empty,
   additionalData: AdditionalDataDTO = AdditionalDataDTO(additionalData = Map.empty)
 )

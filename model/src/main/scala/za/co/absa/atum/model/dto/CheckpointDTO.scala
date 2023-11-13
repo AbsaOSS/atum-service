@@ -24,7 +24,7 @@ case class CheckpointDTO(
   name: String,
   author: String,
   measuredByAtumAgent: Boolean = false,
-  partitioning: Seq[PartitionDTO],
+  partitioning: PartitioningDTO,
   processStartTime: OffsetDateTime,
   processEndTime: Option[OffsetDateTime],
   measurements: Seq[MeasurementDTO]

@@ -18,7 +18,7 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningDTO}
+import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  * Entity that communicate with the API, primarily focused on spawning Atum Context(s).
@@ -67,7 +67,7 @@ class AtumAgent private[agent] () {
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
     val authorIfNew = AtumAgent.currentUser
-    val partitioningDTO = PartitioningDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None, authorIfNew)
+    val partitioningDTO = PartitioningSubmitDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None, authorIfNew)
 
     val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
     lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
@@ -81,7 +81,7 @@ class AtumAgent private[agent] () {
 
     val newPartitionsDTO = AtumPartitions.toSeqPartitionDTO(newPartitions)
     val parentPartitionsDTO = Some(AtumPartitions.toSeqPartitionDTO(parentAtumContext.atumPartitions))
-    val partitioningDTO = PartitioningDTO(newPartitionsDTO, parentPartitionsDTO, authorIfNew)
+    val partitioningDTO = PartitioningSubmitDTO(newPartitionsDTO, parentPartitionsDTO, authorIfNew)
 
     val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
     lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
