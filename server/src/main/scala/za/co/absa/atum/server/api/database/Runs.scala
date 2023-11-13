@@ -99,7 +99,7 @@ object Runs {
       val parentPartitioningNormalized = values.parentPartitioning.map { parentPartitioning => {
         val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
         SerializationUtils.asJson(parentPartitioningForDB)
-      }}.getOrElse("{}")
+      }}
 
       sql"""SELECT #$selectEntry
             FROM #$functionName(
