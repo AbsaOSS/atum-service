@@ -24,7 +24,6 @@ import za.co.absa.atum.model.dto._
 
 import java.time.OffsetDateTime
 import java.util.UUID
-import scala.collection.Seq
 import scala.collection.immutable.ListMap
 
 /**
@@ -132,7 +131,7 @@ object AtumContext {
       ListMap(elems)
     }
 
-    def apply(elems: Seq[(String, String)]): AtumPartitions = {
+    def apply(elems: List[(String, String)]): AtumPartitions = {
       ListMap(elems:_*)
     }
 
@@ -141,7 +140,7 @@ object AtumContext {
     }
 
     private[agent] def fromPartitioning(partitioning: PartitioningDTO): AtumPartitions = {
-      AtumPartitions(partitioning.map(partition => Tuple2(partition.key, partition.value)))
+      AtumPartitions(partitioning.map(partition => Tuple2(partition.key, partition.value)).toList)
     }
   }
 

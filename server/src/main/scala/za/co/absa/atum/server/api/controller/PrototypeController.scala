@@ -51,15 +51,18 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    */
   @PostMapping(Array("/createPartitioning"))
   @ResponseStatus(HttpStatus.OK)
-  def createPartitioning(@RequestBody partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    val partitioningObtained = databaseService.createPartitioningIfNotExists(partitioning)
+  def createPartitioning(@RequestBody partitioning: PartitioningSubmitDTO): CompletableFuture[AtumContextDTO] = {
+    val partitioningFuture = databaseService.createPartitioningIfNotExists(partitioning)
     val measures: Set[MeasureDTO] = Set(
       // TODO #120, get measures from DB, this solution is temporary - we need record count always for now
       MeasureDTO("count", Seq("countCol"))
     )
     val additionalData = AdditionalDataDTO(additionalData = Map.empty)
 
-    AtumContextDTO(partitioningObtained.get().partitioning, measures, additionalData)  // TODO that get()
+    partitioningFuture
+      .thenApply(
+        partitioningObtained => AtumContextDTO(partitioningObtained.partitioning, measures, additionalData)
+      )
   }
 
 }
