@@ -92,9 +92,9 @@ BEGIN
     PERFORM runs._write_measurement(
         i_id_checkpoint,
         _fk_partitioning,
-        UN.measurement->>'measureName',
-        jsonb_array_to_text_array(UN.measurement->'measuredColumns'),
-        UN.measurement->'measurementValue',
+        UN.measurement->'measure'->>'measureName',
+        jsonb_array_to_text_array(UN.measurement->'measure'->'measuredColumns'),
+        UN.measurement->'result'->'mainValue',
         i_by_user
         )
     FROM (

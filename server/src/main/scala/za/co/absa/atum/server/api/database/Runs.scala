@@ -60,14 +60,7 @@ object Runs {
       val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
       val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
-      val measureNames = values.measurements.map(_.measure.measureName).toSeq
-      val measureNamesNormalized = scalaSeqToPgArray(measureNames)
-
-      val measuredColumns = values.measurements.map(_.measure.measuredColumns).toSeq
-      val measuredColumnsNormalized = nestedScalaSeqToPgArray(measuredColumns)
-
-      val measureResults = values.measurements.map(_.result).toSeq
-      val measureResultsNormalized = measureResults.map(SerializationUtils.asJson)
+      val measurementsNormalized = values.measurements.map(SerializationUtils.asJson)
 
       sql"""SELECT #$selectEntry
             FROM #$functionName(
@@ -76,9 +69,8 @@ object Runs {
               ${values.name},
               ${values.processStartTime}::TIMESTAMPTZ,
               ${values.processEndTime}::TIMESTAMPTZ,
-              $measureNamesNormalized::TEXT[],
-              $measuredColumnsNormalized::TEXT[][],
-              $measureResultsNormalized::JSONB[],
+              $measurementsNormalized::JSONB[],
+              ${values.measuredByAtumAgent},
               ${values.author}
             ) #$alias;"""
     }
