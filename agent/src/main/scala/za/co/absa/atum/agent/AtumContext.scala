@@ -140,8 +140,7 @@ object AtumContext {
     }
 
     private[agent] def fromPartitioning(partitioning: PartitioningDTO): AtumPartitions = {
-      val test = partitioning.map(partition => Tuple2(partition.key, partition.value))
-      AtumPartitions(test)
+      AtumPartitions(partitioning.map(partition => partition.key, partition.value))
     }
   }
 
