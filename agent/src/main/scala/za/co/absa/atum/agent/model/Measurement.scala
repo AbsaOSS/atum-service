@@ -71,20 +71,20 @@ object Measurement {
       }
     }
 
-    def apply[T](measureName: String, controlCol: String, resultValue: T): MeasurementProvided[T] = {
+    def apply[T](customMeasure: CustomMeasure, resultValue: T): MeasurementProvided[T] = {
       resultValue match {
         case _: Long =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Long)
+          MeasurementProvided[T](customMeasure, resultValue, ResultValueType.Long)
         case _: Double =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Double)
+          MeasurementProvided[T](customMeasure, resultValue, ResultValueType.Double)
         case _: BigDecimal =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.BigDecimal)
+          MeasurementProvided[T](customMeasure, resultValue, ResultValueType.BigDecimal)
         case _: String =>
-          MeasurementProvided[T](CustomMeasure(measureName, controlCol), resultValue, ResultValueType.String)
+          MeasurementProvided[T](customMeasure, resultValue, ResultValueType.String)
         case unsupportedType =>
           val className = unsupportedType.getClass.getSimpleName
           throw MeasurementProvidedException(
-            s"Unsupported type of measurement for measure ${measureName}: $className " +
+            s"Unsupported type of measurement for custom measure ${customMeasure.measureName}: $className " +
               s"for provided result: $resultValue"
           )
       }

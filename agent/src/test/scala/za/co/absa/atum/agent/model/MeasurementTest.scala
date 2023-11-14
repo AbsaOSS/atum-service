@@ -67,7 +67,7 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val expectedMeasurementProvided = MeasurementProvided(
       CustomMeasure(measureName, controlCol), resultValue, ResultValueType.String
     )
-    val actualMeasurementProvided = MeasurementProvided(measureName, controlCol, "abc")
+    val actualMeasurementProvided = MeasurementProvided(CustomMeasure(measureName, controlCol), "abc")
 
     assert(expectedMeasurementProvided == actualMeasurementProvided)
   }

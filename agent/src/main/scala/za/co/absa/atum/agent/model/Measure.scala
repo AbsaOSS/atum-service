@@ -32,7 +32,7 @@ sealed trait Measure {
   val controlCol: String
 }
 
-case class CustomMeasure private [agent] (measureName: String, controlCol: String) extends Measure
+case class CustomMeasure (measureName: String, controlCol: String) extends Measure
 
 abstract class AtumMeasure extends Measure with MeasurementProcessor {
   val resultValueType: ResultValueType.ResultValueType
