@@ -40,7 +40,7 @@ $$
 --
 -- Status codes:
 --      11                  - Partitioning created
---      12                  - Partitioning updated
+--      12                  - Partitioning parent registered
 --      14                  - Partitioning already present
 --
 -------------------------------------------------------------------------------
@@ -55,8 +55,6 @@ BEGIN
     _create_partitioning := id_partitioning IS NULL;
 
     IF i_parent_partitioning IS NOT NULL THEN
-        -- TODO check if i_parent_partitioning is parent to i_partitioning #69
-
         SELECT CPINE.id_partitioning
         FROM runs.create_partitioning_if_not_exists(i_parent_partitioning, i_by_user, NULL)   CPINE
         INTO _fk_parent_partitioning;
@@ -95,7 +93,7 @@ BEGIN
           -- additional data are not copied, they are specific for particular partitioning
         ELSIF (_status = 11) THEN
           status := 12;
-          status_text := 'Partitioning updated';
+          status_text := 'Partitioning parent registered';
         END IF;
     END IF;
 
