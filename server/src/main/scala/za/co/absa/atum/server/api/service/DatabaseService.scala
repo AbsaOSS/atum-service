@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitionDTO, PartitioningCreationDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitionDTO, PartitioningCreationDTO}
 import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 
@@ -26,9 +26,9 @@ import java.util.concurrent.CompletableFuture
 import scala.concurrent.ExecutionContext
 
 @Service
-class DatabaseService {
+class DatabaseService (@Autowired postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider){
 
-  private val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
+//  private val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
 
   /** This service function saves the checkpoint into the database. */
   def saveCheckpoint(checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
@@ -39,12 +39,16 @@ class DatabaseService {
   }
 
   /**
-   * Function to retrieve checkpoint based on the provided fields
+   * Function to create partitioning based on the provided fields
    *
-   * @param filterCriteria JSON object containing the fields for filtering the checkpoint
+   * @param partitioningInfo json information to be added while creating a partition
    */
-  def createPartitioningIfNotExists(partitioningInfo: PartitioningCreationDTO): Seq[PartitionDTO] = {
-    // Todo - implement the db function call in #23
-    Seq()
+  def createPartitioningIfNotExists(partitioningInfo: PartitioningCreationDTO): AtumContextDTO = {
+    // Todo - db function call to be implemented in #23
+    val partitioning = Seq()
+    val measures = Set.empty[MeasureDTO]
+    val additionalData = AdditionalDataDTO(additionalData = Map.empty)
+
+    AtumContextDTO(partitioning, measures, additionalData)
   }
 }
