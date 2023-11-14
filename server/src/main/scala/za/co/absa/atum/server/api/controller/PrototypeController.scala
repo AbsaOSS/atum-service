@@ -23,7 +23,6 @@ import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointD
 import za.co.absa.atum.server.api.service.DatabaseService
 
 import java.util.concurrent.CompletableFuture
-import scala.collection.immutable.Seq
 
 
 @RestController
