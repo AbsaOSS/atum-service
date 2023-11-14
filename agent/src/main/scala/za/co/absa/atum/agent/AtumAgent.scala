@@ -71,7 +71,7 @@ class AtumAgent private[agent] () {
     val partitioningDTO = PartitioningSubmitDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None, authorIfNew)
 
     val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
-    lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    val atumContext = AtumContext.fromDTO(atumContextDTO, this)
 
     getExistingOrNewContext(atumPartitions, atumContext)
   }
@@ -85,7 +85,7 @@ class AtumAgent private[agent] () {
     val partitioningDTO = PartitioningSubmitDTO(newPartitionsDTO, parentPartitionsDTO, authorIfNew)
 
     val atumContextDTO = dispatcher.getOrCreateAtumContext(partitioningDTO)
-    lazy val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    val atumContext = AtumContext.fromDTO(atumContextDTO, this)
 
     getExistingOrNewContext(newPartitions, atumContext)
   }
