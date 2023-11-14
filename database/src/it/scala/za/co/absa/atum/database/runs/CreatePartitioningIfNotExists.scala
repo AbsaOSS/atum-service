@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
     )
   }
 
-  test("Partitioning exists, but parent is updated") {
+  test("Partitioning exists, but parent is added") {
     val partitioningID = function(fncCreatePartitioningIfNotExists)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
@@ -188,7 +188,7 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
         assert(queryResult.hasNext)
         val row = queryResult.next()
         assert(row.getInt("status").contains(12))
-        assert(row.getString("status_text").contains("Partitioning updated"))
+        assert(row.getString("status_text").contains("Partitioning parent registered"))
         assert(row.getLong("id_partitioning").contains(partitioningID))
       }
 
