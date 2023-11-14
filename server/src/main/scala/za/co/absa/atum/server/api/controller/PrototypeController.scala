@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.controller
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningDTO}
 import za.co.absa.atum.server.api.service.DatabaseService
 
 import java.util.concurrent.CompletableFuture
@@ -39,5 +39,21 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
   @ResponseStatus(HttpStatus.CREATED)
   def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
     databaseService.saveCheckpoint(checkpoint)
+  }
+
+  /**
+   * Creates a partitioning in a DB and returns an Atum Context out of it.
+   *
+   * @param partitioningInfo DTO (JSON-like) object containing fields that will be used for creating a partitioning.
+   * @return A new AtumContext object that uses newly obtained partitioning.
+   */
+  @PostMapping(Array("/createPartitioning"))
+  @ResponseStatus(HttpStatus.OK)
+  def createPartitioningIfNotExists(@RequestBody partitioningInfo: PartitioningDTO): AtumContextDTO = {
+    val partitioning = databaseService.createPartitioningIfNotExists(partitioningInfo)
+    val measures = Set.empty[MeasureDTO]
+    val additionalData = AdditionalDataDTO(additionalData = Map.empty)
+
+    AtumContextDTO(partitioning, measures, additionalData)
   }
 }
