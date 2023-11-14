@@ -18,26 +18,24 @@ package za.co.absa.atum.server.api.service
 
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 
-import java.util.concurrent.CompletableFuture
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Service
 class DatabaseService {
 
   private val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
 
-  def saveCheckpoint(checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
-    implicit val executionContext: ExecutionContext = postgresAccessProvider.executor
+  private implicit val executionContext: ExecutionContext = postgresAccessProvider.executor
+
+  def saveCheckpoint(checkpoint: CheckpointDTO): Future[CheckpointDTO] = {
     for {
       _ <- postgresAccessProvider.runs.writeCheckpoint(checkpoint)
     } yield checkpoint
   }
 
-  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): CompletableFuture[PartitioningSubmitDTO] = {
-    implicit val executionContext: ExecutionContext = postgresAccessProvider.executor
+  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): Future[PartitioningSubmitDTO] = {
     for {
       _ <- postgresAccessProvider.runs.createPartitioningIfNotExists(partitioning)
     } yield partitioning

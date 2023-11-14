@@ -23,6 +23,7 @@ import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointD
 import za.co.absa.atum.server.api.service.DatabaseService
 
 import java.util.concurrent.CompletableFuture
+import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
 
 
 @RestController
@@ -54,7 +55,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
     val partitioningFuture = databaseService.createPartitioningIfNotExists(partitioning)
     val measures: Set[MeasureDTO] = Set(
       // TODO #120, get measures from DB, this solution is temporary - we need record count always for now
-      MeasureDTO("count", Seq("countCol"))
+      MeasureDTO("count", Seq("*"))
     )
     val additionalData = AdditionalDataDTO(additionalData = Map.empty)
 
