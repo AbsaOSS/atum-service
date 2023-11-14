@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext
 
 class PostgresAccessProvider {
 
-  val executor: ExecutionContext = ExecutionContext.Implicits.global
+  val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
   private def databaseConfig: Config = {
     val baseConfig = AtumConfig.dbConfig
@@ -38,6 +38,6 @@ class PostgresAccessProvider {
 
   private val db = Database.forConfig("", databaseConfig)
 
-  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executor)
+  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executionContext)
   val runs: Runs = new Runs()
 }

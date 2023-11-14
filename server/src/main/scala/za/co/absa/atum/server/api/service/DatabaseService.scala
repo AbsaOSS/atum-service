@@ -27,7 +27,7 @@ class DatabaseService {
 
   private val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
 
-  private implicit val executionContext: ExecutionContext = postgresAccessProvider.executor
+  implicit val executionContext: ExecutionContext = postgresAccessProvider.executionContext
 
   def saveCheckpoint(checkpoint: CheckpointDTO): Future[CheckpointDTO] = {
     for {

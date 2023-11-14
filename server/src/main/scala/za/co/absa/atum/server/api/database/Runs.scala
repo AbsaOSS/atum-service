@@ -38,11 +38,6 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
 object Runs {
 
-  private def nestedScalaSeqToPgArray[T <: AnyRef: ClassTag](toConvert: Seq[Seq[T]]): String = {
-    val scalaSeqJsonized = toConvert.map(scalaSeqToPgArray).mkString(",")
-    "{" + scalaSeqJsonized + "}"
-  }
-
   private def scalaSeqToPgArray[T <: AnyRef: ClassTag](toConvert: Seq[T]): String = {
     val scalaSeqJsonized = SerializationUtils.asJson(toConvert)  // this also correctly escapes double quotes
 

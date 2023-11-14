@@ -19,16 +19,17 @@ package za.co.absa.atum.server.api.controller
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.service.DatabaseService
 
-import java.util.concurrent.CompletableFuture
-import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
+import scala.concurrent.{ExecutionContext, Future}
 
 
 @RestController
 @RequestMapping(Array("/api/v1"))
 class PrototypeController @Autowired()(databaseService: DatabaseService){
+
+  implicit val executionContext: ExecutionContext = databaseService.executionContext
 
   /**
    * Creates a checkpoint in a DB.
@@ -38,7 +39,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    */
   @PostMapping(path = Array("/createCheckpoint"))
   @ResponseStatus(HttpStatus.CREATED)
-  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
+  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): Future[CheckpointDTO] = {
     databaseService.saveCheckpoint(checkpoint)
   }
 
@@ -51,18 +52,15 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    */
   @PostMapping(Array("/createPartitioning"))
   @ResponseStatus(HttpStatus.OK)
-  def createPartitioning(@RequestBody partitioning: PartitioningSubmitDTO): CompletableFuture[AtumContextDTO] = {
-    val partitioningFuture = databaseService.createPartitioningIfNotExists(partitioning)
-    val measures: Set[MeasureDTO] = Set(
-      // TODO #120, get measures from DB, this solution is temporary - we need record count always for now
-      MeasureDTO("count", Seq("*"))
-    )
+  def createPartitioning(@RequestBody partitioning: PartitioningSubmitDTO): Future[AtumContextDTO] = {
+    // TODO #120, get measures from DB, this solution is temporary - we need record count always for now
+    val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
+
     val additionalData = AdditionalDataDTO(additionalData = Map.empty)
 
-    partitioningFuture
-      .thenApply(
-        partitioningObtained => AtumContextDTO(partitioningObtained.partitioning, measures, additionalData)
-      )
+    for {
+      partitioningFuture <- databaseService.createPartitioningIfNotExists(partitioning)
+    } yield AtumContextDTO(partitioningFuture.partitioning, measures, additionalData)
   }
 
 }
