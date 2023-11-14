@@ -36,7 +36,8 @@ class AtumAgent private[agent] () {
   }
 
   /**
-   * Returns a user under who's security context the JVM is running. It can be used for author/createdBy fields.
+   * Returns a user under who's security context the JVM is running.
+   * It's purpose is for auditing in author/createdBy fields.
    *
    * Important: It's not supposed to be used for authorization as it can be spoofed!
    *

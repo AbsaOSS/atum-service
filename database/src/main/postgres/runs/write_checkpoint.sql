@@ -40,9 +40,11 @@ $$
 --      i_i_process_end_time        - the end of the processing (measuring) of the checkpoint
 --      i_measurements              - array of JSON objects of the following format (values of the keys are examples only)
 --                                    {
---                                      "measureName": "count",
---                                      "measuredColumns": ["a","b"],
---                                      "measurementValue":{
+--                                      "measure": {
+--                                        "measureName": "count",
+--                                        "measuredColumns": ["a","b"]
+--                                      },
+--                                      "result": {
 --                                        whatever here
 --                                      }
 --                                    }
@@ -94,7 +96,7 @@ BEGIN
         _fk_partitioning,
         UN.measurement->'measure'->>'measureName',
         jsonb_array_to_text_array(UN.measurement->'measure'->'measuredColumns'),
-        UN.measurement->'result'->'mainValue',
+        UN.measurement->'result',
         i_by_user
         )
     FROM (
