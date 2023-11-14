@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,10 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+CREATE SCHEMA IF NOT EXISTS flows;
+ALTER  SCHEMA flows OWNER TO atum_owner;
 
-case class PartitioningDTO (
-  partitioning: Seq[PartitionDTO],
-  parentPartitioning: Option[Seq[PartitionDTO]],
-  author: String
-)
+GRANT USAGE ON SCHEMA flows TO atum_user;

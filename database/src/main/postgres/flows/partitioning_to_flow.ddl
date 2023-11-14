@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,10 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+CREATE TABLE flows.partitioning_to_flow
+(
+    fk_flow                 BIGINT NOT NULL,
+    fk_partitioning         BIGINT NOT NULL,
+    created_by              TEXT NOT NULL,
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT partitioning_to_flow_pk PRIMARY KEY (fk_flow, fk_partitioning)
+);
 
-case class PartitioningDTO (
-  partitioning: Seq[PartitionDTO],
-  parentPartitioning: Option[Seq[PartitionDTO]],
-  author: String
-)
+ALTER TABLE flows.partitioning_to_flow OWNER to atum_owner;

@@ -16,9 +16,12 @@
 
 package za.co.absa.atum.server.api.service
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+<<<<<<< HEAD
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitionDTO, PartitioningCreationDTO}
+=======
+import za.co.absa.atum.model.dto.{CheckpointDTO, PartitionDTO, PartitioningDTO}
+>>>>>>> d9fcb0d2c85e2893d1ce37926f08fc99881d0d06
 import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 
@@ -43,7 +46,7 @@ class DatabaseService (@Autowired postgresAccessProvider: PostgresAccessProvider
    *
    * @param partitioningInfo json information to be added while creating a partition
    */
-  def createPartitioningIfNotExists(partitioningInfo: PartitioningCreationDTO): AtumContextDTO = {
+  def createPartitioningIfNotExists(partitioningInfo: PartitioningDTO): AtumContextDTO = {
     // Todo - db function call to be implemented in #23
     val partitioning = Seq()
     val measures = Set.empty[MeasureDTO]

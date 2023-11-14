@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.service
 
 import org.springframework.stereotype.Service
-import za.co.absa.atum.server.api.config.AtumConfig
+import za.co.absa.atum.server.api.AtumConfig
 
 @Service
 class TestService {

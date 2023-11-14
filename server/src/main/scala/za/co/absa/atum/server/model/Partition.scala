@@ -19,9 +19,9 @@ package za.co.absa.atum.server.model
 import java.util.UUID
 
 case class Partition(
-                      id: Option[UUID],
-                      flowId: UUID
-                    ) extends BaseApiModel {
+  id: Option[UUID],
+  flowId: UUID
+) extends BaseApiModel {
 
   override def withId(uuid: UUID): Partition = copy(id = Some(uuid))
 }

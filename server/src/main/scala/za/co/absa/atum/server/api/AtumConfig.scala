@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.api
 
-case class PartitioningDTO (
-  partitioning: Seq[PartitionDTO],
-  parentPartitioning: Option[Seq[PartitionDTO]],
-  author: String
-)
+import com.typesafe.config.{Config, ConfigFactory}
+
+trait AtumConfig {
+
+  def dbConfig: Config
+}
+
+object AtumConfig extends AtumConfig {
+
+  private val config = ConfigFactory.load("application.properties")
+
+  override def dbConfig: Config = config.getConfig("postgres")
+  def testEndpointConfig: Config = config.getConfig("atum.server.api.config")
+}

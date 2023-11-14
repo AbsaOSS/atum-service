@@ -21,10 +21,8 @@ import sbt.Keys.name
 
 
 ThisBuild / organization := "za.co.absa"
-ThisBuild / name         := "atum-service"
 
 ThisBuild / scalaVersion := Versions.scala212  // default version
-ThisBuild / crossScalaVersions := Versions.supportedScalaVersions
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -71,8 +69,7 @@ lazy val server = (projectMatrix in file("server"))
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
-      inheritJarManifest := true,
-      mergeStrategy
+      inheritJarManifest := true
     ): _*
   )
   .settings(
@@ -82,7 +79,7 @@ lazy val server = (projectMatrix in file("server"))
   .enablePlugins(AssemblyPlugin)
   .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
-  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
   .dependsOn(model)
 
 lazy val agent = (projectMatrix in file("agent"))
@@ -102,8 +99,8 @@ lazy val agent = (projectMatrix in file("agent"))
     jacocoExcludes := jacocoProjectExcludes()
   )
   .sparkRow(SparkVersionAxis(Versions.spark2), scalaVersions = Seq(Versions.scala211, Versions.scala212))
-  .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212))
-  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212, Versions.scala213))
+  .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
   .dependsOn(model)
 
 lazy val model = (projectMatrix in file("model"))
@@ -118,4 +115,4 @@ lazy val model = (projectMatrix in file("model"))
     jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent: model"),
     jacocoExcludes := jacocoProjectExcludes()
   )
-  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)

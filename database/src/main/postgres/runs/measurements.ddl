@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,10 +13,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+CREATE TABLE runs.measurements
+(
+    id_measurement                      BIGINT NOT NULL DEFAULT global_id(),
+    fk_measure_definition               BIGINT NOT NULL,
+    fk_checkpoint                       UUID NOT NULL,
+    measurement_value                   JSONB NOT NULL,
+    CONSTRAINT measurements_pk PRIMARY KEY (id_measurement)
+);
 
-case class PartitioningDTO (
-  partitioning: Seq[PartitionDTO],
-  parentPartitioning: Option[Seq[PartitionDTO]],
-  author: String
-)
+ALTER TABLE runs.measurements
+    ADD CONSTRAINT measurements_unq UNIQUE (fk_checkpoint, fk_measure_definition);
+
+CREATE INDEX measurements_idx1 ON runs.measurements (fk_measure_definition);
+
+ALTER TABLE runs.measurements OWNER to atum_owner;
