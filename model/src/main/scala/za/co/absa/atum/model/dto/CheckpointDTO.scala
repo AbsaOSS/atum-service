@@ -20,12 +20,12 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 case class CheckpointDTO(
-                          id: UUID,
-                          name: String,
-                          author: String,
-                          measuredByAtumAgent: Boolean = false,
-                          partitioning: Seq[PartitionDTO],
-                          processStartTime: OffsetDateTime,
-                          processEndTime: Option[OffsetDateTime],
-                          measurements: Set[MeasurementDTO]
+  id: UUID,
+  name: String,
+  author: String,
+  measuredByAtumAgent: Boolean = false,
+  partitioning: PartitioningDTO,
+  processStartTime: OffsetDateTime,
+  processEndTime: Option[OffsetDateTime],
+  measurements: Set[MeasurementDTO]
 )

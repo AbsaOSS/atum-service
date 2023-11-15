@@ -35,7 +35,7 @@ private [agent] object MeasurementBuilder {
   private def validateMeasurementUniqueness(measurements: Set[Measurement]): Unit = {
     val originalMeasurementsCnt = measurements.size
     val uniqueMeasuresCnt = measurements.toSeq.map(m =>
-      Tuple2(m.measure.measureName, m.measure.controlCol)  // there can't be 2 same measures defined on the same column
+      Tuple2(m.measure.measureName, m.measure.measuredColumn)  // there can't be 2 same measures defined on the same column
     ).distinct.size
 
     val areMeasuresUnique = originalMeasurementsCnt == uniqueMeasuresCnt
@@ -55,11 +55,11 @@ private [agent] object MeasurementBuilder {
 
   private[agent] def buildMeasurementDTO(measure: Measure, measureResult: MeasureResult): MeasurementDTO = {
     val measureName = measure.measureName
-    val controlCols = Seq(measure.controlCol)
+    val measuredColumns = Seq(measure.measuredColumn)
 
     validateMeasurement(measure, measureResult)
 
-    val measureDTO = MeasureDTO(measureName, controlCols)
+    val measureDTO = MeasureDTO(measureName, measuredColumns)
     val measureResultDTO = MeasureResultDTO(
       MeasureResultDTO.TypedValue(measureResult.resultValue.toString, measureResult.resultType)
     )

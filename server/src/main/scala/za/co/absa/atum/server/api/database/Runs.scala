@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database
 
 import slick.jdbc.{GetResult, SQLActionBuilder}
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBFunction._
@@ -33,14 +33,10 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
   import Runs._
 
   val writeCheckpoint = new WriteCheckpoint
+  val createPartitioningIfNotExists = new CreatePartitioningIfNotExists
 }
 
 object Runs {
-
-  private def nestedScalaSeqToPgArray[T <: AnyRef: ClassTag](toConvert: Seq[Seq[T]]): String = {
-    val scalaSeqJsonized = toConvert.map(scalaSeqToPgArray).mkString(",")
-    "{" + scalaSeqJsonized + "}"
-  }
 
   private def scalaSeqToPgArray[T <: AnyRef: ClassTag](toConvert: Seq[T]): String = {
     val scalaSeqJsonized = SerializationUtils.asJson(toConvert)  // this also correctly escapes double quotes
@@ -59,14 +55,7 @@ object Runs {
       val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
       val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
-      val measureNames = values.measurements.map(_.measure.measureName).toSeq
-      val measureNamesNormalized = scalaSeqToPgArray(measureNames)
-
-      val controlColumns = values.measurements.map(_.measure.controlColumns).toSeq
-      val controlColumnsNormalized = nestedScalaSeqToPgArray(controlColumns)
-
-      val measureResults = values.measurements.map(_.result).toSeq
-      val measureResultsNormalized = measureResults.map(SerializationUtils.asJson)
+      val measurementsNormalized = values.measurements.map(SerializationUtils.asJson)
 
       sql"""SELECT #$selectEntry
             FROM #$functionName(
@@ -75,10 +64,34 @@ object Runs {
               ${values.name},
               ${values.processStartTime}::TIMESTAMPTZ,
               ${values.processEndTime}::TIMESTAMPTZ,
-              $measureNamesNormalized::TEXT[],
-              $controlColumnsNormalized::TEXT[][],
-              $measureResultsNormalized::JSONB[],
+              $measurementsNormalized::JSONB[],
+              ${values.measuredByAtumAgent},
               ${values.author}
+            ) #$alias;"""
+    }
+
+    override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
+  }
+
+  class CreatePartitioningIfNotExists(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
+    extends DBSingleResultFunction[PartitioningSubmitDTO, Unit, SlickPgEngine]
+      with SlickFunctionWithStatusSupport[PartitioningSubmitDTO, Unit]
+      with StandardStatusHandling {
+
+    override protected def sql(values: PartitioningSubmitDTO): SQLActionBuilder = {
+      val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
+      val partitioningNormalized = SerializationUtils.asJson(partitioning)
+
+      val parentPartitioningNormalized = values.parentPartitioning.map { parentPartitioning => {
+        val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
+        SerializationUtils.asJson(parentPartitioningForDB)
+      }}
+
+      sql"""SELECT #$selectEntry
+            FROM #$functionName(
+              $partitioningNormalized::JSONB,
+              ${values.authorIfNew},
+              $parentPartitioningNormalized::JSONB
             ) #$alias;"""
     }
 

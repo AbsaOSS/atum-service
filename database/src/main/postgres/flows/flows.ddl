@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,23 +13,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+CREATE TABLE flows.flows
+(
+    id_flow                 BIGINT NOT NULL DEFAULT global_id(),
+    flow_name               TEXT NOT NULL,
+    flow_description        TEXT,
+    from_pattern            BOOLEAN NOT NULL,
+    created_by              TEXT NOT NULL,
+    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT flows_pk PRIMARY KEY (id_flow)
+);
 
-import za.co.absa.atum.model.dto.PartitioningDTO
-
-private[server] case class PartitioningForDB private(
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValuesMap: Map[String, String]
-)
-
-object PartitioningForDB {
-
-  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
-
-    PartitioningForDB(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
-  }
-}
-
+ALTER TABLE flows.flows OWNER to atum_owner;

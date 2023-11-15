@@ -27,7 +27,7 @@ import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancem
  *  Type of different measures to be applied to the columns.
  */
 sealed trait Measure extends MeasurementProcessor with MeasureType {
-  val controlCol: String
+  val measuredColumn: String
 }
 
 trait MeasureType {
@@ -49,39 +49,39 @@ object Measure {
   val supportedMeasureNames: Seq[String] = supportedMeasures.map(_.measureName)
 
   case class RecordCount private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
+   measuredColumn: String,
+   measureName: String,
+   resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementProcessor.MeasurementFunction =
       (ds: DataFrame) => {
-        val resultValue = ds.select(col(controlCol)).count().toString
+        val resultValue = ds.select(col(measuredColumn)).count().toString
         MeasureResult(resultValue, resultValueType)
       }
   }
   object RecordCount extends MeasureType {
-    def apply(controlCol: String): RecordCount = RecordCount(controlCol, measureName, resultValueType)
+    def apply(measuredColumn: String): RecordCount = RecordCount(measuredColumn, measureName, resultValueType)
 
     override val measureName: String = "count"
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
 
   case class DistinctRecordCount private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
+     measuredColumn: String,
+     measureName: String,
+     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementProcessor.MeasurementFunction =
       (ds: DataFrame) => {
-        val resultValue = ds.select(col(controlCol)).distinct().count().toString
+        val resultValue = ds.select(col(measuredColumn)).distinct().count().toString
         MeasureResult(resultValue, resultValueType)
       }
   }
   object DistinctRecordCount extends MeasureType {
-    def apply(controlCol: String): DistinctRecordCount = {
-      DistinctRecordCount(controlCol, measureName, resultValueType)
+    def apply(measuredColumn: String): DistinctRecordCount = {
+      DistinctRecordCount(measuredColumn, measureName, resultValueType)
     }
 
     override val measureName: String = "distinctCount"
@@ -89,20 +89,20 @@ object Measure {
   }
 
   case class SumOfValuesOfColumn private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
+   measuredColumn: String,
+   measureName: String,
+   resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(col(valueColumnName))
-      val resultValue = aggregateColumn(ds, controlCol, aggCol)
+      val resultValue = aggregateColumn(ds, measuredColumn, aggCol)
       MeasureResult(resultValue, resultValueType)
     }
   }
   object SumOfValuesOfColumn extends MeasureType {
-    def apply(controlCol: String): SumOfValuesOfColumn = {
-      SumOfValuesOfColumn(controlCol, measureName, resultValueType)
+    def apply(measuredColumn: String): SumOfValuesOfColumn = {
+      SumOfValuesOfColumn(measuredColumn, measureName, resultValueType)
     }
 
     override val measureName: String = "aggregatedTotal"
@@ -110,20 +110,20 @@ object Measure {
   }
 
   case class AbsSumOfValuesOfColumn private (
-    controlCol: String,
+    measuredColumn: String,
     measureName: String,
     resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
       val aggCol = sum(abs(col(valueColumnName)))
-      val resultValue = aggregateColumn(ds, controlCol, aggCol)
+      val resultValue = aggregateColumn(ds, measuredColumn, aggCol)
       MeasureResult(resultValue, resultValueType)
     }
   }
   object AbsSumOfValuesOfColumn extends MeasureType {
-    def apply(controlCol: String): AbsSumOfValuesOfColumn = {
-      AbsSumOfValuesOfColumn(controlCol, measureName, resultValueType)
+    def apply(measuredColumn: String): AbsSumOfValuesOfColumn = {
+      AbsSumOfValuesOfColumn(measuredColumn, measureName, resultValueType)
     }
 
     override val measureName: String = "absAggregatedTotal"
@@ -131,16 +131,16 @@ object Measure {
   }
 
   case class SumOfHashesOfColumn private (
-    controlCol: String,
-    measureName: String,
-    resultValueType: ResultValueType.ResultValueType
+   measuredColumn: String,
+   measureName: String,
+   resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
 
       val aggregatedColumnName = ds.schema.getClosestUniqueName("sum_of_hashes")
       val value = ds
-        .withColumn(aggregatedColumnName, crc32(col(controlCol).cast("String")))
+        .withColumn(aggregatedColumnName, crc32(col(measuredColumn).cast("String")))
         .agg(sum(col(aggregatedColumnName)))
         .collect()(0)(0)
       val resultValue = if (value == null) "" else value.toString
@@ -148,8 +148,8 @@ object Measure {
     }
   }
   object SumOfHashesOfColumn extends MeasureType {
-    def apply(controlCol: String): SumOfHashesOfColumn = {
-      SumOfHashesOfColumn(controlCol, measureName, resultValueType)
+    def apply(measuredColumn: String): SumOfHashesOfColumn = {
+      SumOfHashesOfColumn(measuredColumn, measureName, resultValueType)
     }
 
     override val measureName: String = "hashCrc32"
@@ -168,7 +168,7 @@ object Measure {
         //   scala> sc.parallelize(List(Long.MaxValue, 1)).toDF.agg(sum("value")).take(1)(0)(0)
         //   res11: Any = -9223372036854775808
         // Converting to BigDecimal fixes the issue
-        // val ds2 = ds.select(col(measurement.controlCol).cast(DecimalType(38, 0)).as("value"))
+        // val ds2 = ds.select(col(measurement.measuredColumn).cast(DecimalType(38, 0)).as("value"))
         // ds2.agg(sum(abs($"value"))).collect()(0)(0)
         val ds2 = ds.select(
           col(measureColumn).cast(DecimalType(38, 0)).as(valueColumnName)

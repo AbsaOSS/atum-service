@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,23 +13,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+CREATE TABLE runs.measurements
+(
+    id_measurement                      BIGINT NOT NULL DEFAULT global_id(),
+    fk_measure_definition               BIGINT NOT NULL,
+    fk_checkpoint                       UUID NOT NULL,
+    measurement_value                   JSONB NOT NULL,
+    CONSTRAINT measurements_pk PRIMARY KEY (id_measurement)
+);
 
-import za.co.absa.atum.model.dto.PartitioningDTO
+ALTER TABLE runs.measurements
+    ADD CONSTRAINT measurements_unq UNIQUE (fk_checkpoint, fk_measure_definition);
 
-private[server] case class PartitioningForDB private(
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValuesMap: Map[String, String]
-)
+CREATE INDEX measurements_idx1 ON runs.measurements (fk_measure_definition);
 
-object PartitioningForDB {
-
-  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
-
-    PartitioningForDB(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
-  }
-}
-
+ALTER TABLE runs.measurements OWNER to atum_owner;
