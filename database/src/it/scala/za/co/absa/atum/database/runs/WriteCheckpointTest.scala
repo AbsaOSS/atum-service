@@ -102,25 +102,31 @@ class WriteCheckpointTest extends DBTestSuite {
       """
         |{
         |  "{
-        |    \"measureName\": \"count\",
-        |    \"measuredColumns\": [],
-        |    \"measurementValue\":{
+        |    \"measure\": {
+        |      \"measureName\": \"count\",
+        |      \"measuredColumns\": []
+        |    },
+        |    \"result\":{
         |      \"value\":\"3\",
         |      \"type\":\"int\"
         |    }
         |  }",
         |  "{
-        |    \"measureName\": \"avg\",
-        |    \"measuredColumns\": [\"col1\"],
-        |    \"measurementValue\":{
+        |    \"measure\": {
+        |      \"measureName\": \"avg\",
+        |      \"measuredColumns\": [\"col1\"]
+        |    },
+        |    \"result\":{
         |      \"value\":\"3.14\",
         |      \"type\":\"double\"
         |    }
         |  }",
         |  "{
-        |    \"measureName\": \"avg\",
-        |    \"measuredColumns\": [\"a\",\"b\"],
-        |    \"measurementValue\":{
+        |    \"measure\": {
+        |      \"measureName\": \"avg\",
+        |      \"measuredColumns\": [\"a\",\"b\"]
+        |    },
+        |    \"result\":{
         |      \"value\":\"2.71\",
         |      \"type\":\"double\"
         |    }
