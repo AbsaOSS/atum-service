@@ -34,6 +34,14 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     assert(actualMeasurement.resultType == ResultValueType.Double)
   }
 
+  "MeasurementProvided" should "be able to be converted to MeasurementProvided object when the result is String" in {
+    val measure = SumOfHashesOfColumn("col")
+    val actualMeasurement = MeasurementProvided(measure, "abc")
+
+    assert(actualMeasurement.resultValue == "abc")
+    assert(actualMeasurement.resultType == ResultValueType.String)
+  }
+
   "MeasurementProvided" should "throw exception for unsupported result value - BigDecimal instead of Double" in {
     val measure = AbsSumOfValuesOfColumn("col")
     assertThrows[MeasurementProvidedException](MeasurementProvided(measure, BigDecimal(1.0)))
@@ -59,7 +67,7 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
   }
 
-  "forCustomMeasure" should "create MeasurementProvided for custom measure" in {
+  "apply" should "create MeasurementProvided for custom measure with String result value type" in {
     val measureName = "myCustomMeasure"
     val controlCol = "columnName"
     val resultValue = "abc"
@@ -70,5 +78,38 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val actualMeasurementProvided = MeasurementProvided(CustomMeasure(measureName, controlCol), "abc")
 
     assert(expectedMeasurementProvided == actualMeasurementProvided)
+  }
+
+  "apply" should "create MeasurementProvided for custom measure with Long result value type" in {
+    val measureName = "myCustomMeasure"
+    val controlCol = "columnName"
+    val resultValue = 123L
+
+    val expectedMeasurementProvided = MeasurementProvided(
+      CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Long
+    )
+    val actualMeasurementProvided = MeasurementProvided(CustomMeasure(measureName, controlCol), 123L)
+
+    assert(expectedMeasurementProvided == actualMeasurementProvided)
+  }
+
+  "apply" should "create MeasurementProvided for custom measure with Double result value type" in {
+    val measureName = "myCustomMeasure"
+    val controlCol = "columnName"
+    val resultValue = 1.13
+
+    val expectedMeasurementProvided = MeasurementProvided(
+      CustomMeasure(measureName, controlCol), resultValue, ResultValueType.Double
+    )
+    val actualMeasurementProvided = MeasurementProvided(CustomMeasure(measureName, controlCol), 1.13)
+
+    assert(expectedMeasurementProvided == actualMeasurementProvided)
+  }
+
+  "apply" should "throw exception for unsupported type" in {
+    val measureName = "myCustomMeasure"
+    val controlCol = "columnName"
+
+    assertThrows[MeasurementProvidedException](MeasurementProvided(CustomMeasure(measureName, controlCol), true))
   }
 }

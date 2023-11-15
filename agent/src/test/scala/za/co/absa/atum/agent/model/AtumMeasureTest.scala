@@ -29,11 +29,11 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
   "Measure" should "be based on the dataframe" in {
 
     // Measures
-    val measureIds: Measure = RecordCount(measuredColumn = "id")
-    val salaryAbsSum: Measure = AbsSumOfValuesOfColumn(measuredColumn = "salary")
+    val measureIds: AtumMeasure = RecordCount(measuredColumn = "id")
+    val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn(measuredColumn = "salary")
 
     val salarySum = SumOfValuesOfColumn(measuredColumn = "salary")
-    val sumOfHashes: Measure = SumOfHashesOfColumn(measuredColumn = "id")
+    val sumOfHashes: AtumMeasure = SumOfHashesOfColumn(measuredColumn = "id")
 
     // AtumContext contains `Measurement`
     val atumContextInstanceWithRecordCount = AtumAgent

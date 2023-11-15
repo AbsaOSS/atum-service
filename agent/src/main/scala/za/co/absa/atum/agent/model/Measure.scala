@@ -32,7 +32,7 @@ sealed trait Measure {
   val measuredColumn: String
 }
 
-case class CustomMeasure (measureName: String, controlCol: String) extends Measure
+case class CustomMeasure (measureName: String, measuredColumn: String) extends Measure
 
 abstract class AtumMeasure extends Measure with MeasurementProcessor {
   val resultValueType: ResultValueType.ResultValueType
@@ -57,7 +57,10 @@ object AtumMeasure {
         val resultValue = ds.select(col(measuredColumn)).count().toString
         ResultOfMeasurement(resultValue, resultValueType)
       }
+
+    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
+
   object RecordCount {
     private [agent] val measureName: String = "count"
     def apply(measuredColumn: String): RecordCount = RecordCount(measureName, measuredColumn)
@@ -73,6 +76,7 @@ object AtumMeasure {
 
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
+
   object DistinctRecordCount {
     private [agent] val measureName: String = "distinctCount"
     def apply(controlCol: String): DistinctRecordCount = DistinctRecordCount(measureName, controlCol)
@@ -88,9 +92,10 @@ object AtumMeasure {
 
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
   }
+
   object SumOfValuesOfColumn {
     private [agent] val measureName: String = "aggregatedTotal"
-    def apply(controlCol: String): SumOfValuesOfColumn = SumOfValuesOfColumn(measureName, controlCol)
+    def apply(measuredColumn: String): SumOfValuesOfColumn = SumOfValuesOfColumn(measureName, measuredColumn)
   }
 
   case class AbsSumOfValuesOfColumn private (measureName: String, measuredColumn: String) extends AtumMeasure {
@@ -103,6 +108,7 @@ object AtumMeasure {
 
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Double
   }
+
   object AbsSumOfValuesOfColumn  {
     private [agent] val measureName: String = "absAggregatedTotal"
     def apply(measuredColumn: String): AbsSumOfValuesOfColumn = AbsSumOfValuesOfColumn(measureName, measuredColumn)
@@ -123,6 +129,7 @@ object AtumMeasure {
 
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.String
   }
+
   object SumOfHashesOfColumn {
     private [agent] val measureName: String = "hashCrc32"
     def apply(measuredColumn: String): SumOfHashesOfColumn = SumOfHashesOfColumn(measureName, measuredColumn)
