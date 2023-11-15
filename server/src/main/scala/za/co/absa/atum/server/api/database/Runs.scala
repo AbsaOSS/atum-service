@@ -55,7 +55,7 @@ object Runs {
       val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
       val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
-      val measurementsNormalized = values.measurements.map(SerializationUtils.asJson)
+      val measurementsNormalized = values.measurements.map(SerializationUtils.asJson).toSeq
 
       sql"""SELECT #$selectEntry
             FROM #$functionName(
