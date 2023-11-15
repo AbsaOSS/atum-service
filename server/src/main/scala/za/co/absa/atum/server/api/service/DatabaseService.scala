@@ -16,36 +16,28 @@
 
 package za.co.absa.atum.server.api.service
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.atum.model.dto.{CheckpointDTO, PartitionDTO, PartitioningDTO}
-import za.co.absa.atum.server.api.implicits.scalaToJavaFuture
+import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 
-import java.util.concurrent.CompletableFuture
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Service
-class DatabaseService @Autowired()() {
+class DatabaseService {
 
-  val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
+  private val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
 
-  /** This service function saves the checkpoint into the database. */
-  def saveCheckpoint(checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
-    implicit val executionContext: ExecutionContext = postgresAccessProvider.executor
+  implicit val executionContext: ExecutionContext = postgresAccessProvider.executionContext
+
+  def saveCheckpoint(checkpoint: CheckpointDTO): Future[CheckpointDTO] = {
     for {
       _ <- postgresAccessProvider.runs.writeCheckpoint(checkpoint)
     } yield checkpoint
   }
 
-  /**
-   * Function to retrieve checkpoint based on the provided fields
-   *
-   * @param filterCriteria JSON object containing the fields for filtering the checkpoint
-   */
-  def createPartitioningIfNotExists(partitioningInfo: PartitioningDTO): Seq[PartitionDTO] = {
-    // Todo - implement the db function call in #23
-    Seq()
+  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): Future[PartitioningSubmitDTO] = {
+    for {
+      _ <- postgresAccessProvider.runs.createPartitioningIfNotExists(partitioning)
+    } yield partitioning
   }
-
 }
