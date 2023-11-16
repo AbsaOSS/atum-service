@@ -23,7 +23,9 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.service.DatabaseService
 
 import scala.concurrent.{ExecutionContext, Future}
+import za.co.absa.atum.server.api.implicits._
 
+import java.util.concurrent.CompletableFuture
 
 @RestController
 @RequestMapping(Array("/api/v1"))
@@ -39,7 +41,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    */
   @PostMapping(path = Array("/createCheckpoint"))
   @ResponseStatus(HttpStatus.CREATED)
-  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): Future[CheckpointDTO] = {
+  def createCheckpoint(@RequestBody checkpoint: CheckpointDTO): CompletableFuture[CheckpointDTO] = {
     databaseService.saveCheckpoint(checkpoint)
   }
 
@@ -52,7 +54,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    */
   @PostMapping(Array("/createPartitioning"))
   @ResponseStatus(HttpStatus.OK)
-  def createPartitioning(@RequestBody partitioning: PartitioningSubmitDTO): Future[AtumContextDTO] = {
+  def createPartitioning(@RequestBody partitioning: PartitioningSubmitDTO): CompletableFuture[AtumContextDTO] = {
     // TODO #120, get measures from DB, this solution is temporary - we need record count always for now
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
 

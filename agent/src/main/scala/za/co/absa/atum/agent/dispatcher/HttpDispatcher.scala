@@ -21,29 +21,38 @@ import org.apache.spark.internal.Logging
 import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.utils.SerializationUtils
 
 class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
-  private val serverUri = Uri.unsafeParse(config.getString("url"))
+  private val serverUrl = config.getString("url")
+  private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl/api/v1/createPartitioning")
+  private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl/api/v1/createCheckpoint")
+
   private val backend = HttpURLConnectionBackend()
 
   logInfo("using http dispatcher")
-  logInfo(s"serverUri $serverUri")
+  logInfo(s"serverUrl $serverUrl")
 
-  override def getOrCreateAtumContext(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    basicRequest
-      .body(s"$partitioning")
-      .post(serverUri)
-      .send(backend)
+  override def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
+    val request = basicRequest
+      .post(createPartitioningEndpoint)
+      .body(SerializationUtils.asJson(partitioning))
+      .header("Content-Type", "application/json")
+      .response(asString)
 
-    // todo: implement request
-    AtumContextDTO(partitioning = partitioning.partitioning)
+    val response = backend.send(request)
+
+    response.body match {
+      case Left(_) => throw new RuntimeException(s"${response.code} ${response.statusText}")
+      case Right(r) => SerializationUtils.fromJson[AtumContextDTO](r)
+    }
   }
 
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     basicRequest
       .body(s"$checkpoint")
-      .post(serverUri)
+      .post(createCheckpointEndpoint)
       .send(backend)
   }
 
