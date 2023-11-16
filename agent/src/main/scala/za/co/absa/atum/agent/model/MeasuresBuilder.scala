@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.MeasureException
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasureException
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto
 
