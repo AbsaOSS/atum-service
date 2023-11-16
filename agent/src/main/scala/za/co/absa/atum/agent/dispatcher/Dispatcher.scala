@@ -19,7 +19,7 @@ package za.co.absa.atum.agent.dispatcher
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 trait Dispatcher {
-  def getOrCreateAtumContext(partitioning: PartitioningSubmitDTO): AtumContextDTO
+  def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO
 
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 }
