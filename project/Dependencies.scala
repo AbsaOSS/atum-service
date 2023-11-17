@@ -196,4 +196,20 @@ object Dependencies {
       postgresql,
     )
   }
+
+  def e2eDependencies: Seq[ModuleID] = {
+    val sparkVersion = Versions.spark3
+    lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion % Provided
+    lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
+    lazy val typeSafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
+
+    lazy val postgresql = "org.postgresql"   % "postgresql" % Versions.postgresql
+
+    Seq(
+      sparkCore,
+      sparkSql,
+      typeSafeConfig,
+      postgresql,
+    )
+  }
 }

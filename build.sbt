@@ -51,7 +51,7 @@ val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := 
 }
 
 lazy val root = (projectMatrix in file("."))
-  .aggregate(model, server, agent, database)
+  .aggregate(model, server, agent, database, e2eTests)
   .settings(
     name := "atum-service-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
@@ -115,7 +115,7 @@ lazy val model = (projectMatrix in file("model"))
     jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-model"),
     jacocoExcludes := jacocoProjectExcludes()
   )
-  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
 
 lazy val database = (projectMatrix in file("database"))
   .settings(
@@ -127,3 +127,16 @@ lazy val database = (projectMatrix in file("database"))
   )
   .jvmPlatform(scalaVersions = Seq(Versions.scala212))
 
+lazy val e2eTests = (projectMatrix in file("e2e"))
+  .settings(
+    commonSettings ++ Seq(
+      name := "atum-e2e-test",
+      libraryDependencies ++= Dependencies.e2eDependencies,
+      Compile / packageBin / publishArtifact := false,
+      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      packageBin := (Compile / assembly).value
+    ): _*
+  )
+  .enablePlugins(AssemblyPlugin)
+  .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
+  .dependsOn(agent,database)
