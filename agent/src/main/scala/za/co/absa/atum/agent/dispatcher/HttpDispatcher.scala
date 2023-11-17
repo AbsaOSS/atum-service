@@ -29,7 +29,7 @@ import scala.util.{Failure, Success, Try}
 class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
   private val serverUrl = config.getString("url")
-  private val currentApiVersion = "api/v1"
+  private val currentApiVersion = "/api/v1"
   private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createPartitioning")
   private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createCheckpoint")
 

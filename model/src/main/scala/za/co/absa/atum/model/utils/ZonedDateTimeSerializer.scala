@@ -23,9 +23,7 @@ import java.time.ZonedDateTime
 
 case object ZonedDateTimeSerializer extends CustomSerializer[ZonedDateTime](_ => (
   {
-    case JString(s) =>
-      println(s)
-      ZonedDateTime.parse(s, SerializationUtils.timestampFormat)
+    case JString(s) => ZonedDateTime.parse(s, SerializationUtils.timestampFormat)
     case JNull => null
   },
   {
