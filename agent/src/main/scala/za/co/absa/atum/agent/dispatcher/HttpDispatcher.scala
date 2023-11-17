@@ -49,7 +49,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
     val response = backend.send(request)
 
-    SerializationUtils.fromJson(
+    SerializationUtils.fromJson[AtumContextDTO](
       safeResponseBody(response).get
     )
   }
@@ -60,7 +60,6 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
       .body(SerializationUtils.asJson(checkpoint))
 
     val response = backend.send(request)
-
 
     safeResponseBody(response).get
   }
