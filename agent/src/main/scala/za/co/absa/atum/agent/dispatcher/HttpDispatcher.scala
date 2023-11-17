@@ -61,7 +61,6 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
     val response = backend.send(request)
 
-
     safeResponseBody(response).get
   }
 
