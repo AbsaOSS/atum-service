@@ -29,11 +29,10 @@ object SerializationUtils {
     Serialization.formats(NoTypeHints).withBigDecimal +
       new ext.EnumNameSerializer(ResultValueType) +
       ext.UUIDSerializer +
-      OffsetDateTimeSerializer
+      ZonedDateTimeSerializer
 
   // TODO "yyyy-MM-dd'T'hh:mm:ss.SSS'Z'" OR TODO "yyyy-MM-dd HH:mm:ss.SSSSSSX"
-  val timestampFormatRaw = "yyyy-MM-dd'T'hh:mm:ss.SSS'Z'"
-  val timestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern(timestampFormatRaw)
+  val timestampFormat: DateTimeFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
 
   /**
    * The method returns arbitrary object as a Json string.
