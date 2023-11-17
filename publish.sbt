@@ -52,6 +52,12 @@ ThisBuild / developers := List(
     name = "Tebalelo Sekhula",
     email = "tebalelo.sekhula@absa.africa",
     url = url("https://github.com/TebaleloS")
+  ),
+  Developer(
+    id = "salamonpavel",
+    name = "Pavel Salamon",
+    email = "pavel.salamon@absa.africa",
+    url = url("https://github.com/salamonpavel")
   )
 )
 
@@ -61,3 +67,4 @@ ThisBuild / organizationHomepage := Some(url("https://www.absa.africa"))
 ThisBuild / description := "A tool for fixing Spark Structured Streaming metadata files"
 ThisBuild / startYear := Some(2021)
 ThisBuild / licenses += "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")
+ThisBuild / homepage := Some(url("https://github.com/AbsaOSS/atum-service"))
