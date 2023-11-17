@@ -27,7 +27,7 @@ object Dependencies {
     val scala213 = "2.13.11"
 
     val serviceScalaVersion: String = scala212
-    val clientSupportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
+    val clientSupportedScalaVersions: Seq[String] = Seq(/*scala211,*/ scala212/*, scala213*/)
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
@@ -189,8 +189,8 @@ object Dependencies {
   }
 
   def databaseDependencies: Seq[ModuleID] = {
-    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % "test,it"
-    lazy val postgresql = "org.postgresql"   % "postgresql" % Versions.postgresql % "test,it"
+    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest
+    lazy val postgresql = "org.postgresql"   % "postgresql" % Versions.postgresql
     Seq(
       scalaTest,
       postgresql,
@@ -199,8 +199,8 @@ object Dependencies {
 
   def e2eDependencies: Seq[ModuleID] = {
     val sparkVersion = Versions.spark3
-    lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion % Provided
-    lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
+    lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion// % Provided
+    lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion// % Provided
     lazy val typeSafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
     lazy val postgresql = "org.postgresql"   % "postgresql" % Versions.postgresql

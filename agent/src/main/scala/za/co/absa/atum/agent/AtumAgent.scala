@@ -68,7 +68,8 @@ class AtumAgent private[agent] () {
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
     val authorIfNew = AtumAgent.currentUser
-    val partitioningDTO = PartitioningSubmitDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None, authorIfNew)
+    val aaa = AtumPartitions.toSeqPartitionDTO(atumPartitions)
+    val partitioningDTO = PartitioningSubmitDTO(aaa, None, authorIfNew)
 
     val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
     val atumContext = AtumContext.fromDTO(atumContextDTO, this)

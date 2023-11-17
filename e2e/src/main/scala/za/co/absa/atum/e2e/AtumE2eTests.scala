@@ -16,19 +16,26 @@
 
 package za.co.absa.atum.e2e
 
-import org.apache.commons.logging.LogFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import za.co.absa.atum.database.balta.classes.DBConnection
 
 import java.sql.DriverManager
-import java.time.Instant
+import java.time.{Instant, ZoneId}
 import java.time.format.DateTimeFormatter
 import java.util.Properties
 
-object AtumE2eTests extends Logging {
+object AtumE2eTests /*extends Logging*/ {
 
-  private val now = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss").format(Instant.now())
+  private val now = DateTimeFormatter
+    .ofPattern("yyyy-MM-dd_HH:mm:ss")
+    .withZone(ZoneId.of("UTC"))
+    .format(Instant.now())
+
+  private def logInfo(msg: String): Unit = {
+    println(msg)
+  }
 
   def main(args: Array[String]): Unit = {
     val jobName = "Atum E2E tests"
@@ -56,18 +63,18 @@ object AtumE2eTests extends Logging {
   private def obtainSparkSession(jobName: String): SparkSession = {
     val spark = SparkSession.builder()
       .appName(jobName)
+      .config("spark.master", "local")
       .getOrCreate()
 
     spark
   }
 
   private def obtainDBConnection: DBConnection = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/application.conf"))
+    val config: Config = ConfigFactory.load()
 
-    val dbUrl = properties.getProperty("test.jdbc.url")
-    val username = properties.getProperty("test.jdbc.username")
-    val password = properties.getProperty("test.jdbc.password")
+    val dbUrl = config.getString("database.jdbc.url")
+    val username = config.getString("database.jdbc.username")
+    val password = config.getString("database.jdbc.password")
 
     val conn = DriverManager.getConnection(dbUrl, username, password)
     conn.setAutoCommit(false)

@@ -98,8 +98,8 @@ lazy val agent = (projectMatrix in file("agent"))
     jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent"),
     jacocoExcludes := jacocoProjectExcludes()
   )
-  .sparkRow(SparkVersionAxis(Versions.spark2), scalaVersions = Seq(Versions.scala211, Versions.scala212))
-  .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212, Versions.scala213))
+  .sparkRow(SparkVersionAxis(Versions.spark2), scalaVersions = Seq(/*Versions.scala211,*/ Versions.scala212))
+  .sparkRow(SparkVersionAxis(Versions.spark3), scalaVersions = Seq(Versions.scala212/*, Versions.scala213*/))
   .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
   .dependsOn(model)
 
@@ -134,9 +134,12 @@ lazy val e2eTests = (projectMatrix in file("e2e"))
       libraryDependencies ++= Dependencies.e2eDependencies,
       Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
-      packageBin := (Compile / assembly).value
+      packageBin := (Compile / assembly).value,
+      artifactPath /(Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
+      webappWebInfClasses := false,
+      inheritJarManifest := true
     ): _*
   )
   .enablePlugins(AssemblyPlugin)
   .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
-  .dependsOn(agent, database, server)
+  .dependsOn(agent, server)

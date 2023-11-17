@@ -21,9 +21,6 @@ import za.co.absa.atum.agent.{AtumAgent, AtumContext}
 import za.co.absa.atum.agent.AtumContext.{AtumPartitions, DatasetWrapper}
 import za.co.absa.atum.database.balta.classes.{DBConnection, DBTable}
 
-import java.time.Instant
-import java.time.format.DateTimeFormatter
-
 class TestSuite (jobName: String)(implicit spark: SparkSession, dbConnection: DBConnection) {
 
   def test1(partitionsValues: List[(String, String)]): Unit = {
@@ -31,8 +28,8 @@ class TestSuite (jobName: String)(implicit spark: SparkSession, dbConnection: DB
 
     implicit val context: AtumContext = AtumAgent.getOrCreateAtumContext(mainPartition)
     //check DB
-    DBTable("").where("") {
-      ???
+    DBTable("").where("") {resultSet =>
+
     }
 
     val df1: DataFrame = spark.read.csv(getClass.getResource("/data/table1.csv").getPath)

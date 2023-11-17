@@ -80,6 +80,7 @@ object Runs {
 
     override protected def sql(values: PartitioningSubmitDTO): SQLActionBuilder = {
       val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
+      println(s"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n$partitioning\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
       val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
       val parentPartitioningNormalized = values.parentPartitioning.map { parentPartitioning => {
