@@ -20,14 +20,22 @@ import com.typesafe.config.Config
 import org.apache.spark.internal.Logging
 import sttp.client3._
 import sttp.model.Uri
+import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
+
+import scala.util.{Failure, Success, Try}
 
 class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
   private val serverUrl = config.getString("url")
-  private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl/api/v1/createPartitioning")
-  private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl/api/v1/createCheckpoint")
+  private val currentApiVersion = "/api/v1"
+  private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createPartitioning")
+  private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createCheckpoint")
+
+  private val commonAtumRequest = basicRequest
+    .header("Content-Type", "application/json")
+    .response(asString)
 
   private val backend = HttpURLConnectionBackend()
 
@@ -35,25 +43,32 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   logInfo(s"serverUrl $serverUrl")
 
   override def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    val request = basicRequest
+    val request = commonAtumRequest
       .post(createPartitioningEndpoint)
       .body(SerializationUtils.asJson(partitioning))
-      .header("Content-Type", "application/json")
-      .response(asString)
 
     val response = backend.send(request)
 
-    response.body match {
-      case Left(_) => throw new RuntimeException(s"${response.code} ${response.statusText}")
-      case Right(r) => SerializationUtils.fromJson[AtumContextDTO](r)
-    }
+    SerializationUtils.fromJson[AtumContextDTO](
+      safeResponseBody(response).get
+    )
   }
 
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    basicRequest
-      .body(s"$checkpoint")
+    val request = commonAtumRequest
       .post(createCheckpointEndpoint)
-      .send(backend)
+      .body(SerializationUtils.asJson(checkpoint))
+
+    val response = backend.send(request)
+
+    safeResponseBody(response).get
+  }
+
+  private def safeResponseBody(response: Response[Either[String, String]]): Try[String] = {
+    response.body match {
+      case Left(body) => Failure(HttpException(response.code.code, body))
+      case Right(body) => Success(body)
+    }
   }
 
 }
