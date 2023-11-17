@@ -28,9 +28,9 @@ class TestSuite (jobName: String)(implicit spark: SparkSession, dbConnection: DB
 
     implicit val context: AtumContext = AtumAgent.getOrCreateAtumContext(mainPartition)
     //check DB
-    DBTable("").where("") {resultSet =>
-
-    }
+//    DBTable("").where("") {resultSet =>
+//
+//    }
 
     val df1: DataFrame = spark.read.csv(getClass.getResource("/data/table1.csv").getPath)
     df1.createCheckpoint("Read table 1")
@@ -45,7 +45,7 @@ class TestSuite (jobName: String)(implicit spark: SparkSession, dbConnection: DB
     ()
     //check DB
 
-    val df2: DataFrame = spark.read.csv(getClass.getResource("/data/table1.csv").getPath)
+    val df2: DataFrame = spark.read.csv(getClass.getResource("/data/table2.csv").getPath)
     df2.createCheckpoint("Read table 2")(subContext)
     //check DB
   }

@@ -96,8 +96,8 @@ object Dependencies {
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
 
     lazy val json4sExt = "org.json4s" %% "json4s-ext" % json4sVersion
-    lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion % Provided
-    lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion % Provided
+    lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion
+    lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
     lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
