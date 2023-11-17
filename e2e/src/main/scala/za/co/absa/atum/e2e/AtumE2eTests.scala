@@ -55,7 +55,7 @@ object AtumE2eTests /*extends Logging*/ {
     val testSuite = new TestSuite(jobName)
     testSuite.test1(partitionsValues)
     logInfo("Test 1 passed")
-    testSuite.test2(partitionsValues, partitionsValues)
+    testSuite.test2(partitionsValues, subpartitionsValues)
     logInfo("Test 2 passed")
     logInfo("All tests passed")
   }

@@ -41,12 +41,12 @@ class TestSuite (jobName: String)(implicit spark: SparkSession, dbConnection: DB
   def test2(partitionsValues: List[(String, String)], subpartitionsValues: List[(String, String)]): Unit = {
     val mainPartition = AtumPartitions(partitionsValues)
     val subPartition = AtumPartitions(subpartitionsValues)
-    val subContext: AtumContext = AtumAgent.getOrCreateAtumSubContext(subPartition)(AtumAgent.getOrCreateAtumContext(mainPartition))
-    ()
+    implicit val subContext: AtumContext = AtumAgent.getOrCreateAtumSubContext(subPartition)(AtumAgent.getOrCreateAtumContext(mainPartition))
+
     //check DB
 
     val df2: DataFrame = spark.read.csv(getClass.getResource("/data/table2.csv").getPath)
-    df2.createCheckpoint("Read table 2")(subContext)
+    df2.createCheckpoint("Read table 2")
     //check DB
   }
 }
