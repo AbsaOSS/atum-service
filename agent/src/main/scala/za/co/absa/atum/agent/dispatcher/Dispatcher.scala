@@ -18,8 +18,20 @@ package za.co.absa.atum.agent.dispatcher
 
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 
+/**
+ *  This trait provides a contract for different dispatchers
+ */
 trait Dispatcher {
+  /**
+   *  This method is used to fetch AtumContext from server.
+   *  @param partitioning: PartitioningSubmitDTO to be used for fetching AtumContext.
+   *  @return AtumContextDTO.
+   */
   def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO
 
+  /**
+   *  This method is used to save checkpoint to server.
+   *  @param checkpoint: CheckpointDTO to be saved.
+   */
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 }

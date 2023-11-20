@@ -19,12 +19,18 @@ package za.co.absa.atum.agent.model
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementProvidedException
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
+/**
+ * This trait defines a contract for a measurement.
+ */
 trait Measurement {
   val measure: Measure
   val resultValue: Any
   val resultType: ResultValueType.ResultValueType
 }
 
+/**
+ * This object contains all the possible measurements
+ */
 object Measurement {
 
   /**
@@ -49,6 +55,14 @@ object Measurement {
       MeasurementProvided[T](measure, resultValue, requiredType)
     }
 
+    /**
+     * This method creates a measurement for a given measure and result value.
+     *
+     * @param measure     A measure for which the measurement is created.
+     * @param resultValue A result value of the measurement.
+     * @tparam T A type of the result value.
+     * @return A measurement.
+     */
     def apply[T](measure: Measure, resultValue: T): Measurement = {
       resultValue match {
         case l: Long =>

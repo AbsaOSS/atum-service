@@ -25,17 +25,23 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 /**
- *  Type of different measures to be applied to the columns.
+ * This trait represents a measure that can be applied to a column.
  */
 sealed trait Measure extends MeasurementProcessor with MeasureType {
   val measuredColumn: String
 }
 
+/**
+ * This trait represents a measure type that can be applied to a column.
+ */
 trait MeasureType {
   val measureName: String
   val resultValueType: ResultValueType.ResultValueType
 }
 
+/**
+ * This object contains all the possible measures that can be applied to a column.
+ */
 object Measure {
 
   private val valueColumnName: String = "value"
@@ -157,6 +163,15 @@ object Measure {
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.String
   }
 
+  /**
+   * This method aggregates a column of a given data frame using a given aggregation expression.
+   * The result is converted to a string.
+   *
+   * @param ds            A data frame
+   * @param measureColumn A column to aggregate
+   * @param aggExpression An aggregation expression
+   * @return A string representation of the aggregated value
+   */
   private def aggregateColumn(
     ds: DataFrame,
     measureColumn: String,
@@ -196,6 +211,14 @@ object Measure {
     workaroundBigDecimalIssues(aggregatedValue)
   }
 
+  /**
+   * This method converts a given value to string.
+   * It is a workaround for different serializers generating different JSONs for BigDecimal.
+   * See https://stackoverflow.com/questions/61973058/json-serialization-of-bigdecimal-returns-scientific-notation
+   *
+   * @param value A value to convert
+   * @return A string representation of the value
+   */
   private def workaroundBigDecimalIssues(value: Any): String =
     // If aggregated value is java.math.BigDecimal, convert it to scala.math.BigDecimal
     value match {
