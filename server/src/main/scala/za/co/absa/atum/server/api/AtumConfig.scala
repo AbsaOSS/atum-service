@@ -25,7 +25,7 @@ trait AtumConfig {
 
 object AtumConfig extends AtumConfig {
 
-  private val config = ConfigFactory.load("application.properties")
+  private val config = ConfigFactory.load()
 
   override def dbConfig: Config = config.getConfig("postgres")
   def testEndpointConfig: Config = config.getConfig("atum.server.api.config")
