@@ -53,12 +53,12 @@ ARG SCALA_VERSION=2.12
 LABEL org.opencontainers.image.authors="ABSA"
 
 # Copy Spring application properties
-COPY $CONFIG /opt/application.yaml
+COPY $CONFIG /opt/application.properties
 
 # deploy as root application in tomcat
 COPY ${AS_PREFIX}/target/jvm-${SCALA_VERSION}/*.war /usr/local/tomcat/webapps/ROOT.war
 
-ENV SPRING_CONFIG_LOCATION=/opt/application.yaml
+ENV SPRING_CONFIG_LOCATION=/opt/application.properties
 
 ENV http_proxy=$BUILD_PROXY
 ENV https_proxy=$BUILD_PROXY
