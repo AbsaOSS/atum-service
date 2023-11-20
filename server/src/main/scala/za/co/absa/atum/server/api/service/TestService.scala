@@ -16,13 +16,14 @@
 
 package za.co.absa.atum.server.api.service
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.server.api.AtumConfig
 
 @Service
-class TestService {
+class TestService @Autowired()(atumConfig: AtumConfig){
   def getMessage: String = {
-    val testConfigVal = AtumConfig.testEndpointConfig.getString("some-key")
+    val testConfigVal = atumConfig.testEndpointConfig.getString("some-key")
     s"The service says: alfa '$testConfigVal'"
   }
 }
