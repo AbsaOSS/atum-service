@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.MeasurementProvidedException
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementProvidedException
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 trait Measurement {

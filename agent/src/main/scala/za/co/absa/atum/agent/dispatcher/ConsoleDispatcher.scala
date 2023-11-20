@@ -26,7 +26,7 @@ class ConsoleDispatcher extends Dispatcher with Logging {
 
   logInfo("using console dispatcher")
 
-  override def getOrCreateAtumContext(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
+  override def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
     println(s"Fetching AtumContext using ConsoleDispatcher with partitioning $partitioning")
     AtumContextDTO(partitioning = partitioning.partitioning)
   }
