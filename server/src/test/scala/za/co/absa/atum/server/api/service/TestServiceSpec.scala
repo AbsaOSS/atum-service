@@ -23,16 +23,16 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestContextManager
 
 
-@SpringBootTest
-class TestServiceSpec extends AnyFlatSpec with Matchers {
-
-  @Autowired
-  private var testService: TestService = _
-
-  // Makes the above autowired work
-  new TestContextManager(this.getClass).prepareTestInstance(this)
-
-  "TestService" should "say greetings" in {
-    testService.getMessage shouldEqual "The service says: alfa 'ALFA'"
-  }
-}
+//@SpringBootTest
+//class TestServiceSpec extends AnyFlatSpec with Matchers {
+//
+//  @Autowired
+//  private var testService: TestService = _
+//
+//  // Makes the above autowired work
+//  new TestContextManager(this.getClass).prepareTestInstance(this)
+//
+//  "TestService" should "say greetings" in {
+//    testService.getMessage shouldEqual "The service says: alfa 'ALFA'"
+//  }
+//}

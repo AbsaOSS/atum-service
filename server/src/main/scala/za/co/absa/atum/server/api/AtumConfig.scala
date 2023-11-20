@@ -17,16 +17,21 @@
 package za.co.absa.atum.server.api
 
 import com.typesafe.config.{Config, ConfigFactory}
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
+
+import java.io.File
+
 
 trait AtumConfig {
-
   def dbConfig: Config
+  def testEndpointConfig: Config
 }
 
-object AtumConfig extends AtumConfig {
-
-  private val config = ConfigFactory.load()
-
+@Component
+class AtumConfigImpl (@Value("${spring.config.location}") location: String) extends AtumConfig
+{
+  private val config = ConfigFactory.parseFile(new File(location))
   override def dbConfig: Config = config.getConfig("postgres")
-  def testEndpointConfig: Config = config.getConfig("atum.server.api.config")
+  override def testEndpointConfig: Config = config.getConfig("atum.server.api.config")
 }
