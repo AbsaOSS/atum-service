@@ -16,7 +16,15 @@
 
 package za.co.absa.atum.agent.exception
 
-sealed abstract class AtumAgentException extends Exception
+abstract class AtumAgentException(message: String) extends Exception(message)
 
-case class MeasurementException(msg: String) extends AtumAgentException
-case class MeasureException(msg: String) extends AtumAgentException
+object AtumAgentException {
+  case class MeasurementException(message: String) extends AtumAgentException(message)
+
+  case class MeasureException(message: String) extends AtumAgentException(message)
+
+  case class HttpException(statusCode: Int, message: String) extends AtumAgentException(message)
+}
+
+
+

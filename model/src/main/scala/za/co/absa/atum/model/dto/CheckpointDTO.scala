@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.model.dto
 
-import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 import java.util.UUID
 
 case class CheckpointDTO(
@@ -25,7 +25,7 @@ case class CheckpointDTO(
   author: String,
   measuredByAtumAgent: Boolean = false,
   partitioning: PartitioningDTO,
-  processStartTime: OffsetDateTime,
-  processEndTime: Option[OffsetDateTime],
+  processStartTime: ZonedDateTime,
+  processEndTime: Option[ZonedDateTime],
   measurements: Set[MeasurementDTO]
 )

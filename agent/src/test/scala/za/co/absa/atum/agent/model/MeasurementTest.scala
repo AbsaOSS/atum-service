@@ -18,7 +18,7 @@ package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.atum.agent.exception.MeasurementException
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase

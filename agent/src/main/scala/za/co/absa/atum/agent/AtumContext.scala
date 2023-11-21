@@ -21,7 +21,8 @@ import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
-import java.time.OffsetDateTime
+import java.time.ZonedDateTime
+
 import java.util.UUID
 import scala.collection.immutable.ListMap
 
@@ -53,9 +54,9 @@ class AtumContext private[agent] (
   }
 
   def createCheckpoint(checkpointName: String, dataToMeasure: DataFrame): AtumContext = {
-    val startTime = OffsetDateTime.now()
+    val startTime = ZonedDateTime.now()
     val measurementDTOs = takeMeasurements(dataToMeasure)
-    val endTime = OffsetDateTime.now()
+    val endTime = ZonedDateTime.now()
 
     val checkpointDTO = CheckpointDTO(
       id = UUID.randomUUID(),
@@ -73,15 +74,15 @@ class AtumContext private[agent] (
   }
 
   def createCheckpointOnProvidedData(checkpointName: String, measurements: Set[Measurement]): AtumContext = {
-    val offsetDateTimeNow = OffsetDateTime.now()
+    val dateTimeNow = ZonedDateTime.now()
 
     val checkpointDTO = CheckpointDTO(
       id = UUID.randomUUID(),
       name = checkpointName,
       author = this.agent.currentUser,
       partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
-      processStartTime = offsetDateTimeNow,
-      processEndTime = Some(offsetDateTimeNow),
+      processStartTime = dateTimeNow,
+      processEndTime = Some(dateTimeNow),
       measurements = MeasurementBuilder.buildMeasurementDTO(measurements)
     )
 

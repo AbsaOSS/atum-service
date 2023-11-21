@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
@@ -23,9 +24,7 @@ import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 import scala.concurrent.{ExecutionContext, Future}
 
 @Service
-class DatabaseService {
-
-  private val postgresAccessProvider: PostgresAccessProvider = new PostgresAccessProvider
+class DatabaseService @Autowired()(postgresAccessProvider: PostgresAccessProvider) {
 
   implicit val executionContext: ExecutionContext = postgresAccessProvider.executionContext
 
