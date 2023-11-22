@@ -67,11 +67,11 @@ class AtumContext private[agent] (
   /**
    * Creates a checkpoint in the AtumContext.
    *
-   * This method is used to mark a specific point in the data processing pipeline where measurements of data quality are taken.
-   * The checkpoint is identified by a unique name, which can be used later to retrieve the measurements taken at this point.
+   * This method is used to mark a specific point in the data processing pipeline where measurements of data completeness are taken.
+   * The checkpoint is identified by a name, which can be used later to retrieve the measurements taken at this point.
    * After the checkpoint is created, the method returns the AtumContext for further operations.
    *
-   * @param checkpointName the unique name of the checkpoint to be created.
+   * @param checkpointName the name of the checkpoint to be created.
    *                       This name should be descriptive of the point in the data processing pipeline where the checkpoint is created.
    * @return the AtumContext after the checkpoint has been created. This allows for method chaining in the data processing pipeline.
    */

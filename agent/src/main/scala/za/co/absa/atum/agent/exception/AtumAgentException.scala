@@ -24,7 +24,7 @@ package za.co.absa.atum.agent.exception
 abstract class AtumAgentException(message: String) extends Exception(message)
 
 /**
- * This object contains all the possible exceptions thrown by the Atum Agent.
+ * This object contains possible exceptions thrown by the Atum Agent.
  */
 object AtumAgentException {
   /**

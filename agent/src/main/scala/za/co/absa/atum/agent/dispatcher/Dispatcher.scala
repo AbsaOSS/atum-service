@@ -23,8 +23,9 @@ import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSub
  */
 trait Dispatcher {
   /**
-   *  This method is used to fetch AtumContext from server.
-   *  @param partitioning: PartitioningSubmitDTO to be used for fetching AtumContext.
+   *  This method is used to ensure the server knows the given partitioning. 
+   *  As a response the `AtumContext` is fetched from the server.
+   *  @param partitioning: PartitioningSubmitDTO to be used to ensure server knows the given partitioning.
    *  @return AtumContextDTO.
    */
   def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO
