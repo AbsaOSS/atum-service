@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent.exception
 
 /**
- * This class represents an exception thrown by the Atum Agent.
+ * This type represents a base class for exceptions thrown by the Atum Agent.
  *
  * @param message A message describing the exception.
  */
