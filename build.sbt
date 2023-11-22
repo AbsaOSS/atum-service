@@ -115,7 +115,7 @@ lazy val model = (projectMatrix in file("model"))
     jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-model"),
     jacocoExcludes := jacocoProjectExcludes()
   )
-  .jvmPlatform(scalaVersions = Versions.supportedScalaVersions)
+  .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
 
 lazy val database = (projectMatrix in file("database"))
   .settings(
@@ -125,5 +125,5 @@ lazy val database = (projectMatrix in file("database"))
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
     ): _*
   )
-  .jvmPlatform(scalaVersions = Seq(Versions.scala212))
+  .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
 
