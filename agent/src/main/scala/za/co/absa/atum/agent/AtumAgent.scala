@@ -76,6 +76,13 @@ class AtumAgent private[agent] () {
     getExistingOrNewContext(atumPartitions, atumContext)
   }
 
+  /**
+   * Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
+   * Retrieves the data from AtumService API.
+   * @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
+   * @param parentAtumContext Parent AtumContext.
+   * @return Atum context object
+   */
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
     val authorIfNew = AtumAgent.currentUser
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions

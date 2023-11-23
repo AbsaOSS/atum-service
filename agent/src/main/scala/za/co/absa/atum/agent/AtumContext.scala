@@ -41,8 +41,18 @@ class AtumContext private[agent] (
   private var additionalData: Map[String, Option[String]] = Map.empty
 ) {
 
+  /**
+   * Returns the current set of measures in the AtumContext.
+   *
+   * @return the current set of measures
+   */
   def currentMeasures: Set[Measure] = measures
 
+  /**
+   * Returns the sub-partition context in the AtumContext.
+   *
+   * @return the sub-partition context
+   */
   def subPartitionContext(subPartitions: AtumPartitions): AtumContext = {
     agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
   }
@@ -54,6 +64,19 @@ class AtumContext private[agent] (
     }
   }
 
+  /**
+   * Creates a checkpoint in the AtumContext.
+   *
+   * This method is used to mark a specific point in the data processing pipeline where measurements of data
+   * completeness are taken.
+   * The checkpoint is identified by a name, which can be used later to retrieve the measurements taken at this point.
+   * After the checkpoint is created, the method returns the AtumContext for further operations.
+   *
+   * @param checkpointName the name of the checkpoint to be created. This name should be descriptive of the point in
+   *                       the data processing pipeline where the checkpoint is created.
+   * @return the AtumContext after the checkpoint has been created.
+   *         This allows for method chaining in the data processing pipeline.
+   */
   def createCheckpoint(checkpointName: String, dataToMeasure: DataFrame): AtumContext = {
     val startTime = ZonedDateTime.now()
     val measurements = takeMeasurements(dataToMeasure)
@@ -74,6 +97,13 @@ class AtumContext private[agent] (
     this
   }
 
+  /**
+   * Creates a checkpoint with the specified name and provided measurements.
+   *
+   * @param checkpointName the name of the checkpoint to be created
+   * @param measurements   the measurements to be included in the checkpoint
+   * @return the AtumContext after the checkpoint has been created
+   */
   def createCheckpointOnProvidedData(checkpointName: String, measurements: Seq[Measurement]): AtumContext = {
     val dateTimeNow = ZonedDateTime.now()
 
@@ -91,24 +121,50 @@ class AtumContext private[agent] (
     this
   }
 
+  /**
+   * Adds additional data to the AtumContext.
+   *
+   * @param key   the key of the additional data
+   * @param value the value of the additional data
+   */
   def addAdditionalData(key: String, value: String): Unit = {
     additionalData += (key -> Some(value))
   }
 
+  /**
+   * Returns the current additional data in the AtumContext.
+   *
+   * @return the current additional data
+   */
   def currentAdditionalData: Map[String, Option[String]] = {
     this.additionalData
   }
 
+  /**
+   * Adds a measure to the AtumContext.
+   *
+   * @param measure the measure to be added
+   */
   def addMeasure(newMeasure: Measure): AtumContext = {
     measures = measures + newMeasure
     this
   }
 
+  /**
+   * Adds multiple measures to the AtumContext.
+   *
+   * @param measures set sequence of measures to be added
+   */
   def addMeasures(newMeasures: Set[Measure]): AtumContext = {
     measures = measures ++ newMeasures
     this
   }
 
+  /**
+   * Removes a measure from the AtumContext.
+   *
+   * @param measureToRemove the measure to be removed
+   */
   def removeMeasure(measureToRemove: Measure): AtumContext = {
     measures = measures - measureToRemove
     this
@@ -125,8 +181,14 @@ class AtumContext private[agent] (
 }
 
 object AtumContext {
+  /**
+   * Type alias for Atum partitions.
+   */
   type AtumPartitions = ListMap[String, String]
 
+  /**
+   * Object contains helper methods to work with Atum partitions.
+   */
   object AtumPartitions {
     def apply(elems: (String, String)): AtumPartitions = {
       ListMap(elems)
@@ -154,6 +216,9 @@ object AtumContext {
     )
   }
 
+  /**
+   * Implicit class to add a method to DataFrame to create a checkpoint.
+   */
   implicit class DatasetWrapper(df: DataFrame) {
 
     /**
