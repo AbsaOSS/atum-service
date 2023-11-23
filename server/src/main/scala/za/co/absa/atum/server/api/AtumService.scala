@@ -30,7 +30,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2
 
 @Configuration
 @SpringBootApplication(scanBasePackages = Array("za.co.absa.atum.server")) // dao is outside default web.api package
-@PropertySource(Array("classpath:application.properties"))
 @ConfigurationPropertiesScan(Array("za.co.absa.atum.server.api.config"))
 @EnableSwagger2
 class AtumService extends SpringBootServletInitializer {
