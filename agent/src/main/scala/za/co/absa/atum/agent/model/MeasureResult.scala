@@ -59,6 +59,9 @@ object MeasureResult {
   /**
    * When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
    * to do any adjustments.
+   *
+   * @param resultValue A result value of the measurement of any type.
+   * @return A measure result.
    */
   def apply(resultValue: Any): MeasureResult = {
     resultValue match {
