@@ -25,17 +25,23 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 /**
- *  Type of different measures to be applied to the columns.
+ *  This trait represents a measure that can be applied to a column.
  */
 sealed trait Measure extends MeasurementProcessor with MeasureType {
   val measuredColumn: String
 }
 
+/**
+ *  This trait represents a measure type that can be applied to a column.
+ */
 trait MeasureType {
   val measureName: String
   val resultValueType: ResultValueType.ResultValueType
 }
 
+/**
+ *  This object contains all the possible measures that can be applied to a column.
+ */
 object Measure {
 
   private val valueColumnName: String = "value"
@@ -50,9 +56,9 @@ object Measure {
   val supportedMeasureNames: Seq[String] = supportedMeasures.map(_.measureName)
 
   case class RecordCount private (
-                                   measuredColumn: String,
-                                   measureName: String,
-                                   resultValueType: ResultValueType.ResultValueType
+    measuredColumn: String,
+    measureName: String,
+    resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementFunction =
@@ -69,9 +75,9 @@ object Measure {
   }
 
   case class DistinctRecordCount private (
-                                           measuredColumn: String,
-                                           measureName: String,
-                                           resultValueType: ResultValueType.ResultValueType
+    measuredColumn: String,
+    measureName: String,
+    resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementFunction =
@@ -90,9 +96,9 @@ object Measure {
   }
 
   case class SumOfValuesOfColumn private (
-                                           measuredColumn: String,
-                                           measureName: String,
-                                           resultValueType: ResultValueType.ResultValueType
+    measuredColumn: String,
+    measureName: String,
+    resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
@@ -111,9 +117,9 @@ object Measure {
   }
 
   case class AbsSumOfValuesOfColumn private (
-                                              measuredColumn: String,
-                                              measureName: String,
-                                              resultValueType: ResultValueType.ResultValueType
+    measuredColumn: String,
+    measureName: String,
+    resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
@@ -132,9 +138,9 @@ object Measure {
   }
 
   case class SumOfHashesOfColumn private (
-                                           measuredColumn: String,
-                                           measureName: String,
-                                           resultValueType: ResultValueType.ResultValueType
+    measuredColumn: String,
+    measureName: String,
+    resultValueType: ResultValueType.ResultValueType
   ) extends Measure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
@@ -157,12 +163,21 @@ object Measure {
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.String
   }
 
+  /**
+   *  This method aggregates a column of a given data frame using a given aggregation expression.
+   *  The result is converted to a string.
+   *
+   *  @param df            A data frame
+   *  @param measureColumn A column to aggregate
+   *  @param aggExpression An aggregation expression
+   *  @return A string representation of the aggregated value
+   */
   private def aggregateColumn(
-    ds: DataFrame,
+    df: DataFrame,
     measureColumn: String,
     aggExpression: Column
   ): String = {
-    val dataType = ds.select(measureColumn).schema.fields(0).dataType
+    val dataType = df.select(measureColumn).schema.fields(0).dataType
     val aggregatedValue = dataType match {
       case _: LongType =>
         // This is protection against long overflow, e.g. Long.MaxValue = 9223372036854775807:
@@ -171,14 +186,14 @@ object Measure {
         // Converting to BigDecimal fixes the issue
         // val ds2 = ds.select(col(measurement.measuredColumn).cast(DecimalType(38, 0)).as("value"))
         // ds2.agg(sum(abs($"value"))).collect()(0)(0)
-        val ds2 = ds.select(
+        val ds2 = df.select(
           col(measureColumn).cast(DecimalType(38, 0)).as(valueColumnName)
         )
         val collected = ds2.agg(aggExpression).collect()(0)(0)
         if (collected == null) 0 else collected
       case _: StringType =>
         // Support for string type aggregation
-        val ds2 = ds.select(
+        val ds2 = df.select(
           col(measureColumn).cast(DecimalType(38, 18)).as(valueColumnName)
         )
         val collected = ds2.agg(aggExpression).collect()(0)(0)
@@ -188,7 +203,7 @@ object Measure {
         value.stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
           .toPlainString // converts to normal string (6E+2 -> "600")
       case _ =>
-        val ds2 = ds.select(col(measureColumn).as(valueColumnName))
+        val ds2 = df.select(col(measureColumn).as(valueColumnName))
         val collected = ds2.agg(aggExpression).collect()(0)(0)
         if (collected == null) 0 else collected
     }
@@ -196,6 +211,14 @@ object Measure {
     workaroundBigDecimalIssues(aggregatedValue)
   }
 
+  /**
+   *  This method converts a given value to string.
+   *  It is a workaround for different serializers generating different JSONs for BigDecimal.
+   *  See https://stackoverflow.com/questions/61973058/json-serialization-of-bigdecimal-returns-scientific-notation
+   *
+   *  @param value A value to convert
+   *  @return A string representation of the value
+   */
   private def workaroundBigDecimalIssues(value: Any): String =
     // If aggregated value is java.math.BigDecimal, convert it to scala.math.BigDecimal
     value match {

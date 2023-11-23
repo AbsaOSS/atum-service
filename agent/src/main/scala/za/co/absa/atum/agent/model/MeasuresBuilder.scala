@@ -20,6 +20,10 @@ import za.co.absa.atum.agent.exception.AtumAgentException.MeasureException
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto
 
+/**
+ * This object provides a functionality to convert a DTO representation of measures to the Agent's internal
+ * representation of those objects.
+ */
 private [agent] object MeasuresBuilder {
 
   private [agent] def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {

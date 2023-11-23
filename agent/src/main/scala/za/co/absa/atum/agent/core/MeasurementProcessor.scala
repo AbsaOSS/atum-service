@@ -20,12 +20,23 @@ import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
+/**
+ *  This trait provides a contract for different measurement processors
+ */
 trait MeasurementProcessor {
 
+  /**
+   *  This method is used to compute measure on Spark `Dataframe`.
+   *  @param df: Spark `Dataframe` to be measured.
+   *  @return Result of measurement.
+   */
   def function: MeasurementFunction
 
 }
 
+/**
+ *  This companion object provides a set of types for measurement processors
+ */
 object MeasurementProcessor {
   /**
    * The raw result of measurement is always gonna be string, because we want to avoid some floating point issues
@@ -34,6 +45,11 @@ object MeasurementProcessor {
    */
   final case class ResultOfMeasurement(result: String, resultType: ResultValueType.ResultValueType)
 
+  /**
+   *  This type alias describes a function that is used to compute measure on Spark `Dataframe`.
+   *  @param df: Spark `Dataframe` to be measured.
+   *  @return Result of measurement.
+   */
   type MeasurementFunction = DataFrame => ResultOfMeasurement
 
 }
