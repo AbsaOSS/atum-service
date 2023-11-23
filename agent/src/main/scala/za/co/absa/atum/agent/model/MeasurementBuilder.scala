@@ -19,6 +19,9 @@ package za.co.absa.atum.agent.model
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
 
+/**
+ * This object provides a functionality to convert a measurement to its DTO representation.
+ */
 private [agent] object MeasurementBuilder {
 
   private def validateMeasurement(measure: Measure, result: MeasureResult): Unit = {

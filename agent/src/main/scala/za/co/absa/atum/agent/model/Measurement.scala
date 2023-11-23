@@ -16,4 +16,7 @@
 
 package za.co.absa.atum.agent.model
 
+/**
+ *  This class defines a contract for a measurement.
+ */
 final case class Measurement(measure: Measure, result: MeasureResult)

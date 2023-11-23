@@ -20,10 +20,27 @@ import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 import za.co.absa.atum.agent.model.MeasureResult
 
+/**
+ *  This trait provides a contract for different measurement processors
+ */
 trait MeasurementProcessor {
+
+  /**
+   *  This method is used to compute measure on Spark `Dataframe`.
+   *  @param df: Spark `Dataframe` to be measured.
+   *  @return Result of measurement.
+   */
   def function: MeasurementFunction
 }
 
+/**
+ *  This companion object provides a set of types for measurement processors
+ */
 object MeasurementProcessor {
+  /**
+   * This type alias describes a function that is used to compute measure on Spark `Dataframe`.
+   * @param df: Spark `Dataframe` to be measured.
+   * @return Result of measurement.
+   */
   type MeasurementFunction = DataFrame => MeasureResult
 }
