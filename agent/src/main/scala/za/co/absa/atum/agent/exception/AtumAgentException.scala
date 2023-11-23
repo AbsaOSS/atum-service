@@ -43,7 +43,7 @@ object AtumAgentException {
 
   /**
    * This type represents an exception related to HTTP communication.
-   *
+   * @param statusCode A status code of the HTTP response.
    * @param message A message describing the exception.
    */
   case class HttpException(statusCode: Int, message: String) extends AtumAgentException(message)
