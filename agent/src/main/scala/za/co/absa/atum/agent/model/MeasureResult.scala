@@ -19,22 +19,38 @@ package za.co.absa.atum.agent.model
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
+/**
+ *  This trait defines a contract for a measure result.
+ */
 trait MeasureResult {
   val resultValue: Any
   val resultType: ResultValueType.ResultValueType
 }
 
+/**
+ *  This object contains all the possible measure results.
+ */
 object MeasureResult {
+  /**
+   * When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
+   * to do any adjustments.
+   */
   private final case class MeasureResultWithType[T](resultValue: T, resultType: ResultValueType.ResultValueType)
     extends MeasureResult
 
   /**
+   * This method creates a measure result for a given result value.
+   *
    * When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
    * needed - thus we are converting the results to strings always - but we need to keep the information about
    * the actual type as well.
    *
    * These adjustments are needed to be performed - to avoid some floating point issues
    * (overflows, consistent representation of numbers - whether they are coming from Java or Scala world, and more).
+   *
+   * @param resultValue A result value of the measurement.
+   * @param resultType  A result type of the measurement.
+   * @return A measure result.
    */
   def apply(resultValue: String, resultType: ResultValueType.ResultValueType): MeasureResult = {
     MeasureResultWithType[String](resultValue, resultType)
