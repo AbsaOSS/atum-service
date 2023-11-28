@@ -6,11 +6,11 @@ import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueReque
 
 object RetrieveAwsSecret {
   def retrieveAwsSecret(): Unit = {
-    val secretName = "awsSecretName"
+    val secretName = "atum_user"
 
     // Create a Secrets Manager client
     val client = SecretsManagerClient.builder()
-      .region(Region.SA_EAST_1)
+      .region(Region.AF_SOUTH_1)
       .build()
 
     try {
