@@ -55,6 +55,7 @@ object Dependencies {
     val json4s_spark3 = "3.7.0-M11"
 
     val logback = "1.2.3"
+    val awssdk = "2.17.96"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -137,6 +138,9 @@ object Dependencies {
     lazy val faDbSlick = "za.co.absa.fa-db" %% "slick" % Versions.fadb
     lazy val slickPg = "com.github.tminglei" %% "slick-pg" % Versions.slickpg
 
+    // awssdk library for providing the functionality of retrieving the secret key
+    lazy val awsSdk = "software.amazon.awssdk" % "secretsmanager" % "2.20.68"
+
     Seq(
       springBootTest % Test,
       springBootWeb,
@@ -150,7 +154,8 @@ object Dependencies {
       jacksonModuleScala,
       faDbCore,
       faDbSlick,
-      slickPg
+      slickPg,
+      awsSdk
     )
   }
 
