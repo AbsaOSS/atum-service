@@ -20,11 +20,19 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, SecretsManagerException}
 
+/**
+ * Class implement the functionality of retrieving secret keys from aws secret manger service
+ */
 class RetrieveAwsSecret {
   private val secretsManagerClient: SecretsManagerClient = SecretsManagerClient.builder()
     .region(Region.AF_SOUTH_1)
     .build()
 
+  /**
+   * Function retrieves secret keys from aws
+   * @param secretName
+   * @return
+   */
   def retrieveAwsSecret(secretName: String = "atum_user"): Seq[String] = {
     try {
       val request = GetSecretValueRequest.builder()
