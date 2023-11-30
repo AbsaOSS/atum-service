@@ -20,31 +20,30 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, SecretsManagerException}
 
-object RetrieveAwsSecret {
-  def retrieveAwsSecret(): Unit = {
-    val secretName = "atum_user"
+class RetrieveAwsSecret {
+  private val secretsManagerClient: SecretsManagerClient = SecretsManagerClient.builder()
+    .region(Region.AF_SOUTH_1)
+    .build()
 
-    // Create a Secrets Manager client
-    val client = SecretsManagerClient.builder()
-      .region(Region.AF_SOUTH_1)
-      .build()
-
+  def retrieveAwsSecret(secretName: String = "atum_user"): Seq[String] = {
     try {
       val request = GetSecretValueRequest.builder()
         .secretId(secretName)
         .build()
 
-      val response = client.getSecretValue(request)
+      val response = secretsManagerClient.getSecretValue(request)
 
       response.secretString.foreach { secretString =>
         println(s"Secret Key: $secretString")
       }
+      response.secretString.map(_.toString)
     } catch {
       case e: SecretsManagerException =>
         println(s"Error retrieving secret key: ${e.getMessage}")
+        e.getMessage.map(_.toString)
     } finally {
       // Close the client when done
-      client.close()
+      secretsManagerClient.close()
     }
   }
 }
