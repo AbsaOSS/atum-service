@@ -44,7 +44,7 @@ jobs:
         with:
           java-version: "adopt@1.8"
       - name: Build and run tests
-        run: sbt ++${{scala}} jacoco
+        run: sbt ++${{scalaLong}} jacoco
      #  Agent module code coverage
       - name: Add coverage to PR
         id: jacoco-agent
@@ -68,6 +68,18 @@ jobs:
           min-coverage-overall: ${{ overall }}
           min-coverage-changed-file: ${{ changed }}
           title: JaCoCo server module code coverage report - scala ${{ scalaLong }}
+          update-comment: true
+     #  model module code coverage
+      - name: Add coverage to PR
+        id: jacoco-server
+        uses: madrapps/jacoco-report@v1.3
+        with:
+          name: server-jacoco-report
+          paths: ${{ github.workspace }}/model/target/jvm-${{ scalaShort }}/jacoco/report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: ${{ overall }}
+          min-coverage-changed-file: ${{ changed }}
+          title: JaCoCo model module code coverage report - scala ${{ scalaLong }}
           update-comment: true
       - name: Get the Coverage info
         run: |
