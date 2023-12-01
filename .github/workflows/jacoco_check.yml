@@ -21,22 +21,21 @@ on:
     branches: [ master ]
     types: [ opened, edited, synchronize, reopened ]
 
+# The project supports Scala 2.12 and the default version of spark2
+# The CI runs all tests suites for all supported Scala versions at build.yml
+# The codebase for all Scala versions is the same, so the coverage is calculated only once
+# Scala 2.12 is chosen since it is supported by the most wide range of Spark versions and
+# vendor distributions.
+env:
+  scalaLong: 2.12.18
+  scalaShort: "2.12"
+  overall: 80.0
+  changed: 80.0
+
 jobs:
   test:
     name: Build and test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          # The project supports Scala 2.11, 2.12 and the default version of spark2
-          # The CI runs all tests suites for all supported Scala versions at build.yml
-          # The codebase for all Scala versions is the same, so the coverage is calculated only once
-          # Scala 2.12 is chosen since it is supported by the most wide range of Spark versions and
-          # vendor distributions.
-          - scala: 2.12.18
-            scalaShort: "2.12"
-            overall: 80.0
-            changed: 80.0
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -45,18 +44,18 @@ jobs:
         with:
           java-version: "adopt@1.8"
       - name: Build and run tests
-        run: sbt ++${{matrix.scala}} jacoco
+        run: sbt ++${{scala}} jacoco
      #  Agent module code coverage
       - name: Add coverage to PR
         id: jacoco-agent
         uses: madrapps/jacoco-report@v1.3
         with:
           name: agent-jacoco-report
-          paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{matrix.overall }}
-          min-coverage-changed-file: ${{ matrix.changed }}
-          title: JaCoCo agent module code coverage report - spark:2 - scala ${{ matrix.scala }}
+          min-coverage-overall: ${{ overall }}
+          min-coverage-changed-file: ${{ changed }}
+          title: JaCoCo agent module code coverage report - spark:2 - scala ${{ scalaLong }}
           update-comment: true
      #  server module code coverage
       - name: Add coverage to PR
@@ -64,11 +63,11 @@ jobs:
         uses: madrapps/jacoco-report@v1.3
         with:
           name: server-jacoco-report
-          paths: ${{ github.workspace }}/server/target/jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/server/target/jvm-${{ scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{matrix.overall }}
-          min-coverage-changed-file: ${{ matrix.changed }}
-          title: JaCoCo server module code coverage report - scala ${{ matrix.scala }}
+          min-coverage-overall: ${{ overall }}
+          min-coverage-changed-file: ${{ changed }}
+          title: JaCoCo server module code coverage report - scala ${{ scalaLong }}
           update-comment: true
       - name: Get the Coverage info
         run: |
@@ -76,13 +75,11 @@ jobs:
           echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
           echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
-      - name: Fail PR if changed files coverage is less than ${{ matrix.changed }}%
+      - name: Fail PR if changed files coverage is less than ${{ changed }}%
         if: |
           ${{ steps.jacoco-agent.outputs.coverage-changed-files < 80.0 }} &&
           ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }}
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Changed files coverage is less than ${{ matrix.changed }}%!')
-
-
+            core.setFailed('Changed files coverage is less than ${{ changed }}%!')

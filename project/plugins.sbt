@@ -17,7 +17,7 @@
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
-addSbtPlugin("com.eed3si9n"       % "sbt-projectmatrix" % "0.9.1")
+addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.1")
 
 // To add release plugin
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
