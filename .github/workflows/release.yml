@@ -26,9 +26,36 @@ jobs:
         with:
           fetch-depth: 0
       - uses: olafurpg/setup-scala@v13
-      - run: sbt ci-release
+
+      - name: Run sbt ci-release (produces war as well)
+        run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+      - name: Find WAR file
+        id: find_war
+        run: echo "WAR_PATH=$(find . -name '*.war' | head -n 1)" >> $GITHUB_ENV
+
+      - name: Create Draft Release
+        id: create_draft_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Draft Release for ${{ github.ref }}
+          draft: true
+          prerelease: false
+
+      - name: Upload WAR file to Draft Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_draft_release.outputs.upload_url }}
+          asset_path: ${{ env.WAR_PATH }}
+          asset_name: $(basename ${{ env.WAR_PATH }})
+          asset_content_type: application/octet-stream
