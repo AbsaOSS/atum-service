@@ -71,7 +71,7 @@ jobs:
           update-comment: true
      #  model module code coverage
       - name: Add coverage to PR
-        id: jacoco-server
+        id: jacoco-model
         uses: madrapps/jacoco-report@v1.3
         with:
           name: server-jacoco-report
@@ -85,12 +85,16 @@ jobs:
         run: |
           echo "Total agent module coverage ${{ steps.jacoco-agent.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
-          echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
+          echo "Total server module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
+          echo "Total model module coverage ${{ steps.jacoco-model.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco-model.outputs.coverage-changed-files }}"
+
       - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
         if: |
           ${{ steps.jacoco-agent.outputs.coverage-changed-files < 80.0 }} &&
-          ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }}
+          ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }} &&
+          ${{ steps.jacoco-model.outputs.coverage-changed-files < 80.0 }}
         uses: actions/github-script@v6
         with:
           script: |
