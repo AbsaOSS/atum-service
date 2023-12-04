@@ -18,7 +18,7 @@ import Dependencies._
 import JacocoSetup._
 import sbt.Keys.name
 
-ThisBuild / organization := "za.co.absa"
+ThisBuild / organization := "za.co.absa.atum-service"
 
 ThisBuild / scalaVersion := Versions.scala212  // default version
 
@@ -39,7 +39,7 @@ lazy val commonSettings = Seq(
 lazy val root = (projectMatrix in file("."))
   .aggregate(model, server, agent)
   .settings(
-    name := "atum-service-root",
+    name := "service-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
     publish / skip := true,
   )
@@ -47,7 +47,7 @@ lazy val root = (projectMatrix in file("."))
 lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
-      name := "atum-server",
+      name := "server",
       libraryDependencies ++= Dependencies.serverDependencies,
       Compile / packageBin / publishArtifact := false,
       printSparkScalaVersion := {
@@ -73,7 +73,7 @@ lazy val server = (projectMatrix in file("server"))
 lazy val agent = (projectMatrix in file("agent"))
   .settings(
     commonSettings ++ Seq(
-      name := "atum-agent",
+      name := "agent",
       libraryDependencies ++= Dependencies.agentDependencies(
         if (scalaVersion.value == Versions.scala211) Versions.spark2 else Versions.spark3,
         scalaVersion.value
@@ -93,7 +93,7 @@ lazy val agent = (projectMatrix in file("agent"))
 lazy val model = (projectMatrix in file("model"))
   .settings(
     commonSettings ++ Seq(
-      name := "atum-model",
+      name := "model",
       libraryDependencies ++= Dependencies.modelDependencies(scalaVersion.value),
       printSparkScalaVersion := {
         val log = streams.value.log
