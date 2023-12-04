@@ -44,18 +44,18 @@ jobs:
         with:
           java-version: "adopt@1.8"
       - name: Build and run tests
-        run: sbt ++${{scalaLong}} jacoco
+        run: sbt ++${{ env.scalaLong }} jacoco
      #  Agent module code coverage
       - name: Add coverage to PR
         id: jacoco-agent
         uses: madrapps/jacoco-report@v1.3
         with:
           name: agent-jacoco-report
-          paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{ overall }}
-          min-coverage-changed-file: ${{ changed }}
-          title: JaCoCo agent module code coverage report - spark:2 - scala ${{ scalaLong }}
+          min-coverage-overall: ${{ env.overall }}
+          min-coverage-changed-file: ${{ env.changed }}
+          title: JaCoCo agent module code coverage report - spark:2 - scala ${{ env.scalaLong }}
           update-comment: true
      #  server module code coverage
       - name: Add coverage to PR
@@ -63,11 +63,11 @@ jobs:
         uses: madrapps/jacoco-report@v1.3
         with:
           name: server-jacoco-report
-          paths: ${{ github.workspace }}/server/target/jvm-${{ scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{ overall }}
-          min-coverage-changed-file: ${{ changed }}
-          title: JaCoCo server module code coverage report - scala ${{ scalaLong }}
+          min-coverage-overall: ${{ env.overall }}
+          min-coverage-changed-file: ${{ env.changed }}
+          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
      #  model module code coverage
       - name: Add coverage to PR
@@ -75,11 +75,11 @@ jobs:
         uses: madrapps/jacoco-report@v1.3
         with:
           name: server-jacoco-report
-          paths: ${{ github.workspace }}/model/target/jvm-${{ scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{ overall }}
-          min-coverage-changed-file: ${{ changed }}
-          title: JaCoCo model module code coverage report - scala ${{ scalaLong }}
+          min-coverage-overall: ${{ env.overall }}
+          min-coverage-changed-file: ${{ env.changed }}
+          title: JaCoCo model module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Get the Coverage info
         run: |
@@ -87,11 +87,11 @@ jobs:
           echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
           echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
-      - name: Fail PR if changed files coverage is less than ${{ changed }}%
+      - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
         if: |
           ${{ steps.jacoco-agent.outputs.coverage-changed-files < 80.0 }} &&
           ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }}
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Changed files coverage is less than ${{ changed }}%!')
+            core.setFailed('Changed files coverage is less than ${{ env.changed }}%!')
