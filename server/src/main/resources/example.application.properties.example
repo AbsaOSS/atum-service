@@ -12,3 +12,6 @@ postgres.properties.databaseName=atum_db
 postgres.properties.user=atum_user
 postgres.properties.password=changeme
 postgres.numThreads=10
+
+aws.property.user=atum_user
+aws.property.profileCredentials=npintdebdtools-sso
