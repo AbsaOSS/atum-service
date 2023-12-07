@@ -122,6 +122,24 @@ class AtumContext private[agent] (
   }
 
   /**
+   * This method creates `Metadata` in the agentService.
+   * @param key The placeholder for the added additional data.
+   * @param value The actual additional data added.
+   * @return
+   */
+  def createMetadata(key: String, value: String): AtumContext = {
+    val additionalDataDTO = this.addAdditionalData(key, value)
+
+    val metadata = MetadataDTO(
+      atumPartitioning = atumPartitions,
+      additionalData = additionalData
+    )
+
+    agent.saveAdditionalData(metadata)
+    this
+  }
+
+  /**
    * Adds additional data to the AtumContext.
    *
    * @param key   the key of the additional data
