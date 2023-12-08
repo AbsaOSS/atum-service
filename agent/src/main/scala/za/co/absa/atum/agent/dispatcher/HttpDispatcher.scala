@@ -21,7 +21,7 @@ import org.apache.spark.internal.Logging
 import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MetadataDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
 
 import scala.util.{Failure, Success, Try}
@@ -65,7 +65,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     safeResponseBody(response).get
   }
 
-  override def saveAdditionalData(metadataDTO: MetadataDTO): Unit = {
+  override def saveAdditionalData(metadataDTO: AdditionalDataDTO): Unit = {
     val request = commonAtumRequest
       .post(createMetadataEndpoint)
       .body(SerializationUtils.asJson(metadataDTO))

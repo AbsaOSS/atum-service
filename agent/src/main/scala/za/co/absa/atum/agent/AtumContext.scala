@@ -127,16 +127,16 @@ class AtumContext private[agent] (
    * @param value The actual additional data added.
    * @return
    */
-  def createMetadata(key: String, value: String): AtumContext = {
-    val additionalDataDTO = this.addAdditionalData(key, value)
+  def createMetadata(): Unit = {
+//
+//    val metadata = MetadataDTO(
+//      this.atumPartitions,
+//      additionalData
+//    )
+    val additionalData = AdditionalDataDTO(AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData)
 
-    val metadata = MetadataDTO(
-      atumPartitioning = atumPartitions,
-      additionalData = additionalData
-    )
+//    Dispatcher.saveAdditionalData(additionalData)
 
-    agent.saveAdditionalData(metadata)
-    this
   }
 
   /**

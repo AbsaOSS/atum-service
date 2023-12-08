@@ -18,7 +18,7 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.{CheckpointDTO, MetadataDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  * Entity that communicate with the API, primarily focused on spawning Atum Context(s).
@@ -56,10 +56,10 @@ class AtumAgent private[agent] () {
 
   /**
    * Sends the `Metadata` to the Atumservice API
-   * @param metadataDTO the metadata to be saved to the server.
+   * @param metadata the metadata to be saved to the server.
    */
-  private [agent] def saveAdditionalData(metadataDTO: MetadataDTO): Unit = {
-    dispatcher.saveAdditionalData(metadataDTO)
+  private [agent] def saveAdditionalData(metadata: AdditionalDataDTO): Unit = {
+    dispatcher.saveAdditionalData(metadata)
   }
 
   /**
