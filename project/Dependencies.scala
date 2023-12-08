@@ -157,7 +157,8 @@ object Dependencies {
       faDbCore,
       faDbSlick,
       slickPg,
-      awsSdk
+      awsSdk,
+      sso
     )
   }
 
@@ -187,8 +188,8 @@ object Dependencies {
   def modelDependencies(scalaVersion: String): Seq[ModuleID] = {
     val json4sVersion = json4sVersionForScala(scalaVersion)
 
-    lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
-    lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
+    lazy val specs2core = "org.specs2" %% "specs2-core" % Versions.specs2 % Test
+    lazy val typeSafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
     Seq(specs2core, typeSafeConfig)
   }

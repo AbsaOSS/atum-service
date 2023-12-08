@@ -48,7 +48,7 @@ class RetrieveAwsSecretTest extends AnyFlatSpec with BeforeAndAfterEach{
   }
 
   "AWSSecretKeyExtractor" should "retrieve secret key from AWS Secrets Manager" in {
-    val secretName = "ValidSecretName"
+    val secretName = "bdtools-atum-service-dev/atum_service_user_password"
     val secretKey = extractor.retrieveAwsSecret(secretName)
     println("Secret key: ", secretKey)
   }
