@@ -23,7 +23,6 @@ import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
 import java.time.ZonedDateTime
-
 import java.util.UUID
 import scala.collection.immutable.ListMap
 
@@ -123,20 +122,13 @@ class AtumContext private[agent] (
 
   /**
    * This method creates `Metadata` in the agentService.
-   * @param key The placeholder for the added additional data.
-   * @param value The actual additional data added.
-   * @return
+   *
+   * @return AtumContext
    */
-  def createMetadata(): Unit = {
-//
-//    val metadata = MetadataDTO(
-//      this.atumPartitions,
-//      additionalData
-//    )
-    val additionalData = AdditionalDataDTO(AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData)
-
-//    Dispatcher.saveAdditionalData(additionalData)
-
+  def createMetadata(): AtumContext = {
+    val additionalData = AdditionalDataSubmitDTO(AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData)
+    agent.saveAdditionalData(additionalData)
+    this
   }
 
   /**
