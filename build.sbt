@@ -19,6 +19,7 @@ import JacocoSetup._
 import sbt.Keys.name
 
 ThisBuild / organization := "za.co.absa.atum-service"
+sonatypeProfileName := "za.co.absa"
 
 ThisBuild / scalaVersion := Versions.scala212  // default version
 
@@ -47,7 +48,7 @@ lazy val root = (projectMatrix in file("."))
 lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
-      name := "server",
+      name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
       Compile / packageBin / publishArtifact := false,
       printSparkScalaVersion := {
