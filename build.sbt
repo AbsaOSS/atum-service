@@ -27,6 +27,8 @@ ThisBuild / versionScheme := Some("early-semver")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+publish / skip := true
+
 lazy val printSparkScalaVersion = taskKey[Unit]("Print Spark and Scala versions for atum-service is being built for.")
 
 lazy val commonSettings = Seq(
@@ -36,14 +38,6 @@ lazy val commonSettings = Seq(
   Test / parallelExecution := false,
   jacocoExcludes := jacocoProjectExcludes()
 )
-
-lazy val root = (projectMatrix in file("."))
-  .aggregate(model, server, agent)
-  .settings(
-    name := "service-root",
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-    publish / skip := true,
-  )
 
 lazy val server = (projectMatrix in file("server"))
   .settings(
