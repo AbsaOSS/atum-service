@@ -24,6 +24,11 @@ $$
 --
 -- Function: runs._validate_partitioning(2)
 --      Validates the input partitioning and returns a set of individual error messages, one per an issue.
+--      The validation performs:
+--          1) Correct structure of the input JSONB object
+--          2) The list of keys in 'keys' is unique and doesn't have NULLs
+--          3) The keys in 'keys' and in 'keysToValuesMap' correspond to each other
+--          4) (if i_is_pattern = false) The values in 'keysToValuesMap' are non-empty/non-null
 --
 -- Parameters:
 --      i_partitioning      - partitioning to validate, a valid example:
@@ -45,69 +50,63 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _mandatoryFieldsInInput CONSTANT TEXT[] := ARRAY['keys', 'version', 'keysToValuesMap'];
-    _allFieldsInInput TEXT[];
+    _mandatory_fields_in_input CONSTANT TEXT[] := ARRAY['keys', 'version', 'keysToValuesMap'];
+    _all_fields_in_input TEXT[];
 
-    _isPartitionProperlyStructured BOOL;
+    _is_input_properly_structured BOOL;
 
-    _partitionKeysAllCnt INTEGER;
-    _partitionKeysUniqAndNotNull TEXT[];
-    _partitionKeysUniqAndNotNullCnt INTEGER;
+    _partitioning_keys_all_cnt INTEGER;
+    _partitioning_keys_uniq_and_not_null TEXT[];
+    _partitioning_keys_uniq_and_not_null_cnt INTEGER;
 
-    _partitioningKeysAll TEXT[];
-    _partitioningKeysFromValuesMap TEXT[];
+    _partitioning_keys_from_values_map TEXT[];
 
-    _partitionNullValuesCnt INTEGER;
+    _partitioning_null_values_cnt INTEGER;
 
 BEGIN
     -- Checking whether the input has correct structure.
     SELECT ARRAY(SELECT jsonb_object_keys(i_partitioning))
-    INTO _allFieldsInInput;
+    INTO _all_fields_in_input;
 
-    SELECT i_partitioning ?& _mandatoryFieldsInInput
-    INTO _isPartitionProperlyStructured;
-
-    IF NOT _isPartitionProperlyStructured THEN
+    SELECT i_partitioning ?& _mandatory_fields_in_input
+    INTO _is_input_properly_structured;
+    IF NOT _is_input_properly_structured THEN
         RETURN NEXT
             'The input partitioning is not properly structured, it should have this structure: '
-                || _mandatoryFieldsInInput::TEXT
+                || _mandatory_fields_in_input::TEXT
                 || ' but contains: '
-                || _allFieldsInInput::TEXT;
+                || _all_fields_in_input::TEXT;
     END IF;
 
     -- Checking whether the array 'keys' is valid, i.e. has unique, non-null elements.
-    SELECT ARRAY(SELECT i_partitioning->'keys')
-    INTO _partitioningKeysAll;
+    SELECT jsonb_array_length(i_partitioning->'keys')
+    INTO _partitioning_keys_all_cnt;
 
-    _partitionKeysAllCnt := array_length(_partitioningKeysAll, 1);
+    SELECT array_unique(x.keys)
+    FROM jsonb_to_record(i_partitioning) AS x(keys text[])
+    INTO _partitioning_keys_uniq_and_not_null;
 
-    WITH nonNullKeys AS (
-        SELECT UNNEST(array_remove(x.keys, NULL))
-        FROM jsonb_to_record(i_partitioning) AS x(keys text[])
-    )
-    SELECT ARRAY(SELECT DISTINCT * FROM nonNullKeys)
-    INTO _partitionKeysUniqAndNotNull;
+    _partitioning_keys_uniq_and_not_null_cnt := array_length(_partitioning_keys_uniq_and_not_null, 1);
 
-    _partitionKeysUniqAndNotNullCnt := array_length(_partitionKeysUniqAndNotNull, 1);
-
-    IF _partitionKeysAllCnt != _partitionKeysUniqAndNotNullCnt THEN
-        RETURN NEXT 'The input partitioning is invalid, the keys are not unique: '
-            || array_to_string(_partitioningKeysAll, ', ');
+    IF _partitioning_keys_all_cnt != _partitioning_keys_uniq_and_not_null_cnt THEN
+        RETURN NEXT 'The input partitioning is invalid, the keys must be unique and can not contain NULLs: '
+            || (i_partitioning->>'keys');
     END IF;
 
     -- Checking whether the map 'keysToValuesMap' has the same keys as the 'keys' attribute.
     SELECT ARRAY(SELECT jsonb_object_keys(i_partitioning->'keysToValuesMap'))
-    INTO _partitioningKeysFromValuesMap;
+    INTO _partitioning_keys_from_values_map;
 
     IF NOT (
-            (_partitioningKeysFromValuesMap @> _partitionKeysUniqAndNotNull)
-            AND (_partitioningKeysFromValuesMap <@ _partitionKeysUniqAndNotNull)
+            (_partitioning_keys_from_values_map @> _partitioning_keys_uniq_and_not_null)
+            AND (_partitioning_keys_from_values_map <@ _partitioning_keys_uniq_and_not_null)
         ) THEN
         RETURN NEXT
-            'The keys in keysToValuesMap are not as it should: '
-                || _partitioningKeysFromValuesMap::TEXT
-                || ' vs (what it should be): '
-                || _partitionKeysUniqAndNotNull::TEXT;
+            'The input partitioning is invalid, the keys in ''keys'' and ''keysToValuesMap'' do not correspond. '
+                || 'Given in ''keysToValuesMap'': '
+                || _partitioning_keys_from_values_map::TEXT
+                || ' vs (probably expected from ''keys''): '
+                || _partitioning_keys_uniq_and_not_null::TEXT;
     END IF;
 
     -- Checking the validity of values in the map 'keysToValuesMap',
@@ -115,11 +114,11 @@ BEGIN
     IF NOT i_is_pattern THEN
         SELECT COUNT(*)
         FROM jsonb_each_text(i_partitioning->'keysToValuesMap') AS elem
-        WHERE (elem.value) IS NULL
-        INTO _partitionNullValuesCnt;
+        WHERE COALESCE(TRIM(elem.value), '') = ''
+        INTO _partitioning_null_values_cnt;
 
-        IF _partitionNullValuesCnt > 0 THEN
-            RETURN NEXT 'The values in keysToValuesMap have some NULL values present: '
+        IF _partitioning_null_values_cnt > 0 THEN
+            RETURN NEXT 'The input partitioning is invalid, some values in ''keysToValuesMap'' are NULLs or empty: '
                 || (i_partitioning->>'keysToValuesMap');
         END IF;
     END IF;
