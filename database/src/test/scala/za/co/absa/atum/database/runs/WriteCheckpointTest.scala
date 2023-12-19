@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.database.runs
 
-import za.co.absa.atum.database.balta.DBTestSuite
-import za.co.absa.atum.database.balta.classes.JsonBString
-import za.co.absa.atum.database.balta.classes.setter.CustomDBType
+import za.co.absa.balta.DBTestSuite
+import za.co.absa.balta.classes.JsonBString
+import za.co.absa.balta.classes.setter.CustomDBType
 
 import java.time.OffsetDateTime
 import java.util.UUID

@@ -32,6 +32,7 @@ object Dependencies {
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
     val scalaLangJava8Compat = "1.0.2"
+    val balta = "0.1.0"
 
     val jacksonModuleScala = "2.14.2"
 
@@ -189,11 +190,12 @@ object Dependencies {
   }
 
   def databaseDependencies: Seq[ModuleID] = {
-    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % "test,it"
-    lazy val postgresql = "org.postgresql"   % "postgresql" % Versions.postgresql % "test,it"
+    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % "test"
+    lazy val balta = "za.co.absa" %% "balta" % Versions.balta
+
     Seq(
       scalaTest,
-      postgresql,
+      balta,
     )
   }
 }

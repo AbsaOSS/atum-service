@@ -16,8 +16,8 @@
 
 package za.co.absa.atum.database.runs
 
-import za.co.absa.atum.database.balta.DBTestSuite
-import za.co.absa.atum.database.balta.classes.JsonBString
+import za.co.absa.balta.DBTestSuite
+import za.co.absa.balta.classes.JsonBString
 
 class CreatePartitioningIfNotExists extends DBTestSuite{
 

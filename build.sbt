@@ -123,7 +123,14 @@ lazy val database = (projectMatrix in file("database"))
       name := "atum-database",
       libraryDependencies ++= Dependencies.databaseDependencies,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      test := {}
     ): _*
   )
   .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
 
+lazy val dbTest = taskKey[Unit]("Launch DB tests")
+
+dbTest := {
+  println("Running DB tests")
+  (database.jvm(Versions.scala212) / Test / test).value
+}
