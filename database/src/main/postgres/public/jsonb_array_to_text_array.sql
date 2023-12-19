@@ -17,7 +17,7 @@
 CREATE OR REPLACE FUNCTION public.jsonb_array_to_text_array(
     IN i_json_array JSONB
 ) RETURNS  text[]
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: public.jsonb_array_to_text_array(1)
 --      Converts a JSONB array into a Postgres array
