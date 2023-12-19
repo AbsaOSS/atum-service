@@ -16,10 +16,14 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.MeasureException
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasureException
 import za.co.absa.atum.agent.model.Measure._
 import za.co.absa.atum.model.dto
 
+/**
+ * This object provides a functionality to convert a DTO representation of measures to the Agent's internal
+ * representation of those objects.
+ */
 private [agent] object MeasuresBuilder {
 
   private [agent] def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {
@@ -27,14 +31,14 @@ private [agent] object MeasuresBuilder {
   }
 
   private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.Measure = {
-    val controlColumn = measure.controlColumns.head
+    val measuredColumn = measure.measuredColumns.head
 
     measure.measureName match {
-      case RecordCount.measureName            => RecordCount(controlColumn)
-      case DistinctRecordCount.measureName    => DistinctRecordCount(controlColumn)
-      case SumOfValuesOfColumn.measureName    => SumOfValuesOfColumn(controlColumn)
-      case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(controlColumn)
-      case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(controlColumn)
+      case RecordCount.measureName            => RecordCount(measuredColumn)
+      case DistinctRecordCount.measureName    => DistinctRecordCount(measuredColumn)
+      case SumOfValuesOfColumn.measureName    => SumOfValuesOfColumn(measuredColumn)
+      case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(measuredColumn)
+      case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(measuredColumn)
       case unsupportedMeasure =>
         throw MeasureException(
           s"Measure not supported: $unsupportedMeasure. Supported measures are: ${Measure.supportedMeasureNames}"

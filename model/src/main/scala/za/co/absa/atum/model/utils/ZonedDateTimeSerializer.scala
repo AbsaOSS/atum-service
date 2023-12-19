@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.model.utils
 
-case class PartitioningDTO (
-  partitioning: Seq[PartitionDTO],
-  parentPartitioning: Option[Seq[PartitionDTO]]
-)
+import org.json4s.JsonAST.JString
+import org.json4s.{CustomSerializer, JNull}
+
+import java.time.ZonedDateTime
+
+case object ZonedDateTimeSerializer extends CustomSerializer[ZonedDateTime](_ => (
+  {
+    case JString(s) => ZonedDateTime.parse(s, SerializationUtils.timestampFormat)
+    case JNull => null
+  },
+  {
+    case d: ZonedDateTime => JString(SerializationUtils.timestampFormat.format(d))
+  }
+))

@@ -17,6 +17,8 @@
 package za.co.absa.atum.server.api.provider
 
 import com.typesafe.config.{Config, ConfigValueFactory}
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 import za.co.absa.atum.server.api.AtumConfig
 import za.co.absa.atum.server.api.database.Runs
 import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
@@ -24,12 +26,13 @@ import za.co.absa.fadb.slick.SlickPgEngine
 
 import scala.concurrent.ExecutionContext
 
-class PostgresAccessProvider {
+@Component
+class PostgresAccessProvider @Autowired()(atumConfig: AtumConfig) {
 
-  val executor: ExecutionContext = ExecutionContext.Implicits.global
+  val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
   private def databaseConfig: Config = {
-    val baseConfig = AtumConfig.dbConfig
+    val baseConfig = atumConfig.dbConfig
     // TODO: https://github.com/AbsaOSS/atum-service/issues/107
     Map.empty.foldLeft(baseConfig) { case (acc, (configPath, configVal)) =>
       acc.withValue(configPath, ConfigValueFactory.fromAnyRef(configVal))
@@ -38,6 +41,6 @@ class PostgresAccessProvider {
 
   private val db = Database.forConfig("", databaseConfig)
 
-  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executor)
+  private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executionContext)
   val runs: Runs = new Runs()
 }

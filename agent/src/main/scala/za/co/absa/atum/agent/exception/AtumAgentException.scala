@@ -16,7 +16,35 @@
 
 package za.co.absa.atum.agent.exception
 
-sealed abstract class AtumAgentException extends Exception
+/**
+ * This type represents a base class for exceptions thrown by the Atum Agent.
+ *
+ * @param message A message describing the exception.
+ */
+abstract class AtumAgentException(message: String) extends Exception(message)
 
-case class MeasurementProvidedException(msg: String) extends AtumAgentException
-case class MeasureException(msg: String) extends AtumAgentException
+/**
+ * This object contains possible exceptions thrown by the Atum Agent.
+ */
+object AtumAgentException {
+  /**
+   * This type represents an exception related to creation of provided measurement.
+   *
+   * @param message A message describing the exception.
+   */
+  case class MeasurementProvidedException(message: String) extends AtumAgentException(message)
+
+  /**
+   * This type represents an exception thrown when a measure is not supported by the Atum Agent.
+   *
+   * @param message A message describing the exception.
+   */
+  case class MeasureException(message: String) extends AtumAgentException(message)
+
+  /**
+   * This type represents an exception related to HTTP communication.
+   * @param statusCode A status code of the HTTP response.
+   * @param message A message describing the exception.
+   */
+  case class HttpException(statusCode: Int, message: String) extends AtumAgentException(message)
+}
