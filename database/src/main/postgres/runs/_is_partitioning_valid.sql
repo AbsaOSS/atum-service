@@ -47,7 +47,7 @@ $$
 --
 -- Status codes:
 --      10                  - OK
---      50                  - Partitioning is not valid
+--      50                  - Partitioning not valid
 --
 -------------------------------------------------------------------------------
 DECLARE

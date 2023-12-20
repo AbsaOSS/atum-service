@@ -42,6 +42,8 @@ $$
 --      11                  - Partitioning created
 --      12                  - Partitioning parent registered
 --      14                  - Partitioning already present
+--      50                  - Partitioning not valid
+--      51                  - Parent partitioning not valid
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -50,11 +52,31 @@ DECLARE
     _status                 BIGINT;
 BEGIN
 
+    SELECT partit_validity.status
+    FROM runs._is_partitioning_valid(i_partitioning) AS partit_validity
+    INTO _status;
+
+    IF _status = 50 THEN
+        status := 50;
+        status_text := 'Partitioning not valid';
+        RETURN;
+    END IF;
+
     id_partitioning := runs._get_id_partitioning(i_partitioning, true);
 
     _create_partitioning := id_partitioning IS NULL;
 
     IF i_parent_partitioning IS NOT NULL THEN
+        SELECT parent_partit_validity.status
+        FROM runs._is_partitioning_valid(i_parent_partitioning) AS parent_partit_validity
+        INTO _status;
+
+        IF _status = 50 THEN
+            status := 51;
+            status_text := 'Parent partitioning not valid';
+            RETURN;
+        END IF;
+
         SELECT CPINE.id_partitioning
         FROM runs.create_partitioning_if_not_exists(i_parent_partitioning, i_by_user, NULL)   CPINE
         INTO _fk_parent_partitioning;
