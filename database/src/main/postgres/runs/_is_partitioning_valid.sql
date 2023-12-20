@@ -54,8 +54,7 @@ DECLARE
 
 BEGIN
     -- Checking whether the input partitioning is valid.
-    PERFORM 1
-    FROM runs._validate_partitioning(i_partitioning, i_is_pattern)
+    PERFORM runs._validate_partitioning(i_partitioning, i_is_pattern)
     LIMIT 1;
 
     IF found THEN
