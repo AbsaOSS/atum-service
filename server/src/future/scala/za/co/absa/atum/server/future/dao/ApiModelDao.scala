@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.dao
+package za.co.absa.atum.server.future.dao
 
-import za.co.absa.atum.server.model.BaseApiModel
+import za.co.absa.atum.server.future.model.BaseApiModel
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -32,4 +32,3 @@ trait ApiModelDao[T <: BaseApiModel] {
   def update(entity: T): Future[Boolean]
 
 }
-

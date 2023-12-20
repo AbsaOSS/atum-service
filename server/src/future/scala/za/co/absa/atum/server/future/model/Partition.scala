@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.model
 
-case class Measurement(
-  controlName: String,
-  controlType: String,
-  controlCol: String,
-  controlValue: Any
-)
+import java.util.UUID
+
+case class Partition(
+  id: Option[UUID],
+  flowId: UUID
+) extends BaseApiModel {
+
+  override def withId(uuid: UUID): Partition = copy(id = Some(uuid))
+}
