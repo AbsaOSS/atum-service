@@ -53,7 +53,6 @@ $$
 DECLARE
 
 BEGIN
-    -- Checking whether the input partitioning is valid.
     PERFORM runs._validate_partitioning(i_partitioning, i_is_pattern)
     LIMIT 1;
 
