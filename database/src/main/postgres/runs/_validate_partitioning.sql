@@ -17,8 +17,7 @@
 CREATE OR REPLACE FUNCTION runs._validate_partitioning(
     IN i_partitioning JSONB,
     IN i_is_pattern BOOL = false
-)
-    RETURNS SETOF TEXT AS
+) RETURNS SETOF TEXT AS
 $$
 -------------------------------------------------------------------------------
 --

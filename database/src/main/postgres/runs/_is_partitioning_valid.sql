@@ -15,10 +15,11 @@
  */
 
 CREATE OR REPLACE FUNCTION runs._is_partitioning_valid(
-    IN i_partitioning JSONB,
-    IN i_is_pattern BOOL = false
-)
-    RETURNS SETOF TEXT AS
+    IN i_partitioning   JSONB,
+    IN i_is_pattern     BOOL = false,
+    OUT status          INTEGER,
+    OUT status_text     TEXT
+) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
 --
@@ -41,17 +42,29 @@ $$
 --                            such check would be skipped.
 --
 -- Returns:
---      TODO
+--      status              - Status code
+--      status_text         - Status text
+--
+-- Status codes:
+--      10                  - OK
+--      50                  - Partitioning is not valid
 --
 -------------------------------------------------------------------------------
 DECLARE
 
 BEGIN
     -- Checking whether the input partitioning is valid.
-    SELECT runs._validate_partitioning(i_partitioning) LIMIT 1
-    INTO _allFieldsInInput;
+    PERFORM 1
+    FROM runs._validate_partitioning(i_partitioning, i_is_pattern)
+    LIMIT 1;
 
-    -- TODO
+    IF found THEN
+        status := 50;
+        status_text := 'The input partitioning is not valid';
+    ELSE
+        status := 10;
+        status_text := 'OK';
+    END IF;
 
     RETURN;
 END;
