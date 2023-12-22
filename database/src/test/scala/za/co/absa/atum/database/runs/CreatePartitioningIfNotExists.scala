@@ -90,11 +90,7 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
       assert(flowRow.getOffsetDateTime("created_at").contains(now()))
       assert(!flowsResult.hasNext)
     }
-
-
   }
-
-
   test("Partitioning created with parent partitioning that already exists") {
     val parentPartitioningID = function(fncCreatePartitioningIfNotExists)
       .setParam("i_partitioning", parentPartitioning)
@@ -110,8 +106,6 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
     assert(
       table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID)) == 1
     )
-
-
     val partitioningID = function(fncCreatePartitioningIfNotExists)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
@@ -130,7 +124,6 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
     assert(
       table("flows.partitioning_to_flow").count(add("fk_partitioning", partitioningID)) == 2
     )
-
   }
 
   test("Partitioning already exists") {

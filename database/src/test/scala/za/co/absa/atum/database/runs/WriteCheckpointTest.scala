@@ -259,7 +259,6 @@ class WriteCheckpointTest extends DBTestSuite {
       assert(row.getBoolean("measured_by_atum_agent").contains(false))
       assert(row.getString("created_by").contains(origAuthor))
     }
-
   }
 
   test("Partitioning of the checkpoint does not exist") {
@@ -282,5 +281,4 @@ class WriteCheckpointTest extends DBTestSuite {
       }
     assert(table("runs.checkpoints").count() == count)
   }
-
 }
