@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.server.future.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.server.api.NotFoundException
-import za.co.absa.atum.server.dao.ApiModelDao
-import za.co.absa.atum.server.model.Partition
+import za.co.absa.atum.server.future.dao.ApiModelDao
+import za.co.absa.atum.server.future.model.Partition
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -56,5 +56,3 @@ class SegmentationService @Autowired()(flowService: FlowService, dao: ApiModelDa
 
   override val entityName: String = "Segmentation"
 }
-
-
