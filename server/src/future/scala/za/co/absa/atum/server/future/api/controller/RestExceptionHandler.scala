@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.server.future.api.controller
 
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
 import za.co.absa.atum.server.api.NotFoundException
-import za.co.absa.atum.server.api.payload.MessagePayload
+import za.co.absa.atum.server.future.api.payload.MessagePayload
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.api.controller
 
-import java.util.UUID
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.web.bind.annotation.{RequestMapping, RestController}
+import za.co.absa.atum.server.future.api.service.FlowService
 
-trait BaseApiModel {
-  def id: Option[UUID]
+@RestController
+@RequestMapping(Array("/api/flows"))
+class FlowController @Autowired()(flowService: FlowService)
+  extends BaseApiController(flowService) {
 
-  // todo def withId[T <: BaseApiModel](uuid: UUID): T or even def withId[T <: BaseApiModel[T]](uuid: UUID): T ?
-  def withId(uuid: UUID): BaseApiModel
-
-  def entityName: String = this.getClass.getSimpleName
 }
