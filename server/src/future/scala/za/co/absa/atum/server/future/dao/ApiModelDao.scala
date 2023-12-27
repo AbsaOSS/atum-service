@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.dao
 
-case class ControlMeasureMetadata(
-  sourceApplication: String,
-  country: String,
-  historyType: String,
-  dataFilename: String,
-  sourceType: String,
-  version: Int,
-  informationDate: String,
-  additionalInfo: Map[String, String] = Map.empty
-)
+import za.co.absa.atum.server.future.model.BaseApiModel
+
+import java.util.UUID
+import scala.concurrent.Future
+
+trait ApiModelDao[T <: BaseApiModel] {
+
+  def getList(limit: Int, offset: Int, filter: T => Boolean = _ => true): Future[List[T]]
+
+  def getById(uuid: UUID): Future[Option[T]]
+
+  def add(entity: T): Future[UUID]
+
+  def update(entity: T): Future[Boolean]
+
+}

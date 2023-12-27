@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.model
 
 import java.util.UUID
 
-case class Partition(
+case class Flow(
   id: Option[UUID],
-  flowId: UUID
+  description: Option[String],
+  properties: Map[String, String] = Map.empty
 ) extends BaseApiModel {
 
-  override def withId(uuid: UUID): Partition = copy(id = Some(uuid))
+  def apply(desc: Option[String] = None): Flow = Flow(None, desc)
+
+  override def withId(uuid: UUID): Flow = copy(id = Some(uuid))
 }

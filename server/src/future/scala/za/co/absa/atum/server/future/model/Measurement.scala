@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.server.future.model
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.{RequestMapping, RestController}
-import za.co.absa.atum.server.api.service.FlowService
-
-@RestController
-@RequestMapping(Array("/api/flows"))
-class FlowController @Autowired()(flowService: FlowService)
-  extends BaseApiController(flowService) {
-
-}
+case class Measurement(
+  controlName: String,
+  controlType: String,
+  controlCol: String,
+  controlValue: Any
+)
