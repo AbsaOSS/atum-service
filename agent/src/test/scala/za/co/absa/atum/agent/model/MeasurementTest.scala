@@ -26,7 +26,7 @@ import za.co.absa.spark.commons.test.SparkTestBase
 
 class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
-  "MeasurementProvided" should "be able to be converted to MeasurementProvided object when the result is Double" in {
+  "MeasurementProvided" should "be able to be converted to MeasurementProvided object when the result is BigDecimal" in {
     val measure = AbsSumOfValuesOfColumn("col")
     val actualMeasurement = MeasurementProvided(measure, BigDecimal(1.0))
 
