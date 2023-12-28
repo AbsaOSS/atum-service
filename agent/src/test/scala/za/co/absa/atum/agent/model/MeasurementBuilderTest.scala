@@ -18,10 +18,9 @@ package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import za.co.absa.atum.agent.model.AtumMeasure.SumOfValuesOfColumn
-import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
-import za.co.absa.atum.agent.model.Measurement.MeasurementProvided._
-import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO}
+import za.co.absa.atum.agent.model.Measurement.{MeasurementByAtum, MeasurementProvided}
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
+import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO}
 
 class MeasurementBuilderTest extends AnyFlatSpec {
 

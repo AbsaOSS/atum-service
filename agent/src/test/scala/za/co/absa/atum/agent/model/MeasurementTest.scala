@@ -18,7 +18,7 @@ package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.atum.agent.exception.MeasurementProvidedException
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementProvidedException
 import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
@@ -54,16 +54,8 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     assertThrows[MeasurementProvidedException](MeasurementProvided(measure, "1"))
   }
 
-  "forCustomMeasure" should "create MeasurementProvided for custom measure" in {
-    val measureName = "myCustomMeasure"
-    val controlCol = "columnName"
-    val resultValue = "abc"
-
-    val expectedMeasurementProvided = MeasurementProvided(
-      CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.String
-    )
-    val actualMeasurementProvided = MeasurementProvided.forCustomMeasure(measureName, controlCol, "abc")
-
-    assert(expectedMeasurementProvided == actualMeasurementProvided)
+  "MeasurementProvided" should "throw exception for unsupported (slightly different FPN) result value type for a given Measure" in {
+    val measure = SumOfValuesOfColumn("col")
+    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
   }
 }

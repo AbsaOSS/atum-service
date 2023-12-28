@@ -16,10 +16,14 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.MeasureException
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasureException
 import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureDTO
 
+/**
+ * This object provides a functionality to convert a DTO representation of measures to the Agent's internal
+ * representation of those objects.
+ */
 private [agent] object MeasuresBuilder {
 
   private [agent] def mapToMeasures(measures: Set[MeasureDTO]): Set[za.co.absa.atum.agent.model.AtumMeasure] = {
@@ -27,7 +31,7 @@ private [agent] object MeasuresBuilder {
   }
 
   private def createMeasure(measure: MeasureDTO): za.co.absa.atum.agent.model.AtumMeasure = {
-    val controlColumns = measure.controlColumns
+    val controlColumns = measure.measuredColumns
 
     measure.measureName match {
       case RecordCount.measureName            => RecordCount()

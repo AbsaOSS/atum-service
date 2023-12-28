@@ -26,10 +26,13 @@ import java.time.format.DateTimeFormatter
 object SerializationUtils {
 
   implicit private val formatsJson: Formats =
-    Serialization.formats(NoTypeHints).withBigDecimal + new ext.EnumNameSerializer(ResultValueType) +
-      ext.UUIDSerializer + OffsetDateTimeSerializer
+    Serialization.formats(NoTypeHints).withBigDecimal +
+      new ext.EnumNameSerializer(ResultValueType) +
+      ext.UUIDSerializer +
+      ZonedDateTimeSerializer
 
-  val timestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSX")
+  // TODO "yyyy-MM-dd'T'hh:mm:ss.SSS'Z'" OR TODO "yyyy-MM-dd HH:mm:ss.SSSSSSX"
+  val timestampFormat: DateTimeFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
 
   /**
    * The method returns arbitrary object as a Json string.

@@ -19,6 +19,9 @@ package za.co.absa.atum.agent.model
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 
+/**
+ * This object provides a functionality to convert a measurement to its DTO representation.
+ */
 private [agent] object MeasurementBuilder {
 
   private [agent] def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {

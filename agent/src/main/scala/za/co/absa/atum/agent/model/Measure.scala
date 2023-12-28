@@ -31,10 +31,6 @@ sealed trait Measure {
   def controlColumns: Seq[String]
 }
 
-case class CustomMeasure(measureName: String, controlCols: Seq[String]) extends Measure {
-  override def controlColumns: Seq[String] = controlCols
-}
-
 trait AtumMeasure extends Measure with MeasurementProcessor {
   val resultValueType: ResultValueType.ResultValueType
 }
@@ -170,6 +166,14 @@ object AtumMeasure {
     workaroundBigDecimalIssues(aggregatedValue)
   }
 
+  /**
+   *  This method converts a given value to string.
+   *  It is a workaround for different serializers generating different JSONs for BigDecimal.
+   *  See https://stackoverflow.com/questions/61973058/json-serialization-of-bigdecimal-returns-scientific-notation
+   *
+   *  @param value A value to convert
+   *  @return A string representation of the value
+   */
   private def workaroundBigDecimalIssues(value: Any): String =
     // If aggregated value is java.math.BigDecimal, convert it to scala.math.BigDecimal
     value match {

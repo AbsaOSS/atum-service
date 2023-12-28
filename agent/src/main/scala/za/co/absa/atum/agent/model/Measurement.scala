@@ -16,15 +16,21 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.MeasurementProvidedException
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementProvidedException
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
+/**
+ *  This trait defines a contract for a measurement.
+ */
 trait Measurement {
   val measure: Measure
   val resultValue: Any
   val resultType: ResultValueType.ResultValueType
 }
 
+/**
+ *  This object contains all the possible measurements
+ */
 object Measurement {
 
   /**
@@ -51,6 +57,14 @@ object Measurement {
       MeasurementProvided[T](measure, resultValue, requiredType)
     }
 
+    /**
+     *  This method creates a measurement for a given measure and result value.
+     *
+     *  @param measure     A measure for which the measurement is created.
+     *  @param resultValue A result value of the measurement.
+     *  @tparam T A type of the result value.
+     *  @return A measurement.
+     */
     def apply[T](measure: AtumMeasure, resultValue: T): Measurement = {
       resultValue match {
         case l: Long =>
@@ -70,25 +84,7 @@ object Measurement {
           )
       }
     }
-
-    def forCustomMeasure[T](measureName: String, controlCol: String, resultValue: T): MeasurementProvided[T] = {
-      resultValue match {
-        case _: Long =>
-          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.Long)
-        case _: Double =>
-          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.Double)
-        case _: BigDecimal =>
-          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.BigDecimal)
-        case _: String =>
-          MeasurementProvided[T](CustomMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.String)
-        case unsupportedType =>
-          val className = unsupportedType.getClass.getSimpleName
-          throw MeasurementProvidedException(
-            s"Unsupported type of measurement for measure ${measureName}: $className " +
-              s"for provided result: $resultValue"
-          )
-      }
-    }
+  }
 
     /**
      *  When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
@@ -97,5 +93,4 @@ object Measurement {
      */
     case class MeasurementByAtum(measure: AtumMeasure, resultValue: String, resultType: ResultValueType.ResultValueType)
         extends Measurement
-  }
 }

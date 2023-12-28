@@ -1,0 +1,14 @@
+spring.mvc.pathmatch.matching-strategy=ANT_PATH_MATCHER
+server.servlet.encoding.charset=UTF-8
+server.servlet.encoding.force-response=true
+
+atum.server.api.config.some-key=ALFA
+
+postgres.connectionPool=HikariCP
+postgres.dataSourceClass=org.postgresql.ds.PGSimpleDataSource
+postgres.properties.serverName=localhost
+postgres.properties.portNumber=5432
+postgres.properties.databaseName=atum_db
+postgres.properties.user=atum_user
+postgres.properties.password=changeme
+postgres.numThreads=10
