@@ -50,8 +50,10 @@ object Dependencies {
 
     val postgresql = "42.6.0"
 
+
     val fadb = "0.2.0"
     val slickpg = "0.20.4"
+    val balta = "0.1.0"
 
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"
@@ -199,17 +201,17 @@ object Dependencies {
 
   def e2eDependencies: Seq[ModuleID] = {
     val sparkVersion = Versions.spark3
-    lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion// % Provided
-    lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion// % Provided
+    lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion % Provided
+    lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
     lazy val typeSafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
-    lazy val postgresql = "org.postgresql"   % "postgresql" % Versions.postgresql
+    lazy val balta = "za.co.absa" %% "balta" % Versions.balta
 
     Seq(
       sparkCore,
       sparkSql,
       typeSafeConfig,
-      postgresql,
+      balta,
     )
   }
 }
