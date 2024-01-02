@@ -22,10 +22,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: olafurpg/setup-scala@v13
+      - uses: olafurpg/setup-scala@v14
 
       - name: Run sbt ci-release (produces war as well)
         run: sbt ci-release
@@ -40,22 +40,13 @@ jobs:
         run: echo "WAR_PATH=$(find . -name '*.war' | head -n 1)" >> $GITHUB_ENV
 
       - name: Create Draft Release
-        id: create_draft_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Draft Release for ${{ github.ref }}
+          files: ${{ env.WAR_PATH }}
+          name: Draft Release for ${{ github.ref }}
           draft: true
           prerelease: false
-
-      - name: Upload WAR file to Draft Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_draft_release.outputs.upload_url }}
-          asset_path: ${{ env.WAR_PATH }}
-          asset_name: $(basename ${{ env.WAR_PATH }})
-          asset_content_type: application/octet-stream
+          fail_on_unmatched_files: true
+#          body_path: .github/release-body.md

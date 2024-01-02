@@ -38,9 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v14
         with:
           java-version: "adopt@1.8"
       - name: Build and run tests
@@ -48,7 +48,7 @@ jobs:
      #  Agent module code coverage
       - name: Add coverage to PR
         id: jacoco-agent
-        uses: madrapps/jacoco-report@v1.3
+        uses: madrapps/jacoco-report@v1.6.1
         with:
           name: agent-jacoco-report
           paths: ${{ github.workspace }}/agent/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
@@ -60,7 +60,7 @@ jobs:
      #  server module code coverage
       - name: Add coverage to PR
         id: jacoco-server
-        uses: madrapps/jacoco-report@v1.3
+        uses: madrapps/jacoco-report@v1.6.1
         with:
           name: server-jacoco-report
           paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
@@ -72,7 +72,7 @@ jobs:
      #  model module code coverage
       - name: Add coverage to PR
         id: jacoco-model
-        uses: madrapps/jacoco-report@v1.3
+        uses: madrapps/jacoco-report@v1.6.1
         with:
           name: model-jacoco-report
           paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
@@ -92,9 +92,9 @@ jobs:
 
       - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
         if: |
-          ${{ steps.jacoco-agent.outputs.coverage-changed-files < 80.0 }} &&
-          ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }} &&
-          ${{ steps.jacoco-model.outputs.coverage-changed-files < 80.0 }}
+          ${{ steps.jacoco-agent.outputs.coverage-changed-files < env.changed }} &&
+          ${{ steps.jacoco-server.outputs.coverage-changed-files < env.changed }} &&
+          ${{ steps.jacoco-model.outputs.coverage-changed-files < env.changed }}
         uses: actions/github-script@v6
         with:
           script: |
