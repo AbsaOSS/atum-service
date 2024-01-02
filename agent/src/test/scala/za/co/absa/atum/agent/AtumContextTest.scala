@@ -16,17 +16,16 @@
 
 package za.co.absa.atum.agent
 
-import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
-import org.mockito.Mockito.{mock, times, verify, when}
 import org.mockito.ArgumentCaptor
+import org.mockito.Mockito.{mock, times, verify, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
-import za.co.absa.atum.agent.model.MeasurementBuilder
+import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import za.co.absa.atum.agent.model.MeasurementBuilder
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
