@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.server.future.api.controller
 
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.server.api.implicits._
-import za.co.absa.atum.server.api.payload.MessagePayload
-import za.co.absa.atum.server.api.service.BaseApiService
-import za.co.absa.atum.server.model.BaseApiModel
+import za.co.absa.atum.server.future.api.payload.MessagePayload
+import za.co.absa.atum.server.future.api.service.BaseApiService
+import za.co.absa.atum.server.future.model.BaseApiModel
 
 import java.net.URI
 import java.util.concurrent.CompletableFuture

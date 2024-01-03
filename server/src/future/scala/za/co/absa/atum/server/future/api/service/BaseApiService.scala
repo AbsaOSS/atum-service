@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.server.future.api.service
 
 import za.co.absa.atum.server.api.NotFoundException
-import za.co.absa.atum.server.dao.ApiModelDao
-import za.co.absa.atum.server.model.BaseApiModel
+import za.co.absa.atum.server.future.dao.ApiModelDao
+import za.co.absa.atum.server.future.model.BaseApiModel
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global

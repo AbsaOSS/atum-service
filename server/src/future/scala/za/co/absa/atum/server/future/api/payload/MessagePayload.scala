@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.api.payload
 
-case class Measurement(
-  controlName: String,
-  controlType: String,
-  controlCol: String,
-  controlValue: Any
-)
+case class MessagePayload(message: String)
