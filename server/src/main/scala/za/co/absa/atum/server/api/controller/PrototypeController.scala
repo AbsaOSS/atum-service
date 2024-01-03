@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.controller
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, _}
 import za.co.absa.atum.server.api.service.DatabaseService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -63,6 +63,19 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
     for {
       partitioningFuture <- databaseService.createPartitioningIfNotExists(partitioning)
     } yield AtumContextDTO(partitioningFuture.partitioning, measures, additionalData)
+  }
+
+  /**
+   * Creates an additional data in a DB.
+   *
+   * @param additionalData DTO (JSON-like) object containing fields that will be used for
+   *                                creating an additional data.
+   * @return A ResponseEntity with the status code CREATED.
+   */
+  @PostMapping(Array("/createAdditionalData"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def createAdditionalData(additionalData: AdditionalDataSubmitDTO): CompletableFuture[AdditionalDataSubmitDTO] = {
+    databaseService.saveAdditionalData(additionalData)
   }
 
 }

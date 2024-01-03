@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.service
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.provider.PostgresAccessProvider
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,5 +38,11 @@ class DatabaseService @Autowired()(postgresAccessProvider: PostgresAccessProvide
     for {
       _ <- postgresAccessProvider.runs.createPartitioningIfNotExists(partitioning)
     } yield partitioning
+  }
+
+  def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Future[AdditionalDataSubmitDTO] = {
+    for {
+      _ <- postgresAccessProvider.runs.createAdditionalData(additionalData)
+    } yield additionalData
   }
 }

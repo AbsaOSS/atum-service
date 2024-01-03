@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database
 
 import slick.jdbc.{GetResult, SQLActionBuilder}
-import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBFunction._
@@ -34,6 +34,7 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
   val writeCheckpoint = new WriteCheckpoint
   val createPartitioningIfNotExists = new CreatePartitioningIfNotExists
+  val createAdditionalData = new CreateAdditionalData
 }
 
 object Runs {
@@ -92,6 +93,27 @@ object Runs {
               $partitioningNormalized::JSONB,
               ${values.authorIfNew},
               $parentPartitioningNormalized::JSONB
+            ) #$alias;"""
+    }
+
+    override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
+  }
+
+  class CreateAdditionalData(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
+    extends DBSingleResultFunction[AdditionalDataSubmitDTO, Unit, SlickPgEngine]
+      with SlickFunctionWithStatusSupport[AdditionalDataSubmitDTO, Unit]
+      with StandardStatusHandling {
+
+    override protected def sql(values: AdditionalDataSubmitDTO): SQLActionBuilder = {
+      val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.atumPartitioning)
+      val partitioningNormalized = SerializationUtils.asJson(partitioning)
+
+      val additionalDataNormalized = SerializationUtils.asJson(values.additionalData)
+
+      sql"""SELECT #$selectEntry
+            FROM #$functionName(
+              $partitioningNormalized::JSONB,
+              $additionalDataNormalized::JSONB
             ) #$alias;"""
     }
 
