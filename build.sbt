@@ -30,6 +30,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 publish / skip := true
 
 lazy val printSparkScalaVersion = taskKey[Unit]("Print Spark and Scala versions for atum-service is being built for.")
+lazy val printScalaVersion = taskKey[Unit]("Print Scala versions for atum-service is being built for.")
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= commonDependencies,
@@ -45,12 +46,11 @@ lazy val server = (projectMatrix in file("server"))
       name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
       Compile / packageBin / publishArtifact := false,
-      printSparkScalaVersion := {
+      printScalaVersion := {
         val log = streams.value.log
-        val sparkVer = sparkVersionForScala(scalaVersion.value)
-        log.info(s"Building ${name.value} with Spark $sparkVer, Scala ${scalaVersion.value}")
+        log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")
       },
-      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
@@ -90,12 +90,11 @@ lazy val model = (projectMatrix in file("model"))
     commonSettings ++ Seq(
       name := "model",
       libraryDependencies ++= Dependencies.modelDependencies(scalaVersion.value),
-      printSparkScalaVersion := {
+      printScalaVersion := {
         val log = streams.value.log
-        val sparkVer = sparkVersionForScala(scalaVersion.value)
-        log.info(s"Building ${name.value} with Spark $sparkVer, Scala ${scalaVersion.value}")
+        log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")
       },
-      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent: model")
     ): _*
   )
