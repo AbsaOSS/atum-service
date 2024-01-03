@@ -18,14 +18,14 @@ package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasureException
-import za.co.absa.atum.agent.model.Measure._
+import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureDTO
 
 class MeasuresBuilderTest extends AnyFlatSpecLike {
 
   "mapToMeasures" should "map MeasureDTO into Measure for supported measures" in {
     val supportedMeasures = Set(
-      MeasureDTO("count", Seq("countCol")),
+      MeasureDTO("count", Seq("*")),
       MeasureDTO("distinctCount", Seq("distinctCountCol")),
       MeasureDTO("aggregatedTotal", Seq("aggregatedTotalCol")),
       MeasureDTO("absAggregatedTotal", Seq("absAggregatedTotalCol")),
@@ -33,8 +33,8 @@ class MeasuresBuilderTest extends AnyFlatSpecLike {
     )
 
     val expectedMeasures = Set(
-      RecordCount("countCol"),
-      DistinctRecordCount("distinctCountCol"),
+      RecordCount(),
+      DistinctRecordCount(Seq("distinctCountCol")),
       SumOfValuesOfColumn("aggregatedTotalCol"),
       AbsSumOfValuesOfColumn("absAggregatedTotalCol"),
       SumOfHashesOfColumn("hashCrc32Col")

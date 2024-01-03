@@ -19,24 +19,24 @@ package za.co.absa.atum.agent.model
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementProvidedException
-import za.co.absa.atum.agent.model.Measure._
+import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase
 
 class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
-  "MeasurementProvided" should "be able to be converted to MeasurementProvided object when the result is Double" in {
+  "MeasurementProvided" should "be able to be converted to MeasurementProvided object when the result is BigDecimal" in {
     val measure = AbsSumOfValuesOfColumn("col")
-    val actualMeasurement = MeasurementProvided(measure, 1.0)
+    val actualMeasurement = MeasurementProvided(measure, BigDecimal(1.0))
 
     assert(actualMeasurement.resultValue == 1.0)
-    assert(actualMeasurement.resultType == ResultValueType.Double)
+    assert(actualMeasurement.resultType == ResultValueType.BigDecimal)
   }
 
-  "MeasurementProvided" should "throw exception for unsupported result value - BigDecimal instead of Double" in {
+  "MeasurementProvided" should "throw exception for unsupported result value - Double instead of BigDecimal" in {
     val measure = AbsSumOfValuesOfColumn("col")
-    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, BigDecimal(1.0)))
+    assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
   }
 
   "MeasurementProvided" should "throw exception for unsupported result value type in general (scalar)" in {
@@ -50,7 +50,7 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
   }
 
   "MeasurementProvided" should "throw exception for unsupported result value type for a given Measure" in {
-    val measure = DistinctRecordCount("col")
+    val measure = DistinctRecordCount(Seq("col"))
     assertThrows[MeasurementProvidedException](MeasurementProvided(measure, "1"))
   }
 

@@ -19,21 +19,22 @@ package za.co.absa.atum.agent.model
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumAgent
-import za.co.absa.atum.agent.AtumContext.{AtumPartitions, DatasetWrapper}
-import za.co.absa.atum.agent.model.Measure._
+import za.co.absa.atum.agent.AtumContext.AtumPartitions
+import za.co.absa.atum.agent.model.AtumMeasure.{AbsSumOfValuesOfColumn, RecordCount, SumOfHashesOfColumn, SumOfValuesOfColumn}
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.atum.agent.AtumContext._
 
 class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
   "Measure" should "be based on the dataframe" in {
 
     // Measures
-    val measureIds: Measure = RecordCount(measuredColumn = "id")
-    val salaryAbsSum: Measure = AbsSumOfValuesOfColumn(measuredColumn = "salary")
+    val measureIds: AtumMeasure = RecordCount("id")
+    val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn("salary")
 
-    val salarySum = SumOfValuesOfColumn(measuredColumn = "salary")
-    val sumOfHashes: Measure = SumOfHashesOfColumn(measuredColumn = "id")
+    val salarySum = SumOfValuesOfColumn("salary")
+    val sumOfHashes: AtumMeasure = SumOfHashesOfColumn("id")
 
     // AtumContext contains `Measurement`
     val atumContextInstanceWithRecordCount = AtumAgent
@@ -95,7 +96,7 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
     assert(dfFullCntResult.result == "1000")
     assert(dfFullCntResult.resultType == ResultValueType.Long)
     assert(dfFullSalaryAbsSumResult.result == "2987144")
-    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.Double)
+    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.BigDecimal)
     assert(dfFullHashResult.result == "2044144307532")
     assert(dfFullHashResult.resultType == ResultValueType.String)
     assert(dfExtraPersonSalarySumResult.result == "2986144")

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.model
 
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.module.scala.JsonScalaEnumeration
-import za.co.absa.atum.server.model.Checkpoint.CheckpointStatus
+import za.co.absa.atum.server.future.model.Checkpoint.CheckpointStatus
 
 import java.util.UUID
 
