@@ -24,9 +24,10 @@ CREATE OR REPLACE FUNCTION runs.write_additional_data(
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.write_additional_data(4)
+-- Function: runs.write_additional_data(3)
 --      Adds the additional data for the input partitioning. If additional data of the given name already
---      exists for such partitioning, the value is updated.
+--      exists for such partitioning, the value is updated and the old value is moved to the
+--      additional data history table.
 --
 -- Parameters:
 --      i_partitioning      - partitioning to add the additional data for
