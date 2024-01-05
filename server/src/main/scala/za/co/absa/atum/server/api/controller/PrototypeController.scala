@@ -19,13 +19,12 @@ package za.co.absa.atum.server.api.controller
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, _}
+import za.co.absa.atum.model.dto._
+import za.co.absa.atum.server.api.implicits._
 import za.co.absa.atum.server.api.service.DatabaseService
 
-import scala.concurrent.{ExecutionContext, Future}
-import za.co.absa.atum.server.api.implicits._
-
 import java.util.concurrent.CompletableFuture
+import scala.concurrent.ExecutionContext
 
 @RestController
 @RequestMapping(Array("/api/v1"))
