@@ -42,7 +42,7 @@ class DatabaseService @Autowired()(postgresAccessProvider: PostgresAccessProvide
 
   def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Future[AdditionalDataSubmitDTO] = {
     for {
-      _ <- postgresAccessProvider.runs.createAdditionalData(additionalData)
+      _ <- postgresAccessProvider.runs.writeAdditionalData(additionalData)
     } yield additionalData
   }
 }

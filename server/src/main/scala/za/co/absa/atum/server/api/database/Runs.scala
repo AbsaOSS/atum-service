@@ -34,7 +34,7 @@ class Runs (implicit dBEngine: SlickPgEngine) extends DBSchema{
 
   val writeCheckpoint = new WriteCheckpoint
   val createPartitioningIfNotExists = new CreatePartitioningIfNotExists
-  val createAdditionalData = new CreateAdditionalData
+  val writeAdditionalData = new WriteAdditionalData
 }
 
 object Runs {
@@ -99,7 +99,7 @@ object Runs {
     override protected def slickConverter: GetResult[Unit] = GetResult { _ => }
   }
 
-  class CreateAdditionalData(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
+  class WriteAdditionalData(implicit override val schema: DBSchema, override val dbEngine: SlickPgEngine)
     extends DBSingleResultFunction[AdditionalDataSubmitDTO, Unit, SlickPgEngine]
       with SlickFunctionWithStatusSupport[AdditionalDataSubmitDTO, Unit]
       with StandardStatusHandling {
@@ -113,7 +113,8 @@ object Runs {
       sql"""SELECT #$selectEntry
             FROM #$functionName(
               $partitioningNormalized::JSONB,
-              $additionalDataNormalized::JSONB
+              $additionalDataNormalized::JSONB,
+              ${values.author}
             ) #$alias;"""
     }
 

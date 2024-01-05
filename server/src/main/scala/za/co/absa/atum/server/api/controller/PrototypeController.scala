@@ -72,7 +72,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
    *                                creating an additional data.
    * @return A ResponseEntity with the status code CREATED.
    */
-  @PostMapping(Array("/createAdditionalData"))
+  @PostMapping(Array("/writeAdditionalData"))
   @ResponseStatus(HttpStatus.CREATED)
   def createAdditionalData(additionalData: AdditionalDataSubmitDTO): CompletableFuture[AdditionalDataSubmitDTO] = {
     databaseService.saveAdditionalData(additionalData)

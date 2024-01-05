@@ -13,18 +13,17 @@
  * limitations under the License.
  */
 
-CREATE TABLE runs.additional_data
+CREATE TABLE runs.additional_data_history
 (
     id_additional_data      BIGINT NOT NULL DEFAULT global_id(),
     fk_partitioning         BIGINT NOT NULL,
     ad_name                 TEXT NOT NULL,
     ad_value                TEXT,
-    created_by              TEXT NOT NULL,
-    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT additional_data_pk PRIMARY KEY (id_additional_data)
+    created_by_originally   TEXT NOT NULL,
+    created_at_originally   TIMESTAMP WITH TIME ZONE NOT NULL,
+    archived_by             TEXT NOT NULL,
+    archived_at             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT additional_data_history_pk PRIMARY KEY (id_additional_data)
 );
 
-ALTER TABLE runs.additional_data
-    ADD CONSTRAINT ad_unq UNIQUE (fk_partitioning, ad_name);
-
-ALTER TABLE runs.additional_data OWNER to atum_owner;
+ALTER TABLE runs.additional_data_history OWNER to atum_owner;
