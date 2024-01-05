@@ -40,7 +40,7 @@ $$
 --      id_additional_data  - id of the data added
 -- Status codes:
 --      11                  - Additional data have been added
---      12                  - Additional data have been updated
+--      12                  - Additional data have been upserted
 --		14					- Additional data already exist
 --      41                  - Partitioning not found
 --      60                  - Additional data value cannot be NULL
@@ -48,6 +48,7 @@ $$
 -------------------------------------------------------------------------------
 DECLARE
     _fk_partitioning BIGINT;
+    _ad_backup_performed   BOOLEAN;
 BEGIN
 
     PERFORM 1
@@ -89,11 +90,9 @@ BEGIN
     SELECT * FROM ad_records_to_backup;
 
     IF found THEN
-        status := 12;
-        status_text := 'Additional data have been updated (at least some)';
+        _ad_backup_performed := TRUE;
     ELSE
-        status := 11;
-        status_text := 'Additional data have been added';
+        _ad_backup_performed := FALSE;
     END IF;
 
     WITH input_ad_expanded AS (
@@ -102,8 +101,8 @@ BEGIN
     ), ad_records_to_update AS (
         SELECT _fk_partitioning, input_ad.key, input_ad.value, i_by_user
         FROM runs.additional_data AS existing_ad
-                 JOIN input_ad_expanded AS input_ad
-                      ON input_ad.key = existing_ad.ad_name
+        JOIN input_ad_expanded AS input_ad
+          ON input_ad.key = existing_ad.ad_name
         WHERE existing_ad.fk_partitioning = _fk_partitioning
           AND input_ad.value != existing_ad.ad_value
     )
@@ -114,7 +113,23 @@ BEGIN
             created_by = i_by_user,
             created_at = now();
 
-    IF NOT found THEN
+    WITH input_ad_expanded AS (
+        SELECT _fk_partitioning, e.key, e.value, i_by_user
+        FROM each(i_additional_data) AS e
+    )
+    INSERT INTO runs.additional_data (fk_partitioning, ad_name, ad_value, created_by)
+    SELECT * FROM input_ad_expanded
+    ON CONFLICT (fk_partitioning, ad_name) DO NOTHING;
+
+    IF found THEN
+        IF _ad_backup_performed THEN
+            status := 12;
+            status_text := 'Additional data have been upserted';
+        ELSE
+            status := 11;
+            status_text := 'Additional data have been added';
+        END IF;
+    ELSE
         status := 14;
         status_text := 'Additional data already exist';
     END IF;
