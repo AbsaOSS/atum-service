@@ -42,7 +42,7 @@ $$
 -- Status codes:
 --      11                  - Additional data have been added
 --      12                  - Additional data have been upserted
---		14					- Additional data already exist
+--      14                  - Additional data already exist
 --      41                  - Partitioning not found
 --
 -------------------------------------------------------------------------------
