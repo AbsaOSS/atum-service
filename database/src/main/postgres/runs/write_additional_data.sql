@@ -38,12 +38,12 @@ $$
 --      status              - Status code
 --      status_text         - Status text
 --      id_additional_data  - id of the data added
+--
 -- Status codes:
 --      11                  - Additional data have been added
 --      12                  - Additional data have been upserted
 --		14					- Additional data already exist
 --      41                  - Partitioning not found
---      60                  - Additional data value cannot be NULL
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -51,19 +51,7 @@ DECLARE
     _ad_backup_performed   BOOLEAN;
 BEGIN
 
-    PERFORM 1
-    FROM (
-        SELECT svals(i_additional_data) AS ad
-    ) AS ad_keys
-    WHERE ad_keys.ad IS NULL;
-
-    IF found THEN
-        status := 60;
-        status_text := 'Additional data value cannot be NULL';
-        RETURN;
-    END IF;
-
-    _fk_partitioning := runs._get_id_partitioning(i_partitioning);
+    _fk_partitioning := runs._get_id_partitioning(i_partitioning, true);
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
@@ -71,67 +59,57 @@ BEGIN
         RETURN;
     END IF;
 
-    -- 1. (backup) get records that already exist and insert them into ad history table
-    -- 2. (upsert) get records that do not not exist yet and insert it into ad table, and update existing records
+    -- 1. (backup) get records that already exist but values differ, and insert them into ad history table
+    -- 2. (update) get records that already exist but values differ, and update the ad table with new values
+    -- 3. (insert) get records that do not not exist yet and insert it into ad table
     --    (their original rows were previously saved in step 1)
-    WITH input_ad_expanded AS (
-        SELECT e.key, e.value
-        FROM each(i_additional_data) AS e
-    ), ad_records_to_backup AS (
-        SELECT fk_partitioning, ad_name, ad_value, created_by, created_at, i_by_user
-        FROM runs.additional_data AS existing_ad
-        JOIN input_ad_expanded AS input_ad
-          ON input_ad.key = existing_ad.ad_name
-        WHERE existing_ad.fk_partitioning = _fk_partitioning
-          AND input_ad.value != existing_ad.ad_value
-    )
     INSERT INTO runs.additional_data_history
         (fk_partitioning, ad_name, ad_value, created_by_originally, created_at_originally, archived_by)
-    SELECT * FROM ad_records_to_backup;
+    SELECT ad_curr.fk_partitioning, ad_curr.ad_name, ad_curr.ad_value,
+           ad_curr.created_by, ad_curr.created_at, i_by_user
+    FROM runs.additional_data AS ad_curr
+    WHERE ad_curr.fk_partitioning = _fk_partitioning
+      AND EXISTS (  -- get only those records where keys exist but values differ - so will be backed-up and later updated
+          SELECT *
+          FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
+          WHERE ad_curr.ad_name = ad_input.ad_key
+            AND ad_curr.ad_value != ad_input.ad_value
+      );
 
     IF found THEN
+        UPDATE runs.additional_data AS ad_curr
+        SET ad_value = ad_input.ad_value,
+            created_by = i_by_user,
+            created_at = now()
+        FROM (
+            SELECT ad_key, ad_value
+            FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
+        ) as ad_input
+        WHERE ad_curr.fk_partitioning = _fk_partitioning
+          AND ad_curr.ad_name = ad_input.ad_key
+          AND ad_curr.ad_value != ad_input.ad_value;
+
         _ad_backup_performed := TRUE;
     ELSE
         _ad_backup_performed := FALSE;
     END IF;
 
-    WITH input_ad_expanded AS (
-        SELECT e.key, e.value
-        FROM each(i_additional_data) AS e
-    ), ad_records_to_update AS (
-        SELECT _fk_partitioning, input_ad.key, input_ad.value, i_by_user
-        FROM runs.additional_data AS existing_ad
-        JOIN input_ad_expanded AS input_ad
-          ON input_ad.key = existing_ad.ad_name
-        WHERE existing_ad.fk_partitioning = _fk_partitioning
-          AND input_ad.value != existing_ad.ad_value
-    )
     INSERT INTO runs.additional_data (fk_partitioning, ad_name, ad_value, created_by)
-    SELECT * FROM ad_records_to_update
-    ON CONFLICT (fk_partitioning, ad_name) DO UPDATE
-        SET ad_value = EXCLUDED.ad_value,
-            created_by = i_by_user,
-            created_at = now();
-
-    WITH input_ad_expanded AS (
-        SELECT _fk_partitioning, e.key, e.value, i_by_user
-        FROM each(i_additional_data) AS e
-    )
-    INSERT INTO runs.additional_data (fk_partitioning, ad_name, ad_value, created_by)
-    SELECT * FROM input_ad_expanded
+    SELECT _fk_partitioning, ad_input.key, ad_input.value, i_by_user
+    FROM each(i_additional_data) AS ad_input
     ON CONFLICT (fk_partitioning, ad_name) DO NOTHING;
 
-    IF found THEN
-        IF _ad_backup_performed THEN
-            status := 12;
-            status_text := 'Additional data have been upserted';
-        ELSE
+    IF _ad_backup_performed THEN
+        status := 12;
+        status_text := 'Additional data have been upserted';
+    ELSE
+        IF found THEN
             status := 11;
             status_text := 'Additional data have been added';
+        ELSE
+            status := 14;
+            status_text := 'Additional data already exist';
         END IF;
-    ELSE
-        status := 14;
-        status_text := 'Additional data already exist';
     END IF;
 
     RETURN;
