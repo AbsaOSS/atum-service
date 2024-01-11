@@ -25,7 +25,7 @@ $$
 -------------------------------------------------------------------------------
 --
 -- Function: runs.write_additional_data(3)
---      Adds the additional data for the input partitioning. If additional data of the given name already
+--      Adds the additional data for the input partitioning. If additional data of a given name already
 --      exists for such partitioning, the value is updated and the old value is moved to the
 --      additional data history table.
 --

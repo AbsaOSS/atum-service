@@ -126,7 +126,10 @@ class AtumContext private[agent] (
    * @return AtumContext
    */
   def createMetadata(): AtumContext = {
-    val additionalData = AdditionalDataSubmitDTO(AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData)
+    val additionalData = AdditionalDataSubmitDTO(
+      AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData, this.agent.currentUser
+    )
+
     agent.saveAdditionalData(additionalData)
     this
   }
@@ -153,7 +156,7 @@ class AtumContext private[agent] (
   /**
    * Adds a measure to the AtumContext.
    *
-   * @param measure the measure to be added
+   * @param newMeasure the measure to be added
    */
   def addMeasure(newMeasure: AtumMeasure): AtumContext = {
     measures = measures + newMeasure
@@ -163,7 +166,7 @@ class AtumContext private[agent] (
   /**
    * Adds multiple measures to the AtumContext.
    *
-   * @param measures set sequence of measures to be added
+   * @param newMeasures set sequence of measures to be added
    */
   def addMeasures(newMeasures: Set[AtumMeasure]): AtumContext = {
     measures = measures ++ newMeasures
@@ -222,7 +225,7 @@ object AtumContext {
       AtumPartitions.fromPartitioning(atumContextDTO.partitioning),
       agent,
       MeasuresBuilder.mapToMeasures(atumContextDTO.measures),
-      atumContextDTO.additionalData.additionalData
+      atumContextDTO.additionalData
     )
   }
 

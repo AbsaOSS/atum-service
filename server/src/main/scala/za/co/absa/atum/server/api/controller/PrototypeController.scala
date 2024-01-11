@@ -57,7 +57,7 @@ class PrototypeController @Autowired()(databaseService: DatabaseService){
     // TODO #120, get measures from DB, this solution is temporary - we need record count always for now
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
 
-    val additionalData = AdditionalDataDTO(additionalData = Map.empty)
+    val additionalData: AdditionalDataDTO = Map.empty
 
     for {
       partitioningFuture <- databaseService.createPartitioningIfNotExists(partitioning)
