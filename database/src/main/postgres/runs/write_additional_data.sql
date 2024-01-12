@@ -47,8 +47,8 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _fk_partitioning BIGINT;
-    _ad_backup_performed   BOOLEAN;
+    _fk_partitioning        BIGINT;
+    _ad_backup_performed    BOOLEAN;
 BEGIN
 
     _fk_partitioning := runs._get_id_partitioning(i_partitioning, true);
