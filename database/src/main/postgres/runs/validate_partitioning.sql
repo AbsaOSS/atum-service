@@ -62,8 +62,6 @@ DECLARE
 
     _partitioning_keys_from_values_map TEXT[];
 
-    _partitioning_null_values_cnt INTEGER;
-
 BEGIN
     -- Checking whether the input has correct structure.
     SELECT ARRAY(SELECT jsonb_object_keys(i_partitioning))
@@ -71,6 +69,7 @@ BEGIN
 
     SELECT i_partitioning ?& _mandatory_fields_in_input
     INTO _is_input_properly_structured;
+
     IF NOT _is_input_properly_structured THEN
         RETURN NEXT
             'The input partitioning is not properly structured, it should have this structure: '
@@ -123,12 +122,11 @@ BEGIN
     -- Checking the validity of values in the map 'keysToValues',
     -- non-pattern-like partitioning can't have null values there.
     IF i_strict_check THEN
-        SELECT COUNT(*)
+        PERFORM 1
         FROM jsonb_each_text(i_partitioning->'keysToValues') AS elem
-        WHERE elem.value IS NULL
-        INTO _partitioning_null_values_cnt;
+        WHERE elem.value IS NULL;
 
-        IF _partitioning_null_values_cnt > 0 THEN
+        IF found THEN
             RETURN NEXT 'The input partitioning is invalid, some values in ''keysToValues'' are NULLs: '
                 || (i_partitioning->>'keysToValues');
         END IF;
