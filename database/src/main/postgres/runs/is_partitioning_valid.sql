@@ -14,54 +14,44 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs._is_partitioning_valid(
+CREATE OR REPLACE FUNCTION runs.is_partitioning_valid(
     IN i_partitioning   JSONB,
-    IN i_is_pattern     BOOL = false,
+    IN i_strict_check   BOOLEAN = true,
     OUT status          INTEGER,
     OUT status_text     TEXT
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs._is_partitioning_valid(2)
---      Validates the input partitioning.
+-- Function: runs.is_partitioning_valid(2)
+--      Validates the input partitioning and raises exception if it's not valid.
 --
 -- Parameters:
 --      i_partitioning      - partitioning to check, a valid example:
--- 	                          {
+--                            {
 --                              "keys": ["one", "two", "three"],
 --                              "version": 1,
--- 	                            "keysToValuesMap": {
+--                              "keysToValues": {
 --                                  "one": "DatasetA",
 --                                  "two": "Version1",
--- 	                          	    "three": "2022-12-20"
+--                                  "three": "2022-12-20"
 --                               }
 --                            }
---      i_is_pattern        - flag signaling whether the partitioning is not a real one, but just a pattern.
---                            If the input partitioning is just a pattern, then values can have NULL values and
+--      i_strict_check      - flag signaling whether the partitioning check should be strict or no.
+--                            E.g., if an input partitioning is just a pattern, then values can have NULLs and
 --                            such check would be skipped.
 --
--- Returns:
---      status              - Status code
---      status_text         - Status text
---
--- Status codes:
---      10                  - OK
---      50                  - Partitioning not valid
+
 --
 -------------------------------------------------------------------------------
 DECLARE
 
 BEGIN
-    PERFORM runs._validate_partitioning(i_partitioning, i_is_pattern)
+    PERFORM runs.validate_partitioning(i_partitioning, i_strict_check)
     LIMIT 1;
 
     IF found THEN
-        status := 50;
-        status_text := 'The input partitioning is not valid';
-    ELSE
-        status := 10;
-        status_text := 'OK';
+        RAISE EXCEPTION 'The input partitioning is not valid';
     END IF;
 
     RETURN;
@@ -69,4 +59,4 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER;
 
-ALTER FUNCTION runs._is_partitioning_valid(JSONB, BOOL) OWNER TO atum_owner;
+ALTER FUNCTION runs.is_partitioning_valid(JSONB, BOOL) OWNER TO atum_owner;

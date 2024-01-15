@@ -16,7 +16,7 @@
 CREATE TABLE runs.partitionings
 (
     id_partitioning         BIGINT NOT NULL DEFAULT global_id(),
-    partitioning            JSONB NOT NULL, -- TODO add  partitioning validity check #69
+    partitioning            JSONB NOT NULL,
     created_by              TEXT NOT NULL,
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT partitionings_pk PRIMARY KEY (id_partitioning)
@@ -24,5 +24,8 @@ CREATE TABLE runs.partitionings
 
 ALTER TABLE runs.partitionings
     ADD CONSTRAINT partitioning_unq UNIQUE (partitioning);
+
+ALTER TABLE runs.partitionings
+    ADD CONSTRAINT partitioning_valid CHECK (runs.validate_partitioning(partitioning));
 
 ALTER TABLE runs.partitionings OWNER to atum_owner;
