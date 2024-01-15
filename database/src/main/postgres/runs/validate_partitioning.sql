@@ -26,8 +26,8 @@ $$
 --      The validation performs:
 --          1) Correct structure of the input JSONB object
 --          2) The list of keys in 'keys' is unique and doesn't have NULLs
---          3) The keys in 'keys' and in 'keysToValues' correspond to each other
---          4) (if i_strict_check = true) The values in 'keysToValues' are non-empty/non-null
+--          3) (if i_strict_check = true) The keys in 'keys' and in 'keysToValues' correspond to each other
+--          4) (if i_strict_check = true) The values in 'keysToValues' are non-null
 --
 -- Parameters:
 --      i_partitioning      - partitioning to validate, a valid example:
@@ -102,19 +102,22 @@ BEGIN
     END IF;
 
     -- Checking whether the map 'keysToValues' has the same keys as the 'keys' attribute.
-    SELECT ARRAY(SELECT jsonb_object_keys(i_partitioning->'keysToValues'))
-    INTO _partitioning_keys_from_values_map;
+    IF i_strict_check THEN
+        SELECT ARRAY(SELECT jsonb_object_keys(i_partitioning->'keysToValues'))
+        INTO _partitioning_keys_from_values_map;
 
-    IF NOT (
+        IF NOT (
             (_partitioning_keys_from_values_map @> _partitioning_keys_uniq_and_not_null)
             AND (_partitioning_keys_from_values_map <@ _partitioning_keys_uniq_and_not_null)
         ) THEN
-        RETURN NEXT
-            'The input partitioning is invalid, the keys in ''keys'' and ''keysToValues'' do not correspond. '
-                || 'Given in ''keysToValues'': '
-                || _partitioning_keys_from_values_map::TEXT
-                || ' vs (probably expected from ''keys''): '
-                || _partitioning_keys_uniq_and_not_null::TEXT;
+
+            RETURN NEXT
+                'The input partitioning is invalid, the keys in ''keys'' and ''keysToValues'' do not correspond. '
+                    || 'Given in ''keysToValues'': '
+                    || _partitioning_keys_from_values_map::TEXT
+                    || ' vs (probably expected from ''keys''): '
+                    || _partitioning_keys_uniq_and_not_null::TEXT;
+        END IF;
     END IF;
 
     -- Checking the validity of values in the map 'keysToValues',
@@ -122,11 +125,11 @@ BEGIN
     IF i_strict_check THEN
         SELECT COUNT(*)
         FROM jsonb_each_text(i_partitioning->'keysToValues') AS elem
-        WHERE COALESCE(TRIM(elem.value), '') = ''
+        WHERE elem.value IS NULL
         INTO _partitioning_null_values_cnt;
 
         IF _partitioning_null_values_cnt > 0 THEN
-            RETURN NEXT 'The input partitioning is invalid, some values in ''keysToValues'' are NULLs or empty: '
+            RETURN NEXT 'The input partitioning is invalid, some values in ''keysToValues'' are NULLs: '
                 || (i_partitioning->>'keysToValues');
         END IF;
     END IF;
