@@ -22,6 +22,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, GetSecretValueResponse, SecretsManagerException}
 
+
 class RetrieveAwsSecretTest extends AnyFlatSpec with BeforeAndAfterEach{
 
   class MockSecretsManagerClient extends SecretsManagerClient {

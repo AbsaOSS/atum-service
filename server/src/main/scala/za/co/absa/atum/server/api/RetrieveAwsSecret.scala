@@ -16,10 +16,12 @@
 
 package za.co.absa.atum.server.api
 
+
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, SecretsManagerException}
+
 
 /**
  * Class implement the functionality of retrieving secret keys from aws secret manger service
@@ -35,7 +37,7 @@ class RetrieveAwsSecret (profileCredentials: String = "default") {
    * @param secretName
    * @return
    */
-  def retrieveAwsSecret(secretName: String = "atum_user"): Seq[String] = {
+  def retrieveAwsSecret(secretName: String): Seq[String] = {
     try {
       val request = GetSecretValueRequest.builder()
         .secretId(secretName)
@@ -46,7 +48,11 @@ class RetrieveAwsSecret (profileCredentials: String = "default") {
       response.secretString.foreach { secretString =>
         println(s"Secret Key: $secretString")
       }
-      response.secretString.map(_.toString)
+      println("Response: ", response)
+
+      val secretKey = response.secretString.map(_.toString)
+      secretKey
+
     } catch {
       case e: SecretsManagerException =>
         println(s"Error retrieving secret key: ${e.getMessage}")

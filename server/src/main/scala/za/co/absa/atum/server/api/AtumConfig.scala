@@ -25,6 +25,9 @@ import java.io.File
 
 trait AtumConfig {
   def dbConfig: Config
+  def defaultAWSRegion: String
+  def awsProfile: String
+  def awsUser: String
   def testEndpointConfig: Config
 }
 
@@ -32,6 +35,12 @@ trait AtumConfig {
 class AtumConfigImpl (@Value("${spring.config.location}") location: String) extends AtumConfig
 {
   private val config = ConfigFactory.parseFile(new File(location))
+  val retrieveAwsSecret: RetrieveAwsSecret = new RetrieveAwsSecret(awsProfile)
+
   override def dbConfig: Config = config.getConfig("postgres")
+  override def awsUser: String = config.getString("AWSUser")
+  override def awsProfile: String = config.getString("AWSProfileCredentials")
+  override def defaultAWSRegion: String = config.getString("AWSRegion")
   override def testEndpointConfig: Config = config.getConfig("atum.server.api.config")
+
 }

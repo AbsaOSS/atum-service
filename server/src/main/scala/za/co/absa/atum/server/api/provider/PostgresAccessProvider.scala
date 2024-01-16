@@ -19,17 +19,22 @@ package za.co.absa.atum.server.api.provider
 import com.typesafe.config.{Config, ConfigValueFactory}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import za.co.absa.atum.server.api.AtumConfig
+import spray.json.JsValue
+import za.co.absa.atum.server.api.{AtumConfig, RetrieveAwsSecret}
 import za.co.absa.atum.server.api.database.Runs
 import za.co.absa.fadb.slick.FaDbPostgresProfile.api._
 import za.co.absa.fadb.slick.SlickPgEngine
-
 import scala.concurrent.ExecutionContext
+import za.co.absa.atum.server.api.StringListToJson
 
 @Component
 class PostgresAccessProvider @Autowired()(atumConfig: AtumConfig) {
 
   val executionContext: ExecutionContext = ExecutionContext.Implicits.global
+
+  private val awsProfile = atumConfig.awsProfile
+
+  val retrieveAwsSecret: RetrieveAwsSecret = new RetrieveAwsSecret(awsProfile)
 
   private def databaseConfig: Config = {
     val baseConfig = atumConfig.dbConfig
@@ -39,8 +44,17 @@ class PostgresAccessProvider @Autowired()(atumConfig: AtumConfig) {
     }
   }
 
-  private val db = Database.forConfig("", databaseConfig)
+  private def awsDBConfig: List[JsValue] = {
+    val atumUser = atumConfig.awsUser
+    val secret: Seq[String] = retrieveAwsSecret.retrieveAwsSecret(atumUser)
+    StringListToJson.convertToJsonValue(secret)
+  }
+
+//  private val db = Database.forConfig("", databaseConfig)
+
+  private val db = Database.forConfig(awsDBConfig.toString())
 
   private implicit val slickPgEngine: SlickPgEngine = new SlickPgEngine(db)(executionContext)
   val runs: Runs = new Runs()
+
 }
