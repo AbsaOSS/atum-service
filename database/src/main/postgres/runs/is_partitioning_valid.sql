@@ -16,10 +16,8 @@
 
 CREATE OR REPLACE FUNCTION runs.is_partitioning_valid(
     IN i_partitioning   JSONB,
-    IN i_strict_check   BOOLEAN = true,
-    OUT status          INTEGER,
-    OUT status_text     TEXT
-) RETURNS record AS
+    IN i_strict_check   BOOLEAN = true
+) RETURNS BOOLEAN AS
 $$
 -------------------------------------------------------------------------------
 --
@@ -41,8 +39,6 @@ $$
 --                            E.g., if an input partitioning is just a pattern, then values can have NULLs and
 --                            such check would be skipped.
 --
-
---
 -------------------------------------------------------------------------------
 DECLARE
 
@@ -51,10 +47,10 @@ BEGIN
     LIMIT 1;
 
     IF found THEN
-        RAISE EXCEPTION 'The input partitioning is not valid';
+        RAISE EXCEPTION 'The input partitioning is not valid: %', jsonb_pretty(i_partitioning);
     END IF;
 
-    RETURN;
+    RETURN TRUE;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER;

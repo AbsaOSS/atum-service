@@ -26,6 +26,6 @@ ALTER TABLE runs.partitionings
     ADD CONSTRAINT partitioning_unq UNIQUE (partitioning);
 
 ALTER TABLE runs.partitionings
-    ADD CONSTRAINT partitioning_valid CHECK (runs.validate_partitioning(partitioning));
+    ADD CONSTRAINT partitioning_valid CHECK (runs.is_partitioning_valid(partitioning));
 
 ALTER TABLE runs.partitionings OWNER to atum_owner;
