@@ -199,9 +199,6 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
     atumContext.addAdditionalData(additionalDataKey, additionalDataValue)
 
-    val context = atumContext.createMetadata()
-    print("context", context)
-
     assert(atumContext.currentAdditionalData == expectedAdditionalData)
   }
 
