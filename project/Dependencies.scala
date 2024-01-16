@@ -57,6 +57,8 @@ object Dependencies {
     val logback = "1.2.3"
     val awssdk = "2.20.68"
     val _sso = "2.20.107"
+
+    val spray = "1.3.6"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -144,8 +146,7 @@ object Dependencies {
     lazy val sso = "software.amazon.awssdk" % "sso" % Versions._sso
 
     // For allowing array of strings to be parsed as json
-    lazy val cats = "org.typelevel" %% "cats-core" % "2.9.0"
-    lazy val spray = "io.spray" %% "spray-json" % "1.3.6"
+    lazy val spray = "io.spray" %% "spray-json" % Versions.spray
 
     Seq(
       springBootTest % Test,
@@ -163,7 +164,6 @@ object Dependencies {
       slickPg,
       awsSdk,
       sso,
-      cats,
       spray
     )
   }
