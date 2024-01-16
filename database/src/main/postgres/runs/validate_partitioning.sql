@@ -89,11 +89,13 @@ BEGIN
     SELECT jsonb_array_length(i_partitioning->'keys')
     INTO _partitioning_keys_all_cnt;
 
-    SELECT array_unique(x.keys)
-    FROM jsonb_to_record(i_partitioning) AS x(keys text[])
-    INTO _partitioning_keys_uniq_and_not_null;
-
-    _partitioning_keys_uniq_and_not_null_cnt := array_length(_partitioning_keys_uniq_and_not_null, 1);
+    SELECT array_agg(X.keys), count(1)
+    FROM (
+         SELECT DISTINCT(JAE.value) AS keys
+         FROM jsonb_array_elements_text(i_partitioning->'keys') AS JAE
+         WHERE JAE.value IS NOT NULL
+    ) AS X
+    INTO _partitioning_keys_uniq_and_not_null, _partitioning_keys_uniq_and_not_null_cnt;
 
     IF _partitioning_keys_all_cnt != _partitioning_keys_uniq_and_not_null_cnt THEN
         RETURN NEXT 'The input partitioning is invalid, the keys must be unique and can not contain NULLs: '
