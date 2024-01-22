@@ -17,46 +17,50 @@
 package za.co.absa.atum.server.api
 
 
-import org.scalatest.BeforeAndAfterEach
+import org.mockito.ArgumentMatchers.any
+import org.mockito.MockitoSugar
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, GetSecretValueResponse, SecretsManagerException}
 
+import scala.util.{Failure, Success, Try}
 
-class RetrieveAwsSecretTest extends AnyFlatSpec with BeforeAndAfterEach{
 
-  class MockSecretsManagerClient extends SecretsManagerClient {
-     override def getSecretValue(request: GetSecretValueRequest): GetSecretValueResponse = {
-      // Simulate a response from AWS Secrets Manager
-      if (request.secretId() == "ValidSecretName") {
-        GetSecretValueResponse.builder().secretString("ValidSecretKey").build()
-      } else {
-        throw SecretsManagerException.builder().message("Invalid secret ID").build()
-      }
+class RetrieveAwsSecretSpec extends AnyFlatSpec with Matchers with MockitoSugar {
+  val secretsManagerClient: SecretsManagerClient = mock[SecretsManagerClient]
+  val retrieveAwsSecret: RetrieveAwsSecret = new RetrieveAwsSecret("test-profile") {
+    private[RetrieveAwsSecret] val secretsManagerClient: SecretsManagerClient = secretsManagerClient
+  }
+
+  "RetrieveAwsSecret" should "return a sequence of strings from AWS secret service" in {
+    val secretName = "test-secret"
+    val secretString = "test-secret-key"
+    val response: GetSecretValueResponse = GetSecretValueResponse.builder().secretString(secretString).build()
+
+    when(secretsManagerClient.getSecretValue(any[GetSecretValueRequest])).thenReturn(response)
+
+    val result: Seq[String] = retrieveAwsSecret.retrieveAwsSecret(secretName)
+    val resultsToTry = secretString.foldLeft(Try("")) { (acc, s) =>
+      acc.flatMap(str => Try(str + s))
     }
 
-    override def serviceName(): String = "SecretManager"
-
-    override def close(): Unit = close()
+    resultsToTry shouldBe Success(Seq(secretString))
   }
 
-  var extractor: RetrieveAwsSecret = _
+  it should "return an error message when there is an exception" in {
+    val secretName = "test-secret"
+    val exceptionMessage = "test-exception-message"
+    val exception = SecretsManagerException.builder().message(exceptionMessage).build()
 
-  override def beforeEach(): Unit = {
-    // Initialize the object with a mock client for testing
-    val mockClient = new MockSecretsManagerClient()
-    extractor = new RetrieveAwsSecret()
-  }
+    when(secretsManagerClient.getSecretValue(any[GetSecretValueRequest])).thenThrow(exception)
 
-  "AWSSecretKeyExtractor" should "retrieve secret key from AWS Secrets Manager" in {
-    val secretName = "bdtools-atum-service-dev/atum_service_user_password"
-    val secretKey = extractor.retrieveAwsSecret(secretName)
-    println("Secret key: ", secretKey)
-  }
+    val secretString: Seq[String] = retrieveAwsSecret.retrieveAwsSecret(secretName)
 
-  it should "return None for an invalid secret name" in {
-    val secretName = "InvalidSecretName"
-    val secretKey = extractor.retrieveAwsSecret(secretName)
-    println("Secret key: " + secretKey.map(_.toSeq))
+    val resultsToTry = secretString.foldLeft(Try("")) { (acc, s) =>
+      acc.flatMap(str => Try(str + s))
+    }
+
+    resultsToTry shouldBe Failure(exception)
   }
 }

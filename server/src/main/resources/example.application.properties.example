@@ -13,6 +13,14 @@ postgres.properties.user=atum_user
 postgres.properties.password=changeme
 postgres.numThreads=10
 
-AWSRegion =af-south-1
+#fromSecret.properties.connectionPool=""
+#fromSecret.dataSourceClass=""
+# properties.serverName=""
+# properties.portNumber=""
+# properties.databaseName=""
+# properties.user="pg-"
+fromSecret.properties.password=""
+
+AWSRegion=af-south-1
 AWSUser=atum_user
 AWSProfileCredentials=npintdebdtools-sso

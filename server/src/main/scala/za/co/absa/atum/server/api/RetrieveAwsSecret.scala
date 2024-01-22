@@ -26,7 +26,7 @@ import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueReque
 /**
  * Class implement the functionality of retrieving secret keys from aws secret manger service
  */
-class RetrieveAwsSecret (profileCredentials: String = "default") {
+class RetrieveAwsSecret (profileCredentials: String = "npintdebdtools-sso") {
   private val secretsManagerClient: SecretsManagerClient = SecretsManagerClient.builder()
     .region(Region.AF_SOUTH_1)
     .credentialsProvider(ProfileCredentialsProvider.create(profileCredentials))
@@ -35,7 +35,7 @@ class RetrieveAwsSecret (profileCredentials: String = "default") {
   /**
    * Function retrieves secret keys from aws
    * @param secretName
-   * @return
+   * @return a sequence of string from aws secret service
    */
   def retrieveAwsSecret(secretName: String): Seq[String] = {
     try {
@@ -44,15 +44,7 @@ class RetrieveAwsSecret (profileCredentials: String = "default") {
         .build()
 
       val response = secretsManagerClient.getSecretValue(request)
-
-      response.secretString.foreach { secretString =>
-        println(s"Secret Key: $secretString")
-      }
-      println("Response: ", response)
-
-      val secretKey = response.secretString.map(_.toString)
-      secretKey
-
+      response.secretString.map(_.toString)
     } catch {
       case e: SecretsManagerException =>
         println(s"Error retrieving secret key: ${e.getMessage}")
@@ -62,4 +54,5 @@ class RetrieveAwsSecret (profileCredentials: String = "default") {
       secretsManagerClient.close()
     }
   }
+
 }

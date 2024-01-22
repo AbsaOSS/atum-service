@@ -30,6 +30,7 @@ object Dependencies {
     val clientSupportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
 
     val scalatest = "3.2.15"
+    val scalaMock = "5.2.0"
     val scalaMockito = "1.17.12"
     val scalaLangJava8Compat = "1.0.2"
 
@@ -129,6 +130,7 @@ object Dependencies {
     lazy val springFoxSwagger = "io.springfox" % "springfox-swagger2" % Versions.springfox
     lazy val springFoxSwaggerUI = "io.springfox" % "springfox-swagger-ui" % Versions.springfox
     lazy val springFoxBoot = "io.springfox" % "springfox-boot-starter" % Versions.springfox
+    lazy val scalaMock = "org.scalamock" %% "scalamock" % Versions.scalaMock % Test
 
     // controller implicits:  java CompletableFuture -> scala Future
     lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % Versions.scalaLangJava8Compat
@@ -150,6 +152,7 @@ object Dependencies {
 
     Seq(
       springBootTest % Test,
+      scalaMock,
       springBootWeb,
       springBootConfiguration,
       springBootTomcat,
