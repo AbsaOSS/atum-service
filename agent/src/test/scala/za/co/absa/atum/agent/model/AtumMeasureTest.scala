@@ -93,17 +93,17 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val dfFullSalarySumResult = salarySum.function(dfFull)
 
     // Assertions
-    assert(dfPersonCntResult.result == "1000")
+    assert(dfPersonCntResult.resultValue == "1000")
     assert(dfPersonCntResult.resultType == ResultValueType.Long)
-    assert(dfFullCntResult.result == "1000")
+    assert(dfFullCntResult.resultValue == "1000")
     assert(dfFullCntResult.resultType == ResultValueType.Long)
-    assert(dfFullSalaryAbsSumResult.result == "2987144")
+    assert(dfFullSalaryAbsSumResult.resultValue == "2987144")
     assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.BigDecimal)
-    assert(dfFullHashResult.result == "2044144307532")
+    assert(dfFullHashResult.resultValue == "2044144307532")
     assert(dfFullHashResult.resultType == ResultValueType.String)
-    assert(dfExtraPersonSalarySumResult.result == "2986144")
+    assert(dfExtraPersonSalarySumResult.resultValue == "2986144")
     assert(dfExtraPersonSalarySumResult.resultType == ResultValueType.BigDecimal)
-    assert(dfFullSalarySumResult.result == "2987144")
+    assert(dfFullSalarySumResult.resultValue == "2987144")
     assert(dfFullSalarySumResult.resultType == ResultValueType.BigDecimal)
   }
 
@@ -118,7 +118,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
 
     val result = salaryAbsSum.function(df)
 
-    assert(result.result == "300.3")
+    assert(result.resultValue == "300.3")
     assert(result.resultType == ResultValueType.BigDecimal)
   }
 
@@ -133,7 +133,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
 
     val result = salaryAbsSum.function(df)
 
-    assert(result.result == "0")
+    assert(result.resultValue == "0")
     assert(result.resultType == ResultValueType.BigDecimal)
   }
 
@@ -148,7 +148,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
 
     val result = distinctCount.function(df)
 
-    assert(result.result == "4")
+    assert(result.resultValue == "4")
     assert(result.resultType == ResultValueType.Long)
   }
 
@@ -163,7 +163,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
 
     val result = distinctCount.function(df)
 
-    assert(result.result == "3")
+    assert(result.resultValue == "3")
     assert(result.resultType == ResultValueType.Long)
   }
 
@@ -182,7 +182,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
 
     val result = distinctCount.function(df)
 
-    assert(result.result == "4")
+    assert(result.resultValue == "4")
     assert(result.resultType == ResultValueType.BigDecimal)
   }
 

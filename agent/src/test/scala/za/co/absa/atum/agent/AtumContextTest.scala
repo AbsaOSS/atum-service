@@ -24,8 +24,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.MeasurementBuilder
-import za.co.absa.atum.agent.model.Measure.{RecordCount, SumOfValuesOfColumn}
-import za.co.absa.atum.agent.model.{Measurement, MeasurementBuilder, MeasureResult}
+import za.co.absa.atum.agent.model.AtumMeasure._
+import za.co.absa.atum.agent.model.{Measurement, MeasureResult}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
