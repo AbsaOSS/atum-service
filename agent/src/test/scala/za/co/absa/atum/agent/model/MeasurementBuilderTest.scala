@@ -19,7 +19,7 @@ package za.co.absa.atum.agent.model
 import org.scalatest.flatspec.AnyFlatSpec
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
-import za.co.absa.atum.agent.model.AtumMeasure.SumOfValuesOfColumn
+import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 class MeasurementBuilderTest extends AnyFlatSpec {
@@ -111,7 +111,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
   }
 
   "buildMeasurementDTO" should "throw exception for unsupported result value type for a given Measure" in {
-    val measure = DistinctRecordCount("col")
+    val measure = DistinctRecordCount(Seq("col"))
     val measureResult = MeasureResult("1")
 
     assertThrows[MeasurementException](MeasurementBuilder.buildMeasurementDTO(measure, measureResult))
@@ -119,7 +119,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
 
   "buildMeasurementDTO" should "build Seq[MeasurementDTO] for multiple measures, all unique" in {
     val measurements = Set(
-      Measurement(DistinctRecordCount("col"), MeasureResult("1", ResultValueType.Long)),
+      Measurement(DistinctRecordCount(Seq("col")), MeasureResult("1", ResultValueType.Long)),
       Measurement(SumOfValuesOfColumn("col1"), MeasureResult(BigDecimal(1.2))),
       Measurement(SumOfValuesOfColumn("col2"), MeasureResult(BigDecimal(1.3)))
     )
@@ -142,7 +142,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
 
   "buildMeasurementDTO" should "throw exception for multiple measures, some of them repetitive" in {
     val measurements = Set(
-      Measurement(DistinctRecordCount("col"), MeasureResult("1")),
+      Measurement(DistinctRecordCount(Seq("col")), MeasureResult("1")),
       Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1.2))),
       Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1.3)))
     )

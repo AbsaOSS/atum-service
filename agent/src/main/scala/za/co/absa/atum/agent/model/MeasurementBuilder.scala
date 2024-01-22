@@ -24,7 +24,7 @@ import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
  */
 private [agent] object MeasurementBuilder {
 
-  private def validateMeasurement(measure: Measure, result: MeasureResult): Unit = {
+  private def validateMeasurement(measure: AtumMeasure, result: MeasureResult): Unit = {
     val actualType = result.resultType
     val requiredType = measure.resultValueType
 
@@ -58,7 +58,19 @@ private [agent] object MeasurementBuilder {
 
   private[agent] def buildMeasurementDTO(measure: Measure, measureResult: MeasureResult): MeasurementDTO = {
     val measureName = measure.measureName
-    val measuredColumns = Seq(measure.measuredColumns)
+    val measuredColumns = measure.measuredColumns
+
+    val measureDTO = MeasureDTO(measureName, measuredColumns)
+    val measureResultDTO = MeasureResultDTO(
+      MeasureResultDTO.TypedValue(measureResult.resultValue.toString, measureResult.resultType)
+    )
+    MeasurementDTO(measureDTO, measureResultDTO)
+  }
+
+  // TODO Measure vs AtumMeasure
+  private[agent] def buildMeasurementDTO(measure: AtumMeasure, measureResult: MeasureResult): MeasurementDTO = {
+    val measureName = measure.measureName
+    val measuredColumns = measure.measuredColumns
 
     validateMeasurement(measure, measureResult)
 
