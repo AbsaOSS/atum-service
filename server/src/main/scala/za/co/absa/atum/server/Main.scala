@@ -19,8 +19,8 @@ package za.co.absa.atum.server
 import za.co.absa.atum.server.api.controller._
 import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
 import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningIfNotExists, WriteCheckpoint}
+import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
 import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, PartitioningServiceImpl}
-import za.co.absa.atum.server.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.logging.consoleLogger
 import zio._

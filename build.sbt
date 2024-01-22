@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import Dependencies._
-import SparkVersionAxis._
-import JacocoSetup._
+import Dependencies.*
+import SparkVersionAxis.*
+import JacocoSetup.*
 import sbt.Keys.name
 
 
@@ -38,7 +38,7 @@ ThisBuild / printSparkScalaVersion := {
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= commonDependencies,
-  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
+  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings", "-Ymacro-annotations"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
   Test / parallelExecution := false
 )
@@ -58,6 +58,13 @@ lazy val root = (projectMatrix in file("."))
     publish / skip := true,
     mergeStrategy
   )
+  .enablePlugins(FlywayPlugin)
+
+flywayUrl := "jdbc:postgresql://localhost:5433/atum_db"
+flywayUser := "postgres"
+flywayPassword := "postgres"
+flywayLocations := Seq("filesystem:database/src/main/postgres")
+flywaySqlMigrationSuffixes := Seq(".sql",".ddl")
 
 lazy val server = (projectMatrix in file("server"))
   .settings(

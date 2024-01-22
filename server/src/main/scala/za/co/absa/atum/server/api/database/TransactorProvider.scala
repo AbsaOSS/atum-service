@@ -20,6 +20,7 @@ import com.zaxxer.hikari.HikariConfig
 import doobie.HC
 import doobie.hikari.HikariTransactor
 import doobie.util.transactor.{Strategy, Transactor}
+import za.co.absa.atum.server.config.PostgresConfig
 import zio.Runtime.defaultBlockingExecutor
 import zio._
 import zio.interop.catz._

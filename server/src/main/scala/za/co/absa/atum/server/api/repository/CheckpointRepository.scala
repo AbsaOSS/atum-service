@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.repository
+package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint

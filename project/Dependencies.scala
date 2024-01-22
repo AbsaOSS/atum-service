@@ -49,7 +49,6 @@ object Dependencies {
     val sttp = "3.5.2"
 
     val fadb = "0.3.0"
-//    val slickpg = "0.20.4"
 
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"

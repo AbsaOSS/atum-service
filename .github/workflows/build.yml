@@ -26,6 +26,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: atum_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5433:5432 # default postgres port is 5432, so we map to 5433 in order to avoid conflicts
+
     strategy:
       fail-fast: false
       matrix:

@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
-import za.co.absa.atum.server.repository.PartitioningRepository
+import za.co.absa.atum.server.api.repository.PartitioningRepository
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
 import zio.macros.accessible
