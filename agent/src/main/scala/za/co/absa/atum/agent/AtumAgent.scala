@@ -56,10 +56,10 @@ class AtumAgent private[agent] () {
 
   /**
    * Sends the `Metadata` to the Atumservice API
-   * @param metadata the metadata to be saved to the server.
+   * @param AdditionalData the metadata to be saved to the server.
    */
-  private [agent] def saveAdditionalData(metadata: AdditionalDataSubmitDTO): Unit = {
-    dispatcher.saveAdditionalData(metadata)
+  private [agent] def saveAdditionalData(AdditionalData: AdditionalDataSubmitDTO): Unit = {
+    dispatcher.saveAdditionalData(AdditionalData)
   }
 
   /**

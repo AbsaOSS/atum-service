@@ -32,7 +32,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   private val currentApiVersion = "/api/v1"
   private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createPartitioning")
   private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createCheckpoint")
-  private val createMetadataEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/saveMetadata")
+  private val createAdditionalDataEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/saveMetadata")
 
   private val commonAtumRequest = basicRequest
     .header("Content-Type", "application/json")
@@ -67,7 +67,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
   override def saveAdditionalData(metadataDTO: AdditionalDataSubmitDTO): Unit = {
     val request = commonAtumRequest
-      .post(createMetadataEndpoint)
+      .post(createAdditionalDataEndpoint)
       .body(SerializationUtils.asJson(metadataDTO))
 
     val response = backend.send(request)
