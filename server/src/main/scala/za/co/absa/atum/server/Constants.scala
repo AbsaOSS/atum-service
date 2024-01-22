@@ -16,22 +16,13 @@
 
 package za.co.absa.atum.server
 
-import java.util.Optional
-import java.util.concurrent.CompletableFuture
-import scala.concurrent.Future
-import scala.compat.java8.FutureConverters._
-import scala.language.implicitConversions
-
-
-package object api {
-
-  case class NotFoundException(message: String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
-
-  object implicits {
-    implicit class JavaOptExt[C](javaOptional: Optional[C]) {
-      def toScalaOption: Option[C] = if (javaOptional.isPresent) Some(javaOptional.get) else None
-    }
-
-    implicit def scalaToJavaFuture[T](in: Future[T]): CompletableFuture[T] = in.toJava.toCompletableFuture
-  }
+object Constants {
+  final val Api = "api"
+  final val V1 = "v1"
+  final val CreatePartitioning = "createPartitioning"
+  final val CreateCheckpoint = "createCheckpoint"
+  final val ServerHost = "localhost"
+  final val ServerPort = 8080
+  final val SwaggerApiName = "Atum API"
+  final val SwaggerApiVersion = "1.0"
 }

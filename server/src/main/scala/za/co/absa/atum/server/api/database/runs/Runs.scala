@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.server.api.database.runs
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
-import za.co.absa.atum.server.api.AtumConfig
+import za.co.absa.fadb.DBSchema
+import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 
-@Service
-class TestService @Autowired()(atumConfig: AtumConfig){
-  def getMessage: String = {
-    val testConfigVal = atumConfig.testEndpointConfig.getString("some-key")
-    s"The service says: alfa '$testConfigVal'"
-  }
-}
+object Runs extends DBSchema
