@@ -27,7 +27,7 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
  */
 sealed trait Measure {
   val measureName: String
-  def controlColumns: Seq[String]
+  def measuredColumns: Seq[String]
 }
 
 trait AtumMeasure extends Measure with MeasurementProcessor {
@@ -53,7 +53,7 @@ object AtumMeasure {
         MeasureResult(resultValue(0).toString, resultValueType)
       }
 
-    override def controlColumns: Seq[String] = Seq.empty
+    override def measuredColumns: Seq[String] = Seq.empty
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
   object RecordCount {
@@ -72,7 +72,7 @@ object AtumMeasure {
         MeasureResult(resultValue(0)(0).toString, resultValueType)
       }
 
-    override def controlColumns: Seq[String] = controlCols
+    override def measuredColumns: Seq[String] = controlCols
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
   }
   object DistinctRecordCount {
@@ -89,7 +89,7 @@ object AtumMeasure {
       MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
     }
 
-    override def controlColumns: Seq[String] = Seq(controlCol)
+    override def measuredColumns: Seq[String] = Seq(controlCol)
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
   }
   object SumOfValuesOfColumn {
@@ -106,7 +106,7 @@ object AtumMeasure {
       MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
     }
 
-    override def controlColumns: Seq[String] = Seq(controlCol)
+    override def measuredColumns: Seq[String] = Seq(controlCol)
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
   }
   object AbsSumOfValuesOfColumn {
@@ -121,7 +121,7 @@ object AtumMeasure {
       MeasureResult(Option(resultValue(0)(0)).getOrElse("").toString, resultValueType)
     }
 
-    override def controlColumns: Seq[String] = Seq(controlCol)
+    override def measuredColumns: Seq[String] = Seq(controlCol)
     override val resultValueType: ResultValueType.ResultValueType = ResultValueType.String
   }
   object SumOfHashesOfColumn {
