@@ -22,7 +22,6 @@ import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
 import java.time.ZonedDateTime
-
 import java.util.UUID
 import scala.collection.immutable.ListMap
 
@@ -36,7 +35,7 @@ import scala.collection.immutable.ListMap
 class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
   val agent: AtumAgent,
-  private var measures: Set[Measure] = Set.empty,
+  private var measures: Set[AtumMeasure] = Set.empty,
   private var additionalData: Map[String, Option[String]] = Map.empty
 ) {
 
@@ -45,7 +44,7 @@ class AtumContext private[agent] (
    *
    * @return the current set of measures
    */
-  def currentMeasures: Set[Measure] = measures
+  def currentMeasures: Set[AtumMeasure] = measures
 
   /**
    * Returns the sub-partition context in the AtumContext.
@@ -144,7 +143,7 @@ class AtumContext private[agent] (
    *
    * @param measure the measure to be added
    */
-  def addMeasure(newMeasure: Measure): AtumContext = {
+  def addMeasure(newMeasure: AtumMeasure): AtumContext = {
     measures = measures + newMeasure
     this
   }
@@ -154,7 +153,7 @@ class AtumContext private[agent] (
    *
    * @param measures set sequence of measures to be added
    */
-  def addMeasures(newMeasures: Set[Measure]): AtumContext = {
+  def addMeasures(newMeasures: Set[AtumMeasure]): AtumContext = {
     measures = measures ++ newMeasures
     this
   }
@@ -164,7 +163,7 @@ class AtumContext private[agent] (
    *
    * @param measureToRemove the measure to be removed
    */
-  def removeMeasure(measureToRemove: Measure): AtumContext = {
+  def removeMeasure(measureToRemove: AtumMeasure): AtumContext = {
     measures = measures - measureToRemove
     this
   }
@@ -172,7 +171,7 @@ class AtumContext private[agent] (
   private[agent] def copy(
     atumPartitions: AtumPartitions = this.atumPartitions,
     agent: AtumAgent = this.agent,
-    measures: Set[Measure] = this.measures,
+    measures: Set[AtumMeasure] = this.measures,
     additionalData: Map[String, Option[String]] = this.additionalData
   ): AtumContext = {
     new AtumContext(atumPartitions, agent, measures, additionalData)

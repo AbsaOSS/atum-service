@@ -18,8 +18,8 @@ package za.co.absa.atum.agent.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
-import za.co.absa.atum.agent.model.Measure.{AbsSumOfValuesOfColumn, DistinctRecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
+import za.co.absa.atum.agent.model.AtumMeasure.SumOfValuesOfColumn
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 class MeasurementBuilderTest extends AnyFlatSpec {
