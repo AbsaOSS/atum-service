@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.dao
+package za.co.absa.atum.server.future.dao
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
-import za.co.absa.atum.server.model.{BaseApiModel, ControlMeasure, Flow, Partition}
+import za.co.absa.atum.server.future.model.{BaseApiModel, ControlMeasure, Flow, Partition}
 
 import java.util.UUID
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.collection.JavaConverters._
 
 object InMemoryApiModelDao {
 

@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.model
 
 import java.util.UUID
 
-case class Flow(
-  id: Option[UUID],
-  description: Option[String],
-  properties: Map[String, String] = Map.empty
-) extends BaseApiModel {
+trait BaseApiModel {
+  def id: Option[UUID]
 
-  def apply(desc: Option[String] = None): Flow = Flow(None, desc)
+  // todo def withId[T <: BaseApiModel](uuid: UUID): T or even def withId[T <: BaseApiModel[T]](uuid: UUID): T ?
+  def withId(uuid: UUID): BaseApiModel
 
-  override def withId(uuid: UUID): Flow = copy(id = Some(uuid))
+  def entityName: String = this.getClass.getSimpleName
 }
