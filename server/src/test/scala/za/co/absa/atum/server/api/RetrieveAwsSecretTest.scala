@@ -16,51 +16,42 @@
 
 package za.co.absa.atum.server.api
 
-
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, GetSecretValueResponse, SecretsManagerException}
 
-import scala.util.{Failure, Success, Try}
 
+class RetrieveAwsSecretSpec extends AnyFlatSpec with MockitoSugar {
 
-class RetrieveAwsSecretSpec extends AnyFlatSpec with Matchers with MockitoSugar {
-  val secretsManagerClient: SecretsManagerClient = mock[SecretsManagerClient]
-  val retrieveAwsSecret: RetrieveAwsSecret = new RetrieveAwsSecret("test-profile") {
-    private[RetrieveAwsSecret] val secretsManagerClient: SecretsManagerClient = secretsManagerClient
+  "retrieveAwsSecret" should "return secret keys from AWS" in {
+    val mockSecretsManagerClient = mock[SecretsManagerClient]
+    val retrieveAwsSecret = new RetrieveAwsSecret("testProfile") {
+      override val secretsManagerClient: SecretsManagerClient = mockSecretsManagerClient
+    }
+    val testSecretName: String = "testSecret"
+    val expectedResults = Vector("t", "e", "s", "t", "S", "e", "c", "r", "e", "t")
+
+    val mockResponse = GetSecretValueResponse.builder().secretString(testSecretName).build()
+    when(mockSecretsManagerClient.getSecretValue(any[GetSecretValueRequest])).thenReturn(mockResponse)
+
+    val actualResults = retrieveAwsSecret.retrieveAwsSecret(testSecretName)
+    assert(actualResults == expectedResults)
   }
 
-  "RetrieveAwsSecret" should "return a sequence of strings from AWS secret service" in {
-    val secretName = "test-secret"
-    val secretString = "test-secret-key"
-    val response: GetSecretValueResponse = GetSecretValueResponse.builder().secretString(secretString).build()
-
-    when(secretsManagerClient.getSecretValue(any[GetSecretValueRequest])).thenReturn(response)
-
-    val result: Seq[String] = retrieveAwsSecret.retrieveAwsSecret(secretName)
-    val resultsToTry = secretString.foldLeft(Try("")) { (acc, s) =>
-      acc.flatMap(str => Try(str + s))
+  it should "handle SecretsManagerException and return error message" in {
+    val mockSecretsManagerClient = mock[SecretsManagerClient]
+    val retrieveAwsSecret = new RetrieveAwsSecret("testProfile") {
+      override val secretsManagerClient: SecretsManagerClient = mockSecretsManagerClient
     }
 
-    resultsToTry shouldBe Success(Seq(secretString))
+    val testSecretName: String = "testSecret"
+
+    val exception = SecretsManagerException.builder().message("testError").build()
+    when(mockSecretsManagerClient.getSecretValue(any[GetSecretValueRequest])).thenThrow(exception)
+
+    assert(retrieveAwsSecret.retrieveAwsSecret(testSecretName) == "testError".map(_.toString))
   }
 
-  it should "return an error message when there is an exception" in {
-    val secretName = "test-secret"
-    val exceptionMessage = "test-exception-message"
-    val exception = SecretsManagerException.builder().message(exceptionMessage).build()
-
-    when(secretsManagerClient.getSecretValue(any[GetSecretValueRequest])).thenThrow(exception)
-
-    val secretString: Seq[String] = retrieveAwsSecret.retrieveAwsSecret(secretName)
-
-    val resultsToTry = secretString.foldLeft(Try("")) { (acc, s) =>
-      acc.flatMap(str => Try(str + s))
-    }
-
-    resultsToTry shouldBe Failure(exception)
-  }
 }
