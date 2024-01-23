@@ -25,7 +25,7 @@ import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueReque
 import scala.util.{Try, Success}
 
 
-class RetrieveAwsSecretSpec extends AnyFlatSpec with MockitoSugar {
+class RetrieveAwsSecretTest extends AnyFlatSpec with MockitoSugar {
 
   "retrieveAwsSecret" should "return secret keys from AWS" in {
     val mockSecretsManagerClient = mock[SecretsManagerClient]
