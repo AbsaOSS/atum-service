@@ -22,6 +22,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, GetSecretValueResponse, SecretsManagerException}
 
+import scala.util.{Try, Success}
+
 
 class RetrieveAwsSecretSpec extends AnyFlatSpec with MockitoSugar {
 
@@ -31,13 +33,17 @@ class RetrieveAwsSecretSpec extends AnyFlatSpec with MockitoSugar {
       override val secretsManagerClient: SecretsManagerClient = mockSecretsManagerClient
     }
     val testSecretName: String = "testSecret"
-    val expectedResults = Vector("t", "e", "s", "t", "S", "e", "c", "r", "e", "t")
+    val expectedResults = Success("testSecret")
 
     val mockResponse = GetSecretValueResponse.builder().secretString(testSecretName).build()
     when(mockSecretsManagerClient.getSecretValue(any[GetSecretValueRequest])).thenReturn(mockResponse)
 
     val actualResults = retrieveAwsSecret.retrieveAwsSecret(testSecretName)
-    assert(actualResults == expectedResults)
+    val overrideValue = actualResults.foldLeft(Try("")) { (acc, s) =>
+      acc.flatMap(str => Try(str + s))
+    }
+
+    assert(overrideValue == expectedResults)
   }
 
   it should "handle SecretsManagerException and return error message" in {
