@@ -19,8 +19,6 @@ package za.co.absa.atum.server.config
 import zio.Config
 import zio.config.magnolia.deriveConfig
 
-import scala.language.higherKinds
-
 case class PostgresConfig(
   dataSourceClass: String,
   serverName: String,
