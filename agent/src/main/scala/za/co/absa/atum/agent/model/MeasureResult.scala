@@ -31,29 +31,32 @@ trait MeasureResult {
  *  This object contains all the possible measure results.
  */
 object MeasureResult {
-  /**
-   * When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
-   * to do any adjustments.
-   */
-  private final case class MeasureResultWithType[T](resultValue: T, resultValueType: ResultValueType.ResultValueType)
-    extends MeasureResult
 
   /**
-   * This method creates a measure result for a given result value.
-   *
    * When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
    * needed - thus we are converting the results to strings always - but we need to keep the information about
    * the actual type as well.
    *
    * These adjustments are needed to be performed - to avoid some floating point issues
    * (overflows, consistent representation of numbers - whether they are coming from Java or Scala world, and more).
+   */
+  case class MeasureResultByAtum(resultValue: String, resultValueType: ResultValueType.ResultValueType) extends MeasureResult
+
+  /**
+   * When the application/user provides the actual results by himself, the type is precise and we don't need
+   * to do any adjustments.
+   */
+  case class MeasureResultProvided[T](resultValue: T, resultValueType: ResultValueType.ResultValueType) extends MeasureResult
+
+  /**
+   * This method creates a measure result for a given result value.
    *
    * @param resultValue A result value of the measurement.
    * @param resultType  A result type of the measurement.
    * @return A measure result.
    */
   def apply(resultValue: String, resultType: ResultValueType.ResultValueType): MeasureResult = {
-    MeasureResultWithType[String](resultValue, resultType)
+    MeasureResultByAtum(resultValue, resultType)
   }
 
   /**
@@ -63,17 +66,17 @@ object MeasureResult {
    * @param resultValue A result value of the measurement of any type.
    * @return A measure result.
    */
-  def apply(resultValue: Any): MeasureResult = {
+  def apply[T](resultValue: T): MeasureResult = {
     resultValue match {
 
       case l: Long =>
-        MeasureResultWithType[Long](l, ResultValueType.Long)
+        MeasureResultProvided[Long](l, ResultValueType.Long)
       case d: Double =>
-        MeasureResultWithType[Double](d, ResultValueType.Double)
+        MeasureResultProvided[Double](d, ResultValueType.Double)
       case bd: BigDecimal =>
-        MeasureResultWithType[BigDecimal](bd, ResultValueType.BigDecimal)
+        MeasureResultProvided[BigDecimal](bd, ResultValueType.BigDecimal)
       case s: String =>
-        MeasureResultWithType[String](s, ResultValueType.String)
+        MeasureResultProvided[String](s, ResultValueType.String)
 
       case unsupportedType =>
         val className = unsupportedType.getClass.getSimpleName
