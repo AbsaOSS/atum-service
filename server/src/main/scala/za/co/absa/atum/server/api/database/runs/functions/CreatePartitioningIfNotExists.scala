@@ -41,10 +41,8 @@ class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieE
     val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
     val parentPartitioningNormalized = values.parentPartitioning.map { parentPartitioning =>
-      {
-        val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
-        SerializationUtils.asJson(parentPartitioningForDB)
-      }
+      val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
+      SerializationUtils.asJson(parentPartitioningForDB)
     }
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(

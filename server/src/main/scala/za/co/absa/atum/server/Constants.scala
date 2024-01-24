@@ -21,8 +21,6 @@ object Constants {
   final val V1 = "v1"
   final val CreatePartitioning = "createPartitioning"
   final val CreateCheckpoint = "createCheckpoint"
-  final val ServerHost = "localhost"
-  final val ServerPort = 8080
   final val SwaggerApiName = "Atum API"
   final val SwaggerApiVersion = "1.0"
 }
