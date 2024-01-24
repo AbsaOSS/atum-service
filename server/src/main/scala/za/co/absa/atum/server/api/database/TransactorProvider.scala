@@ -55,7 +55,21 @@ object TransactorProvider {
           postgresConfig.dataSourceClass,
           s"jdbc:postgresql://${postgresConfig.serverName}:${postgresConfig.portNumber}/${postgresConfig.databaseName}",
           postgresConfig.user,
-          postgresConfig.password,
+          postgresConfig.password
+        )
+      )
+    } yield transactor
+  }
+
+  val testLayerWithRollback: ZLayer[Any, Config.Error, Transactor[Task]] = ZLayer {
+    for {
+      postgresConfig <- ZIO.config[PostgresConfig](PostgresConfig.config)
+      transactor <- ZIO.succeed(
+        Transactor.fromDriverManager[Task](
+          postgresConfig.dataSourceClass,
+          s"jdbc:postgresql://${postgresConfig.serverName}:${postgresConfig.portNumber}/${postgresConfig.databaseName}",
+          postgresConfig.user,
+          postgresConfig.password
         )
       )
       transactorWithRollback = Transactor.strategy.set(transactor, Strategy.default.copy(after = HC.rollback))

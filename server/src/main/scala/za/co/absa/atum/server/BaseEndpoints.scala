@@ -26,28 +26,33 @@ import za.co.absa.atum.server.model._
 
 trait BaseEndpoints {
 
-  private val badRequestOneOfVariant: EndpointOutput.OneOfVariant[ErrorResponse] = {
+  private val badRequestOneOfVariant: EndpointOutput.OneOfVariant[BadRequestResponse] = {
     oneOfVariantFromMatchType(
-      StatusCode.BadRequest, jsonBody[BadRequestResponse]
+      StatusCode.BadRequest,
+      jsonBody[BadRequestResponse]
     )
   }
 
-  private val internalServerErrorOneOfVariant: EndpointOutput.OneOfVariant[ErrorResponse] = {
+  private val internalServerErrorOneOfVariant: EndpointOutput.OneOfVariant[InternalServerErrorResponse] = {
     oneOfVariantFromMatchType(
-      StatusCode.InternalServerError, jsonBody[InternalServerErrorResponse]
+      StatusCode.InternalServerError,
+      jsonBody[InternalServerErrorResponse]
     )
   }
 
-  private val generalErrorOneOfVariant: EndpointOutput.OneOfVariant[ErrorResponse] = {
+  private val generalErrorOneOfVariant: EndpointOutput.OneOfVariant[GeneralErrorResponse] = {
     oneOfVariantFromMatchType(
-      StatusCode.BadRequest, jsonBody[GeneralErrorResponse]
+      StatusCode.BadRequest,
+      jsonBody[GeneralErrorResponse]
     )
   }
 
   private val baseEndpoint: PublicEndpoint[Unit, ErrorResponse, Unit, Any] = {
     endpoint.errorOut(
       oneOf[ErrorResponse](
-        badRequestOneOfVariant, generalErrorOneOfVariant, internalServerErrorOneOfVariant
+        badRequestOneOfVariant,
+        generalErrorOneOfVariant,
+        internalServerErrorOneOfVariant
       )
     )
   }

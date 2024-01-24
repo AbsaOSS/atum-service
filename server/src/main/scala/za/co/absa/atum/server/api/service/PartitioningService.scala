@@ -25,12 +25,17 @@ import zio.macros.accessible
 
 @accessible
 trait PartitioningService {
-  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, Unit]]
+  def createPartitioningIfNotExists(
+    partitioning: PartitioningSubmitDTO
+  ): IO[ServiceError, Either[StatusException, Unit]]
 }
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) extends PartitioningService {
-  override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, Unit]] = {
-    partitioningRepository.createPartitioningIfNotExists(partitioning)
+  override def createPartitioningIfNotExists(
+    partitioning: PartitioningSubmitDTO
+  ): IO[ServiceError, Either[StatusException, Unit]] = {
+    partitioningRepository
+      .createPartitioningIfNotExists(partitioning)
       .mapError { case DatabaseError(message) =>
         ServiceError(s"Failed to create or retrieve partitioning: $message")
       }

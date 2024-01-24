@@ -26,7 +26,7 @@ class PostgresDatabaseProvider(val dbEngine: DoobieEngine[Task])
 object PostgresDatabaseProvider {
   val layer: RLayer[Transactor[Task], PostgresDatabaseProvider] = ZLayer {
     for {
-      transactor   <- ZIO.service[Transactor[Task]]
+      transactor <- ZIO.service[Transactor[Task]]
       doobieEngine <- ZIO.succeed(new DoobieEngine[Task](transactor))
     } yield new PostgresDatabaseProvider(doobieEngine)
   }

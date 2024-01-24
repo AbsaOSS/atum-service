@@ -26,7 +26,7 @@ object Dependencies {
     val scala212 = "2.12.18"
     val scala213 = "2.13.11"
 
-    val serviceScalaVersion: String = scala212
+    val serviceScalaVersion: String = scala213
     val clientSupportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
 
     val scalatest = "3.2.15"
@@ -60,6 +60,7 @@ object Dependencies {
     val zioConfig = "4.0.1"
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
+    val playJson = "2.9.4"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -125,7 +126,7 @@ object Dependencies {
     val http4sOrg = "org.http4s"
     val faDbOrg = "za.co.absa.fa-db"
 
-    // zio, http4s, tapir
+    // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
     lazy val zioMacros = zioOrg %% "zio-macros" % Versions.zio
     lazy val zioLogging = zioOrg %% "zio-logging" % Versions.zioLogging
@@ -141,13 +142,18 @@ object Dependencies {
     lazy val tapirSwagger = tapirOrg %% "tapir-swagger-ui-bundle" % Versions.tapir
     lazy val tapirPlayJson = tapirOrg %% "tapir-json-play" % Versions.tapir
 
-    // testing
-    lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
-    lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
-    lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
+    // json
+    lazy val playJson = "com.typesafe.play" %% "play-json" % Versions.playJson
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
+
+    // testing
+    lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
+    lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
+//    lazy val zioTestMagnolia = zioOrg %% "zio-test-magnolia" % Versions.zio % Test
+    lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
+    lazy val sbtJunitInterface = "com.github.sbt" % "junit-interface" % "0.13.3" % Test
 
     Seq(
       faDbDoobie,
@@ -161,9 +167,12 @@ object Dependencies {
       tapirHttp4sZio,
       tapirSwagger,
       tapirPlayJson,
+      playJson,
       zioTest,
       zioTestSbt,
-      zioTestJunit
+//      zioTestMagnolia,
+      zioTestJunit,
+      sbtJunitInterface
     )
   }
 

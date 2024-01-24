@@ -18,7 +18,7 @@ package za.co.absa.atum.server.model
 
 import play.api.libs.json.{Json, Reads, Writes}
 
-sealed abstract class ErrorResponse {
+sealed trait ErrorResponse {
   def message: String
 }
 

@@ -42,14 +42,16 @@ object DoobieImplicits {
   object Json {
 
     implicit val jsonArrayPutUsingString: Put[List[String]] = {
-      Put.Advanced.other[PGobject](
-        NonEmptyList.of("json[]")
-      ).tcontramap { a =>
-        val o = new PGobject
-        o.setType("json[]")
-        o.setValue(a.mkString("{", ",", "}"))
-        o
-      }
+      Put.Advanced
+        .other[PGobject](
+          NonEmptyList.of("json[]")
+        )
+        .tcontramap { a =>
+          val o = new PGobject
+          o.setType("json[]")
+          o.setValue(a.mkString("{", ",", "}"))
+          o
+        }
     }
 
     implicit val jsonArrayGetUsingString: Get[List[String]] = {
@@ -60,32 +62,36 @@ object DoobieImplicits {
         }
       }
 
-      Get.Advanced.other[PgArray](
-        NonEmptyList.of("json[]")
-      ).temap( a =>
-        parsePgArray(a)
-      )
+      Get.Advanced
+        .other[PgArray](
+          NonEmptyList.of("json[]")
+        )
+        .temap(a => parsePgArray(a))
     }
 
     implicit val jsonPutUsingString: Put[String] =
-      Put.Advanced.other[PGobject](
-        NonEmptyList.of("json")
-      ).tcontramap{ a =>
-        val o = new PGobject
-        o.setType("json")
-        o.setValue(a)
-        o
-      }
+      Put.Advanced
+        .other[PGobject](
+          NonEmptyList.of("json")
+        )
+        .tcontramap { a =>
+          val o = new PGobject
+          o.setType("json")
+          o.setValue(a)
+          o
+        }
 
     implicit val jsonGetUsingString: Get[String] = {
-      Get.Advanced.other[PGobject](
-        NonEmptyList.of("json")
-      ).temap(a =>
-        Try(a.getValue) match {
-          case Failure(exception) => Left(exception.toString)
-          case Success(value) => Right(value)
-        }
-      )
+      Get.Advanced
+        .other[PGobject](
+          NonEmptyList.of("json")
+        )
+        .temap(a =>
+          Try(a.getValue) match {
+            case Failure(exception) => Left(exception.toString)
+            case Success(value) => Right(value)
+          }
+        )
     }
 
   }
@@ -93,14 +99,16 @@ object DoobieImplicits {
   object Jsonb {
 
     implicit val jsonbArrayPutUsingString: Put[List[String]] = {
-      Put.Advanced.other[PGobject](
-        NonEmptyList.of("jsonb[]")
-      ).tcontramap { a =>
-        val o = new PGobject
-        o.setType("jsonb[]")
-        o.setValue(a.mkString("{", ",", "}"))
-        o
-      }
+      Put.Advanced
+        .other[PGobject](
+          NonEmptyList.of("jsonb[]")
+        )
+        .tcontramap { a =>
+          val o = new PGobject
+          o.setType("jsonb[]")
+          o.setValue(a.mkString("{", ",", "}"))
+          o
+        }
     }
 
     implicit val jsonbArrayGetUsingString: Get[List[String]] = {
@@ -111,32 +119,36 @@ object DoobieImplicits {
         }
       }
 
-      Get.Advanced.other[PgArray](
-        NonEmptyList.of("jsonb[]")
-      ).temap( a =>
-        parsePgArray(a)
-      )
+      Get.Advanced
+        .other[PgArray](
+          NonEmptyList.of("jsonb[]")
+        )
+        .temap(a => parsePgArray(a))
     }
 
     implicit val jsonbPutUsingString: Put[String] =
-      Put.Advanced.other[PGobject](
-        NonEmptyList.of("jsonb")
-      ).tcontramap{ a =>
-        val o = new PGobject
-        o.setType("jsonb")
-        o.setValue(a)
-        o
-      }
+      Put.Advanced
+        .other[PGobject](
+          NonEmptyList.of("jsonb")
+        )
+        .tcontramap { a =>
+          val o = new PGobject
+          o.setType("jsonb")
+          o.setValue(a)
+          o
+        }
 
     implicit val jsonbGetUsingString: Get[String] = {
-      Get.Advanced.other[PGobject](
-        NonEmptyList.of("jsonb")
-      ).temap(a =>
-        Try(a.getValue) match {
-          case Failure(exception) => Left(exception.toString)
-          case Success(value) => Right(value)
-        }
-      )
+      Get.Advanced
+        .other[PGobject](
+          NonEmptyList.of("jsonb")
+        )
+        .temap(a =>
+          Try(a.getValue) match {
+            case Failure(exception) => Left(exception.toString)
+            case Success(value) => Right(value)
+          }
+        )
     }
 
   }

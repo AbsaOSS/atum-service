@@ -16,24 +16,17 @@
 
 package za.co.absa.atum.server
 
-import play.api.libs.json.{Json, Reads, Writes}
 import sttp.model.StatusCode
 import sttp.tapir.PublicEndpoint
-import sttp.tapir.json.play.jsonBody
 import sttp.tapir.generic.auto.schemaForCaseClass
+import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir.statusCode
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.Constants.{CreateCheckpoint, CreatePartitioning}
 import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.PlayJsonImplicits._
 
 trait Endpoints extends BaseEndpoints {
-
-  private implicit val checkpointDTOReads: Reads[CheckpointDTO] = Json.reads[CheckpointDTO]
-  private implicit val checkpointDTOWrites: Writes[CheckpointDTO] = Json.writes[CheckpointDTO]
-  private implicit val partitioningSubmitDTOReads: Reads[PartitioningSubmitDTO] = Json.reads[PartitioningSubmitDTO]
-  private implicit val partitioningSubmitDTOWrites: Writes[PartitioningSubmitDTO] = Json.writes[PartitioningSubmitDTO]
-  private implicit val atumContextDTOReads: Reads[AtumContextDTO] = Json.reads[AtumContextDTO]
-  private implicit val atumContextDTOWrites: Writes[AtumContextDTO] = Json.writes[AtumContextDTO]
 
   protected val createCheckpointEndpoint: PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
     apiV1.post
@@ -44,7 +37,8 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[CheckpointDTO])
   }
 
-  protected val createPartitioningEndpoint: PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, AtumContextDTO, Any] = {
+  protected val createPartitioningEndpoint
+    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, AtumContextDTO, Any] = {
     apiV1.post
       .name(CreatePartitioning)
       .in(CreatePartitioning)

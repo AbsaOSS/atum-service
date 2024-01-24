@@ -16,27 +16,27 @@
 
 package za.co.absa.atum.server
 
+import cats.syntax.semigroupk._
 import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.Router
-import sttp.tapir.{DecodeResult, PublicEndpoint}
-import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
-import sttp.tapir.swagger.bundle.SwaggerInterpreter
-import sttp.tapir.ztapir._
-import sttp.tapir.generic.auto.schemaForCaseClass
-import za.co.absa.atum.server.Constants._
-import za.co.absa.atum.server.api.controller._
-import zio.{RIO, ZIO}
-import zio.interop.catz._
-import cats.syntax.all._
 import sttp.monad.MonadError
+import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.server.http4s.Http4sServerOptions
+import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.DecodeFailureContext
 import sttp.tapir.server.interceptor.decodefailure.DecodeFailureHandler
 import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.respond
 import sttp.tapir.server.model.ValuedEndpointOutput
+import sttp.tapir.swagger.bundle.SwaggerInterpreter
+import sttp.tapir.ztapir._
+import sttp.tapir.{DecodeResult, PublicEndpoint, headers, statusCode}
+import za.co.absa.atum.server.Constants.{ServerHost, ServerPort, SwaggerApiName, SwaggerApiVersion}
+import za.co.absa.atum.server.api.controller._
 import za.co.absa.atum.server.model.BadRequestResponse
+import zio.interop.catz._
+import zio.{RIO, ZIO}
 
 trait Server extends Endpoints {
 
@@ -48,10 +48,10 @@ trait Server extends Endpoints {
       monad.unit(
         respond(ctx).map { case (sc, hs) =>
           val message = ctx.failure match {
-            case DecodeResult.Missing              => s"Decoding error - missing value."
-            case DecodeResult.Multiple(vs)         => s"Decoding error - $vs."
-            case DecodeResult.Error(original, _)   => s"Decoding error for an input value '$original'."
-            case DecodeResult.Mismatch(_, actual)  => s"Unexpected value '$actual'."
+            case DecodeResult.Missing => s"Decoding error - missing value."
+            case DecodeResult.Multiple(vs) => s"Decoding error - $vs."
+            case DecodeResult.Error(original, _) => s"Decoding error for an input value '$original'."
+            case DecodeResult.Mismatch(_, actual) => s"Unexpected value '$actual'."
             case DecodeResult.InvalidValue(errors) => s"Validation error - $errors."
           }
           val errorResponse = BadRequestResponse(message)
@@ -67,16 +67,16 @@ trait Server extends Endpoints {
     .options
 
   private def createServerEndpoint[I, E, O](
-                                             endpoint: PublicEndpoint[I, E, O, Any],
-                                             logic: I => ZIO[Env, E, O]
-                                           ): ZServerEndpoint[Env, Any] = {
+    endpoint: PublicEndpoint[I, E, O, Any],
+    logic: I => ZIO[Env, E, O]
+  ): ZServerEndpoint[Env, Any] = {
     endpoint.zServerLogic(logic).widen[Env]
   }
 
   private def createAllServerRoutes: HttpRoutes[F] = {
     val endpoints = List(
       createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
-      createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists),
+      createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists)
     )
     ZHttp4sServerInterpreter[Env](http4sServerOptions).from(endpoints).toRoutes
   }
@@ -92,7 +92,7 @@ trait Server extends Endpoints {
     ZIO.executor.flatMap { executor =>
       BlazeServerBuilder[F]
         .withExecutionContext(executor.asExecutionContext)
-        .bindHttp(ServerPort, ServerHost) // todo: proper config parameters for port and server
+//        .bindHttp(ServerPort, ServerHost) // todo: proper config parameters for port and server
         .withHttpApp(Router("/" -> (createAllServerRoutes <+> createSwaggerRoutes)).orNotFound)
         .serve
         .compile

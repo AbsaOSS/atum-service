@@ -32,26 +32,29 @@ import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
 
-import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb._
-import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence._
-
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task]
-  with StandardStatusHandling {
+    extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task]
+    with StandardStatusHandling {
 
   override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
-    val parentPartitioningNormalized = values.parentPartitioning.map { parentPartitioning => {
-      val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
-      SerializationUtils.asJson(parentPartitioningForDB)
-    }}
+    val parentPartitioningNormalized = values.parentPartitioning.map { parentPartitioning =>
+      {
+        val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
+        SerializationUtils.asJson(parentPartitioningForDB)
+      }
+    }
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  $partitioningNormalized,
+                  ${import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
+      partitioningNormalized
+      },
                   ${values.authorIfNew},
-                  $parentPartitioningNormalized
+                  ${import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
+      parentPartitioningNormalized
+      }
                 ) ${Fragment.const(alias)};"""
   }
 }

@@ -30,7 +30,8 @@ trait CheckpointService {
 
 class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends CheckpointService {
   override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]] = {
-    checkpointRepository.writeCheckpoint(checkpointDTO)
+    checkpointRepository
+      .writeCheckpoint(checkpointDTO)
       .mapError { case DatabaseError(message) =>
         ServiceError(s"Failed to save checkpoint: $message")
       }

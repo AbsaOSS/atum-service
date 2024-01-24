@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.future.api.controller
+package za.co.absa.atum.server.api
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.{RequestMapping, RestController}
-import za.co.absa.atum.server.future.api.service.FlowService
+import zio.config.typesafe.TypesafeConfigProvider
+import zio.{Runtime, ZLayer}
 
-@RestController
-@RequestMapping(Array("/api/flows"))
-class FlowController @Autowired()(flowService: FlowService)
-  extends BaseApiController(flowService) {
+object TestConfigProvider {
+
+  val layer: ZLayer[Any, Nothing, Unit] =
+    Runtime.setConfigProvider(TypesafeConfigProvider.fromResourcePath())
 
 }

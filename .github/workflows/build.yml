@@ -38,7 +38,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5433:5432 # default postgres port is 5432, so we map to 5433 in order to avoid conflicts
+          - 5432:5432
 
     strategy:
       fail-fast: false
@@ -51,9 +51,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - uses: coursier/cache-action@v5
+
       - name: Setup Scala
         uses: olafurpg/setup-scala@v10
         with:
           java-version: "adopt@1.8"
+
+      - name: Prepare testing database
+        run: sbt flywayMigrate
+
       - name: Build and run tests
         run: sbt ++${{matrix.scala}} test doc

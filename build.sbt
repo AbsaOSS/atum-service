@@ -38,7 +38,7 @@ ThisBuild / printSparkScalaVersion := {
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= commonDependencies,
-  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings", "-Ymacro-annotations"),
+  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
   Test / parallelExecution := false
 )
@@ -50,6 +50,14 @@ val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := 
   case _                       => MergeStrategy.first
 }
 
+enablePlugins(FlywayPlugin)
+flywayUrl := "jdbc:postgresql://localhost:5432/atum_db"
+flywayUser := "postgres"
+flywayPassword := "postgres"
+flywayLocations := Seq("filesystem:database/src/main/postgres")
+flywaySqlMigrationSuffixes := Seq(".sql",".ddl")
+libraryDependencies += "org.postgresql" % "postgresql" % "42.5.4"
+
 lazy val root = (projectMatrix in file("."))
   .aggregate(model, server, agent)
   .settings(
@@ -58,25 +66,20 @@ lazy val root = (projectMatrix in file("."))
     publish / skip := true,
     mergeStrategy
   )
-  .enablePlugins(FlywayPlugin)
-
-flywayUrl := "jdbc:postgresql://localhost:5433/atum_db"
-flywayUser := "postgres"
-flywayPassword := "postgres"
-flywayLocations := Seq("filesystem:database/src/main/postgres")
-flywaySqlMigrationSuffixes := Seq(".sql",".ddl")
 
 lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
+      scalacOptions ++= Seq("-Ymacro-annotations"),
       Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
-      inheritJarManifest := true
+      inheritJarManifest := true,
+      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     ): _*
   )
   .settings(
@@ -124,4 +127,4 @@ lazy val model = (projectMatrix in file("model"))
   )
   .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
 
-testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+//testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")

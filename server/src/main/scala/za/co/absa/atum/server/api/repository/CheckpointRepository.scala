@@ -33,7 +33,9 @@ class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends Check
     writeCheckpointFn(checkpointDTO)
       .tap {
         case Left(statusException) =>
-          ZIO.logError(s"Checkpoint write operation exception: (${statusException.status}) ${statusException.status}")
+          ZIO.logError(
+            s"Checkpoint write operation exception: (${statusException.status.statusCode}) ${statusException.status.statusText}"
+          )
         case Right(_) =>
           ZIO.logDebug("Checkpoint successfully written to database.")
       }

@@ -25,15 +25,22 @@ import zio.macros.accessible
 
 @accessible
 trait PartitioningRepository {
-  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[DatabaseError, Either[StatusException, Unit]]
+  def createPartitioningIfNotExists(
+    partitioning: PartitioningSubmitDTO
+  ): IO[DatabaseError, Either[StatusException, Unit]]
 }
 
-class PartitioningRepositoryImpl(createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists) extends PartitioningRepository {
-  override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
+class PartitioningRepositoryImpl(createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists)
+    extends PartitioningRepository {
+  override def createPartitioningIfNotExists(
+    partitioning: PartitioningSubmitDTO
+  ): IO[DatabaseError, Either[StatusException, Unit]] = {
     createPartitioningIfNotExistsFn(partitioning)
       .tap {
         case Left(statusException) =>
-          ZIO.logError(s"Partitioning create or retrieve operation exception: (${statusException.status}) ${statusException.status}")
+          ZIO.logError(
+            s"Partitioning create or retrieve operation exception: (${statusException.status.statusCode}) ${statusException.status.statusText}"
+          )
         case Right(_) =>
           ZIO.logDebug("Partitioning successfully created or retrieved in/from database.")
       }

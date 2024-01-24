@@ -32,10 +32,10 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
   override def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO] = {
     checkpointService
       .saveCheckpoint(checkpointDTO)
-      .mapError {
-        serviceError: ServiceError =>
-          InternalServerErrorResponse(serviceError.message)
-      }.flatMap {
+      .mapError { serviceError: ServiceError =>
+        InternalServerErrorResponse(serviceError.message)
+      }
+      .flatMap {
         case Left(statusException) =>
           ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
         case Right(_) =>

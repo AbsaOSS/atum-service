@@ -32,10 +32,10 @@ class PartitioningControllerImpl(partitioningService: PartitioningService) exten
   override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
     partitioningService
       .createPartitioningIfNotExists(partitioning)
-      .mapError {
-        serviceError: ServiceError =>
-          InternalServerErrorResponse(serviceError.message)
-      }.flatMap {
+      .mapError { serviceError: ServiceError =>
+        InternalServerErrorResponse(serviceError.message)
+      }
+      .flatMap {
         case Left(statusException) =>
           ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
         case Right(_) =>
