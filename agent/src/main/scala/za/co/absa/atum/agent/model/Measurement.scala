@@ -29,7 +29,7 @@ final case class Measurement private (measure: AtumMeasure, result: MeasureResul
 object Measurement {
 
   private def validateMeasurement(measure: AtumMeasure, result: MeasureResult): Unit = {
-    val actualType = result.resultType
+    val actualType = result.resultValueType
     val requiredType = measure.resultValueType
 
     if (actualType != requiredType)

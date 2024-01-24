@@ -52,7 +52,7 @@ private [agent] object MeasurementBuilder {
     val measureDTO = MeasureDTO(measure.measureName, measure.measuredColumns)
 
     val measureResultDTO = MeasureResultDTO(
-      MeasureResultDTO.TypedValue(measureResult.resultValue.toString, measureResult.resultType)
+      MeasureResultDTO.TypedValue(measureResult.resultValue.toString, measureResult.resultValueType)
     )
     MeasurementDTO(measureDTO, measureResultDTO)
   }

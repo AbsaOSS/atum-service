@@ -30,7 +30,7 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val actualMeasurement = Measurement(measure, MeasureResult(BigDecimal(1.0)))
 
     assert(actualMeasurement.result.resultValue == 1.0)
-    assert(actualMeasurement.result.resultType == ResultValueType.BigDecimal)
+    assert(actualMeasurement.result.resultValueType == ResultValueType.BigDecimal)
   }
 
   "Measurement" should "throw exception for unsupported result value - Double instead of BigDecimal" in {

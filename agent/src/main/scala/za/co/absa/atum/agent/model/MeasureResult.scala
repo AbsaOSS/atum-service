@@ -24,7 +24,7 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
  */
 trait MeasureResult {
   val resultValue: Any
-  val resultType: ResultValueType.ResultValueType
+  val resultValueType: ResultValueType.ResultValueType
 }
 
 /**
@@ -35,7 +35,7 @@ object MeasureResult {
    * When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
    * to do any adjustments.
    */
-  private final case class MeasureResultWithType[T](resultValue: T, resultType: ResultValueType.ResultValueType)
+  private final case class MeasureResultWithType[T](resultValue: T, resultValueType: ResultValueType.ResultValueType)
     extends MeasureResult
 
   /**

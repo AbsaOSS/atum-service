@@ -94,17 +94,17 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
 
     // Assertions
     assert(dfPersonCntResult.resultValue == "1000")
-    assert(dfPersonCntResult.resultType == ResultValueType.Long)
+    assert(dfPersonCntResult.resultValueType == ResultValueType.Long)
     assert(dfFullCntResult.resultValue == "1000")
-    assert(dfFullCntResult.resultType == ResultValueType.Long)
+    assert(dfFullCntResult.resultValueType == ResultValueType.Long)
     assert(dfFullSalaryAbsSumResult.resultValue == "2987144")
-    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.BigDecimal)
+    assert(dfFullSalaryAbsSumResult.resultValueType == ResultValueType.BigDecimal)
     assert(dfFullHashResult.resultValue == "2044144307532")
-    assert(dfFullHashResult.resultType == ResultValueType.String)
+    assert(dfFullHashResult.resultValueType == ResultValueType.String)
     assert(dfExtraPersonSalarySumResult.resultValue == "2986144")
-    assert(dfExtraPersonSalarySumResult.resultType == ResultValueType.BigDecimal)
+    assert(dfExtraPersonSalarySumResult.resultValueType == ResultValueType.BigDecimal)
     assert(dfFullSalarySumResult.resultValue == "2987144")
-    assert(dfFullSalarySumResult.resultType == ResultValueType.BigDecimal)
+    assert(dfFullSalarySumResult.resultValueType == ResultValueType.BigDecimal)
   }
 
   "AbsSumOfValuesOfColumn" should "return expected value" in {
@@ -119,7 +119,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val result = salaryAbsSum.function(df)
 
     assert(result.resultValue == "300.3")
-    assert(result.resultType == ResultValueType.BigDecimal)
+    assert(result.resultValueType == ResultValueType.BigDecimal)
   }
 
   "AbsSumOfValuesOfColumn" should "return expected value for null result" in {
@@ -134,7 +134,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val result = salaryAbsSum.function(df)
 
     assert(result.resultValue == "0")
-    assert(result.resultType == ResultValueType.BigDecimal)
+    assert(result.resultValueType == ResultValueType.BigDecimal)
   }
 
   "RecordCount" should "return expected value" in {
@@ -149,7 +149,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val result = distinctCount.function(df)
 
     assert(result.resultValue == "4")
-    assert(result.resultType == ResultValueType.Long)
+    assert(result.resultValueType == ResultValueType.Long)
   }
 
   "DistinctRecordCount" should "return expected value for multiple columns" in {
@@ -164,7 +164,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val result = distinctCount.function(df)
 
     assert(result.resultValue == "3")
-    assert(result.resultType == ResultValueType.Long)
+    assert(result.resultValueType == ResultValueType.Long)
   }
 
   "DistinctRecordCount" should "fail requirements when no control columns given" in {
@@ -183,7 +183,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val result = distinctCount.function(df)
 
     assert(result.resultValue == "4")
-    assert(result.resultType == ResultValueType.BigDecimal)
+    assert(result.resultValueType == ResultValueType.BigDecimal)
   }
 
 }
