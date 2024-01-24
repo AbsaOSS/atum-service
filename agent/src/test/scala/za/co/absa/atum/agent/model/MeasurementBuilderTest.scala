@@ -62,7 +62,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assertThrows[MeasurementException](validateMeasureUniqueness(measurements))
   }
 
-  "buildMeasurementDTO" should
+  "buildMeasurementsDTO" should
     "build MeasurementDTO for BigDecimal type of result value when Measure and MeasureResult provided" in {
 
     val measure = SumOfValuesOfColumn("col")
@@ -80,38 +80,39 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result == expectedMeasureResultDTO)
   }
 
-  "buildMeasurementDTO" should
+  "buildMeasurementsDTO" should
     "build MeasurementDTO for BigDecimal type of result value when Measurement provided" in {
 
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, MeasureResult(BigDecimal(3.14)))
-    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
+    val measureResult = MeasureResult(BigDecimal(3.14))
+    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measure, measureResult)
 
     val expectedTypedValue = TypedValue("3.14", ResultValueType.BigDecimal)
 
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementDTO" should
+  "buildMeasurementsDTO" should
     "build MeasurementDTO (at least for now) for compatible result type but incompatible actual type of result value " +
       "when Measurement provided" in {
 
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, MeasureResult("stringValue", ResultValueType.BigDecimal))
+    val measureResult = MeasureResult("stringValue", ResultValueType.BigDecimal)
 
-    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
+    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measure, measureResult)
 
     val expectedTypedValue = TypedValue("stringValue", ResultValueType.BigDecimal)
 
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementDTO" should
+  "buildMeasurementsDTO" should
     "build MeasurementDTO for BigDecimal type of result value when measured by Agent" in {
 
     val measure = SumOfValuesOfColumn("col")
-    val measurement = Measurement(measure, MeasureResult("1", ResultValueType.BigDecimal))
-    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measurement)
+    val measureResult = MeasureResult("1", ResultValueType.BigDecimal)
+
+    val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measure, measureResult)
 
     val expectedMeasureDTO = MeasureDTO("aggregatedTotal", Seq("col"))
 
@@ -124,13 +125,13 @@ class MeasurementBuilderTest extends AnyFlatSpec {
   }
 
 
-  "buildMeasurementDTO" should "build Seq[MeasurementDTO] for multiple measures, all unique" in {
+  "buildMeasurementsDTO" should "build Seq[MeasurementDTO] for multiple measures, all unique" in {
     val measurements = Set(
       Measurement(DistinctRecordCount(Seq("col")), MeasureResult("1", ResultValueType.Long)),
       Measurement(SumOfValuesOfColumn("col1"), MeasureResult(BigDecimal(1.2))),
       Measurement(SumOfValuesOfColumn("col2"), MeasureResult(BigDecimal(1.3)))
     )
-    val measurementDTOs = MeasurementBuilder.buildMeasurementDTO(measurements)
+    val measurementDTOs = MeasurementBuilder.buildMeasurementsDTO(measurements)
 
     val expectedMeasurementDTO = Set(
       MeasurementDTO(
@@ -147,12 +148,12 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTOs == expectedMeasurementDTO)
   }
 
-  "buildMeasurementDTO" should "throw exception for multiple measures, some of them repetitive" in {
+  "buildMeasurementsDTO" should "throw exception for multiple measures, some of them repetitive" in {
     val measurements = Set(
       Measurement(DistinctRecordCount(Seq("col")), MeasureResult(1L)),
       Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1.2))),
       Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1.3)))
     )
-    assertThrows[MeasurementException](MeasurementBuilder.buildMeasurementDTO(measurements))
+    assertThrows[MeasurementException](MeasurementBuilder.buildMeasurementsDTO(measurements))
   }
 }

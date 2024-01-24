@@ -128,7 +128,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     assert(!argument.getValue.measuredByAtumAgent)
     assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
     assert(argument.getValue.processStartTime == argument.getValue.processEndTime.get)
-    assert(argument.getValue.measurements == measurements.map(MeasurementBuilder.buildMeasurementDTO))
+    assert(argument.getValue.measurements == MeasurementBuilder.buildMeasurementsDTO(measurements))
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {

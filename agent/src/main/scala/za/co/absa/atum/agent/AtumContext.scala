@@ -112,7 +112,7 @@ class AtumContext private[agent] (
       partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
       processStartTime = dateTimeNow,
       processEndTime = Some(dateTimeNow),
-      measurements = MeasurementBuilder.buildMeasurementDTO(measurements)
+      measurements = MeasurementBuilder.buildMeasurementsDTO(measurements)
     )
 
     agent.saveCheckpoint(checkpointDTO)

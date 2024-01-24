@@ -38,14 +38,10 @@ private [agent] object MeasurementBuilder {
       )
   }
 
-  private[agent] def buildMeasurementDTO(measurements: Set[Measurement]): Set[MeasurementDTO] = {
+  private[agent] def buildMeasurementsDTO(measurements: Set[Measurement]): Set[MeasurementDTO] = {
     validateMeasureUniqueness(measurements)
 
     measurements.map(m => buildMeasurementDTO(m.measure, m.result))
-  }
-
-  private[agent] def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {
-    buildMeasurementDTO(measurement.measure, measurement.result)
   }
 
   private[agent] def buildMeasurementDTO(measure: AtumMeasure, measureResult: MeasureResult): MeasurementDTO = {
