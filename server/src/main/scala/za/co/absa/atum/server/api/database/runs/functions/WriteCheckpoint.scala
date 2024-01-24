@@ -47,16 +47,18 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
       values.measurements.map(x => s"\"${SerializationUtils.asJson(x).replaceAll("\"", "\\\\\"")}\"")
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  ${import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-      partitioningNormalized
-      },
+                  ${
+                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
+                    partitioningNormalized
+                  },
                   ${values.id},
                   ${values.name},
                   ${values.processStartTime},
                   ${values.processEndTime},
-                  ${import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbArrayPutUsingString
-      measurementsNormalized.toList
-      },
+                  ${
+                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbArrayPutUsingString
+                    measurementsNormalized.toList
+                  },
                   ${values.measuredByAtumAgent},
                   ${values.author}
                 ) ${Fragment.const(alias)};"""

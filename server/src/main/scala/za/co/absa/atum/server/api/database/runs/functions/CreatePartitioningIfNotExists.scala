@@ -48,13 +48,15 @@ class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieE
     }
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  ${import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-      partitioningNormalized
-      },
+                  ${
+                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
+                    partitioningNormalized
+                  },
                   ${values.authorIfNew},
-                  ${import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-      parentPartitioningNormalized
-      }
+                  ${
+                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
+                    parentPartitioningNormalized
+                  }
                 ) ${Fragment.const(alias)};"""
   }
 }

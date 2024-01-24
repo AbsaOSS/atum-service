@@ -151,7 +151,6 @@ object Dependencies {
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
     lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
-//    lazy val zioTestMagnolia = zioOrg %% "zio-test-magnolia" % Versions.zio % Test
     lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
     lazy val sbtJunitInterface = "com.github.sbt" % "junit-interface" % "0.13.3" % Test
 
@@ -170,7 +169,6 @@ object Dependencies {
       playJson,
       zioTest,
       zioTestSbt,
-//      zioTestMagnolia,
       zioTestJunit,
       sbtJunitInterface
     )
