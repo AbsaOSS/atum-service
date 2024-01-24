@@ -27,8 +27,6 @@ trait MeasurementProcessor {
 
   /**
    *  This method is used to compute measure on Spark `Dataframe`.
-   *  @param df: Spark `Dataframe` to be measured.
-   *  @return Result of measurement.
    */
   def function: MeasurementFunction
 }
@@ -39,7 +37,8 @@ trait MeasurementProcessor {
 object MeasurementProcessor {
   /**
    * This type alias describes a function that is used to compute measure on Spark `Dataframe`.
-   * @param df: Spark `Dataframe` to be measured.
+   * It receives a Spark `Dataframe` to be measured on its input.
+   *
    * @return Result of measurement.
    */
   type MeasurementFunction = DataFrame => MeasureResult

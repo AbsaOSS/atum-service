@@ -141,7 +141,7 @@ class AtumContext private[agent] (
   /**
    * Adds a measure to the AtumContext.
    *
-   * @param measure the measure to be added
+   * @param newMeasure the measure to be added
    */
   def addMeasure(newMeasure: AtumMeasure): AtumContext = {
     measures = measures + newMeasure
@@ -151,7 +151,7 @@ class AtumContext private[agent] (
   /**
    * Adds multiple measures to the AtumContext.
    *
-   * @param measures set sequence of measures to be added
+   * @param newMeasures set sequence of measures to be added
    */
   def addMeasures(newMeasures: Set[AtumMeasure]): AtumContext = {
     measures = measures ++ newMeasures

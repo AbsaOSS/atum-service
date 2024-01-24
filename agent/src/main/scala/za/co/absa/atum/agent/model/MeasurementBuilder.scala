@@ -24,30 +24,22 @@ import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
  */
 private [agent] object MeasurementBuilder {
 
-  private def validateMeasurement(measure: AtumMeasure, result: MeasureResult): Unit = {
-    val actualType = result.resultType
-    val requiredType = measure.resultValueType
+  private[agent] def validateMeasureUniqueness(measurements: Set[Measurement]): Unit = {
+    val allMeasures = measurements.toSeq.map(_.measure)
 
-    if (actualType != requiredType)
+    val originalMeasuresCnt = allMeasures.size
+    val uniqueMeasureColumnCombinationCnt = allMeasures.map(m =>
+      Tuple2(m.measureName, m.measuredColumns)  // there can't be two same measures defined on the same column(s)
+    ).distinct.size
+
+    if (originalMeasuresCnt != uniqueMeasureColumnCombinationCnt)
       throw MeasurementException(
-        s"Type of a given provided measurement result and type that a given measure supports are not compatible! " +
-          s"Got $actualType but should be $requiredType"
+        s"Measure and measuredColumn combinations must be unique, i.e. they cannot repeat! Got: $allMeasures"
       )
   }
 
-  private def validateMeasurementUniqueness(measurements: Set[Measurement]): Unit = {
-    val originalMeasurementsCnt = measurements.size
-    val uniqueMeasuresCnt = measurements.toSeq.map(m =>
-      Tuple2(m.measure.measureName, m.measure.measuredColumns)  // there can't be 2 same measures defined on the same column
-    ).distinct.size
-
-    val areMeasuresUnique = originalMeasurementsCnt == uniqueMeasuresCnt
-
-    require(areMeasuresUnique, s"Measures must be unique, i.e. they cannot repeat! Got: ${measurements.map(_.measure)}")
-  }
-
   private[agent] def buildMeasurementDTO(measurements: Set[Measurement]): Set[MeasurementDTO] = {
-    validateMeasurementUniqueness(measurements)
+    validateMeasureUniqueness(measurements)
 
     measurements.map(m => buildMeasurementDTO(m.measure, m.result))
   }
@@ -56,25 +48,9 @@ private [agent] object MeasurementBuilder {
     buildMeasurementDTO(measurement.measure, measurement.result)
   }
 
-  private[agent] def buildMeasurementDTO(measure: Measure, measureResult: MeasureResult): MeasurementDTO = {
-    val measureName = measure.measureName
-    val measuredColumns = measure.measuredColumns
-
-    val measureDTO = MeasureDTO(measureName, measuredColumns)
-    val measureResultDTO = MeasureResultDTO(
-      MeasureResultDTO.TypedValue(measureResult.resultValue.toString, measureResult.resultType)
-    )
-    MeasurementDTO(measureDTO, measureResultDTO)
-  }
-
-  // TODO Measure vs AtumMeasure
   private[agent] def buildMeasurementDTO(measure: AtumMeasure, measureResult: MeasureResult): MeasurementDTO = {
-    val measureName = measure.measureName
-    val measuredColumns = measure.measuredColumns
+    val measureDTO = MeasureDTO(measure.measureName, measure.measuredColumns)
 
-    validateMeasurement(measure, measureResult)
-
-    val measureDTO = MeasureDTO(measureName, measuredColumns)
     val measureResultDTO = MeasureResultDTO(
       MeasureResultDTO.TypedValue(measureResult.resultValue.toString, measureResult.resultType)
     )

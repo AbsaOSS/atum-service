@@ -33,10 +33,10 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     // Measures
     val measureIds: AtumMeasure = RecordCount()
     val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn(
-      controlCol = "salary"
+      measuredCol = "salary"
     )
-    val salarySum = SumOfValuesOfColumn(controlCol = "salary")
-    val sumOfHashes: AtumMeasure = SumOfHashesOfColumn(controlCol = "id")
+    val salarySum = SumOfValuesOfColumn(measuredCol = "salary")
+    val sumOfHashes: AtumMeasure = SumOfHashesOfColumn(measuredCol = "id")
 
     // AtumContext contains `Measurement`
     val atumContextInstanceWithRecordCount = AtumAgent
@@ -168,7 +168,7 @@ class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
   }
 
   "DistinctRecordCount" should "fail requirements when no control columns given" in {
-    assertThrows[java.lang.IllegalArgumentException](DistinctRecordCount(controlCols = Seq.empty))
+    assertThrows[java.lang.IllegalArgumentException](DistinctRecordCount(measuredCols = Seq.empty))
   }
 
   "SumOfValuesOfColumn" should "return expected value" in {

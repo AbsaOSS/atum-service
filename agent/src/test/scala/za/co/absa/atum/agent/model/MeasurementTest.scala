@@ -25,7 +25,7 @@ import za.co.absa.spark.commons.test.SparkTestBase
 
 class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
-  "Measurement" should "be able to be converted to MeasurementProvided object when the result is BigDecimal" in {
+  "Measurement" should "be able to be converted to MeasureResultWithType internally when the result is BigDecimal" in {
     val measure = AbsSumOfValuesOfColumn("col")
     val actualMeasurement = Measurement(measure, MeasureResult(BigDecimal(1.0)))
 
@@ -33,15 +33,7 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     assert(actualMeasurement.result.resultType == ResultValueType.BigDecimal)
   }
 
-  "Measurement" should "be able derive correct result type when the result is Double" in {
-    val measure = AbsSumOfValuesOfColumn("col")
-    val actualMeasurement = Measurement(measure, MeasureResult(1.0))
-
-    assert(actualMeasurement.result.resultValue == 1.0)
-    assert(actualMeasurement.result.resultType == ResultValueType.Double)
-  }
-
-  "MeasurementProvided" should "throw exception for unsupported result value - Double instead of BigDecimal" in {
+  "Measurement" should "throw exception for unsupported result value - Double instead of BigDecimal" in {
     val measure = AbsSumOfValuesOfColumn("col")
     assertThrows[MeasurementException](Measurement(measure, MeasureResult(1.0)))
   }
@@ -59,6 +51,14 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
   "Measurement" should "throw exception for unsupported result value type for a given Measure" in {
     val measure = DistinctRecordCount(Seq("col"))
     assertThrows[MeasurementException](Measurement(measure, MeasureResult("1")))
+  }
+
+  "Measurement" should "throw exception for incompatible String type of result value when Measurement provided" in {
+    val measure = SumOfValuesOfColumn("col")
+
+    assertThrows[MeasurementException](
+      Measurement(measure, MeasureResult("stringValue", ResultValueType.String))
+    )
   }
 
   "Measurement" should "throw exception for unsupported (slightly different FPN) result value type for a given Measure" in {

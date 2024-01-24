@@ -16,7 +16,26 @@
 
 package za.co.absa.atum.agent.model
 
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
+import za.co.absa.atum.agent.model.Measurement.validateMeasurement
+
 /**
  *  This class defines a contract for a measurement.
  */
-final case class Measurement(measure: Measure, result: MeasureResult)
+final case class Measurement private (measure: AtumMeasure, result: MeasureResult) {
+  validateMeasurement(measure, result)
+}
+
+object Measurement {
+
+  private def validateMeasurement(measure: AtumMeasure, result: MeasureResult): Unit = {
+    val actualType = result.resultType
+    val requiredType = measure.resultValueType
+
+    if (actualType != requiredType)
+      throw MeasurementException(
+        s"Type of a given provided measurement result and type that a given measure supports are not compatible! " +
+          s"Got $actualType but should be $requiredType"
+      )
+  }
+}
