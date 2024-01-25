@@ -18,14 +18,14 @@ package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
-import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitionDTO}
-import za.co.absa.atum.server.api.TestConfigProvider
-import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
+import za.co.absa.atum.model.dto._
+import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
+import za.co.absa.atum.server.api.{TestConfigProvider, TestTransactorProvider}
 import za.co.absa.fadb.exceptions.DataNotFoundException
 import za.co.absa.fadb.status.FunctionStatus
-import zio.{Scope, ZIO}
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
+import zio._
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -55,7 +55,7 @@ class WriteCheckpointSpec extends ZIOSpecDefault {
     ).provide(
       WriteCheckpoint.layer,
       PostgresDatabaseProvider.layer,
-      TransactorProvider.testLayerWithRollback
+      TestTransactorProvider.layerWithRollback
     )
 
   }.provideLayer(

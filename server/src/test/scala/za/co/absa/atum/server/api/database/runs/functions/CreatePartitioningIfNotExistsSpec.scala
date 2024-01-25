@@ -18,11 +18,11 @@ package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
 import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.api.TestConfigProvider
-import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
-import zio.{Scope, ZIO}
+import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
+import za.co.absa.atum.server.api.{TestConfigProvider, TestTransactorProvider}
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
+import zio._
 
 @RunWith(classOf[ZTestJUnitRunner])
 class CreatePartitioningIfNotExistsSpec extends ZIOSpecDefault {
@@ -44,7 +44,7 @@ class CreatePartitioningIfNotExistsSpec extends ZIOSpecDefault {
     ).provide(
       CreatePartitioningIfNotExists.layer,
       PostgresDatabaseProvider.layer,
-      TransactorProvider.testLayerWithRollback
+      TestTransactorProvider.layerWithRollback
     )
 
   }.provideLayer(
