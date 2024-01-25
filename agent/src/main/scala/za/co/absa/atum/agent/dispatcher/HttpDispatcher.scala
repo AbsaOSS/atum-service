@@ -65,7 +65,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     safeResponseBody(response).get
   }
 
-  override def saveAdditionalData(metadataDTO: AdditionalDataSubmitDTO): Unit = {
+  override def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
     val request = commonAtumRequest
       .post(createAdditionalDataEndpoint)
       .body(SerializationUtils.asJson(metadataDTO))
