@@ -45,17 +45,17 @@ class CheckpointServiceSpec extends ZIOSpecDefault with TestData {
 
     suite("CheckpointServiceSuite")(
       suite("SaveCheckpointSuite")(
-        test("Returns expected Right with Unit"){
+        test("Returns expected Right with Unit") {
           for {
             result <- CheckpointService.saveCheckpoint(checkpointDTO1)
           } yield assertTrue(result.isRight)
         },
-        test("Returns expected Left with StatusException"){
+        test("Returns expected Left with StatusException") {
           for {
             result <- CheckpointService.saveCheckpoint(checkpointDTO2)
           } yield assertTrue(result.isLeft)
         },
-        test("Returns expected ServiceError"){
+        test("Returns expected ServiceError") {
           assertZIO(CheckpointService.saveCheckpoint(checkpointDTO3).exit)(failsWithA[ServiceError])
         }
       )

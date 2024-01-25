@@ -48,7 +48,7 @@ class CreatePartitioningIfNotExistsSpec extends ZIOSpecDefault {
     )
 
   }.provideLayer(
-    TestConfigProvider.layer,
+    TestConfigProvider.layer
   )
 
 }

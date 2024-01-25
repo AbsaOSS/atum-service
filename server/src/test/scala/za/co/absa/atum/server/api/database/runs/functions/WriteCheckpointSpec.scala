@@ -44,7 +44,8 @@ class WriteCheckpointSpec extends ZIOSpecDefault {
           partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
           processStartTime = ZonedDateTime.now(),
           processEndTime = None,
-          measurements = Seq(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))))
+          measurements =
+            Seq(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))))
         )
         for {
           writeCheckpoint <- ZIO.service[WriteCheckpoint]
@@ -58,6 +59,6 @@ class WriteCheckpointSpec extends ZIOSpecDefault {
     )
 
   }.provideLayer(
-    TestConfigProvider.layer,
+    TestConfigProvider.layer
   )
 }

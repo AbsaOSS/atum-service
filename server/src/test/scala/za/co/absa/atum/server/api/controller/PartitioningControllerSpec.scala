@@ -47,7 +47,7 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
 
     suite("PartitioningControllerSuite")(
       suite("CreatePartitioningIfNotExistsSuite")(
-        test("Returns expected AtumContextDTO"){
+        test("Returns expected AtumContextDTO") {
           val expectedAtumContextDTO = AtumContextDTO(
             partitioning = partitioningSubmitDTO1.partitioning,
             measures = Set(MeasureDTO("count", Seq("*"))),
@@ -57,11 +57,15 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
             result <- PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO1)
           } yield assertTrue(result == expectedAtumContextDTO)
         },
-        test("Returns expected InternalServerErrorResponse"){
-          assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(failsWithA[InternalServerErrorResponse])
+        test("Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
         },
-        test("Returns expected GeneralErrorResponse"){
-          assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO2).exit)(failsWithA[GeneralErrorResponse])
+        test("Returns expected GeneralErrorResponse") {
+          assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO2).exit)(
+            failsWithA[GeneralErrorResponse]
+          )
         }
       )
     ).provide(
