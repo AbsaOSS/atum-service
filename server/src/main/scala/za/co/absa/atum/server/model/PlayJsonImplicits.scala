@@ -16,8 +16,9 @@
 
 package za.co.absa.atum.server.model
 
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
+import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
 
 object PlayJsonImplicits {
@@ -43,7 +44,12 @@ object PlayJsonImplicits {
   implicit val readsTypedValue: Reads[MeasureResultDTO.TypedValue] = Json.reads[MeasureResultDTO.TypedValue]
   implicit val writesTypedValue: Writes[MeasureResultDTO.TypedValue] = Json.writes[MeasureResultDTO.TypedValue]
 
-  implicit val readsMeasureResultDTO: Reads[MeasureResultDTO] = Json.reads[MeasureResultDTO]
+  implicit val readsMeasureResultDTO: Reads[MeasureResultDTO] = {
+    ((__ \ "mainValue").read[MeasureResultDTO.TypedValue] and
+      (__ \ "supportValues").readNullable[Map[String, TypedValue]].map(_.getOrElse(Map.empty))
+      )(MeasureResultDTO.apply _)
+  }
+
   implicit val writesMeasureResultDTO: Writes[MeasureResultDTO] = Json.writes[MeasureResultDTO]
 
   implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
