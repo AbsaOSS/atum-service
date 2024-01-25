@@ -37,7 +37,7 @@ trait Dispatcher {
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 
   /**
-   * This method is used to save the metadata to the server.
+   * This method is used to save the additional data to the server.
    * @param AdditionalData the data to be saved.
    */
   def saveAdditionalData(AdditionalData: AdditionalDataSubmitDTO): Unit
