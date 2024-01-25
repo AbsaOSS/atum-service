@@ -125,6 +125,7 @@ object Dependencies {
     val tapirOrg = "com.softwaremill.sttp.tapir"
     val http4sOrg = "org.http4s"
     val faDbOrg = "za.co.absa.fa-db"
+    val playOrg = "com.typesafe.play"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
@@ -142,8 +143,11 @@ object Dependencies {
     lazy val tapirSwagger = tapirOrg %% "tapir-swagger-ui-bundle" % Versions.tapir
     lazy val tapirPlayJson = tapirOrg %% "tapir-json-play" % Versions.tapir
 
+    // tapir sttp stub server for testing endpoints (needs higher java version; 11+)
+//    lazy val tapirStubServer = tapirOrg %% "tapir-sttp-stub-server" % Versions.tapir % Test
+
     // json
-    lazy val playJson = "com.typesafe.play" %% "play-json" % Versions.playJson
+    lazy val playJson = playOrg %% "play-json" % Versions.playJson
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
@@ -166,6 +170,7 @@ object Dependencies {
       tapirHttp4sZio,
       tapirSwagger,
       tapirPlayJson,
+//      tapirStubServer,
       playJson,
       zioTest,
       zioTestSbt,
