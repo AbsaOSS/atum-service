@@ -60,9 +60,6 @@ BEGIN
     END IF;
 
     -- 1. (backup) get records that already exist but values differ, and insert them into ad history table
-    -- 2. (update) get records that already exist but values differ, and update the ad table with new values
-    -- 3. (insert) get records that do not not exist yet and insert it into ad table
-    --    (their original rows were previously saved in step 1)
     INSERT INTO runs.additional_data_history
         (fk_partitioning, ad_name, ad_value, created_by_originally, created_at_originally, archived_by)
     SELECT ad_curr.fk_partitioning, ad_curr.ad_name, ad_curr.ad_value,
@@ -76,6 +73,7 @@ BEGIN
             AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value
       );
 
+    -- 2. (update) get records that already exist but values differ, and update the ad table with new values
     IF found THEN
         UPDATE runs.additional_data AS ad_curr
         SET ad_value = ad_input.ad_value,
@@ -94,6 +92,8 @@ BEGIN
         _ad_backup_performed := FALSE;
     END IF;
 
+    -- 3. (insert) get records that do not not exist yet and insert it into ad table
+    --    (their original rows were previously saved in step 1)
     INSERT INTO runs.additional_data (fk_partitioning, ad_name, ad_value, created_by)
     SELECT _fk_partitioning, ad_input.key, ad_input.value, i_by_user
     FROM each(i_additional_data) AS ad_input
