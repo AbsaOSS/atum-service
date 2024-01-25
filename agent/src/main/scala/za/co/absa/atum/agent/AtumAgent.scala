@@ -19,7 +19,7 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.{ AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  * Entity that communicate with the API, primarily focused on spawning Atum Context(s).
