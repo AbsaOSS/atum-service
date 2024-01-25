@@ -121,7 +121,7 @@ class AtumContext private[agent] (
   }
 
   /**
-   * This method creates `Metadata` in the agentService.
+   * This method creates Additional Data in the agentService.
    *
    * @return AtumContext
    */
