@@ -15,15 +15,15 @@
 
 CREATE TABLE runs.additional_data_history
 (
-    id_additional_data      BIGINT NOT NULL DEFAULT global_id(),
-    fk_partitioning         BIGINT NOT NULL,
-    ad_name                 TEXT NOT NULL,
-    ad_value                TEXT,
-    created_by_originally   TEXT NOT NULL,
-    created_at_originally   TIMESTAMP WITH TIME ZONE NOT NULL,
-    archived_by             TEXT NOT NULL,
-    archived_at             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT additional_data_history_pk PRIMARY KEY (id_additional_data)
+    id_additional_data_history  BIGINT NOT NULL DEFAULT global_id(),
+    fk_partitioning             BIGINT NOT NULL,
+    ad_name                     TEXT NOT NULL,
+    ad_value                    TEXT,
+    created_by_originally       TEXT NOT NULL,
+    created_at_originally       TIMESTAMP WITH TIME ZONE NOT NULL,
+    archived_by                 TEXT NOT NULL,
+    archived_at                 TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT additional_data_history_pk PRIMARY KEY (id_additional_data_history)
 );
 
 ALTER TABLE runs.additional_data_history
