@@ -64,13 +64,16 @@ DECLARE
 
 BEGIN
     -- Checking whether the input has correct structure.
-    SELECT ARRAY(SELECT jsonb_object_keys(i_partitioning))
-    INTO _all_fields_in_input;
-
     SELECT i_partitioning ?& _mandatory_fields_in_input
     INTO _is_input_properly_structured;
 
     IF NOT _is_input_properly_structured THEN
+        SELECT array_agg(X.keys)
+        FROM (
+            SELECT jsonb_object_keys(i_partitioning) AS keys
+        ) AS X
+        INTO _all_fields_in_input;
+
         RETURN NEXT
             'The input partitioning is not properly structured, it should have this structure: '
                 || _mandatory_fields_in_input::TEXT
@@ -104,7 +107,10 @@ BEGIN
 
     -- Checking whether the map 'keysToValues' has the same keys as the 'keys' attribute.
     IF i_strict_check THEN
-        SELECT ARRAY(SELECT jsonb_object_keys(i_partitioning->'keysToValues'))
+        SELECT array_agg(X.keys)
+        FROM (
+            SELECT jsonb_object_keys(i_partitioning->'keysToValues') AS keys
+        ) AS X
         INTO _partitioning_keys_from_values_map;
 
         IF NOT (
