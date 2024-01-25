@@ -126,5 +126,3 @@ lazy val model = (projectMatrix in file("model"))
     jacocoExcludes := jacocoProjectExcludes()
   )
   .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
-
-//testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")

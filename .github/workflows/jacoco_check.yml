@@ -48,8 +48,8 @@ jobs:
           # The codebase for all Scala versions is the same, so the coverage is calculated only once
           # Scala 2.12 is chosen since it is supported by the most wide range of Spark versions and
           # vendor distributions.
-          - scala: 2.12.18
-            scalaShort: "2.12"
+          - scala: 2.13.11
+            scalaShort: "2.13"
             overall: 80.0
             changed: 80.0
     steps:
