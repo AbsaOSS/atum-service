@@ -48,7 +48,7 @@ ARG LDAP_SSL_CERTS_PATH
 # In case you build the Dockerfile from another location than the default 'service' dir, provide a prefix to reach it
 ARG AS_PREFIX=.
 # Version of scala that server was built against
-ARG SCALA_VERSION=2.12
+ARG SCALA_VERSION=2.13
 
 LABEL org.opencontainers.image.authors="ABSA"
 
