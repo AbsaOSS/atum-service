@@ -69,11 +69,11 @@ jobs:
         uses: madrapps/jacoco-report@v1.6.1
         with:
           name: agent-jacoco-report
-          paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/agent/target/spark3-jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-file: ${{ matrix.changed }}
-          title: JaCoCo agent module code coverage report - spark:2 - scala ${{ matrix.scala }}
+          title: JaCoCo agent module code coverage report - spark:3 - scala ${{ matrix.scala }}
           update-comment: true
      #  server module code coverage
       - name: Add coverage to PR

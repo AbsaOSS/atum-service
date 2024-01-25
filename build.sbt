@@ -122,7 +122,7 @@ lazy val model = (projectMatrix in file("model"))
     ): _*
   )
   .settings(
-    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent: model"),
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-model: model"),
     jacocoExcludes := jacocoProjectExcludes()
   )
   .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
