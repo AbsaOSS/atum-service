@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server
+package za.co.absa.atum.server.api.http
 
 import cats.syntax.semigroupk._
 import org.http4s.HttpRoutes

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server
+package za.co.absa.atum.server.api.http
 
 import sttp.model.StatusCode
-import sttp.tapir.json.play.jsonBody
-import sttp.tapir.{Endpoint, EndpointOutput, PublicEndpoint, oneOfVariantFromMatchType}
-import sttp.tapir.ztapir._
 import sttp.tapir.generic.auto.schemaForCaseClass
+import sttp.tapir.json.play.jsonBody
+import sttp.tapir.ztapir._
+import sttp.tapir._
 import za.co.absa.atum.server.Constants.{Api, V1}
 import za.co.absa.atum.server.model._
 

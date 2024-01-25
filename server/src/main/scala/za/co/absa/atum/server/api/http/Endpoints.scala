@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server
+package za.co.absa.atum.server.api.http
 
 import sttp.model.StatusCode
 import sttp.tapir.PublicEndpoint
