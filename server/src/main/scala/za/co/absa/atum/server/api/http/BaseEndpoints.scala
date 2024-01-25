@@ -20,7 +20,7 @@ import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir._
-import sttp.tapir._
+import sttp.tapir.{EndpointOutput, PublicEndpoint}
 import za.co.absa.atum.server.Constants.{Api, V1}
 import za.co.absa.atum.server.model._
 
@@ -57,7 +57,7 @@ trait BaseEndpoints {
     )
   }
 
-  protected val apiV1: Endpoint[Unit, Unit, ErrorResponse, Unit, Any] = {
+  protected val apiV1: PublicEndpoint[Unit, ErrorResponse, Unit, Any] = {
     baseEndpoint.in(Api / V1)
   }
 
