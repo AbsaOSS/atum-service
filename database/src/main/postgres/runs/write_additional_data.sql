@@ -42,7 +42,7 @@ $$
 -- Status codes:
 --      11                  - Additional data have been added
 --      12                  - Additional data have been upserted
---      14                  - Additional data already exist
+--      14                  - No changes in additional data (this is when they already existed)
 --      41                  - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ BEGIN
           SELECT *
           FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
           WHERE ad_curr.ad_name = ad_input.ad_key
-            AND ad_curr.ad_value != ad_input.ad_value
+            AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value
       );
 
     IF found THEN
@@ -87,7 +87,7 @@ BEGIN
         ) as ad_input
         WHERE ad_curr.fk_partitioning = _fk_partitioning
           AND ad_curr.ad_name = ad_input.ad_key
-          AND ad_curr.ad_value != ad_input.ad_value;
+          AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value;
 
         _ad_backup_performed := TRUE;
     ELSE
@@ -108,7 +108,7 @@ BEGIN
             status_text := 'Additional data have been added';
         ELSE
             status := 14;
-            status_text := 'Additional data already exist';
+            status_text := 'No changes in additional data';
         END IF;
     END IF;
 

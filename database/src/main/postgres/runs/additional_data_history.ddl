@@ -26,7 +26,7 @@ CREATE TABLE runs.additional_data_history
     CONSTRAINT additional_data_history_pk PRIMARY KEY (id_additional_data)
 );
 
-ALTER TABLE runs.additional_data
+ALTER TABLE runs.additional_data_history
     ADD CONSTRAINT ad_history_unq UNIQUE (fk_partitioning, ad_name, ad_value, created_by_originally, created_at_originally);
 
 ALTER TABLE runs.additional_data_history OWNER to atum_owner;
