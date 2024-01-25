@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs.validate_partitioning(
+CREATE OR REPLACE FUNCTION validation.validate_partitioning(
     IN i_partitioning JSONB,
     IN i_strict_check BOOLEAN = true
 ) RETURNS SETOF TEXT AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.validate_partitioning(2)
+-- Function: validation.validate_partitioning(2)
 --      Validates the input partitioning and returns a set of individual error messages, one per an issue.
 --      The validation performs:
 --          1) Correct structure of the input JSONB object
@@ -139,4 +139,4 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER;
 
-ALTER FUNCTION runs.validate_partitioning(JSONB, BOOL) OWNER TO atum_owner;
+ALTER FUNCTION validation.validate_partitioning(JSONB, BOOL) OWNER TO atum_owner;

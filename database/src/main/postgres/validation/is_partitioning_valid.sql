@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs.is_partitioning_valid(
+CREATE OR REPLACE FUNCTION validation.is_partitioning_valid(
     IN i_partitioning   JSONB,
     IN i_strict_check   BOOLEAN = true
 ) RETURNS BOOLEAN AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.is_partitioning_valid(2)
+-- Function: validation.is_partitioning_valid(2)
 --      Validates the input partitioning and raises exception if it's not valid.
 --
 -- Parameters:
@@ -43,7 +43,7 @@ $$
 DECLARE
 
 BEGIN
-    PERFORM runs.validate_partitioning(i_partitioning, i_strict_check)
+    PERFORM validation.validate_partitioning(i_partitioning, i_strict_check)
     LIMIT 1;
 
     IF found THEN
@@ -55,4 +55,4 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER;
 
-ALTER FUNCTION runs.is_partitioning_valid(JSONB, BOOL) OWNER TO atum_owner;
+ALTER FUNCTION validation.is_partitioning_valid(JSONB, BOOL) OWNER TO atum_owner;
