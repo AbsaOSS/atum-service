@@ -30,7 +30,7 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
   "Measure" should "be based on the dataframe" in {
 
     // Measures
-    val measureIds: AtumMeasure = RecordCount("id")
+    val measureIds: AtumMeasure = RecordCount()
     val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn("salary")
 
     val salarySum = SumOfValuesOfColumn("salary")
