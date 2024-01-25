@@ -39,7 +39,7 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
 }
 
 object CheckpointServiceImpl {
-  val layer: RLayer[CheckpointRepository, CheckpointService] = ZLayer {
+  val layer: URLayer[CheckpointRepository, CheckpointService] = ZLayer {
     for {
       checkpointRepository <- ZIO.service[CheckpointRepository]
     } yield new CheckpointServiceImpl(checkpointRepository)

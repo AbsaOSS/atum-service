@@ -45,7 +45,7 @@ class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends Check
 }
 
 object CheckpointRepositoryImpl {
-  val layer: RLayer[WriteCheckpoint, CheckpointRepository] = ZLayer {
+  val layer: URLayer[WriteCheckpoint, CheckpointRepository] = ZLayer {
     for {
       writeCheckpoint <- ZIO.service[WriteCheckpoint]
     } yield new CheckpointRepositoryImpl(writeCheckpoint)

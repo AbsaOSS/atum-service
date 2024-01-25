@@ -60,7 +60,7 @@ class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieE
 }
 
 object CreatePartitioningIfNotExists {
-  val layer: RLayer[PostgresDatabaseProvider, CreatePartitioningIfNotExists] = ZLayer {
+  val layer: URLayer[PostgresDatabaseProvider, CreatePartitioningIfNotExists] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
     } yield new CreatePartitioningIfNotExists()(Runs, dbProvider.dbEngine)

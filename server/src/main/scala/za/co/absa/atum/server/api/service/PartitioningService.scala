@@ -43,7 +43,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) ex
 }
 
 object PartitioningServiceImpl {
-  val layer: ZLayer[PartitioningRepository, Nothing, PartitioningService] = ZLayer {
+  val layer: URLayer[PartitioningRepository, PartitioningService] = ZLayer {
     for {
       partitioningRepository <- ZIO.service[PartitioningRepository]
     } yield new PartitioningServiceImpl(partitioningRepository)

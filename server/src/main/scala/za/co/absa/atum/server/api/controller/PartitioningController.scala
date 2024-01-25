@@ -49,7 +49,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService) exten
 }
 
 object PartitioningControllerImpl {
-  val layer: RLayer[PartitioningService, PartitioningController] = ZLayer {
+  val layer: URLayer[PartitioningService, PartitioningController] = ZLayer {
     for {
       partitioningService <- ZIO.service[PartitioningService]
     } yield new PartitioningControllerImpl(partitioningService)

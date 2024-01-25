@@ -45,7 +45,7 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
 }
 
 object CheckpointControllerImpl {
-  val layer: RLayer[CheckpointService, CheckpointController] = ZLayer {
+  val layer: URLayer[CheckpointService, CheckpointController] = ZLayer {
     for {
       checkpointService <- ZIO.service[CheckpointService]
     } yield new CheckpointControllerImpl(checkpointService)

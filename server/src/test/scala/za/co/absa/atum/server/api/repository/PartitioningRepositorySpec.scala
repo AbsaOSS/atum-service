@@ -18,30 +18,26 @@ package za.co.absa.atum.server.api.repository
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.PartitioningSubmitDTO
-import za.co.absa.atum.server.api.TestConfigProvider
 import za.co.absa.atum.server.api.database.runs.functions.CreatePartitioningIfNotExists
+import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.api.TestData
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
 import zio._
+import zio.test.Assertion.failsWithA
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 
 @RunWith(classOf[ZTestJUnitRunner])
-class PartitioningRepositorySpec extends ZIOSpecDefault {
-
-  private val partitioningSubmitDTO1 = PartitioningSubmitDTO(
-    partitioning = Seq.empty,
-    parentPartitioning = None,
-    authorIfNew = ""
-  )
-  private val partitioningSubmitDTO2 = partitioningSubmitDTO1.copy(authorIfNew = "differentAuthor")
+class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
 
   private val createPartitioningIfNotExistsMock = mock(classOf[CreatePartitioningIfNotExists])
 
   when(createPartitioningIfNotExistsMock.apply(partitioningSubmitDTO1)).thenReturn(ZIO.right(()))
   when(createPartitioningIfNotExistsMock.apply(partitioningSubmitDTO2))
     .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
+  when(createPartitioningIfNotExistsMock.apply(partitioningSubmitDTO3))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val createPartitioningIfNotExistsMockLayer = ZLayer.succeed(createPartitioningIfNotExistsMock)
 
@@ -58,10 +54,15 @@ class PartitioningRepositorySpec extends ZIOSpecDefault {
           for {
             result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO2)
           } yield assertTrue(result.isLeft)
+        },
+        test("Returns expected DatabaseError") {
+          assertZIO(PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
+            failsWithA[DatabaseError]
+          )
         }
       )
     ).provide(PartitioningRepositoryImpl.layer, createPartitioningIfNotExistsMockLayer)
 
-  }.provideLayer(TestConfigProvider.layer)
+  }
 
 }

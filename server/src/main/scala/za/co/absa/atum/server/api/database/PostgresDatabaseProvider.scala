@@ -24,7 +24,7 @@ import zio.interop.catz._
 class PostgresDatabaseProvider(val dbEngine: DoobieEngine[Task])
 
 object PostgresDatabaseProvider {
-  val layer: RLayer[Transactor[Task], PostgresDatabaseProvider] = ZLayer {
+  val layer: URLayer[Transactor[Task], PostgresDatabaseProvider] = ZLayer {
     for {
       transactor <- ZIO.service[Transactor[Task]]
       doobieEngine <- ZIO.succeed(new DoobieEngine[Task](transactor))

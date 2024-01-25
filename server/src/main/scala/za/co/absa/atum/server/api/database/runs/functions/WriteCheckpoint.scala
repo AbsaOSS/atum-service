@@ -66,7 +66,7 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
 }
 
 object WriteCheckpoint {
-  val layer: RLayer[PostgresDatabaseProvider, WriteCheckpoint] = ZLayer {
+  val layer: URLayer[PostgresDatabaseProvider, WriteCheckpoint] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
     } yield new WriteCheckpoint()(Runs, dbProvider.dbEngine)
