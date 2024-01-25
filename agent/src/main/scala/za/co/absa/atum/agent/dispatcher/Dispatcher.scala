@@ -38,7 +38,7 @@ trait Dispatcher {
 
   /**
    * This method is used to save the additional data to the server.
-   * @param AdditionalData the data to be saved.
+   * @param additionalData the data to be saved.
    */
-  def saveAdditionalData(AdditionalData: AdditionalDataSubmitDTO): Unit
+  def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit
 }

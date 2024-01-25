@@ -68,14 +68,14 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   override def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
     val request = commonAtumRequest
       .post(createAdditionalDataEndpoint)
-      .body(SerializationUtils.asJson(metadataDTO))
+      .body(SerializationUtils.asJson(additionalDataSubmitDTO))
 
     val response = backend.send(request)
 
     safeResponseBody(response).get
   }
 
-  private def safeResponseBody(response: Response[Either[String, String]]): Try[String] = {
+  def safeResponseBody(response: Response[Either[String, String]]): Try[String] = {
     response.body match {
       case Left(body) => Failure(HttpException(response.code.code, body))
       case Right(body) => Success(body)
