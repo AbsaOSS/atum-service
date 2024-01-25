@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.agent.dispatcher
 
-import za.co.absa.atum.model.dto.{ AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  *  This trait provides a contract for different dispatchers
