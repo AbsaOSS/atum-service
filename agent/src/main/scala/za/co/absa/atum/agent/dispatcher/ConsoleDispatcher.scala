@@ -36,7 +36,7 @@ class ConsoleDispatcher extends Dispatcher with Logging {
   }
 
   override def saveAdditionalData(AdditionalData: AdditionalDataSubmitDTO): Unit = {
-    println(s"Saving the metadata to server. $AdditionalData")
+    println(s"Saving the additional data to server. $AdditionalData")
   }
 
 }
