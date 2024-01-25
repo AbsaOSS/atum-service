@@ -17,11 +17,13 @@
 package za.co.absa.atum.server.api
 
 import zio.config.typesafe.TypesafeConfigProvider
+import zio.test.ZIOSpec
 import zio.{Runtime, ZLayer}
 
-object TestConfigProvider {
+abstract class SharedConfigSpec extends ZIOSpec[Unit]{
 
-  val layer: ZLayer[Any, Nothing, Unit] =
+  override def bootstrap: ZLayer[Any, Any, Unit] =
     Runtime.setConfigProvider(TypesafeConfigProvider.fromResourcePath())
 
 }
+

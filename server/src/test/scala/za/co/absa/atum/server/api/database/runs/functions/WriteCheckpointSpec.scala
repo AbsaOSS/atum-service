@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.{TestConfigProvider, TestTransactorProvider}
+import za.co.absa.atum.server.api.{SharedConfigSpec, TestTransactorProvider}
 import za.co.absa.fadb.exceptions.DataNotFoundException
 import za.co.absa.fadb.status.FunctionStatus
 import zio.test._
@@ -31,7 +31,7 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 @RunWith(classOf[ZTestJUnitRunner])
-class WriteCheckpointSpec extends ZIOSpecDefault {
+class WriteCheckpointSpec extends SharedConfigSpec {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -58,7 +58,6 @@ class WriteCheckpointSpec extends ZIOSpecDefault {
       TestTransactorProvider.layerWithRollback
     )
 
-  }.provideLayer(
-    TestConfigProvider.layer
-  )
+  }
+
 }
