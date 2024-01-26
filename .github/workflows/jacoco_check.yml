@@ -49,7 +49,7 @@ jobs:
      #  Agent module code coverage
       - name: Add coverage to PR
         id: jacoco-agent
-        uses: madrapps/jacoco-report@v1.4
+        uses: madrapps/jacoco-report@v1.5
         with:
           name: agent-jacoco-report
           paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
