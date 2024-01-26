@@ -20,6 +20,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DataType, DecimalType, LongType, StringType}
 import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
+import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 /**
@@ -47,7 +48,7 @@ object AtumMeasure {
   case class RecordCount private (measureName: String) extends AtumMeasure {
     private val columnExpression = count("*")
 
-    override def function: MeasurementProcessor.MeasurementFunction =
+    override def function: MeasurementFunction =
       (ds: DataFrame) => {
         val resultValue = ds.select(columnExpression).collect()
         MeasureResult(resultValue(0).toString, resultValueType)
@@ -66,7 +67,7 @@ object AtumMeasure {
 
     private val columnExpression = countDistinct(col(measuredCols.head), measuredCols.tail.map(col): _*)
 
-    override def function: MeasurementProcessor.MeasurementFunction =
+    override def function: MeasurementFunction =
       (ds: DataFrame) => {
         val resultValue = ds.select(columnExpression).collect()
         MeasureResult(resultValue(0)(0).toString, resultValueType)
@@ -83,7 +84,7 @@ object AtumMeasure {
   case class SumOfValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
     private val columnAggFn: Column => Column = column => sum(column)
 
-    override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
+    override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
       val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
       MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
@@ -100,7 +101,7 @@ object AtumMeasure {
   case class AbsSumOfValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
     private val columnAggFn: Column => Column = column => sum(abs(column))
 
-    override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
+    override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
       val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
       MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
@@ -116,7 +117,7 @@ object AtumMeasure {
 
   case class SumOfHashesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
     private val columnExpression: Column = sum(crc32(col(measuredCol).cast("String")))
-    override def function: MeasurementProcessor.MeasurementFunction = (ds: DataFrame) => {
+    override def function: MeasurementFunction = (ds: DataFrame) => {
       val resultValue = ds.select(columnExpression).collect()
       MeasureResult(Option(resultValue(0)(0)).getOrElse("").toString, resultValueType)
     }

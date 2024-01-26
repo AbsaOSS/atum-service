@@ -48,7 +48,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     val response = backend.send(request)
 
     SerializationUtils.fromJson[AtumContextDTO](
-      safeResponseBody(response)
+      handleResponseBody(response)
     )
   }
 
@@ -59,10 +59,10 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
     val response = backend.send(request)
 
-    safeResponseBody(response)
+    handleResponseBody(response)
   }
 
-  private def safeResponseBody(response: Response[Either[String, String]]): String = {
+  private def handleResponseBody(response: Response[Either[String, String]]): String = {
     response.body match {
       case Left(body) => throw HttpException(response.code.code, body)
       case Right(body) => body
