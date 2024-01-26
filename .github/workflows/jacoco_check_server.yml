@@ -57,7 +57,7 @@ jobs:
       - name: Prepare testing database
         run: sbt flywayMigrate
       - name: Build and run tests
-        run: sbt ++${{matrix.scala}} jacoco
+        run: sbt ++${{matrix.scala}} "server/jacoco"
       #  server module code coverage
       - name: Add coverage to PR
         id: jacoco-server

@@ -45,7 +45,7 @@ jobs:
         with:
           java-version: "adopt@1.8"
       - name: Build and run tests
-        run: sbt ++${{matrix.scala}} jacoco
+        run: sbt ++${{matrix.scala}} "agent/jacoco"
      #  Agent module code coverage
       - name: Add coverage to PR
         id: jacoco-agent
