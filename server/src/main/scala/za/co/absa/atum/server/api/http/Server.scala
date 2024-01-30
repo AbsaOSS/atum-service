@@ -31,7 +31,7 @@ import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.r
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import sttp.tapir.{DecodeResult, PublicEndpoint, headers, statusCode}
+import sttp.tapir.{DecodeResult, Endpoint, PublicEndpoint, headers, statusCode}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller._
 import za.co.absa.atum.server.model.BadRequestResponse

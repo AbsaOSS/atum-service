@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import Dependencies.*
-import SparkVersionAxis.*
-import JacocoSetup.*
+import Dependencies._
+import SparkVersionAxis._
+import JacocoSetup._
 import sbt.Keys.name
 
 
@@ -51,12 +51,12 @@ val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := 
 }
 
 enablePlugins(FlywayPlugin)
-flywayUrl := "jdbc:postgresql://localhost:5432/atum_db"
-flywayUser := "postgres"
-flywayPassword := "postgres"
-flywayLocations := Seq("filesystem:database/src/main/postgres")
-flywaySqlMigrationSuffixes := Seq(".sql",".ddl")
-libraryDependencies += "org.postgresql" % "postgresql" % "42.5.4"
+flywayUrl := FlywayConfiguration.flywayUrl
+flywayUser := FlywayConfiguration.flywayUser
+flywayPassword := FlywayConfiguration.flywayPassword
+flywayLocations := FlywayConfiguration.flywayLocations
+flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
+libraryDependencies ++= flywayDependencies
 
 lazy val root = (projectMatrix in file("."))
   .aggregate(model, server, agent)

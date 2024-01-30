@@ -61,6 +61,8 @@ object Dependencies {
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
     val playJson = "2.9.4"
+
+    val postgresql = "42.5.4"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -143,9 +145,6 @@ object Dependencies {
     lazy val tapirSwagger = tapirOrg %% "tapir-swagger-ui-bundle" % Versions.tapir
     lazy val tapirPlayJson = tapirOrg %% "tapir-json-play" % Versions.tapir
 
-    // tapir sttp stub server for testing endpoints (needs higher java version; 11+)
-//    lazy val tapirStubServer = tapirOrg %% "tapir-sttp-stub-server" % Versions.tapir % Test
-
     // json
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
 
@@ -170,7 +169,6 @@ object Dependencies {
       tapirHttp4sZio,
       tapirSwagger,
       tapirPlayJson,
-//      tapirStubServer,
       playJson,
       zioTest,
       zioTestSbt,
@@ -209,6 +207,12 @@ object Dependencies {
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
     Seq(specs2core, typeSafeConfig)
+  }
+
+  def flywayDependencies: Seq[ModuleID] = {
+    val postgresql = "org.postgresql" % "postgresql" % Versions.postgresql
+
+    Seq(postgresql)
   }
 
 }

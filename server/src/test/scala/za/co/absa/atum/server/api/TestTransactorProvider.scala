@@ -24,7 +24,7 @@ import zio.interop.catz._
 
 object TestTransactorProvider {
 
-  val layer: ZLayer[Any, Config.Error, Transactor[Task]] = ZLayer {
+  val layerWithoutRollback: ZLayer[Any, Config.Error, Transactor[Task]] = ZLayer {
     for {
       postgresConfig <- ZIO.config[PostgresConfig](PostgresConfig.config)
       transactor <- ZIO.succeed(
