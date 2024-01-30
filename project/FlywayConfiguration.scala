@@ -1,5 +1,3 @@
-import io.github.davidmweber.FlywayPlugin.autoImport.{flywayLocations, flywayPassword, flywaySqlMigrationSuffixes, flywayUrl, flywayUser}
-
 /*
  * Copyright 2021 ABSA Group Limited
  *
