@@ -16,7 +16,10 @@
 
 object FlywayConfiguration {
 
-  val flywayUrl = "jdbc:postgresql://localhost:5432/atum_db"
+  private val port = 5432
+  private val host = "localhost"
+  private val database = "atum_db"
+  val flywayUrl = s"jdbc:postgresql://$host:$port/$database"
   val flywayUser = "postgres"
   val flywayPassword = "postgres"
   val flywayLocations: Seq[String] = Seq("filesystem:database/src/main/postgres")

@@ -58,6 +58,7 @@ object Dependencies {
     val zio = "2.0.19"
     val zioLogging = "2.2.0"
     val zioConfig = "4.0.1"
+    val sbtJunitInterface = "0.13.3"
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
     val playJson = "2.9.4"
@@ -128,6 +129,7 @@ object Dependencies {
     val http4sOrg = "org.http4s"
     val faDbOrg = "za.co.absa.fa-db"
     val playOrg = "com.typesafe.play"
+    val sbtOrg = "com.github.sbt"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
@@ -155,7 +157,7 @@ object Dependencies {
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
     lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
     lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
-    lazy val sbtJunitInterface = "com.github.sbt" % "junit-interface" % "0.13.3" % Test
+    lazy val sbtJunitInterface = sbtOrg % "junit-interface" % Versions.sbtJunitInterface % Test
 
     Seq(
       faDbDoobie,
