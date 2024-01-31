@@ -29,7 +29,7 @@ private [agent] object MeasurementBuilder {
 
     val originalMeasuresCnt = allMeasures.size
     val uniqueMeasureColumnCombinationCnt = allMeasures.map(m =>
-      Tuple2(m.measureName, m.measuredColumns)  // there can't be two same measures defined on the same column(s)
+      (m.measureName, m.measuredColumns)  // there can't be two same measures defined on the same column(s)
     ).distinct.size
 
     if (originalMeasuresCnt != uniqueMeasureColumnCombinationCnt)
