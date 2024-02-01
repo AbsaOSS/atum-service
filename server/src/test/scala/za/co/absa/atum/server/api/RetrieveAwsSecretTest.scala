@@ -46,7 +46,7 @@ class RetrieveAwsSecretTest extends AnyFlatSpec with MockitoSugar {
     assert(overrideValue == expectedResults)
   }
 
-  it should "handle SecretsManagerException and return error message" in {
+  it should "return an error message" in {
     val mockSecretsManagerClient = mock[SecretsManagerClient]
     val retrieveAwsSecret = new RetrieveAwsSecret("testProfile") {
       override val secretsManagerClient: SecretsManagerClient = mockSecretsManagerClient
@@ -57,7 +57,11 @@ class RetrieveAwsSecretTest extends AnyFlatSpec with MockitoSugar {
     val exception = SecretsManagerException.builder().message("testError").build()
     when(mockSecretsManagerClient.getSecretValue(any[GetSecretValueRequest])).thenThrow(exception)
 
-    assert(retrieveAwsSecret.retrieveAwsSecret(testSecretName) == "testError".map(_.toString))
+    val thrown = intercept[SecretsManagerException] {
+      retrieveAwsSecret.retrieveAwsSecret(testSecretName)
+    }
+    assert(thrown.getMessage == "testError")
   }
+
 
 }

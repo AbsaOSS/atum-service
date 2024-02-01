@@ -20,8 +20,7 @@ package za.co.absa.atum.server.api
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
-import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, SecretsManagerException}
-import org.slf4j.{Logger, LoggerFactory}
+import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest
 
 
 /**
@@ -38,24 +37,14 @@ class RetrieveAwsSecret (profileCredentials: String = "default") {
    * @param secretName
    * @return a sequence of string from aws secret service
    */
-  def retrieveAwsSecret(secretName: String): Seq[String] = {
-    val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+  def retrieveAwsSecret(secretName: String): String = {
+    val request = GetSecretValueRequest.builder()
+      .secretId(secretName)
+      .build()
 
-    try {
-      val request = GetSecretValueRequest.builder()
-        .secretId(secretName)
-        .build()
-
-      val response = secretsManagerClient.getSecretValue(request)
-      response.secretString.map(_.toString)
-    } catch {
-      case e: SecretsManagerException =>
-        logger.error(s"Error retrieving secret key: ${e.getMessage}")
-        e.getMessage.map(_.toString)
-    } finally {
-      // Close the client when done
-      secretsManagerClient.close()
-    }
+    val response = secretsManagerClient.getSecretValue(request)
+    response.secretString
   }
 
 }
+

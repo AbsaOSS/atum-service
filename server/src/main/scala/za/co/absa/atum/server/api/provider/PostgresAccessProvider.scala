@@ -61,7 +61,7 @@ class PostgresAccessProvider @Autowired()(atumConfig: AtumConfig) {
 
   private def overrideWithSecret(oldConfig: Config, path: String, secretName: String): Config = {
 
-    val secretString: Seq[String] = retrieveAwsSecret.retrieveAwsSecret(secretName)
+    val secretString: String = retrieveAwsSecret.retrieveAwsSecret(secretName)
     val overrideValue = secretString.foldLeft(Try("")) {(acc, s) =>
       acc.flatMap(str => Try(str + s))
     }
