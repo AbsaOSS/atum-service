@@ -137,8 +137,9 @@ class AtumContext private[agent] (
    * @param key   the key of the additional data
    * @param value the value of the additional data
    */
-  def addAdditionalData(key: String, value: String): Unit = {
+  def addAdditionalData(key: String, value: String): AtumContext = {
     additionalData += (key -> Some(value))
+    this
   }
 
   /**
