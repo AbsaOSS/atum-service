@@ -21,7 +21,7 @@ import org.apache.spark.internal.Logging
 import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
 
 class HttpDispatcher(config: Config) extends Dispatcher with Logging {
@@ -30,6 +30,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   private val currentApiVersion = "/api/v1"
   private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createPartitioning")
   private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createCheckpoint")
+  private val createAdditionalDataEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/writeAdditionalData")
 
   private val commonAtumRequest = basicRequest
     .header("Content-Type", "application/json")
@@ -56,6 +57,16 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     val request = commonAtumRequest
       .post(createCheckpointEndpoint)
       .body(SerializationUtils.asJson(checkpoint))
+
+    val response = backend.send(request)
+
+    handleResponseBody(response)
+  }
+
+  override def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
+    val request = commonAtumRequest
+      .post(createAdditionalDataEndpoint)
+      .body(SerializationUtils.asJson(additionalDataSubmitDTO))
 
     val response = backend.send(request)
 
