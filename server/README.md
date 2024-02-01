@@ -1,6 +1,6 @@
 # Atum Web Service
 
-## How to build and run
+## How to build and run (will be updated soon)
 
 To create a war file that can be deployed to tomcat just run:
 
@@ -8,16 +8,13 @@ To create a war file that can be deployed to tomcat just run:
 > sbt package
 ```
 
-If you want to quickly build and run from sbt you can run using the command below. This deploys it to `localhost:8080`.
-This is possible thanks to [xsbt-web-plugin](https://github.com/earldouglas/xsbt-web-plugin)
+If you want to quickly build and run from sbt you can run using the command below (alternatively you can execute za.co.absa.atum.server.Main within your IDE). This deploys it to `localhost:8080`.
 
 ```shell
-> sbt
-sbt:Atum Service> tomcat:start
-sbt:Atum Service> tomcat:stop
+sbt "server/runMain za.co.absa.atum.server.Main"
 ```
 
 ### REST API Reference 
 
 The REST API exposes a Swagger Documentation UI which documents all the HTTP endpoints exposed.
-It can be found at **{REST_API_HOST}/swagger-ui/** (e.g. `http://localhost:8080/swagger-ui/`)
+It can be found at **{REST_API_HOST}/docs/** (e.g. `http://localhost:8080/docs/`)
