@@ -147,8 +147,6 @@ object Dependencies {
     lazy val awsSdk = "software.amazon.awssdk" % "secretsmanager" % Versions.awssdk
     lazy val sso = "software.amazon.awssdk" % "sso" % Versions._sso
 
-    // For allowing array of strings to be parsed as json
-    lazy val spray = "io.spray" %% "spray-json" % Versions.spray
 
     Seq(
       springBootTest % Test,
@@ -166,8 +164,7 @@ object Dependencies {
       faDbSlick,
       slickPg,
       awsSdk,
-      sso,
-      spray
+      sso
     )
   }
 
