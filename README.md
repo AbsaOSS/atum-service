@@ -121,12 +121,9 @@ Code coverage wil be generated on path:
 ## How to Run in IntelliJ
 
 To make this project runnable via IntelliJ, do the following:
-- Make sure that your Spring related configuration in `server/src/main/resources/application.properties` 
+- Make sure that your configuration in `server/src/main/resources/reference.conf` 
   is configured according to your needs
-- Create a new Spring Boot configuration (see the screenshot below)
 
-![Intellij Spring Boot Run Configuration](https://github.com/AbsaOSS/atum-service/assets/5686168/63648615-03eb-45fb-99b3-f09e9aeebbb4")
-Intellij Run Configuration for Spring Boot, Server configuration
 
 ## How to Release
 

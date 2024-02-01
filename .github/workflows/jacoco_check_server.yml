@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: JaCoCo report
+name: JaCoCo report server
 
 on:
   pull_request:
@@ -25,16 +25,26 @@ jobs:
   test:
     name: Build and test
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: atum_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     strategy:
       matrix:
         include:
-          # The project supports Scala 2.11, 2.12 and the default version of spark2
-          # The CI runs all tests suites for all supported Scala versions at build.yml
-          # The codebase for all Scala versions is the same, so the coverage is calculated only once
-          # Scala 2.12 is chosen since it is supported by the most wide range of Spark versions and
-          # vendor distributions.
-          - scala: 2.12.18
-            scalaShort: "2.12"
+          - scala: 2.13.11
+            scalaShort: "2.13"
             overall: 80.0
             changed: 80.0
     steps:
@@ -44,26 +54,28 @@ jobs:
         uses: olafurpg/setup-scala@v10
         with:
           java-version: "adopt@1.8"
+      - name: Prepare testing database
+        run: sbt flywayMigrate
       - name: Build and run tests
-        run: sbt "++${{matrix.scala}}; project agent; jacoco"
-     #  Agent module code coverage
+        run: sbt "++${{matrix.scala}}; project server; jacoco"
+      #  server module code coverage
       - name: Add coverage to PR
-        id: jacoco-agent
+        id: jacoco-server
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/server/target/jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{matrix.overall }}
           min-coverage-changed-files: ${{ matrix.changed }}
-          title: JaCoCo agent module code coverage report - spark:2 - scala ${{ matrix.scala }}
+          title: JaCoCo server module code coverage report - scala ${{ matrix.scala }}
           update-comment: true
       - name: Get the Coverage info
         run: |
-          echo "Total agent module coverage ${{ steps.jacoco-agent.outputs.coverage-overall }}"
-          echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
+          echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ matrix.changed }}%
         if: |
-          ${{ steps.jacoco-agent.outputs.coverage-changed-files < 80.0 }}
+          ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }}
         uses: actions/github-script@v6
         with:
           script: |
