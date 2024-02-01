@@ -21,12 +21,13 @@ import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, SecretsManagerException}
+import org.slf4j.{Logger, LoggerFactory}
 
 
 /**
  * Class implement the functionality of retrieving secret keys from aws secret manger service
  */
-class RetrieveAwsSecret (profileCredentials: String = "npintdebdtools-sso") {
+class RetrieveAwsSecret (profileCredentials: String = "default") {
   val secretsManagerClient: SecretsManagerClient = SecretsManagerClient.builder()
     .region(Region.AF_SOUTH_1)
     .credentialsProvider(ProfileCredentialsProvider.create(profileCredentials))
@@ -38,6 +39,8 @@ class RetrieveAwsSecret (profileCredentials: String = "npintdebdtools-sso") {
    * @return a sequence of string from aws secret service
    */
   def retrieveAwsSecret(secretName: String): Seq[String] = {
+    val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+
     try {
       val request = GetSecretValueRequest.builder()
         .secretId(secretName)
@@ -47,7 +50,7 @@ class RetrieveAwsSecret (profileCredentials: String = "npintdebdtools-sso") {
       response.secretString.map(_.toString)
     } catch {
       case e: SecretsManagerException =>
-        println(s"Error retrieving secret key: ${e.getMessage}")
+        logger.error(s"Error retrieving secret key: ${e.getMessage}")
         e.getMessage.map(_.toString)
     } finally {
       // Close the client when done
