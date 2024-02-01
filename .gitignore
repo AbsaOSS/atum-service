@@ -85,5 +85,7 @@ _site
 .jekyll-metadata
 
 utils/resources/*.conf
+reference.conf
 
 .bsp
+

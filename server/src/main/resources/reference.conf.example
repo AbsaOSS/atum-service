@@ -8,6 +8,9 @@
          rootLevel = INFO
       }
    }
+
+   defaultAWSRegion = "af-south-1"
+
    postgres {
       # The JDBC driver class
       dataSourceClass=org.postgresql.Driver
@@ -19,5 +22,18 @@
       password=changeme
       # maximum number of connections that HikariCP will keep in the pool, including both idle and in-use connections
       maxPoolSize=10
+
+      # Keys listed here can be overridden by AWS secrets if the are defined. Format is `configuration.key' = "overriding.secret.name"
+      # only string fields can be overridden
+      fromSecrets = {
+        # connectionPool = ""
+        # dataSourceClass = ""
+        # properties.serverName = ""
+        # properties.portNumber = ""
+        # properties.databaseName = ""
+        # properties.user = "pg-"
+        properties.password = ""
+        # `numThreads` cannot be override from secrets as it's not a string
+      }
    }
 }
