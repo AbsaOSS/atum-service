@@ -121,13 +121,25 @@ class AtumContext private[agent] (
   }
 
   /**
+   * This method creates Additional Data in the agentService.
+   *
+   * @return AtumContext
+   */
+  def saveAdditionalData(): AtumContext = {
+    val additionalData = AdditionalDataSubmitDTO(AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData)
+    agent.saveAdditionalData(additionalData)
+    this
+  }
+
+  /**
    * Adds additional data to the AtumContext.
    *
    * @param key   the key of the additional data
    * @param value the value of the additional data
    */
-  def addAdditionalData(key: String, value: String): Unit = {
+  def addAdditionalData(key: String, value: String): AtumContext = {
     additionalData += (key -> Some(value))
+    this
   }
 
   /**
