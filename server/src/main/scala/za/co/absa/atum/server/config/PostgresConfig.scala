@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.config
 
-import za.co.absa.atum.model.dto.PartitioningDTO
+import zio.Config
+import zio.config.magnolia.deriveConfig
 
-private[server] case class PartitioningForDB private (
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValuesMap: Map[String, String]
+case class PostgresConfig(
+  dataSourceClass: String,
+  serverName: String,
+  portNumber: Int,
+  databaseName: String,
+  user: String,
+  password: String,
+  maxPoolSize: Int
 )
 
-object PartitioningForDB {
-
-  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
-
-    PartitioningForDB(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
-  }
+object PostgresConfig {
+  val config: Config[PostgresConfig] = deriveConfig[PostgresConfig].nested("postgres")
 }
