@@ -19,26 +19,34 @@ package za.co.absa.atum.agent.model
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementProvidedException
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
+/**
+ *  This trait defines a contract for a measurement.
+ */
 trait Measurement {
   val measure: Measure
   val resultValue: Any
   val resultType: ResultValueType.ResultValueType
 }
 
+/**
+ *  This object contains all the possible measurements
+ */
 object Measurement {
 
   /**
-   * When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
-   * to do any adjustments.
+   *  When the application/user of Atum Agent provides actual results by himself, the type is precise and we don't need
+   *  to do any adjustments.
    */
   case class MeasurementProvided[T](measure: Measure, resultValue: T, resultType: ResultValueType.ResultValueType)
-    extends Measurement
+      extends Measurement
 
   object MeasurementProvided {
 
     private def handleSpecificType[T](
-                               measure: Measure, resultValue: T, requiredType: ResultValueType.ResultValueType
-                             ): MeasurementProvided[T] = {
+      measure: AtumMeasure,
+      resultValue: T,
+      requiredType: ResultValueType.ResultValueType
+    ): MeasurementProvided[T] = {
 
       val actualType = measure.resultValueType
       if (actualType != requiredType)
@@ -49,7 +57,15 @@ object Measurement {
       MeasurementProvided[T](measure, resultValue, requiredType)
     }
 
-    def apply[T](measure: Measure, resultValue: T): Measurement = {
+    /**
+     *  This method creates a measurement for a given measure and result value.
+     *
+     *  @param measure     A measure for which the measurement is created.
+     *  @param resultValue A result value of the measurement.
+     *  @tparam T A type of the result value.
+     *  @return A measurement.
+     */
+    def apply[T](measure: AtumMeasure, resultValue: T): Measurement = {
       resultValue match {
         case l: Long =>
           handleSpecificType[Long](measure, l, ResultValueType.Long)
@@ -70,11 +86,11 @@ object Measurement {
     }
   }
 
-  /**
-   * When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
-   * needed - thus we are converting the results to strings always - but we need to keep the information about
-   * the actual type as well.
-   */
-  case class MeasurementByAtum(measure: Measure, resultValue: String, resultType: ResultValueType.ResultValueType)
-    extends Measurement
+    /**
+     *  When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
+     *  needed - thus we are converting the results to strings always - but we need to keep the information about
+     *  the actual type as well.
+     */
+    case class MeasurementByAtum(measure: AtumMeasure, resultValue: String, resultType: ResultValueType.ResultValueType)
+        extends Measurement
 }

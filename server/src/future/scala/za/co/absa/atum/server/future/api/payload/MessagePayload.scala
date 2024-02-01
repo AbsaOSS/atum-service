@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.api.payload
 
-case class ControlMeasureMetadata(
-  sourceApplication: String,
-  country: String,
-  historyType: String,
-  dataFilename: String,
-  sourceType: String,
-  version: Int,
-  informationDate: String,
-  additionalInfo: Map[String, String] = Map.empty
-)
+case class MessagePayload(message: String)

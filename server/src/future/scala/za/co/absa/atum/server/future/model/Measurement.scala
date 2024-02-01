@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.future.model
 
-import java.util.UUID
-
-case class Flow(
-  id: Option[UUID],
-  description: Option[String],
-  properties: Map[String, String] = Map.empty
-) extends BaseApiModel {
-
-  def apply(desc: Option[String] = None): Flow = Flow(None, desc)
-
-  override def withId(uuid: UUID): Flow = copy(id = Some(uuid))
-}
+case class Measurement(
+  controlName: String,
+  controlType: String,
+  controlCol: String,
+  controlValue: Any
+)

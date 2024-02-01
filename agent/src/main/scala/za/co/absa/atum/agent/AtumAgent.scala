@@ -15,10 +15,11 @@
  */
 
 package za.co.absa.atum.agent
+
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  * Entity that communicate with the API, primarily focused on spawning Atum Context(s).
@@ -55,6 +56,14 @@ class AtumAgent private[agent] () {
   }
 
   /**
+   * Sends the `Metadata` to the Atumservice API
+   * @param additionalData the metadata to be saved to the server.
+   */
+  private [agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
+    dispatcher.saveAdditionalData(additionalData)
+  }
+
+  /**
    *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
    *
    * Note: if partitioning doesn't exist in the store yet, a new one will be created with the author stored in
@@ -76,6 +85,13 @@ class AtumAgent private[agent] () {
     getExistingOrNewContext(atumPartitions, atumContext)
   }
 
+  /**
+   * Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
+   * Retrieves the data from AtumService API.
+   * @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
+   * @param parentAtumContext Parent AtumContext.
+   * @return Atum context object
+   */
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
     val authorIfNew = AtumAgent.currentUser
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions

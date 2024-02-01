@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.server.future.api.controller
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.{RequestMapping, RestController}
-import za.co.absa.atum.server.api.service.FlowService
+import za.co.absa.atum.server.future.api.service.FlowService
 
 @RestController
 @RequestMapping(Array("/api/flows"))
