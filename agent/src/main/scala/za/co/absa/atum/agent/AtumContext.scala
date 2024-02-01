@@ -121,15 +121,12 @@ class AtumContext private[agent] (
   }
 
   /**
-   * This method creates `Metadata` in the agentService.
+   * This method creates Additional Data in the agentService.
    *
    * @return AtumContext
    */
-  def createMetadata(): AtumContext = {
-    val additionalData = AdditionalDataSubmitDTO(
-      AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData, this.agent.currentUser
-    )
-
+  def saveAdditionalData(): AtumContext = {
+    val additionalData = AdditionalDataSubmitDTO(AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData)
     agent.saveAdditionalData(additionalData)
     this
   }
@@ -140,8 +137,9 @@ class AtumContext private[agent] (
    * @param key   the key of the additional data
    * @param value the value of the additional data
    */
-  def addAdditionalData(key: String, value: String): Unit = {
+  def addAdditionalData(key: String, value: String): AtumContext = {
     additionalData += (key -> Some(value))
+    this
   }
 
   /**

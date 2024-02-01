@@ -21,7 +21,7 @@ import org.apache.spark.internal.Logging
 import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
-import za.co.absa.atum.model.dto.{ AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
 
 import scala.util.{Failure, Success, Try}
@@ -32,7 +32,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   private val currentApiVersion = "/api/v1"
   private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createPartitioning")
   private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createCheckpoint")
-  private val createMetadataEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/saveMetadata")
+  private val createAdditionalDataEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/writeAdditionalData")
 
   private val commonAtumRequest = basicRequest
     .header("Content-Type", "application/json")
@@ -65,17 +65,17 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     safeResponseBody(response).get
   }
 
-  override def saveAdditionalData(metadataDTO: AdditionalDataSubmitDTO): Unit = {
+  override def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
     val request = commonAtumRequest
-      .post(createMetadataEndpoint)
-      .body(SerializationUtils.asJson(metadataDTO))
+      .post(createAdditionalDataEndpoint)
+      .body(SerializationUtils.asJson(additionalDataSubmitDTO))
 
     val response = backend.send(request)
 
     safeResponseBody(response).get
   }
 
-  private def safeResponseBody(response: Response[Either[String, String]]): Try[String] = {
+  def safeResponseBody(response: Response[Either[String, String]]): Try[String] = {
     response.body match {
       case Left(body) => Failure(HttpException(response.code.code, body))
       case Right(body) => Success(body)

@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.agent.dispatcher
 
-import za.co.absa.atum.model.dto.{ AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  *  This trait provides a contract for different dispatchers
@@ -37,8 +37,8 @@ trait Dispatcher {
   def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 
   /**
-   * This method is used to save the metadata to the server.
-   * @param metadata the data to be saved.
+   * This method is used to save the additional data to the server.
+   * @param additionalData the data to be saved.
    */
-  def saveAdditionalData(metadata: AdditionalDataSubmitDTO): Unit
+  def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit
 }
