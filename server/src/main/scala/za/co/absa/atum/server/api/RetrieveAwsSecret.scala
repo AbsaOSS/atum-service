@@ -26,7 +26,7 @@ import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueReques
 /**
  * Class implement the functionality of retrieving secret keys from aws secret manger service
  */
-class RetrieveAwsSecret (profileCredentials: String = "default") {
+class RetrieveAwsSecret (profileCredentials: String) {
   val secretsManagerClient: SecretsManagerClient = SecretsManagerClient.builder()
     .region(Region.AF_SOUTH_1)
     .credentialsProvider(ProfileCredentialsProvider.create(profileCredentials))
