@@ -57,6 +57,7 @@ class AtumContext private[agent] (
 
   private def takeMeasurements(df: DataFrame): Set[MeasurementDTO] = {
     measures.map { m =>
+      // TODO group measurements together: https://github.com/AbsaOSS/atum-service/issues/98
       val measureResult = m.function(df)
       MeasurementBuilder.buildMeasurementDTO(m, measureResult)
     }

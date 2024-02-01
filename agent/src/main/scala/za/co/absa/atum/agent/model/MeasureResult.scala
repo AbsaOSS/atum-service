@@ -40,13 +40,15 @@ object MeasureResult {
    * These adjustments are needed to be performed - to avoid some floating point issues
    * (overflows, consistent representation of numbers - whether they are coming from Java or Scala world, and more).
    */
-  case class MeasureResultByAtum(resultValue: String, resultValueType: ResultValueType.ResultValueType) extends MeasureResult
+  case class MeasureResultByAtum private (resultValue: String, resultValueType: ResultValueType.ResultValueType)
+    extends MeasureResult
 
   /**
    * When the application/user provides the actual results by himself, the type is precise and we don't need
    * to do any adjustments.
    */
-  case class MeasureResultProvided[T](resultValue: T, resultValueType: ResultValueType.ResultValueType) extends MeasureResult
+  case class MeasureResultProvided[T] private (resultValue: T, resultValueType: ResultValueType.ResultValueType)
+    extends MeasureResult
 
   /**
    * This method creates a measure result for a given result value.
