@@ -105,7 +105,7 @@ object Runs {
       with StandardStatusHandling {
 
     override protected def sql(values: AdditionalDataSubmitDTO): SQLActionBuilder = {
-      val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.atumPartitioning)
+      val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
       val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
       val additionalDataNormalized = SerializationUtils.asJson(values.additionalData)

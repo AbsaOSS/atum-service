@@ -126,7 +126,11 @@ class AtumContext private[agent] (
    * @return AtumContext
    */
   def saveAdditionalData(): AtumContext = {
-    val additionalData = AdditionalDataSubmitDTO(AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData)
+    val additionalData = AdditionalDataSubmitDTO(
+      AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
+      this.additionalData,
+      this.agent.currentUser
+    )
     agent.saveAdditionalData(additionalData)
     this
   }
