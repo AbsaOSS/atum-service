@@ -76,13 +76,14 @@ trait Server extends Endpoints {
   private def createAllServerRoutes: HttpRoutes[F] = {
     val endpoints = List(
       createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
-      createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists)
+      createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists),
+      createServerEndpoint(createOrUpdateAdditionalDataEndpoint, PartitioningController.createOrUpdateAdditionalData)
     )
     ZHttp4sServerInterpreter[Env](http4sServerOptions).from(endpoints).toRoutes
   }
 
   private def createSwaggerRoutes: HttpRoutes[F] = {
-    val endpoints = List(createCheckpointEndpoint, createPartitioningEndpoint)
+    val endpoints = List(createCheckpointEndpoint, createPartitioningEndpoint, createOrUpdateAdditionalDataEndpoint)
     ZHttp4sServerInterpreter[Env](http4sServerOptions)
       .from(SwaggerInterpreter().fromEndpoints[F](endpoints, SwaggerApiName, SwaggerApiVersion))
       .toRoutes

@@ -74,6 +74,9 @@ object PlayJsonImplicits {
   implicit val readsAdditionalDataDTO: Reads[AdditionalDataDTO] = Json.reads[AdditionalDataDTO]
   implicit val writesAdditionalDataDTO: Writes[AdditionalDataDTO] = Json.writes[AdditionalDataDTO]
 
+  implicit val readsAdditionalDataSubmitDTO: Reads[AdditionalDataSubmitDTO] = Json.reads[AdditionalDataSubmitDTO]
+  implicit val writesAdditionalDataSubmitDTO: Writes[AdditionalDataSubmitDTO] = Json.writes[AdditionalDataSubmitDTO]
+
   implicit val readsAtumContextDTO: Reads[AtumContextDTO] = Json.reads[AtumContextDTO]
   implicit val writesAtumContextDTO: Writes[AtumContextDTO] = Json.writes[AtumContextDTO]
 
