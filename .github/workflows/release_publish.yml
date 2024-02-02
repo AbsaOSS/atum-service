@@ -14,9 +14,10 @@
 # limitations under the License.
 #
 
-name: Release
+name: Release - publish artifacts
 on:
-  workflow_dispatch:
+  release:
+    types: [released]
 
 jobs:
   publish:
@@ -26,7 +27,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: olafurpg/setup-scala@v14
-
       - name: Run sbt ci-release (produces war as well)
         run: sbt ci-release
         env:
@@ -39,14 +39,7 @@ jobs:
         id: find_war
         run: echo "WAR_PATH=$(find . -name '*.war' | head -n 1)" >> $GITHUB_ENV
 
-      - name: Create Draft Release
-        uses: softprops/action-gh-release@v1
+      - name: Upload WAR file to GitHub Release
+        run: gh release upload ${{ github.event.release.tag_name }} ${{ env.WAR_PATH }} --repo ${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: ${{ env.WAR_PATH }}
-          name: Draft Release for ${{ github.ref }}
-          draft: true
-          prerelease: false
-          fail_on_unmatched_files: true
-#          body_path: .github/release-body.md
