@@ -37,7 +37,7 @@ trait PartitioningRepository {
 
 class PartitioningRepositoryImpl(
     createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
-    createOrUpdateAdditionalData: CreateOrUpdateAdditionalData
+    createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData
   ) extends PartitioningRepository {
   override def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
@@ -58,7 +58,7 @@ class PartitioningRepositoryImpl(
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    createOrUpdateAdditionalData(additionalData)
+    createOrUpdateAdditionalDataFn(additionalData)
       .tap {
         case Left(statusException) =>
           ZIO.logError(
