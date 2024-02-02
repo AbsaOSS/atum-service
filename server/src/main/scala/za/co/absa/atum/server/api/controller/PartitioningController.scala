@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, MeasureDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
@@ -26,6 +26,7 @@ import zio.macros.accessible
 @accessible
 trait PartitioningController {
   def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
+  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
 }
 
 class PartitioningControllerImpl(partitioningService: PartitioningService) extends PartitioningController {
@@ -41,11 +42,28 @@ class PartitioningControllerImpl(partitioningService: PartitioningService) exten
         case Right(_) =>
           ZIO.succeed {
             val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
-            val additionalData = AdditionalDataDTO(additionalData = Map.empty)
+            val additionalData: AdditionalDataDTO = Map.empty
             AtumContextDTO(partitioning.partitioning, measures, additionalData)
           }
       }
   }
+
+  override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO] = {
+    partitioningService
+      .createOrUpdateAdditionalData(additionalData)
+      .mapError { serviceError: ServiceError =>
+        InternalServerErrorResponse(serviceError.message)
+      }
+      .flatMap {
+        case Left(statusException) =>
+          ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
+        case Right(_) =>
+          ZIO.succeed {
+            additionalData
+          }
+      }
+  }
+
 }
 
 object PartitioningControllerImpl {

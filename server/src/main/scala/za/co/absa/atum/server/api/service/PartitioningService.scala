@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.PartitioningSubmitDTO
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.PartitioningRepository
 import za.co.absa.fadb.exceptions.StatusException
@@ -25,9 +25,11 @@ import zio.macros.accessible
 
 @accessible
 trait PartitioningService {
-  def createPartitioningIfNotExists(
-    partitioning: PartitioningSubmitDTO
-  ): IO[ServiceError, Either[StatusException, Unit]]
+  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO):
+    IO[ServiceError, Either[StatusException, Unit]]
+
+  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
+    IO[ServiceError, Either[StatusException, Unit]]
 }
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) extends PartitioningService {
@@ -38,6 +40,16 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) ex
       .createPartitioningIfNotExists(partitioning)
       .mapError { case DatabaseError(message) =>
         ServiceError(s"Failed to create or retrieve partitioning: $message")
+      }
+  }
+
+  override def createOrUpdateAdditionalData(
+    additionalData: AdditionalDataSubmitDTO
+  ): IO[ServiceError, Either[StatusException, Unit]] = {
+    partitioningRepository
+      .createOrUpdateAdditionalData(additionalData)
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to create or update additional data: $message")
       }
   }
 }
