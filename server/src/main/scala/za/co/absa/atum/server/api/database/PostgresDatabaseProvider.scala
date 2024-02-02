@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.api.database
 
-import za.co.absa.atum.model.dto.PartitioningDTO
+import doobie.Transactor
+import za.co.absa.fadb.doobie.DoobieEngine
+import zio._
+import zio.interop.catz._
 
-private[server] case class PartitioningForDB private (
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValues: Map[String, String]
-)
+class PostgresDatabaseProvider(val dbEngine: DoobieEngine[Task])
 
-object PartitioningForDB {
-
-  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
-
-    PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
+object PostgresDatabaseProvider {
+  val layer: URLayer[Transactor[Task], PostgresDatabaseProvider] = ZLayer {
+    for {
+      transactor <- ZIO.service[Transactor[Task]]
+      doobieEngine <- ZIO.succeed(new DoobieEngine[Task](transactor))
+    } yield new PostgresDatabaseProvider(doobieEngine)
   }
 }

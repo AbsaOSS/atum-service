@@ -14,22 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server
 
-import za.co.absa.atum.model.dto.PartitioningDTO
-
-private[server] case class PartitioningForDB private (
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValues: Map[String, String]
-)
-
-object PartitioningForDB {
-
-  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
-
-    PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
-  }
+object Constants {
+  final val Api = "api"
+  final val V1 = "v1"
+  final val CreatePartitioning = "createPartitioning"
+  final val CreateCheckpoint = "createCheckpoint"
+  final val SwaggerApiName = "Atum API"
+  final val SwaggerApiVersion = "1.0"
 }

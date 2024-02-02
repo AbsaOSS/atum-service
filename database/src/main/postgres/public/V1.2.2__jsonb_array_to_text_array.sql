@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+-- THIS SCRIPT CONTAINS STUFF FOR LOCAL DATABASE TESTING ONLY; IT'S NOT TO BE DEPLOYED TO ANY AWS ENVIRONMENT
+
 CREATE OR REPLACE FUNCTION public.jsonb_array_to_text_array(
     IN i_json_array JSONB
 ) RETURNS  text[]
@@ -21,7 +23,6 @@ CREATE OR REPLACE FUNCTION public.jsonb_array_to_text_array(
 --
 -- Function: public.jsonb_array_to_text_array(1)
 --      Converts a JSONB array into a Postgres array
---      Based on the answer in https://dba.stackexchange.com/questions/54283/how-to-turn-json-array-into-postgres-array?newreg=5b29b7ed90224c7e9624162a0b52e81f
 --
 -- Parameters:
 --      i_json_array         - JSON array
@@ -30,10 +31,10 @@ CREATE OR REPLACE FUNCTION public.jsonb_array_to_text_array(
 --      Postgres array
 --
 -------------------------------------------------------------------------------
-    LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
-BEGIN ATOMIC
-SELECT ARRAY(SELECT jsonb_array_elements_text(i_json_array));
-END;
-
+LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
+AS
+    $$
+        SELECT ARRAY(SELECT jsonb_array_elements_text(i_json_array));
+    $$;
 
 GRANT EXECUTE ON FUNCTION public.jsonb_array_to_text_array(JSONB) TO public;

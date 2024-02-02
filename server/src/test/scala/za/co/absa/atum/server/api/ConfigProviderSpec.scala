@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.api
 
-import za.co.absa.atum.model.dto.PartitioningDTO
+import zio.config.typesafe.TypesafeConfigProvider
+import zio.test.ZIOSpec
+import zio.{Runtime, ZLayer}
 
-private[server] case class PartitioningForDB private (
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValues: Map[String, String]
-)
+abstract class ConfigProviderSpec extends ZIOSpec[Unit] {
 
-object PartitioningForDB {
+  override def bootstrap: ZLayer[Any, Any, Unit] =
+    Runtime.setConfigProvider(TypesafeConfigProvider.fromResourcePath())
 
-  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
-
-    PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
-  }
 }
+

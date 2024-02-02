@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent.dispatcher
 
 import org.apache.spark.internal.Logging
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  *  dispatcher useful for development, testing and debugging
@@ -33,6 +33,10 @@ class ConsoleDispatcher extends Dispatcher with Logging {
 
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     println(s"Saving checkpoint to server. $checkpoint")
+  }
+
+  override def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
+    println(s"Saving the additional data to server. $additionalData")
   }
 
 }

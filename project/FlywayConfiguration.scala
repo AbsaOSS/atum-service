@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+object FlywayConfiguration {
 
-import za.co.absa.atum.model.dto.PartitioningDTO
+  private val port = 5432
+  private val host = "localhost"
+  private val database = "atum_db"
+  val flywayUrl = s"jdbc:postgresql://$host:$port/$database"
+  val flywayUser = "postgres"
+  val flywayPassword = "postgres"
+  val flywayLocations: Seq[String] = Seq("filesystem:database/src/main/postgres")
+  val flywaySqlMigrationSuffixes: Seq[String] = Seq(".sql",".ddl")
 
-private[server] case class PartitioningForDB private (
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValues: Map[String, String]
-)
-
-object PartitioningForDB {
-
-  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
-
-    PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
-  }
 }

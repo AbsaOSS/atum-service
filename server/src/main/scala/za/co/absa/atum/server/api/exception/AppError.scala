@@ -14,22 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.server.api.exception
 
-import za.co.absa.atum.model.dto.PartitioningDTO
-
-private[server] case class PartitioningForDB private (
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValues: Map[String, String]
-)
-
-object PartitioningForDB {
-
-  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
-
-    PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
-  }
+sealed trait AppError extends Throwable {
+  def message: String
 }
+
+case class DatabaseError(message: String) extends AppError
+case class ServiceError(message: String) extends AppError
