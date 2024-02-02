@@ -64,6 +64,8 @@ object Dependencies {
     val playJson = "2.9.4"
 
     val postgresql = "42.5.4"
+
+    val awssdk = "2.23.15"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -153,6 +155,9 @@ object Dependencies {
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
 
+    // aws
+    lazy val awsSdk = "software.amazon.awssdk" % "aws-sdk-java" % Versions.awssdk
+
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
     lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
@@ -172,6 +177,7 @@ object Dependencies {
       tapirSwagger,
       tapirPlayJson,
       playJson,
+      awsSdk,
       zioTest,
       zioTestSbt,
       zioTestJunit,

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api
+package za.co.absa.atum.server.config
 
-import zio.config.typesafe.TypesafeConfigProvider
-import zio.test.ZIOSpec
-import zio.{Runtime, ZLayer}
+import zio.Config
+import zio.config.magnolia.deriveConfig
 
-abstract class ConfigProviderSpec extends ZIOSpec[Unit] {
+case class AwsConfig (
+  region: String,
+  serviceUserSecretKey: String
+)
 
-  override def bootstrap: ZLayer[Any, Any, Unit] =
-    Runtime.setConfigProvider(TypesafeConfigProvider.fromResourcePath())
-
+object AwsConfig {
+  val config: Config[AwsConfig] = deriveConfig[AwsConfig].nested("aws")
 }
-
