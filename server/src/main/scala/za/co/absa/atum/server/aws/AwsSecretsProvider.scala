@@ -41,8 +41,6 @@ object AwsSecretsProviderImpl {
   val layer: ZLayer[Any, Config.Error, AwsSecretsProviderImpl] = ZLayer {
     for {
       awsConfig <- ZIO.config[AwsConfig](AwsConfig.config)
-    } yield new AwsSecretsProviderImpl(
-      SecretsManagerClient.builder().region(Region.of(awsConfig.region)).build()
-    )
+    } yield new AwsSecretsProviderImpl(SecretsManagerClient.builder().region(Region.of(awsConfig.region)).build())
   }
 }
