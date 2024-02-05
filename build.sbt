@@ -45,6 +45,7 @@ lazy val server = (projectMatrix in file("server"))
     commonSettings ++ Seq(
       name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
+      scalacOptions ++= Seq("-Ymacro-annotations"),
       Compile / packageBin / publishArtifact := false,
       printScalaVersion := {
         val log = streams.value.log
