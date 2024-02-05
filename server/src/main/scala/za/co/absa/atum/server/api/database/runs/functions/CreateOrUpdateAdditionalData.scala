@@ -40,14 +40,17 @@ class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEn
     val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
     // TODO check if it works!
-    // val additionalDataNormalized = SerializationUtils.asJson(values.additionalData)
+     val additionalDataNormalized = SerializationUtils.asJson(values.additionalData)
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     partitioningNormalized
                   },
-                  ${values.additionalData},
+                  ${
+                    import za.co.absa.atum.server.api.database.DoobieImplicits.HStore.hstorePutUsingString
+                    additionalDataNormalized
+                  },
                   ${values.author}
                 ) ${Fragment.const(alias)};"""
   }

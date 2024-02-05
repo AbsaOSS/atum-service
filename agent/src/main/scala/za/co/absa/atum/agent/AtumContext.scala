@@ -37,7 +37,7 @@ class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
   val agent: AtumAgent,
   private var measures: Set[AtumMeasure] = Set.empty,
-  private var additionalData: Map[String, Option[String]] = Map.empty
+  private var additionalData: AdditionalDataDTO = Map.empty
 ) {
 
   /**
@@ -151,7 +151,7 @@ class AtumContext private[agent] (
    *
    * @return the current additional data
    */
-  def currentAdditionalData: Map[String, Option[String]] = {
+  def currentAdditionalData: AdditionalDataDTO = {
     this.additionalData
   }
 
@@ -189,7 +189,7 @@ class AtumContext private[agent] (
     atumPartitions: AtumPartitions = this.atumPartitions,
     agent: AtumAgent = this.agent,
     measures: Set[AtumMeasure] = this.measures,
-    additionalData: Map[String, Option[String]] = this.additionalData
+    additionalData: AdditionalDataDTO = this.additionalData
   ): AtumContext = {
     new AtumContext(atumPartitions, agent, measures, additionalData)
   }

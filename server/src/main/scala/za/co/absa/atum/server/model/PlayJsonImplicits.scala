@@ -71,9 +71,6 @@ object PlayJsonImplicits {
   implicit val writesStringMap: OWrites[MapWrites.Map[String, Option[String]]] =
     Writes.genericMapWrites[Option[String], MapWrites.Map]
 
-  implicit val readsAdditionalDataDTO: Reads[AdditionalDataDTO] = Json.reads[AdditionalDataDTO]
-  implicit val writesAdditionalDataDTO: Writes[AdditionalDataDTO] = Json.writes[AdditionalDataDTO]
-
   implicit val readsAdditionalDataSubmitDTO: Reads[AdditionalDataSubmitDTO] = Json.reads[AdditionalDataSubmitDTO]
   implicit val writesAdditionalDataSubmitDTO: Writes[AdditionalDataSubmitDTO] = Json.writes[AdditionalDataSubmitDTO]
 
