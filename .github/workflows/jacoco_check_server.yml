@@ -21,6 +21,12 @@ on:
     branches: [ master ]
     types: [ opened, edited, synchronize, reopened ]
 
+env:
+  scalaLong: 2.13.11
+  scalaShort: "2.13"
+  overall: 80.0
+  changed: 80.0
+
 jobs:
   test:
     name: Build and test
@@ -40,13 +46,6 @@ jobs:
         ports:
           - 5432:5432
 
-    strategy:
-      matrix:
-        include:
-          - scala: 2.13.11
-            scalaShort: "2.13"
-            overall: 80.0
-            changed: 80.0
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -57,28 +56,28 @@ jobs:
       - name: Prepare testing database
         run: sbt flywayMigrate
       - name: Build and run tests
-        run: sbt "++${{matrix.scala}}; project server; jacoco"
+        run: sbt "++${{env.scalaLong}}; project server; jacoco"
       #  server module code coverage
       - name: Add coverage to PR
         id: jacoco-server
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          paths: ${{ github.workspace }}/server/target/jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{matrix.overall }}
-          min-coverage-changed-files: ${{ matrix.changed }}
-          title: JaCoCo server module code coverage report - scala ${{ matrix.scala }}
+          min-coverage-overall: ${{env.overall }}
+          min-coverage-changed-files: ${{ env.changed }}
+          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Get the Coverage info
         run: |
           echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
-      - name: Fail PR if changed files coverage is less than ${{ matrix.changed }}%
+      - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
         if: |
           ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }}
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Changed files coverage is less than ${{ matrix.changed }}%!')
+            core.setFailed('Changed files coverage is less than ${{ env.changed }}%!')
 
 
