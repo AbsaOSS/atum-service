@@ -40,6 +40,14 @@ lazy val commonSettings = Seq(
   jacocoExcludes := jacocoProjectExcludes()
 )
 
+enablePlugins(FlywayPlugin)
+flywayUrl := FlywayConfiguration.flywayUrl
+flywayUser := FlywayConfiguration.flywayUser
+flywayPassword := FlywayConfiguration.flywayPassword
+flywayLocations := FlywayConfiguration.flywayLocations
+flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
+libraryDependencies ++= flywayDependencies
+
 lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
