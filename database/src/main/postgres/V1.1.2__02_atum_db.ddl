@@ -14,3 +14,5 @@
  */
 
 ALTER DATABASE atum_db OWNER TO atum_owner;
+
+CREATE EXTENSION IF NOT EXISTS hstore;
