@@ -92,7 +92,7 @@ jobs:
           ref: refs/tags/${{ github.event.inputs.tagName }}
       - name: Generate release notes
         id: generate_release_notes
-        uses: AbsaOSS/generate-release-notes@0.2.0
+        uses: AbsaOSS/generate-release-notes@v0.2.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
