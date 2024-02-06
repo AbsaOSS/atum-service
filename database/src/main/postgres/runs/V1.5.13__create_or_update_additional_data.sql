@@ -32,7 +32,7 @@ $$
 -- Parameters:
 --      i_partitioning      - partitioning to add the additional data for
 --      i_additional_data   - sets of key/value pairs representing name and values of the additional data
---      i_by_user           - user behind the change
+--      i_by_user           - user behind the change (an author of AD records if there will be something to upsert)
 --
 -- Returns:
 --      status              - Status code
@@ -43,6 +43,7 @@ $$
 --      11                  - Additional data have been added
 --      12                  - Additional data have been upserted
 --      14                  - No changes in additional data (this is when they already existed)
+--      31                  - Additional data could not be backed up
 --      41                  - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -59,40 +60,18 @@ BEGIN
         RETURN;
     END IF;
 
-    -- 1. (backup) get records that already exist but values differ, and insert them into ad history table
-    INSERT INTO runs.additional_data_history
-        (fk_partitioning, ad_name, ad_value, created_by_originally, created_at_originally, archived_by)
-    SELECT ad_curr.fk_partitioning, ad_curr.ad_name, ad_curr.ad_value,
-           ad_curr.created_by, ad_curr.created_at, i_by_user
-    FROM runs.additional_data AS ad_curr
-    WHERE ad_curr.fk_partitioning = _fk_partitioning
-      AND EXISTS (  -- get only those records where keys exist but values differ - so will be backed-up and later updated
-          SELECT *
-          FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
-          WHERE ad_curr.ad_name = ad_input.ad_key
-            AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value
-      );
+    -- 1. (backup) get records that already exist but values differ,
+    --             then insert them into AD history table and
+    --             then update the actual AD table with new values
+    _ad_backup_performed := runs._update_existing_additional_data(_fk_partitioning, i_additional_data, i_by_user);
 
-    -- 2. (update) get records that already exist but values differ, and update the ad table with new values
-    IF found THEN
-        UPDATE runs.additional_data AS ad_curr
-        SET ad_value = ad_input.ad_value,
-            created_by = i_by_user,
-            created_at = now()
-        FROM (
-            SELECT ad_key, ad_value
-            FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
-        ) as ad_input
-        WHERE ad_curr.fk_partitioning = _fk_partitioning
-          AND ad_curr.ad_name = ad_input.ad_key
-          AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value;
-
-        _ad_backup_performed := TRUE;
-    ELSE
-        _ad_backup_performed := FALSE;
+    IF _ad_backup_performed IS NULL THEN
+        status := 31;
+        status_text := 'Additional data could not be backed up';
+        RETURN;
     END IF;
 
-    -- 3. (insert) get records that do not not exist yet and insert it into ad table
+    -- 2. (insert) get records that do not not exist yet and insert it into ad table
     --    (their original rows were previously saved in step 1)
     INSERT INTO runs.additional_data (fk_partitioning, ad_name, ad_value, created_by)
     SELECT _fk_partitioning, ad_input.key, ad_input.value, i_by_user

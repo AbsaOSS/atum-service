@@ -53,7 +53,7 @@ trait Endpoints extends BaseEndpoints {
       .name(CreateOrUpdateAdditionalData)
       .in(CreateOrUpdateAdditionalData)
       .in(jsonBody[AdditionalDataSubmitDTO])
-      .out(statusCode(StatusCode.Ok))
+      .out(statusCode(StatusCode.Created))
       .out(jsonBody[AdditionalDataSubmitDTO])
   }
 

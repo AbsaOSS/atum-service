@@ -49,7 +49,7 @@ class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEn
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     partitioningNormalized
                   },
-                  $additionalDataNormalized::hstore,
+                  $additionalDataNormalized,
                   ${values.author}
                 ) ${Fragment.const(alias)};"""
   }
