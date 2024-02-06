@@ -39,36 +39,6 @@ object DoobieImplicits {
 
   }
 
-  object HStore {
-
-    implicit val hstorePutUsingString: Put[String] = {
-      Put.Advanced
-        .other[PGobject](
-          NonEmptyList.of("hstore")
-        )
-        .tcontramap { a =>
-          val o = new PGobject
-          o.setType("hstore")
-          o.setValue(a)
-          o
-        }
-    }
-
-    implicit val hstoreGetUsingString: Get[String] = {
-      Get.Advanced
-        .other[PGobject](
-          NonEmptyList.of("hstore")
-        )
-        .temap(a =>
-          Try(a.getValue) match {
-            case Failure(exception) => Left(exception.toString)
-            case Success(value) => Right(value)
-          }
-        )
-    }
-
-  }
-
   object Json {
 
     implicit val jsonArrayPutUsingString: Put[List[String]] = {

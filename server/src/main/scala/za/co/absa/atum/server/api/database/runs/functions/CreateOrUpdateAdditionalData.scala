@@ -31,6 +31,8 @@ import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 import zio.interop.catz._
 
+import doobie.postgres.implicits._
+
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task]
     with StandardStatusHandling {
@@ -39,7 +41,6 @@ class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEn
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningNormalized = SerializationUtils.asJson(partitioning)
 
-    // TODO check if it works!
      val additionalDataNormalized = SerializationUtils.asJson(values.additionalData)
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
@@ -47,10 +48,7 @@ class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEn
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     partitioningNormalized
                   },
-                  ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.HStore.hstorePutUsingString
-                    additionalDataNormalized
-                  },
+                  $additionalDataNormalized,
                   ${values.author}
                 ) ${Fragment.const(alias)};"""
   }
