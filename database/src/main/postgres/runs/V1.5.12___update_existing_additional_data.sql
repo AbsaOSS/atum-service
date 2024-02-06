@@ -68,7 +68,7 @@ BEGIN
             SELECT ad_key, ad_value
             FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
         ) as ad_input
-        WHERE ad_curr.fk_partitioning = _fk_partitioning
+        WHERE ad_curr.fk_partitioning = i_fk_partitioning
           AND ad_curr.ad_name = ad_input.ad_key
           AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value;
 
