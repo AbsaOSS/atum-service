@@ -17,7 +17,7 @@
 package za.co.absa.atum.server
 
 import za.co.absa.atum.server.api.controller._
-import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
+import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TestTransactorProvider, TransactorProvider}
 import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningIfNotExists, WriteCheckpoint}
 import za.co.absa.atum.server.api.http.Server
 import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
@@ -42,8 +42,9 @@ object Main extends ZIOAppDefault with Server {
         CreatePartitioningIfNotExists.layer,
         WriteCheckpoint.layer,
         PostgresDatabaseProvider.layer,
-        TransactorProvider.layer,
-        zio.Scope.default
+//        TransactorProvider.layer,
+        TestTransactorProvider.layerWithoutRollback,
+//        zio.Scope.default
       )
 
   override val bootstrap: ZLayer[Any, Config.Error, Unit] =

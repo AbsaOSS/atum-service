@@ -61,7 +61,7 @@ object Dependencies {
     val sbtJunitInterface = "0.13.3"
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
-    val playJson = "2.9.4"
+    val playJson = "3.0.1"//"2.9.4"
 
     val postgresql = "42.5.4"
   }
@@ -128,7 +128,8 @@ object Dependencies {
     val tapirOrg = "com.softwaremill.sttp.tapir"
     val http4sOrg = "org.http4s"
     val faDbOrg = "za.co.absa.fa-db"
-    val playOrg = "com.typesafe.play"
+//    val playOrg = "com.typesafe.play"
+    val playOrg = "org.playframework"
     val sbtOrg = "com.github.sbt"
 
     // zio

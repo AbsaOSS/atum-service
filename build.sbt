@@ -22,7 +22,7 @@ import sbt.Keys.name
 
 ThisBuild / organization := "za.co.absa"
 
-ThisBuild / scalaVersion := Versions.scala212  // default version
+ThisBuild / scalaVersion := Versions.scala213  // default version
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -44,7 +44,7 @@ lazy val commonSettings = Seq(
 )
 
 val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := {
-  case PathList("META-INF", _) => MergeStrategy.discard
+  // case PathList("META-INF", _) => MergeStrategy.discard
   case "application.conf"      => MergeStrategy.concat
   case "reference.conf"        => MergeStrategy.concat
   case _                       => MergeStrategy.first
@@ -70,13 +70,24 @@ lazy val root = (projectMatrix in file("."))
 lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
+      assemblyMergeStrategy in assembly := {
+        case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
+        case PathList("META-INF", "resources", "webjars", "swagger-ui", _*)               => MergeStrategy.singleOrError
+        case PathList("META-INF", _*)                                                     => MergeStrategy.discard
+        case PathList("META-INF", "versions", "9", xs @ _*)                               => MergeStrategy.discard
+        case PathList("module-info.class")                                                => MergeStrategy.discard
+        case x =>
+          val oldStrategy = (assemblyMergeStrategy in assembly).value
+          oldStrategy(x)
+      },
       name := "atum-server",
+      javacOptions ++= Seq("-source", "11", "-target", "11"),
       libraryDependencies ++= Dependencies.serverDependencies,
       scalacOptions ++= Seq("-Ymacro-annotations"),
       Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
       packageBin := (Compile / assembly).value,
-      artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
+      artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
       webappWebInfClasses := true,
       inheritJarManifest := true,
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
@@ -87,7 +98,7 @@ lazy val server = (projectMatrix in file("server"))
     jacocoExcludes := jacocoProjectExcludes()
   )
   .enablePlugins(AssemblyPlugin)
-  .enablePlugins(TomcatPlugin)
+  // .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
   .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
   .dependsOn(model)
