@@ -19,7 +19,7 @@
 # build via (docker root = project root):
 # docker build -t absaoss/atum-service:latest \
 # --build-arg BUILD_PROXY=http://my.cool.proxy.here:3128 \
-# --build-arg CONFIG=./path/to/my.awesome.local.application.properties \
+# --build-arg CONFIG=./path/to/my.awesome.local.reference.conf \
 # --build-arg SSL=true \
 # --build-arg SSL_DNAME="CN=*.my.domain.com, OU=project1, O=mycorp, L=Johannesburg, ST=Gauteng, C=za" .
 # run via
