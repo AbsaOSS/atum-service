@@ -18,7 +18,7 @@ package za.co.absa.atum.server.model
 
 import za.co.absa.atum.model.dto.PartitioningDTO
 
-private[server] case class PartitioningForDB private(
+private[server] case class PartitioningForDB private (
   version: Int = 1,
   keys: Seq[String],
   keysToValuesMap: Map[String, String]
@@ -33,4 +33,3 @@ object PartitioningForDB {
     PartitioningForDB(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
   }
 }
-

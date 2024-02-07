@@ -43,7 +43,7 @@ object Measurement {
   object MeasurementProvided {
 
     private def handleSpecificType[T](
-      measure: Measure,
+      measure: AtumMeasure,
       resultValue: T,
       requiredType: ResultValueType.ResultValueType
     ): MeasurementProvided[T] = {
@@ -65,7 +65,7 @@ object Measurement {
      *  @tparam T A type of the result value.
      *  @return A measurement.
      */
-    def apply[T](measure: Measure, resultValue: T): Measurement = {
+    def apply[T](measure: AtumMeasure, resultValue: T): Measurement = {
       resultValue match {
         case l: Long =>
           handleSpecificType[Long](measure, l, ResultValueType.Long)
@@ -86,11 +86,11 @@ object Measurement {
     }
   }
 
-  /**
-   *  When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
-   *  needed - thus we are converting the results to strings always - but we need to keep the information about
-   *  the actual type as well.
-   */
-  case class MeasurementByAtum(measure: Measure, resultValue: String, resultType: ResultValueType.ResultValueType)
-      extends Measurement
+    /**
+     *  When the Atum Agent itself performs the measurements, using Spark, then in some cases some adjustments are
+     *  needed - thus we are converting the results to strings always - but we need to keep the information about
+     *  the actual type as well.
+     */
+    case class MeasurementByAtum(measure: AtumMeasure, resultValue: String, resultType: ResultValueType.ResultValueType)
+        extends Measurement
 }

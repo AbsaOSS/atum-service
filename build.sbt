@@ -50,6 +50,14 @@ val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := 
   case _                       => MergeStrategy.first
 }
 
+enablePlugins(FlywayPlugin)
+flywayUrl := FlywayConfiguration.flywayUrl
+flywayUser := FlywayConfiguration.flywayUser
+flywayPassword := FlywayConfiguration.flywayPassword
+flywayLocations := FlywayConfiguration.flywayLocations
+flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
+libraryDependencies ++= flywayDependencies
+
 lazy val root = (projectMatrix in file("."))
   .aggregate(model, server, agent, database)
   .settings(
@@ -64,12 +72,14 @@ lazy val server = (projectMatrix in file("server"))
     commonSettings ++ Seq(
       name := "atum-server",
       libraryDependencies ++= Dependencies.serverDependencies,
+      scalacOptions ++= Seq("-Ymacro-annotations"),
       Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.war",
       webappWebInfClasses := true,
-      inheritJarManifest := true
+      inheritJarManifest := true,
+      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     ): _*
   )
   .settings(
@@ -112,7 +122,7 @@ lazy val model = (projectMatrix in file("model"))
     ): _*
   )
   .settings(
-    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-model"),
+    jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-model: model"),
     jacocoExcludes := jacocoProjectExcludes()
   )
   .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)

@@ -32,7 +32,7 @@ CREATE OR REPLACE FUNCTION public.jsonb_array_to_text_array(
 -------------------------------------------------------------------------------
     LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
 BEGIN ATOMIC
-    SELECT ARRAY(SELECT jsonb_array_elements_text(i_json_array));
+SELECT ARRAY(SELECT jsonb_array_elements_text(i_json_array));
 END;
 
 

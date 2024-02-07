@@ -26,7 +26,7 @@ object Dependencies {
     val scala212 = "2.12.18"
     val scala213 = "2.13.11"
 
-    val serviceScalaVersion: String = scala212
+    val serviceScalaVersion: String = scala213
     val clientSupportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
 
     val scalatest = "3.2.15"
@@ -50,14 +50,22 @@ object Dependencies {
     val sttp = "3.5.2"
 
     val postgresql = "42.6.0"
-
-    val fadb = "0.2.0"
-    val slickpg = "0.20.4"
+    
+    val fadb = "0.3.0"
 
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"
 
     val logback = "1.2.3"
+
+    val zio = "2.0.19"
+    val zioLogging = "2.2.0"
+    val zioConfig = "4.0.1"
+    val sbtJunitInterface = "0.13.3"
+    val tapir = "1.9.6"
+    val http4sBlazeBackend = "0.23.15"
+    val playJson = "2.9.4"
+
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -118,42 +126,58 @@ object Dependencies {
   }
 
   def serverDependencies: Seq[ModuleID] = {
-    val springOrg = "org.springframework.boot"
+    val zioOrg = "dev.zio"
+    val tapirOrg = "com.softwaremill.sttp.tapir"
+    val http4sOrg = "org.http4s"
+    val faDbOrg = "za.co.absa.fa-db"
+    val playOrg = "com.typesafe.play"
+    val sbtOrg = "com.github.sbt"
 
-    lazy val springBootTest = springOrg % "spring-boot-starter-test" % Versions.spring
-    lazy val springBootWeb = springOrg % "spring-boot-starter-web" % Versions.spring
-    lazy val springBootConfiguration = springOrg % "spring-boot-configuration-processor" % Versions.spring
-    lazy val springBootTomcat = springOrg % "spring-boot-starter-tomcat" % Versions.spring
-    lazy val servletApi = "javax.servlet" % "javax.servlet-api" % Versions.javaxServlet
-    lazy val springFoxSwagger = "io.springfox" % "springfox-swagger2" % Versions.springfox
-    lazy val springFoxSwaggerUI = "io.springfox" % "springfox-swagger-ui" % Versions.springfox
-    lazy val springFoxBoot = "io.springfox" % "springfox-boot-starter" % Versions.springfox
+    // zio
+    lazy val zioCore = zioOrg %% "zio" % Versions.zio
+    lazy val zioMacros = zioOrg %% "zio-macros" % Versions.zio
+    lazy val zioLogging = zioOrg %% "zio-logging" % Versions.zioLogging
+    lazy val zioConfig = zioOrg %% "zio-config" % Versions.zioConfig
+    lazy val zioConfigMagnolia = zioOrg %% "zio-config-magnolia" % Versions.zioConfig
+    lazy val zioConfigTypesafe = zioOrg %% "zio-config-typesafe" % Versions.zioConfig
 
-    // controller implicits:  java CompletableFuture -> scala Future
-    lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % Versions.scalaLangJava8Compat
+    // http4s
+    lazy val http4sBlazeBackend = http4sOrg %% "http4s-blaze-server" % Versions.http4sBlazeBackend
 
-    // object mapper serialization
-    lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
+    // tapir
+    lazy val tapirHttp4sZio = tapirOrg %% "tapir-http4s-server-zio" % Versions.tapir
+    lazy val tapirSwagger = tapirOrg %% "tapir-swagger-ui-bundle" % Versions.tapir
+    lazy val tapirPlayJson = tapirOrg %% "tapir-json-play" % Versions.tapir
 
-    // Fa-db & Slick & PG dependencies
-    lazy val faDbCore = "za.co.absa.fa-db" %% "core" % Versions.fadb
-    lazy val faDbSlick = "za.co.absa.fa-db" %% "slick" % Versions.fadb
-    lazy val slickPg = "com.github.tminglei" %% "slick-pg" % Versions.slickpg
+    // json
+    lazy val playJson = playOrg %% "play-json" % Versions.playJson
+
+    // Fa-db
+    lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
+
+    // testing
+    lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
+    lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
+    lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
+    lazy val sbtJunitInterface = sbtOrg % "junit-interface" % Versions.sbtJunitInterface % Test
 
     Seq(
-      springBootTest % Test,
-      springBootWeb,
-      springBootConfiguration,
-      springBootTomcat,
-      servletApi,
-      springFoxSwagger,
-      springFoxSwaggerUI,
-      springFoxBoot,
-      scalaJava8Compat,
-      jacksonModuleScala,
-      faDbCore,
-      faDbSlick,
-      slickPg
+      faDbDoobie,
+      zioCore,
+      zioMacros,
+      zioLogging,
+      zioConfig,
+      zioConfigMagnolia,
+      zioConfigTypesafe,
+      http4sBlazeBackend,
+      tapirHttp4sZio,
+      tapirSwagger,
+      tapirPlayJson,
+      playJson,
+      zioTest,
+      zioTestSbt,
+      zioTestJunit,
+      sbtJunitInterface
     )
   }
 
@@ -189,13 +213,20 @@ object Dependencies {
     Seq(specs2core, typeSafeConfig)
   }
 
-  def databaseDependencies: Seq[ModuleID] = {
-    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % "test"
-    lazy val balta = "za.co.absa" %% "balta" % Versions.balta
+ def databaseDependencies: Seq[ModuleID] = {
+    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % Test
+    lazy val balta =      "za.co.absa"      %% "balta"      % Versions.balta      % Test
 
     Seq(
       scalaTest,
       balta,
     )
   }
+  
+  def flywayDependencies: Seq[ModuleID] = {
+    val postgresql = "org.postgresql" % "postgresql" % Versions.postgresql
+
+    Seq(postgresql)
+  }
+
 }

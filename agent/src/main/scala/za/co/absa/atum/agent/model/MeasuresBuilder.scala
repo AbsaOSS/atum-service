@@ -17,8 +17,8 @@
 package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasureException
-import za.co.absa.atum.agent.model.Measure._
-import za.co.absa.atum.model.dto
+import za.co.absa.atum.agent.model.AtumMeasure._
+import za.co.absa.atum.model.dto.MeasureDTO
 
 /**
  * This object provides a functionality to convert a DTO representation of measures to the Agent's internal
@@ -26,22 +26,22 @@ import za.co.absa.atum.model.dto
  */
 private [agent] object MeasuresBuilder {
 
-  private [agent] def mapToMeasures(measures: Set[dto.MeasureDTO]): Set[za.co.absa.atum.agent.model.Measure] = {
+  private [agent] def mapToMeasures(measures: Set[MeasureDTO]): Set[za.co.absa.atum.agent.model.AtumMeasure] = {
     measures.map(createMeasure)
   }
 
-  private def createMeasure(measure: dto.MeasureDTO): za.co.absa.atum.agent.model.Measure = {
-    val measuredColumn = measure.measuredColumns.head
+  private def createMeasure(measure: MeasureDTO): za.co.absa.atum.agent.model.AtumMeasure = {
+    val controlColumns = measure.measuredColumns
 
     measure.measureName match {
-      case RecordCount.measureName            => RecordCount(measuredColumn)
-      case DistinctRecordCount.measureName    => DistinctRecordCount(measuredColumn)
-      case SumOfValuesOfColumn.measureName    => SumOfValuesOfColumn(measuredColumn)
-      case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(measuredColumn)
-      case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(measuredColumn)
+      case RecordCount.measureName            => RecordCount()
+      case DistinctRecordCount.measureName    => DistinctRecordCount(controlColumns)
+      case SumOfValuesOfColumn.measureName    => SumOfValuesOfColumn(controlColumns.head)
+      case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(controlColumns.head)
+      case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(controlColumns.head)
       case unsupportedMeasure =>
         throw MeasureException(
-          s"Measure not supported: $unsupportedMeasure. Supported measures are: ${Measure.supportedMeasureNames}"
+          s"Measure not supported: $unsupportedMeasure. Supported measures are: ${AtumMeasure.supportedMeasureNames}"
         )
     }
   }
