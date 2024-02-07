@@ -142,5 +142,5 @@ lazy val dbTest = taskKey[Unit]("Launch DB tests")
 
 dbTest := {
   println("Running DB tests")
-  (database.jvm(Versions.scala212) / Test / test).value
+  (database.jvm(Versions.serviceScalaVersion) / Test / test).value
 }
