@@ -83,8 +83,6 @@ ARG SSL_DNAME="CN=*.my.example.com, OU=project1, O=yourcompany, L=Johannesburg, 
 # A self-seigned certificate for HTTPS
 RUN keytool -genkeypair -keyalg RSA -alias selfsigned -keysize 2048 \
     -dname "$SSL_DNAME" \
-#    /usr/local/openjdk-11/conf/selfsigned.p12
-#    -validity 365 -storepass changeit -keystore /usr/local/java-11-amazon-corretto/conf/selfsigned.p12 -storetype PKCS12
     -validity 365 -storepass changeit -keystore /etc/ssl/certs/selfsigned.p12 -storetype PKCS12
 
 EXPOSE 8080 8443
