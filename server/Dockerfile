@@ -32,8 +32,8 @@
 # Conditional Docker image creation idea: https://stackoverflow.com/a/60820156/1773349
 # change to OFF to disable SSL
 ARG SSL=true
-# OpenJDK base image
-ARG BASE_IMAGE=openjdk:11-jdk-slim
+# Amazon correto base image
+ARG BASE_IMAGE=amazoncorretto:11.0.22
 
 # --- Base image part (common for SSL true|false) ---
 FROM $BASE_IMAGE as base
@@ -69,7 +69,7 @@ COPY $LDAP_SSL_CERTS_PATH /opt/certs/
 
 RUN for file in `ls /opt/certs/*.pem`; \
 do \
-    echo yes | keytool -import -file $file -alias ldaps$RANDOM -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit; \
+    echo yes | keytool -import -file $file -alias ldaps$RANDOM -keystore /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts -storepass changeit; \
 done
 
 # --- SSL=true image specifics ---
@@ -83,7 +83,9 @@ ARG SSL_DNAME="CN=*.my.example.com, OU=project1, O=yourcompany, L=Johannesburg, 
 # A self-seigned certificate for HTTPS
 RUN keytool -genkeypair -keyalg RSA -alias selfsigned -keysize 2048 \
     -dname "$SSL_DNAME" \
-    -validity 365 -storepass changeit -keystore /usr/local/openjdk-11/conf/selfsigned.p12 -storetype PKCS12
+#    /usr/local/openjdk-11/conf/selfsigned.p12
+#    -validity 365 -storepass changeit -keystore /usr/local/java-11-amazon-corretto/conf/selfsigned.p12 -storetype PKCS12
+    -validity 365 -storepass changeit -keystore /etc/ssl/certs/selfsigned.p12 -storetype PKCS12
 
 EXPOSE 8080 8443
 ENTRYPOINT ["java","-jar","/app.jar"]
