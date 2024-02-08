@@ -82,7 +82,7 @@ class WriteCheckpointTest extends DBTestSuite {
     assert(table("runs.measurements").count(add("fk_checkpoint", uuid)) == 0)
     assert(table("runs.checkpoints").count(add("fk_partitioning", fkPartitioning)) == 1)
     table("runs.checkpoints").where(add("fk_partitioning", fkPartitioning)) {resultSet =>
-      val row =resultSet.next()
+      val row = resultSet.next()
       assert(row.getString("checkpoint_name").contains("Empty path"))
       assert(row.getOffsetDateTime("process_start_time").contains(startTime))
       assert(row.getOffsetDateTime("process_end_time").contains(endTime))
