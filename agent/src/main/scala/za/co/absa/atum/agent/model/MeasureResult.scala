@@ -23,7 +23,12 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
  *  This trait defines a contract for a measure result.
  */
 trait MeasureResult {
-  val resultValue: Any
+  type T
+
+  val resultValue: T
+
+  // An actual type of the result represented as Enumeration; it can vastly differ from T,
+  // e.g. the result was stringified but we still need to keep the underlying 'true' type
   val resultValueType: ResultValueType.ResultValueType
 }
 
@@ -41,14 +46,15 @@ object MeasureResult {
    * (overflows, consistent representation of numbers - whether they are coming from Java or Scala world, and more).
    */
   case class MeasureResultByAtum private (resultValue: String, resultValueType: ResultValueType.ResultValueType)
-    extends MeasureResult
+    extends MeasureResult {override type T = String}
 
   /**
    * When the application/user provides the actual results by himself, the type is precise and we don't need
    * to do any adjustments.
    */
-  case class MeasureResultProvided[T] private (resultValue: T, resultValueType: ResultValueType.ResultValueType)
-    extends MeasureResult
+  case class MeasureResultProvided[ProvidedValueType] private
+    (resultValue: ProvidedValueType, resultValueType: ResultValueType.ResultValueType)
+    extends MeasureResult {override type T = ProvidedValueType}
 
   /**
    * This method creates a measure result for a given result value.
