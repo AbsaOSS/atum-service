@@ -87,3 +87,6 @@ _site
 utils/resources/*.conf
 
 .bsp
+/server/certs/
+/server/selfsigned.crt
+/server/selfsigned.p12

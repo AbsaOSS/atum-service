@@ -31,12 +31,16 @@ import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.r
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import sttp.tapir.{DecodeResult, Endpoint, PublicEndpoint, headers, statusCode}
+import sttp.tapir.{DecodeResult, PublicEndpoint, headers, statusCode}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller._
 import za.co.absa.atum.server.model.BadRequestResponse
 import zio.interop.catz._
 import zio.{RIO, ZIO}
+
+import java.io.FileInputStream
+import java.security.{KeyStore, SecureRandom}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 trait Server extends Endpoints {
 
@@ -88,9 +92,27 @@ trait Server extends Endpoints {
       .toRoutes
   }
 
+  val password: Array[Char] = "changeit".toCharArray // replace with your keystore password
+
+  val ks: KeyStore = KeyStore.getInstance("PKCS12")
+  val fis = new FileInputStream("/etc/ssl/certs/selfsigned.p12") // replace with your keystore path
+  ks.load(fis, password)
+
+  val kmf: KeyManagerFactory = KeyManagerFactory.getInstance("SunX509")
+  kmf.init(ks, password)
+
+  val tmf: TrustManagerFactory = TrustManagerFactory.getInstance("SunX509")
+  tmf.init(ks)
+
+  val sslContext: SSLContext = SSLContext.getInstance("SSL")
+//  val sslContext: SSLContext = SSLContext.getInstance("TLS")
+//  sslContext.init(kmf.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
+  sslContext.init(kmf.getKeyManagers, null, null)
+
   protected val server: ZIO[Env, Throwable, Unit] =
     ZIO.executor.flatMap { executor =>
       BlazeServerBuilder[F]
+        .withSslContext(sslContext)
         .withExecutionContext(executor.asExecutionContext)
         .withHttpApp(Router("/" -> (createAllServerRoutes <+> createSwaggerRoutes)).orNotFound)
         .serve

@@ -23,7 +23,7 @@ import za.co.absa.atum.server.api.http.Server
 import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
 import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, PartitioningServiceImpl}
 import zio.config.typesafe.TypesafeConfigProvider
-import zio.logging.consoleLogger
+import zio.logging.{consoleLogger, loggerConfigPath}
 import zio._
 
 object Main extends ZIOAppDefault with Server {

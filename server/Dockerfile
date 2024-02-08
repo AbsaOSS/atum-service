@@ -31,7 +31,7 @@
 
 # Conditional Docker image creation idea: https://stackoverflow.com/a/60820156/1773349
 # change to OFF to disable SSL
-ARG SSL=true
+ARG SSL
 # Amazon correto base image
 ARG BASE_IMAGE=amazoncorretto:11.0.22
 
