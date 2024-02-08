@@ -47,7 +47,7 @@ passed from agent to server and vice versa.
 ### Database `database/`
 
 This module contains a set of scripts that are used to create and maintain the database models. It also contains 
-integration tests that are used to verify the database functions logic.
+integration tests that are used to verify the logic of our database functions.
 The database tests are integration tests in nature. Therefore, a few conditions applies:
 * The tests are excluded from task `test` and are run only by a dedicated `dbTest` task (`sbt dbTest`).
 * The database structures must exist on the target database 
