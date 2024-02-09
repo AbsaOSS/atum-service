@@ -32,6 +32,7 @@ object Dependencies {
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
     val scalaLangJava8Compat = "1.0.2"
+    val balta = "0.1.0"
 
     val jacksonModuleScala = "2.14.2"
 
@@ -48,6 +49,8 @@ object Dependencies {
 
     val sttp = "3.5.2"
 
+    val postgresql = "42.6.0"
+    
     val fadb = "0.3.0"
 
     val json4s_spark2 = "3.5.3"
@@ -63,7 +66,6 @@ object Dependencies {
     val http4sBlazeBackend = "0.23.15"
     val playJson = "2.9.4"
 
-    val postgresql = "42.5.4"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -211,6 +213,16 @@ object Dependencies {
     Seq(specs2core, typeSafeConfig)
   }
 
+ def databaseDependencies: Seq[ModuleID] = {
+    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % Test
+    lazy val balta =      "za.co.absa"      %% "balta"      % Versions.balta      % Test
+
+    Seq(
+      scalaTest,
+      balta,
+    )
+  }
+  
   def flywayDependencies: Seq[ModuleID] = {
     val postgresql = "org.postgresql" % "postgresql" % Versions.postgresql
 
