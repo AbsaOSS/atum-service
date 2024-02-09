@@ -206,13 +206,15 @@ class WriteCheckpointTest extends DBTestSuite {
       // because measure definition of `count` was created only after the manual enter of the `avg`, it's actually only
       // second in the list
       assert(row1.getLong("fk_measure_definition").contains(measureDefinitionIds(1)))
-      //TODO assert(row1.getJsonB("measurement_value").contains(JsonBString("")))
+      println(row1.getJsonB("measurement_value"))
+      assert(row1.getJsonB("measurement_value").contains(JsonBString("""{"type": "int", "value": "3"}""")))
       val row2 = resultSet.next()
       assert(row2.getLong("fk_measure_definition").contains(measureDefinitionIds(0)))
-      //TODO assert(row2.getJsonB("measurement_value").contains(JsonBString("")))
+      assert(row2.getJsonB("measurement_value").contains(JsonBString("""{"type": "double", "value": "3.14"}""")))
+      println(row2.getJsonB("measurement_value"))
       val row3 = resultSet.next()
       assert(row3.getLong("fk_measure_definition").contains(measureDefinitionIds(2)))
-      //TODO assert(row3.getJsonB("measurement_value").contains(JsonBString("")))
+      assert(row3.getJsonB("measurement_value").contains(JsonBString("""{"type": "double", "value": "2.71"}""")))
     }
   }
 
