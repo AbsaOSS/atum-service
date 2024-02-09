@@ -64,6 +64,8 @@ object Dependencies {
     val playJson = "2.9.4"
 
     val postgresql = "42.5.4"
+
+    val scalaNameof = "4.0.0"
   }
 
   private def limitVersion(version: String, parts: Int): String = {
@@ -130,6 +132,7 @@ object Dependencies {
     val faDbOrg = "za.co.absa.fa-db"
     val playOrg = "com.typesafe.play"
     val sbtOrg = "com.github.sbt"
+    val dwickernOrg = "com.github.dwickern"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
@@ -159,6 +162,9 @@ object Dependencies {
     lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
     lazy val sbtJunitInterface = sbtOrg % "junit-interface" % Versions.sbtJunitInterface % Test
 
+    // utils
+    lazy val scalaNameof = dwickernOrg %% "scala-nameof" % Versions.scalaNameof % Provided
+
     Seq(
       faDbDoobie,
       zioCore,
@@ -175,7 +181,8 @@ object Dependencies {
       zioTest,
       zioTestSbt,
       zioTestJunit,
-      sbtJunitInterface
+      sbtJunitInterface,
+      scalaNameof
     )
   }
 

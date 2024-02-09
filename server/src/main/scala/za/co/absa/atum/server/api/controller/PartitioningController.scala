@@ -17,51 +17,37 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.ErrorResponse
 import zio._
 import zio.macros.accessible
 
 @accessible
-trait PartitioningController {
+trait PartitioningController extends BaseController {
   def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
 }
 
 class PartitioningControllerImpl(partitioningService: PartitioningService) extends PartitioningController {
+
   override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
-    partitioningService
-      .createPartitioningIfNotExists(partitioning)
-      .mapError { serviceError: ServiceError =>
-        InternalServerErrorResponse(serviceError.message)
+    handleServiceCall[Unit, AtumContextDTO](
+      partitioningService.createPartitioningIfNotExists(partitioning),
+      _ => {
+        val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
+        val additionalData: AdditionalDataDTO = Map.empty
+        AtumContextDTO(partitioning.partitioning, measures, additionalData)
       }
-      .flatMap {
-        case Left(statusException) =>
-          ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
-        case Right(_) =>
-          ZIO.succeed {
-            val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
-            val additionalData: AdditionalDataDTO = Map.empty
-            AtumContextDTO(partitioning.partitioning, measures, additionalData)
-          }
-      }
+    )
   }
 
-  override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO] = {
-    partitioningService
-      .createOrUpdateAdditionalData(additionalData)
-      .mapError { serviceError: ServiceError =>
-        InternalServerErrorResponse(serviceError.message)
-      }
-      .flatMap {
-        case Left(statusException) =>
-          ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
-        case Right(_) =>
-          ZIO.succeed {
-            additionalData
-          }
-      }
+  override def createOrUpdateAdditionalData(
+    additionalData: AdditionalDataSubmitDTO
+  ): IO[ErrorResponse, AdditionalDataSubmitDTO] = {
+    handleServiceCall[Unit, AdditionalDataSubmitDTO](
+      partitioningService.createOrUpdateAdditionalData(additionalData),
+      _ => additionalData
+    )
   }
 
 }

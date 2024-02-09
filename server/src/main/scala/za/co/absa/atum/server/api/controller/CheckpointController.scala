@@ -17,31 +17,25 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.ErrorResponse
 import zio._
 import zio.macros.accessible
 
 @accessible
-trait CheckpointController {
+trait CheckpointController extends BaseController {
   def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
 }
 
 class CheckpointControllerImpl(checkpointService: CheckpointService) extends CheckpointController {
+
   override def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO] = {
-    checkpointService
-      .saveCheckpoint(checkpointDTO)
-      .mapError { serviceError: ServiceError =>
-        InternalServerErrorResponse(serviceError.message)
-      }
-      .flatMap {
-        case Left(statusException) =>
-          ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
-        case Right(_) =>
-          ZIO.succeed(checkpointDTO)
-      }
+    handleServiceCall[Unit, CheckpointDTO](
+      checkpointService.saveCheckpoint(checkpointDTO),
+      _ => checkpointDTO
+    )
   }
+
 }
 
 object CheckpointControllerImpl {

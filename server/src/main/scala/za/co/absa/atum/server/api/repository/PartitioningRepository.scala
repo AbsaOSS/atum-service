@@ -24,11 +24,10 @@ import zio._
 import zio.macros.accessible
 
 @accessible
-trait PartitioningRepository {
+trait PartitioningRepository extends BaseRepository {
   def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]]
-
 
   def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
@@ -36,41 +35,22 @@ trait PartitioningRepository {
 }
 
 class PartitioningRepositoryImpl(
-    createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
-    createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData
-  ) extends PartitioningRepository {
+  createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
+  createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData
+) extends PartitioningRepository {
+
   override def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    createPartitioningIfNotExistsFn(partitioning)
-      .tap {
-        case Left(statusException) =>
-          ZIO.logError(
-            s"Partitioning create or retrieve operation exception: (${statusException.status.statusCode}) ${statusException.status.statusText}"
-          )
-        case Right(_) =>
-          ZIO.logDebug("Partitioning successfully created or retrieved in/from database.")
-      }
-      .mapError(error => DatabaseError(error.getMessage))
-      .tapError(error => ZIO.logError(s"Failed to create or retrieve partitioning in/from database: ${error.message}"))
+    handleDbFunctionCall(createPartitioningIfNotExistsFn.apply, partitioning)
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    createOrUpdateAdditionalDataFn(additionalData)
-      .tap {
-        case Left(statusException) =>
-          ZIO.logError(
-            s"Additional data create or update operation exception: " +
-              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
-          )
-        case Right(_) =>
-          ZIO.logDebug("Additional data successfully created or updated in database.")
-      }
-      .mapError(error => DatabaseError(error.getMessage))
-      .tapError(error => ZIO.logError(s"Failed to create or update additional data in database: ${error.message}"))
+    handleDbFunctionCall(createOrUpdateAdditionalDataFn.apply, additionalData)
   }
+
 }
 
 object PartitioningRepositoryImpl {

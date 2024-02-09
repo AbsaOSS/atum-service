@@ -17,25 +17,23 @@
 package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
+import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.CheckpointRepository
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
 import zio.macros.accessible
 
 @accessible
-trait CheckpointService {
+trait CheckpointService extends BaseService {
   def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]]
 }
 
 class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends CheckpointService {
+
   override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]] = {
-    checkpointRepository
-      .writeCheckpoint(checkpointDTO)
-      .mapError { case DatabaseError(message) =>
-        ServiceError(s"Failed to save checkpoint: $message")
-      }
+    handleRepositoryCall(checkpointRepository.writeCheckpoint, checkpointDTO)
   }
+
 }
 
 object CheckpointServiceImpl {

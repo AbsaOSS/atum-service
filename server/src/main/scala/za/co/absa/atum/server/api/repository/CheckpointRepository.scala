@@ -24,24 +24,16 @@ import zio._
 import zio.macros.accessible
 
 @accessible
-trait CheckpointRepository {
+trait CheckpointRepository extends BaseRepository {
   def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]]
 }
 
 class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository {
+
   override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
-    writeCheckpointFn(checkpointDTO)
-      .tap {
-        case Left(statusException) =>
-          ZIO.logError(
-            s"Checkpoint write operation exception: (${statusException.status.statusCode}) ${statusException.status.statusText}"
-          )
-        case Right(_) =>
-          ZIO.logDebug("Checkpoint successfully written to database.")
-      }
-      .mapError(error => DatabaseError(error.getMessage))
-      .tapError(error => ZIO.logError(s"Failed to write checkpoint to database: ${error.message}"))
+    handleDbFunctionCall(writeCheckpointFn.apply, checkpointDTO)
   }
+
 }
 
 object CheckpointRepositoryImpl {
