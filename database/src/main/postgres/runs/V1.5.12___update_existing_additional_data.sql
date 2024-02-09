@@ -83,4 +83,3 @@ $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 ALTER FUNCTION runs._update_existing_additional_data(BIGINT, HSTORE, TEXT) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs._update_existing_additional_data(BIGINT, HSTORE, TEXT) TO atum_user;
