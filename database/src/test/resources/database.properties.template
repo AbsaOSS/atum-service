@@ -1,0 +1,8 @@
+# jdbc settings
+test.jdbc.url=jdbc:postgresql://localhost:5432/atum_db
+
+test.jdbc.username=atum_owner
+test.jdbc.password=changeme
+
+# debug - Hint: Use `.only` to run one selected test only. Test are not designed for parallel run.
+test.persist.db=false
