@@ -66,8 +66,6 @@ object Dependencies {
     val http4sBlazeBackend = "0.23.15"
     val playJson = "2.9.4"
 
-    val postgresql = "42.5.4"
-
     val scalaNameof = "4.0.0"
   }
 
