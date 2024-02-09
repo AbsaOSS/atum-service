@@ -59,7 +59,7 @@ flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
 libraryDependencies ++= flywayDependencies
 
 lazy val root = (projectMatrix in file("."))
-  .aggregate(model, server, agent)
+  .aggregate(model, server, agent, database)
   .settings(
     name := "atum-service-root",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
@@ -126,3 +126,21 @@ lazy val model = (projectMatrix in file("model"))
     jacocoExcludes := jacocoProjectExcludes()
   )
   .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
+
+lazy val database = (projectMatrix in file("database"))
+  .settings(
+    commonSettings ++ Seq(
+      name := "atum-database",
+      libraryDependencies ++= Dependencies.databaseDependencies,
+      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      test := {}
+    ): _*
+  )
+  .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
+
+lazy val dbTest = taskKey[Unit]("Launch DB tests")
+
+dbTest := {
+  println("Running DB tests")
+  (database.jvm(Versions.serviceScalaVersion) / Test / test).value
+}

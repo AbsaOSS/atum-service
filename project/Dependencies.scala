@@ -32,6 +32,7 @@ object Dependencies {
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
     val scalaLangJava8Compat = "1.0.2"
+    val balta = "0.1.0"
 
     val jacksonModuleScala = "2.14.2"
 
@@ -47,6 +48,8 @@ object Dependencies {
     val sparkCommons = "0.6.1"
 
     val sttp = "3.5.2"
+
+    val postgresql = "42.6.0"
 
     val fadb = "0.3.0"
 
@@ -216,6 +219,16 @@ object Dependencies {
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
     Seq(specs2core, typeSafeConfig)
+  }
+
+ def databaseDependencies: Seq[ModuleID] = {
+    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % Test
+    lazy val balta =      "za.co.absa"      %% "balta"      % Versions.balta      % Test
+
+    Seq(
+      scalaTest,
+      balta,
+    )
   }
 
   def flywayDependencies: Seq[ModuleID] = {
