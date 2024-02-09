@@ -17,14 +17,14 @@
 package za.co.absa.atum.server
 
 import za.co.absa.atum.server.api.controller._
-import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TestTransactorProvider, TransactorProvider}
 import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningIfNotExists, WriteCheckpoint}
+import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
 import za.co.absa.atum.server.api.http.Server
 import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
 import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, PartitioningServiceImpl}
-import zio.config.typesafe.TypesafeConfigProvider
-import zio.logging.{consoleLogger, loggerConfigPath}
 import zio._
+import zio.config.typesafe.TypesafeConfigProvider
+import zio.logging.backend.SLF4J
 
 object Main extends ZIOAppDefault with Server {
 
@@ -42,12 +42,11 @@ object Main extends ZIOAppDefault with Server {
         CreatePartitioningIfNotExists.layer,
         WriteCheckpoint.layer,
         PostgresDatabaseProvider.layer,
-//        TransactorProvider.layer,
-        TestTransactorProvider.layerWithoutRollback,
-//        zio.Scope.default
+        TransactorProvider.layer,
+        zio.Scope.default
       )
 
   override val bootstrap: ZLayer[Any, Config.Error, Unit] =
-    Runtime.removeDefaultLoggers >>> Runtime.setConfigProvider(configProvider) >>> consoleLogger()
+    Runtime.removeDefaultLoggers >>> SLF4J.slf4j >>> Runtime.setConfigProvider(configProvider)
 
 }

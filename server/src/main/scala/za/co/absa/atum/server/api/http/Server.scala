@@ -34,13 +34,12 @@ import sttp.tapir.ztapir._
 import sttp.tapir.{DecodeResult, PublicEndpoint, headers, statusCode}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller._
+import za.co.absa.atum.server.config.SslConfig
 import za.co.absa.atum.server.model.BadRequestResponse
 import zio.interop.catz._
-import zio.{RIO, ZIO}
+import zio._
 
-import java.io.FileInputStream
-import java.security.{KeyStore, SecureRandom}
-import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+import javax.net.ssl.SSLContext
 
 trait Server extends Endpoints {
 
@@ -92,32 +91,25 @@ trait Server extends Endpoints {
       .toRoutes
   }
 
-  val password: Array[Char] = "changeit".toCharArray // replace with your keystore password
-
-  val ks: KeyStore = KeyStore.getInstance("PKCS12")
-  val fis = new FileInputStream("/etc/ssl/certs/selfsigned.p12") // replace with your keystore path
-  ks.load(fis, password)
-
-  val kmf: KeyManagerFactory = KeyManagerFactory.getInstance("SunX509")
-  kmf.init(ks, password)
-
-  val tmf: TrustManagerFactory = TrustManagerFactory.getInstance("SunX509")
-  tmf.init(ks)
-
-  val sslContext: SSLContext = SSLContext.getInstance("SSL")
-//  val sslContext: SSLContext = SSLContext.getInstance("TLS")
-//  sslContext.init(kmf.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
-  sslContext.init(kmf.getKeyManagers, null, null)
-
-  protected val server: ZIO[Env, Throwable, Unit] =
+  private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[Env, Throwable, Unit] =
     ZIO.executor.flatMap { executor =>
-      BlazeServerBuilder[F]
-        .withSslContext(sslContext)
+      val builder = BlazeServerBuilder[F]
+        .bindHttp(port, "0.0.0.0")
         .withExecutionContext(executor.asExecutionContext)
         .withHttpApp(Router("/" -> (createAllServerRoutes <+> createSwaggerRoutes)).orNotFound)
-        .serve
-        .compile
-        .drain
+
+      val builderWithSsl = sslContext.fold(builder)(ctx => builder.withSslContext(ctx))
+      builderWithSsl.serve.compile.drain
     }
+
+  private def httpServer: ZIO[Env, Throwable, Unit] = createServer(8080)
+  private def httpsServer: ZIO[Env, Throwable, Unit] = SSL.context.flatMap { context =>
+    createServer(8443, Some(context))
+  }
+
+  protected val server: ZIO[Env, Throwable, Unit] = for {
+    sslConfig <- ZIO.config[SslConfig](SslConfig.config)
+    server <- if (sslConfig.enabled) httpsServer else httpServer
+  } yield server
 
 }

@@ -57,6 +57,7 @@ object Dependencies {
 
     val zio = "2.0.19"
     val zioLogging = "2.2.0"
+    val logbackZio = "1.4.7"
     val zioConfig = "4.0.1"
     val sbtJunitInterface = "0.13.3"
     val tapir = "1.9.6"
@@ -128,14 +129,16 @@ object Dependencies {
     val tapirOrg = "com.softwaremill.sttp.tapir"
     val http4sOrg = "org.http4s"
     val faDbOrg = "za.co.absa.fa-db"
-//    val playOrg = "com.typesafe.play"
     val playOrg = "org.playframework"
     val sbtOrg = "com.github.sbt"
+    val logbackOrg = "ch.qos.logback"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
     lazy val zioMacros = zioOrg %% "zio-macros" % Versions.zio
     lazy val zioLogging = zioOrg %% "zio-logging" % Versions.zioLogging
+    lazy val slf4jLogging = zioOrg %% "zio-logging-slf4j2" % Versions.zioLogging
+    lazy val logback = logbackOrg % "logback-classic" % Versions.logbackZio
     lazy val zioConfig = zioOrg %% "zio-config" % Versions.zioConfig
     lazy val zioConfigMagnolia = zioOrg %% "zio-config-magnolia" % Versions.zioConfig
     lazy val zioConfigTypesafe = zioOrg %% "zio-config-typesafe" % Versions.zioConfig
@@ -165,6 +168,8 @@ object Dependencies {
       zioCore,
       zioMacros,
       zioLogging,
+      slf4jLogging,
+      logback,
       zioConfig,
       zioConfigMagnolia,
       zioConfigTypesafe,

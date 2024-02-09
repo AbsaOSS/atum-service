@@ -13,7 +13,6 @@
 # limitations under the License.
 #
 
-
 # Atum Service docker file
 
 # build via (docker root = project root):
@@ -30,7 +29,7 @@
 # https://localhost:8443/token/public-key
 
 # Conditional Docker image creation idea: https://stackoverflow.com/a/60820156/1773349
-# change to OFF to disable SSL
+# change to false to disable SSL
 ARG SSL
 # Amazon correto base image
 ARG BASE_IMAGE=amazoncorretto:11.0.22
@@ -80,10 +79,10 @@ RUN echo "This stage sets SSL=$SSL_ENABLED"
 # DNAME for self-signed cert, only applied for SSL=true
 ARG SSL_DNAME="CN=*.my.example.com, OU=project1, O=yourcompany, L=Johannesburg, ST=Gauteng, C=za"
 
-# A self-seigned certificate for HTTPS
+# A self-signed certificate for HTTPS
 RUN keytool -genkeypair -keyalg RSA -alias selfsigned -keysize 2048 \
     -dname "$SSL_DNAME" \
-    -validity 365 -storepass changeit -keystore /etc/ssl/certs/selfsigned.p12 -storetype PKCS12
+    -validity 365 -storepass changeit -keystore /etc/ssl/certs/selfsigned.jks -storetype JKS
 
 EXPOSE 8080 8443
 ENTRYPOINT ["java","-jar","/app.jar"]
