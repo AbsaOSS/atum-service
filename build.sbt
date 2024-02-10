@@ -40,6 +40,7 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= commonDependencies,
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
+  scalacOptions ++= Seq("-target:jvm-1.8"),
   Test / parallelExecution := false
 )
 
@@ -62,15 +63,19 @@ lazy val root = (projectMatrix in file("."))
   .aggregate(model, server, agent)
   .settings(
     name := "atum-service-root",
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
     publish / skip := true,
     mergeStrategy
   )
 
 lazy val server = (projectMatrix in file("server"))
   .settings(
-    commonSettings ++ Seq(
-      assembly / assemblyMergeStrategy := {
+      Seq(
+        libraryDependencies ++= commonDependencies,
+        scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
+        javacOptions ++= Seq("-source", "11", "-target", "11"),
+        scalacOptions ++= Seq("-target:jvm-11"),
+        Test / parallelExecution := false,
+        assembly / assemblyMergeStrategy := {
         case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
         case PathList("META-INF", "resources", "webjars", "swagger-ui", _*)               => MergeStrategy.singleOrError
         case PathList("META-INF", _*)                                                     => MergeStrategy.discard
@@ -79,9 +84,8 @@ lazy val server = (projectMatrix in file("server"))
         case "application.conf"      => MergeStrategy.concat
         case "reference.conf"        => MergeStrategy.concat
         case _                       => MergeStrategy.first
-      },
+        },
       name := "atum-server",
-      javacOptions ++= Seq("-source", "11", "-target", "11"),
       libraryDependencies ++= Dependencies.serverDependencies,
       scalacOptions ++= Seq("-Ymacro-annotations"),
       Compile / packageBin / publishArtifact := false,
