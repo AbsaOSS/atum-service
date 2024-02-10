@@ -44,7 +44,7 @@ lazy val commonSettings = Seq(
 )
 
 val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := {
-  // case PathList("META-INF", _) => MergeStrategy.discard
+  case PathList("META-INF", _) => MergeStrategy.discard
   case "application.conf"      => MergeStrategy.concat
   case "reference.conf"        => MergeStrategy.concat
   case _                       => MergeStrategy.first
@@ -70,15 +70,15 @@ lazy val root = (projectMatrix in file("."))
 lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
-      assemblyMergeStrategy in assembly := {
+      assembly / assemblyMergeStrategy := {
         case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
         case PathList("META-INF", "resources", "webjars", "swagger-ui", _*)               => MergeStrategy.singleOrError
         case PathList("META-INF", _*)                                                     => MergeStrategy.discard
         case PathList("META-INF", "versions", "9", xs @ _*)                               => MergeStrategy.discard
         case PathList("module-info.class")                                                => MergeStrategy.discard
-        case x =>
-          val oldStrategy = (assemblyMergeStrategy in assembly).value
-          oldStrategy(x)
+        case "application.conf"      => MergeStrategy.concat
+        case "reference.conf"        => MergeStrategy.concat
+        case _                       => MergeStrategy.first
       },
       name := "atum-server",
       javacOptions ++= Seq("-source", "11", "-target", "11"),
@@ -98,7 +98,6 @@ lazy val server = (projectMatrix in file("server"))
     jacocoExcludes := jacocoProjectExcludes()
   )
   .enablePlugins(AssemblyPlugin)
-  // .enablePlugins(TomcatPlugin)
   .enablePlugins(AutomateHeaderPlugin)
   .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
   .dependsOn(model)
