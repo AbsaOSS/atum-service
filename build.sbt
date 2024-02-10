@@ -40,7 +40,7 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= commonDependencies,
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-  scalacOptions ++= Seq("-target:jvm-1.8"),
+  scalacOptions ++= Seq("-release", "8"),
   Test / parallelExecution := false
 )
 
@@ -73,7 +73,7 @@ lazy val server = (projectMatrix in file("server"))
         libraryDependencies ++= commonDependencies,
         scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
         javacOptions ++= Seq("-source", "11", "-target", "11"),
-        scalacOptions ++= Seq("-target:jvm-11"),
+        scalacOptions ++= Seq("-release", "11"),
         Test / parallelExecution := false,
         assembly / assemblyMergeStrategy := {
         case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
