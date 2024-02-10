@@ -19,6 +19,7 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
+import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.model.utils.SerializationUtils
 import za.co.absa.atum.server.model.PartitioningForDB
@@ -28,7 +29,6 @@ import za.co.absa.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatu
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-
 import zio._
 import zio.interop.catz._
 
@@ -38,22 +38,22 @@ class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieE
 
   override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = SerializationUtils.asJson(partitioning)
+    val partitioningJsonString = Json.toJson(partitioning).toString()
 
-    val parentPartitioningNormalized = values.parentPartitioning.map { parentPartitioning =>
+    val parentPartitioningJsonString = values.parentPartitioning.map { parentPartitioning =>
       val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
-      SerializationUtils.asJson(parentPartitioningForDB)
+      Json.toJson(parentPartitioningForDB).toString()
     }
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-                    partitioningNormalized
+                    partitioningJsonString
                   },
                   ${values.authorIfNew},
                   ${
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-                    parentPartitioningNormalized
+                    parentPartitioningJsonString
                   }
                 ) ${Fragment.const(alias)};"""
   }

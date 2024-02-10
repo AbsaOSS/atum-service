@@ -40,7 +40,10 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= commonDependencies,
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-  scalacOptions ++= Seq("-release", "8"),
+  scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((2, major)) if major >= 12 => Seq("-release", "8")
+    case _ => Seq("-target:jvm-1.8")
+  }),
   Test / parallelExecution := false
 )
 
@@ -70,7 +73,6 @@ lazy val root = (projectMatrix in file("."))
 lazy val server = (projectMatrix in file("server"))
   .settings(
       Seq(
-        libraryDependencies ++= commonDependencies,
         scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
         javacOptions ++= Seq("-source", "11", "-target", "11"),
         scalacOptions ++= Seq("-release", "11"),
@@ -86,7 +88,7 @@ lazy val server = (projectMatrix in file("server"))
         case _                       => MergeStrategy.first
         },
       name := "atum-server",
-      libraryDependencies ++= Dependencies.serverDependencies,
+      libraryDependencies ++= Dependencies.serverDependencies ++ commonDependencies,
       scalacOptions ++= Seq("-Ymacro-annotations"),
       Compile / packageBin / publishArtifact := false,
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,

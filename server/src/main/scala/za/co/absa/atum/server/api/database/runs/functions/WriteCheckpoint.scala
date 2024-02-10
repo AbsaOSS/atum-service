@@ -28,10 +28,8 @@ import za.co.absa.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatu
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-
 import zio._
 import zio.interop.catz._
-
 import doobie.postgres.implicits._
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
