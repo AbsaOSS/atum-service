@@ -44,6 +44,17 @@ See `server/README.md` for more technical documentation.
 This module defines a set of Data Transfer Objects. These are Atum-specific objects that carry data that are being 
 passed from agent to server and vice versa.
 
+### Database `database/`
+
+This module contains a set of scripts that are used to create and maintain the database models. It also contains 
+integration tests that are used to verify the logic of our database functions.
+The database tests are integration tests in nature. Therefore, a few conditions applies:
+* The tests are excluded from task `test` and are run only by a dedicated `dbTest` task (`sbt dbTest`).
+* The database structures must exist on the target database 
+  (follow the [deployment instructions in database module](database/README.md#Deployment)).
+* The connection information to the DB is provided in file `database/src/test/resources/database.properties` 
+  (See `database.properties.template` for syntax).
+
 ## Vocabulary
 
 This section defines a vocabulary of words and phrases used across the codebase or this documentation.
