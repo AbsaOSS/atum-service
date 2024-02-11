@@ -42,11 +42,22 @@ lazy val commonSettings = Seq(
   Test / parallelExecution := false
 )
 
-val mergeStrategy: Def.SettingsDefinition = assembly / assemblyMergeStrategy := {
+val mergeStrategy = assembly / assemblyMergeStrategy := {
   case PathList("META-INF", _) => MergeStrategy.discard
   case "application.conf"      => MergeStrategy.concat
   case "reference.conf"        => MergeStrategy.concat
   case _                       => MergeStrategy.first
+}
+
+val serverMergeStrategy = assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
+  case PathList("META-INF", "resources", "webjars", "swagger-ui", _*) => MergeStrategy.singleOrError
+  case PathList("META-INF", _*) => MergeStrategy.discard
+  case PathList("META-INF", "versions", "9", xs@_*) => MergeStrategy.discard
+  case PathList("module-info.class") => MergeStrategy.discard
+  case "application.conf" => MergeStrategy.concat
+  case "reference.conf" => MergeStrategy.concat
+  case _ => MergeStrategy.first
 }
 
 enablePlugins(FlywayPlugin)
@@ -69,30 +80,19 @@ lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++
       Seq(
-        scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
         scalacOptions ++= Seq("-release", "11"),
         javacOptions ++= Seq("-source", "11", "-target", "11", "-Xlint"),
-        Test / parallelExecution := false,
-        assembly / assemblyMergeStrategy := {
-        case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
-        case PathList("META-INF", "resources", "webjars", "swagger-ui", _*)               => MergeStrategy.singleOrError
-        case PathList("META-INF", _*)                                                     => MergeStrategy.discard
-        case PathList("META-INF", "versions", "9", xs @ _*)                               => MergeStrategy.discard
-        case PathList("module-info.class")                                                => MergeStrategy.discard
-        case "application.conf"      => MergeStrategy.concat
-        case "reference.conf"        => MergeStrategy.concat
-        case _                       => MergeStrategy.first
-        },
-      name := "atum-server",
-      libraryDependencies ++= Dependencies.serverDependencies ++ commonDependencies,
-      scalacOptions ++= Seq("-Ymacro-annotations"),
-      Compile / packageBin / publishArtifact := false,
-      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
-      packageBin := (Compile / assembly).value,
-      artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
-      webappWebInfClasses := true,
-      inheritJarManifest := true,
-      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+        serverMergeStrategy,
+        name := "atum-server",
+        libraryDependencies ++= Dependencies.serverDependencies ++ commonDependencies,
+        scalacOptions ++= Seq("-Ymacro-annotations"),
+        Compile / packageBin / publishArtifact := false,
+        (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+        packageBin := (Compile / assembly).value,
+        artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
+        webappWebInfClasses := true,
+        inheritJarManifest := true,
+        testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     ): _*
   )
   .settings(

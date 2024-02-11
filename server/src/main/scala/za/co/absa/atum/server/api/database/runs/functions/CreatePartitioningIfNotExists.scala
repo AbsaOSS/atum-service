@@ -38,13 +38,11 @@ class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieE
 
   override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-//    val partitioningJsonString = Json.toJson(partitioning).toString()
-    val partitioningJsonString = SerializationUtils.asJson(partitioning)
+    val partitioningJsonString = Json.toJson(partitioning).toString()
 
     val parentPartitioningJsonString = values.parentPartitioning.map { parentPartitioning =>
       val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
-//      Json.toJson(parentPartitioningForDB).toString()
-      SerializationUtils.asJson(parentPartitioningForDB)
+      Json.toJson(parentPartitioningForDB).toString()
     }
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
