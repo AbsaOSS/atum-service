@@ -113,8 +113,12 @@ lazy val database = (projectMatrix in file("database"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-database",
+      printScalaVersion := {
+        val log = streams.value.log
+        log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")
+      },
       libraryDependencies ++= Dependencies.databaseDependencies,
-      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       test := {}
     ): _*
   )
