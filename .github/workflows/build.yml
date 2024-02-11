@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: Build
+name: Build all modules
 
 on:
   pull_request:
@@ -80,7 +80,7 @@ jobs:
           java-version: "adopt@1.8"
 
       - name: Build and run tests
-        run: sbt "project agent" ++${{matrix.scala}} test "project model" ++${{matrix.scala}} test
+        run: sbt "project agent" ++${{matrix.scala}} test doc "project model" ++${{matrix.scala}} test doc
 
   build-server:
     runs-on: ubuntu-latest
@@ -114,4 +114,4 @@ jobs:
         run: sbt flywayMigrate
 
       - name: Build and run tests
-        run: sbt "project server" ++${{matrix.scala}} test
+        run: sbt "project server" ++${{matrix.scala}} test doc
