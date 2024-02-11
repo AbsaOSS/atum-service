@@ -39,11 +39,6 @@ ThisBuild / printSparkScalaVersion := {
 lazy val commonSettings = Seq(
   libraryDependencies ++= commonDependencies,
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
-  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-  scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, major)) if major >= 12 => Seq("-release", "8")
-    case _ => Seq("-target:jvm-1.8")
-  }),
   Test / parallelExecution := false
 )
 
@@ -72,10 +67,11 @@ lazy val root = (projectMatrix in file("."))
 
 lazy val server = (projectMatrix in file("server"))
   .settings(
+    commonSettings,
       Seq(
         scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
-        javacOptions ++= Seq("-source", "11", "-target", "11"),
         scalacOptions ++= Seq("-release", "11"),
+        javacOptions ++= Seq("-source", "11", "-target", "11", "-Xlint"),
         Test / parallelExecution := false,
         assembly / assemblyMergeStrategy := {
         case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
@@ -110,7 +106,13 @@ lazy val server = (projectMatrix in file("server"))
 
 lazy val agent = (projectMatrix in file("agent"))
   .settings(
-    commonSettings ++ Seq(
+    commonSettings,
+    scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, major)) if major >= 12 => Seq("-release", "8")
+      case _ => Seq("-target:jvm-1.8")
+    }),
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
+    Seq(
       name := "atum-agent",
       libraryDependencies ++= Dependencies.agentDependencies(
         if (scalaVersion.value == Versions.scala211) Versions.spark2 else Versions.spark3,
@@ -131,7 +133,13 @@ lazy val agent = (projectMatrix in file("agent"))
 
 lazy val model = (projectMatrix in file("model"))
   .settings(
-    commonSettings ++ Seq(
+    commonSettings,
+    scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, major)) if major >= 12 => Seq("-release", "8")
+      case _ => Seq("-target:jvm-1.8")
+    }),
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
+    Seq(
       name         := "atum-model",
       libraryDependencies ++= Dependencies.modelDependencies(scalaVersion.value),
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
