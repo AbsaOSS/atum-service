@@ -23,9 +23,67 @@ on:
     types: [ opened, synchronize, reopened ]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+#  test:
+#    runs-on: ubuntu-latest
+#
+#    services:
+#      postgres:
+#        image: postgres:15
+#        env:
+#          POSTGRES_PASSWORD: postgres
+#          POSTGRES_DB: atum_db
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
+#        ports:
+#          - 5432:5432
 
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        scala: [2.11.12, 2.12.18, 2.13.11]
+#
+#    name: Scala ${{matrix.scala}}
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v2
+#      - uses: coursier/cache-action@v5
+#
+#      - name: Setup Scala
+#        uses: olafurpg/setup-scala@v10
+#        with:
+#          java-version: "adopt@1.11.0-11"
+##          java-version: "adopt@1.8"
+#
+#      - name: Prepare testing database
+#        run: sbt flywayMigrate
+#
+#      - name: Build and run tests
+#        run: sbt ++${{matrix.scala}} test doc
+
+  build-agent-and-model:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        scala: [2.11.12, 2.12.18, 2.13.11]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: "adopt@1.8"
+
+      - name: Build and run tests
+        run: sbt "project agent" ++${{matrix.scala}} test "project model" ++${{matrix.scala}} test
+
+  build-server:
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:15
@@ -39,14 +97,9 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
     strategy:
-      fail-fast: false
       matrix:
-        scala: [2.11.12, 2.12.18, 2.13.11]
-
-    name: Scala ${{matrix.scala}}
-
+        scala: [2.13.11]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -56,10 +109,9 @@ jobs:
         uses: olafurpg/setup-scala@v10
         with:
           java-version: "adopt@1.11.0-11"
-#          java-version: "adopt@1.8"
 
       - name: Prepare testing database
         run: sbt flywayMigrate
 
       - name: Build and run tests
-        run: sbt ++${{matrix.scala}} test doc
+        run: sbt "project server" ++${{matrix.scala}} test
