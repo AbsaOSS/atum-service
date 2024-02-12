@@ -113,7 +113,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const coverageCheckFailed = 
+            const coverageCheckFailed =
               Number('${{ steps.jacoco-server.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
               Number('${{ steps.jacoco-agent.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
               Number('${{ steps.jacoco-model.outputs.coverage-changed-files }}') < Number('${{ env.changed }}');
@@ -129,13 +129,13 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const jacocoReportRegExp = /^### JaCoCo .* code coverage report .*/;
-            
+
             const comments = await github.rest.issues.listComments({
               owner,
               repo,
               issue_number,
             });
-            
+
             for (const comment of comments.data) {
               const lines = comment.body.split('\n');
               if (lines.length > 0 && jacocoReportRegExp.test(lines[0])) {
@@ -143,9 +143,9 @@ jobs:
                   owner,
                   repo,
                   comment_id: comment.id,
-                  body: lines[0] + "- Build Failed",
+                  body: lines[0] + "\\n\\n### Build Failed",
                 });
               }
             }
-            
+
             core.setFailed('JaCoCo test coverage report generation failed, and related PR comments were updated.');
