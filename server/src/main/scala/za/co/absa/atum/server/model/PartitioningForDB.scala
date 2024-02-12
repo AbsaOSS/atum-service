@@ -34,6 +34,4 @@ object PartitioningForDB {
     PartitioningForDB(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
   }
 
-  implicit val writes: Writes[PartitioningForDB] = Json.writes
-
 }

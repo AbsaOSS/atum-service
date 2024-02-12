@@ -80,10 +80,8 @@ lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++
       Seq(
-//        scalacOptions ++= Seq("-release", "11"),
-        javacOptions ++= Seq("-source", "11", "-target", "11", "-Xlint"),
-        serverMergeStrategy,
         name := "atum-server",
+        javacOptions ++= Seq("-source", "11", "-target", "11", "-Xlint"),
         libraryDependencies ++= Dependencies.serverDependencies ++ commonDependencies,
         scalacOptions ++= Seq("-Ymacro-annotations"),
         Compile / packageBin / publishArtifact := false,
@@ -92,7 +90,8 @@ lazy val server = (projectMatrix in file("server"))
         artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
         webappWebInfClasses := true,
         inheritJarManifest := true,
-        testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+        testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+        serverMergeStrategy,
     ): _*
   )
   .settings(
@@ -108,10 +107,6 @@ lazy val agent = (projectMatrix in file("agent"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-agent",
-//      scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-//        case Some((2, major)) if major >= 12 => Seq("-release", "8")
-//        case _ => Seq("-target:jvm-1.8")
-//      }),
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
       libraryDependencies ++= Dependencies.agentDependencies(
         if (scalaVersion.value == Versions.scala211) Versions.spark2 else Versions.spark3,
@@ -134,10 +129,6 @@ lazy val model = (projectMatrix in file("model"))
   .settings(
     commonSettings ++ Seq(
       name         := "atum-model",
-//      scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-//        case Some((2, major)) if major >= 12 => Seq("-release", "8")
-//        case _ => Seq("-target:jvm-1.8")
-//      }),
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
       libraryDependencies ++= Dependencies.modelDependencies(scalaVersion.value),
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
