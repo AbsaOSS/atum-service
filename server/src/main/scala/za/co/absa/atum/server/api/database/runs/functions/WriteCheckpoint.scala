@@ -20,7 +20,6 @@ import doobie.Fragment
 import doobie.implicits._
 import doobie.util.Read
 import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.model.utils.SerializationUtils
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.doobie.{DoobieEngine, StatusWithData}
@@ -30,6 +29,9 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
+import play.api.libs.json.Json
+import za.co.absa.atum.server.model.PlayJsonImplicits.writesMeasurementDTO
+
 import doobie.postgres.implicits._
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
@@ -38,11 +40,12 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
 
   override def sql(values: CheckpointDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = SerializationUtils.asJson(partitioning)
+    val partitioningNormalized = Json.toJson(partitioning).toString
     // List[String] containing json data has to be properly escaped
     // It would be safer to use Json data type and derive Put instance
-    val measurementsNormalized =
-      values.measurements.map(x => s"\"${SerializationUtils.asJson(x).replaceAll("\"", "\\\\\"")}\"")
+    val measurementsNormalized = {
+      values.measurements.map(x => s"\"${Json.toJson(x).toString.replaceAll("\"", "\\\\\"")}\"")
+    }
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${

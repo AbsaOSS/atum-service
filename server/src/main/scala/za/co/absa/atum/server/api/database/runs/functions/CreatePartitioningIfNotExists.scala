@@ -21,7 +21,6 @@ import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
 import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
-import za.co.absa.atum.model.utils.SerializationUtils
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.doobie.{DoobieEngine, StatusWithData}
@@ -38,12 +37,10 @@ class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieE
 
   override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-//    val partitioningJsonString = SerializationUtils.asJson(partitioning)
     val partitioningJsonString = Json.toJson(partitioning).toString
 
     val parentPartitioningJsonString = values.parentPartitioning.map { parentPartitioning =>
       val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
-//      SerializationUtils.asJson(parentPartitioningForDB)
       Json.toJson(parentPartitioningForDB).toString
     }
 

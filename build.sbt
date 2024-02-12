@@ -18,8 +18,6 @@ import Dependencies.*
 import SparkVersionAxis.*
 import JacocoSetup.*
 import sbt.Keys.name
-import sbtassembly.AssemblyPlugin.autoImport.assemblyJarName
-
 
 ThisBuild / organization := "za.co.absa"
 
@@ -38,7 +36,6 @@ ThisBuild / printSparkScalaVersion := {
 }
 
 lazy val commonSettings = Seq(
-//  libraryDependencies ++= commonDependencies,
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
   Test / parallelExecution := false
 )
@@ -51,6 +48,7 @@ val mergeStrategy = assembly / assemblyMergeStrategy := {
 }
 
 val serverMergeStrategy = assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", "services", xs @ _*) => MergeStrategy.filterDistinctLines
   case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
   case PathList("META-INF", "resources", "webjars", "swagger-ui", _*) => MergeStrategy.singleOrError
   case PathList("META-INF", _*) => MergeStrategy.discard
@@ -74,7 +72,6 @@ lazy val root = (projectMatrix in file("."))
   .settings(
     name := "atum-service-root",
     publish / skip := true,
-    mergeStrategy
   )
 
 lazy val server = (projectMatrix in file("server"))
@@ -84,16 +81,12 @@ lazy val server = (projectMatrix in file("server"))
         name := "atum-server",
         javacOptions ++= Seq("-source", "11", "-target", "11", "-Xlint"),
         scalacOptions ++= Seq("-release", "11"),
-//        libraryDependencies ++= Dependencies.serverDependencies ++ commonDependencies,
         libraryDependencies ++= Dependencies.serverDependencies ++ testDependencies,
-//        unmanagedJars in Compile += file("model/target/jvm-2.13/model.jar"),
         scalacOptions ++= Seq("-Ymacro-annotations"),
         Compile / packageBin / publishArtifact := false,
         (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
         packageBin := (Compile / assembly).value,
         artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
-//        webappWebInfClasses := true,
-//        inheritJarManifest := true,
         testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
         serverMergeStrategy,
     ): _*
@@ -134,10 +127,8 @@ lazy val model = (projectMatrix in file("model"))
     commonSettings ++ Seq(
       name         := "atum-model",
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-      assembly / assemblyJarName := "model.jar",
       libraryDependencies ++= commonDependencies ++ testDependencies ++ Dependencies.modelDependencies(scalaVersion.value),
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
-      mergeStrategy
     ): _*
   )
   .settings(
