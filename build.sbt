@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import Dependencies._
-import SparkVersionAxis._
-import JacocoSetup._
+import Dependencies.*
+import SparkVersionAxis.*
+import JacocoSetup.*
 import sbt.Keys.name
+import sbtassembly.AssemblyPlugin.autoImport.assemblyJarName
 
 
 ThisBuild / organization := "za.co.absa"
@@ -37,7 +38,7 @@ ThisBuild / printSparkScalaVersion := {
 }
 
 lazy val commonSettings = Seq(
-  libraryDependencies ++= commonDependencies,
+//  libraryDependencies ++= commonDependencies,
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
   Test / parallelExecution := false
 )
@@ -82,14 +83,17 @@ lazy val server = (projectMatrix in file("server"))
       Seq(
         name := "atum-server",
         javacOptions ++= Seq("-source", "11", "-target", "11", "-Xlint"),
-        libraryDependencies ++= Dependencies.serverDependencies ++ commonDependencies,
+        scalacOptions ++= Seq("-release", "11"),
+//        libraryDependencies ++= Dependencies.serverDependencies ++ commonDependencies,
+        libraryDependencies ++= Dependencies.serverDependencies ++ testDependencies,
+//        unmanagedJars in Compile += file("model/target/jvm-2.13/model.jar"),
         scalacOptions ++= Seq("-Ymacro-annotations"),
         Compile / packageBin / publishArtifact := false,
         (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
         packageBin := (Compile / assembly).value,
         artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
-        webappWebInfClasses := true,
-        inheritJarManifest := true,
+//        webappWebInfClasses := true,
+//        inheritJarManifest := true,
         testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
         serverMergeStrategy,
     ): _*
@@ -108,7 +112,7 @@ lazy val agent = (projectMatrix in file("agent"))
     commonSettings ++ Seq(
       name := "atum-agent",
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-      libraryDependencies ++= Dependencies.agentDependencies(
+      libraryDependencies ++= commonDependencies ++ testDependencies ++ Dependencies.agentDependencies(
         if (scalaVersion.value == Versions.scala211) Versions.spark2 else Versions.spark3,
         scalaVersion.value
       ),
@@ -130,8 +134,10 @@ lazy val model = (projectMatrix in file("model"))
     commonSettings ++ Seq(
       name         := "atum-model",
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-      libraryDependencies ++= Dependencies.modelDependencies(scalaVersion.value),
+      assembly / assemblyJarName := "model.jar",
+      libraryDependencies ++= commonDependencies ++ testDependencies ++ Dependencies.modelDependencies(scalaVersion.value),
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
+      mergeStrategy
     ): _*
   )
   .settings(

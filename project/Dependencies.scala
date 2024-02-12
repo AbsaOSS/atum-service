@@ -98,6 +98,16 @@ object Dependencies {
     }
   }
 
+  def testDependencies: Seq[ModuleID] = {
+    lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
+    lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
+
+    Seq(
+      scalatest,
+      mockito,
+    )
+  }
+
   def commonDependencies: Seq[ModuleID] = {
     val json4sVersion = json4sVersionForScala(Versions.scala212)
 
@@ -108,9 +118,9 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
-    lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
-    lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
-    lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
+//    lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
+//    lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
+//    lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
 
     Seq(
       jacksonModuleScala,
@@ -118,9 +128,9 @@ object Dependencies {
       json4sCore,
       json4sJackson,
       json4sNative,
-      logback,
-      scalatest,
-      mockito,
+//      logback,
+//      scalatest,
+//      mockito,
     )
   }
 
@@ -198,13 +208,16 @@ object Dependencies {
 
     lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
 
+    lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
+
     Seq(
       sparkCore,
       sparkSql,
       typeSafeConfig,
       sparkCommons,
       sparkCommonsTest,
-      sttp
+      sttp,
+      logback
     )
   }
 

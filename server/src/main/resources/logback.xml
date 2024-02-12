@@ -5,7 +5,7 @@
             <Pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36}:%L - %msg %ex{short}%n</Pattern>
         </layout>
     </appender>
-    <root level="info">
+    <root level="debug">
         <appender-ref ref="STDOUT"/>
     </root>
     <logger name="za.co.absa" level="debug"/>
