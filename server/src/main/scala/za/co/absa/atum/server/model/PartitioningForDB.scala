@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.model
 
-import play.api.libs.json.{Json, Reads, Writes}
 import za.co.absa.atum.model.dto.PartitioningDTO
 
 private[server] case class PartitioningForDB private (

@@ -25,7 +25,7 @@ import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 object SSL {
 
-  def context: ZIO[Any, Throwable, SSLContext] = {
+  val context: ZIO[Any, Throwable, SSLContext] = {
     for {
       sslConfig <- ZIO.config[SslConfig](SslConfig.config)
       _ <- ZIO.logDebug("Attempting to initialize SSLContext")

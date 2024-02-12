@@ -102,8 +102,8 @@ trait Server extends Endpoints {
       builderWithSsl.serve.compile.drain
     }
 
-  private def httpServer: ZIO[Env, Throwable, Unit] = createServer(8080)
-  private def httpsServer: ZIO[Env, Throwable, Unit] = SSL.context.flatMap { context =>
+  private val httpServer: ZIO[Env, Throwable, Unit] = createServer(8080)
+  private val httpsServer: ZIO[Env, Throwable, Unit] = SSL.context.flatMap { context =>
     createServer(8443, Some(context))
   }
 
