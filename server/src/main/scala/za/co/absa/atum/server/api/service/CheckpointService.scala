@@ -24,11 +24,12 @@ import zio._
 import zio.macros.accessible
 
 @accessible
-trait CheckpointService extends BaseService {
+trait CheckpointService {
   def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]]
 }
 
-class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends CheckpointService {
+class CheckpointServiceImpl(checkpointRepository: CheckpointRepository)
+  extends CheckpointService with BaseService {
 
   override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]] = {
     handleRepositoryCall(checkpointRepository.writeCheckpoint, checkpointDTO)

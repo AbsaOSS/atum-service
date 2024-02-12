@@ -23,12 +23,13 @@ import zio._
 import zio.macros.accessible
 
 @accessible
-trait PartitioningController extends BaseController {
+trait PartitioningController {
   def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
 }
 
-class PartitioningControllerImpl(partitioningService: PartitioningService) extends PartitioningController {
+class PartitioningControllerImpl(partitioningService: PartitioningService)
+  extends PartitioningController with BaseController {
 
   override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
     handleServiceCall[Unit, AtumContextDTO](

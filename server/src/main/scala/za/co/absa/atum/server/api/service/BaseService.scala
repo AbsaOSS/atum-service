@@ -25,14 +25,13 @@ trait BaseService {
 
   def handleRepositoryCall[T](
     repositoryCall: T => IO[DatabaseError, Either[StatusException, Unit]],
-    inputDTO: T
+    input: T
   ): IO[ServiceError, Either[StatusException, Unit]] = {
 
     val operationName = nameOf(repositoryCall)
 
-    repositoryCall(inputDTO)
+    repositoryCall(input)
       .mapError { case DatabaseError(underlyingMessage) =>
-        repositoryCall.toString()
         ServiceError(s"Failed to perform '$operationName': $underlyingMessage")
       }
   }

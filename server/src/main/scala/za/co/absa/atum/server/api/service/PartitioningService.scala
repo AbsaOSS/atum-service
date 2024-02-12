@@ -24,7 +24,7 @@ import zio._
 import zio.macros.accessible
 
 @accessible
-trait PartitioningService extends BaseService {
+trait PartitioningService {
   def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO):
     IO[ServiceError, Either[StatusException, Unit]]
 
@@ -32,7 +32,8 @@ trait PartitioningService extends BaseService {
     IO[ServiceError, Either[StatusException, Unit]]
 }
 
-class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) extends PartitioningService {
+class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
+  extends PartitioningService with BaseService {
 
   override def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO

@@ -23,11 +23,12 @@ import zio._
 import zio.macros.accessible
 
 @accessible
-trait CheckpointController extends BaseController {
+trait CheckpointController {
   def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
 }
 
-class CheckpointControllerImpl(checkpointService: CheckpointService) extends CheckpointController {
+class CheckpointControllerImpl(checkpointService: CheckpointService)
+  extends CheckpointController with BaseController {
 
   override def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO] = {
     handleServiceCall[Unit, CheckpointDTO](

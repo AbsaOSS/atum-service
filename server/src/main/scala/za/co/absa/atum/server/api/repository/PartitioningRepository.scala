@@ -24,7 +24,7 @@ import zio._
 import zio.macros.accessible
 
 @accessible
-trait PartitioningRepository extends BaseRepository {
+trait PartitioningRepository {
   def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]]
@@ -37,18 +37,18 @@ trait PartitioningRepository extends BaseRepository {
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData
-) extends PartitioningRepository {
+) extends PartitioningRepository with BaseRepository {
 
   override def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    handleDbFunctionCall(createPartitioningIfNotExistsFn.apply, partitioning)
+    dbCallWithStatus(createPartitioningIfNotExistsFn.apply, partitioning)
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    handleDbFunctionCall(createOrUpdateAdditionalDataFn.apply, additionalData)
+    dbCallWithStatus(createOrUpdateAdditionalDataFn.apply, additionalData)
   }
 
 }

@@ -24,14 +24,14 @@ import zio._
 import zio.macros.accessible
 
 @accessible
-trait CheckpointRepository extends BaseRepository {
+trait CheckpointRepository {
   def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]]
 }
 
-class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository {
+class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository with BaseRepository {
 
   override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
-    handleDbFunctionCall(writeCheckpointFn.apply, checkpointDTO)
+    dbCallWithStatus(writeCheckpointFn.apply, checkpointDTO)
   }
 
 }

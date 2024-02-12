@@ -23,14 +23,14 @@ import zio._
 
 trait BaseRepository {
 
-  def handleDbFunctionCall[T, R](
+  def dbCallWithStatus[T, R](
     dbFuncCall: T => Task[Either[StatusException, R]],
-    inputDTO: T,
+    input: T,
   ): IO[DatabaseError, Either[StatusException, R]] = {
 
     val operationName = nameOf(dbFuncCall)
 
-    dbFuncCall(inputDTO)
+    dbFuncCall(input)
       .tap {
         case Left(statusException) =>
           ZIO.logError(
