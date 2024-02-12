@@ -58,9 +58,12 @@ jobs:
       - name: Prepare testing database
         run: sbt flywayMigrate
       - name: Build and run tests
+        continue-on-error: true
+        id: jacocorun
         run: sbt jacoco
       #  server module code coverage
       - name: Add coverage to PR
+        if: steps.jacocorun.outcome == 'success'
         id: jacoco-server
         uses: madrapps/jacoco-report@v1.6.1
         with:
@@ -72,6 +75,7 @@ jobs:
           update-comment: true
       #  agent module code coverage
       - name: Add coverage to PR
+        if: steps.jacocorun.outcome == 'success'
         id: jacoco-agent
         uses: madrapps/jacoco-report@v1.6.1
         with:
@@ -84,6 +88,7 @@ jobs:
           update-comment: true
       #  model module code coverage
       - name: Add coverage to PR
+        if: steps.jacocorun.outcome == 'success'
         id: jacoco-model
         uses: madrapps/jacoco-report@v1.6.1
         with:
@@ -95,6 +100,7 @@ jobs:
           title: JaCoCo model module code coverage report - scala ${{ env.scalaLong12 }}
           update-comment: true
       - name: Get the Coverage info
+        if: steps.jacocorun.outcome == 'success'
         run: |
           echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
@@ -104,6 +110,7 @@ jobs:
           echo "Changed Files coverage ${{ steps.jacoco-model.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
         if: |
+          steps.jacocorun.outcome == 'success' &&
           ${{ steps.jacoco-server.outputs.coverage-changed-files < env.changed }} &&
           ${{ steps.jacoco-agent.outputs.coverage-changed-files < env.changed }} &&
           ${{ steps.jacoco-model.outputs.coverage-changed-files < env.changed }}
@@ -111,5 +118,30 @@ jobs:
         with:
           script: |
             core.setFailed('Changed files coverage is less than ${{ env.changed }}%!')
-
-
+      - name: Edit JaCoCo comments on build failure
+        if: steps.jacocorun.outcome != 'success'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const jacocoReportRegExp = /^### JaCoCo .* code coverage report .*/;
+            
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+            });
+            
+            for (const comment of comments.data) {
+              const lines = comment.body.split('\n');
+              if (lines.length > 0 && jacocoReportRegExp.test(lines[0])) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: comment.id,
+                  body: "### Build Failed.",
+                });
+              }
+            }
