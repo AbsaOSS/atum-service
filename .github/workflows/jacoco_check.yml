@@ -109,15 +109,17 @@ jobs:
           echo "Total model module coverage ${{ steps.jacoco-model.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-model.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
-        if: |
-          steps.jacocorun.outcome == 'success' &&
-          ${{ steps.jacoco-server.outputs.coverage-changed-files < env.changed }} &&
-          ${{ steps.jacoco-agent.outputs.coverage-changed-files < env.changed }} &&
-          ${{ steps.jacoco-model.outputs.coverage-changed-files < env.changed }}
+        if: steps.jacocorun.outcome == 'success'
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Changed files coverage is less than ${{ env.changed }}%!')
+            const coverageCheckFailed = 
+              Number('${{ steps.jacoco-server.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
+              Number('${{ steps.jacoco-agent.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
+              Number('${{ steps.jacoco-model.outputs.coverage-changed-files }}') < Number('${{ env.changed }}');
+            if (coverageCheckFailed) {
+              core.setFailed('Changed files coverage is less than ${{ env.changed }}%!');
+            }
       - name: Edit JaCoCo comments on build failure
         if: steps.jacocorun.outcome != 'success'
         uses: actions/github-script@v6
