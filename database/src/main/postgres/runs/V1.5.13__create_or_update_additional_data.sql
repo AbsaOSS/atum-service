@@ -43,7 +43,6 @@ $$
 --      11                  - Additional data have been added
 --      12                  - Additional data have been upserted
 --      14                  - No changes in additional data (this is when they already existed)
---      31                  - Additional data could not be backed up
 --      41                  - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -64,12 +63,6 @@ BEGIN
     --             then insert them into AD history table and
     --             then update the actual AD table with new values
     _ad_backup_performed := runs._update_existing_additional_data(_fk_partitioning, i_additional_data, i_by_user);
-
-    IF _ad_backup_performed IS NULL THEN
-        status := 31;
-        status_text := 'Additional data could not be backed up';
-        RETURN;
-    END IF;
 
     -- 2. (insert) get records that do not not exist yet and insert it into ad table
     --    (their original rows were previously saved in step 1)

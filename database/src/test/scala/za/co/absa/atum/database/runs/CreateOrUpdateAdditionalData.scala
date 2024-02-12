@@ -20,6 +20,8 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
+import java.time.OffsetDateTime
+
 class CreateOrUpdateAdditionalData extends DBTestSuite{
 
   private val fncCreateOrUpdateAdditionalData = "runs.create_or_update_additional_data"
@@ -38,7 +40,7 @@ class CreateOrUpdateAdditionalData extends DBTestSuite{
       |""".stripMargin
   )
 
-  test("Partitioning and AD present, multiple AD records backed up") {
+  test("Partitioning and AD present, insert, update, and also 'ignore' of AD records performed") {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -60,7 +62,7 @@ class CreateOrUpdateAdditionalData extends DBTestSuite{
         .add("ad_value", "AnalystB")
         .add("created_by", "SuperTool")
     )
-    val inputADToBackUp = CustomDBType(
+    val inputADToUpsert = CustomDBType(
       """
         |"PrimaryOwner" => "TechnicalManagerA",
         |"SecondaryOwner" => "AnalystNew",
@@ -71,7 +73,7 @@ class CreateOrUpdateAdditionalData extends DBTestSuite{
 
     function(fncCreateOrUpdateAdditionalData)
       .setParam("i_partitioning", partitioning)
-      .setParam("i_additional_data", inputADToBackUp)
+      .setParam("i_additional_data", inputADToUpsert)
       .setParam("i_by_user", "MikeRusty")
       .execute { queryResult =>
         assert(queryResult.hasNext)
@@ -87,4 +89,129 @@ class CreateOrUpdateAdditionalData extends DBTestSuite{
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 1)
   }
 
+  test("Partitioning and AD present, new AD records inserted, nothing backed up") {
+
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning)
+        .add("created_by", "Jimi")
+    )
+
+    //DBTable's insert doesn't return the values yet correctly
+    val fkPartitioning: Long = table("runs.partitionings").fieldValue("partitioning", partitioning, "id_partitioning").get.get
+
+    table("runs.additional_data").insert(
+      add("fk_partitioning", fkPartitioning)
+        .add("ad_name", "PrimaryOwner")
+        .add("ad_value", "TechnicalManagerX")
+        .add("created_by", "Bot")
+    )
+    table("runs.additional_data").insert(
+      add("fk_partitioning", fkPartitioning)
+        .add("ad_name", "SecondaryOwner")
+        .add("ad_value", "AnalystY")
+        .add("created_by", "Bot")
+    )
+    val inputADToUpsert = CustomDBType(
+      """
+        |"SomeNewKey" => "SomeNewValue",
+        |"IsDatasetInHDFS" => "true",
+        |"DatasetContentSensitivityLevel" => "1"
+        |""".stripMargin,
+      "HSTORE"
+    )
+
+    function(fncCreateOrUpdateAdditionalData)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_additional_data", inputADToUpsert)
+      .setParam("i_by_user", "MikeRusty")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Additional data have been added"))
+
+        assert(!queryResult.hasNext)
+      }
+
+    assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 5)
+    assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 0)
+  }
+
+  test("Partitioning and AD present, but no new AD records were backed-up or inserted, no changes detected") {
+
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning)
+        .add("created_by", "Page")
+    )
+
+    //DBTable's insert doesn't return the values yet correctly
+    val fkPartitioning: Long = table("runs.partitionings").fieldValue("partitioning", partitioning, "id_partitioning").get.get
+
+    table("runs.additional_data").insert(
+      add("fk_partitioning", fkPartitioning)
+        .add("ad_name", "PrimaryOwner")
+        .add("ad_value", "TechnicalManagerQ")
+        .add("created_by", "TechnoKingMusk")
+    )
+    table("runs.additional_data").insert(
+      add("fk_partitioning", fkPartitioning)
+        .add("ad_name", "SecondaryOwner")
+        .add("ad_value", "AnalystW")
+        .add("created_by", "TechnoKingMusk")
+    )
+    val inputADToUpsert = CustomDBType(
+      """
+        |"PrimaryOwner" => "TechnicalManagerQ",
+        |"SecondaryOwner" => "AnalystW"
+        |""".stripMargin,
+      "HSTORE"
+    )
+
+    function(fncCreateOrUpdateAdditionalData)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_additional_data", inputADToUpsert)
+      .setParam("i_by_user", "MikeRusty")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+
+        assert(row.getInt("status").contains(14))
+        assert(row.getString("status_text").contains("No changes in additional data"))
+
+        assert(!queryResult.hasNext)
+      }
+
+    assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 2)
+    assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 0)
+  }
+
+  test("Partitioning not present, no action taken") {
+
+    val inputADToInsert = CustomDBType(
+      """
+        |"PrimaryOwner" => "TechnicalManagerA",
+        |"SecondaryOwner" => "AnalystNew",
+        |"IsDatasetInDatalake" => "true"
+        |""".stripMargin,
+      "HSTORE"
+    )
+
+    function(fncCreateOrUpdateAdditionalData)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_additional_data", inputADToInsert)
+      .setParam("i_by_user", "MikeRusty")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+
+        assert(row.getInt("status").contains(41))
+        assert(row.getString("status_text").contains("Partitioning not found"))
+
+        assert(!queryResult.hasNext)
+      }
+
+    assert(table("runs.additional_data").count() == 0)
+    assert(table("runs.additional_data_history").count() == 0)
+  }
 }
