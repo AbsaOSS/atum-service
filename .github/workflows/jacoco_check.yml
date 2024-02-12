@@ -21,52 +21,131 @@ on:
     branches: [ master ]
     types: [ opened, edited, synchronize, reopened ]
 
+env:
+  scalaLong12: 2.12.18
+  scalaShort12: "2.12"
+  scalaLong13: 2.13.11
+  scalaShort13: "2.13"
+  overall: 80.0
+  changed: 80.0
+
 jobs:
   test:
     name: Build and test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          # The project supports Scala 2.11, 2.12 and the default version of spark2
-          # The CI runs all tests suites for all supported Scala versions at build.yml
-          # The codebase for all Scala versions is the same, so the coverage is calculated only once
-          # Scala 2.12 is chosen since it is supported by the most wide range of Spark versions and
-          # vendor distributions.
-          - scala: 2.12.18
-            scalaShort: "2.12"
-            overall: 80.0
-            changed: 80.0
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: atum_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v14
         with:
           java-version: "adopt@1.8"
+      - name: Prepare testing database
+        run: sbt flywayMigrate
       - name: Build and run tests
-        run: sbt "++${{matrix.scala}}; project agent; jacoco"
-     #  Agent module code coverage
+        continue-on-error: true
+        id: jacocorun
+        run: sbt jacoco
+      #  server module code coverage
       - name: Add coverage to PR
+        if: steps.jacocorun.outcome == 'success'
+        id: jacoco-server
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort13 }}/jacoco/report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: ${{env.overall }}
+          min-coverage-changed-files: ${{ env.changed }}
+          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong13 }}
+          update-comment: true
+      #  agent module code coverage
+      - name: Add coverage to PR
+        if: steps.jacocorun.outcome == 'success'
         id: jacoco-agent
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          paths: ${{ github.workspace }}/agent/target/spark2-jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
+          name: agent-jacoco-report
+          paths: ${{ github.workspace }}/agent/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{matrix.overall }}
-          min-coverage-changed-files: ${{ matrix.changed }}
-          title: JaCoCo agent module code coverage report - spark:2 - scala ${{ matrix.scala }}
+          min-coverage-overall: ${{ env.overall }}
+          min-coverage-changed-file: ${{ env.changed }}
+          title: JaCoCo agent module code coverage report - scala ${{ env.scalaLong12 }}
+          update-comment: true
+      #  model module code coverage
+      - name: Add coverage to PR
+        if: steps.jacocorun.outcome == 'success'
+        id: jacoco-model
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          name: model-jacoco-report
+          paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: ${{ env.overall }}
+          min-coverage-changed-file: ${{ env.changed }}
+          title: JaCoCo model module code coverage report - scala ${{ env.scalaLong12 }}
           update-comment: true
       - name: Get the Coverage info
+        if: steps.jacocorun.outcome == 'success'
         run: |
+          echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
           echo "Total agent module coverage ${{ steps.jacoco-agent.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
-      - name: Fail PR if changed files coverage is less than ${{ matrix.changed }}%
-        if: |
-          ${{ steps.jacoco-agent.outputs.coverage-changed-files < 80.0 }}
+          echo "Total model module coverage ${{ steps.jacoco-model.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco-model.outputs.coverage-changed-files }}"
+      - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
+        if: steps.jacocorun.outcome == 'success'
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Changed files coverage is less than ${{ matrix.changed }}%!')
+            const coverageCheckFailed =
+              Number('${{ steps.jacoco-server.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
+              Number('${{ steps.jacoco-agent.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
+              Number('${{ steps.jacoco-model.outputs.coverage-changed-files }}') < Number('${{ env.changed }}');
+            if (coverageCheckFailed) {
+              core.setFailed('Changed files coverage is less than ${{ env.changed }}%!');
+            }
+      - name: Edit JaCoCo comments on build failure
+        if: steps.jacocorun.outcome != 'success'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const jacocoReportRegExp = /^### JaCoCo .* code coverage report .*/;
 
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+            });
 
+            for (const comment of comments.data) {
+              const lines = comment.body.split('\n');
+              if (lines.length > 0 && jacocoReportRegExp.test(lines[0])) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: comment.id,
+                  body: lines[0] + "\n\n### Build Failed",
+                });
+              }
+            }
+
+            core.setFailed('JaCoCo test coverage report generation failed, and related PR comments were updated.');
