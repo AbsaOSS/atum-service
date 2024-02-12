@@ -143,7 +143,9 @@ jobs:
                   owner,
                   repo,
                   comment_id: comment.id,
-                  body: "### Build Failed.",
+                  body: lines[0] + "- Build Failed",
                 });
               }
             }
+            
+            core.setFailed('JaCoCo test coverage report generation failed, and related PR comments were updated.');
