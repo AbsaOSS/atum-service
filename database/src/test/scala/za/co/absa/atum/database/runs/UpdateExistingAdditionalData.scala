@@ -62,7 +62,7 @@ class UpdateExistingAdditionalData extends DBTestSuite{
     )
     val inputADToBackUp = CustomDBType(
       """
-        |"DatasetLocation" => "s3://some_bucket/some_path2",
+        |"DatasetLocation" => "s3://some_bucket/some_path_updated",
         |"Author" => "NewOne"
         |""".stripMargin,
       "HSTORE"
@@ -81,6 +81,9 @@ class UpdateExistingAdditionalData extends DBTestSuite{
 
         assert(!queryResult.hasNext)
       }
+
+    assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 2)
+    assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 2)
   }
 
   test("Partitioning and AD present, but the input AD are the same as in DB, no backup") {
@@ -127,5 +130,8 @@ class UpdateExistingAdditionalData extends DBTestSuite{
 
         assert(!queryResult.hasNext)
       }
+
+    assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 2)
+    assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 0)
   }
 }
