@@ -80,7 +80,7 @@ lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++
       Seq(
-        scalacOptions ++= Seq("-release", "11"),
+//        scalacOptions ++= Seq("-release", "11"),
         javacOptions ++= Seq("-source", "11", "-target", "11", "-Xlint"),
         serverMergeStrategy,
         name := "atum-server",
@@ -108,10 +108,10 @@ lazy val agent = (projectMatrix in file("agent"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-agent",
-      scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, major)) if major >= 12 => Seq("-release", "8")
-        case _ => Seq("-target:jvm-1.8")
-      }),
+//      scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+//        case Some((2, major)) if major >= 12 => Seq("-release", "8")
+//        case _ => Seq("-target:jvm-1.8")
+//      }),
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
       libraryDependencies ++= Dependencies.agentDependencies(
         if (scalaVersion.value == Versions.scala211) Versions.spark2 else Versions.spark3,
@@ -134,10 +134,10 @@ lazy val model = (projectMatrix in file("model"))
   .settings(
     commonSettings ++ Seq(
       name         := "atum-model",
-      scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, major)) if major >= 12 => Seq("-release", "8")
-        case _ => Seq("-target:jvm-1.8")
-      }),
+//      scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+//        case Some((2, major)) if major >= 12 => Seq("-release", "8")
+//        case _ => Seq("-target:jvm-1.8")
+//      }),
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
       libraryDependencies ++= Dependencies.modelDependencies(scalaVersion.value),
       (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
