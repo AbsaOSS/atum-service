@@ -30,7 +30,7 @@ class WriteCheckpointTest extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key3", "key2", "key4"],
-      |  "values": {
+      |  "keysToValues": {
       |    "key1": "valueX",
       |    "key2": "valueY",
       |    "key3": "valueZ",
