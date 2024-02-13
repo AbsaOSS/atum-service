@@ -110,7 +110,7 @@ object Dependencies {
     )
   }
 
-  def commonDependencies: Seq[ModuleID] = {
+  def jsonSerdeDependencies: Seq[ModuleID] = {
     val json4sVersion = json4sVersionForScala(Versions.scala212)
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala

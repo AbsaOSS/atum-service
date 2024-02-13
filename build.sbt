@@ -18,8 +18,6 @@ import Dependencies._
 import JacocoSetup._
 import sbt.Keys.name
 
-import scala.collection.immutable.Seq
-
 ThisBuild / organization := "za.co.absa.atum-service"
 sonatypeProfileName := "za.co.absa"
 
@@ -90,7 +88,7 @@ lazy val agent = (projectMatrix in file("agent"))
     commonSettings ++ Seq(
       name := "atum-agent",
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-      libraryDependencies ++= commonDependencies ++ testDependencies ++ Dependencies.agentDependencies(
+      libraryDependencies ++= jsonSerdeDependencies ++ testDependencies ++ Dependencies.agentDependencies(
         if (scalaVersion.value == Versions.scala211) Versions.spark2 else Versions.spark3,
         scalaVersion.value
       ),
@@ -111,7 +109,7 @@ lazy val model = (projectMatrix in file("model"))
     commonSettings ++ Seq(
       name         := "atum-model",
       javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-      libraryDependencies ++= commonDependencies ++ testDependencies ++ Dependencies.modelDependencies(scalaVersion.value),
+      libraryDependencies ++= jsonSerdeDependencies ++ testDependencies ++ Dependencies.modelDependencies(scalaVersion.value),
       printScalaVersion := {
         val log = streams.value.log
         log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")

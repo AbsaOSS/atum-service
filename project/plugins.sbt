@@ -26,7 +26,7 @@ addSbtPlugin("io.github.davidmweber" % "flyway-sbt" % "7.4.0")
 // To add release plugin
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 
-// Plugins to build the server module as a war file
+// Plugins to build the server module as a jar file
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
 // sbt-jacoco dependency downloading
