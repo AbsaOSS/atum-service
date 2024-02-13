@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
- CREATE OR REPLACE runs.get_partitioning_measures(
+ CREATE OR REPLACE FUNCTION runs.get_partitioning_measures(
      IN i_partitioning JSONB,
      OUT measure_name TEXT,
      OUT measure_column TEXT[]
@@ -39,7 +39,7 @@ BEGIN
     FOR key IN SELECT jsonb_object_keys(i_partitioning)
     LOOP
         measure_name := key;
-        measured_columns := ARRAY(SELECT jsonb_array_elements_text(i_partitioning -> key));
+        measure_column := ARRAY(SELECT jsonb_array_elements_text(i_partitioning -> key));
         RETURN NEXT;
     END LOOP;
 
