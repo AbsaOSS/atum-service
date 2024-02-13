@@ -27,7 +27,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: olafurpg/setup-scala@v14
-      - name: Run sbt ci-release (produces war as well)
+      - name: Run sbt ci-release (produces jar as well)
         run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
@@ -35,11 +35,11 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
 
-      - name: Find WAR file
-        id: find_war
-        run: echo "WAR_PATH=$(find . -name '*.war' | head -n 1)" >> $GITHUB_ENV
+      - name: Find JAR file
+        id: find_jar
+        run: echo "JAR_PATH=$(find . -name 'server/target/jvm-2.13/*.jar' | head -n 1)" >> $GITHUB_ENV
 
-      - name: Upload WAR file to GitHub Release
-        run: gh release upload ${{ github.event.release.tag_name }} ${{ env.WAR_PATH }} --repo ${{ github.repository }}
+      - name: Upload JAR file to GitHub Release
+        run: gh release upload ${{ github.event.release.tag_name }} ${{ env.JAR_PATH }} --repo ${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
