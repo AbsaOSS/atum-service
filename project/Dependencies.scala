@@ -65,8 +65,6 @@ object Dependencies {
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
     val playJson = "3.0.1"
-
-    val scalaNameof = "4.0.0"
   }
 
 
@@ -170,9 +168,6 @@ object Dependencies {
     lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
     lazy val sbtJunitInterface = sbtOrg % "junit-interface" % Versions.sbtJunitInterface % Test
 
-    // utils
-    lazy val scalaNameof = dwickernOrg %% "scala-nameof" % Versions.scalaNameof % Provided
-
     Seq(
       faDbDoobie,
       zioCore,
@@ -191,8 +186,7 @@ object Dependencies {
       zioTest,
       zioTestSbt,
       zioTestJunit,
-      sbtJunitInterface,
-      scalaNameof
+      sbtJunitInterface
     )
   }
 

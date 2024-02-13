@@ -30,13 +30,13 @@ class PartitioningRepositoryImpl(
   override def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    dbCallWithStatus(createPartitioningIfNotExistsFn.apply, partitioning)
+    dbCallWithStatus(createPartitioningIfNotExistsFn(partitioning), "createPartitioningIfNotExists")
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    dbCallWithStatus(createOrUpdateAdditionalDataFn.apply, additionalData)
+    dbCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
   }
 
 }

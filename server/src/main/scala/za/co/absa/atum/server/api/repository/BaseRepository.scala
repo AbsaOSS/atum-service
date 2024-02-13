@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.repository
 
-import com.github.dwickern.macros.NameOf.nameOf
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
@@ -24,22 +23,19 @@ import zio._
 trait BaseRepository {
 
   def dbCallWithStatus[T, R](
-    dbFuncCall: T => Task[Either[StatusException, R]],
-    input: T,
+    dbFuncCall: Task[Either[StatusException, R]],
+    operationName: String
   ): IO[DatabaseError, Either[StatusException, R]] = {
-
-    ZIO.succeed(nameOf(dbFuncCall)).flatMap { operationName => // TODO correct messages?
-      dbFuncCall(input)
-        .tap {
-          case Left(statusException) =>
-            ZIO.logError(
-              s"Exception caused by operation: '$operationName': " +
-                s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
-            )
-          case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
-        }
-        .mapError(error => DatabaseError(error.getMessage))
-        .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
-    }
+    dbFuncCall
+      .tap {
+        case Left(statusException) =>
+          ZIO.logError(
+            s"Exception caused by operation: '$operationName': " +
+              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+          )
+        case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
+      }
+      .mapError(error => DatabaseError(error.getMessage))
+      .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
 }

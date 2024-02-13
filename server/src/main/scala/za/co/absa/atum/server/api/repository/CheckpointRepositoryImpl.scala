@@ -25,7 +25,7 @@ import zio._
 class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository with BaseRepository {
 
   override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
-    dbCallWithStatus(writeCheckpointFn.apply, checkpointDTO)
+    dbCallWithStatus(writeCheckpointFn(checkpointDTO), "writeCheckpoint")
   }
 
 }
