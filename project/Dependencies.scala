@@ -49,7 +49,7 @@ object Dependencies {
     val sttp = "3.5.2"
 
     val postgresql = "42.6.0"
-    
+
     val fadb = "0.3.0"
 
     val json4s_spark2 = "3.5.3"
@@ -59,11 +59,12 @@ object Dependencies {
 
     val zio = "2.0.19"
     val zioLogging = "2.2.0"
+    val logbackZio = "1.4.7"
     val zioConfig = "4.0.1"
     val sbtJunitInterface = "0.13.3"
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
-    val playJson = "2.9.4"
+    val playJson = "3.0.1"
 
   }
 
@@ -99,7 +100,17 @@ object Dependencies {
     }
   }
 
-  def commonDependencies: Seq[ModuleID] = {
+  def testDependencies: Seq[ModuleID] = {
+    lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
+    lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
+
+    Seq(
+      scalatest,
+      mockito,
+    )
+  }
+
+  def jsonSerdeDependencies: Seq[ModuleID] = {
     val json4sVersion = json4sVersionForScala(Versions.scala212)
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
@@ -109,19 +120,12 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
-    lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
-    lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
-    lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
-
     Seq(
       jacksonModuleScala,
       json4sExt,
       json4sCore,
       json4sJackson,
-      json4sNative,
-      logback,
-      scalatest,
-      mockito,
+      json4sNative
     )
   }
 
@@ -130,13 +134,16 @@ object Dependencies {
     val tapirOrg = "com.softwaremill.sttp.tapir"
     val http4sOrg = "org.http4s"
     val faDbOrg = "za.co.absa.fa-db"
-    val playOrg = "com.typesafe.play"
+    val playOrg = "org.playframework"
     val sbtOrg = "com.github.sbt"
+    val logbackOrg = "ch.qos.logback"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
     lazy val zioMacros = zioOrg %% "zio-macros" % Versions.zio
     lazy val zioLogging = zioOrg %% "zio-logging" % Versions.zioLogging
+    lazy val slf4jLogging = zioOrg %% "zio-logging-slf4j2" % Versions.zioLogging
+    lazy val logback = logbackOrg % "logback-classic" % Versions.logbackZio
     lazy val zioConfig = zioOrg %% "zio-config" % Versions.zioConfig
     lazy val zioConfigMagnolia = zioOrg %% "zio-config-magnolia" % Versions.zioConfig
     lazy val zioConfigTypesafe = zioOrg %% "zio-config-typesafe" % Versions.zioConfig
@@ -166,6 +173,8 @@ object Dependencies {
       zioCore,
       zioMacros,
       zioLogging,
+      slf4jLogging,
+      logback,
       zioConfig,
       zioConfigMagnolia,
       zioConfigTypesafe,
@@ -194,13 +203,16 @@ object Dependencies {
 
     lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
 
+    lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
+
     Seq(
       sparkCore,
       sparkSql,
       typeSafeConfig,
       sparkCommons,
       sparkCommonsTest,
-      sttp
+      sttp,
+      logback
     )
   }
 
@@ -220,7 +232,7 @@ object Dependencies {
       balta,
     )
   }
-  
+
   def flywayDependencies: Seq[ModuleID] = {
     val postgresql = "org.postgresql" % "postgresql" % Versions.postgresql
 

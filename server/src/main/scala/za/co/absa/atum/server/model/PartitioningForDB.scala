@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.server.model
 
+import play.api.libs.json.{Json, Writes}
 import za.co.absa.atum.model.dto.PartitioningDTO
 
 private[server] case class PartitioningForDB private (
@@ -32,4 +33,7 @@ object PartitioningForDB {
 
     PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
   }
+
+  implicit val writes: Writes[PartitioningForDB] = Json.writes
+
 }
