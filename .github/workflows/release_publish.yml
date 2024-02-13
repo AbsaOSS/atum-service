@@ -14,21 +14,32 @@
 # limitations under the License.
 #
 
-name: Release
+name: Release - publish artifacts
 on:
-  workflow_dispatch:
+  release:
+    types: [released]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: olafurpg/setup-scala@v13
-      - run: sbt ci-release
+      - uses: olafurpg/setup-scala@v14
+      - name: Run sbt ci-release (produces war as well)
+        run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+      - name: Find WAR file
+        id: find_war
+        run: echo "WAR_PATH=$(find . -name '*.war' | head -n 1)" >> $GITHUB_ENV
+
+      - name: Upload WAR file to GitHub Release
+        run: gh release upload ${{ github.event.release.tag_name }} ${{ env.WAR_PATH }} --repo ${{ github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

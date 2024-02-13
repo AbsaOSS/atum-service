@@ -64,7 +64,7 @@ ThisBuild / developers := List(
 ThisBuild / organizationName := "ABSA Group Limited"
 ThisBuild / organizationHomepage := Some(url("https://www.absa.africa"))
 
-ThisBuild / description := "A tool for fixing Spark Structured Streaming metadata files"
+ThisBuild / description := "Data completeness and accuracy application meant to be used for data processed by Apache Spark"
 ThisBuild / startYear := Some(2021)
 ThisBuild / licenses += "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")
 ThisBuild / homepage := Some(url("https://github.com/AbsaOSS/atum-service"))

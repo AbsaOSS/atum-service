@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 import sbt._
 
 object Dependencies {
@@ -32,6 +31,7 @@ object Dependencies {
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
     val scalaLangJava8Compat = "1.0.2"
+    val balta = "0.1.0"
 
     val jacksonModuleScala = "2.14.2"
 
@@ -48,6 +48,8 @@ object Dependencies {
 
     val sttp = "3.5.2"
 
+    val postgresql = "42.6.0"
+    
     val fadb = "0.3.0"
 
     val json4s_spark2 = "3.5.3"
@@ -64,36 +66,36 @@ object Dependencies {
     val http4sBlazeBackend = "0.23.15"
     val playJson = "3.0.1"//"2.9.4"
 
-    val postgresql = "42.5.4"
   }
 
-  private def limitVersion(version: String, parts: Int): String = {
-    version.split("\\.", parts + 1).take(parts).mkString(".")
+
+  private def truncateVersion(version: String, parts: Int): String = {
+    version.split("\\.").take(parts).mkString(".")
   }
 
   def getVersionUpToMinor(version: String): String = {
-    limitVersion(version, 2)
+    truncateVersion(version, 2)
   }
 
   def getVersionUpToMajor(version: String): String = {
-    limitVersion(version, 1)
+    truncateVersion(version, 1)
   }
 
   // this is just for the compile-depended printing task
   def sparkVersionForScala(scalaVersion: String): String = {
-    scalaVersion match {
-      case _ if scalaVersion.startsWith("2.11") => Versions.spark2
-      case _ if scalaVersion.startsWith("2.12") => Versions.spark3
-      case _ if scalaVersion.startsWith("2.13") => Versions.spark3
+    truncateVersion(scalaVersion, 2) match {
+      case "2.11" => Versions.spark2
+      case "2.12" => Versions.spark3
+      case "2.13" => Versions.spark3
       case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
     }
   }
 
   def json4sVersionForScala(scalaVersion: String): String = {
-    scalaVersion match {
-      case _ if scalaVersion.startsWith("2.11") => Versions.json4s_spark2
-      case _ if scalaVersion.startsWith("2.12") => Versions.json4s_spark3
-      case _ if scalaVersion.startsWith("2.13") => Versions.json4s_spark3
+    truncateVersion(scalaVersion, 2) match {
+      case "2.11" => Versions.json4s_spark2
+      case "2.12" => Versions.json4s_spark3
+      case "2.13" => Versions.json4s_spark3
       case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
     }
   }
@@ -222,14 +224,22 @@ object Dependencies {
   }
 
   def modelDependencies(scalaVersion: String): Seq[ModuleID] = {
-    val json4sVersion = json4sVersionForScala(scalaVersion)
-
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
     Seq(specs2core, typeSafeConfig)
   }
 
+ def databaseDependencies: Seq[ModuleID] = {
+    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % Test
+    lazy val balta =      "za.co.absa"      %% "balta"      % Versions.balta      % Test
+
+    Seq(
+      scalaTest,
+      balta,
+    )
+  }
+  
   def flywayDependencies: Seq[ModuleID] = {
     val postgresql = "org.postgresql" % "postgresql" % Versions.postgresql
 
