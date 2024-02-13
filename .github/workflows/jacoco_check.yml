@@ -39,12 +39,12 @@ jobs:
         uses: olafurpg/setup-scala@v14
         with:
           java-version: "adopt@1.8"
-      - name: Prepare testing database
-        run: sbt flywayMigrate
       - name: Build and run tests
         continue-on-error: true
         id: jacocorun
-        run: sbt jacoco
+        run: |
+          sbt "project agent; jacoco"
+          sbt "project model; jacoco"
       #  agent module code coverage
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
