@@ -61,5 +61,6 @@ jobs:
       - name: Run the Docker image and execute HTTP call
         run: |
           docker run -d -p 8080:8080 absaoss/atum-service:latest
+          docker container ls
           sleep 10  # Wait for the service to start
           curl -Lf http://localhost:8080/docs
