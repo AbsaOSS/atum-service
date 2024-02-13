@@ -34,12 +34,3 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-
-      - name: Find WAR file
-        id: find_war
-        run: echo "WAR_PATH=$(find . -name '*.war' | head -n 1)" >> $GITHUB_ENV
-
-      - name: Upload WAR file to GitHub Release
-        run: gh release upload ${{ github.event.release.tag_name }} ${{ env.WAR_PATH }} --repo ${{ github.repository }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

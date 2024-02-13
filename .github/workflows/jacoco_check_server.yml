@@ -21,6 +21,12 @@ on:
     branches: [ master ]
     types: [ opened, edited, synchronize, reopened ]
 
+env:
+  scalaLong13: 2.13.11
+  scalaShort13: "2.13"
+  overall: 80.0
+  changed: 80.0
+
 jobs:
   test:
     name: Build and test
@@ -40,45 +46,72 @@ jobs:
         ports:
           - 5432:5432
 
-    strategy:
-      matrix:
-        include:
-          - scala: 2.13.11
-            scalaShort: "2.13"
-            overall: 80.0
-            changed: 80.0
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v14
         with:
           java-version: "adopt@1.11.0-11"
       - name: Prepare testing database
         run: sbt flywayMigrate
       - name: Build and run tests
-        run: sbt "++${{matrix.scala}}; project server; jacoco"
+        continue-on-error: true
+        id: jacocorun
+        run: sbt "project server; jacoco"
       #  server module code coverage
       - name: Add coverage to PR
+        if: steps.jacocorun.outcome == 'success'
         id: jacoco-server
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          paths: ${{ github.workspace }}/server/target/jvm-${{ matrix.scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort13 }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{matrix.overall }}
-          min-coverage-changed-files: ${{ matrix.changed }}
-          title: JaCoCo server module code coverage report - scala ${{ matrix.scala }}
+          min-coverage-overall: ${{env.overall }}
+          min-coverage-changed-files: ${{ env.changed }}
+          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong13 }}
           update-comment: true
       - name: Get the Coverage info
+        if: steps.jacocorun.outcome == 'success'
         run: |
           echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
-      - name: Fail PR if changed files coverage is less than ${{ matrix.changed }}%
-        if: |
-          ${{ steps.jacoco-server.outputs.coverage-changed-files < 80.0 }}
+      - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
+        if: steps.jacocorun.outcome == 'success'
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Changed files coverage is less than ${{ matrix.changed }}%!')
+            const coverageCheckFailed =
+              Number('${{ steps.jacoco-server.outputs.coverage-changed-files }}') < Number('${{ env.changed }}');
+            if (coverageCheckFailed) {
+              core.setFailed('Changed files coverage is less than ${{ env.changed }}%!');
+            }
+      - name: Edit JaCoCo comments on build failure
+        if: steps.jacocorun.outcome != 'success'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const jacocoReportRegExp = /^### JaCoCo .* code coverage report .*/;
 
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+            });
 
+            for (const comment of comments.data) {
+              const lines = comment.body.split('\n');
+              if (lines.length > 0 && jacocoReportRegExp.test(lines[0])) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: comment.id,
+                  body: lines[0] + "\n\n### Build Failed",
+                });
+              }
+            }
+
+            core.setFailed('JaCoCo test coverage report generation failed, and related PR comments were updated.');

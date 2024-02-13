@@ -40,12 +40,12 @@ lazy val commonSettings = Seq(
   jacocoExcludes := jacocoProjectExcludes()
 )
 
-val mergeStrategy = assembly / assemblyMergeStrategy := {
-  case PathList("META-INF", _) => MergeStrategy.discard
-  case "application.conf"      => MergeStrategy.concat
-  case "reference.conf"        => MergeStrategy.concat
-  case _                       => MergeStrategy.first
-}
+//val mergeStrategy = assembly / assemblyMergeStrategy := {
+//  case PathList("META-INF", _) => MergeStrategy.discard
+//  case "application.conf"      => MergeStrategy.concat
+//  case "reference.conf"        => MergeStrategy.concat
+//  case _                       => MergeStrategy.first
+//}
 
 val serverMergeStrategy = assembly / assemblyMergeStrategy := {
   case PathList("META-INF", "services", xs @ _*) => MergeStrategy.filterDistinctLines

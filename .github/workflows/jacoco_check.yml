@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: JaCoCo report
+name: JaCoCo report agent and module
 
 on:
   pull_request:
@@ -24,8 +24,6 @@ on:
 env:
   scalaLong12: 2.12.18
   scalaShort12: "2.12"
-  scalaLong13: 2.13.11
-  scalaShort13: "2.13"
   overall: 80.0
   changed: 80.0
 
@@ -33,20 +31,6 @@ jobs:
   test:
     name: Build and test
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: atum_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - name: Checkout code
@@ -61,18 +45,6 @@ jobs:
         continue-on-error: true
         id: jacocorun
         run: sbt jacoco
-      #  server module code coverage
-      - name: Add coverage to PR
-        if: steps.jacocorun.outcome == 'success'
-        id: jacoco-server
-        uses: madrapps/jacoco-report@v1.6.1
-        with:
-          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort13 }}/jacoco/report/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{env.overall }}
-          min-coverage-changed-files: ${{ env.changed }}
-          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong13 }}
-          update-comment: true
       #  agent module code coverage
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
@@ -102,8 +74,6 @@ jobs:
       - name: Get the Coverage info
         if: steps.jacocorun.outcome == 'success'
         run: |
-          echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
-          echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
           echo "Total agent module coverage ${{ steps.jacoco-agent.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
           echo "Total model module coverage ${{ steps.jacoco-model.outputs.coverage-overall }}"
@@ -114,7 +84,6 @@ jobs:
         with:
           script: |
             const coverageCheckFailed =
-              Number('${{ steps.jacoco-server.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
               Number('${{ steps.jacoco-agent.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
               Number('${{ steps.jacoco-model.outputs.coverage-changed-files }}') < Number('${{ env.changed }}');
             if (coverageCheckFailed) {
