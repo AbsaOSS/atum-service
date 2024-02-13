@@ -49,7 +49,7 @@ object Dependencies {
     val sttp = "3.5.2"
 
     val postgresql = "42.6.0"
-    
+
     val fadb = "0.3.0"
 
     val json4s_spark2 = "3.5.3"
@@ -64,7 +64,7 @@ object Dependencies {
     val sbtJunitInterface = "0.13.3"
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
-    val playJson = "3.0.1"//"2.9.4"
+    val playJson = "3.0.1"
 
   }
 
@@ -120,19 +120,12 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
-//    lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
-//    lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
-//    lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
-
     Seq(
       jacksonModuleScala,
       json4sExt,
       json4sCore,
       json4sJackson,
-      json4sNative,
-//      logback,
-//      scalatest,
-//      mockito,
+      json4sNative
     )
   }
 
@@ -239,7 +232,7 @@ object Dependencies {
       balta,
     )
   }
-  
+
   def flywayDependencies: Seq[ModuleID] = {
     val postgresql = "org.postgresql" % "postgresql" % Versions.postgresql
 

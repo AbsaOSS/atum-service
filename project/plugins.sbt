@@ -27,7 +27,6 @@ addSbtPlugin("io.github.davidmweber" % "flyway-sbt" % "7.4.0")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 
 // Plugins to build the server module as a war file
-//addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.1.5")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
 // sbt-jacoco dependency downloading
@@ -48,4 +47,3 @@ addSbtPlugin("org.ow2.asm" % "asm-commons" % ow2Version from ow2Url("asm-commons
 addSbtPlugin("org.ow2.asm" % "asm-tree" % ow2Version from ow2Url("asm-tree"))
 
 addSbtPlugin("za.co.absa.sbt" % "sbt-jacoco" % "3.4.1-absa.4" from "https://github.com/AbsaOSS/sbt-jacoco/releases/download/3.4.1-absa.4/sbt-jacoco-3.4.1-absa.4.jar")
-
