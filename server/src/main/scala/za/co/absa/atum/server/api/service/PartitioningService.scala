@@ -38,13 +38,13 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   override def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
   ): IO[ServiceError, Either[StatusException, Unit]] = {
-    handleRepositoryCall(partitioningRepository.createPartitioningIfNotExists, partitioning)
+    repositoryCallWithStatus(partitioningRepository.createPartitioningIfNotExists, partitioning)
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[ServiceError, Either[StatusException, Unit]] = {
-    handleRepositoryCall(partitioningRepository.createOrUpdateAdditionalData, additionalData)
+    repositoryCallWithStatus(partitioningRepository.createOrUpdateAdditionalData, additionalData)
   }
 
 }

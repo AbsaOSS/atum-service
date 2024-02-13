@@ -32,7 +32,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   extends PartitioningController with BaseController {
 
   override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
-    handleServiceCall[Unit, AtumContextDTO](
+    serviceCallWithStatus[Unit, AtumContextDTO](
       partitioningService.createPartitioningIfNotExists(partitioning),
       _ => {
         val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
@@ -45,7 +45,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[ErrorResponse, AdditionalDataSubmitDTO] = {
-    handleServiceCall[Unit, AdditionalDataSubmitDTO](
+    serviceCallWithStatus[Unit, AdditionalDataSubmitDTO](
       partitioningService.createOrUpdateAdditionalData(additionalData),
       _ => additionalData
     )

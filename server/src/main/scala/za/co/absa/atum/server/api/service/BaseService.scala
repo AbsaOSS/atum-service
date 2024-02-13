@@ -23,17 +23,17 @@ import zio._
 
 trait BaseService {
 
-  def handleRepositoryCall[T](
-    repositoryCall: T => IO[DatabaseError, Either[StatusException, Unit]],
+  def repositoryCallWithStatus[T, R](
+    repositoryCall: T => IO[DatabaseError, Either[StatusException, R]],
     input: T
-  ): IO[ServiceError, Either[StatusException, Unit]] = {
+  ): IO[ServiceError, Either[StatusException, R]] = {
 
-    val operationName = nameOf(repositoryCall)
-
-    repositoryCall(input)
-      .mapError { case DatabaseError(underlyingMessage) =>
-        ServiceError(s"Failed to perform '$operationName': $underlyingMessage")
-      }
+    ZIO.succeed(nameOf(repositoryCall)).flatMap { operationName =>
+      repositoryCall(input)
+        .mapError { case DatabaseError(message) =>
+          ServiceError(s"Failed to perform '$operationName': $message")
+        }
+    }
   }
 
 }

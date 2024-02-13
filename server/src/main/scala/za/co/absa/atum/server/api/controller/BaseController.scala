@@ -23,7 +23,7 @@ import zio._
 
 trait BaseController {
 
-  def handleServiceCall[A, B](
+  def serviceCallWithStatus[A, B](
     serviceCall: IO[ServiceError, Either[StatusException, A]],
     onSuccessFnc: A => B
   ): IO[ErrorResponse, B] = {

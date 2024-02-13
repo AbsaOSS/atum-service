@@ -31,7 +31,7 @@ class CheckpointControllerImpl(checkpointService: CheckpointService)
   extends CheckpointController with BaseController {
 
   override def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO] = {
-    handleServiceCall[Unit, CheckpointDTO](
+    serviceCallWithStatus[Unit, CheckpointDTO](
       checkpointService.saveCheckpoint(checkpointDTO),
       _ => checkpointDTO
     )

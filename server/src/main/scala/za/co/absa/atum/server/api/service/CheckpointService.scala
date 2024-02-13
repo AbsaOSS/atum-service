@@ -32,7 +32,7 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository)
   extends CheckpointService with BaseService {
 
   override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]] = {
-    handleRepositoryCall(checkpointRepository.writeCheckpoint, checkpointDTO)
+    repositoryCallWithStatus(checkpointRepository.writeCheckpoint, checkpointDTO)
   }
 
 }
