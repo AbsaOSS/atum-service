@@ -54,9 +54,7 @@ jobs:
         run: sbt server/assembly
 
       - name: Build the Docker image
-        run: docker build -t absaoss/atum-service:latest \
-          --build-arg CONFIG=./src/main/resources/reference.conf \
-          --build-arg SSL=false ./
+        run: docker buildx build --platform linux/amd64 -t absaoss/atum-service:latest --build-arg CONFIG=./src/main/resources/reference.conf --build-arg SSL=false ./
 
       - name: Run the Docker image
         run: docker run -d -p 8080:8080 absaoss/atum-service:latest
