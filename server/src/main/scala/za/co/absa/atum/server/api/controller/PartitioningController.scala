@@ -16,47 +16,13 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.api.service.PartitioningService
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.model.ErrorResponse
-import zio._
+import zio.IO
 import zio.macros.accessible
 
 @accessible
 trait PartitioningController {
   def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
-}
-
-class PartitioningControllerImpl(partitioningService: PartitioningService)
-  extends PartitioningController with BaseController {
-
-  override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
-    serviceCallWithStatus[Unit, AtumContextDTO](
-      partitioningService.createPartitioningIfNotExists(partitioning),
-      _ => {
-        val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
-        val additionalData: AdditionalDataDTO = Map.empty
-        AtumContextDTO(partitioning.partitioning, measures, additionalData)
-      }
-    )
-  }
-
-  override def createOrUpdateAdditionalData(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[ErrorResponse, AdditionalDataSubmitDTO] = {
-    serviceCallWithStatus[Unit, AdditionalDataSubmitDTO](
-      partitioningService.createOrUpdateAdditionalData(additionalData),
-      _ => additionalData
-    )
-  }
-
-}
-
-object PartitioningControllerImpl {
-  val layer: URLayer[PartitioningService, PartitioningController] = ZLayer {
-    for {
-      partitioningService <- ZIO.service[PartitioningService]
-    } yield new PartitioningControllerImpl(partitioningService)
-  }
 }
