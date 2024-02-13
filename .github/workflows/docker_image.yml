@@ -38,6 +38,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+        network: network_name
 
     steps:
       - uses: actions/checkout@v2
@@ -60,8 +61,8 @@ jobs:
 
       - name: Run the Docker image and execute HTTP call
         run: |
-          docker run -d -p 8080:8080 absaoss/atum-service:latest
+          docker run -d -p 8080:8080 --network network_name absaoss/atum-service:latest
           docker container ls
-          sleep 10 
+          sleep 10
           docker logs $(docker ps -lq)
           curl -Lf http://127.0.0.1:8080/docs
