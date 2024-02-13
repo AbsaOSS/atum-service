@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: JaCoCo report agent and module
+name: JaCoCo report server
 
 on:
   pull_request:
@@ -22,8 +22,8 @@ on:
     types: [ opened, edited, synchronize, reopened ]
 
 env:
-  scalaLong12: 2.12.18
-  scalaShort12: "2.12"
+  scalaLong13: 2.13.11
+  scalaShort13: "2.13"
   overall: 80.0
   changed: 80.0
 
@@ -32,60 +32,57 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: atum_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Setup Scala
         uses: olafurpg/setup-scala@v14
         with:
-          java-version: "adopt@1.8"
+          java-version: "adopt@1.11.0-11"
+      - name: Prepare testing database
+        run: sbt flywayMigrate
       - name: Build and run tests
         continue-on-error: true
         id: jacocorun
-        run: |
-          sbt "project agent; jacoco"
-          sbt "project model; jacoco"
-      #  agent module code coverage
+        run: sbt "project server; jacoco"
+      #  server module code coverage
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
-        id: jacoco-agent
+        id: jacoco-server
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          name: agent-jacoco-report
-          paths: ${{ github.workspace }}/agent/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort13 }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{ env.overall }}
-          min-coverage-changed-file: ${{ env.changed }}
-          title: JaCoCo agent module code coverage report - scala ${{ env.scalaLong12 }}
-          update-comment: true
-      #  model module code coverage
-      - name: Add coverage to PR
-        if: steps.jacocorun.outcome == 'success'
-        id: jacoco-model
-        uses: madrapps/jacoco-report@v1.6.1
-        with:
-          name: model-jacoco-report
-          paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{ env.overall }}
-          min-coverage-changed-file: ${{ env.changed }}
-          title: JaCoCo model module code coverage report - scala ${{ env.scalaLong12 }}
+          min-coverage-overall: ${{env.overall }}
+          min-coverage-changed-files: ${{ env.changed }}
+          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong13 }}
           update-comment: true
       - name: Get the Coverage info
         if: steps.jacocorun.outcome == 'success'
         run: |
-          echo "Total agent module coverage ${{ steps.jacoco-agent.outputs.coverage-overall }}"
-          echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
-          echo "Total model module coverage ${{ steps.jacoco-model.outputs.coverage-overall }}"
-          echo "Changed Files coverage ${{ steps.jacoco-model.outputs.coverage-changed-files }}"
+          echo "Total sever module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
         if: steps.jacocorun.outcome == 'success'
         uses: actions/github-script@v6
         with:
           script: |
             const coverageCheckFailed =
-              Number('${{ steps.jacoco-agent.outputs.coverage-changed-files }}') < Number('${{ env.changed }}') ||
-              Number('${{ steps.jacoco-model.outputs.coverage-changed-files }}') < Number('${{ env.changed }}');
+              Number('${{ steps.jacoco-server.outputs.coverage-changed-files }}') < Number('${{ env.changed }}');
             if (coverageCheckFailed) {
               core.setFailed('Changed files coverage is less than ${{ env.changed }}%!');
             }
