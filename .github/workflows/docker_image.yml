@@ -58,10 +58,8 @@ jobs:
           cd server
           docker buildx build --platform linux/amd64 -t absaoss/atum-service:latest --build-arg CONFIG=./src/main/resources/reference.conf --build-arg SSL=false ./
 
-      - name: Run the Docker image
-        run: docker run -d -p 8080:8080 absaoss/atum-service:latest
-
-      - name: Execute HTTP call
+      - name: Run the Docker image and execute HTTP call
         run: |
+          docker run -d -p 8080:8080 absaoss/atum-service:latest
           sleep 10  # Wait for the service to start
           curl -Lf http://localhost:8080/docs
