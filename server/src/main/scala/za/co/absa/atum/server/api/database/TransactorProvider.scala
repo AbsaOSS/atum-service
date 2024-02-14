@@ -32,7 +32,12 @@ object TransactorProvider {
       awsConfig <- ZIO.config[AwsConfig](AwsConfig.config)
 
       awsSecretsProvider <- ZIO.service[AwsSecretsProvider]
-      passwordSecret <- awsSecretsProvider.getSecretValue(awsConfig.serviceUserSecretKey)
+      password <- awsSecretsProvider.getSecretValue(awsConfig.serviceUserSecretKey)
+        // fallback to password property's value from postgres section of reference.conf; useful for local testing
+        .orElse {
+          ZIO.logError("Credentials were not retrieved from AWS, falling back to config value.")
+            .as(postgresConfig.password)
+        }
 
       hikariConfig = {
         val config = new HikariConfig()
@@ -41,7 +46,7 @@ object TransactorProvider {
           s"jdbc:postgresql://${postgresConfig.serverName}:${postgresConfig.portNumber}/${postgresConfig.databaseName}"
         )
         config.setUsername(postgresConfig.user)
-        config.setPassword(passwordSecret)
+        config.setPassword(password)
         config.setMaximumPoolSize(postgresConfig.maxPoolSize)
         config
       }
