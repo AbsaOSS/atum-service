@@ -1,6 +1,6 @@
 # Atum Service
 
-Atum Service is a data completeness and accuracy application meant to be used for data being processed by Apache Spark.
+Atum Service is a data completeness and accuracy application meant to be used for data processed by Apache Spark.
 
 One of the challenges regulated industries face is the requirement to track and prove that their systems preserve
 the accuracy and completeness of data. In an attempt to solve this data processing problem in Apache Spark applications,
@@ -43,6 +43,17 @@ See `server/README.md` for more technical documentation.
 
 This module defines a set of Data Transfer Objects. These are Atum-specific objects that carry data that are being 
 passed from agent to server and vice versa.
+
+### Database `database/`
+
+This module contains a set of scripts that are used to create and maintain the database models. It also contains 
+integration tests that are used to verify the logic of our database functions.
+The database tests are integration tests in nature. Therefore, a few conditions applies:
+* The tests are excluded from task `test` and are run only by a dedicated `dbTest` task (`sbt dbTest`).
+* The database structures must exist on the target database 
+  (follow the [deployment instructions in database module](database/README.md#Deployment)).
+* The connection information to the DB is provided in file `database/src/test/resources/database.properties` 
+  (See `database.properties.template` for syntax).
 
 ## Vocabulary
 
