@@ -19,13 +19,15 @@ package za.co.absa.atum.server
 import za.co.absa.atum.server.api.controller._
 import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
 import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningIfNotExists, WriteCheckpoint}
-import za.co.absa.atum.server.api.http.Server
+import za.co.absa.atum.server.api.http.{Server, ZioEndpoint}
 import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
 import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, PartitioningServiceImpl}
 import za.co.absa.atum.server.aws.AwsSecretsProviderImpl
 import zio._
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.logging.backend.SLF4J
+import zio.metrics.connectors.prometheus
+import zio.metrics.jvm.DefaultJvmMetrics
 
 object Main extends ZIOAppDefault with Server {
 
@@ -46,6 +48,11 @@ object Main extends ZIOAppDefault with Server {
         TransactorProvider.layer,
         AwsSecretsProviderImpl.layer,
         zio.Scope.default
+//        , Runtime.enableRuntimeMetrics,
+//        ,
+//        ZioEndpoint.layer
+//
+//        DefaultJvmMetrics.live.unit,
       )
 
   override val bootstrap: ZLayer[Any, Config.Error, Unit] =

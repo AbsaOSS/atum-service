@@ -1,4 +1,12 @@
+global:
+  scrape_interval: 5s
+
 scrape_configs:
   - job_name: 'atum_server_http4s'
+    metrics_path: /metrics
     static_configs:
-      - targets: ['host.docker.internal:9091']
+      - targets: ['host.docker.internal:8080']
+  - job_name: 'atum_server_zio_runtime'
+    metrics_path: /zio-metrics
+    static_configs:
+      - targets: ['host.docker.internal:8080']

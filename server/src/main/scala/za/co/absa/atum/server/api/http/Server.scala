@@ -17,20 +17,18 @@
 package za.co.absa.atum.server.api.http
 
 import cats.syntax.semigroupk._
-import io.prometheus.client.CollectorRegistry
 import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
-import org.http4s.metrics.prometheus.{Prometheus, PrometheusExportService}
 import org.http4s.server.Router
-import org.http4s.server.middleware.Metrics
 import sttp.monad.MonadError
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
-import sttp.tapir.server.http4s.Http4sServerOptions
+import sttp.tapir.server.http4s.{Http4sServerInterpreter, Http4sServerOptions}
 import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.DecodeFailureContext
 import sttp.tapir.server.interceptor.decodefailure.DecodeFailureHandler
 import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.respond
+import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
@@ -39,14 +37,16 @@ import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller._
 import za.co.absa.atum.server.config.SslConfig
 import za.co.absa.atum.server.model.BadRequestResponse
-import zio.interop.catz._
 import zio._
+import zio.interop.catz._
+import zio.metrics.Metric
+import zio.metrics.connectors.prometheus.PrometheusPublisher
 
 import javax.net.ssl.SSLContext
 
 trait Server extends Endpoints {
 
-  type Env = PartitioningController with CheckpointController
+  type Env = PartitioningController with CheckpointController //with PrometheusPublisher
   type F[A] = RIO[Env, A]
 
   private val decodeFailureHandler: DecodeFailureHandler[F] = new DecodeFailureHandler[F] {
@@ -67,9 +67,15 @@ trait Server extends Endpoints {
     }
   }
 
+  private val prometheusMetrics = PrometheusMetrics[F]("atum")
+    .addRequestsTotal()
+    .addRequestsActive()
+    .addRequestsDuration()
+
   private val http4sServerOptions: Http4sServerOptions[F] = Http4sServerOptions
     .customiseInterceptors[F]
     .decodeFailureHandler(decodeFailureHandler)
+    .metricsInterceptor(prometheusMetrics.metricsInterceptor())
     .options
 
   private def createServerEndpoint[I, E, O](
@@ -94,27 +100,19 @@ trait Server extends Endpoints {
       .toRoutes
   }
 
-  protected val registry = CollectorRegistry.defaultRegistry
+  private def zioEndpointRoutes: HttpRoutes[F] = {
+    ZHttp4sServerInterpreter[Env](http4sServerOptions).from(List(createServerEndpoint(ZioEndpoint.zioEndpoint, (_:Unit) => ZioEndpoint.getMetricsEffect))).toRoutes
+  }
 
-  private val allRoutes = createAllServerRoutes <+> createSwaggerRoutes
+  private val metricsRoutes = Http4sServerInterpreter[F]().toRoutes(prometheusMetrics.metricsEndpoint)
+  private val allRoutes = createAllServerRoutes <+> createSwaggerRoutes <+> metricsRoutes <+> zioEndpointRoutes
 
-//  val xServer = metrics.flatMap { metricsOps =>
-//    val meteredRoutes = Metrics[F](metricsOps)(createAllServerRoutes)
-//    val prometheusService = PrometheusExportService.build[F].toScopedZIO
-//    prometheusService.flatMap { x =>
-//      x.routes
-//    }
-//    val routes = meteredRoutes <+> prometheusService
-//  }
-
-  val monitoredServer = for {
-    metricsSvc <- PrometheusExportService.build[F]
-    metrics <- Prometheus.metricsOps[F](registry, "atum-server")
-    router <- Router[F](
-      "/api" -> Metrics[F](metrics)(allRoutes),
-      "/" -> metricsSvc.routes
-    )
-  } yield router
+  def memoryUsage: ZIO[Any, Nothing, Double] = {
+    import java.lang.Runtime._
+    ZIO
+      .succeed(getRuntime.totalMemory() - getRuntime.freeMemory())
+      .map(_ / (1024.0 * 1024.0)) @@ Metric.gauge("memory_usage")
+  }
 
   private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[Env, Throwable, Unit] =
     ZIO.executor.flatMap { executor =>
