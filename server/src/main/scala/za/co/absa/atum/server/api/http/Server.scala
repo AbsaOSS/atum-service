@@ -17,9 +17,12 @@
 package za.co.absa.atum.server.api.http
 
 import cats.syntax.semigroupk._
+import io.prometheus.client.CollectorRegistry
 import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
+import org.http4s.metrics.prometheus.{Prometheus, PrometheusExportService}
 import org.http4s.server.Router
+import org.http4s.server.middleware.Metrics
 import sttp.monad.MonadError
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
@@ -91,12 +94,34 @@ trait Server extends Endpoints {
       .toRoutes
   }
 
+  protected val registry = CollectorRegistry.defaultRegistry
+
+  private val allRoutes = createAllServerRoutes <+> createSwaggerRoutes
+
+//  val xServer = metrics.flatMap { metricsOps =>
+//    val meteredRoutes = Metrics[F](metricsOps)(createAllServerRoutes)
+//    val prometheusService = PrometheusExportService.build[F].toScopedZIO
+//    prometheusService.flatMap { x =>
+//      x.routes
+//    }
+//    val routes = meteredRoutes <+> prometheusService
+//  }
+
+  val monitoredServer = for {
+    metricsSvc <- PrometheusExportService.build[F]
+    metrics <- Prometheus.metricsOps[F](registry, "atum-server")
+    router <- Router[F](
+      "/api" -> Metrics[F](metrics)(allRoutes),
+      "/" -> metricsSvc.routes
+    )
+  } yield router
+
   private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[Env, Throwable, Unit] =
     ZIO.executor.flatMap { executor =>
       val builder = BlazeServerBuilder[F]
         .bindHttp(port, "0.0.0.0")
         .withExecutionContext(executor.asExecutionContext)
-        .withHttpApp(Router("/" -> (createAllServerRoutes <+> createSwaggerRoutes)).orNotFound)
+        .withHttpApp(Router("/" -> allRoutes).orNotFound)
 
       val builderWithSsl = sslContext.fold(builder)(ctx => builder.withSslContext(ctx))
       builderWithSsl.serve.compile.drain

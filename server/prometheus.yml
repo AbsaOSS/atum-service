@@ -1,0 +1,4 @@
+scrape_configs:
+  - job_name: 'atum_server_http4s'
+    static_configs:
+      - targets: ['host.docker.internal:9091']

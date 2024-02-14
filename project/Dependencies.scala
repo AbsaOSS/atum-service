@@ -65,6 +65,7 @@ object Dependencies {
     val sbtJunitInterface = "0.13.3"
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
+    val http4sPrometheus = "0.23.6"
     val playJson = "3.0.1"
 
     val awssdk = "2.23.15"
@@ -153,6 +154,7 @@ object Dependencies {
 
     // http4s
     lazy val http4sBlazeBackend = http4sOrg %% "http4s-blaze-server" % Versions.http4sBlazeBackend
+    lazy val http4sPrometheus = http4sOrg %% "http4s-prometheus-metrics" % Versions.http4sPrometheus
 
     // tapir
     lazy val tapirHttp4sZio = tapirOrg %% "tapir-http4s-server-zio" % Versions.tapir
@@ -185,6 +187,7 @@ object Dependencies {
       zioConfigMagnolia,
       zioConfigTypesafe,
       http4sBlazeBackend,
+      http4sPrometheus,
       tapirHttp4sZio,
       tapirSwagger,
       tapirPlayJson,
