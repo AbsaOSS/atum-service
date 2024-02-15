@@ -39,14 +39,13 @@ import za.co.absa.atum.server.config.SslConfig
 import za.co.absa.atum.server.model.BadRequestResponse
 import zio._
 import zio.interop.catz._
-import zio.metrics.Metric
 import zio.metrics.connectors.prometheus.PrometheusPublisher
 
 import javax.net.ssl.SSLContext
 
 trait Server extends Endpoints {
 
-  type Env = PartitioningController with CheckpointController //with PrometheusPublisher
+  type Env = PartitioningController with CheckpointController with PrometheusPublisher
   type F[A] = RIO[Env, A]
 
   private val decodeFailureHandler: DecodeFailureHandler[F] = new DecodeFailureHandler[F] {
@@ -100,19 +99,17 @@ trait Server extends Endpoints {
       .toRoutes
   }
 
-  private def zioEndpointRoutes: HttpRoutes[F] = {
-    ZHttp4sServerInterpreter[Env](http4sServerOptions).from(List(createServerEndpoint(ZioEndpoint.zioEndpoint, (_:Unit) => ZioEndpoint.getMetricsEffect))).toRoutes
+  val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] =
+    endpoint.get.in("zio-metrics").out(stringBody)
+
+  private def zioMetricsRoutes: HttpRoutes[F] = {
+    ZHttp4sServerInterpreter[Env](http4sServerOptions).from(
+      List(createServerEndpoint(zioMetricsEndpoint, (_: Unit) => ZIO.serviceWithZIO[PrometheusPublisher](_.get)))
+    ).toRoutes
   }
 
   private val metricsRoutes = Http4sServerInterpreter[F]().toRoutes(prometheusMetrics.metricsEndpoint)
-  private val allRoutes = createAllServerRoutes <+> createSwaggerRoutes <+> metricsRoutes <+> zioEndpointRoutes
-
-  def memoryUsage: ZIO[Any, Nothing, Double] = {
-    import java.lang.Runtime._
-    ZIO
-      .succeed(getRuntime.totalMemory() - getRuntime.freeMemory())
-      .map(_ / (1024.0 * 1024.0)) @@ Metric.gauge("memory_usage")
-  }
+  private val allRoutes = createAllServerRoutes <+> createSwaggerRoutes <+> metricsRoutes <+> zioMetricsRoutes
 
   private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[Env, Throwable, Unit] =
     ZIO.executor.flatMap { executor =>

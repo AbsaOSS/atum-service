@@ -19,19 +19,20 @@ package za.co.absa.atum.server
 import za.co.absa.atum.server.api.controller._
 import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
 import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningIfNotExists, WriteCheckpoint}
-import za.co.absa.atum.server.api.http.{Server, ZioEndpoint}
+import za.co.absa.atum.server.api.http.Server
 import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
 import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, PartitioningServiceImpl}
 import za.co.absa.atum.server.aws.AwsSecretsProviderImpl
 import zio._
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.logging.backend.SLF4J
-import zio.metrics.connectors.prometheus
+import zio.metrics.connectors.{MetricsConfig, prometheus}
 import zio.metrics.jvm.DefaultJvmMetrics
 
 object Main extends ZIOAppDefault with Server {
 
   private val configProvider: ConfigProvider = TypesafeConfigProvider.fromResourcePath()
+  private val metricsConfigLayer = ZLayer.succeed(MetricsConfig(5.seconds))
 
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] =
     server
@@ -47,12 +48,15 @@ object Main extends ZIOAppDefault with Server {
         PostgresDatabaseProvider.layer,
         TransactorProvider.layer,
         AwsSecretsProviderImpl.layer,
-        zio.Scope.default
-//        , Runtime.enableRuntimeMetrics,
-//        ,
-//        ZioEndpoint.layer
-//
-//        DefaultJvmMetrics.live.unit,
+        zio.Scope.default,
+        // for observability
+        prometheus.publisherLayer,
+        prometheus.prometheusLayer,
+        // enabling ZIO internal metrics and default JVM metrics
+        Runtime.enableRuntimeMetrics,
+        DefaultJvmMetrics.live.unit,
+        // metrics config
+        metricsConfigLayer
       )
 
   override val bootstrap: ZLayer[Any, Config.Error, Unit] =
