@@ -99,7 +99,7 @@ trait Server extends Endpoints {
       .toRoutes
   }
 
-  val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] =
+  private val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] =
     endpoint.get.in("zio-metrics").out(stringBody)
 
   private def zioMetricsRoutes: HttpRoutes[F] = {
