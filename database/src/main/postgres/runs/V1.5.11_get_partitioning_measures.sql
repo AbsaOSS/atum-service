@@ -39,7 +39,7 @@ BEGIN
     FOR key IN SELECT jsonb_object_keys(i_partitioning)
     LOOP
         measure_name := key;
-        measure_column := ARRAY(SELECT jsonb_array_elements_text(i_partitioning -> key));
+        measure_column := ARRAY(SELECT jsonb_array_elements_text(i_partitioning ->> key));
         RETURN NEXT;
     END LOOP;
 

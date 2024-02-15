@@ -64,7 +64,7 @@ class CreatePartitioningIfNotExists extends DBTestSuite{
         row.getLong("id_partitioning").get
       }
 
-    table("runs.partitionings").where(add("id_partitioning", partitioningID)) {partitioningResult =>
+    table("runs.partitionings").where(add("id_partitioning", partitioningID)) { partitioningResult =>
       val row = partitioningResult.next()
       // assert(row.getJsonB("partitioning").contains(partitioning)) TODO keys are reordered in JsonB and whitespaces removed
       assert(row.getString("created_by").contains("Fantômas"))
