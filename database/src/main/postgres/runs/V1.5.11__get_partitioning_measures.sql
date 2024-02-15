@@ -34,15 +34,19 @@ $$
 -------------------------------------------------------------------------------
 
 DECLARE
-key text;
+    _fk_partitioning                    BIGINT;
 BEGIN
-    FOR key IN SELECT jsonb_object_keys(i_partitioning)
-    LOOP
-        measure_name := key;
-        measure_column := ARRAY(SELECT jsonb_array_elements_text(i_partitioning ->> key));
-        RETURN NEXT;
-    END LOOP;
+    _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
+    IF _fk_partitioning IS NULL THEN
+        measure_name := 'Partitioning not found';
+        measure_column := '{}';
+        RETURN;
+    END IF;
+
+    SELECT measure_name, measure_column
+    FROM runs.partitioning_measures
+    WHERE fk_partitioning = _fk_partitioning;
     RETURN;
 END;
 $$

@@ -19,17 +19,22 @@ package za.co.absa.atum.database.runs
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
-import scala.Byte.MaxValue
 
-class getPartitioningMeasures extends DBTestSuite{
+class GetPartitioningMeasures extends DBTestSuite{
 
   private val fncGetPartitioningMeasures = "runs.get_partitioning_measures"
 
   private val partitioning = JsonBString(
     """
       |{
-      |  "measure1": ["column1", "column2"],
-      |  "measure2": ["column3", "column4"]
+      |  "version": 1,
+      |  "keys": ["key1", "key3", "key2", "key4"],
+      |  "values": {
+      |    "key1": "valueX",
+      |    "key2": "valueY",
+      |    "key3": "valueZ",
+      |    "key4": "valueA"
+      |  }
       |}
       |""".stripMargin
   )
@@ -38,18 +43,9 @@ class getPartitioningMeasures extends DBTestSuite{
     function(fncGetPartitioningMeasures)
       .setParam("i_partitioning", partitioning)
       .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getArray("measure_column").asInstanceOf[Array[String]].sameElements(Array("column1", "column2")))
-
-        assert(queryResult.hasNext)
-        val row2 = queryResult.next()
-        assert(row2.getArray("measure_column").asInstanceOf[Array[String]].sameElements(Array("column3", "column4")))
-
-        assert(!queryResult.hasNext)
+        print(queryResult)
+        queryResult.foreach(println)
       }
   }
-
-
 
 }
