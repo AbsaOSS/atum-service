@@ -31,6 +31,8 @@ import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 import zio.interop.catz._
 
+import doobie.postgres.implicits._
+
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task]
     with StandardStatusHandling {
