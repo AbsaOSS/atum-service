@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+
 import sbt._
 
 object Dependencies {
@@ -66,6 +67,7 @@ object Dependencies {
     val http4sBlazeBackend = "0.23.15"
     val playJson = "3.0.1"
 
+    val awssdk = "2.23.15"
   }
 
 
@@ -137,6 +139,7 @@ object Dependencies {
     val playOrg = "org.playframework"
     val sbtOrg = "com.github.sbt"
     val logbackOrg = "ch.qos.logback"
+    val awsSdkOrg = "software.amazon.awssdk"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
@@ -162,6 +165,9 @@ object Dependencies {
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
 
+    // aws
+    lazy val awsSecretsManagerSdk = awsSdkOrg % "secretsmanager" % Versions.awssdk
+
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
     lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
@@ -183,6 +189,7 @@ object Dependencies {
       tapirSwagger,
       tapirPlayJson,
       playJson,
+      awsSecretsManagerSdk,
       zioTest,
       zioTestSbt,
       zioTestJunit,
