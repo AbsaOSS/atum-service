@@ -30,10 +30,10 @@ class GetPartitioningMeasures extends DBTestSuite{
       |  "version": 1,
       |  "keys": ["key1", "key3", "key2", "key4"],
       |  "values": {
-      |    "key1": "valueX",
-      |    "key2": "valueY",
-      |    "key3": "valueZ",
-      |    "key4": "valueA"
+      |    "key1": "value1",
+      |    "key2": "value2",
+      |    "key3": "value3",
+      |    "key4": "value4"
       |  }
       |}
       |""".stripMargin
