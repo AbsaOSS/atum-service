@@ -20,8 +20,6 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-import java.time.OffsetDateTime
-
 class CreateOrUpdateAdditionalData extends DBTestSuite{
 
   private val fncCreateOrUpdateAdditionalData = "runs.create_or_update_additional_data"

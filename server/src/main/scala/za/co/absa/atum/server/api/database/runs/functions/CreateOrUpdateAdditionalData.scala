@@ -19,8 +19,8 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
+import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.AdditionalDataSubmitDTO
-import za.co.absa.atum.model.utils.SerializationUtils
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.model.PartitioningForDB
@@ -31,15 +31,13 @@ import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 import zio.interop.catz._
 
-import doobie.postgres.implicits._
-
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task]
     with StandardStatusHandling {
 
   override def sql(values: AdditionalDataSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = SerializationUtils.asJson(partitioning)
+    val partitioningJsonString = Json.toJson(partitioning).toString
 
     // implicits from Doobie can't handle Map[String, Option[String]] -> HStore, so we converted None to null basically
     val additionalDataNormalized = values.additionalData.map{ case (k, v) => (k, v.orNull)}
@@ -47,7 +45,7 @@ class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEn
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-                    partitioningNormalized
+                    partitioningJsonString
                   },
                   $additionalDataNormalized,
                   ${values.author}
