@@ -139,7 +139,6 @@ object Dependencies {
     val sbtOrg = "com.github.sbt"
     val logbackOrg = "ch.qos.logback"
     val awsSdkOrg = "software.amazon.awssdk"
-    val dwickernOrg = "com.github.dwickern"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio

@@ -22,7 +22,7 @@ import zio._
 
 trait BaseService {
 
-  def repositoryCallWithStatus[T, R](
+  def repositoryCallWithStatus[R](
     repositoryCall: IO[DatabaseError, Either[StatusException, R]],
     operationName: String
   ): IO[ServiceError, Either[StatusException, R]] = {

@@ -22,7 +22,7 @@ import zio._
 
 trait BaseRepository {
 
-  def dbCallWithStatus[T, R](
+  def dbCallWithStatus[R](
     dbFuncCall: Task[Either[StatusException, R]],
     operationName: String
   ): IO[DatabaseError, Either[StatusException, R]] = {
