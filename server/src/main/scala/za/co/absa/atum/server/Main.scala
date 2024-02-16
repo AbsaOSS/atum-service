@@ -22,6 +22,7 @@ import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.http.Server
 import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
 import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, PartitioningServiceImpl}
+import za.co.absa.atum.server.aws.AwsSecretsProviderImpl
 import zio._
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.logging.backend.SLF4J
@@ -44,6 +45,7 @@ object Main extends ZIOAppDefault with Server {
         WriteCheckpoint.layer,
         PostgresDatabaseProvider.layer,
         TransactorProvider.layer,
+        AwsSecretsProviderImpl.layer,
         zio.Scope.default
       )
 

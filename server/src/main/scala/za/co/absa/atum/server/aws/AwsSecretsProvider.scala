@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api
+package za.co.absa.atum.server.aws
 
-import zio.config.typesafe.TypesafeConfigProvider
-import zio.test.ZIOSpec
-import zio.{Runtime, ZLayer}
+import zio.Task
+import zio.macros.accessible
 
-abstract class ConfigProviderSpec extends ZIOSpec[Unit] {
-
-  override def bootstrap: ZLayer[Any, Any, Unit] =
-    Runtime.setConfigProvider(TypesafeConfigProvider.fromResourcePath())
-
+@accessible
+trait AwsSecretsProvider {
+  def getSecretValue(secretName: String): Task[String]
 }
-

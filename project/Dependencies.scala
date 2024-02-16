@@ -65,6 +65,8 @@ object Dependencies {
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
     val playJson = "3.0.1"
+
+    val awssdk = "2.23.15"
   }
 
 
@@ -136,6 +138,7 @@ object Dependencies {
     val playOrg = "org.playframework"
     val sbtOrg = "com.github.sbt"
     val logbackOrg = "ch.qos.logback"
+    val awsSdkOrg = "software.amazon.awssdk"
     val dwickernOrg = "com.github.dwickern"
 
     // zio
@@ -162,6 +165,9 @@ object Dependencies {
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
 
+    // aws
+    lazy val awsSecretsManagerSdk = awsSdkOrg % "secretsmanager" % Versions.awssdk
+
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
     lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
@@ -183,6 +189,7 @@ object Dependencies {
       tapirSwagger,
       tapirPlayJson,
       playJson,
+      awsSecretsManagerSdk,
       zioTest,
       zioTestSbt,
       zioTestJunit,
