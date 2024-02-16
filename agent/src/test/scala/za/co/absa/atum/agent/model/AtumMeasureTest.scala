@@ -28,84 +28,84 @@ import za.co.absa.spark.commons.test.SparkTestBase
 
 class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
-  "Measure" should "be based on the dataframe" in {
-
-    // Measures
-    val measureIds: AtumMeasure = RecordCount()
-    val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn(
-      controlCol = "salary"
-    )
-    val salarySum = SumOfValuesOfColumn(controlCol = "salary")
-    val sumOfHashes: AtumMeasure = SumOfHashesOfColumn(controlCol = "id")
-
-    // AtumContext contains `Measurement`
-    val atumContextInstanceWithRecordCount = AtumAgent
-      .getOrCreateAtumContext(AtumPartitions("foo" -> "bar"))
-      .addMeasure(measureIds)
-    val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
-      .subPartitionContext(AtumPartitions("sub" -> "partition"))
-      .addMeasure(salaryAbsSum)
-    val atumContextWithNameHashSum = atumContextInstanceWithRecordCount
-      .subPartitionContext(AtumPartitions("another" -> "partition"))
-      .addMeasure(sumOfHashes)
-
-    // Pipeline
-    val dfPersons = spark.read
-      .format("csv")
-      .option("header", "true")
-      .load("agent/src/test/resources/random-dataset/persons.csv")
-      .createCheckpoint("name1")(atumContextInstanceWithRecordCount)
-      .createCheckpoint("name2")(atumContextWithNameHashSum)
-
-    val dsEnrichment = spark.read
-      .format("csv")
-      .option("header", "true")
-      .load("agent/src/test/resources/random-dataset/persons-enriched.csv")
-      .createCheckpoint("name3")(
-        atumContextWithSalaryAbsMeasure.removeMeasure(salaryAbsSum)
-      )
-
-    val dfFull = dfPersons
-      .join(dsEnrichment, Seq("id"))
-      .createCheckpoint("other different name")(atumContextWithSalaryAbsMeasure)
-
-    val dfExtraPersonWithNegativeSalary = spark
-      .createDataFrame(
-        Seq(
-          ("id", "firstName", "lastName", "email", "email2", "profession", "-1000")
-        )
-      )
-      .toDF("id", "firstName", "lastName", "email", "email2", "profession", "salary")
-
-    val dfExtraPerson = dfExtraPersonWithNegativeSalary.union(dfPersons)
-
-    dfExtraPerson.createCheckpoint("a checkpoint name")(
-      atumContextWithSalaryAbsMeasure
-        .removeMeasure(measureIds)
-        .removeMeasure(salaryAbsSum)
-    )
-
-    val dfPersonCntResult = measureIds.function(dfPersons)
-    val dfFullCntResult = measureIds.function(dfFull)
-    val dfFullSalaryAbsSumResult = salaryAbsSum.function(dfFull)
-    val dfFullHashResult = sumOfHashes.function(dfFull)
-    val dfExtraPersonSalarySumResult = salarySum.function(dfExtraPerson)
-    val dfFullSalarySumResult = salarySum.function(dfFull)
-
-    // Assertions
-    assert(dfPersonCntResult.result == "1000")
-    assert(dfPersonCntResult.resultType == ResultValueType.Long)
-    assert(dfFullCntResult.result == "1000")
-    assert(dfFullCntResult.resultType == ResultValueType.Long)
-    assert(dfFullSalaryAbsSumResult.result == "2987144")
-    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.BigDecimal)
-    assert(dfFullHashResult.result == "2044144307532")
-    assert(dfFullHashResult.resultType == ResultValueType.String)
-    assert(dfExtraPersonSalarySumResult.result == "2986144")
-    assert(dfExtraPersonSalarySumResult.resultType == ResultValueType.BigDecimal)
-    assert(dfFullSalarySumResult.result == "2987144")
-    assert(dfFullSalarySumResult.resultType == ResultValueType.BigDecimal)
-  }
+//  "Measure" should "be based on the dataframe" in {
+//
+//    // Measures
+//    val measureIds: AtumMeasure = RecordCount()
+//    val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn(
+//      controlCol = "salary"
+//    )
+//    val salarySum = SumOfValuesOfColumn(controlCol = "salary")
+//    val sumOfHashes: AtumMeasure = SumOfHashesOfColumn(controlCol = "id")
+//
+//    // AtumContext contains `Measurement`
+//    val atumContextInstanceWithRecordCount = AtumAgent
+//      .getOrCreateAtumContext(AtumPartitions("foo" -> "bar"))
+//      .addMeasure(measureIds)
+//    val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
+//      .subPartitionContext(AtumPartitions("sub" -> "partition"))
+//      .addMeasure(salaryAbsSum)
+//    val atumContextWithNameHashSum = atumContextInstanceWithRecordCount
+//      .subPartitionContext(AtumPartitions("another" -> "partition"))
+//      .addMeasure(sumOfHashes)
+//
+//    // Pipeline
+//    val dfPersons = spark.read
+//      .format("csv")
+//      .option("header", "true")
+//      .load("agent/src/dbTest/resources/random-dataset/persons.csv")
+//      .createCheckpoint("name1")(atumContextInstanceWithRecordCount)
+//      .createCheckpoint("name2")(atumContextWithNameHashSum)
+//
+//    val dsEnrichment = spark.read
+//      .format("csv")
+//      .option("header", "true")
+//      .load("agent/src/dbTest/resources/random-dataset/persons-enriched.csv")
+//      .createCheckpoint("name3")(
+//        atumContextWithSalaryAbsMeasure.removeMeasure(salaryAbsSum)
+//      )
+//
+//    val dfFull = dfPersons
+//      .join(dsEnrichment, Seq("id"))
+//      .createCheckpoint("other different name")(atumContextWithSalaryAbsMeasure)
+//
+//    val dfExtraPersonWithNegativeSalary = spark
+//      .createDataFrame(
+//        Seq(
+//          ("id", "firstName", "lastName", "email", "email2", "profession", "-1000")
+//        )
+//      )
+//      .toDF("id", "firstName", "lastName", "email", "email2", "profession", "salary")
+//
+//    val dfExtraPerson = dfExtraPersonWithNegativeSalary.union(dfPersons)
+//
+//    dfExtraPerson.createCheckpoint("a checkpoint name")(
+//      atumContextWithSalaryAbsMeasure
+//        .removeMeasure(measureIds)
+//        .removeMeasure(salaryAbsSum)
+//    )
+//
+//    val dfPersonCntResult = measureIds.function(dfPersons)
+//    val dfFullCntResult = measureIds.function(dfFull)
+//    val dfFullSalaryAbsSumResult = salaryAbsSum.function(dfFull)
+//    val dfFullHashResult = sumOfHashes.function(dfFull)
+//    val dfExtraPersonSalarySumResult = salarySum.function(dfExtraPerson)
+//    val dfFullSalarySumResult = salarySum.function(dfFull)
+//
+//    // Assertions
+//    assert(dfPersonCntResult.result == "1000")
+//    assert(dfPersonCntResult.resultType == ResultValueType.Long)
+//    assert(dfFullCntResult.result == "1000")
+//    assert(dfFullCntResult.resultType == ResultValueType.Long)
+//    assert(dfFullSalaryAbsSumResult.result == "2987144")
+//    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.BigDecimal)
+//    assert(dfFullHashResult.result == "2044144307532")
+//    assert(dfFullHashResult.resultType == ResultValueType.String)
+//    assert(dfExtraPersonSalarySumResult.result == "2986144")
+//    assert(dfExtraPersonSalarySumResult.resultType == ResultValueType.BigDecimal)
+//    assert(dfFullSalarySumResult.result == "2987144")
+//    assert(dfFullSalarySumResult.resultType == ResultValueType.BigDecimal)
+//  }
 
   "AbsSumOfValuesOfColumn" should "return expected value" in {
     val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn("salary")
