@@ -45,7 +45,7 @@ class AwsSecretsProviderSpec extends ConfigProviderSpec {
       test("GetSecretValue returns expected secret's value"){
         for {
           awsConfig <- ZIO.config[AwsConfig](AwsConfig.config)
-          awsSecretValue <- AwsSecretsProvider.getSecretValue(awsConfig.serviceUserSecretKey)
+          awsSecretValue <- AwsSecretsProvider.getSecretValue(awsConfig.dbPasswordSecretName)
         } yield assertTrue(dummySecretValue == awsSecretValue)
       }
     )

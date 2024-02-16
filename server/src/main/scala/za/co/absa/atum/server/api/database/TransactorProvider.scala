@@ -32,7 +32,7 @@ object TransactorProvider {
       awsConfig <- ZIO.config[AwsConfig](AwsConfig.config)
 
       awsSecretsProvider <- ZIO.service[AwsSecretsProvider]
-      password <- awsSecretsProvider.getSecretValue(awsConfig.serviceUserSecretKey)
+      password <- awsSecretsProvider.getSecretValue(awsConfig.dbPasswordSecretName)
         // fallback to password property's value from postgres section of reference.conf; useful for local testing
         .orElse {
           ZIO.logError("Credentials were not retrieved from AWS, falling back to config value.")

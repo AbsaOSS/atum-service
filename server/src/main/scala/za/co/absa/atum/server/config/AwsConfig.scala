@@ -19,9 +19,9 @@ package za.co.absa.atum.server.config
 import zio.Config
 import zio.config.magnolia.deriveConfig
 
-case class AwsConfig (
+case class AwsConfig(
   region: String,
-  serviceUserSecretKey: String
+  dbPasswordSecretName: String
 )
 
 object AwsConfig {
