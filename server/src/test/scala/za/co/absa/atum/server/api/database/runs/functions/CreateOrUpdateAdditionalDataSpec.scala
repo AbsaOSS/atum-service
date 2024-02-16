@@ -21,6 +21,8 @@ import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitionDTO}
 import za.co.absa.atum.server.ConfigProviderSpec
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
+import za.co.absa.fadb.exceptions.DataNotFoundException
+import za.co.absa.fadb.status.FunctionStatus
 import zio._
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
@@ -43,7 +45,7 @@ class CreateOrUpdateAdditionalDataSpec extends ConfigProviderSpec {
         for {
           createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
           result <- createOrUpdateAdditionalData(additionalDataSubmitDTO)
-        } yield assertTrue(result.isRight)
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       CreateOrUpdateAdditionalData.layer,
