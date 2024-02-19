@@ -13,13 +13,16 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs.get_partitioning_measures(
-    IN i_partitioning JSONB,
-    OUT measure_name TEXT,
-    OUT measured_columns TEXT[]
-) RETURNS SETOF record AS
+
+ CREATE OR REPLACE FUNCTION runs.get_partitioning_measures(
+     IN i_partitioning          JSONB,
+     OUT measure_name           TEXT,
+     OUT measured_columns       TEXT[],
+     OUT status                 INTEGER,
+     OUT status_text            TEXT
+ ) RETURNS SETOF record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_measures(2)
 --      Iterates over a JSONB object and returns each key-value pair as a record
@@ -41,15 +44,20 @@ BEGIN
     IF _fk_partitioning IS NULL THEN
         measure_name := 'Partitioning not found';
         measured_columns := '{}';
+        status := 41;
+        status_text := 'The partitioning does not exist.';
         RETURN;
     END IF;
 
-    SELECT measure_name, measured_columns
-    FROM runs.partitioning_measures
-    WHERE fk_partitioning = _fk_partitioning;
-    RETURN;
+    status = 11;
+    status_text = 'OK';
+
+    RETURN QUERY
+    SELECT md.measure_name, md.measured_columns, status, status_text
+    FROM runs.measure_definitions AS md
+    WHERE md.fk_partitioning = _fk_partitioning;
 END;
 $$
-    LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 ALTER FUNCTION runs.get_partitioning_measures(JSONB) OWNER TO atum_owner;

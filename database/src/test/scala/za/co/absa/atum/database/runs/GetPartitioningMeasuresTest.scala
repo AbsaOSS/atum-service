@@ -20,21 +20,19 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
 
-class GetPartitioningMeasures extends DBTestSuite{
+class GetPartitioningMeasuresTest extends DBTestSuite{
 
   private val fncGetPartitioningMeasures = "runs.get_partitioning_measures"
 
   private val partitioning = JsonBString(
     """
       |{
-      |  "version": 1,
-      |  "keys": ["key1", "key3", "key2", "key4"],
-      |  "values": {
-      |    "key1": "value1",
-      |    "key2": "value2",
-      |    "key3": "value3",
-      |    "key4": "value4"
-      |  }
+      |   "version": 1,
+      |   "keys": ["key1", "key2"],
+      |   "values": {
+      |     "key1": "value1",
+      |     "key2": "value2"
+      |   }
       |}
       |""".stripMargin
   )
@@ -43,8 +41,11 @@ class GetPartitioningMeasures extends DBTestSuite{
     function(fncGetPartitioningMeasures)
       .setParam("i_partitioning", partitioning)
       .execute { queryResult =>
-        print(queryResult)
-        queryResult.foreach(println)
+        val results = queryResult.distinct.next()
+        assert(results.getInt("status").contains(11))
+        assert(results.getString("status_text").contains("OK"))
+        println(results.getString("measure_name"))
+        println(results.getString("measured_columns"))
       }
   }
 
