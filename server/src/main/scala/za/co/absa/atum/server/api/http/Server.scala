@@ -31,12 +31,15 @@ import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.r
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import sttp.tapir.{DecodeResult, Endpoint, PublicEndpoint, headers, statusCode}
+import sttp.tapir.{DecodeResult, PublicEndpoint, headers, statusCode}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller._
+import za.co.absa.atum.server.config.SslConfig
 import za.co.absa.atum.server.model.BadRequestResponse
 import zio.interop.catz._
-import zio.{RIO, ZIO}
+import zio._
+
+import javax.net.ssl.SSLContext
 
 trait Server extends Endpoints {
 
@@ -88,14 +91,25 @@ trait Server extends Endpoints {
       .toRoutes
   }
 
-  protected val server: ZIO[Env, Throwable, Unit] =
+  private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[Env, Throwable, Unit] =
     ZIO.executor.flatMap { executor =>
-      BlazeServerBuilder[F]
+      val builder = BlazeServerBuilder[F]
+        .bindHttp(port, "0.0.0.0")
         .withExecutionContext(executor.asExecutionContext)
         .withHttpApp(Router("/" -> (createAllServerRoutes <+> createSwaggerRoutes)).orNotFound)
-        .serve
-        .compile
-        .drain
+
+      val builderWithSsl = sslContext.fold(builder)(ctx => builder.withSslContext(ctx))
+      builderWithSsl.serve.compile.drain
     }
+
+  private val httpServer: ZIO[Env, Throwable, Unit] = createServer(8080)
+  private val httpsServer: ZIO[Env, Throwable, Unit] = SSL.context.flatMap { context =>
+    createServer(8443, Some(context))
+  }
+
+  protected val server: ZIO[Env, Throwable, Unit] = for {
+    sslConfig <- ZIO.config[SslConfig](SslConfig.config)
+    server <- if (sslConfig.enabled) httpsServer else httpServer
+  } yield server
 
 }

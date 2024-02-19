@@ -2,10 +2,11 @@
 
 ## How to build and run (will be updated soon)
 
-To create a war file that can be deployed to tomcat just run:
+To create a jar file that can be executed:
 
 ```shell
-> sbt package
+> sbt clean "project server" assembly
+> java -jar server/target/jvm-2.13/*.jar
 ```
 
 If you want to quickly build and run from sbt you can run using the command below (alternatively you can execute za.co.absa.atum.server.Main within your IDE). This deploys it to `localhost:8080`.
