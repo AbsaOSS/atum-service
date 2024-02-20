@@ -21,7 +21,7 @@ import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir._
 import sttp.tapir.{EndpointOutput, PublicEndpoint}
-import za.co.absa.atum.server.Constants.{Api, V1}
+import za.co.absa.atum.server.Constants.Endpoints.{Api, V1}
 import za.co.absa.atum.server.model._
 
 trait BaseEndpoints {

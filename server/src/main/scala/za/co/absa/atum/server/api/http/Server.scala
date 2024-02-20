@@ -79,7 +79,8 @@ trait Server extends Endpoints {
   private def createAllServerRoutes: HttpRoutes[F] = {
     val endpoints = List(
       createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
-      createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists)
+      createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists),
+      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )
     ZHttp4sServerInterpreter[Env](http4sServerOptions).from(endpoints).toRoutes
   }
