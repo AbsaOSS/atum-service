@@ -23,7 +23,7 @@ CREATE OR REPLACE FUNCTION runs.create_partitioning_if_not_exists(
     OUT id_partitioning         BIGINT
 ) RETURNS record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.create_partitioning_if_not_exists(3)
 --      Creates a partitioning entry if it does not exist
