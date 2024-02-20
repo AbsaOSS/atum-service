@@ -21,6 +21,7 @@ object Constants {
   final val V1 = "v1"
   final val CreatePartitioning = "createPartitioning"
   final val CreateCheckpoint = "createCheckpoint"
+  final val health = "health"
   final val SwaggerApiName = "Atum API"
   final val SwaggerApiVersion = "1.0"
 }
