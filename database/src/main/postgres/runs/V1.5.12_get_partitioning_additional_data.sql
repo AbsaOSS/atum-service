@@ -17,7 +17,9 @@
 CREATE OR REPLACE FUNCTION runs.get_partitioning_additional_data(
     IN  i_partitioning          JSONB,
     OUT ad_name                 TEXT,
-    OUT ad_value                TEXT
+    OUT ad_value                TEXT,
+    OUT status                  INTEGER,
+    OUT status_text             TEXT
 ) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
@@ -35,16 +37,27 @@ $$
 -------------------------------------------------------------------------------
 
 DECLARE
-    key text;
+    _fk_partitioning                    BIGINT;
 BEGIN
-    FOR key IN SELECT jsonb_object_keys(i_partitioning)
-        LOOP
-            ad_name := key;
-            ad_value := i_partitioning ->> key;
-            RETURN NEXT;
-        END LOOP;
-    RETURN;
+    _fk_partitioning = runs._get_id_partitioning(i_partitioning);
+
+    IF _fk_partitioning IS NULL THEN
+        ad_name := 'Partitioning not found';
+        ad_value := '';
+        status := 41;
+        status_text := 'The partitioning does not exist.';
+        RETURN;
+    END IF;
+
+    status = 11;
+    status_text = 'OK';
+
+    RETURN QUERY
+        SELECT mdh.ad_name, mdh.ad_value, status, status_text
+        FROM runs.measure_definitions_history AS mdh
+        WHERE mdh.fk_partitioning = _fk_partitioning;
 END;
-$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+$$
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 ALTER FUNCTION runs.get_partitioning_additional_data(JSONB, BOOLEAN) OWNER TO atum_owner;
