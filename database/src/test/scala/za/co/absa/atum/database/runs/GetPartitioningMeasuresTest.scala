@@ -44,8 +44,6 @@ class GetPartitioningMeasuresTest extends DBTestSuite{
         val results = queryResult.distinct.next()
         assert(results.getInt("status").contains(11))
         assert(results.getString("status_text").contains("OK"))
-        println(results.getString("measure_name"))
-        println(results.getString("measured_columns"))
       }
   }
 
