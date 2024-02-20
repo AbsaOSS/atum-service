@@ -22,7 +22,7 @@ import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir.statusCode
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.Constants.{CreateCheckpoint, CreatePartitioning, Health}
+import za.co.absa.atum.server.Constants.Endpoints.{CreateCheckpoint, CreatePartitioning, Health}
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.PlayJsonImplicits._
 

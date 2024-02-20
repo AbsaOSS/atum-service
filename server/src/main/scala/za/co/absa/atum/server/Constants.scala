@@ -17,11 +17,18 @@
 package za.co.absa.atum.server
 
 object Constants {
-  final val Api = "api"
-  final val V1 = "v1"
-  final val CreatePartitioning = "createPartitioning"
-  final val CreateCheckpoint = "createCheckpoint"
-  final val Health = "health"
+
+  object Endpoints {
+
+    final val Api = "api"
+    final val V1 = "v1"
+    final val CreatePartitioning = "createPartitioning"
+    final val CreateCheckpoint = "createCheckpoint"
+    final val Health = "health"
+
+  }
+
   final val SwaggerApiName = "Atum API"
   final val SwaggerApiVersion = "1.0"
+
 }
