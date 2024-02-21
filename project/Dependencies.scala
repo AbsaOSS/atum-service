@@ -158,9 +158,11 @@ object Dependencies {
     lazy val tapirHttp4sZio = tapirOrg %% "tapir-http4s-server-zio" % Versions.tapir
     lazy val tapirSwagger = tapirOrg %% "tapir-swagger-ui-bundle" % Versions.tapir
     lazy val tapirPlayJson = tapirOrg %% "tapir-json-play" % Versions.tapir
+    lazy val tapirStubServer = tapirOrg %% "tapir-sttp-stub-server" % Versions.tapir % Test
 
     // json
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
+    lazy val sttpPlayJson = "com.softwaremill.sttp.client3" %% "play-json" % "3.9.3" % Test
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
@@ -188,7 +190,9 @@ object Dependencies {
       tapirHttp4sZio,
       tapirSwagger,
       tapirPlayJson,
+      tapirStubServer,
       playJson,
+      sttpPlayJson,
       awsSecretsManagerSdk,
       zioTest,
       zioTestSbt,
