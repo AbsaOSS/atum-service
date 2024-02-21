@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server
+package za.co.absa.atum.server.config
 
-object Constants {
+import zio.Config
+import zio.config.magnolia.deriveConfig
 
-  object Endpoints {
+case class SslConfig(
+  enabled: Boolean,
+  keyStorePassword: String,
+  keyStorePath: String
+)
 
-    final val Api = "api"
-    final val V1 = "v1"
-    final val CreatePartitioning = "createPartitioning"
-    final val CreateCheckpoint = "createCheckpoint"
-    final val Health = "health"
-
-  }
-
-  final val SwaggerApiName = "Atum API"
-  final val SwaggerApiVersion = "1.0"
-
+object SslConfig {
+  val config: Config[SslConfig] = deriveConfig[SslConfig].nested("ssl")
 }

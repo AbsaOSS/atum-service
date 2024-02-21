@@ -27,7 +27,7 @@ CREATE OR REPLACE FUNCTION runs.flows_of_segmentation(
     OUT segmentation_count  INTEGER
 ) RETURNS SETOF record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.get_flow_additional_data(1)
 --      Returns all the flows the given segmentation belongs to

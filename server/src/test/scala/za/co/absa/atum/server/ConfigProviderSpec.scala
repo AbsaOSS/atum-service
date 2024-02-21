@@ -16,19 +16,14 @@
 
 package za.co.absa.atum.server
 
-object Constants {
+import zio.config.typesafe.TypesafeConfigProvider
+import zio.test.ZIOSpec
+import zio.{Runtime, ZLayer}
 
-  object Endpoints {
+abstract class ConfigProviderSpec extends ZIOSpec[Unit] {
 
-    final val Api = "api"
-    final val V1 = "v1"
-    final val CreatePartitioning = "createPartitioning"
-    final val CreateCheckpoint = "createCheckpoint"
-    final val Health = "health"
-
-  }
-
-  final val SwaggerApiName = "Atum API"
-  final val SwaggerApiVersion = "1.0"
+  override def bootstrap: ZLayer[Any, Any, Unit] =
+    Runtime.setConfigProvider(TypesafeConfigProvider.fromResourcePath())
 
 }
+
