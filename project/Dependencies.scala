@@ -66,6 +66,7 @@ object Dependencies {
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
     val playJson = "3.0.1"
+    val sttpPlayJson = "3.9.3"
 
     val awssdk = "2.23.15"
   }
@@ -162,7 +163,7 @@ object Dependencies {
 
     // json
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
-    lazy val sttpPlayJson = "com.softwaremill.sttp.client3" %% "play-json" % "3.9.3" % Test
+    lazy val sttpPlayJson = "com.softwaremill.sttp.client3" %% "play-json" % Versions.sttpPlayJson % Test
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
