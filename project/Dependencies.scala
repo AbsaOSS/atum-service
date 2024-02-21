@@ -141,6 +141,7 @@ object Dependencies {
     val sbtOrg = "com.github.sbt"
     val logbackOrg = "ch.qos.logback"
     val awsSdkOrg = "software.amazon.awssdk"
+    val sttpClient3Org = "com.softwaremill.sttp.client3"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
@@ -163,7 +164,7 @@ object Dependencies {
 
     // json
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
-    lazy val sttpPlayJson = "com.softwaremill.sttp.client3" %% "play-json" % Versions.sttpPlayJson % Test
+    lazy val sttpPlayJson = sttpClient3Org %% "play-json" % Versions.sttpPlayJson % Test
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
