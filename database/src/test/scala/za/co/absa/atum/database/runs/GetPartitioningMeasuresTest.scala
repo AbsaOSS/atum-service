@@ -24,26 +24,79 @@ class GetPartitioningMeasuresTest extends DBTestSuite{
 
   private val fncGetPartitioningMeasures = "runs.get_partitioning_measures"
 
-  private val partitioning = JsonBString(
-    """
-      |{
-      |   "version": 1,
-      |   "keys": ["key1", "key2"],
-      |   "values": {
-      |     "key1": "value1",
-      |     "key2": "value2"
-      |   }
-      |}
-      |""".stripMargin
-  )
+  test("Get partitioning measures should return partitioning measures for partitioning with measures") {
+    val partitioning = JsonBString(
+      """
+        |{
+        |  "keys": [
+        |    "key1",
+        |    "key2"
+        |  ],
+        |  "version": 1,
+        |  "keysToValues": {
+        |    "key1": "value1",
+        |    "key2": "value2"
+        |  }
+        |}
+        |""".stripMargin
+    )
 
-  test("Get partitioning measures") {
     function(fncGetPartitioningMeasures)
       .setParam("i_partitioning", partitioning)
       .execute { queryResult =>
         val results = queryResult.distinct.next()
         assert(results.getInt("status").contains(11))
         assert(results.getString("status_text").contains("OK"))
+      }
+  }
+
+  test("Get partitioning measures should return error on non existing partitioning") {
+    val partitioning = JsonBString(
+      """
+        |{
+        |   "version": 1,
+        |   "keys": ["key1"],
+        |   "values": {
+        |     "key1": "value1"
+        |   }
+        |}
+        |""".stripMargin
+    )
+
+    function(fncGetPartitioningMeasures)
+      .setParam("i_partitioning", partitioning)
+      .execute { queryResult =>
+        val results = queryResult.distinct.next()
+        assert(results.getInt("status").contains(41))
+        assert(results.getString("status_text").contains("The partitioning does not exist."))
+      }
+  }
+
+  test("Get partitioning measures should return exception for partitioning with no measures") {
+    val partitioning = JsonBString(
+      """
+        |{
+        |  "keys": [
+        |    "key1",
+        |    "key3",
+        |    "key5"
+        |  ],
+        |  "version": 1,
+        |  "keysToValues": {
+        |    "key1": "value1",
+        |    "key3": "value3",
+        |    "key5": "value5"
+        |  }
+        |}
+        |""".stripMargin
+    )
+
+    function(fncGetPartitioningMeasures)
+      .setParam("i_partitioning", partitioning)
+      .execute { queryResult =>
+        val results = queryResult.distinct.next()
+        assert(results.getInt("status").contains(42))
+        assert(results.getString("status_text").contains("No partitioning measures match the provided partitioning."))
       }
   }
 

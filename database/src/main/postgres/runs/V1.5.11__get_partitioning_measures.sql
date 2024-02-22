@@ -33,11 +33,20 @@ $$
 -- Returns:
 --      measure_name        - Name of the measure
 --      measured_columns    - Array of columns associated with the measure
+--      status              - Status code
+--      status_text         - Status message
+
+-- Status codes:
+--      11 - OK
+--      41 - Partitioning not found
+--      42 - Record not found
 --
 -------------------------------------------------------------------------------
 
 DECLARE
     _fk_partitioning                    BIGINT;
+    _measure_name                       TEXT;
+    _measured_columns                   TEXT[];
 BEGIN
     _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
@@ -46,16 +55,26 @@ BEGIN
         measured_columns := '{}';
         status := 41;
         status_text := 'The partitioning does not exist.';
-        RETURN;
+        RETURN NEXT;
     END IF;
 
-    status = 11;
-    status_text = 'OK';
-
-    RETURN QUERY
-    SELECT md.measure_name, md.measured_columns, status, status_text
+    SELECT md.measure_name, md.measured_columns
+    INTO _measure_name, _measured_columns
     FROM runs.measure_definitions AS md
     WHERE md.fk_partitioning = _fk_partitioning;
+
+    IF NOT FOUND THEN
+        measure_name := 'Record not found';
+        measured_columns := '{}';
+        status := 42;
+        status_text := 'No partitioning measures match the provided partitioning.';
+    ELSE
+        measure_name := _measure_name;
+        measured_columns := _measured_columns;
+        status = 11;
+        status_text = 'OK';
+    END IF;
+    RETURN NEXT;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
