@@ -117,11 +117,11 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
     val fkPartitioning: Long = table("runs.partitionings").fieldValue("partitioning", partitioning, "id_partitioning").get.get
 
     function(fncGetPartitioningMeasures)
-      .setParam("i_partitioning", fkPartitioning)
+      .setParam("i_partitioning", partitioning)
       .execute { queryResult =>
         val results = queryResult.distinct.next()
-        assert(results.getInt("status").contains(42))
-        assert(results.getString("status_text").contains("No partitioning measures match the provided partitioning."))
+        assert(results.getInt("status").contains(10))
+        assert(results.getString("status_text").contains("No measures found for the given partitioning."))
       }
   }
 

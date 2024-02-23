@@ -37,9 +37,9 @@ $$
 --      status_text         - Status message
 
 -- Status codes:
+--      10 - Record not found for the given partitioning
 --      11 - OK
 --      41 - Partitioning not found
---      42 - Record not found
 --
 -------------------------------------------------------------------------------
 
@@ -51,8 +51,8 @@ BEGIN
     _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
     IF _fk_partitioning IS NULL THEN
-        measure_name := 'Partitioning not found';
-        measured_columns := '{}';
+        measure_name := NULL;
+        measured_columns := NULL;
         status := 41;
         status_text := 'The partitioning does not exist.';
         RETURN NEXT;
@@ -64,10 +64,10 @@ BEGIN
     WHERE md.fk_partitioning = _fk_partitioning;
 
     IF NOT FOUND THEN
-        measure_name := 'Record not found';
-        measured_columns := '{}';
-        status := 42;
-        status_text := 'No partitioning measures match the provided partitioning.';
+        measure_name := NULL;
+        measured_columns := NULL;
+        status := 10;
+        status_text := 'No measures found for the given partitioning.';
     ELSE
         measure_name := _measure_name;
         measured_columns := _measured_columns;
