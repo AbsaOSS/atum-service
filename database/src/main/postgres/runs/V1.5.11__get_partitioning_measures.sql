@@ -69,10 +69,7 @@ BEGIN
         status := 10;
         status_text := 'No measures found for the given partitioning.';
     ELSE
-        measure_name := _measure_name;
-        measured_columns := _measured_columns;
-        status = 11;
-        status_text = 'OK';
+        RETURN NEXT;
     END IF;
     RETURN NEXT;
 END;
