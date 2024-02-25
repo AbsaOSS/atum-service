@@ -24,7 +24,7 @@
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.get_partitioning_measures(2)
+-- Function: runs.get_partitioning_measures(1)
 --      Iterates over a JSONB object and returns each key-value pair as a record
 --
 -- Parameters:
