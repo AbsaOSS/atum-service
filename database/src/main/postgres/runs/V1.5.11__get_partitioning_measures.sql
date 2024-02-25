@@ -55,7 +55,7 @@ BEGIN
         measured_columns := NULL;
         status := 41;
         status_text := 'The partitioning does not exist.';
-        RETURN NEXT;
+        RETURN;
     END IF;
 
     SELECT md.measure_name, md.measured_columns
