@@ -74,7 +74,7 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
         |{
         |   "version": 1,
         |   "keys": ["key1"],
-        |   "values": {
+        |   "keysToValues": {
         |     "key1": "value1"
         |   }
         |}
