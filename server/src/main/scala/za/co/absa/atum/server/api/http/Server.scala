@@ -80,7 +80,8 @@ trait Server extends Endpoints {
     val endpoints = List(
       createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
       createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists),
-      createServerEndpoint(createOrUpdateAdditionalDataEndpoint, PartitioningController.createOrUpdateAdditionalData)
+      createServerEndpoint(createOrUpdateAdditionalDataEndpoint, PartitioningController.createOrUpdateAdditionalData),
+      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )
     ZHttp4sServerInterpreter[Env](http4sServerOptions).from(endpoints).toRoutes
   }
