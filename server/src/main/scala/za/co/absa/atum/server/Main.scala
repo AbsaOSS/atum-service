@@ -49,7 +49,7 @@ object Main extends ZIOAppDefault with Server {
         TransactorProvider.layer,
         AwsSecretsProviderImpl.layer,
         zio.Scope.default,
-        // for observability
+        // for Prometheus
         prometheus.publisherLayer,
         prometheus.prometheusLayer,
         // enabling ZIO internal metrics and default JVM metrics

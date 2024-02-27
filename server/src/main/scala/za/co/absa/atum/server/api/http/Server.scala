@@ -66,14 +66,17 @@ trait Server extends Endpoints {
     }
   }
 
+  // 1. Define metrics of your interest
   private val prometheusMetrics = PrometheusMetrics[F]("atum")
     .addRequestsTotal()
     .addRequestsActive()
     .addRequestsDuration()
+//    .addCustom()
 
   private val http4sServerOptions: Http4sServerOptions[F] = Http4sServerOptions
     .customiseInterceptors[F]
     .decodeFailureHandler(decodeFailureHandler)
+    // 2. register metrics interceptor
     .metricsInterceptor(prometheusMetrics.metricsInterceptor())
     .options
 
@@ -108,7 +111,8 @@ trait Server extends Endpoints {
     ).toRoutes
   }
 
-  private val metricsRoutes = Http4sServerInterpreter[F]().toRoutes(prometheusMetrics.metricsEndpoint)
+  // 3. Expose metrics endpoint which will can be scraped by Prometheus
+  private val metricsRoutes = Http4sServerInterpreter[F]().toRoutes(prometheusMetrics.metricsEndpoint) // route at path /metrics
   private val allRoutes = createAllServerRoutes <+> createSwaggerRoutes <+> metricsRoutes <+> zioMetricsRoutes
 
   private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[Env, Throwable, Unit] =
