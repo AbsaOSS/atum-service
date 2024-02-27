@@ -103,7 +103,7 @@ class AtumContext private[agent] (
    * @param measurements   the measurements to be included in the checkpoint
    * @return the AtumContext after the checkpoint has been created
    */
-  def createCheckpointOnProvidedData(checkpointName: String, measurements: Set[Measurement]): AtumContext = {
+  def createCheckpointOnProvidedData(checkpointName: String, measurements: Map[AtumMeasure, MeasureResult]): AtumContext = {
     val dateTimeNow = ZonedDateTime.now()
 
     val checkpointDTO = CheckpointDTO(
@@ -113,7 +113,7 @@ class AtumContext private[agent] (
       partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
       processStartTime = dateTimeNow,
       processEndTime = Some(dateTimeNow),
-      measurements = MeasurementBuilder.buildMeasurementsDTO(measurements)
+      measurements = MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements)
     )
 
     agent.saveCheckpoint(checkpointDTO)

@@ -24,27 +24,20 @@ import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
  */
 private [agent] object MeasurementBuilder {
 
-  private[agent] def validateMeasureUniqueness(measurements: Set[Measurement]): Unit = {
-    val allMeasures = measurements.toSeq.map(_.measure)
+  private def validateMeasureAndResultTypeCompatibility(measure: AtumMeasure, result: MeasureResult): Unit = {
+    val requiredType = measure.resultValueType
+    val actualType = result.resultValueType
 
-    val originalMeasuresCnt = allMeasures.size
-    val uniqueMeasureColumnCombinationCnt = allMeasures.map(m =>
-      (m.measureName, m.measuredColumns)  // there can't be two same measures defined on the same column(s)
-    ).distinct.size
-
-    if (originalMeasuresCnt != uniqueMeasureColumnCombinationCnt)
+    if (actualType != requiredType)
       throw MeasurementException(
-        s"Measure and measuredColumn combinations must be unique, i.e. they cannot repeat! Got: $allMeasures"
+        s"Type of a given provided measurement result and type that a given measure supports are not compatible! " +
+          s"Got $actualType but should be $requiredType"
       )
   }
 
-  private[agent] def buildMeasurementsDTO(measurements: Set[Measurement]): Set[MeasurementDTO] = {
-    validateMeasureUniqueness(measurements)
+  def buildMeasurementDTO(measure: AtumMeasure, measureResult: MeasureResult): MeasurementDTO = {
+    validateMeasureAndResultTypeCompatibility(measure, measureResult)
 
-    measurements.map(m => buildMeasurementDTO(m.measure, m.result))
-  }
-
-  private[agent] def buildMeasurementDTO(measure: AtumMeasure, measureResult: MeasureResult): MeasurementDTO = {
     val measureDTO = MeasureDTO(measure.measureName, measure.measuredColumns)
 
     val measureResultDTO = MeasureResultDTO(
@@ -52,4 +45,12 @@ private [agent] object MeasurementBuilder {
     )
     MeasurementDTO(measureDTO, measureResultDTO)
   }
+
+  def buildAndValidateMeasurementsDTO(measurements: Map[AtumMeasure, MeasureResult]): Set[MeasurementDTO] = {
+    measurements.toSet[(AtumMeasure, MeasureResult)].map { case (measure: AtumMeasure, measureResult: MeasureResult) =>
+        validateMeasureAndResultTypeCompatibility(measure, measureResult)
+        buildMeasurementDTO(measure, measureResult)
+    }
+  }
+
 }

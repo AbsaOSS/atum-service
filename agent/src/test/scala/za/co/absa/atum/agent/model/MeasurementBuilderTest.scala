@@ -20,49 +20,11 @@ import org.scalatest.flatspec.AnyFlatSpec
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.agent.model.AtumMeasure._
-import za.co.absa.atum.agent.model.MeasurementBuilder.validateMeasureUniqueness
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
 class MeasurementBuilderTest extends AnyFlatSpec {
 
-  "validateMeasureUniqueness" should "accept unique measurements with unique measures" in {
-    val measurements = Set(
-      Measurement(RecordCount(), MeasureResult("1", ResultValueType.Long)),
-      Measurement(SumOfValuesOfColumn("col1"), MeasureResult(BigDecimal(1.2))),
-      Measurement(DistinctRecordCount(Seq("col2")), MeasureResult(3L))
-    )
-    validateMeasureUniqueness(measurements)
-  }
-
-  "validateMeasureUniqueness" should "accept duplicated measures but with different measured columns" in {
-    val measurements = Set(
-      Measurement(RecordCount(), MeasureResult("1", ResultValueType.Long)),
-      Measurement(SumOfValuesOfColumn("col1"), MeasureResult(BigDecimal(1.2))),
-      Measurement(SumOfValuesOfColumn("col2"), MeasureResult(BigDecimal(1.4))),
-      Measurement(DistinctRecordCount(Seq("col2")), MeasureResult(3L))
-    )
-    validateMeasureUniqueness(measurements)
-  }
-
-  "validateMeasureUniqueness" should "fail on duplicated measures with repeated measured columns" in {
-    val measurements = Set(
-      Measurement(RecordCount(), MeasureResult("1", ResultValueType.Long)),
-      Measurement(SumOfValuesOfColumn("col1"), MeasureResult(BigDecimal(1.2))),
-      Measurement(SumOfValuesOfColumn("col1"), MeasureResult(BigDecimal(1.4))),
-      Measurement(DistinctRecordCount(Seq("col2")), MeasureResult(3L))
-    )
-    assertThrows[MeasurementException](validateMeasureUniqueness(measurements))
-  }
-
-  "validateMeasureUniqueness" should "fail on duplicated measurements with different results" in {
-    val measurements = Set(
-      Measurement(RecordCount(), MeasureResult("1", ResultValueType.Long)),
-      Measurement(RecordCount(), MeasureResult("2", ResultValueType.Long))
-    )
-    assertThrows[MeasurementException](validateMeasureUniqueness(measurements))
-  }
-
-  "buildMeasurementsDTO" should
+  "buildMeasurementDTO" should
     "build MeasurementDTO for BigDecimal type of result value when Measure and MeasureResult provided" in {
 
     val measure = SumOfValuesOfColumn("col")
@@ -80,7 +42,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result == expectedMeasureResultDTO)
   }
 
-  "buildMeasurementsDTO" should
+  "buildMeasurementDTO" should
     "build MeasurementDTO for BigDecimal type of result value when Measurement provided" in {
 
     val measure = SumOfValuesOfColumn("col")
@@ -92,7 +54,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementsDTO" should
+  "buildMeasurementDTO" should
     "build MeasurementDTO (at least for now) for compatible result type but incompatible actual type of result value " +
       "when Measurement provided" in {
 
@@ -106,7 +68,7 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
-  "buildMeasurementsDTO" should
+  "buildMeasurementDTO" should
     "build MeasurementDTO for BigDecimal type of result value when measured by Agent" in {
 
     val measure = SumOfValuesOfColumn("col")
@@ -124,14 +86,13 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTO.result == expectedMeasureResultDTO)
   }
 
-
-  "buildMeasurementsDTO" should "build Seq[MeasurementDTO] for multiple measures, all unique" in {
-    val measurements = Set(
-      Measurement(DistinctRecordCount(Seq("col")), MeasureResult("1", ResultValueType.Long)),
-      Measurement(SumOfValuesOfColumn("col1"), MeasureResult(BigDecimal(1.2))),
-      Measurement(SumOfValuesOfColumn("col2"), MeasureResult(BigDecimal(1.3)))
+  "buildAndValidateMeasurementsDTO" should "build Seq[MeasurementDTO] for multiple measures, all unique" in {
+    val measurements: Map[AtumMeasure, MeasureResult] = Map(
+      DistinctRecordCount(Seq("col")) -> MeasureResult("1", ResultValueType.Long),
+      SumOfValuesOfColumn("col1")     -> MeasureResult(BigDecimal(1.2)),
+      SumOfValuesOfColumn("col2")     -> MeasureResult(BigDecimal(1.3))
     )
-    val measurementDTOs = MeasurementBuilder.buildMeasurementsDTO(measurements)
+    val measurementDTOs = MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements)
 
     val expectedMeasurementDTO = Set(
       MeasurementDTO(
@@ -148,12 +109,43 @@ class MeasurementBuilderTest extends AnyFlatSpec {
     assert(measurementDTOs == expectedMeasurementDTO)
   }
 
-  "buildMeasurementsDTO" should "throw exception for multiple measures, some of them repetitive" in {
-    val measurements = Set(
-      Measurement(DistinctRecordCount(Seq("col")), MeasureResult(1L)),
-      Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1.2))),
-      Measurement(SumOfValuesOfColumn("col"), MeasureResult(BigDecimal(1.3)))
+  "buildAndValidateMeasurementsDTO" should "throw exception for unsupported result value - Double instead of BigDecimal" in {
+    val measure = AbsSumOfValuesOfColumn("col")
+
+    assertThrows[MeasurementException](
+      MeasurementBuilder.buildAndValidateMeasurementsDTO(Map(measure -> MeasureResult(1.0)))
     )
-    assertThrows[MeasurementException](MeasurementBuilder.buildMeasurementsDTO(measurements))
+  }
+
+  "buildAndValidateMeasurementsDTO" should "throw exception for unsupported result value - Int instead of BigDecimal" in {
+    val measure = SumOfValuesOfColumn("col")
+
+    assertThrows[MeasurementException](
+      MeasurementBuilder.buildAndValidateMeasurementsDTO(Map(measure -> MeasureResult(1)))
+    )
+  }
+
+  "buildAndValidateMeasurementsDTO" should "throw exception for unsupported result value type in general (composite)" in {
+    val measure = SumOfHashesOfColumn("col")
+
+    assertThrows[MeasurementException](
+      MeasurementBuilder.buildAndValidateMeasurementsDTO(Map(measure -> MeasureResult(Map(1 -> "no-go"))))
+    )
+  }
+
+  "buildAndValidateMeasurementsDTO" should "throw exception for unsupported result value type for a given Measure" in {
+    val measure = DistinctRecordCount(Seq("col"))
+
+    assertThrows[MeasurementException](
+      MeasurementBuilder.buildAndValidateMeasurementsDTO(Map(measure -> MeasureResult("1")))
+    )
+  }
+
+  "buildAndValidateMeasurementsDTO" should "throw exception for incompatible String type of result value when Measurement provided" in {
+    val measure = SumOfValuesOfColumn("col")
+
+    assertThrows[MeasurementException](
+      MeasurementBuilder.buildAndValidateMeasurementsDTO(Map(measure -> MeasureResult("stringValue", ResultValueType.String)))
+    )
   }
 }

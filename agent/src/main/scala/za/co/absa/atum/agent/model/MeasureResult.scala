@@ -45,7 +45,8 @@ object MeasureResult {
    * These adjustments are needed to be performed - to avoid some floating point issues
    * (overflows, consistent representation of numbers - whether they are coming from Java or Scala world, and more).
    */
-  case class MeasureResultByAtum private (resultValue: String, resultValueType: ResultValueType.ResultValueType)
+  case class MeasureResultByAtum private
+    (resultValue: String, resultValueType: ResultValueType.ResultValueType)
     extends MeasureResult {override type T = String}
 
   /**
@@ -57,13 +58,14 @@ object MeasureResult {
     extends MeasureResult {override type T = ProvidedValueType}
 
   /**
-   * This method creates a measure result for a given result value.
+   * This method creates a measure result for a given result value. This is supposed to be used internally
+   * within Atum Agent basically only.
    *
    * @param resultValue A result value of the measurement.
    * @param resultType  A result type of the measurement.
    * @return A measure result.
    */
-  def apply(resultValue: String, resultType: ResultValueType.ResultValueType): MeasureResult = {
+  private[agent] def apply(resultValue: String, resultType: ResultValueType.ResultValueType): MeasureResult = {
     MeasureResultByAtum(resultValue, resultType)
   }
 
