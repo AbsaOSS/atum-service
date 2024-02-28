@@ -76,7 +76,7 @@ class UpdateExistingAdditionalData extends DBTestSuite{
         assert(queryResult.hasNext)
         val row = queryResult.next()
 
-        val adWasBackedUp = row.getBoolean("ad_backup_performed").get
+        val adWasBackedUp = row.getBoolean("records_updated").get
         assert(adWasBackedUp)
 
         assert(!queryResult.hasNext)
@@ -125,7 +125,7 @@ class UpdateExistingAdditionalData extends DBTestSuite{
         assert(queryResult.hasNext)
         val row = queryResult.next()
 
-        val adWasBackedUp = row.getBoolean("ad_backup_performed").get
+        val adWasBackedUp = row.getBoolean("records_updated").get
         assert(!adWasBackedUp)
 
         assert(!queryResult.hasNext)
