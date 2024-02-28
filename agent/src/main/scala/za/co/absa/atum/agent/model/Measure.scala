@@ -32,7 +32,7 @@ sealed trait Measure {
 }
 
 trait AtumMeasure extends Measure with MeasurementProcessor {
-  val resultValueType: ResultValueType.ResultValueType
+  val resultValueType: ResultValueType
 }
 
 object AtumMeasure {
@@ -55,7 +55,7 @@ object AtumMeasure {
       }
 
     override def measuredColumns: Seq[String] = Seq.empty
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
+    override val resultValueType: ResultValueType = ResultValueType.Long
   }
   object RecordCount {
     private[agent] val measureName: String = "count"
@@ -74,7 +74,7 @@ object AtumMeasure {
       }
 
     override def measuredColumns: Seq[String] = measuredCols
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
+    override val resultValueType: ResultValueType = ResultValueType.Long
   }
   object DistinctRecordCount {
     private[agent] val measureName: String = "distinctCount"
@@ -91,7 +91,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimal
   }
   object SumOfValuesOfColumn {
     private[agent] val measureName: String = "aggregatedTotal"
@@ -108,7 +108,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimal
   }
   object AbsSumOfValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTotal"
@@ -123,7 +123,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.String
+    override val resultValueType: ResultValueType = ResultValueType.String
   }
   object SumOfHashesOfColumn {
     private[agent] val measureName: String = "hashCrc32"

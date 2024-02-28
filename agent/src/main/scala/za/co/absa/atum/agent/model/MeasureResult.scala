@@ -29,7 +29,7 @@ trait MeasureResult {
 
   // An actual type of the result represented as Enumeration; it can vastly differ from T,
   // e.g. the result was stringified but we still need to keep the underlying 'true' type
-  val resultValueType: ResultValueType.ResultValueType
+  val resultValueType: ResultValueType
 }
 
 /**
@@ -46,7 +46,7 @@ object MeasureResult {
    * (overflows, consistent representation of numbers - whether they are coming from Java or Scala world, and more).
    */
   case class MeasureResultByAtum private
-    (resultValue: String, resultValueType: ResultValueType.ResultValueType)
+    (resultValue: String, resultValueType: ResultValueType)
     extends MeasureResult {override type T = String}
 
   /**
@@ -54,7 +54,7 @@ object MeasureResult {
    * to do any adjustments.
    */
   case class MeasureResultProvided[ProvidedValueType] private
-    (resultValue: ProvidedValueType, resultValueType: ResultValueType.ResultValueType)
+    (resultValue: ProvidedValueType, resultValueType: ResultValueType)
     extends MeasureResult {override type T = ProvidedValueType}
 
   /**
@@ -65,7 +65,7 @@ object MeasureResult {
    * @param resultType  A result type of the measurement.
    * @return A measure result.
    */
-  private[agent] def apply(resultValue: String, resultType: ResultValueType.ResultValueType): MeasureResult = {
+  private[agent] def apply(resultValue: String, resultType: ResultValueType): MeasureResult = {
     MeasureResultByAtum(resultValue, resultType)
   }
 

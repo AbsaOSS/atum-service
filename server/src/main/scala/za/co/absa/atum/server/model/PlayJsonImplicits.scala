@@ -38,8 +38,24 @@ object PlayJsonImplicits {
     }
   }
 
-  implicit val readsResultValueType: Reads[ResultValueType.Value] = Reads.enumNameReads(ResultValueType)
-  implicit val writesResultValueType: Writes[ResultValueType.Value] = Writes.enumNameWrites
+  implicit val resultValueTypeReads: Reads[ResultValueType] = new Reads[ResultValueType] {
+    override def reads(json: JsValue): JsResult[ResultValueType] = json match {
+      case JsString("String") => JsSuccess(ResultValueType.String)
+      case JsString("Long") => JsSuccess(ResultValueType.Long)
+      case JsString("BigDecimal") => JsSuccess(ResultValueType.BigDecimal)
+      case JsString("Double") => JsSuccess(ResultValueType.Double)
+      case _ => JsError("Invalid ResultValueType")
+    }
+  }
+
+  implicit val resultValueTypeWrites: Writes[ResultValueType] = new Writes[ResultValueType] {
+    def writes(resultValueType: ResultValueType): JsValue = resultValueType match {
+      case ResultValueType.String       => Json.toJson("String")
+      case ResultValueType.Long         => Json.toJson("Long")
+      case ResultValueType.BigDecimal   => Json.toJson("BigDecimal")
+      case ResultValueType.Double       => Json.toJson("Double")
+    }
+  }
 
   implicit val readsTypedValue: Reads[MeasureResultDTO.TypedValue] = Json.reads[MeasureResultDTO.TypedValue]
   implicit val writesTypedValue: Writes[MeasureResultDTO.TypedValue] = Json.writes[MeasureResultDTO.TypedValue]

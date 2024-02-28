@@ -16,10 +16,12 @@
 
 package za.co.absa.atum.model.utils
 
+import org.json4s.JsonAST.JString
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{write, writePretty}
-import org.json4s.{Formats, NoTypeHints, ext}
+import org.json4s.{CustomSerializer, Formats, JNull, NoTypeHints, ext}
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
+import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType._
 
 import java.time.format.DateTimeFormatter
 
@@ -27,9 +29,9 @@ object SerializationUtils {
 
   implicit private val formatsJson: Formats =
     Serialization.formats(NoTypeHints).withBigDecimal +
-      new ext.EnumNameSerializer(ResultValueType) +
       ext.UUIDSerializer +
-      ZonedDateTimeSerializer
+      ZonedDateTimeSerializer +
+      ResultValueTypeSerializer
 
   // TODO "yyyy-MM-dd'T'hh:mm:ss.SSS'Z'" OR TODO "yyyy-MM-dd HH:mm:ss.SSSSSSX"
   val timestampFormat: DateTimeFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
@@ -60,5 +62,19 @@ object SerializationUtils {
   def fromJson[T <: AnyRef](jsonStr: String)(implicit m: Manifest[T]): T = {
     Serialization.read[T](jsonStr)
   }
+
+  private case object ResultValueTypeSerializer extends CustomSerializer[ResultValueType](format => (
+    {
+      case JString(resultValType) => resultValType match {
+        case "String" => String
+        case "Long" => Long
+        case "BigDecimal" => BigDecimal
+        case "Double" => Double
+      }
+      case JNull => null
+    },
+    {
+      case resultValType: ResultValueType => JString(resultValType.getClass.getSimpleName.replace("$",""))
+    }))
 
 }
