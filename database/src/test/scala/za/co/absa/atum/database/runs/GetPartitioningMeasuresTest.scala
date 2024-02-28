@@ -49,16 +49,33 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
     table("runs.measure_definitions").insert(
       add("fk_partitioning", fkPartitioning)
         .add("created_by", "Thomas")
-        .add("measure_name", s"measure${fkPartitioning}")
+        .add("measure_name", "measure1")
         .add("measured_columns", CustomDBType("""{"col1"}""", "TEXT[]"))
+    )
+
+    table("runs.measure_definitions").insert(
+      add("fk_partitioning", fkPartitioning)
+        .add("created_by", "Thomas")
+        .add("measure_name", "measure2")
+        .add("measured_columns", CustomDBType("""{"col2"}""", "TEXT[]"))
     )
 
     function(fncGetPartitioningMeasures)
       .setParam("i_partitioning", partitioning)
       .execute { queryResult =>
-        val results = queryResult.distinct.next()
+        val results = queryResult.next()
         assert(results.getInt("status").contains(11))
         assert(results.getString("status_text").contains("OK"))
+        assert(results.getString("measure_name").contains("measure1"))
+        assert(results.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col1")))
+
+        val results2 = queryResult.next()
+        assert(results2.getInt("status").contains(11))
+        assert(results2.getString("status_text").contains("OK"))
+        assert(results2.getString("measure_name").contains("measure2"))
+        assert(results2.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col2")))
+
+        assert(!queryResult.hasNext)
       }
 
     table("runs.measure_definitions").where(add("fk_partitioning", fkPartitioning)) { partitioningMeasuresResult =>
@@ -68,7 +85,7 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
     }
   }
 
-  test("Get partitioning measures should return error on non existing partitioning") {
+  test("Get partitioning measures should return error status code on non existing partitioning") {
     val partitioning = JsonBString(
       """
         |{
@@ -84,13 +101,13 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
     function(fncGetPartitioningMeasures)
       .setParam("i_partitioning", partitioning)
       .execute { queryResult =>
-        val results = queryResult.distinct.next()
+        val results = queryResult.next()
         assert(results.getInt("status").contains(41))
         assert(results.getString("status_text").contains("The partitioning does not exist."))
       }
   }
 
-  test("Get partitioning measures should return exception for partitioning with no measures") {
+  test("Get partitioning measures should return no data status code on partitioning without measures") {
     val partitioning = JsonBString(
       """
         |{
@@ -114,13 +131,11 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
         .add("created_by", "Thomas")
     )
 
-    val fkPartitioning: Long = table("runs.partitionings").fieldValue("partitioning", partitioning, "id_partitioning").get.get
-
     function(fncGetPartitioningMeasures)
       .setParam("i_partitioning", partitioning)
       .execute { queryResult =>
-        val results = queryResult.distinct.next()
-        assert(results.getInt("status").contains(10))
+        val results = queryResult.next()
+        assert(results.getInt("status").contains(16))
         assert(results.getString("status_text").contains("No measures found for the given partitioning."))
       }
   }

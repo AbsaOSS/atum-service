@@ -16,64 +16,62 @@
 
  CREATE OR REPLACE FUNCTION runs.get_partitioning_measures(
      IN i_partitioning          JSONB,
-     OUT measure_name           TEXT,
-     OUT measured_columns       TEXT[],
      OUT status                 INTEGER,
-     OUT status_text            TEXT
+     OUT status_text            TEXT,
+     OUT measure_name           TEXT,
+     OUT measured_columns       TEXT[]
  ) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_measures(1)
---      Iterates over a JSONB object and returns each key-value pair as a record
+--      Returns measures for the given partitioning
 --
 -- Parameters:
---      i_partitioning      - JSONB object where each key is a measure name and its corresponding value is an array of measured columns
+--      i_partitioning      - partitioning we are asking the measures for
 --
 -- Returns:
---      measure_name        - Name of the measure
---      measured_columns    - Array of columns associated with the measure
 --      status              - Status code
 --      status_text         - Status message
+--      measure_name        - Name of the measure
+--      measured_columns    - Array of columns associated with the measure
 
 -- Status codes:
---      10 - Record not found for the given partitioning
 --      11 - OK
+--      16 - Record not found for the given partitioning
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
 
 DECLARE
     _fk_partitioning                    BIGINT;
-    _measure_name                       TEXT;
-    _measured_columns                   TEXT[];
 BEGIN
     _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
     IF _fk_partitioning IS NULL THEN
-        measure_name := NULL;
-        measured_columns := NULL;
         status := 41;
         status_text := 'The partitioning does not exist.';
+        RETURN NEXT;
         RETURN;
     END IF;
 
-    SELECT md.measure_name, md.measured_columns
-    INTO _measure_name, _measured_columns
+    status := 11;
+    status_text := 'OK';
+
+    RETURN QUERY
+    SELECT status, status_text, md.measure_name, md.measured_columns
     FROM runs.measure_definitions AS md
     WHERE md.fk_partitioning = _fk_partitioning;
 
     IF NOT FOUND THEN
-        measure_name := NULL;
-        measured_columns := NULL;
-        status := 10;
+        status := 16;
         status_text := 'No measures found for the given partitioning.';
-    ELSE
         RETURN NEXT;
+        RETURN;
     END IF;
-    RETURN NEXT;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 ALTER FUNCTION runs.get_partitioning_measures(JSONB) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_measures(JSONB) TO atum_user;
