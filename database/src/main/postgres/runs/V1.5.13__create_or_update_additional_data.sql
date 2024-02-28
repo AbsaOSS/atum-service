@@ -48,10 +48,10 @@ $$
 -------------------------------------------------------------------------------
 DECLARE
     _fk_partitioning        BIGINT;
-    _ad_backup_performed    BOOLEAN;
+    _records_updated        BOOLEAN;
 BEGIN
 
-    _fk_partitioning := runs._get_id_partitioning(i_partitioning, true);
+    _fk_partitioning := runs._get_id_partitioning(i_partitioning, i_blocking => true);
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
@@ -62,7 +62,7 @@ BEGIN
     -- 1. (backup) get records that already exist but values differ,
     --             then insert them into AD history table and
     --             then update the actual AD table with new values
-    _ad_backup_performed := runs._update_existing_additional_data(_fk_partitioning, i_additional_data, i_by_user);
+    _records_updated := runs._update_existing_additional_data(_fk_partitioning, i_additional_data, i_by_user);
 
     -- 2. (insert) get records that do not not exist yet and insert it into ad table
     --    (their original rows were previously saved in step 1)
@@ -71,7 +71,7 @@ BEGIN
     FROM each(i_additional_data) AS ad_input
     ON CONFLICT (fk_partitioning, ad_name) DO NOTHING;
 
-    IF _ad_backup_performed THEN
+    IF _records_updated THEN
         status := 12;
         status_text := 'Additional data have been upserted';
     ELSE

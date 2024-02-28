@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION runs._update_existing_additional_data(
     IN  i_fk_partitioning     BIGINT,
     IN  i_additional_data     HSTORE,
     IN  i_by_user             TEXT,
-    OUT ad_backup_performed   BOOLEAN
+    OUT records_updated       BOOLEAN
 ) RETURNS BOOLEAN AS
 $$
 -------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ $$
 --      to the additional data history table.
 --
 --      If additional data of a given name doesn't exist for such partitioning yet, it will be skipped - the
---      responsibility of this function is to only back up existing data.
+--      responsibility of this function is to only back up existing data that it changes.
 --
 -- Parameters:
 --      i_fk_partitioning   - partitioning FK that refers to the given additional data that will be archived
@@ -38,7 +38,7 @@ $$
 --      i_by_user           - user behind the change (who requested to 'archive' the given AD records)
 --
 -- Returns:
---      ad_backup_performed - TRUE if the backup was performed, FALSE otherwise
+--      records_updated     - TRUE if the update was performed, FALSE otherwise
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -72,9 +72,9 @@ BEGIN
           AND ad_curr.ad_name = ad_input.ad_key
           AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value;
 
-        ad_backup_performed := TRUE;
+        records_updated := TRUE;
     ELSE
-        ad_backup_performed := FALSE;
+        records_updated := FALSE;
     END IF;
 
     RETURN;

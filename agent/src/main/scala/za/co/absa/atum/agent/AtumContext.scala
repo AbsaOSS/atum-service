@@ -84,9 +84,9 @@ class AtumContext private[agent] (
     val checkpointDTO = CheckpointDTO(
       id = UUID.randomUUID(),
       name = checkpointName,
-      author = this.agent.currentUser,
+      author = agent.currentUser,
       measuredByAtumAgent = true,
-      partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
+      partitioning = AtumPartitions.toSeqPartitionDTO(atumPartitions),
       processStartTime = startTime,
       processEndTime = Some(endTime),
       measurements = measurements.map(MeasurementBuilder.buildMeasurementDTO).toSeq
@@ -109,8 +109,8 @@ class AtumContext private[agent] (
     val checkpointDTO = CheckpointDTO(
       id = UUID.randomUUID(),
       name = checkpointName,
-      author = this.agent.currentUser,
-      partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
+      author = agent.currentUser,
+      partitioning = AtumPartitions.toSeqPartitionDTO(atumPartitions),
       processStartTime = dateTimeNow,
       processEndTime = Some(dateTimeNow),
       measurements = measurements.map(MeasurementBuilder.buildMeasurementDTO)
@@ -127,9 +127,9 @@ class AtumContext private[agent] (
    */
   def saveAdditionalData(): AtumContext = {
     val additionalData = AdditionalDataSubmitDTO(
-      AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
-      this.additionalData,
-      this.agent.currentUser
+      AtumPartitions.toSeqPartitionDTO(atumPartitions),
+      additionalData,
+      agent.currentUser
     )
     agent.saveAdditionalData(additionalData)
     this
@@ -152,7 +152,7 @@ class AtumContext private[agent] (
    * @return the current additional data
    */
   def currentAdditionalData: AdditionalDataDTO = {
-    this.additionalData
+    additionalData
   }
 
   /**
@@ -186,10 +186,10 @@ class AtumContext private[agent] (
   }
 
   private[agent] def copy(
-    atumPartitions: AtumPartitions = this.atumPartitions,
-    agent: AtumAgent = this.agent,
-    measures: Set[AtumMeasure] = this.measures,
-    additionalData: AdditionalDataDTO = this.additionalData
+    atumPartitions: AtumPartitions = atumPartitions,
+    agent: AtumAgent = agent,
+    measures: Set[AtumMeasure] = measures,
+    additionalData: AdditionalDataDTO = additionalData
   ): AtumContext = {
     new AtumContext(atumPartitions, agent, measures, additionalData)
   }

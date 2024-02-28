@@ -13,18 +13,8 @@
  * limitations under the License.
  */
 
-CREATE TABLE runs.additional_data
-(
-    id_additional_data      BIGINT NOT NULL DEFAULT global_id(),
-    fk_partitioning         BIGINT NOT NULL,
-    ad_name                 TEXT NOT NULL,
-    ad_value                TEXT,
-    created_by              TEXT NOT NULL,
-    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT additional_data_pk PRIMARY KEY (id_additional_data)
-);
+ALTER TABLE runs.additional_data DROP COLUMN updated_by;
+ALTER TABLE runs.additional_data DROP COLUMN updated_at;
 
-ALTER TABLE runs.additional_data
-    ADD CONSTRAINT flows_unq UNIQUE (fk_partitioning, ad_name);
-
-ALTER TABLE runs.additional_data OWNER to atum_owner;
+ALTER TABLE runs.additional_data DROP CONSTRAINT flows_unq;
+ALTER TABLE runs.additional_data ADD CONSTRAINT ad_unq UNIQUE (fk_partitioning, ad_name);

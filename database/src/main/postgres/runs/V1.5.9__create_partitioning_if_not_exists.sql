@@ -80,7 +80,7 @@ BEGIN
     IF i_parent_partitioning IS NOT NULL THEN
 
         SELECT ATPF.status
-        FROM flows._add_to_parent_flows(_fk_parent_partitioning, id_partitioning, i_by_user) ATPF
+        FROM flows._add_to_parent_flows(_fk_parent_partitioning, id_partitioning, i_by_user) AS ATPF
         INTO _status;
 
         IF _create_partitioning THEN
