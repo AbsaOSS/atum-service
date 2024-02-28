@@ -51,7 +51,7 @@ DECLARE
     _records_updated        BOOLEAN;
 BEGIN
 
-    _fk_partitioning := runs._get_id_partitioning(i_partitioning, i_blocking => true);
+    _fk_partitioning := runs._get_id_partitioning(i_partitioning, true);
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
