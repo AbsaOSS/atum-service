@@ -16,23 +16,30 @@
 
 CREATE OR REPLACE FUNCTION runs.get_partitioning_additional_data(
     IN  i_partitioning          JSONB,
-    OUT ad_name                 TEXT,
-    OUT ad_value                TEXT,
     OUT status                  INTEGER,
-    OUT status_text             TEXT
+    OUT status_text             TEXT,
+    OUT ad_name                 TEXT,
+    OUT ad_value                TEXT
 ) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_additional_data(2)
---      Iterates over a JSONB object and returns each key-value pair as a record
+--      Returns additional data for the given partitioning
 --
 -- Parameters:
---      i_partitioning      - JSONB object where each key is an additional data name and its corresponding value is the additional data value
+--      i_partitioning      - partitioning for requested additional data
 --
 -- Returns:
+--      status              - Status code
+--      status_text         - Status message
 --      ad_name             - Name of the additional data
 --      ad_value            - Value of the additional data
+--
+-- Status codes:
+--      11 - OK
+--      16 - Record not found for the given partitioning
+--      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
 
@@ -42,10 +49,9 @@ BEGIN
     _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
     IF _fk_partitioning IS NULL THEN
-        ad_name := 'Partitioning not found';
-        ad_value := '';
         status := 41;
         status_text := 'The partitioning does not exist.';
+        RETURN NEXT;
         RETURN;
     END IF;
 
@@ -53,11 +59,19 @@ BEGIN
     status_text = 'OK';
 
     RETURN QUERY
-        SELECT mdh.ad_name, mdh.ad_value, status, status_text
-        FROM runs.measure_definitions_history AS mdh
-        WHERE mdh.fk_partitioning = _fk_partitioning;
+    SELECT status, status_text, ad.ad_name, ad.ad_value
+    FROM runs.additional_data AS ad
+    WHERE ad.fk_partitioning = _fk_partitioning;
+
+    IF NOT FOUND THEN
+        status := 16;
+        status_text := 'No measures found for the given partitioning.';
+        RETURN NEXT;
+        RETURN;
+    END IF;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.get_partitioning_additional_data(JSONB, BOOLEAN) OWNER TO atum_owner;
+ALTER FUNCTION runs.get_partitioning_additional_data(JSONB) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_additional_data(JSONB) TO atum_user;
