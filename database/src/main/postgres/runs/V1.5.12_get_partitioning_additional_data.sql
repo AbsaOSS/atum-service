@@ -65,7 +65,7 @@ BEGIN
 
     IF NOT FOUND THEN
         status := 16;
-        status_text := 'No measures found for the given partitioning.';
+        status_text := 'No additional data found for the given partitioning.';
         RETURN NEXT;
         RETURN;
     END IF;
