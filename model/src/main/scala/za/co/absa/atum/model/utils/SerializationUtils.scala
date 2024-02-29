@@ -66,15 +66,20 @@ object SerializationUtils {
   private case object ResultValueTypeSerializer extends CustomSerializer[ResultValueType](format => (
     {
       case JString(resultValType) => resultValType match {
-        case "String" => String
-        case "Long" => Long
-        case "BigDecimal" => BigDecimal
-        case "Double" => Double
+        case "String"       => String
+        case "Long"         => Long
+        case "BigDecimal"   => BigDecimal
+        case "Double"       => Double
       }
       case JNull => null
     },
     {
-      case resultValType: ResultValueType => JString(resultValType.getClass.getSimpleName.replace("$",""))
+      case resultValType: ResultValueType => resultValType match {
+        case String       => JString("String")
+        case Long         => JString("Long")
+        case BigDecimal   => JString("BigDecimal")
+        case Double       => JString("Double")
+      }
     }))
 
 }
