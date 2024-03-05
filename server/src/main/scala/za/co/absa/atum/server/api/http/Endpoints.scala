@@ -20,7 +20,7 @@ import sttp.model.StatusCode
 import sttp.tapir.PublicEndpoint
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
-import sttp.tapir.ztapir.statusCode
+import sttp.tapir.ztapir.{endpoint, statusCode, stringBody}
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.Constants.{CreateCheckpoint, CreatePartitioning}
 import za.co.absa.atum.server.model.ErrorResponse
@@ -45,6 +45,10 @@ trait Endpoints extends BaseEndpoints {
       .in(jsonBody[PartitioningSubmitDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[AtumContextDTO])
+  }
+
+  protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
+    endpoint.get.in("zio-metrics").out(stringBody)
   }
 
 }

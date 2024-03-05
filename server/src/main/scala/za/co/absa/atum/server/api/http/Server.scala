@@ -43,76 +43,32 @@ import zio.metrics.connectors.prometheus.PrometheusPublisher
 
 import javax.net.ssl.SSLContext
 
-trait Server extends Endpoints {
-
-  type Env = PartitioningController with CheckpointController with PrometheusPublisher
-  type F[A] = RIO[Env, A]
-
-  private val decodeFailureHandler: DecodeFailureHandler[F] = new DecodeFailureHandler[F] {
-    override def apply(ctx: DecodeFailureContext)(implicit monad: MonadError[F]): F[Option[ValuedEndpointOutput[_]]] = {
-      monad.unit(
-        respond(ctx).map { case (sc, hs) =>
-          val message = ctx.failure match {
-            case DecodeResult.Missing => s"Decoding error - missing value."
-            case DecodeResult.Multiple(vs) => s"Decoding error - $vs."
-            case DecodeResult.Error(original, _) => s"Decoding error for an input value '$original'."
-            case DecodeResult.Mismatch(_, actual) => s"Unexpected value '$actual'."
-            case DecodeResult.InvalidValue(errors) => s"Validation error - $errors."
-          }
-          val errorResponse = BadRequestResponse(message)
-          ValuedEndpointOutput(statusCode.and(headers).and(jsonBody[BadRequestResponse]), (sc, hs, errorResponse))
-        }
-      )
-    }
-  }
-
-  // 1. Define metrics of your interest
-  private val prometheusMetrics = PrometheusMetrics[F]("atum")
-    .addRequestsTotal()
-    .addRequestsActive()
-    .addRequestsDuration()
-//    .addCustom()
-
-  private val http4sServerOptions: Http4sServerOptions[F] = Http4sServerOptions
-    .customiseInterceptors[F]
-    .decodeFailureHandler(decodeFailureHandler)
-    // 2. register metrics interceptor
-    .metricsInterceptor(prometheusMetrics.metricsInterceptor())
-    .options
-
-  private def createServerEndpoint[I, E, O](
-    endpoint: PublicEndpoint[I, E, O, Any],
-    logic: I => ZIO[Env, E, O]
-  ): ZServerEndpoint[Env, Any] = {
-    endpoint.zServerLogic(logic).widen[Env]
-  }
+trait Server extends ServerUtils with Endpoints with HttpEnv {
 
   private def createAllServerRoutes: HttpRoutes[F] = {
     val endpoints = List(
       createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
       createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists)
     )
-    ZHttp4sServerInterpreter[Env](http4sServerOptions).from(endpoints).toRoutes
+    ZHttp4sServerInterpreter[Env](http4sServerOptions(Metrics.prometheusMetrics.metricsInterceptor()).from(endpoints).toRoutes
   }
 
   private def createSwaggerRoutes: HttpRoutes[F] = {
     val endpoints = List(createCheckpointEndpoint, createPartitioningEndpoint)
-    ZHttp4sServerInterpreter[Env](http4sServerOptions)
+    ZHttp4sServerInterpreter[Env](http4sServerOptions())
       .from(SwaggerInterpreter().fromEndpoints[F](endpoints, SwaggerApiName, SwaggerApiVersion))
       .toRoutes
   }
 
-  private val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] =
-    endpoint.get.in("zio-metrics").out(stringBody)
 
   private def zioMetricsRoutes: HttpRoutes[F] = {
-    ZHttp4sServerInterpreter[Env](http4sServerOptions).from(
+    ZHttp4sServerInterpreter[Env].from(
       List(createServerEndpoint(zioMetricsEndpoint, (_: Unit) => ZIO.serviceWithZIO[PrometheusPublisher](_.get)))
     ).toRoutes
   }
 
   // 3. Expose metrics endpoint which will can be scraped by Prometheus
-  private val metricsRoutes = Http4sServerInterpreter[F]().toRoutes(prometheusMetrics.metricsEndpoint) // route at path /metrics
+  private val metricsRoutes = Http4sServerInterpreter[F]().toRoutes(Metrics.prometheusMetrics.metricsEndpoint) // route at path /metrics
   private val allRoutes = createAllServerRoutes <+> createSwaggerRoutes <+> metricsRoutes <+> zioMetricsRoutes
 
   private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[Env, Throwable, Unit] =
