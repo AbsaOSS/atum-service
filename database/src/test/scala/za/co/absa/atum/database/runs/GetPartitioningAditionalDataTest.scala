@@ -58,14 +58,37 @@ class GetPartitioningAditionalDataTest extends DBTestSuite{
         .add("created_by", "Joseph")
     )
 
-    val fkPartitioning: Long = table("runs.partitionings").fieldValue("partitioning", partitioning1, "id_partitioning").get.get
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning2)
+        .add("created_by", "Daniel")
+    )
+
+
+    val fkPartitioning1: Long = table("runs.partitionings").fieldValue("partitioning", partitioning1, "id_partitioning").get.get
+    val fkPartitioning2: Long = table("runs.partitionings").fieldValue("partitioning", partitioning2, "id_partitioning").get.get
 
     table("runs.additional_data").insert(
-      add("fk_partitioning", fkPartitioning)
+      add("fk_partitioning", fkPartitioning1)
         .add("created_by", "Joseph")
         .add("ad_name", "ad_1")
         .add("ad_value", "This is the additional data for Joseph")
         .add("updated_by", "Joseph")
+    )
+
+    table("runs.additional_data").insert(
+      add("fk_partitioning", fkPartitioning1)
+        .add("created_by", "Joseph")
+        .add("ad_name", "ad_2")
+        .add("ad_value", "This is the additional data for Joseph")
+        .add("updated_by", "Joseph")
+    )
+
+    table("runs.additional_data").insert(
+      add("fk_partitioning", fkPartitioning2)
+        .add("created_by", "Daniel")
+        .add("ad_name", "ad_3")
+        .add("ad_value", "This is the additional data for Daniel")
+        .add("updated_by", "Daniel")
     )
 
     function(fncGetPartitioningAdditionalData)
@@ -76,14 +99,22 @@ class GetPartitioningAditionalDataTest extends DBTestSuite{
         assert(results.getString("status_text").contains("OK"))
         assert(results.getString("ad_name").contains("ad_1"))
         assert(results.getString("ad_value").contains("This is the additional data for Joseph"))
+
+        val results2 = queryResult.next()
+        assert(results2.getInt("status").contains(11))
+        assert(results2.getString("status_text").contains("OK"))
+        assert(results2.getString("ad_name").contains("ad_2"))
+        assert(results2.getString("ad_value").contains("This is the additional data for Joseph"))
+
         assert(!queryResult.hasNext)
       }
 
-    table("runs.additional_data").where(add("fk_partitioning", fkPartitioning)) { additionalDataResult =>
+    table("runs.additional_data").where(add("fk_partitioning", fkPartitioning1)) { additionalDataResult =>
       assert(additionalDataResult.hasNext)
       val row = additionalDataResult.next()
       assert(row.getString("ad_name").contains("ad_1"))
       assert(row.getString("ad_value").contains("This is the additional data for Joseph"))
+      assert(row.getString("created_by").contains("Joseph"))
     }
 
   }
