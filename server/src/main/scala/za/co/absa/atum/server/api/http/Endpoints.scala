@@ -22,7 +22,7 @@ import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir.{endpoint, statusCode, stringBody}
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.Constants.{CreateCheckpoint, CreatePartitioning}
+import za.co.absa.atum.server.Constants.{CreateCheckpoint, CreatePartitioning, ZioMetrics}
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.PlayJsonImplicits._
 
@@ -48,7 +48,7 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
-    endpoint.get.in("zio-metrics").out(stringBody)
+    endpoint.get.in(ZioMetrics).out(stringBody)
   }
 
 }

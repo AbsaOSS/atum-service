@@ -29,6 +29,7 @@ import zio.config.typesafe.TypesafeConfigProvider
 import zio.logging.backend.SLF4J
 import zio.metrics.connectors.{MetricsConfig, prometheus}
 import zio.metrics.jvm.DefaultJvmMetrics
+
 import java.time.Duration
 
 object Main extends ZIOAppDefault with Server {
@@ -52,15 +53,13 @@ object Main extends ZIOAppDefault with Server {
           AwsSecretsProviderImpl.layer,
           zio.Scope.default,
           // for Prometheus
-          if (jvmMonitoringConfig.enabled) prometheus.publisherLayer else ZLayer.succeed(),
-          if (jvmMonitoringConfig.enabled) prometheus.prometheusLayer else prometheus.prometheusLayer.unit,
-          // enabling ZIO internal metrics and default JVM metrics
-          if (jvmMonitoringConfig.enabled) Runtime.enableRuntimeMetrics else Runtime.enableRuntimeMetrics.unit,
-          DefaultJvmMetrics.live.unit,
-          // metrics config
-          if (jvmMonitoringConfig.enabled)
-            ZLayer.succeed(MetricsConfig(Duration.ofSeconds(jvmMonitoringConfig.intervalInSeconds)))
-          else ZLayer.empty
+          prometheus.publisherLayer,
+          prometheus.prometheusLayer,
+          // enabling conditionally collection of ZIO runtime metrics and default JVM metrics
+          if (jvmMonitoringConfig.enabled) {
+            ZLayer.succeed(MetricsConfig(Duration.ofSeconds(jvmMonitoringConfig.intervalInSeconds))) ++
+            Runtime.enableRuntimeMetrics.unit ++ DefaultJvmMetrics.live.unit
+          } else ZLayer.succeed(MetricsConfig(Duration.ofSeconds(Long.MaxValue)))
         )
     }
 
