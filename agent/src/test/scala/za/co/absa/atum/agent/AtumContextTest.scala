@@ -25,7 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
-import za.co.absa.atum.agent.model.MeasurementBuilder
+import za.co.absa.atum.agent.model.{MeasurementBuilder, UnknownMeasure}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
@@ -115,7 +115,8 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
     val measurements = Seq(
       MeasurementProvided(RecordCount("col"), 1L),
-      MeasurementProvided(SumOfValuesOfColumn("col"), BigDecimal(1))
+      MeasurementProvided(SumOfValuesOfColumn("col"), BigDecimal(1)),
+      MeasurementProvided(UnknownMeasure("customMeasureName", Seq("col")), BigDecimal(1))
     )
 
     atumContext.createCheckpointOnProvidedData(checkpointName = "name", measurements = measurements)

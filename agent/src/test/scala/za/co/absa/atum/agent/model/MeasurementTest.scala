@@ -59,6 +59,13 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
   }
 
+  "MeasurementProvided" should "be able to be converted to MeasurementProvided object when the result is String" in {
+    val measure = SumOfHashesOfColumn("col")
+    val actualMeasurement = MeasurementProvided(measure, "abc")
+
+    assert(actualMeasurement.resultValue == "abc")
+    assert(actualMeasurement.resultType == ResultValueType.String)
+  }
 
   "apply" should "create MeasurementProvided for custom measure with String result value type" in {
     val measureName = "myCustomMeasure"
