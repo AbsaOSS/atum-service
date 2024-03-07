@@ -24,17 +24,16 @@ import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, Partitio
 import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, PartitioningServiceImpl}
 import za.co.absa.atum.server.aws.AwsSecretsProviderImpl
 import za.co.absa.atum.server.config.JvmMonitoringConfig
-import za.co.absa.atum.server.monitoring.JvmMonitoring
 import zio._
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.logging.backend.SLF4J
 import zio.metrics.connectors.{MetricsConfig, prometheus}
 import zio.metrics.jvm.DefaultJvmMetrics
+import java.time.Duration
 
 object Main extends ZIOAppDefault with Server {
 
   private val configProvider: ConfigProvider = TypesafeConfigProvider.fromResourcePath()
-  private val metricsConfigLayer = ZLayer.succeed(MetricsConfig(5.seconds))
 
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
     ZIO.config[JvmMonitoringConfig](JvmMonitoringConfig.config).flatMap { jvmMonitoringConfig =>
@@ -52,49 +51,20 @@ object Main extends ZIOAppDefault with Server {
           TransactorProvider.layer,
           AwsSecretsProviderImpl.layer,
           zio.Scope.default,
-          //        JvmMonitoring.layer,
           // for Prometheus
-          prometheus.publisherLayer,
-          prometheus.prometheusLayer,
+          if (jvmMonitoringConfig.enabled) prometheus.publisherLayer else ZLayer.succeed(),
+          if (jvmMonitoringConfig.enabled) prometheus.prometheusLayer else prometheus.prometheusLayer.unit,
           // enabling ZIO internal metrics and default JVM metrics
-          Runtime.enableRuntimeMetrics,
+          if (jvmMonitoringConfig.enabled) Runtime.enableRuntimeMetrics else Runtime.enableRuntimeMetrics.unit,
           DefaultJvmMetrics.live.unit,
           // metrics config
-          metricsConfigLayer
+          if (jvmMonitoringConfig.enabled)
+            ZLayer.succeed(MetricsConfig(Duration.ofSeconds(jvmMonitoringConfig.intervalInSeconds)))
+          else ZLayer.empty
         )
     }
 
   }
-
-//  override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
-//    ZIO.config[JvmMonitoringConfig](JvmMonitoringConfig.config).flatMap { jvmMonitoringConfig =>
-//      server
-//        .provide(
-//          PartitioningControllerImpl.layer,
-//          CheckpointControllerImpl.layer,
-//          PartitioningServiceImpl.layer,
-//          CheckpointServiceImpl.layer,
-//          PartitioningRepositoryImpl.layer,
-//          CheckpointRepositoryImpl.layer,
-//          CreatePartitioningIfNotExists.layer,
-//          WriteCheckpoint.layer,
-//          PostgresDatabaseProvider.layer,
-//          TransactorProvider.layer,
-//          AwsSecretsProviderImpl.layer,
-//          zio.Scope.default,
-//          //        JvmMonitoring.layer,
-//          // for Prometheus
-//          if (jvmMonitoringConfig.enabled) prometheus.publisherLayer else ZLayer.empty,
-//          if (jvmMonitoringConfig.enabled) prometheus.prometheusLayer else ZLayer.empty,
-//          // enabling ZIO internal metrics and default JVM metrics
-//          if (jvmMonitoringConfig.enabled) Runtime.enableRuntimeMetrics else ZLayer.empty,
-//          if (jvmMonitoringConfig.enabled) DefaultJvmMetrics.live.unit else ZLayer.empty,
-//          // metrics config
-//          if (jvmMonitoringConfig.enabled) metricsConfigLayer else ZLayer.empty
-//        )
-//    }
-//
-//  }
 
   override val bootstrap: ZLayer[Any, Config.Error, Unit] =
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j >>> Runtime.setConfigProvider(configProvider)

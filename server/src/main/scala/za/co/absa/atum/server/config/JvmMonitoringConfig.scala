@@ -9,5 +9,5 @@ case class JvmMonitoringConfig(
                               )
 
 object JvmMonitoringConfig {
-  val config: Config[JvmMonitoringConfig] = deriveConfig[JvmMonitoringConfig].nested("monitoring.jvm")
+  val config: Config[JvmMonitoringConfig] = deriveConfig[JvmMonitoringConfig].nested("monitoring","jvm")
 }
