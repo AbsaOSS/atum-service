@@ -40,7 +40,7 @@ trait Routes extends Endpoints with ServerOptions {
     val endpoints = List(
       createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
       createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists),
-      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
+      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit),
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
   }
@@ -75,7 +75,7 @@ trait Routes extends Endpoints with ServerOptions {
   ): HttpRoutes[HttpEnv.F] = {
     createAllServerRoutes(httpMonitoringConfig) <+>
       createSwaggerRoutes <+>
-      http4sMetricsRoutes <+>
+      (if (httpMonitoringConfig.enabled) http4sMetricsRoutes else HttpRoutes.empty[HttpEnv.F]) <+>
       zioMetricsRoutes(jvmMonitoringConfig)
   }
 
