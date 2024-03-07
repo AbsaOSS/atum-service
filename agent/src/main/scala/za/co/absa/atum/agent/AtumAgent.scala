@@ -18,23 +18,66 @@ package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, Dispatcher, HttpDispatcher}
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
+
 
 /**
  * Entity that communicate with the API, primarily focused on spawning Atum Context(s).
  */
-class AtumAgent private[agent] () {
+trait AtumAgent {
 
-  private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
+  /**
+   * Returns a user under who's security context the JVM is running.
+   * It's purpose is for auditing in author/createdBy fields.
+   *
+   * @note '''Important:''' It's '''not''' supposed to be used for '''authorization''' as it can be '''spoofed'''!
+   *
+   * @return Current user.
+   */
+  private[agent] def currentUser: String
 
-  val config: Config = ConfigFactory.load()
+  /**
+   * Sends `CheckpointDTO` to the AtumService API
+   *
+   * @param checkpoint Already initialized Checkpoint object to store
+   */
+  private[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 
-  private val dispatcher = config.getString("atum.dispatcher.type") match {
-    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
-    case "console" => new ConsoleDispatcher
-    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
-  }
+  /**
+   * Sends the `Metadata` to the Atumservice API
+   *
+   * @param additionalData the metadata to be saved to the server.
+   */
+  private[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit
+
+  /**
+   * Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
+   *
+   * Note: if partitioning doesn't exist in the store yet, a new one will be created with the author stored in
+   * `AtumAgent.currentUser`. If partitioning already exists, this attribute will be ignored because there
+   * already is an author who previously created the partitioning in the data store. Each Atum Context thus
+   * can have different author potentially.
+   *
+   * @param atumPartitions : Partitioning based on which an Atum Context will be created or obtained.
+   * @return Atum context object that's either newly created in the data store, or obtained because the input
+   *         partitioning already existed.
+   */
+  def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext
+
+  /**
+   * Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
+   * Retrieves the data from AtumService API.
+   *
+   * @param subPartitions     Sub partitions based on which an Atum Context will be created or obtained.
+   * @param parentAtumContext Parent AtumContext.
+   * @return Atum context object
+   */
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext
+
+}
+
+object AtumAgent extends AtumAgent {
 
   /**
    * Returns a user under who's security context the JVM is running.
@@ -44,79 +87,148 @@ class AtumAgent private[agent] () {
    *
    * @return Current user.
    */
-  private[agent] def currentUser: String = System.getProperty("user.name") // platform independent
+  private[agent] def currentUser: String = instance.currentUser
 
   /**
    * Sends `CheckpointDTO` to the AtumService API
    *
    * @param checkpoint Already initialized Checkpoint object to store
    */
-  private [agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    dispatcher.saveCheckpoint(checkpoint)
-  }
+  override private[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit =
+    instance.saveCheckpoint(checkpoint)
 
   /**
    * Sends the `Metadata` to the Atumservice API
+   *
    * @param additionalData the metadata to be saved to the server.
    */
-  private [agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
-    dispatcher.saveAdditionalData(additionalData)
-  }
+  override private[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit =
+    instance.saveAdditionalData(additionalData)
 
   /**
-   *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
+   * Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
    *
    * Note: if partitioning doesn't exist in the store yet, a new one will be created with the author stored in
-   *    `AtumAgent.currentUser`. If partitioning already exists, this attribute will be ignored because there
-   *    already is an author who previously created the partitioning in the data store. Each Atum Context thus
-   *    can have different author potentially.
+   * `AtumAgent.currentUser`. If partitioning already exists, this attribute will be ignored because there
+   * already is an author who previously created the partitioning in the data store. Each Atum Context thus
+   * can have different author potentially.
    *
-   *  @param atumPartitions: Partitioning based on which an Atum Context will be created or obtained.
-   *  @return Atum context object that's either newly created in the data store, or obtained because the input
-   *          partitioning already existed.
+   * @param atumPartitions : Partitioning based on which an Atum Context will be created or obtained.
+   * @return Atum context object that's either newly created in the data store, or obtained because the input
+   *         partitioning already existed.
    */
-  def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
-    val authorIfNew = AtumAgent.currentUser
-    val partitioningDTO = PartitioningSubmitDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None, authorIfNew)
-
-    val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
-    val atumContext = AtumContext.fromDTO(atumContextDTO, this)
-
-    getExistingOrNewContext(atumPartitions, atumContext)
-  }
+  override def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext =
+    instance.getOrCreateAtumContext(atumPartitions)
 
   /**
    * Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
    * Retrieves the data from AtumService API.
-   * @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
+   *
+   * @param subPartitions     Sub partitions based on which an Atum Context will be created or obtained.
    * @param parentAtumContext Parent AtumContext.
    * @return Atum context object
    */
-  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
-    val authorIfNew = AtumAgent.currentUser
-    val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
+  override def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext =
+    instance.getOrCreateAtumSubContext(subPartitions)
 
-    val newPartitionsDTO = AtumPartitions.toSeqPartitionDTO(newPartitions)
-    val parentPartitionsDTO = Some(AtumPartitions.toSeqPartitionDTO(parentAtumContext.atumPartitions))
-    val partitioningDTO = PartitioningSubmitDTO(newPartitionsDTO, parentPartitionsDTO, authorIfNew)
+  private lazy val instance: AtumAgent = {
+    val config: Config = ConfigFactory.load()
 
-    val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
-    val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+    val dispatcher = config.getString("atum.dispatcher.type") match {
+      case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
+      case "console" => new ConsoleDispatcher
+      case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+    }
 
-    getExistingOrNewContext(newPartitions, atumContext)
+    new AtumAgentImpl(dispatcher)
   }
 
-  private def getExistingOrNewContext(atumPartitions: AtumPartitions, newAtumContext: => AtumContext): AtumContext = {
-    synchronized {
-      contexts.getOrElse(
-        atumPartitions, {
-          contexts = contexts + (atumPartitions -> newAtumContext)
-          newAtumContext
-        }
-      )
+
+  /**
+   * Concrete implementation of entity that communicates with the API, primarily focused on spawning Atum Context(s).
+   */
+  class AtumAgentImpl(dispatcher: Dispatcher) extends AtumAgent {
+
+    private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
+
+    /**
+     * Returns a user under who's security context the JVM is running.
+     * It's purpose is for auditing in author/createdBy fields.
+     *
+     * @note '''Important:''' It's '''not''' supposed to be used for '''authorization''' as it can be '''spoofed'''!
+     * @return Current user.
+     */
+    private[agent] def currentUser: String = System.getProperty("user.name") // platform independent
+
+    /**
+     * Sends `CheckpointDTO` to the AtumService API
+     *
+     * @param checkpoint Already initialized Checkpoint object to store
+     */
+    private [agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+      dispatcher.saveCheckpoint(checkpoint)
+    }
+
+    /**
+     * Sends the `Metadata` to the Atumservice API
+     * @param additionalData the metadata to be saved to the server.
+     */
+    private [agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
+      dispatcher.saveAdditionalData(additionalData)
+    }
+
+    /**
+     *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
+     *
+     * Note: if partitioning doesn't exist in the store yet, a new one will be created with the author stored in
+     *    `AtumAgent.currentUser`. If partitioning already exists, this attribute will be ignored because there
+     *    already is an author who previously created the partitioning in the data store. Each Atum Context thus
+     *    can have different author potentially.
+     *
+     *  @param atumPartitions: Partitioning based on which an Atum Context will be created or obtained.
+     *  @return Atum context object that's either newly created in the data store, or obtained because the input
+     *          partitioning already existed.
+     */
+    def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
+      val authorIfNew = AtumAgent.currentUser
+      val partitioningDTO = PartitioningSubmitDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None, authorIfNew)
+
+      val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
+      val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+
+      getExistingOrNewContext(atumPartitions, atumContext)
+    }
+
+    /**
+     * Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
+     * Retrieves the data from AtumService API.
+     * @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
+     * @param parentAtumContext Parent AtumContext.
+     * @return Atum context object
+     */
+    def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+      val authorIfNew = AtumAgent.currentUser
+      val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
+
+      val newPartitionsDTO = AtumPartitions.toSeqPartitionDTO(newPartitions)
+      val parentPartitionsDTO = Some(AtumPartitions.toSeqPartitionDTO(parentAtumContext.atumPartitions))
+      val partitioningDTO = PartitioningSubmitDTO(newPartitionsDTO, parentPartitionsDTO, authorIfNew)
+
+      val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
+      val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+
+      getExistingOrNewContext(newPartitions, atumContext)
+    }
+
+    private def getExistingOrNewContext(atumPartitions: AtumPartitions, newAtumContext: => AtumContext): AtumContext = {
+      synchronized {
+        contexts.getOrElse(
+          atumPartitions, {
+            contexts = contexts + (atumPartitions -> newAtumContext)
+            newAtumContext
+          }
+        )
+      }
     }
   }
-
 }
-
-object AtumAgent extends AtumAgent

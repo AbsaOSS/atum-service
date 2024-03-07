@@ -22,7 +22,9 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.{mock, times, verify, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.atum.agent.AtumAgent.AtumAgentImpl
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
+import za.co.absa.atum.agent.dispatcher.ConsoleDispatcher
 import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
 import za.co.absa.atum.agent.model.MeasurementBuilder
@@ -188,7 +190,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
   }
 
   "addAdditionalData" should "add key/value pair to map for additional data" in {
-    val atumAgent = new AtumAgent
+    val atumAgent = new AtumAgentImpl(new ConsoleDispatcher)
     val atumPartitions = AtumPartitions("key" -> "val")
     val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
 
