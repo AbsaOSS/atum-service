@@ -68,6 +68,7 @@ object Dependencies {
     val http4sBlazeBackend = "0.23.15"
     val http4sPrometheus = "0.23.6"
     val playJson = "3.0.1"
+    val sttpPlayJson = "3.9.3"
 
     val awssdk = "2.23.15"
   }
@@ -142,6 +143,7 @@ object Dependencies {
     val sbtOrg = "com.github.sbt"
     val logbackOrg = "ch.qos.logback"
     val awsSdkOrg = "software.amazon.awssdk"
+    val sttpClient3Org = "com.softwaremill.sttp.client3"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
@@ -163,9 +165,11 @@ object Dependencies {
     lazy val tapirSwagger = tapirOrg %% "tapir-swagger-ui-bundle" % Versions.tapir
     lazy val tapirPlayJson = tapirOrg %% "tapir-json-play" % Versions.tapir
     lazy val tapirPrometheus = tapirOrg %% "tapir-prometheus-metrics" % Versions.tapir
+    lazy val tapirStubServer = tapirOrg %% "tapir-sttp-stub-server" % Versions.tapir % Test
 
     // json
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
+    lazy val sttpPlayJson = sttpClient3Org %% "play-json" % Versions.sttpPlayJson % Test
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
@@ -196,7 +200,9 @@ object Dependencies {
       tapirSwagger,
       tapirPlayJson,
       tapirPrometheus,
+      tapirStubServer,
       playJson,
+      sttpPlayJson,
       awsSecretsManagerSdk,
       zioTest,
       zioTestSbt,

@@ -17,12 +17,12 @@
 package za.co.absa.atum.server.api.http
 
 import sttp.model.StatusCode
-import sttp.tapir.PublicEndpoint
+import sttp.tapir.{PublicEndpoint, endpoint}
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
-import sttp.tapir.ztapir.{endpoint, statusCode, stringBody}
+import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.Constants.{CreateCheckpoint, CreatePartitioning, ZioMetrics}
+import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.PlayJsonImplicits._
 
@@ -50,5 +50,8 @@ trait Endpoints extends BaseEndpoints {
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
     endpoint.get.in(ZioMetrics).out(stringBody)
   }
+
+  protected val healthEndpoint: PublicEndpoint[Unit, Unit, Unit, Any] =
+    endpoint.get.in(Health)
 
 }
