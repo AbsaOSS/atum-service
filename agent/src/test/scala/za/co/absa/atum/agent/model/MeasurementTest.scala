@@ -58,4 +58,51 @@ class MeasurementTest extends AnyFlatSpec with Matchers with SparkTestBase { sel
     val measure = SumOfValuesOfColumn("col")
     assertThrows[MeasurementProvidedException](MeasurementProvided(measure, 1.0))
   }
+
+
+  "apply" should "create MeasurementProvided for custom measure with String result value type" in {
+    val measureName = "myCustomMeasure"
+    val controlCol = "columnName"
+    val resultValue = "abc"
+
+    val expectedMeasurementProvided = MeasurementProvided(
+      UnknownMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.String
+    )
+    val actualMeasurementProvided = MeasurementProvided(UnknownMeasure(measureName, Seq(controlCol)), "abc")
+
+    assert(expectedMeasurementProvided == actualMeasurementProvided)
+  }
+
+  "apply" should "create MeasurementProvided for custom measure with Long result value type" in {
+    val measureName = "myCustomMeasure"
+    val controlCol = "columnName"
+    val resultValue = 123L
+
+    val expectedMeasurementProvided = MeasurementProvided(
+      UnknownMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.Long
+    )
+    val actualMeasurementProvided = MeasurementProvided(UnknownMeasure(measureName, Seq(controlCol)), 123L)
+
+    assert(expectedMeasurementProvided == actualMeasurementProvided)
+  }
+
+  "apply" should "create MeasurementProvided for custom measure with Double result value type" in {
+    val measureName = "myCustomMeasure"
+    val controlCol = "columnName"
+    val resultValue = 1.13
+
+    val expectedMeasurementProvided = MeasurementProvided(
+      UnknownMeasure(measureName, Seq(controlCol)), resultValue, ResultValueType.Double
+    )
+    val actualMeasurementProvided = MeasurementProvided(UnknownMeasure(measureName, Seq(controlCol)), 1.13)
+
+    assert(expectedMeasurementProvided == actualMeasurementProvided)
+  }
+
+  "apply" should "throw exception for unsupported type" in {
+    val measureName = "myCustomMeasure"
+    val controlCol = "columnName"
+
+    assertThrows[MeasurementProvidedException](MeasurementProvided(UnknownMeasure(measureName, Seq(controlCol)), true))
+  }
 }

@@ -84,6 +84,25 @@ object Measurement {
           )
       }
     }
+
+    def apply[T](unknownMeasure: UnknownMeasure, resultValue: T): MeasurementProvided[T] = {
+      resultValue match {
+        case _: Long =>
+          MeasurementProvided[T](unknownMeasure, resultValue, ResultValueType.Long)
+        case _: Double =>
+          MeasurementProvided[T](unknownMeasure, resultValue, ResultValueType.Double)
+        case _: BigDecimal =>
+          MeasurementProvided[T](unknownMeasure, resultValue, ResultValueType.BigDecimal)
+        case _: String =>
+          MeasurementProvided[T](unknownMeasure, resultValue, ResultValueType.String)
+        case unsupportedType =>
+          val className = unsupportedType.getClass.getSimpleName
+          throw MeasurementProvidedException(
+            s"Unsupported type of measurement for unknown measure ${unknownMeasure.measureName}: $className " +
+              s"for provided result: $resultValue"
+          )
+      }
+    }
   }
 
     /**

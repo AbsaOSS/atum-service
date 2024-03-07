@@ -35,6 +35,8 @@ trait AtumMeasure extends Measure with MeasurementProcessor {
   val resultValueType: ResultValueType.ResultValueType
 }
 
+final case class UnknownMeasure(measureName: String, controlColumns: Seq[String]) extends Measure
+
 object AtumMeasure {
 
   val supportedMeasureNames: Seq[String] = Seq(
