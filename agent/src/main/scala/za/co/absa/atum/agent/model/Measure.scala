@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DataType, DecimalType, LongType, StringType}
 import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
-import za.co.absa.atum.agent.core.MeasurementProcessor.{MeasurementFunction, ResultOfMeasurement}
+import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 /**
@@ -28,11 +28,11 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
  */
 sealed trait Measure {
   val measureName: String
-  def controlColumns: Seq[String]
+  def measuredColumns: Seq[String]
 }
 
 trait AtumMeasure extends Measure with MeasurementProcessor {
-  val resultValueType: ResultValueType.ResultValueType
+  val resultValueType: ResultValueType
 }
 
 object AtumMeasure {
@@ -51,83 +51,83 @@ object AtumMeasure {
     override def function: MeasurementFunction =
       (ds: DataFrame) => {
         val resultValue = ds.select(columnExpression).collect()
-        ResultOfMeasurement(resultValue(0).toString, resultValueType)
+        MeasureResult(resultValue(0).toString, resultValueType)
       }
 
-    override def controlColumns: Seq[String] = Seq.empty
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
+    override def measuredColumns: Seq[String] = Seq.empty
+    override val resultValueType: ResultValueType = ResultValueType.Long
   }
   object RecordCount {
     private[agent] val measureName: String = "count"
     def apply(): RecordCount = RecordCount(measureName)
   }
 
-  case class DistinctRecordCount private (measureName: String, controlCols: Seq[String]) extends AtumMeasure {
-    require(controlCols.nonEmpty, "At least one control column has to be defined.")
+  case class DistinctRecordCount private (measureName: String, measuredCols: Seq[String]) extends AtumMeasure {
+    require(measuredCols.nonEmpty, "At least one measured column has to be defined.")
 
-    private val columnExpression = countDistinct(col(controlCols.head), controlCols.tail.map(col): _*)
+    private val columnExpression = countDistinct(col(measuredCols.head), measuredCols.tail.map(col): _*)
 
     override def function: MeasurementFunction =
       (ds: DataFrame) => {
         val resultValue = ds.select(columnExpression).collect()
-        ResultOfMeasurement(resultValue(0)(0).toString, resultValueType)
+        MeasureResult(resultValue(0)(0).toString, resultValueType)
       }
 
-    override def controlColumns: Seq[String] = controlCols
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.Long
+    override def measuredColumns: Seq[String] = measuredCols
+    override val resultValueType: ResultValueType = ResultValueType.Long
   }
   object DistinctRecordCount {
     private[agent] val measureName: String = "distinctCount"
-    def apply(controlCols: Seq[String]): DistinctRecordCount = DistinctRecordCount(measureName, controlCols)
+    def apply(measuredCols: Seq[String]): DistinctRecordCount = DistinctRecordCount(measureName, measuredCols)
   }
 
-  case class SumOfValuesOfColumn private (measureName: String, controlCol: String) extends AtumMeasure {
+  case class SumOfValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
     private val columnAggFn: Column => Column = column => sum(column)
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
-      val dataType = ds.select(controlCol).schema.fields(0).dataType
-      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(controlCol)))).collect()
-      ResultOfMeasurement(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
+      val dataType = ds.select(measuredCol).schema.fields(0).dataType
+      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
+      MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
     }
 
-    override def controlColumns: Seq[String] = Seq(controlCol)
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
+    override def measuredColumns: Seq[String] = Seq(measuredCol)
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimal
   }
   object SumOfValuesOfColumn {
     private[agent] val measureName: String = "aggregatedTotal"
-    def apply(controlCol: String): SumOfValuesOfColumn = SumOfValuesOfColumn(measureName, controlCol)
+    def apply(measuredCol: String): SumOfValuesOfColumn = SumOfValuesOfColumn(measureName, measuredCol)
   }
 
-  case class AbsSumOfValuesOfColumn private (measureName: String, controlCol: String) extends AtumMeasure {
+  case class AbsSumOfValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
     private val columnAggFn: Column => Column = column => sum(abs(column))
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
-      val dataType = ds.select(controlCol).schema.fields(0).dataType
-      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(controlCol)))).collect()
-      ResultOfMeasurement(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
+      val dataType = ds.select(measuredCol).schema.fields(0).dataType
+      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
+      MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
     }
 
-    override def controlColumns: Seq[String] = Seq(controlCol)
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.BigDecimal
+    override def measuredColumns: Seq[String] = Seq(measuredCol)
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimal
   }
   object AbsSumOfValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTotal"
-    def apply(controlCol: String): AbsSumOfValuesOfColumn = AbsSumOfValuesOfColumn(measureName, controlCol)
+    def apply(measuredCol: String): AbsSumOfValuesOfColumn = AbsSumOfValuesOfColumn(measureName, measuredCol)
   }
 
-  case class SumOfHashesOfColumn private (measureName: String, controlCol: String) extends AtumMeasure {
-    private val columnExpression: Column = sum(crc32(col(controlCol).cast("String")))
+  case class SumOfHashesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
+    private val columnExpression: Column = sum(crc32(col(measuredCol).cast("String")))
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val resultValue = ds.select(columnExpression).collect()
-      ResultOfMeasurement(Option(resultValue(0)(0)).getOrElse("").toString, resultValueType)
+      MeasureResult(Option(resultValue(0)(0)).getOrElse("").toString, resultValueType)
     }
 
-    override def controlColumns: Seq[String] = Seq(controlCol)
-    override val resultValueType: ResultValueType.ResultValueType = ResultValueType.String
+    override def measuredColumns: Seq[String] = Seq(measuredCol)
+    override val resultValueType: ResultValueType = ResultValueType.String
   }
   object SumOfHashesOfColumn {
     private[agent] val measureName: String = "hashCrc32"
-    def apply(controlCol: String): SumOfHashesOfColumn = SumOfHashesOfColumn(measureName, controlCol)
+    def apply(measuredCol: String): SumOfHashesOfColumn = SumOfHashesOfColumn(measureName, measuredCol)
   }
 
   private def castForAggregation(

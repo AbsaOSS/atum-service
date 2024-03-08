@@ -138,7 +138,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneId.of("CET"))
 
-    val seqMeasurementDTO = Seq(
+    val setMeasurementDTO = Set(
       MeasurementDTO(
         measure = MeasureDTO("count", Seq("col")), result = MeasureResultDTO(
           mainValue = TypedValue("1", ResultValueType.Long)
@@ -154,7 +154,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
       partitioning = seqPartitionDTO,
       processStartTime = timeWithZone,
       processEndTime = Some(timeWithZone),
-      measurements = seqMeasurementDTO
+      measurements = setMeasurementDTO
     )
 
     val expectedCheckpointDTOJson =
@@ -197,7 +197,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
          |""".linearize
 
 
-    val seqMeasurementDTO = Seq(
+    val setMeasurementDTO = Set(
       MeasurementDTO(
         measure = MeasureDTO("count", Seq("col")), result = MeasureResultDTO(
           mainValue = TypedValue("1", ResultValueType.Long)
@@ -213,7 +213,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
       partitioning = seqPartitionDTO,
       processStartTime = timeWithZone,
       processEndTime = Some(timeWithZone),
-      measurements = seqMeasurementDTO
+      measurements = setMeasurementDTO
     )
 
     val actualCheckpointDTO = SerializationUtils.fromJson[CheckpointDTO](checkpointDTOJson)
