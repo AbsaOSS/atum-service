@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.AtumContext.AtumPartitions
+import za.co.absa.atum.agent.AtumContext.{AdditionalData, AtumPartitions}
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
@@ -36,7 +36,7 @@ class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
   val agent: AtumAgent,
   private var measures: Set[AtumMeasure] = Set.empty,
-  private var additionalData: AdditionalDataDTO = Map.empty
+  private var additionalData: AdditionalData = Map.empty
 ) {
 
   /**
@@ -121,28 +121,35 @@ class AtumContext private[agent] (
   }
 
   /**
-   * This method creates Additional Data in the agentService.
-   *
-   * @return AtumContext
-   */
-  def saveAdditionalData(): AtumContext = {
-    val additionalData = AdditionalDataSubmitDTO(
-      AtumPartitions.toSeqPartitionDTO(atumPartitions),
-      this.additionalData,
-      agent.currentUser
-    )
-    agent.saveAdditionalData(additionalData)
-    this
-  }
-
-  /**
    * Adds additional data to the AtumContext.
    *
    * @param key   the key of the additional data
    * @param value the value of the additional data
+   *
+   * @return the AtumContext after the AD has been dispatched and added
    */
   def addAdditionalData(key: String, value: String): AtumContext = {
-    additionalData += (key -> Some(value))
+    addAdditionalData(Map(key -> value))
+  }
+
+  /**
+   * This method creates Additional Data in the agentService and dispatches them into the data store.
+   *
+   * @param newAdditionalDataToAdd additional data that will be added into the data store
+   *
+   * @return the AtumContext after the AD has been dispatched and added
+   */
+  def addAdditionalData(newAdditionalDataToAdd: Map[String, String]): AtumContext = {
+    val currAdditionalData = newAdditionalDataToAdd.map{case (k,v) => (k, Some(v))}
+
+    val currAdditionalDataSubmit = AdditionalDataSubmitDTO(
+      AtumPartitions.toSeqPartitionDTO(atumPartitions),
+      currAdditionalData,
+      agent.currentUser
+    )
+    agent.saveAdditionalData(currAdditionalDataSubmit)
+
+    this.additionalData ++= currAdditionalData
     this
   }
 
@@ -200,6 +207,7 @@ object AtumContext {
    * Type alias for Atum partitions.
    */
   type AtumPartitions = ListMap[String, String]
+  type AdditionalData = AdditionalDataDTO
 
   /**
    * Object contains helper methods to work with Atum partitions.
