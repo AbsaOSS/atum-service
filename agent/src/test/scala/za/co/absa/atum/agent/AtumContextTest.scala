@@ -23,9 +23,8 @@ import org.mockito.Mockito.{mock, times, verify, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
-import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
-import za.co.absa.atum.agent.model.MeasurementBuilder
+import za.co.absa.atum.agent.model.{AtumMeasure, MeasureResult, MeasurementBuilder}
+import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
@@ -113,12 +112,13 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumPartitions = AtumPartitions("key" -> "value")
     val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
 
-    val measurements = Seq(
-      MeasurementProvided(RecordCount("col"), 1L),
-      MeasurementProvided(SumOfValuesOfColumn("col"), BigDecimal(1))
+    val measurements: Map[AtumMeasure, MeasureResult] = Map(
+      RecordCount("col")          -> MeasureResult(1L),
+      SumOfValuesOfColumn("col")  -> MeasureResult(BigDecimal(1))
     )
 
-    atumContext.createCheckpointOnProvidedData(checkpointName = "name", measurements = measurements)
+    atumContext.createCheckpointOnProvidedData(
+      checkpointName = "name", measurements = measurements)
 
     val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
@@ -128,7 +128,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     assert(!argument.getValue.measuredByAtumAgent)
     assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
     assert(argument.getValue.processStartTime == argument.getValue.processEndTime.get)
-    assert(argument.getValue.measurements == measurements.map(MeasurementBuilder.buildMeasurementDTO))
+    assert(argument.getValue.measurements == MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements))
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
@@ -200,5 +200,4 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
     assert(atumContext.currentAdditionalData == expectedAdditionalData)
   }
-
 }

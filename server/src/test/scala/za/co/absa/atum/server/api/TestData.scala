@@ -55,7 +55,7 @@ trait TestData {
     partitioning = Seq.empty,
     processStartTime = ZonedDateTime.now(),
     processEndTime = None,
-    measurements = Seq.empty
+    measurements = Set.empty
   )
   protected val checkpointDTO2: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
