@@ -64,7 +64,7 @@ class AtumAgent private[agent] () {
   }
 
   /**
-   *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
+   * Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
    *
    * Note: if partitioning doesn't exist in the store yet, a new one will be created with the author stored in
    *    `AtumAgent.currentUser`. If partitioning already exists, this attribute will be ignored because there

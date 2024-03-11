@@ -30,7 +30,7 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
   "Measure" should "be based on the dataframe" in {
 
     // Measures
-    val measureIds: AtumMeasure = RecordCount("id")
+    val measureIds: AtumMeasure = RecordCount()
     val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn("salary")
 
     val salarySum = SumOfValuesOfColumn("salary")
@@ -91,18 +91,18 @@ class MeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
     val dfFullSalarySumResult         = salarySum.function(dfFull)
 
     // Assertions
-    assert(dfPersonCntResult.result == "1000")
-    assert(dfPersonCntResult.resultType == ResultValueType.Long)
-    assert(dfFullCntResult.result == "1000")
-    assert(dfFullCntResult.resultType == ResultValueType.Long)
-    assert(dfFullSalaryAbsSumResult.result == "2987144")
-    assert(dfFullSalaryAbsSumResult.resultType == ResultValueType.BigDecimal)
-    assert(dfFullHashResult.result == "2044144307532")
-    assert(dfFullHashResult.resultType == ResultValueType.String)
-    assert(dfExtraPersonSalarySumResult.result == "2986144")
-    assert(dfExtraPersonSalarySumResult.resultType == ResultValueType.BigDecimal)
-    assert(dfFullSalarySumResult.result == "2987144")
-    assert(dfFullSalarySumResult.resultType == ResultValueType.BigDecimal)
+    assert(dfPersonCntResult.resultValue == "1000")
+    assert(dfPersonCntResult.resultValueType == ResultValueType.Long)
+    assert(dfFullCntResult.resultValue == "1000")
+    assert(dfFullCntResult.resultValueType == ResultValueType.Long)
+    assert(dfFullSalaryAbsSumResult.resultValue == "2987144")
+    assert(dfFullSalaryAbsSumResult.resultValueType == ResultValueType.BigDecimal)
+    assert(dfFullHashResult.resultValue == "2044144307532")
+    assert(dfFullHashResult.resultValueType == ResultValueType.String)
+    assert(dfExtraPersonSalarySumResult.resultValue == "2986144")
+    assert(dfExtraPersonSalarySumResult.resultValueType == ResultValueType.BigDecimal)
+    assert(dfFullSalarySumResult.resultValue == "2987144")
+    assert(dfFullSalarySumResult.resultValueType == ResultValueType.BigDecimal)
   }
 
 }
