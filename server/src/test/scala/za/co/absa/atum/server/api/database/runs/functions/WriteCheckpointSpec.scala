@@ -46,7 +46,7 @@ class WriteCheckpointSpec extends ConfigProviderSpec {
           processStartTime = ZonedDateTime.now(),
           processEndTime = None,
           measurements =
-            Seq(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))))
+            Set(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))))
         )
         for {
           writeCheckpoint <- ZIO.service[WriteCheckpoint]
