@@ -3,6 +3,7 @@ package za.co.absa.atum.agent.dispatcher
 import za.co.absa.atum.model.dto._
 
 import java.util
+import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 class Capture(maxEvents: Int) extends Dispatcher {
   import Capture._
@@ -35,7 +36,7 @@ class Capture(maxEvents: Int) extends Dispatcher {
       (_, events) =>
         Option(events)
           .map(_.copy(checkpoint = checkpoint :: events.checkpoint.take(maxEvents - 1)))
-          .getOrElse(Events(Nil, Map.empty))
+          .getOrElse(Events(checkpoint :: Nil, Map.empty))
     )
   }
 
@@ -48,39 +49,33 @@ class Capture(maxEvents: Int) extends Dispatcher {
     ts.compute(
       createPath(additionalData.partitioning),
       (_, events) =>
-        Option(events).map(_.copy(additionalData = additionalData.additionalData)).getOrElse(Events(Nil, Map.empty))
+        Option(events)
+          .map(_.copy(additionalData = additionalData.additionalData))
+          .getOrElse(Events(Nil, additionalData.additionalData))
     )
   }
 
-  def prefixIter(prefix: String): Iterator[(String, Events)] = {
+  def clear(): Unit = ts.clear()
+
+  def prefixIter(prefix: String): Iterator[PartitionedData] = {
     val prefixWithSlash = sanitizePrefix(prefix)
-    val prefixWithSlashLength = prefixWithSlash.length
-    val tailMap = ts.tailMap(prefixWithSlash)
-    val it = tailMap.entrySet().iterator()
-    new Iterator[(String, Events)] {
-      private var _prefetched = Option.empty[Events]
-      override def hasNext: Boolean = _prefetched match {
-        case Some(_) => true
-        case None if it.hasNext =>
-          val entry = it.next()
-          val key = entry.getKey
-          if (key.startsWith(prefixWithSlash)) {
-            _prefetched = Some(entry.getValue)
-            true
-          } else false
-      }
-      override def next(): (String, Events) = {
-        val entry = it.next()
-        val key = entry.getKey
-        val keyWithoutPrefix = key.substring(prefixWithSlashLength)
-        keyWithoutPrefix -> entry.getValue
-      }
-    }
+    ts.tailMap(prefixWithSlash)
+      .entrySet()
+      .iterator()
+      .asScala
+      .takeWhile(_.getKey.startsWith(prefixWithSlash))
+      .map(entry => PartitionedData(entry.getKey, entry.getValue))
   }
 }
 
 object Capture {
   def apply(maxEvents: Int): Capture = new Capture(maxEvents)
+
+  case class PartitionedData(partition: String, events: Events) {
+    def additionalData: Map[String, Option[String]] = events.additionalData
+
+    def checkpoints: List[CheckpointDTO] = events.checkpoint.reverse
+  }
 
   case class Events(
     checkpoint: List[CheckpointDTO],
