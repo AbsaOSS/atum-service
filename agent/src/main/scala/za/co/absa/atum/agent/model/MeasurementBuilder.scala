@@ -24,7 +24,7 @@ import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
  */
 private [agent] object MeasurementBuilder {
 
-  private def validateMeasureAndResultTypeCompatibility(measure: AtumMeasure, result: MeasureResult): Unit = {
+  private def validateMeasureAndResultTypeCompatibility(measure: Measure, result: MeasureResult): Unit = {
     val requiredType = measure.resultValueType
     val actualType = result.resultValueType
 
@@ -35,7 +35,7 @@ private [agent] object MeasurementBuilder {
       )
   }
 
-  def buildMeasurementDTO(measure: AtumMeasure, measureResult: MeasureResult): MeasurementDTO = {
+  def buildMeasurementDTO(measure: Measure, measureResult: MeasureResult): MeasurementDTO = {
     validateMeasureAndResultTypeCompatibility(measure, measureResult)
 
     val measureDTO = MeasureDTO(measure.measureName, measure.measuredColumns)
@@ -46,8 +46,8 @@ private [agent] object MeasurementBuilder {
     MeasurementDTO(measureDTO, measureResultDTO)
   }
 
-  def buildAndValidateMeasurementsDTO(measurements: Map[AtumMeasure, MeasureResult]): Set[MeasurementDTO] = {
-    measurements.toSet[(AtumMeasure, MeasureResult)].map { case (measure: AtumMeasure, measureResult: MeasureResult) =>
+  def buildAndValidateMeasurementsDTO(measurements: Map[Measure, MeasureResult]): Set[MeasurementDTO] = {
+    measurements.toSet[(Measure, MeasureResult)].map { case (measure: Measure, measureResult: MeasureResult) =>
         validateMeasureAndResultTypeCompatibility(measure, measureResult)
         buildMeasurementDTO(measure, measureResult)
     }

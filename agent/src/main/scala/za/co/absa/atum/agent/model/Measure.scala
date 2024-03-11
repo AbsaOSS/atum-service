@@ -29,13 +29,13 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 sealed trait Measure {
   val measureName: String
   def measuredColumns: Seq[String]
-}
-
-trait AtumMeasure extends Measure with MeasurementProcessor {
   val resultValueType: ResultValueType
 }
 
-final case class UnknownMeasure(measureName: String, controlColumns: Seq[String]) extends Measure
+trait AtumMeasure extends Measure with MeasurementProcessor
+
+final case class UnknownMeasure(measureName: String, measuredColumns: Seq[String], resultValueType: ResultValueType)
+  extends Measure
 
 object AtumMeasure {
 

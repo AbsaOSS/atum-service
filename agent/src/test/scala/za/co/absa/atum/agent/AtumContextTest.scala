@@ -24,8 +24,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
-import za.co.absa.atum.agent.model.Measurement.MeasurementProvided
-import za.co.absa.atum.agent.model.MeasurementBuilder
+import za.co.absa.atum.agent.model.{Measure, MeasureResult, MeasurementBuilder, UnknownMeasure}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
@@ -113,14 +112,10 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val atumPartitions = AtumPartitions("key" -> "value")
     val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
 
-//    val measurements = Seq(
-//      MeasurementProvided(RecordCount("col"), 1L),
-//      MeasurementProvided(SumOfValuesOfColumn("col"), BigDecimal(1)),
-//      MeasurementProvided(UnknownMeasure("customMeasureName", Seq("col")), BigDecimal(1))
-
-    val measurements: Map[AtumMeasure, MeasureResult] = Map(
+    val measurements: Map[Measure, MeasureResult] = Map(
       RecordCount("col")          -> MeasureResult(1L),
-      SumOfValuesOfColumn("col")  -> MeasureResult(BigDecimal(1))
+      SumOfValuesOfColumn("col")  -> MeasureResult(BigDecimal(1)),
+      UnknownMeasure("customMeasureName", Seq("col"), ResultValueType.BigDecimal) -> MeasureResult(BigDecimal(1))
     )
 
     atumContext.createCheckpointOnProvidedData(
