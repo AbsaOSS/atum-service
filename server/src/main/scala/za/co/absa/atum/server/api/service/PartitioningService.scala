@@ -28,6 +28,10 @@ trait PartitioningService {
   def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
   ): IO[ServiceError, Either[StatusException, Unit]]
+
+  def GetPartitioningMeasures(
+    partitioning: PartitioningSubmitDTO
+  ): IO[ServiceError, Either[StatusException, Unit]]
 }
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) extends PartitioningService {
@@ -38,6 +42,14 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) ex
       .createPartitioningIfNotExists(partitioning)
       .mapError { case DatabaseError(message) =>
         ServiceError(s"Failed to create or retrieve partitioning: $message")
+      }
+  }
+
+  override def GetPartitioningMeasures(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, Unit]] = {
+    partitioningRepository
+      .getPartitioningMeasures(partitioning)
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to retrieve partitioning measures: $message")
       }
   }
 }

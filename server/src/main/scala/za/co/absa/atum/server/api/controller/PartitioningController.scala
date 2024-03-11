@@ -26,8 +26,6 @@ import zio.macros.accessible
 @accessible
 trait PartitioningController {
   def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
-}
-
 class PartitioningControllerImpl(partitioningService: PartitioningService) extends PartitioningController {
   override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
     partitioningService
@@ -40,7 +38,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService) exten
           ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
         case Right(_) =>
           ZIO.succeed {
-            val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
+            val measures: Set[MeasureDTO] = Set(partitioningService.GetPartitioningMeasures(partitioning))
             val additionalData = AdditionalDataDTO(additionalData = Map.empty)
             AtumContextDTO(partitioning.partitioning, measures, additionalData)
           }
