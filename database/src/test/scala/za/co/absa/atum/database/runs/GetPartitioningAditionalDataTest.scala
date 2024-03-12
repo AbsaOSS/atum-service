@@ -130,10 +130,6 @@ class GetPartitioningAditionalDataTest extends DBTestSuite{
     function(fncGetPartitioningAdditionalData)
       .setParam("i_partitioning", partitioning2)
       .execute { queryResult =>
-        val results = queryResult.next()
-        assert(results.getInt("status").contains(16))
-        assert(results.getString("status_text").contains("No additional data found for the given partitioning."))
-        assert(results.getString("ad_name").isEmpty)
         assert(!queryResult.hasNext)
       }
 
