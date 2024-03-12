@@ -103,7 +103,7 @@ class AtumContext private[agent] (
    * @param measurements   the measurements to be included in the checkpoint
    * @return the AtumContext after the checkpoint has been created
    */
-  def createCheckpointOnProvidedData(checkpointName: String, measurements: Map[AtumMeasure, MeasureResult]): AtumContext = {
+  def createCheckpointOnProvidedData(checkpointName: String, measurements: Map[Measure, MeasureResult]): AtumContext = {
     val dateTimeNow = ZonedDateTime.now()
 
     val checkpointDTO = CheckpointDTO(
