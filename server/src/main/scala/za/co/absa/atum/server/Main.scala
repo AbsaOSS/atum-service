@@ -59,7 +59,9 @@ object Main extends ZIOAppDefault with Server {
           if (jvmMonitoringConfig.enabled) {
             ZLayer.succeed(MetricsConfig(Duration.ofSeconds(jvmMonitoringConfig.intervalInSeconds))) ++
             Runtime.enableRuntimeMetrics.unit ++ DefaultJvmMetrics.live.unit
-          } else ZLayer.succeed(MetricsConfig(Duration.ofSeconds(Long.MaxValue)))
+          } else {
+            ZLayer.succeed(MetricsConfig(Duration.ofSeconds(Long.MaxValue)))
+          }
         )
     }
 
