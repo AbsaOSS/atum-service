@@ -27,5 +27,5 @@ case class CheckpointDTO(
   partitioning: PartitioningDTO,
   processStartTime: ZonedDateTime,
   processEndTime: Option[ZonedDateTime],
-  measurements: Seq[MeasurementDTO]
+  measurements: Set[MeasurementDTO]
 )

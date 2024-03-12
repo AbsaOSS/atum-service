@@ -24,8 +24,6 @@ import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
 
-import scala.util.{Failure, Success, Try}
-
 class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
   private val serverUrl = config.getString("url")
@@ -51,7 +49,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     val response = backend.send(request)
 
     SerializationUtils.fromJson[AtumContextDTO](
-      safeResponseBody(response).get
+      handleResponseBody(response)
     )
   }
 
@@ -62,7 +60,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
     val response = backend.send(request)
 
-    safeResponseBody(response).get
+    handleResponseBody(response)
   }
 
   override def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
@@ -72,13 +70,13 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
 
     val response = backend.send(request)
 
-    safeResponseBody(response).get
+    handleResponseBody(response)
   }
 
-  def safeResponseBody(response: Response[Either[String, String]]): Try[String] = {
+  private def handleResponseBody(response: Response[Either[String, String]]): String = {
     response.body match {
-      case Left(body) => Failure(HttpException(response.code.code, body))
-      case Right(body) => Success(body)
+      case Left(body) => throw HttpException(response.code.code, body)
+      case Right(body) => body
     }
   }
 

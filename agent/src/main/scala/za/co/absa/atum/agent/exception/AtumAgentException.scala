@@ -32,7 +32,7 @@ object AtumAgentException {
    *
    * @param message A message describing the exception.
    */
-  case class MeasurementProvidedException(message: String) extends AtumAgentException(message)
+  case class MeasurementException(message: String) extends AtumAgentException(message)
 
   /**
    * This type represents an exception thrown when a measure is not supported by the Atum Agent.
