@@ -20,7 +20,7 @@ import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
 
 object HttpMetrics {
 
-  val prometheusMetrics: PrometheusMetrics[HttpEnv.F] = PrometheusMetrics[HttpEnv.F]("atum")
+  val prometheusMetrics: PrometheusMetrics[HttpEnv.F] = PrometheusMetrics[HttpEnv.F]("http")
     .addRequestsTotal()
     .addRequestsActive()
     .addRequestsDuration()
