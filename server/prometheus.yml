@@ -20,7 +20,13 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ['host.docker.internal:8080']
+        labels:
+          env: 'local'
+          app: 'atum'
   - job_name: 'atum_server_zio_runtime'
     metrics_path: /zio-metrics
     static_configs:
       - targets: ['host.docker.internal:8080']
+        labels:
+          env: 'local'
+          app: 'atum'
