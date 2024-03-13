@@ -5,13 +5,10 @@ import za.co.absa.atum.model.dto._
 import java.util
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-class Capture(maxEvents: Int) extends Dispatcher {
-  import Capture._
+class CapturingDispatcher(maxEvents: Int) extends Dispatcher {
+  import CapturingDispatcher._
 
-  private val ts = util.Collections.synchronizedSortedMap(new util.TreeMap[String, Events]())
-
-  private def createPath(partitioning: PartitioningDTO): String =
-    partitioning.map(p => s"${p.key}=${p.value}").mkString(start = "/", sep = "/", end = "/")
+  private val ts = util.Collections.synchronizedSortedMap(new util.TreeMap[String, PartitionedData]())
 
   /**
    *  This method is used to ensure the server knows the given partitioning.
@@ -21,7 +18,6 @@ class Capture(maxEvents: Int) extends Dispatcher {
    *  @return AtumContextDTO.
    */
   override def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    ts.put(createPath(partitioning.partitioning), Events(Nil, Map.empty))
     AtumContextDTO(partitioning = partitioning.partitioning)
   }
 
@@ -31,12 +27,13 @@ class Capture(maxEvents: Int) extends Dispatcher {
    *  @param checkpoint : CheckpointDTO to be saved.
    */
   override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+    val path = createPath(checkpoint.partitioning)
     ts.compute(
-      createPath(checkpoint.partitioning),
+      path,
       (_, events) =>
         Option(events)
-          .map(_.copy(checkpoint = checkpoint :: events.checkpoint.take(maxEvents - 1)))
-          .getOrElse(Events(checkpoint :: Nil, Map.empty))
+          .map(_.copy(checkpointStack = checkpoint :: events.checkpointStack.take(maxEvents - 1)))
+          .getOrElse(PartitionedData(path, checkpoint :: Nil, Map.empty))
     )
   }
 
@@ -46,43 +43,53 @@ class Capture(maxEvents: Int) extends Dispatcher {
    *  @param additionalData the data to be saved.
    */
   override def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
+    val path = createPath(additionalData.partitioning)
     ts.compute(
-      createPath(additionalData.partitioning),
+      path,
       (_, events) =>
         Option(events)
           .map(_.copy(additionalData = additionalData.additionalData))
-          .getOrElse(Events(Nil, additionalData.additionalData))
+          .getOrElse(PartitionedData(path, Nil, additionalData.additionalData))
     )
   }
 
+  /**
+   *  This method is used to clear all captured data.
+   */
   def clear(): Unit = ts.clear()
 
+  /**
+   *  This method creates iterator iterating over all captured data with specified prefix.
+   */
   def prefixIter(prefix: String): Iterator[PartitionedData] = {
-    val prefixWithSlash = sanitizePrefix(prefix)
+    val prefixWithSlash = sanitizeKey(prefix)
     ts.tailMap(prefixWithSlash)
       .entrySet()
       .iterator()
       .asScala
       .takeWhile(_.getKey.startsWith(prefixWithSlash))
-      .map(entry => PartitionedData(entry.getKey, entry.getValue))
+      .map(_.getValue)
+  }
+
+  def getPartition(key: String): Option[PartitionedData] = {
+    Option(ts.get(sanitizeKey(key)))
   }
 }
 
-object Capture {
-  def apply(maxEvents: Int): Capture = new Capture(maxEvents)
+object CapturingDispatcher {
 
-  case class PartitionedData(partition: String, events: Events) {
-    def additionalData: Map[String, Option[String]] = events.additionalData
-
-    def checkpoints: List[CheckpointDTO] = events.checkpoint.reverse
+  case class PartitionedData(
+    partition: String,
+    checkpointStack: List[CheckpointDTO],
+    additionalData: Map[String, Option[String]]
+  ) {
+    def checkpoints: List[CheckpointDTO] = checkpointStack.reverse
   }
 
-  case class Events(
-    checkpoint: List[CheckpointDTO],
-    additionalData: Map[String, Option[String]]
-  )
+  private def createPath(partitioning: PartitioningDTO): String =
+    partitioning.map(p => s"${p.key}=${p.value}").mkString(start = "/", sep = "/", end = "/")
 
-  private def sanitizePrefix(prefix: String): String = {
+  private def sanitizeKey(prefix: String): String = {
     if (prefix == null || prefix.isEmpty) "/"
     else {
       val withLeadingSlash = if (prefix.startsWith("/")) prefix else s"/$prefix"
