@@ -16,99 +16,33 @@
 
 package za.co.absa.atum.server.api.http
 
-import cats.syntax.semigroupk._
-import org.http4s.HttpRoutes
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.Router
-import sttp.monad.MonadError
-import sttp.tapir.generic.auto.schemaForCaseClass
-import sttp.tapir.json.play.jsonBody
-import sttp.tapir.server.http4s.Http4sServerOptions
-import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
-import sttp.tapir.server.interceptor.DecodeFailureContext
-import sttp.tapir.server.interceptor.decodefailure.DecodeFailureHandler
-import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.respond
-import sttp.tapir.server.model.ValuedEndpointOutput
-import sttp.tapir.swagger.bundle.SwaggerInterpreter
-import sttp.tapir.ztapir._
-import sttp.tapir.{DecodeResult, PublicEndpoint, headers, statusCode}
-import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
-import za.co.absa.atum.server.api.controller._
-import za.co.absa.atum.server.config.SslConfig
-import za.co.absa.atum.server.model.BadRequestResponse
-import zio.interop.catz._
+import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig, SslConfig}
 import zio._
+import zio.interop.catz._
 
 import javax.net.ssl.SSLContext
 
-trait Server extends Endpoints {
+trait Server extends Routes {
 
-  type Env = PartitioningController with CheckpointController
-  type F[A] = RIO[Env, A]
-
-  private val decodeFailureHandler: DecodeFailureHandler[F] = new DecodeFailureHandler[F] {
-    override def apply(ctx: DecodeFailureContext)(implicit monad: MonadError[F]): F[Option[ValuedEndpointOutput[_]]] = {
-      monad.unit(
-        respond(ctx).map { case (sc, hs) =>
-          val message = ctx.failure match {
-            case DecodeResult.Missing => s"Decoding error - missing value."
-            case DecodeResult.Multiple(vs) => s"Decoding error - $vs."
-            case DecodeResult.Error(original, _) => s"Decoding error for an input value '$original'."
-            case DecodeResult.Mismatch(_, actual) => s"Unexpected value '$actual'."
-            case DecodeResult.InvalidValue(errors) => s"Validation error - $errors."
-          }
-          val errorResponse = BadRequestResponse(message)
-          ValuedEndpointOutput(statusCode.and(headers).and(jsonBody[BadRequestResponse]), (sc, hs, errorResponse))
-        }
-      )
-    }
-  }
-
-  private val http4sServerOptions: Http4sServerOptions[F] = Http4sServerOptions
-    .customiseInterceptors[F]
-    .decodeFailureHandler(decodeFailureHandler)
-    .options
-
-  private def createServerEndpoint[I, E, O](
-    endpoint: PublicEndpoint[I, E, O, Any],
-    logic: I => ZIO[Env, E, O]
-  ): ZServerEndpoint[Env, Any] = {
-    endpoint.zServerLogic(logic).widen[Env]
-  }
-
-  private def createAllServerRoutes: HttpRoutes[F] = {
-    val endpoints = List(
-      createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
-      createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists),
-      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
-    )
-    ZHttp4sServerInterpreter[Env](http4sServerOptions).from(endpoints).toRoutes
-  }
-
-  private def createSwaggerRoutes: HttpRoutes[F] = {
-    val endpoints = List(createCheckpointEndpoint, createPartitioningEndpoint)
-    ZHttp4sServerInterpreter[Env](http4sServerOptions)
-      .from(SwaggerInterpreter().fromEndpoints[F](endpoints, SwaggerApiName, SwaggerApiVersion))
-      .toRoutes
-  }
-
-  private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[Env, Throwable, Unit] =
-    ZIO.executor.flatMap { executor =>
-      val builder = BlazeServerBuilder[F]
+  private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[HttpEnv.Env, Throwable, Unit] =
+    for {
+      executor <- ZIO.executor
+      httpMonitoringConfig <- ZIO.config[HttpMonitoringConfig](HttpMonitoringConfig.config)
+      jvmMonitoringConfig <- ZIO.config[JvmMonitoringConfig](JvmMonitoringConfig.config)
+      builder = BlazeServerBuilder[HttpEnv.F]
         .bindHttp(port, "0.0.0.0")
         .withExecutionContext(executor.asExecutionContext)
-        .withHttpApp(Router("/" -> (createAllServerRoutes <+> createSwaggerRoutes)).orNotFound)
+        .withHttpApp(Router("/" -> allRoutes(httpMonitoringConfig, jvmMonitoringConfig)).orNotFound)
+      builderWithSsl = sslContext.fold(builder)(ctx => builder.withSslContext(ctx))
+      _ <- builderWithSsl.serve.compile.drain
+    } yield ()
 
-      val builderWithSsl = sslContext.fold(builder)(ctx => builder.withSslContext(ctx))
-      builderWithSsl.serve.compile.drain
-    }
+  private val httpServer = createServer(8080)
+  private val httpsServer = SSL.context.flatMap(context => createServer(8443, Some(context)))
 
-  private val httpServer: ZIO[Env, Throwable, Unit] = createServer(8080)
-  private val httpsServer: ZIO[Env, Throwable, Unit] = SSL.context.flatMap { context =>
-    createServer(8443, Some(context))
-  }
-
-  protected val server: ZIO[Env, Throwable, Unit] = for {
+  protected val server: ZIO[HttpEnv.Env, Throwable, Unit] = for {
     sslConfig <- ZIO.config[SslConfig](SslConfig.config)
     server <- if (sslConfig.enabled) httpsServer else httpServer
   } yield server

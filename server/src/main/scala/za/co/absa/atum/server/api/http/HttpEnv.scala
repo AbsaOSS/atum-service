@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server
+package za.co.absa.atum.server.api.http
 
-object Constants {
+import za.co.absa.atum.server.api.controller.{CheckpointController, PartitioningController}
+import zio.RIO
+import zio.metrics.connectors.prometheus.PrometheusPublisher
 
-  object Endpoints {
+object HttpEnv {
 
-    final val Api = "api"
-    final val V1 = "v1"
-    final val CreatePartitioning = "createPartitioning"
-    final val CreateCheckpoint = "createCheckpoint"
-    final val Health = "health"
-    final val ZioMetrics = "zio-metrics"
-
-  }
-
-  final val SwaggerApiName = "Atum API"
-  final val SwaggerApiVersion = "1.0"
+  type Env = PartitioningController with CheckpointController with PrometheusPublisher
+  // naming effect types as `F` is a convention in Scala community
+  type F[A] = RIO[Env, A]
 
 }
