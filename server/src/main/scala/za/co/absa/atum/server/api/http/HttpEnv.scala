@@ -23,6 +23,7 @@ import zio.metrics.connectors.prometheus.PrometheusPublisher
 object HttpEnv {
 
   type Env = PartitioningController with CheckpointController with PrometheusPublisher
+  // naming effect types as `F` is a convention in Scala community
   type F[A] = RIO[Env, A]
 
 }
