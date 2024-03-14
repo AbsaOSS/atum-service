@@ -87,10 +87,11 @@ class MeasurementBuilderTest extends AnyFlatSpec {
   }
 
   "buildAndValidateMeasurementsDTO" should "build Seq[MeasurementDTO] for multiple measures, all unique" in {
-    val measurements: Map[AtumMeasure, MeasureResult] = Map(
+    val measurements: Map[Measure, MeasureResult] = Map(
       DistinctRecordCount(Seq("col")) -> MeasureResult("1", ResultValueType.Long),
       SumOfValuesOfColumn("col1")     -> MeasureResult(BigDecimal(1.2)),
-      SumOfValuesOfColumn("col2")     -> MeasureResult(BigDecimal(1.3))
+      SumOfValuesOfColumn("col2")     -> MeasureResult(BigDecimal(1.3)),
+      UnknownMeasure("unknownMeasure", Seq("col"), ResultValueType.BigDecimal) -> MeasureResult(BigDecimal(1.1))
     )
     val measurementDTOs = MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements)
 
@@ -103,6 +104,9 @@ class MeasurementBuilderTest extends AnyFlatSpec {
       ),
       MeasurementDTO(
         MeasureDTO("aggregatedTotal", Seq("col2")), MeasureResultDTO(TypedValue("1.3", ResultValueType.BigDecimal))
+      ),
+      MeasurementDTO(
+        MeasureDTO("unknownMeasure", Seq("col")), MeasureResultDTO(TypedValue("1.1", ResultValueType.BigDecimal))
       )
     )
 
