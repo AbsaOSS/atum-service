@@ -23,7 +23,7 @@ It can be found at **{REST_API_HOST}/docs/** (e.g. `http://localhost:8080/docs/`
 ### Observability metrics
 
 Optionally you can run server with monitoring that collects metrics about http communication and/or jvm/zio runtime. `intervalInSeconds` parameter refers to frequency of data collection from its runtime environment.
-Monitoring of http communication is based on intercepting of http calls therefore `intervalInSeconds` parameter do not apply.
+Monitoring of http communication is based on intercepting of http calls therefore `intervalInSeconds` parameter does not apply.
 
 ```
 {
