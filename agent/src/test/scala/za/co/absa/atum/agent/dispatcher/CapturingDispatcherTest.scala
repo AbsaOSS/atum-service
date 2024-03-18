@@ -110,7 +110,7 @@ class CapturingDispatcherTest extends AnyFlatSpec with Matchers {
 
     val it = underTest.prefixIter("/")
 
-    var idx = 0;
+    var idx = 0
     var collected = List.empty[String]
 
     assertThrows[ConcurrentModificationException] {
@@ -210,7 +210,7 @@ class CapturingDispatcherTest extends AnyFlatSpec with Matchers {
     )
 
   private def createPartition(kvs: (String, String)*): PartitioningDTO = {
-    kvs.map { case (k, v) => PartitionDTO(k, v) }.toSeq
+    kvs.map { case (k, v) => PartitionDTO(k, v) }
   }
 
 }
