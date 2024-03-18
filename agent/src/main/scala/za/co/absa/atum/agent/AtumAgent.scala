@@ -18,24 +18,17 @@ package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, Dispatcher, HttpDispatcher}
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  * Entity that communicate with the API, primarily focused on spawning Atum Context(s).
  */
-class AtumAgent private[agent] () {
+abstract class AtumAgent private[agent] () {
 
   private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
-  val config: Config = ConfigFactory.load()
-
-  private val dispatcher = config.getString("atum.dispatcher.type") match {
-    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
-    case "console" => new ConsoleDispatcher
-    case "capture" => CapturingDispatcher.fromConfig(config.getConfig("atum.dispatcher.capture"))
-    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
-  }
+  protected val dispatcher: Dispatcher
 
   /**
    * Returns a user under who's security context the JVM is running.
@@ -120,4 +113,14 @@ class AtumAgent private[agent] () {
 
 }
 
-object AtumAgent extends AtumAgent
+object AtumAgent extends AtumAgent {
+
+  val config: Config = ConfigFactory.load()
+
+  override protected val dispatcher: Dispatcher = config.getString("atum.dispatcher.type") match {
+    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
+    case "console" => new ConsoleDispatcher
+    case "capture" => CapturingDispatcher.fromConfig(config.getConfig("atum.dispatcher.capture"))
+    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+  }
+}

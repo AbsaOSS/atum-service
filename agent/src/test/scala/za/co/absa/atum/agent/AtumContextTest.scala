@@ -188,7 +188,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
   }
 
   "addAdditionalData" should "add key/value pair to map for additional data" in {
-    val atumAgent = new AtumAgent
+    val atumAgent = AtumAgent
     val atumPartitions = AtumPartitions("key" -> "val")
     val atumContext = atumAgent.getOrCreateAtumContext(atumPartitions)
 
