@@ -16,19 +16,41 @@
 
 package za.co.absa.atum.agent.model
 
+import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
-import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 
 /**
  * This object provides a functionality to convert a measurement to its DTO representation.
  */
 private [agent] object MeasurementBuilder {
 
-  private [agent] def buildMeasurementDTO(measurement: Measurement): MeasurementDTO = {
-    val measureName = measurement.measure.measureName
-    val measureDTO = MeasureDTO(measureName, measurement.measure.controlColumns)
-    val measureResultDTO = MeasureResultDTO(TypedValue(measurement.resultValue.toString, measurement.resultType))
+  private def validateMeasureAndResultTypeCompatibility(measure: Measure, result: MeasureResult): Unit = {
+    val requiredType = measure.resultValueType
+    val actualType = result.resultValueType
 
+    if (actualType != requiredType)
+      throw MeasurementException(
+        s"Type of a given provided measurement result and type that a given measure supports are not compatible! " +
+          s"Got $actualType but should be $requiredType"
+      )
+  }
+
+  def buildMeasurementDTO(measure: Measure, measureResult: MeasureResult): MeasurementDTO = {
+    validateMeasureAndResultTypeCompatibility(measure, measureResult)
+
+    val measureDTO = MeasureDTO(measure.measureName, measure.measuredColumns)
+
+    val measureResultDTO = MeasureResultDTO(
+      MeasureResultDTO.TypedValue(measureResult.resultValue.toString, measureResult.resultValueType)
+    )
     MeasurementDTO(measureDTO, measureResultDTO)
   }
+
+  def buildAndValidateMeasurementsDTO(measurements: Map[Measure, MeasureResult]): Set[MeasurementDTO] = {
+    measurements.toSet[(Measure, MeasureResult)].map { case (measure: Measure, measureResult: MeasureResult) =>
+        validateMeasureAndResultTypeCompatibility(measure, measureResult)
+        buildMeasurementDTO(measure, measureResult)
+    }
+  }
+
 }

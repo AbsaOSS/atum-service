@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.config
 
-import java.time.ZonedDateTime
-import java.util.UUID
+import zio.Config
+import zio.config.magnolia.deriveConfig
 
-case class CheckpointDTO(
-  id: UUID,
-  name: String,
-  author: String,
-  measuredByAtumAgent: Boolean = false,
-  partitioning: PartitioningDTO,
-  processStartTime: ZonedDateTime,
-  processEndTime: Option[ZonedDateTime],
-  measurements: Set[MeasurementDTO]
-)
+case class HttpMonitoringConfig(enabled: Boolean)
+
+object HttpMonitoringConfig {
+  val config: Config[HttpMonitoringConfig] = deriveConfig[HttpMonitoringConfig].nested("monitoring", "http")
+}

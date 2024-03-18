@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.api.http
 
-import java.time.ZonedDateTime
-import java.util.UUID
+import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
 
-case class CheckpointDTO(
-  id: UUID,
-  name: String,
-  author: String,
-  measuredByAtumAgent: Boolean = false,
-  partitioning: PartitioningDTO,
-  processStartTime: ZonedDateTime,
-  processEndTime: Option[ZonedDateTime],
-  measurements: Set[MeasurementDTO]
-)
+object HttpMetrics {
+
+  val prometheusMetrics: PrometheusMetrics[HttpEnv.F] = PrometheusMetrics[HttpEnv.F]("http")
+    .addRequestsTotal()
+    .addRequestsActive()
+    .addRequestsDuration()
+
+}

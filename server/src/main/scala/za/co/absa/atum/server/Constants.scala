@@ -25,6 +25,7 @@ object Constants {
     final val CreatePartitioning = "createPartitioning"
     final val CreateCheckpoint = "createCheckpoint"
     final val Health = "health"
+    final val ZioMetrics = "zio-metrics"
 
   }
 

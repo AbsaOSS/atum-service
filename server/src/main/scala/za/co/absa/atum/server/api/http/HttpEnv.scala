@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.api.http
 
-import java.time.ZonedDateTime
-import java.util.UUID
+import za.co.absa.atum.server.api.controller.{CheckpointController, PartitioningController}
+import zio.RIO
+import zio.metrics.connectors.prometheus.PrometheusPublisher
 
-case class CheckpointDTO(
-  id: UUID,
-  name: String,
-  author: String,
-  measuredByAtumAgent: Boolean = false,
-  partitioning: PartitioningDTO,
-  processStartTime: ZonedDateTime,
-  processEndTime: Option[ZonedDateTime],
-  measurements: Set[MeasurementDTO]
-)
+object HttpEnv {
+
+  type Env = PartitioningController with CheckpointController with PrometheusPublisher
+  // naming effect types as `F` is a convention in Scala community
+  type F[A] = RIO[Env, A]
+
+}
