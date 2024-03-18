@@ -20,7 +20,7 @@ import org.postgresql.util.PSQLException
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
-class IsPartitioningValid extends DBTestSuite {
+class IsPartitioningValidTest extends DBTestSuite {
 
   private val fncIsPartitioningValid = "validation.is_partitioning_valid"
 

@@ -20,7 +20,7 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-class UpdateExistingAdditionalData extends DBTestSuite{
+class UpdateExistingAdditionalDataTest extends DBTestSuite{
 
   private val fncUpdateExistingAdditionalData = "runs._update_existing_additional_data"
 
@@ -49,13 +49,15 @@ class UpdateExistingAdditionalData extends DBTestSuite{
     val fkPartitioning: Long = table("runs.partitionings").fieldValue("partitioning", partitioning, "id_partitioning").get.get
 
     table("runs.additional_data").insert(
-      add("fk_partitioning", fkPartitioning)
+      add("id_additional_data", 0L)
+      .add("fk_partitioning", fkPartitioning)
       .add("ad_name", "DatasetLocation")
       .add("ad_value", "s3://some_bucket/some_path")
-      .add("created_by", "MikeRusty")
+      .add("created_by", "Laco")
     )
     table("runs.additional_data").insert(
-      add("fk_partitioning", fkPartitioning)
+      add("id_additional_data", 1L)
+        .add("fk_partitioning", fkPartitioning)
         .add("ad_name", "Author")
         .add("ad_value", "Walker")
         .add("created_by", "MikeRusty")
@@ -82,8 +84,41 @@ class UpdateExistingAdditionalData extends DBTestSuite{
         assert(!queryResult.hasNext)
       }
 
+    assert(table("runs.additional_data").count() == 2)
+    assert(table("runs.additional_data_history").count() == 2)
+
     assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 2)
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 2)
+
+    val expectedDataInAdTable = Seq(
+      (0L, "DatasetLocation", "s3://some_bucket/some_path", "Laco"),
+      (1L, "Author", "Walker", "MikeRusty"),
+    )
+    expectedDataInAdTable.foreach { case (adIdExp, adNameExp, adValExp, adCreatedByExp) =>
+      table("runs.additional_data_history").where(add("ad_name", adNameExp)) {
+        resultSet =>
+          val row = resultSet.next()
+          assert(row.getLong("id_additional_data").contains(adIdExp))
+          assert(row.getString("ad_value").contains(adValExp))
+          assert(row.getString("created_by_originally").contains(adCreatedByExp))
+      }
+    }
+
+    val expectedDataInAdHistTable = Seq(
+      ("DatasetLocation", "s3://some_bucket/some_path_updated", "MikeRusty"),
+      ("Author", "NewOne", "MikeRusty"),
+    )
+    expectedDataInAdHistTable.foreach { case (adNameExp, adValExp, adCreatedByExp) =>
+      table("runs.additional_data").where(add("ad_name", adNameExp)) {
+        resultSet =>
+          val row = resultSet.next()
+          assert(!row.getLong("id_additional_data").contains(0L))
+          assert(!row.getLong("id_additional_data").contains(1L))
+          assert(row.getString("ad_value").contains(adValExp))
+          assert(row.getString("created_by").contains(adCreatedByExp))
+      }
+    }
+
   }
 
   test("Partitioning and AD present, but the input AD are the same as in DB, no backup") {

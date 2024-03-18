@@ -20,7 +20,7 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-class CreateOrUpdateAdditionalData extends DBTestSuite{
+class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
 
   private val fncCreateOrUpdateAdditionalData = "runs.create_or_update_additional_data"
 
@@ -38,7 +38,7 @@ class CreateOrUpdateAdditionalData extends DBTestSuite{
       |""".stripMargin
   )
 
-  test("Partitioning and AD present, insert, update, and also 'ignore' of AD records performed") {
+  test("Partitioning and AD present, delete & re-insert, and also 'ignore' of AD records performed") {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -83,8 +83,23 @@ class CreateOrUpdateAdditionalData extends DBTestSuite{
         assert(!queryResult.hasNext)
       }
 
+    assert(table("runs.additional_data").count() == 3)
     assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 3)
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 1)
+
+    val expectedDataInAdTable = Seq(
+      ("PrimaryOwner", "TechnicalManagerA", "SuperTool"),
+      ("SecondaryOwner", "AnalystNew", "MikeRusty"),
+      ("IsDatasetInDatalake", "true", "MikeRusty"),
+    )
+    expectedDataInAdTable.foreach { case (adNameExp, adValExp, adCreatedByExp) =>
+      table("runs.additional_data").where(add("ad_name", adNameExp)) {
+        resultSet =>
+          val row = resultSet.next()
+          assert(row.getString("ad_value").contains(adValExp))
+          assert(row.getString("created_by").contains(adCreatedByExp))
+      }
+    }
   }
 
   test("Partitioning and AD present, new AD records inserted, nothing backed up") {
@@ -132,8 +147,25 @@ class CreateOrUpdateAdditionalData extends DBTestSuite{
         assert(!queryResult.hasNext)
       }
 
+    assert(table("runs.additional_data").count() == 5)
     assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 5)
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 0)
+
+   val expectedDataInAdTable = Seq(
+     ("PrimaryOwner", "TechnicalManagerX", "Bot"),
+     ("SecondaryOwner", "AnalystY", "Bot"),
+     ("SomeNewKey", "SomeNewValue", "MikeRusty"),
+     ("IsDatasetInHDFS", "true", "MikeRusty"),
+     ("DatasetContentSensitivityLevel", "1", "MikeRusty"),
+   )
+   expectedDataInAdTable.foreach { case (adNameExp, adValExp, adCreatedByExp) =>
+     table("runs.additional_data").where(add("ad_name", adNameExp)) {
+       resultSet =>
+         val row = resultSet.next()
+         assert(row.getString("ad_value").contains(adValExp))
+         assert(row.getString("created_by").contains(adCreatedByExp))
+     }
+   }
   }
 
   test("Partitioning and AD present, but no new AD records were backed-up or inserted, no changes detected") {

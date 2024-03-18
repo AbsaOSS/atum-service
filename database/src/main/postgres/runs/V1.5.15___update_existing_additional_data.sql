@@ -26,8 +26,9 @@ $$
 --      The aim of this function is to back up additional data records that already exists in the DB for the input
 --      partitioning.
 --
---      If additional data of a given name already exists, the value is updated and the old value is moved
---      to the additional data history table.
+--      If additional data of a given name already exists, the row is deleted, the old value is moved
+--      to the additional data history table, and then a new row is inserted with new values
+--      into additional data table (especially creation details and UUID).
 --
 --      If additional data of a given name doesn't exist for such partitioning yet, it will be skipped - the
 --      responsibility of this function is to only back up existing data that it changes.
@@ -44,34 +45,41 @@ $$
 DECLARE
 BEGIN
 
-    -- 1. (backup) get records that already exist but values differ, and insert them into ad history table
-    INSERT INTO runs.additional_data_history
-        (fk_partitioning, ad_name, ad_value, created_by_originally, created_at_originally, archived_by)
-    SELECT ad_curr.fk_partitioning, ad_curr.ad_name, ad_curr.ad_value,
-           ad_curr.created_by, ad_curr.created_at, i_by_user
-    FROM runs.additional_data AS ad_curr
-    WHERE ad_curr.fk_partitioning = i_fk_partitioning
-      AND EXISTS (  -- get only those records where keys exist but values differ - so will be backed-up
-          SELECT *
-          FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
-          WHERE ad_curr.ad_name = ad_input.ad_key
-            AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value
-      );
-
-    -- 2. (update) get records that already exist but values differ, and update the ad table with new values
-    IF found THEN
-        UPDATE runs.additional_data AS ad_curr
-        SET ad_value = ad_input.ad_value,
-            created_by = i_by_user,
-            created_at = now()
-        FROM (
-            SELECT ad_key, ad_value
-            FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
-        ) as ad_input
+    -- 0. (delete) get records that already exist but values differ, and delete them from AD table
+    WITH deleted_rows AS (
+        DELETE FROM runs.additional_data AS ad_curr
         WHERE ad_curr.fk_partitioning = i_fk_partitioning
-          AND ad_curr.ad_name = ad_input.ad_key
-          AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value;
+          AND EXISTS (  -- get only those records where keys exist but values differ - so will be backed-up
+              SELECT *
+              FROM each(i_additional_data) AS ad_input(ad_key, ad_value)
+              WHERE ad_curr.ad_name = ad_input.ad_key
+                AND ad_curr.ad_value IS DISTINCT FROM ad_input.ad_value
+          )
+        RETURNING ad_curr.id_additional_data, ad_curr.fk_partitioning,
+                  ad_curr.ad_name, ad_curr.ad_value,
+                  ad_curr.created_by, ad_curr.created_at
+    ),
+    -- 1. (backup) get records that already exist but values differ, and insert them into AD history table
+    backed_up_rows AS (
+        INSERT INTO runs.additional_data_history
+            (id_additional_data, fk_partitioning, ad_name, ad_value, created_by_originally, created_at_originally, archived_by)
+        SELECT del_r.id_additional_data, del_r.fk_partitioning,
+               del_r.ad_name, del_r.ad_value,
+               del_r.created_by, del_r.created_at, i_by_user
+        FROM deleted_rows AS del_r
+        RETURNING *
+    )
+    -- 2. (insert) get records that were deleted, and insert the AD table with new values (including new UUID / PK!)
+    INSERT INTO runs.additional_data
+        (fk_partitioning, ad_name, ad_value, created_by, created_at)
+    SELECT del_r.fk_partitioning,
+           del_r.ad_name, ad_input.ad_value,
+           i_by_user, now()
+    FROM deleted_rows AS del_r
+    JOIN each(i_additional_data) AS ad_input(ad_key, ad_value)
+      ON del_r.ad_name = ad_input.ad_key;
 
+    IF found THEN
         records_updated := TRUE;
     ELSE
         records_updated := FALSE;

@@ -15,7 +15,7 @@
 
 CREATE TABLE runs.additional_data_history
 (
-    id_additional_data_history  BIGINT NOT NULL DEFAULT global_id(),
+    id_additional_data          BIGINT NOT NULL, -- will be provided from the current AD during backup
     fk_partitioning             BIGINT NOT NULL,
     ad_name                     TEXT NOT NULL,
     ad_value                    TEXT,
@@ -23,10 +23,7 @@ CREATE TABLE runs.additional_data_history
     created_at_originally       TIMESTAMP WITH TIME ZONE NOT NULL,
     archived_by                 TEXT NOT NULL,
     archived_at                 TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT additional_data_history_pk PRIMARY KEY (id_additional_data_history)
+    CONSTRAINT additional_data_history_pk PRIMARY KEY (id_additional_data)
 );
-
-ALTER TABLE runs.additional_data_history
-    ADD CONSTRAINT ad_history_unq UNIQUE (fk_partitioning, ad_name, ad_value, created_by_originally, created_at_originally);
 
 ALTER TABLE runs.additional_data_history OWNER to atum_owner;
