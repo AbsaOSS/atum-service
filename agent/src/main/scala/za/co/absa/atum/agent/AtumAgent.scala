@@ -18,7 +18,7 @@ package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
@@ -33,6 +33,7 @@ class AtumAgent private[agent] () {
   private val dispatcher = config.getString("atum.dispatcher.type") match {
     case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
     case "console" => new ConsoleDispatcher
+    case "capture" => CapturingDispatcher.fromConfig(config.getConfig("atum.dispatcher.capture"))
     case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
   }
 
