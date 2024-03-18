@@ -14,22 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server
+package za.co.absa.atum.server.config
 
-object Constants {
+import zio.Config
+import zio.config.magnolia.deriveConfig
 
-  object Endpoints {
+case class HttpMonitoringConfig(enabled: Boolean)
 
-    final val Api = "api"
-    final val V1 = "v1"
-    final val CreatePartitioning = "createPartitioning"
-    final val CreateCheckpoint = "createCheckpoint"
-    final val Health = "health"
-    final val ZioMetrics = "zio-metrics"
-
-  }
-
-  final val SwaggerApiName = "Atum API"
-  final val SwaggerApiVersion = "1.0"
-
+object HttpMonitoringConfig {
+  val config: Config[HttpMonitoringConfig] = deriveConfig[HttpMonitoringConfig].nested("monitoring", "http")
 }
