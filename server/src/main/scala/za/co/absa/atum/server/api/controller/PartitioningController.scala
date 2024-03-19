@@ -16,42 +16,13 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, MeasureDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
-import zio._
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.server.model.ErrorResponse
+import zio.IO
 import zio.macros.accessible
 
 @accessible
 trait PartitioningController {
   def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
-}
-
-class PartitioningControllerImpl(partitioningService: PartitioningService) extends PartitioningController {
-  override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
-    partitioningService
-      .createPartitioningIfNotExists(partitioning)
-      .mapError { serviceError: ServiceError =>
-        InternalServerErrorResponse(serviceError.message)
-      }
-      .flatMap {
-        case Left(statusException) =>
-          ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
-        case Right(_) =>
-          ZIO.succeed {
-            val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
-            val additionalData = AdditionalDataDTO(additionalData = Map.empty)
-            AtumContextDTO(partitioning.partitioning, measures, additionalData)
-          }
-      }
-  }
-}
-
-object PartitioningControllerImpl {
-  val layer: URLayer[PartitioningService, PartitioningController] = ZLayer {
-    for {
-      partitioningService <- ZIO.service[PartitioningService]
-    } yield new PartitioningControllerImpl(partitioningService)
-  }
+  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
 }

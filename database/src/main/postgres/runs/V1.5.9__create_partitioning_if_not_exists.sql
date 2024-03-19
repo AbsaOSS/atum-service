@@ -56,7 +56,7 @@ BEGIN
 
     IF i_parent_partitioning IS NOT NULL THEN
         SELECT CPINE.id_partitioning
-        FROM runs.create_partitioning_if_not_exists(i_parent_partitioning, i_by_user, NULL)   CPINE
+        FROM runs.create_partitioning_if_not_exists(i_parent_partitioning, i_by_user, NULL) AS CPINE
         INTO _fk_parent_partitioning;
     END IF;
 
@@ -80,7 +80,7 @@ BEGIN
     IF i_parent_partitioning IS NOT NULL THEN
 
         SELECT ATPF.status
-        FROM flows._add_to_parent_flows(_fk_parent_partitioning, id_partitioning, i_by_user) ATPF
+        FROM flows._add_to_parent_flows(_fk_parent_partitioning, id_partitioning, i_by_user) AS ATPF
         INTO _status;
 
         IF _create_partitioning THEN

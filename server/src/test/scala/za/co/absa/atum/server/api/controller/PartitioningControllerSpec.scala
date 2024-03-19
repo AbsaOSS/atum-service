@@ -51,7 +51,7 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
           val expectedAtumContextDTO = AtumContextDTO(
             partitioning = partitioningSubmitDTO1.partitioning,
             measures = Set(MeasureDTO("count", Seq("*"))),
-            additionalData = AdditionalDataDTO(additionalData = Map.empty)
+            additionalData = Map.empty
           )
           for {
             result <- PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO1)
