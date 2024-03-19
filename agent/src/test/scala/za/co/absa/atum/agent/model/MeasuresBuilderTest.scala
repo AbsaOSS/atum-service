@@ -44,7 +44,7 @@ class MeasuresBuilderTest extends AnyFlatSpecLike {
     assert(expectedMeasures == actualMeasures)
   }
 
-  "mapToMeasures" should "throw exception for unsupported measure" in {
+  "mapToMeasures" should "ignore unsupported or unknown measure" in {
     val unsupportedMeasure = Set(
       MeasureDTO("unsupportedMeasure", Seq("col"))
     )

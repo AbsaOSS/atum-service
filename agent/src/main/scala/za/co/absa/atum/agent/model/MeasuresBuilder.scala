@@ -34,7 +34,7 @@ private [agent] object MeasuresBuilder extends Logging {
         case Some(value) =>
           Some(value)
         case None =>
-          logInfo(s"Measure not supported or unknown: $measure.")
+          logWarning(s"Measure not supported or unknown: $measure.")
           None
       }
     }
