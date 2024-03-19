@@ -17,12 +17,14 @@
 package za.co.absa.atum.agent
 
 import org.scalatest.funsuite.AnyFunSuiteLike
+import za.co.absa.atum.agent.AtumAgent.AtumAgentImpl
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
+import za.co.absa.atum.agent.dispatcher.ConsoleDispatcher
 
 class AtumAgentTest extends AnyFunSuiteLike {
 
   test("AtumAgent creates AtumContext(s) as expected") {
-    val atumAgent = new AtumAgent()
+    val atumAgent = new AtumAgentImpl(new ConsoleDispatcher)
     val atumPartitions = AtumPartitions("abc" -> "def")
     val subPartitions = AtumPartitions("ghi", "jkl")
 
