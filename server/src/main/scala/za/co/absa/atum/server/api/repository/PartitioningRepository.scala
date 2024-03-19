@@ -35,7 +35,7 @@ trait PartitioningRepository {
 
   def getPartitioningAdditionalData(
     partitioning: PartitioningSubmitDTO
-  ): IO[DatabaseError, Either[StatusException, AdditionalDataDTO]]
+  ): IO[DatabaseError, Either[StatusException, Seq[AdditionalDataDTO]]]
 
 }
 
@@ -73,7 +73,7 @@ class PartitioningRepositoryImpl(createPartitioningIfNotExistsFn: CreatePartitio
       .tapError(error => ZIO.logError(s"Failed to retrieve partitioning measures from database: ${error.message}"))
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[DatabaseError, Either[StatusException, AdditionalDataDTO]] = {
+  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[DatabaseError, Either[StatusException, Seq[AdditionalDataDTO]]] = {
     getPartitioningAdditionalDataFn(partitioning)
       .tap {
         case Left(statusException) =>
@@ -93,8 +93,8 @@ object PartitioningRepositoryImpl {
   val layer: URLayer[CreatePartitioningIfNotExists, PartitioningRepository] = ZLayer {
     for {
       createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
-//      getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
-//      getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
-    } yield new PartitioningRepositoryImpl(createPartitioningIfNotExists)
+      getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
+      getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
+    } yield new PartitioningRepositoryImpl(createPartitioningIfNotExists, getPartitioningMeasures, getPartitioningAdditionalData)
   }
 }

@@ -16,10 +16,10 @@ import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, AdditionalDataDTO, Task]
+  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Seq[AdditionalDataDTO], Task]
     with StandardStatusHandling {
 
-  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[AdditionalDataDTO]]): Fragment = {
+  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Seq[AdditionalDataDTO]]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningJsonString = Json.toJson(partitioning).toString
 

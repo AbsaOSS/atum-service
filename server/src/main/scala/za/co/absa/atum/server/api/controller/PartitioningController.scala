@@ -42,11 +42,10 @@ class PartitioningControllerImpl(partitioningService: PartitioningService) exten
         case Right(_) =>
 //           partitioningService.getPartitioningMeasures(partitioning)
 //              .flatMap { measures => ZIO.succeed(AtumContextDTO) }
-
           ZIO.succeed {
             val measures: Set[MeasureDTO] = partitioningService.getPartitioningMeasures(partitioning)
-              .flatMap(measures => ZIO.succeed(measures)).getOrElse(Set.empty[MeasureDTO])
-            val additionalData = AdditionalDataDTO(additionalData = Map.empty)
+              .flatMap(measures => ZIO.succeed(measures))
+            val additionalData = AdditionalDataDTO(additionalData = Map.empty[String, Option[String]])
             AtumContextDTO(partitioning.partitioning, measures, additionalData)
           }
       }

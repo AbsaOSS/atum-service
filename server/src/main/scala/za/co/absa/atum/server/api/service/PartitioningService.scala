@@ -35,7 +35,7 @@ trait PartitioningService {
 
   def getPartioningAdditionalData(
     partitioning: PartitioningSubmitDTO
-  ): IO[ServiceError, Either[StatusException, AdditionalDataDTO]]
+  ): IO[ServiceError, Either[StatusException, Seq[AdditionalDataDTO]]]
 }
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) extends PartitioningService {
@@ -57,7 +57,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) ex
       }
   }
 
-  override def getPartioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, AdditionalDataDTO]] = {
+  override def getPartioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, Seq[AdditionalDataDTO]]] = {
     partitioningRepository
       .getPartitioningAdditionalData(partitioning)
       .mapError { case DatabaseError(message) =>
