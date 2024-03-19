@@ -67,7 +67,6 @@ BEGIN
                del_r.ad_name, del_r.ad_value,
                del_r.created_by, del_r.created_at, i_by_user
         FROM deleted_rows AS del_r
-        RETURNING *
     )
     -- 2. (insert) get records that were deleted, and insert the AD table with new values (including new UUID / PK!)
     INSERT INTO runs.additional_data
