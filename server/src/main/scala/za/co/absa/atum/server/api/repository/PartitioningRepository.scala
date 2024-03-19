@@ -89,8 +89,7 @@ class PartitioningRepositoryImpl(createPartitioningIfNotExistsFn: CreatePartitio
 }
 
 object PartitioningRepositoryImpl {
-//  To ask about the behavior
-  val layer: URLayer[CreatePartitioningIfNotExists, PartitioningRepository] = ZLayer {
+  val layer: URLayer[CreatePartitioningIfNotExists with GetPartitioningMeasures with GetPartitioningAdditionalData, PartitioningRepository] = ZLayer {
     for {
       createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
