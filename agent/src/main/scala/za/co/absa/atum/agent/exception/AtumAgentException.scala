@@ -35,13 +35,6 @@ object AtumAgentException {
   case class MeasurementException(message: String) extends AtumAgentException(message)
 
   /**
-   * This type represents an exception thrown when a measure is not supported by the Atum Agent.
-   *
-   * @param message A message describing the exception.
-   */
-  case class MeasureException(message: String) extends AtumAgentException(message)
-
-  /**
    * This type represents an exception related to HTTP communication.
    * @param statusCode A status code of the HTTP response.
    * @param message A message describing the exception.
