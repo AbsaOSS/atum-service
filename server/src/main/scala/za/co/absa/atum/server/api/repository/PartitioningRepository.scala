@@ -16,8 +16,8 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{MeasureDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningIfNotExists, GetPartitioningMeasures}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, MeasureDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
@@ -32,10 +32,16 @@ trait PartitioningRepository {
   def getPartitioningMeasures(
     partitioning: PartitioningSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Seq[MeasureDTO]]]
+
+  def getPartitioningAdditionalData(
+    partitioning: PartitioningSubmitDTO
+  ): IO[DatabaseError, Either[StatusException, AdditionalDataDTO]]
+
 }
 
 class PartitioningRepositoryImpl(createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
-                                 getPartitioningMeasuresFn: GetPartitioningMeasures)
+                                 getPartitioningMeasuresFn: GetPartitioningMeasures,
+                                 getPartitioningAdditionalDataFn: GetPartitioningAdditionalData)
     extends PartitioningRepository {
   override def createPartitioningIfNotExists(
     partitioning: PartitioningSubmitDTO
@@ -66,12 +72,29 @@ class PartitioningRepositoryImpl(createPartitioningIfNotExistsFn: CreatePartitio
       .mapError(error => DatabaseError(error.getMessage))
       .tapError(error => ZIO.logError(s"Failed to retrieve partitioning measures from database: ${error.message}"))
   }
+
+  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[DatabaseError, Either[StatusException, AdditionalDataDTO]] = {
+    getPartitioningAdditionalDataFn(partitioning)
+      .tap {
+        case Left(statusException) =>
+          ZIO.logError(
+            s"Partitioning additional data retrieve operation exception: (${statusException.status.statusCode}) ${statusException.status.statusText}"
+          )
+        case Right(_) =>
+          ZIO.logDebug("Partitioning additional data successfully retrieved from database.")
+      }
+      .mapError(error => DatabaseError(error.getMessage))
+      .tapError(error => ZIO.logError(s"Failed to retrieve partitioning additional data from database: ${error.message}"))
+  }
 }
 
 object PartitioningRepositoryImpl {
+//  To ask about the behavior
   val layer: URLayer[CreatePartitioningIfNotExists, PartitioningRepository] = ZLayer {
     for {
       createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
-    } yield new PartitioningRepositoryImpl(createPartitioningIfNotExists)
+      getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
+      getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
+    } yield new PartitioningRepositoryImpl(createPartitioningIfNotExists, getPartitioningMeasures, getPartitioningAdditionalData)
   }
 }
