@@ -22,6 +22,7 @@ import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
 import zio._
 import zio.macros.accessible
+import zio.prelude.data.Optional.AllValuesAreNullable
 
 @accessible
 trait PartitioningController {
@@ -39,8 +40,12 @@ class PartitioningControllerImpl(partitioningService: PartitioningService) exten
         case Left(statusException) =>
           ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
         case Right(_) =>
+//           partitioningService.getPartitioningMeasures(partitioning)
+//              .flatMap { measures => ZIO.succeed(AtumContextDTO) }
+
           ZIO.succeed {
             val measures: Set[MeasureDTO] = partitioningService.getPartitioningMeasures(partitioning)
+              .flatMap(measures => ZIO.succeed(measures)).getOrElse(Set.empty[MeasureDTO])
             val additionalData = AdditionalDataDTO(additionalData = Map.empty)
             AtumContextDTO(partitioning.partitioning, measures, additionalData)
           }

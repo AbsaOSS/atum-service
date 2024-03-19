@@ -31,7 +31,7 @@ trait PartitioningService {
 
   def getPartitioningMeasures(
     partitioning: PartitioningSubmitDTO
-  ): IO[ServiceError, Either[StatusException, Unit]]
+  ): IO[ServiceError, Either[StatusException, Seq[MeasureDTO]]]
 }
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) extends PartitioningService {
@@ -45,13 +45,14 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) ex
       }
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO): Seq[MeasureDTO] = {
+  override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, Seq[MeasureDTO]]] = {
     partitioningRepository
       .getPartitioningMeasures(partitioning)
       .mapError { case DatabaseError(message) =>
         ServiceError(s"Failed to retrieve partitioning measures: $message")
       }
   }
+
 }
 
 object PartitioningServiceImpl {

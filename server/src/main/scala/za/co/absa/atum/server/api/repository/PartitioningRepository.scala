@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.PartitioningSubmitDTO
+import za.co.absa.atum.model.dto.{MeasureDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningIfNotExists, GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
@@ -31,7 +31,7 @@ trait PartitioningRepository {
 
   def getPartitioningMeasures(
     partitioning: PartitioningSubmitDTO
-  ): IO[DatabaseError, Either[StatusException, Unit]]
+  ): IO[DatabaseError, Either[StatusException, Seq[MeasureDTO]]]
 }
 
 class PartitioningRepositoryImpl(createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
@@ -53,7 +53,7 @@ class PartitioningRepositoryImpl(createPartitioningIfNotExistsFn: CreatePartitio
       .tapError(error => ZIO.logError(s"Failed to create or retrieve partitioning in/from database: ${error.message}"))
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
+  override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO): IO[DatabaseError, Either[StatusException, Seq[MeasureDTO]]] = {
     getPartitioningMeasuresFn(partitioning)
       .tap {
         case Left(statusException) =>
