@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{MeasureDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, MeasureDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.PartitioningRepository
 import za.co.absa.fadb.exceptions.StatusException
@@ -32,6 +32,10 @@ trait PartitioningService {
   def getPartitioningMeasures(
     partitioning: PartitioningSubmitDTO
   ): IO[ServiceError, Either[StatusException, Seq[MeasureDTO]]]
+
+  def getPartioningAdditionalData(
+    partitioning: PartitioningSubmitDTO
+  ): IO[ServiceError, Either[StatusException, AdditionalDataDTO]]
 }
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) extends PartitioningService {
@@ -53,6 +57,13 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository) ex
       }
   }
 
+  override def getPartioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, AdditionalDataDTO]] = {
+    partitioningRepository
+      .getPartitioningAdditionalData(partitioning)
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to retrieve partitioning additional data: $message")
+      }
+  }
 }
 
 object PartitioningServiceImpl {
