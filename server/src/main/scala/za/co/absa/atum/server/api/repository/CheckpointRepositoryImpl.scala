@@ -16,17 +16,24 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
-import zio.IO
-import zio.macros.accessible
+import zio._
 
-@accessible
-trait PartitioningRepository {
-  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO):
-    IO[DatabaseError, Either[StatusException, Unit]]
+class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository with BaseRepository {
 
-  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
-    IO[DatabaseError, Either[StatusException, Unit]]
+  override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
+    dbCallWithStatus(writeCheckpointFn(checkpointDTO), "writeCheckpoint")
+  }
+
+}
+
+object CheckpointRepositoryImpl {
+  val layer: URLayer[WriteCheckpoint, CheckpointRepository] = ZLayer {
+    for {
+      writeCheckpoint <- ZIO.service[WriteCheckpoint]
+    } yield new CheckpointRepositoryImpl(writeCheckpoint)
+  }
 }

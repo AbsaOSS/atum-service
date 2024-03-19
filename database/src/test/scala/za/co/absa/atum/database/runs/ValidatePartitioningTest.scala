@@ -19,7 +19,7 @@ package za.co.absa.atum.database.runs
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
-class ValidatePartitioning extends DBTestSuite {
+class ValidatePartitioningTest extends DBTestSuite {
 
   private val fncValidatePartitioning = "validation.validate_partitioning"
 

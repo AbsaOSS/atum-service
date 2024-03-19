@@ -16,17 +16,26 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
-import zio.IO
-import zio.macros.accessible
+import zio._
 
-@accessible
-trait PartitioningRepository {
-  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO):
-    IO[DatabaseError, Either[StatusException, Unit]]
+trait BaseRepository {
 
-  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
-    IO[DatabaseError, Either[StatusException, Unit]]
+  def dbCallWithStatus[R](
+    dbFuncCall: Task[Either[StatusException, R]],
+    operationName: String
+  ): IO[DatabaseError, Either[StatusException, R]] = {
+    dbFuncCall
+      .tap {
+        case Left(statusException) =>
+          ZIO.logError(
+            s"Exception caused by operation: '$operationName': " +
+              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+          )
+        case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
+      }
+      .mapError(error => DatabaseError(error.getMessage))
+      .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
+  }
 }

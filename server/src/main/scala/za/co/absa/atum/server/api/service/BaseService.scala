@@ -14,9 +14,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.server.api.service
 
-package object dto {
-  type PartitioningDTO = Seq[PartitionDTO]
-  type AdditionalDataDTO = Map[String, Option[String]]
+import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
+import za.co.absa.fadb.exceptions.StatusException
+import zio._
+
+trait BaseService {
+
+  def repositoryCallWithStatus[R](
+    repositoryCall: IO[DatabaseError, Either[StatusException, R]],
+    operationName: String
+  ): IO[ServiceError, Either[StatusException, R]] = {
+    repositoryCall
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to perform '$operationName': $message")
+      }
+  }
+
 }

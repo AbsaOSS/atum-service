@@ -17,11 +17,26 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.ErrorResponse
-import zio.IO
-import zio.macros.accessible
+import zio._
 
-@accessible
-trait CheckpointController {
-  def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
+class CheckpointControllerImpl(checkpointService: CheckpointService)
+  extends CheckpointController with BaseController {
+
+  override def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO] = {
+    serviceCallWithStatus[Unit, CheckpointDTO](
+      checkpointService.saveCheckpoint(checkpointDTO),
+      _ => checkpointDTO
+    )
+  }
+
+}
+
+object CheckpointControllerImpl {
+  val layer: URLayer[CheckpointService, CheckpointController] = ZLayer {
+    for {
+      checkpointService <- ZIO.service[CheckpointService]
+    } yield new CheckpointControllerImpl(checkpointService)
+  }
 }

@@ -28,47 +28,63 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
 
   // AdditionalDataDTO
   "asJson" should "serialize AdditionalDataDTO into json string" in {
-    val additionalDataDTO = AdditionalDataDTO(
+    val additionalDataDTO = AdditionalDataSubmitDTO(
+      Seq(PartitionDTO("key", "val")),
       Map[String, Option[String]](
         "key1" -> Some("val1"),
         "key2" -> Some("val2"),
         "key3" -> None
-      )
+      ),
+      "testAuthor"
     )
 
-    val expectedAdditionalDataJson = """{"additionalData":{"key1":"val1","key2":"val2"}}"""
+    val expectedAdditionalDataJson =
+      """
+        |{"partitioning":[{"key":"key","value":"val"}],
+        |"additionalData":{"key1":"val1","key2":"val2"},
+        |"author":"testAuthor"}
+        |""".linearize
     val actualAdditionalDataJson = SerializationUtils.asJson(additionalDataDTO)
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
 
   "fromJson" should "deserialize AdditionalDataDTO from json string" in {
-    val additionalDataDTOJson = """{"additionalData":{"key1":"val1","key2":"val2"}}"""
-    val expectedAdditionalDataDTO = AdditionalDataDTO(
+    val additionalDataDTOJson =
+      """
+        |{"partitioning":[{"key":"key","value":"val"}],
+        |"additionalData":{"key1":"val1","key2":"val2"},
+        |"author":"testAuthor"}
+        |""".linearize
+
+    val expectedAdditionalDataDTO = AdditionalDataSubmitDTO(
+      Seq[PartitionDTO](PartitionDTO("key", "val")),
       Map[String, Option[String]](
         "key1" -> Some("val1"),
         "key2" -> Some("val2")
-      )
+      ),
+      "testAuthor"
     )
-    val actualAdditionalDataDTO = SerializationUtils.fromJson[AdditionalDataDTO](additionalDataDTOJson)
+    val actualAdditionalDataDTO = SerializationUtils.fromJson[AdditionalDataSubmitDTO](additionalDataDTOJson)
 
     assert(actualAdditionalDataDTO == expectedAdditionalDataDTO)
   }
 
   "asJson" should "serialize empty AdditionalDataDTO into json string" in {
-    val additionalDataDTO = AdditionalDataDTO(Map.empty)
+    val additionalDataDTO = AdditionalDataSubmitDTO(Seq.empty, Map.empty, "testAuthor")
 
-    val expectedAdditionalDataJson = """{"additionalData":{}}"""
+    val expectedAdditionalDataJson = """{"partitioning":[],"additionalData":{},"author":"testAuthor"}"""
     val actualAdditionalDataJson = SerializationUtils.asJson(additionalDataDTO)
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
 
   "fromJson" should "deserialize empty AdditionalDataDTO from json string" in {
-    val additionalDataDTOJsonString = """{"additionalData":{}}"""
-    val expectedAdditionalDataDTO = AdditionalDataDTO(Map.empty)
+    val additionalDataDTOJsonString = """{"partitioning":[],"additionalData":{},"author":"testAuthor"}"""
 
-    val actualAdditionalDataDTO = SerializationUtils.fromJson[AdditionalDataDTO](additionalDataDTOJsonString)
+    val expectedAdditionalDataDTO = AdditionalDataSubmitDTO(Seq.empty, Map.empty, "testAuthor")
+
+    val actualAdditionalDataDTO = SerializationUtils.fromJson[AdditionalDataSubmitDTO](additionalDataDTOJsonString)
 
     assert(actualAdditionalDataDTO == expectedAdditionalDataDTO)
   }
@@ -85,7 +101,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
         |{
         |"partitioning":[{"key":"key","value":"val"}],
         |"measures":[{"measureName":"count","measuredColumns":["col"]}],
-        |"additionalData":{"additionalData":{}}
+        |"additionalData":{}
         |}""".linearize
     val actualAdditionalDataJson = SerializationUtils.asJson(atumContextDTO)
 
@@ -95,10 +111,11 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
   "fromJson" should "deserialize AtumContextDTO from json string" in {
     val atumContextDTOJson =
       """
-        |{"partitioning":[{"key":"key","value":"val"}],
+        |{
+        |"partitioning":[{"key":"key","value":"val"}],
         |"measures":[{"measureName":"count","measuredColumns":["col"]}],
-        |"additionalData":{"additionalData":{}}}
-        |""".stripMargin
+        |"additionalData":{}
+        |}""".linearize
 
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val seqMeasureDTO = Set(MeasureDTO("count", Seq("col")))
@@ -115,14 +132,14 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
 
     val atumContextDTO = AtumContextDTO(partitioning = seqPartitionDTO)
 
-    val expectedAdditionalDataJson = """{"partitioning":[{"key":"key","value":"val"}],"measures":[],"additionalData":{"additionalData":{}}}"""
+    val expectedAdditionalDataJson = """{"partitioning":[{"key":"key","value":"val"}],"measures":[],"additionalData":{}}"""
     val actualAdditionalDataJson = SerializationUtils.asJson(atumContextDTO)
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
 
   "fromJson" should "deserialize AtumContextDTO without measures from json string" in {
-    val atumContextDTOJson = """{"partitioning":[{"key":"key","value":"val"}],"measures":[],"additionalData":{"additionalData":{}}}"""
+    val atumContextDTOJson = """{"partitioning":[{"key":"key","value":"val"}],"measures":[],"additionalData":{}}"""
 
     val expectedSeqPartitionDTO = Seq(PartitionDTO("key", "val"))
 
