@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.AtumContext.AtumPartitions
+import za.co.absa.atum.agent.AtumContext.{AdditionalData, AtumPartitions}
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
@@ -36,7 +36,7 @@ class AtumContext private[agent] (
   val atumPartitions: AtumPartitions,
   val agent: AtumAgent,
   private var measures: Set[AtumMeasure] = Set.empty,
-  private var additionalData: Map[String, Option[String]] = Map.empty
+  private var additionalData: AdditionalData = Map.empty
 ) {
 
   /**
@@ -84,9 +84,9 @@ class AtumContext private[agent] (
     val checkpointDTO = CheckpointDTO(
       id = UUID.randomUUID(),
       name = checkpointName,
-      author = this.agent.currentUser,
+      author = agent.currentUser,
       measuredByAtumAgent = true,
-      partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
+      partitioning = AtumPartitions.toSeqPartitionDTO(atumPartitions),
       processStartTime = startTime,
       processEndTime = Some(endTime),
       measurements = measurementDTOs
@@ -103,14 +103,14 @@ class AtumContext private[agent] (
    * @param measurements   the measurements to be included in the checkpoint
    * @return the AtumContext after the checkpoint has been created
    */
-  def createCheckpointOnProvidedData(checkpointName: String, measurements: Map[AtumMeasure, MeasureResult]): AtumContext = {
+  def createCheckpointOnProvidedData(checkpointName: String, measurements: Map[Measure, MeasureResult]): AtumContext = {
     val dateTimeNow = ZonedDateTime.now()
 
     val checkpointDTO = CheckpointDTO(
       id = UUID.randomUUID(),
       name = checkpointName,
-      author = this.agent.currentUser,
-      partitioning = AtumPartitions.toSeqPartitionDTO(this.atumPartitions),
+      author = agent.currentUser,
+      partitioning = AtumPartitions.toSeqPartitionDTO(atumPartitions),
       processStartTime = dateTimeNow,
       processEndTime = Some(dateTimeNow),
       measurements = MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements)
@@ -121,24 +121,35 @@ class AtumContext private[agent] (
   }
 
   /**
-   * This method creates Additional Data in the agentService.
-   *
-   * @return AtumContext
-   */
-  def saveAdditionalData(): AtumContext = {
-    val additionalData = AdditionalDataSubmitDTO(AtumPartitions.toSeqPartitionDTO(this.atumPartitions), this.additionalData)
-    agent.saveAdditionalData(additionalData)
-    this
-  }
-
-  /**
    * Adds additional data to the AtumContext.
    *
    * @param key   the key of the additional data
    * @param value the value of the additional data
+   *
+   * @return the AtumContext after the AD has been dispatched and added
    */
   def addAdditionalData(key: String, value: String): AtumContext = {
-    additionalData += (key -> Some(value))
+    addAdditionalData(Map(key -> value))
+  }
+
+  /**
+   * This method creates Additional Data in the agentService and dispatches them into the data store.
+   *
+   * @param newAdditionalDataToAdd additional data that will be added into the data store
+   *
+   * @return the AtumContext after the AD has been dispatched and added
+   */
+  def addAdditionalData(newAdditionalDataToAdd: Map[String, String]): AtumContext = {
+    val currAdditionalData = newAdditionalDataToAdd.map{case (k,v) => (k, Some(v))}
+
+    val currAdditionalDataSubmit = AdditionalDataSubmitDTO(
+      AtumPartitions.toSeqPartitionDTO(atumPartitions),
+      currAdditionalData,
+      agent.currentUser
+    )
+    agent.saveAdditionalData(currAdditionalDataSubmit)
+
+    this.additionalData ++= currAdditionalData
     this
   }
 
@@ -147,8 +158,8 @@ class AtumContext private[agent] (
    *
    * @return the current additional data
    */
-  def currentAdditionalData: Map[String, Option[String]] = {
-    this.additionalData
+  def currentAdditionalData: AdditionalDataDTO = {
+    additionalData
   }
 
   /**
@@ -182,10 +193,10 @@ class AtumContext private[agent] (
   }
 
   private[agent] def copy(
-    atumPartitions: AtumPartitions = this.atumPartitions,
-    agent: AtumAgent = this.agent,
-    measures: Set[AtumMeasure] = this.measures,
-    additionalData: Map[String, Option[String]] = this.additionalData
+    atumPartitions: AtumPartitions = atumPartitions,
+    agent: AtumAgent = agent,
+    measures: Set[AtumMeasure] = measures,
+    additionalData: AdditionalDataDTO = additionalData
   ): AtumContext = {
     new AtumContext(atumPartitions, agent, measures, additionalData)
   }
@@ -196,6 +207,7 @@ object AtumContext {
    * Type alias for Atum partitions.
    */
   type AtumPartitions = ListMap[String, String]
+  type AdditionalData = AdditionalDataDTO
 
   /**
    * Object contains helper methods to work with Atum partitions.
@@ -223,7 +235,7 @@ object AtumContext {
       AtumPartitions.fromPartitioning(atumContextDTO.partitioning),
       agent,
       MeasuresBuilder.mapToMeasures(atumContextDTO.measures),
-      atumContextDTO.additionalData.additionalData
+      atumContextDTO.additionalData
     )
   }
 

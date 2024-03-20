@@ -16,34 +16,42 @@
 
 package za.co.absa.atum.agent.model
 
-import za.co.absa.atum.agent.exception.AtumAgentException.MeasureException
 import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureDTO
+import org.apache.spark.internal.Logging
+
+import scala.util.Try
 
 /**
  * This object provides a functionality to convert a DTO representation of measures to the Agent's internal
  * representation of those objects.
  */
-private [agent] object MeasuresBuilder {
+private [agent] object MeasuresBuilder extends Logging {
 
   private [agent] def mapToMeasures(measures: Set[MeasureDTO]): Set[za.co.absa.atum.agent.model.AtumMeasure] = {
-    measures.map(createMeasure)
+    measures.flatMap { measure =>
+      createMeasure(measure) match {
+        case Some(value) =>
+          Some(value)
+        case None =>
+          logWarning(s"Measure not supported or unknown: $measure.")
+          None
+      }
+    }
   }
 
-  private def createMeasure(measure: MeasureDTO): za.co.absa.atum.agent.model.AtumMeasure = {
+  private def createMeasure(measure: MeasureDTO): Option[za.co.absa.atum.agent.model.AtumMeasure] = {
     val measuredColumns = measure.measuredColumns
 
-    measure.measureName match {
-      case RecordCount.measureName            => RecordCount()
-      case DistinctRecordCount.measureName    => DistinctRecordCount(measuredColumns)
-      case SumOfValuesOfColumn.measureName    => SumOfValuesOfColumn(measuredColumns.head)
-      case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(measuredColumns.head)
-      case SumOfHashesOfColumn.measureName    => SumOfHashesOfColumn(measuredColumns.head)
-      case unsupportedMeasure =>
-        throw MeasureException(
-          s"Measure not supported: $unsupportedMeasure. Supported measures are: ${AtumMeasure.supportedMeasureNames}"
-        )
-    }
+    Try {
+      measure.measureName match {
+        case RecordCount.measureName => RecordCount()
+        case DistinctRecordCount.measureName => DistinctRecordCount(measuredColumns)
+        case SumOfValuesOfColumn.measureName => SumOfValuesOfColumn(measuredColumns.head)
+        case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(measuredColumns.head)
+        case SumOfHashesOfColumn.measureName => SumOfHashesOfColumn(measuredColumns.head)
+      }
+    }.toOption
   }
 
 }

@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.server.api.http
 
-package object dto {
-  type PartitioningDTO = Seq[PartitionDTO]
-  type AdditionalDataDTO = Map[String, Option[String]]
+import za.co.absa.atum.server.api.controller.{CheckpointController, PartitioningController}
+import zio.RIO
+import zio.metrics.connectors.prometheus.PrometheusPublisher
+
+object HttpEnv {
+
+  type Env = PartitioningController with CheckpointController with PrometheusPublisher
+  // naming effect types as `F` is a convention in Scala community
+  type F[A] = RIO[Env, A]
+
 }

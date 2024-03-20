@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 import sbt._
 
 object Dependencies {
@@ -62,9 +61,11 @@ object Dependencies {
     val zioLogging = "2.2.0"
     val logbackZio = "1.4.7"
     val zioConfig = "4.0.1"
+    val zioMetricsConnectors = "2.3.1"
     val sbtJunitInterface = "0.13.3"
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
+    val http4sPrometheus = "0.23.6"
     val playJson = "3.0.1"
     val sttpPlayJson = "3.9.3"
 
@@ -152,14 +153,17 @@ object Dependencies {
     lazy val zioConfig = zioOrg %% "zio-config" % Versions.zioConfig
     lazy val zioConfigMagnolia = zioOrg %% "zio-config-magnolia" % Versions.zioConfig
     lazy val zioConfigTypesafe = zioOrg %% "zio-config-typesafe" % Versions.zioConfig
+    lazy val zioMetricsConnectors = zioOrg %% "zio-metrics-connectors-prometheus" % Versions.zioMetricsConnectors
 
     // http4s
     lazy val http4sBlazeBackend = http4sOrg %% "http4s-blaze-server" % Versions.http4sBlazeBackend
+    lazy val http4sPrometheus = http4sOrg %% "http4s-prometheus-metrics" % Versions.http4sPrometheus
 
     // tapir
     lazy val tapirHttp4sZio = tapirOrg %% "tapir-http4s-server-zio" % Versions.tapir
     lazy val tapirSwagger = tapirOrg %% "tapir-swagger-ui-bundle" % Versions.tapir
     lazy val tapirPlayJson = tapirOrg %% "tapir-json-play" % Versions.tapir
+    lazy val tapirPrometheus = tapirOrg %% "tapir-prometheus-metrics" % Versions.tapir
     lazy val tapirStubServer = tapirOrg %% "tapir-sttp-stub-server" % Versions.tapir % Test
 
     // json
@@ -188,10 +192,13 @@ object Dependencies {
       zioConfig,
       zioConfigMagnolia,
       zioConfigTypesafe,
+      zioMetricsConnectors,
       http4sBlazeBackend,
+      http4sPrometheus,
       tapirHttp4sZio,
       tapirSwagger,
       tapirPlayJson,
+      tapirPrometheus,
       tapirStubServer,
       playJson,
       sttpPlayJson,

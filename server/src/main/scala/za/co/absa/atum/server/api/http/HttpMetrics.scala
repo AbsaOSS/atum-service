@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.server.api.http
 
-package object dto {
-  type PartitioningDTO = Seq[PartitionDTO]
-  type AdditionalDataDTO = Map[String, Option[String]]
+import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
+
+object HttpMetrics {
+
+  val prometheusMetrics: PrometheusMetrics[HttpEnv.F] = PrometheusMetrics[HttpEnv.F]("http")
+    .addRequestsTotal()
+    .addRequestsActive()
+    .addRequestsDuration()
+
 }

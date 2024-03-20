@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model
+package za.co.absa.atum.server.config
 
-package object dto {
-  type PartitioningDTO = Seq[PartitionDTO]
-  type AdditionalDataDTO = Map[String, Option[String]]
+import zio.Config
+import zio.config.magnolia.deriveConfig
+
+case class HttpMonitoringConfig(enabled: Boolean)
+
+object HttpMonitoringConfig {
+  val config: Config[HttpMonitoringConfig] = deriveConfig[HttpMonitoringConfig].nested("monitoring", "http")
 }

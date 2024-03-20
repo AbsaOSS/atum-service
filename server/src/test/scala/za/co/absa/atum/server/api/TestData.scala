@@ -16,13 +16,14 @@
 
 package za.co.absa.atum.server.api
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningSubmitDTO}
 
 import java.time.ZonedDateTime
 import java.util.UUID
 
 trait TestData {
 
+  // Partitioning
   protected val partitioningSubmitDTO1: PartitioningSubmitDTO = PartitioningSubmitDTO(
     partitioning = Seq.empty,
     parentPartitioning = None,
@@ -34,6 +35,19 @@ trait TestData {
   protected val partitioningSubmitDTO3: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
 
+  // Additional Data
+  protected val additionalDataSubmitDTO1: AdditionalDataSubmitDTO = AdditionalDataSubmitDTO(
+    partitioning = Seq.empty,
+    additionalData = Map.empty,
+    author = ""
+  )
+  protected val additionalDataSubmitDTO2: AdditionalDataSubmitDTO =
+    additionalDataSubmitDTO1.copy(author = "differentADAuthor")
+
+  protected val additionalDataSubmitDTO3: AdditionalDataSubmitDTO =
+    additionalDataSubmitDTO1.copy(author = "yetAnotherADAuthor")
+
+  // Checkpoint
   protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
     id = UUID.randomUUID(),
     name = "name",
@@ -49,7 +63,7 @@ trait TestData {
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
-    val additionalData = AdditionalDataDTO(additionalData = Map.empty)
+    val additionalData: AdditionalDataDTO = Map.empty
     AtumContextDTO(partitioningSubmitDTO.partitioning, measures, additionalData)
   }
 

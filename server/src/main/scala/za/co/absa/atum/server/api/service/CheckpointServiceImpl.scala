@@ -16,23 +16,27 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AdditionalDataDTO, PartitioningSubmitDTO, MeasureDTO}
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.repository.CheckpointRepository
 import za.co.absa.fadb.exceptions.StatusException
-import zio.IO
-import zio.macros.accessible
+import zio._
 
-@accessible
-trait PartitioningService {
-  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO):
-    IO[ServiceError, Either[StatusException, Unit]]
+class CheckpointServiceImpl(checkpointRepository: CheckpointRepository)
+  extends CheckpointService with BaseService {
 
-  def getPartitioningMeasures(partitioning: PartitioningSubmitDTO):
-    IO[ServiceError, Either[StatusException, Seq[MeasureDTO]]]
+  override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]] = {
+    repositoryCallWithStatus(
+      checkpointRepository.writeCheckpoint(checkpointDTO), "saveCheckpoint"
+    )
+  }
 
-  def getPartioningAdditionalData(partitioning: PartitioningSubmitDTO):
-    IO[ServiceError, Either[StatusException, Seq[AdditionalDataDTO]]]
+}
 
-  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
-    IO[ServiceError, Either[StatusException, Unit]]
+object CheckpointServiceImpl {
+  val layer: URLayer[CheckpointRepository, CheckpointService] = ZLayer {
+    for {
+      checkpointRepository <- ZIO.service[CheckpointRepository]
+    } yield new CheckpointServiceImpl(checkpointRepository)
+  }
 }

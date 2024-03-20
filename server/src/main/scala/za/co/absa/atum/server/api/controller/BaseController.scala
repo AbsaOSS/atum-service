@@ -14,15 +14,30 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
-import zio.macros.accessible
 
-@accessible
-trait CheckpointService {
-  def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]]
+trait BaseController {
+
+  def serviceCallWithStatus[A, B](
+    serviceCall: IO[ServiceError, Either[StatusException, A]],
+    onSuccessFnc: A => B
+  ): IO[ErrorResponse, B] = {
+
+    serviceCall
+      .mapError { serviceError: ServiceError =>
+        InternalServerErrorResponse(serviceError.message)
+      }
+      .flatMap {
+        case Left(statusException) =>
+          ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
+        case Right(result) =>
+          ZIO.succeed(onSuccessFnc(result))
+      }
+
+  }
 }
