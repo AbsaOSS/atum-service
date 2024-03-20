@@ -28,8 +28,8 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     serviceCallWithStatus[Unit, AtumContextDTO](
       partitioningService.createPartitioningIfNotExists(partitioning),
       _ => {
-        val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
-        val additionalData: AdditionalDataDTO = Map.empty
+        val measures: Set[MeasureDTO] = Set(partitioningService.getPartitioningMeasures(partitioning))
+        val additionalData: AdditionalDataDTO = partitioningService.getPartioningAdditionalData(partitioning)
         AtumContextDTO(partitioning.partitioning, measures, additionalData)
       }
     )
