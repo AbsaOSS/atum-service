@@ -22,7 +22,7 @@ import za.co.absa.atum.agent.AtumContext.AtumPartitions
 class AtumAgentTest extends AnyFunSuiteLike {
 
   test("AtumAgent creates AtumContext(s) as expected") {
-    val atumAgent = new AtumAgent()
+    val atumAgent = AtumAgent
     val atumPartitions = AtumPartitions("abc" -> "def")
     val subPartitions = AtumPartitions("ghi", "jkl")
 
