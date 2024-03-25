@@ -34,7 +34,7 @@ trait PartitioningRepository {
 
   def getPartitioningAdditionalData(
     partitioning: PartitioningSubmitDTO
-  ): IO[DatabaseError, Either[StatusException, Seq[AdditionalDataDTO]]]
+  ): IO[DatabaseError, Either[StatusException,  AdditionalDataDTO]]
 
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
     IO[DatabaseError, Either[StatusException, Unit]]

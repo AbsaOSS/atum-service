@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, AtumContextDTO, MeasureDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.PartitioningRepository
 import za.co.absa.fadb.exceptions.StatusException
@@ -41,6 +41,42 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, Seq[MeasureDTO]]] = {
+    repositoryCallWithStatus(
+      partitioningRepository.getPartitioningMeasures(partitioning), "getPartitioningMeasures"
+    )
+  }
+
+  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, AdditionalDataDTO]] = {
+    repositoryCallWithStatus(
+      partitioningRepository.getPartitioningAdditionalData(partitioning), "getPartitioningAdditionalData"
+    )
+  }
+
+  def returnAtumContext(partitioning: PartitioningSubmitDTO): IO[ServiceError, AtumContextDTO] = {
+    for {
+      partitioning <- createPartitioningIfNotExists(partitioning)
+        .flatMap {
+          case Left(_) => ZIO.fail(ServiceError("Failed to create or retrieve partitioning"))
+          case Right(_) => ZIO.succeed(partitioning)
+        }
+        .mapError(error => ServiceError(error.message))
+
+      additionalData <- getPartitioningAdditionalData(partitioning)
+        .flatMap {
+          case Left(_) => ZIO.succeed(Map[String, Option[String]])
+          case Right(value) => ZIO.succeed(value)
+        }
+        .mapError(error => ServiceError(error.message))
+
+      measures <- getPartitioningMeasures(partitioning)
+        .flatMap {
+          case Left(_) => ZIO.succeed(Set.empty[MeasureDTO])
+          case Right(value) => ZIO.succeed(value.toSet)
+        }
+        .mapError(error => ServiceError(error.message))
+    } yield AtumContextDTO(partitioning.partitioning, measures, additionalData)
+  }
 }
 
 object PartitioningServiceImpl {
