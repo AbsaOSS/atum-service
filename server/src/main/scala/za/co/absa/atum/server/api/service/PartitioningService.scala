@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, MeasureDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.fadb.exceptions.StatusException
 import zio.IO
@@ -27,6 +27,13 @@ trait PartitioningService {
   def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO):
     IO[ServiceError, Either[StatusException, Unit]]
 
+  def getPartitioningMeasures(partitioning: PartitioningSubmitDTO):
+    IO[ServiceError, Either[StatusException, Seq[MeasureDTO]]]
+
+  def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO):
+    IO[ServiceError, Either[StatusException, AdditionalDataDTO]]
+
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
     IO[ServiceError, Either[StatusException, Unit]]
+
 }

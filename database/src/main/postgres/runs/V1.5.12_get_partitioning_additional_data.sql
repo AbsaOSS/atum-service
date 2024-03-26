@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_additional_data(
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.get_partitioning_additional_data(2)
+-- Function: runs.get_partitioning_additional_data(1)
 --      Returns additional data for the given partitioning
 --
 -- Parameters:
@@ -63,12 +63,6 @@ BEGIN
     FROM runs.additional_data AS ad
     WHERE ad.fk_partitioning = _fk_partitioning;
 
-    IF NOT FOUND THEN
-        status := 16;
-        status_text := 'No additional data found for the given partitioning.';
-        RETURN NEXT;
-        RETURN;
-    END IF;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
