@@ -19,29 +19,85 @@ package za.co.absa.atum.agent.dispatcher
 import com.typesafe.config.Config
 import za.co.absa.atum.model.dto._
 
-import java.util
-import scala.jdk.CollectionConverters._
+import scala.collection.mutable
 
 /**
  *  This dispatcher instead of sending data captures them and stores them in memory.
- *  @param checkpointsLimit maximal amount of checkpoints to be stored for each partition.
- *                   If the limit is reached, the oldest checkpoint is removed.
- *                   Value 0 removes this limit.
+ *  @param config: Config to be used to create the dispatcher. Keys:
+ *           capture-limit - maximal amount of dispatch captures to store.
  */
-class CapturingDispatcher(checkpointsLimit: Int) extends Dispatcher {
+class CapturingDispatcher(config: Config) extends Dispatcher(config) {
   import CapturingDispatcher._
 
-  private val ts = util.Collections.synchronizedSortedMap(new util.TreeMap[String, PartitionedData]())
+
+  val captureLimit: Int = config.getInt(CheckpointLimitKey)
 
   /**
-   *  This method is used to ensure the server knows the given partitioning.
-   *  As a response the `AtumContext` is fetched from the server.
-   *
-   *  @param partitioning  : PartitioningSubmitDTO to be used to ensure server knows the given partitioning.
-   *  @return AtumContextDTO.
+   * This method is used to clear all captured data.
    */
-  override def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    AtumContextDTO(partitioning = partitioning.partitioning)
+  def clear(): Unit = {
+    synchronized(captures.clear())
+  }
+
+  /**
+   * This method is used to check if the given function call has been captured.
+   *
+   * @param functionName - the function name that was supposed to be dispatched
+   * @return             - true if the function was captured, false otherwise
+   */
+  def contains(functionName: String): Boolean = {
+    synchronized {
+      captures.exists(_.functionName == functionName)
+    }
+  }
+
+  /**
+   * This method is used to check if the given function call has been captured.
+   *
+   * @param functionName - the function name that was supposed to be dispatched
+   * @param input        - the input parameter of the function
+   * @return             - true if the function was captured, false otherwise
+   */
+  def contains[I](functionName: String, input: I): Boolean = {
+    synchronized {
+      captures.exists(item => ((item.functionName == functionName) && (item.input == input)))
+    }
+  }
+
+  /**
+   * This method is used to check if the given function call has been captured.
+   *
+   * @param functionName - the function name that was supposed to be dispatched
+   * @param input        - the input parameter of the function
+   * @param result       - the result of the function
+   * @return             - true if the function was captured, false otherwise
+   */
+  def contains[I, R](functionName: String, input: I, result: R): Boolean = {
+    synchronized(captures.contains(CapturedCall(functionName, input, result)))
+  }
+
+  /**
+   * This method is used to get the captured data.
+   *
+   * @return the captured data
+   */
+  def capturesSnapshot: List[CapturedCall] = synchronized(captures.toList)
+
+
+  private val captures: mutable.Queue[CapturedCall] = mutable.Queue.empty
+
+  protected def capture[I, R](fnc: Function1[I, R], input: I, result: R): R = {
+
+    val functionName = Thread.currentThread().getStackTrace()(2).getMethodName
+    val capture = CapturedCall(functionName, input, result)
+
+    synchronized {
+      if ((captureLimit > 0) && (captures.size >= captureLimit)) {
+        captures.dequeue()
+      }
+      captures.enqueue(capture)
+    }
+    result
   }
 
   /**
@@ -49,22 +105,8 @@ class CapturingDispatcher(checkpointsLimit: Int) extends Dispatcher {
    *
    *  @param checkpoint : CheckpointDTO to be saved.
    */
-  override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    val path = createPath(checkpoint.partitioning)
-    ts.compute(
-      path,
-      (_, events) =>
-        Option(events)
-          .map(_.copy(checkpointStack = checkpoint :: takeLatestCheckpoints(events.checkpointStack)))
-          .getOrElse(PartitionedData(path, checkpoint :: Nil, Map.empty))
-    )
-  }
-
-  private def takeLatestCheckpoints(list: List[CheckpointDTO]): List[CheckpointDTO] = {
-    if (checkpointsLimit <= 0) list
-    else if (checkpointsLimit == 1) Nil
-    else if (checkpointsLimit > list.size) list
-    else list.take(checkpointsLimit - 1)
+  override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+    capture(saveCheckpoint, checkpoint, ())
   }
 
   /**
@@ -72,68 +114,44 @@ class CapturingDispatcher(checkpointsLimit: Int) extends Dispatcher {
    *
    *  @param additionalData the data to be saved.
    */
-  override def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
-    val path = createPath(additionalData.partitioning)
-    ts.compute(
-      path,
-      (_, events) =>
-        Option(events)
-          .map(_.copy(additionalData = additionalData.additionalData))
-          .getOrElse(PartitionedData(path, Nil, additionalData.additionalData))
-    )
+  override protected[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
+    capture(saveAdditionalData, additionalData, ())
   }
 
   /**
-   *  This method is used to clear all captured data.
-   */
-  def clear(): Unit = ts.clear()
-
-  /**
-   *  This method creates iterator iterating over all captured data with specified prefix.
-   */
-  def prefixIter(prefix: String): Iterator[PartitionedData] = {
-    val prefixWithSlash = sanitizeKey(prefix)
-    ts.tailMap(prefixWithSlash)
-      .entrySet()
-      .iterator()
-      .asScala
-      .takeWhile(_.getKey.startsWith(prefixWithSlash))
-      .map(_.getValue)
-  }
-
-  /**
-   *  This method is used to get the partitioned data for the given key.
+   * This method is used to ensure the server knows the given partitioning.
+   * As a response the `AtumContext` is fetched from the server.
    *
-   *  @param key the key of the partitioned data. This key will be wrapped in `/` if it's not already.
-   *             If the key is empty or null, the root partition will be returned.
-   *  @return the partitioned data
+   * @param partitioning  : PartitioningSubmitDTO to be used to ensure server knows the given partitioning.
+   * @return AtumContextDTO.
    */
-  def getPartition(key: String): Option[PartitionedData] = {
-    Option(ts.get(sanitizeKey(key)))
+  override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
+    val result = AtumContextDTO(partitioning.partitioning)
+    capture(createPartitioning, partitioning, result)
   }
 }
 
 object CapturingDispatcher {
-  private val CheckpointLimitKey = "checkpoints-limit"
-  def fromConfig(config: Config): CapturingDispatcher =
-    new CapturingDispatcher(config.getInt(CheckpointLimitKey))
+  private val CheckpointLimitKey = "atum.dispatcher.capture.capture-limit"
 
-  case class PartitionedData(
-    partition: String,
-    checkpointStack: List[CheckpointDTO],
-    additionalData: Map[String, Option[String]]
-  ) {
-    def checkpoints: List[CheckpointDTO] = checkpointStack.reverse
+  abstract class CapturedCall {
+    type I
+    type R
+    val functionName: String
+    val input: I
+    val result: R
   }
 
-  private def createPath(partitioning: PartitioningDTO): String =
-    partitioning.map(p => s"${p.key}=${p.value}").mkString(start = "/", sep = "/", end = "/")
+  object CapturedCall {
 
-  private def sanitizeKey(prefix: String): String = {
-    if (prefix == null || prefix.isEmpty) "/"
-    else {
-      val withLeadingSlash = if (prefix.startsWith("/")) prefix else s"/$prefix"
-      if (withLeadingSlash.endsWith("/")) withLeadingSlash else s"$withLeadingSlash/"
+    final case class CapturedCallImpl[IX, RX] private[dispatcher](functionName: String, input: IX, result: RX)
+      extends CapturedCall {
+      type I = IX
+      type R = RX
+    }
+
+    def apply[I, R](functionName: String, input: I, result: R): CapturedCall = {
+      CapturedCallImpl(functionName, input, result)
     }
   }
 }
