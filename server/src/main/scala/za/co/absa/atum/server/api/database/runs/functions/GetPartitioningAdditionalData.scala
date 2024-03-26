@@ -50,9 +50,9 @@ class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: Doobie
 }
 
 object GetPartitioningAdditionalData {
-  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningMeasures] = ZLayer {
+  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAdditionalData] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new GetPartitioningMeasures()(Runs, dbProvider.dbEngine)
+    } yield new GetPartitioningAdditionalData()(Runs, dbProvider.dbEngine)
   }
 }

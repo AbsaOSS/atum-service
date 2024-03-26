@@ -24,6 +24,6 @@ import zio.macros.accessible
 
 @accessible
 trait PartitioningController {
-  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ServiceError, AtumContextDTO]
+  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
 }
