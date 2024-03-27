@@ -19,7 +19,9 @@ package za.co.absa.atum.agent.dispatcher
 import com.typesafe.config.Config
 import za.co.absa.atum.model.dto._
 
-import scala.collection.mutable
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.UnaryOperator
+import scala.collection.immutable.Queue
 
 /**
  *  This dispatcher instead of sending data captures them and stores them in memory.
@@ -35,8 +37,9 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
   /**
    * This method is used to clear all captured data.
    */
-  def clear(): Unit = {
-    synchronized(captures.clear())
+  def clear(): Queue[CapturedCall] = {
+    capturesRef.updateAndGet((_: Queue[CapturedCall]) => Queue.empty)
+    captures
   }
 
   /**
@@ -46,9 +49,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    * @return             - true if the function was captured, false otherwise
    */
   def contains(functionName: String): Boolean = {
-    synchronized {
-      captures.exists(_.functionName == functionName)
-    }
+    captures.exists(_.functionName == functionName)
   }
 
   /**
@@ -59,9 +60,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    * @return             - true if the function was captured, false otherwise
    */
   def contains[I](functionName: String, input: I): Boolean = {
-    synchronized {
-      captures.exists(item => ((item.functionName == functionName) && (item.input == input)))
-    }
+    captures.exists(item => ((item.functionName == functionName) && (item.input == input)))
   }
 
   /**
@@ -73,7 +72,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    * @return             - true if the function was captured, false otherwise
    */
   def contains[I, R](functionName: String, input: I, result: R): Boolean = {
-    synchronized(captures.contains(CapturedCall(functionName, input, result)))
+    captures.contains(CapturedCall(functionName, input, result))
   }
 
   /**
@@ -81,22 +80,24 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    *
    * @return the captured data
    */
-  def capturesSnapshot: List[CapturedCall] = synchronized(captures.toList)
+  def captures: Queue[CapturedCall] = capturesRef.get()
 
 
-  private val captures: mutable.Queue[CapturedCall] = mutable.Queue.empty
+  private val capturesRef = new AtomicReference(Queue.empty[CapturedCall])
 
   protected def capture[I, R](fnc: Function1[I, R], input: I, result: R): R = {
 
     val functionName = Thread.currentThread().getStackTrace()(2).getMethodName
     val capture = CapturedCall(functionName, input, result)
 
-    synchronized {
-      if ((captureLimit > 0) && (captures.size >= captureLimit)) {
-        captures.dequeue()
+    capturesRef.updateAndGet((queue: Queue[CapturedCall]) => {
+      if ((captureLimit > 0) && (queue.size >= captureLimit)) {
+        queue.dequeue._2.enqueue(capture)
+      } else {
+        queue.enqueue(capture)
       }
-      captures.enqueue(capture)
-    }
+    })
+
     result
   }
 

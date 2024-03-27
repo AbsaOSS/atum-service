@@ -74,7 +74,7 @@ class CapturingDispatcherTest extends AnyWordSpec with Matchers {
       dispatcher.createPartitioning(partitioning2Submit)
       dispatcher.saveCheckpoint(checkpoint2)
 
-      dispatcher.capturesSnapshot.size shouldBe 3
+      dispatcher.captures.size shouldBe 3
     }
 
     "verifies presence of captures" in {
@@ -97,13 +97,12 @@ class CapturingDispatcherTest extends AnyWordSpec with Matchers {
         CapturedCall(nameOf(dispatcher.createPartitioning _), partitioning2Submit, AtumContextDTO(partitioning2)),
         CapturedCall(nameOf(dispatcher.saveCheckpoint _), checkpoint2, ()),
       )
-      dispatcher.capturesSnapshot shouldBe expected
+      dispatcher.captures shouldBe expected
     }
 
     "removes all captures with clear" in {
-      dispatcher.capturesSnapshot.size shouldBe 3
-      dispatcher.clear()
-      dispatcher.capturesSnapshot.size shouldBe 0
+      dispatcher.captures.size shouldBe 3
+      dispatcher.clear().size shouldBe 0
     }
   }
 
