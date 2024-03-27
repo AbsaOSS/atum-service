@@ -23,19 +23,20 @@ import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
+import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
-import za.co.absa.fadb.doobie.{DoobieEngine, StatusWithData}
+import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
+import za.co.absa.fadb.doobie.DoobieEngine
 import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Seq[AdditionalDataDTO], Task]
-    with StandardStatusHandling {
+  extends DoobieMultipleResultFunction[PartitioningSubmitDTO, AdditionalDataDTO, Task]
+  {
 
-  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Seq[AdditionalDataDTO]]]): Fragment = {
+  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[AdditionalDataDTO]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningJsonString = Json.toJson(partitioning).toString
 

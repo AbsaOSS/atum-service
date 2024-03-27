@@ -42,13 +42,13 @@ class PartitioningRepositoryImpl(
   }
 
   override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO):
-    IO[DatabaseError, Either[StatusException, Seq[MeasureDTO]]] = {
-    dbCallWithStatus(getPartitioningMeasuresFn(partitioning), "getPartitioningMeasures")
+    IO[DatabaseError, Seq[MeasureDTO]] = {
+    getPartitioningMeasuresFn(partitioning)
   }
 
   override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO):
-    IO[DatabaseError, Either[StatusException, Seq[AdditionalDataDTO]]] = {
-    dbCallWithStatus(getPartitioningAdditionalDataFn(partitioning), "getPartitioningAdditionalData")
+    IO[DatabaseError, Seq[AdditionalDataDTO]] = {
+    getPartitioningAdditionalDataFn(partitioning)
   }
 }
 

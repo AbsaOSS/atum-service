@@ -18,25 +18,26 @@ package za.co.absa.atum.server.api.controller
 
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.api.service.PartitioningServiceImpl
-import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.service.PartitioningService
+import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
 import zio._
 
-class PartitioningControllerImpl(partitioningServiceImpl: PartitioningServiceImpl)
+class PartitioningControllerImpl(partitioningService: PartitioningService)
   extends PartitioningController with BaseController {
 
   override def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
-    serviceCallWithStatus[Unit, AtumContextDTO](
-      partitioningServiceImpl.returnAtumContext(partitioning),
-      _ => AtumContextDTO(partitioning = partitioning.partitioning, measures = Set.empty, additionalData = Map.empty)
-    )
+    partitioningService.returnAtumContext(partitioning)
+      .mapError { serviceError: ServiceError =>
+        InternalServerErrorResponse(serviceError.message)
+      }
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[ErrorResponse, AdditionalDataSubmitDTO] = {
     serviceCallWithStatus[Unit, AdditionalDataSubmitDTO](
-      partitioningServiceImpl.createOrUpdateAdditionalData(additionalData),
+      partitioningService.createOrUpdateAdditionalData(additionalData),
       _ => additionalData
     )
   }
@@ -44,9 +45,9 @@ class PartitioningControllerImpl(partitioningServiceImpl: PartitioningServiceImp
 }
 
 object PartitioningControllerImpl {
-  val layer: URLayer[PartitioningServiceImpl, PartitioningController] = ZLayer {
+  val layer: URLayer[PartitioningService, PartitioningController] = ZLayer {
     for {
-      partitioningServiceImpl <- ZIO.service[PartitioningServiceImpl]
-    } yield new PartitioningControllerImpl(partitioningServiceImpl)
+      partitioningService <- ZIO.service[PartitioningService]
+    } yield new PartitioningControllerImpl(partitioningService)
   }
 }

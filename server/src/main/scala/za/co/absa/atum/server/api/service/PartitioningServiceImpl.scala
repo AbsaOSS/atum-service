@@ -19,8 +19,8 @@ package za.co.absa.atum.server.api.service
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, AtumContextDTO, MeasureDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.PartitioningRepository
-import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.fadb.exceptions.StatusException
+import za.co.absa.atum.server.api.exception.DatabaseError
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
@@ -42,16 +42,18 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, Seq[MeasureDTO]]] = {
-    repositoryCallWithStatus(
-      partitioningRepository.getPartitioningMeasures(partitioning), "getPartitioningMeasures"
-    )
+  override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO): IO[ServiceError, Seq[MeasureDTO]] = {
+    partitioningRepository.getPartitioningMeasures(partitioning)
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to retrieve partitioning measures': $message")
+      }
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[ServiceError, Either[StatusException, AdditionalDataDTO]] = {
-    repositoryCallWithStatus(
-      partitioningRepository.getPartitioningAdditionalData(partitioning), "getPartitioningAdditionalData"
-    )
+  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[ServiceError, Seq[AdditionalDataDTO]] = {
+    partitioningRepository.getPartitioningAdditionalData(partitioning)
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to retrieve partitioning additional data': $message")
+      }
   }
 
   def returnAtumContext(partitioning: PartitioningSubmitDTO): IO[ServiceError, AtumContextDTO] = {
@@ -72,7 +74,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
 
       measures <- getPartitioningMeasures(partitioning)
         .flatMap {
-          case Left(_) => ZIO.succeed(Set.empty[MeasureDTO])
+          case Left(_) => ZIO.succeed(Seq.empty[MeasureDTO])
           case Right(value) => ZIO.succeed(value.toSet)
         }
         .mapError(error => ServiceError(error.message))
