@@ -16,26 +16,27 @@
 
 package za.co.absa.atum.agent.dispatcher
 
+import com.typesafe.config.Config
 import org.apache.spark.internal.Logging
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  *  dispatcher useful for development, testing and debugging
  */
-class ConsoleDispatcher extends Dispatcher with Logging {
+class ConsoleDispatcher(config: Config) extends Dispatcher(config: Config) with Logging {
 
   logInfo("using console dispatcher")
 
-  override def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
+  override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
     println(s"Fetching AtumContext using ConsoleDispatcher with partitioning $partitioning")
     AtumContextDTO(partitioning = partitioning.partitioning)
   }
 
-  override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+  override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     println(s"Saving checkpoint to server. $checkpoint")
   }
 
-  override def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
+  override protected[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
     println(s"Saving the additional data to server. $additionalData")
   }
 

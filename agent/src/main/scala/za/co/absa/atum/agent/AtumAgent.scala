@@ -28,7 +28,7 @@ abstract class AtumAgent private[agent] () {
 
   private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
-  protected val dispatcher: Dispatcher
+  val dispatcher: Dispatcher
 
   /**
    *  Returns a user under who's security context the JVM is running.
@@ -115,12 +115,15 @@ abstract class AtumAgent private[agent] () {
 
 object AtumAgent extends AtumAgent {
 
-  val config: Config = ConfigFactory.load()
+  override val dispatcher: Dispatcher = dispatcherFromConfig()
 
-  override protected val dispatcher: Dispatcher = config.getString("atum.dispatcher.type") match {
-    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
-    case "console" => new ConsoleDispatcher
-    case "capture" => CapturingDispatcher.fromConfig(config.getConfig("atum.dispatcher.capture"))
-    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+  def dispatcherFromConfig(config: Config = ConfigFactory.load()): Dispatcher = {
+    config.getString("atum.dispatcher.type") match {
+      case "http" => new HttpDispatcher(config)
+      case "console" => new ConsoleDispatcher(config)
+      case "capture" => new CapturingDispatcher(config)
+      case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+    }
   }
+
 }
