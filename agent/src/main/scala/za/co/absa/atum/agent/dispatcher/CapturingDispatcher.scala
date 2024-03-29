@@ -37,9 +37,9 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
   /**
    * This method is used to clear all captured data.
    */
-  def clear(): Queue[CapturedCall] = {
+  def clear(): Unit = {
     capturesRef.updateAndGet((_: Queue[CapturedCall]) => Queue.empty)
-    captures
+    ()
   }
 
   /**
