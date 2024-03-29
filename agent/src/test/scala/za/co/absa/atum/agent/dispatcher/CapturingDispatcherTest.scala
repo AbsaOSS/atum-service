@@ -102,7 +102,8 @@ class CapturingDispatcherTest extends AnyWordSpec with Matchers {
 
     "removes all captures with clear" in {
       dispatcher.captures.size shouldBe 3
-      dispatcher.clear().size shouldBe 0
+      dispatcher.clear()
+      dispatcher.captures.size shouldBe 0
     }
   }
 
