@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.model.ErrorResponse
 import zio.IO
 import zio.macros.accessible
