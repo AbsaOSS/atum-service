@@ -25,17 +25,16 @@ import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.doobie.DoobieEngine
 import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
-import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
 
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningSubmitDTO, Seq[MeasureDTO], Task]
+  extends DoobieMultipleResultFunction[PartitioningSubmitDTO, MeasureDTO, Task]
   {
 
-  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[Seq[MeasureDTO]]): Fragment = {
+  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[MeasureDTO]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningJsonString = Json.toJson(partitioning).toString
 

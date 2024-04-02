@@ -17,7 +17,9 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, MeasureDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningMeasures}
+import za.co.absa.atum.server.api.database.runs.functions.{
+  CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists,
+  GetPartitioningAdditionalData, GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
@@ -44,16 +46,19 @@ class PartitioningRepositoryImpl(
   override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO):
     IO[DatabaseError, Seq[MeasureDTO]] = {
     getPartitioningMeasuresFn(partitioning)
+      .mapError(err => DatabaseError(err.getMessage))
   }
 
   override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO):
     IO[DatabaseError, Seq[AdditionalDataDTO]] = {
     getPartitioningAdditionalDataFn(partitioning)
+      .mapError(err => DatabaseError(err.getMessage))
   }
 }
 
 object PartitioningRepositoryImpl {
-  val layer: URLayer[CreatePartitioningIfNotExists with GetPartitioningMeasures with GetPartitioningAdditionalData with CreateOrUpdateAdditionalData, PartitioningRepository] = ZLayer {
+  val layer: URLayer[CreatePartitioningIfNotExists with GetPartitioningMeasures with
+    GetPartitioningAdditionalData with CreateOrUpdateAdditionalData, PartitioningRepository] = ZLayer {
     for {
       createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]

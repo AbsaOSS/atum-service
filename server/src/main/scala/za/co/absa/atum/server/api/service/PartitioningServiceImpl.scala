@@ -66,20 +66,19 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
         .mapError(error => ServiceError(error.message))
 
       additionalData <- getPartitioningAdditionalData(partitioning)
+        .fold(_ => Seq.empty[AdditionalDataDTO], value => value)
+        .map(_.headOption)
         .flatMap {
-          case Left(_) => ZIO.succeed(Map[String, Option[String]])
-          case Right(value) => ZIO.succeed(value)
+          case Some(data) => ZIO.succeed(data)
+          case None => ZIO.fail(ServiceError("No additional data found"))
         }
-        .mapError(error => ServiceError(error.message))
 
       measures <- getPartitioningMeasures(partitioning)
-        .flatMap {
-          case Left(_) => ZIO.succeed(Seq.empty[MeasureDTO])
-          case Right(value) => ZIO.succeed(value.toSet)
-        }
-        .mapError(error => ServiceError(error.message))
-    } yield AtumContextDTO(partitioning.partitioning, measures, additionalData)
+        .fold(_ => Seq.empty[MeasureDTO], value => value)
+
+    } yield AtumContextDTO(partitioning.partitioning, measures.toSet, additionalData)
   }
+
 }
 
 object PartitioningServiceImpl {
