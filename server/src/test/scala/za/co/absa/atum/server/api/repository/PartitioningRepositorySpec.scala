@@ -69,9 +69,6 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
   when(getPartitioningAdditionalDataMock.apply(partitioningSubmitDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
-//    getPartitioningMeasuresMock,
-//    getPartitioningAdditionalDataMock
-
 
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
