@@ -30,6 +30,8 @@ import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
 
+import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[PartitioningSubmitDTO, MeasureDTO, Task]
   {

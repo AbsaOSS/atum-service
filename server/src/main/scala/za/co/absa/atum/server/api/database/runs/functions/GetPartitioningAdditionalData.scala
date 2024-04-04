@@ -30,6 +30,8 @@ import za.co.absa.fadb.doobie.DoobieEngine
 import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
 
+import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
+
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[PartitioningSubmitDTO, AdditionalDataDTO, Task]
   {
