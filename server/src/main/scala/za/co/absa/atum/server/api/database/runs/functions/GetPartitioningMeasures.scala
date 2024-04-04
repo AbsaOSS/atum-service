@@ -29,14 +29,10 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
-import doobie._
-import doobie.postgres.implicits._
 
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[PartitioningSubmitDTO, MeasureDTO, Task]
   {
-    implicit val getMapWithOptionStringValues: Get[Map[String, Option[String]]] = Get[Map[String, String]]
-      .tmap(map => map.map { case (k, v) => k -> Option(v) })
 
   override def sql(values: PartitioningSubmitDTO)(implicit read: Read[MeasureDTO]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
