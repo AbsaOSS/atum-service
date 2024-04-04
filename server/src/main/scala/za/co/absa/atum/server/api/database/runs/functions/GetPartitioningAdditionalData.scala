@@ -29,20 +29,24 @@ import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import za.co.absa.fadb.doobie.DoobieEngine
 import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
+import doobie._
+import doobie.postgres.implicits._
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[PartitioningSubmitDTO, AdditionalDataDTO, Task]
   {
+    implicit val getMapWithOptionStringValues: Get[Map[String, Option[String]]] = Get[Map[String, String]]
+      .tmap(map => map.map { case (k, v) => k -> Option(v) })
 
-  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[AdditionalDataDTO]): Fragment = {
+    override def sql(values: PartitioningSubmitDTO)(implicit read: Read[AdditionalDataDTO]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningJsonString = Json.toJson(partitioning).toString
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
-      import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-      partitioningJsonString
-    }
+                      import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
+                      partitioningJsonString
+                   }
                 ) ${Fragment.const(alias)};"""
   }
 
