@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists}
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.fadb.exceptions.ErrorInDataException
@@ -52,6 +52,26 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val createOrUpdateAdditionalDataMockLayer = ZLayer.succeed(createOrUpdateAdditionalDataMock)
+
+  // Get Partitioning Measures Mocks
+  private val getPartitioningMeasuresMock = mock(classOf[GetPartitioningMeasures])
+
+  when(getPartitioningMeasuresMock.apply(partitioningSubmitDTO1)).thenReturn(ZIO.succeed(Seq()))
+  when(getPartitioningMeasuresMock.apply(partitioningSubmitDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningMeasuresMock.apply(partitioningSubmitDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
+
+  private val getPartitioningMeasuresMockLayer = ZLayer.succeed(getPartitioningMeasuresMock)
+
+  private val getPartitioningAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
+
+  when(getPartitioningAdditionalDataMock.apply(partitioningSubmitDTO1)).thenReturn(ZIO.succeed(Seq()))
+  when(getPartitioningAdditionalDataMock.apply(partitioningSubmitDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningAdditionalDataMock.apply(partitioningSubmitDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
+
+  private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
+//    getPartitioningMeasuresMock,
+//    getPartitioningAdditionalDataMock
+
 
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -95,7 +115,9 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
     ).provide(
       PartitioningRepositoryImpl.layer,
       createPartitioningIfNotExistsMockLayer,
-      createOrUpdateAdditionalDataMockLayer
+      createOrUpdateAdditionalDataMockLayer,
+      getPartitioningMeasuresMockLayer,
+      getPartitioningAdditionalDataMockLayer
     )
 
   }
