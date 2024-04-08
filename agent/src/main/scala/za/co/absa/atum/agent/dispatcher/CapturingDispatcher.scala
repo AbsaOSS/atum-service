@@ -24,7 +24,7 @@ import java.util.function.UnaryOperator
 import scala.collection.immutable.Queue
 
 /**
- *  This dispatcher instead of sending data captures them and stores them in memory.
+ *  This dispatcher captures the data and stores them in memory instead of actually sending anything.
  *  @param config: Config to be used to create the dispatcher. Keys:
  *           capture-limit - maximal amount of dispatch captures to store.
  */
