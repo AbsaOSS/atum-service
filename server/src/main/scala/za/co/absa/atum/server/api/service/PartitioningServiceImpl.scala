@@ -56,7 +56,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
       }
   }
 
-  def returnAtumContext(partitioning: PartitioningSubmitDTO): IO[ServiceError, AtumContextDTO] = {
+  override def returnAtumContext(partitioning: PartitioningSubmitDTO): IO[ServiceError, AtumContextDTO] = {
     for {
       partitioning <- createPartitioningIfNotExists(partitioning)
         .flatMap {

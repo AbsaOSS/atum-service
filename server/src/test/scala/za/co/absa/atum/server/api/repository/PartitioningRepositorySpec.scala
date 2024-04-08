@@ -28,6 +28,7 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
 import zio._
+import zio.prelude.data.Optional.AllValuesAreNullable
 import zio.test.Assertion.failsWithA
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
@@ -109,6 +110,42 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
+            failsWithA[DatabaseError]
+          )
+        }
+      ),
+
+      suite("GetPartitioningMeasuresSuite")(
+        test("Returns expected Seq") {
+          for {
+            result <- PartitioningRepository.getPartitioningMeasures(partitioningSubmitDTO1)
+          } yield assertTrue(result.getOrElse(Seq()).isEmpty)
+        },
+        test("Returns expected Exception") {
+          assertZIO(PartitioningRepository.getPartitioningMeasures(partitioningSubmitDTO2).exit)(
+            failsWithA[DatabaseError]
+          )
+        },
+        test("Returns expected Exception") {
+          assertZIO(PartitioningRepository.getPartitioningMeasures(partitioningSubmitDTO3).exit)(
+            failsWithA[DatabaseError]
+          )
+        }
+      ),
+
+      suite("GetPartitioningAdditionalDataSuite")(
+        test("Returns expected Seq") {
+          for {
+            result <- PartitioningRepository.getPartitioningAdditionalData(partitioningSubmitDTO1)
+          } yield assertTrue(result.getOrElse(Seq()).isEmpty)
+        },
+        test("Returns expected Exception") {
+          assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningSubmitDTO2).exit)(
+            failsWithA[DatabaseError]
+          )
+        },
+        test("Returns expected Exception") {
+          assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningSubmitDTO3).exit)(
             failsWithA[DatabaseError]
           )
         }
