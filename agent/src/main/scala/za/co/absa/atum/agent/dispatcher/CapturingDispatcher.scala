@@ -20,7 +20,6 @@ import com.typesafe.config.Config
 import za.co.absa.atum.model.dto._
 
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.UnaryOperator
 import scala.collection.immutable.Queue
 
 /**
@@ -39,7 +38,6 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    */
   def clear(): Unit = {
     capturesRef.updateAndGet((_: Queue[CapturedCall]) => Queue.empty)
-    ()
   }
 
   /**
@@ -60,7 +58,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    * @return             - true if the function was captured, false otherwise
    */
   def contains[I](functionName: String, input: I): Boolean = {
-    captures.exists(item => ((item.functionName == functionName) && (item.input == input)))
+    captures.exists(item => (item.functionName == functionName) && (item.input == input))
   }
 
   /**
@@ -85,7 +83,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
 
   private val capturesRef = new AtomicReference(Queue.empty[CapturedCall])
 
-  protected def capture[I, R](fnc: Function1[I, R], input: I, result: R): R = {
+  private def captureFunctionCall[I, R](input: I, result: R): R = {
 
     val functionName = Thread.currentThread().getStackTrace()(2).getMethodName
     val capture = CapturedCall(functionName, input, result)
@@ -107,7 +105,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    *  @param checkpoint : CheckpointDTO to be saved.
    */
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    capture(saveCheckpoint, checkpoint, ())
+    captureFunctionCall(checkpoint, Unit)
   }
 
   /**
@@ -116,7 +114,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    *  @param additionalData the data to be saved.
    */
   override protected[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
-    capture(saveAdditionalData, additionalData, ())
+    captureFunctionCall(additionalData, Unit)
   }
 
   /**
@@ -128,7 +126,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    */
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
     val result = AtumContextDTO(partitioning.partitioning)
-    capture(createPartitioning, partitioning, result)
+    captureFunctionCall(partitioning, result)
   }
 }
 

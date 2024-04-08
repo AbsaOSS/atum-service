@@ -24,6 +24,7 @@ import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, Check
  *  @param config: Config to be used to create the dispatcher.
  */
 abstract class Dispatcher(config: Config) {
+
   /**
    *  This method is used to ensure the server knows the given partitioning.
    *  As a response the `AtumContext` is fetched from the server.

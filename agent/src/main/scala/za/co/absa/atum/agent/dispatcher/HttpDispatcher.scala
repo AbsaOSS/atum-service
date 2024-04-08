@@ -40,7 +40,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
 
   private val backend = HttpURLConnectionBackend()
 
-  logInfo("using http dispatcher") //TODO
+  logInfo("using http dispatcher")
   logInfo(s"serverUrl $serverUrl")
 
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
