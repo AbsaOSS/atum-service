@@ -35,7 +35,11 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
 
   private val partitioningServiceMock = mock(classOf[PartitioningService])
 
-  when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1)).thenReturn(ZIO.right(()))
+  when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1)).thenReturn(ZIO.right(AtumContextDTO(
+    partitioning = partitioningSubmitDTO1.partitioning,
+    measures = Set(MeasureDTO("count", Seq("*"))),
+    additionalData = Map.empty
+  )))
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO3))
@@ -62,9 +66,9 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
             failsWithA[InternalServerErrorResponse]
           )
         },
-        test("Returns expected GeneralErrorResponse") {
+        test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO2).exit)(
-            failsWithA[GeneralErrorResponse]
+            failsWithA[InternalServerErrorResponse]
           )
         }
       )

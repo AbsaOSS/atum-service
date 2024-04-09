@@ -39,7 +39,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   ): IO[ServiceError, Either[StatusException, Unit]] = {
     repositoryCallWithStatus(
       partitioningRepository.createOrUpdateAdditionalData(additionalData), "createOrUpdateAdditionalData"
-    )
+    ).mapError(error => ServiceError(error.message))
   }
 
   override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO): IO[ServiceError, Seq[MeasureDTO]] = {
@@ -65,6 +65,8 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
         }
         .mapError(error => ServiceError(error.message))
 
+//      additionalData <- getPartitioningAdditionalData(partitioning)
+//        .fold(_ => Map[String, Option[String]], value => value)
       additionalData <- getPartitioningAdditionalData(partitioning)
         .fold(_ => Seq.empty[AdditionalDataDTO], value => value)
         .map(_.headOption)
@@ -72,11 +74,22 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
           case Some(data) => ZIO.succeed(data)
           case None => ZIO.fail(ServiceError("No additional data found"))
         }
+//      additionalData <- getPartitioningAdditionalData(partitioning)
+//        .flatMap(data => ZIO.fromOption(data.headOption).orElseFail(ServiceError("No additional data found")))
 
+//      measures <- getPartitioningMeasures(partitioning)
+//        .fold(_ => Seq.empty[MeasureDTO], value => value)
       measures <- getPartitioningMeasures(partitioning)
         .fold(_ => Seq.empty[MeasureDTO], value => value)
+        .map(_.headOption)
+        .flatMap{
+          case Some(measure) => ZIO.succeed(measure)
+          case None => ZIO.fail(ServiceError("No measures found"))
+        }
+//      measures <- getPartitioningMeasures(partitioning)
+//        .flatMap(measures => ZIO.fromOption(measures.headOption).orElseFail(ServiceError("No measures found")))
 
-    } yield AtumContextDTO(partitioning.partitioning, measures.toSet, additionalData)
+    } yield AtumContextDTO(partitioning.partitioning, Set(measures), additionalData)
   }
 
 }

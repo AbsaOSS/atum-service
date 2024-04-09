@@ -35,6 +35,9 @@ trait TestData {
   protected val partitioningSubmitDTO3: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
 
+  // Measure
+  protected val measureDTO1: MeasureDTO = MeasureDTO("count", Seq("*"))
+
   // Additional Data
   protected val additionalDataSubmitDTO1: AdditionalDataSubmitDTO = AdditionalDataSubmitDTO(
     partitioning = Seq.empty,
@@ -46,6 +49,18 @@ trait TestData {
 
   protected val additionalDataSubmitDTO3: AdditionalDataSubmitDTO =
     additionalDataSubmitDTO1.copy(author = "yetAnotherADAuthor")
+
+  // Atum Context
+  protected val atumContextDTO1: AtumContextDTO = AtumContextDTO(
+    partitioning = Seq.empty,
+    measures = Set(MeasureDTO("count", Seq("*"))),
+    additionalData = Map.empty
+  )
+
+  protected val atumContextDTO2: AtumContextDTO = atumContextDTO1.copy(
+    partitioning = partitioningSubmitDTO1.partitioning,
+    measures = Set(MeasureDTO("count", Seq("1")))
+  )
 
   // Checkpoint
   protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
