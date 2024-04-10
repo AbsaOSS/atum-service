@@ -49,47 +49,26 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
       }
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[ServiceError, Seq[AdditionalDataDTO]] = {
+  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO): IO[ServiceError, AdditionalDataDTO] = {
     partitioningRepository.getPartitioningAdditionalData(partitioning)
       .mapError { case DatabaseError(message) =>
         ServiceError(s"Failed to retrieve partitioning additional data': $message")
       }
   }
 
-  override def returnAtumContext(partitioning: PartitioningSubmitDTO): IO[ServiceError, AtumContextDTO] = {
+  override def returnAtumContext(partitioningSubmitDTO: PartitioningSubmitDTO): IO[ServiceError, AtumContextDTO] = {
     for {
-      partitioning <- createPartitioningIfNotExists(partitioning)
+      partitioning <- createPartitioningIfNotExists(partitioningSubmitDTO)
         .flatMap {
           case Left(_) => ZIO.fail(ServiceError("Failed to create or retrieve partitioning"))
-          case Right(_) => ZIO.succeed(partitioning)
+          case Right(_) => ZIO.succeed(partitioningSubmitDTO)
         }
-        .mapError(error => ServiceError(error.message))
 
-//      additionalData <- getPartitioningAdditionalData(partitioning)
-//        .fold(_ => Map[String, Option[String]], value => value)
       additionalData <- getPartitioningAdditionalData(partitioning)
-        .fold(_ => Seq.empty[AdditionalDataDTO], value => value)
-        .map(_.headOption)
-        .flatMap {
-          case Some(data) => ZIO.succeed(data)
-          case None => ZIO.fail(ServiceError("No additional data found"))
-        }
-//      additionalData <- getPartitioningAdditionalData(partitioning)
-//        .flatMap(data => ZIO.fromOption(data.headOption).orElseFail(ServiceError("No additional data found")))
 
-//      measures <- getPartitioningMeasures(partitioning)
-//        .fold(_ => Seq.empty[MeasureDTO], value => value)
       measures <- getPartitioningMeasures(partitioning)
-        .fold(_ => Seq.empty[MeasureDTO], value => value)
-        .map(_.headOption)
-        .flatMap{
-          case Some(measure) => ZIO.succeed(measure)
-          case None => ZIO.fail(ServiceError("No measures found"))
-        }
-//      measures <- getPartitioningMeasures(partitioning)
-//        .flatMap(measures => ZIO.fromOption(measures.headOption).orElseFail(ServiceError("No measures found")))
 
-    } yield AtumContextDTO(partitioning.partitioning, Set(measures), additionalData)
+    } yield AtumContextDTO(partitioning.partitioning, measures.toSet, additionalData)
   }
 
 }

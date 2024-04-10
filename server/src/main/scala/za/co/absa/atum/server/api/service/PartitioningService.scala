@@ -31,7 +31,7 @@ trait PartitioningService {
     IO[ServiceError, Seq[MeasureDTO]]
 
   def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO):
-    IO[ServiceError, Seq[AdditionalDataDTO]]
+    IO[ServiceError, AdditionalDataDTO]
 
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
     IO[ServiceError, Either[StatusException, Unit]]

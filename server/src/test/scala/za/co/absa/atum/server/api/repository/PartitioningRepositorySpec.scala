@@ -18,6 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.AdditionalDataDTO
 import za.co.absa.atum.server.api.database.runs.functions.{
   CreateOrUpdateAdditionalData,
   CreatePartitioningIfNotExists,
@@ -67,6 +68,7 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
 
   private val getPartitioningMeasuresMockLayer = ZLayer.succeed(getPartitioningMeasuresMock)
 
+  // Get Partitioning Additional Data Mocks
   private val getPartitioningAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
 
   when(getPartitioningAdditionalDataMock.apply(partitioningSubmitDTO1)).thenReturn(ZIO.succeed(Seq()))
@@ -74,7 +76,6 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
   when(getPartitioningAdditionalDataMock.apply(partitioningSubmitDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
-
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -134,12 +135,12 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
       ),
 
       suite("GetPartitioningAdditionalDataSuite")(
-        test("Returns expected Seq") {
+        test("Returns expected Right with empty Map") {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(partitioningSubmitDTO1)
-          } yield assertTrue(result.getOrElse(Seq()).isEmpty)
+          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
         },
-        test("Returns expected Exception") {
+        test("Returns expected Left with DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningSubmitDTO2).exit)(
             failsWithA[DatabaseError]
           )

@@ -21,6 +21,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_additional_data(
     OUT ad_name                 TEXT,
     OUT ad_value                TEXT
 ) RETURNS SETOF record AS
+
 $$
 -------------------------------------------------------------------------------
 --

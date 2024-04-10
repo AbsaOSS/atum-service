@@ -47,15 +47,15 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningMeasures(partitioningSubmitDTO1))
-    .thenReturn(ZIO.right(Seq(MeasureDTO))
-  when partitioningRepositoryMock.getPartitioningMeasures(partitioningSubmitDTO2))
+    .thenReturn(ZIO.succeed(Seq.empty[MeasureDTO]))
+  when(partitioningRepositoryMock.getPartitioningMeasures(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
   when(partitioningRepositoryMock.getPartitioningMeasures(partitioningSubmitDTO3))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningSubmitDTO1))
-    .thenReturn(ZIO.right(Seq(additionalDataSubmitDTO1))
-  when partitioningRepositoryMock.getPartitioningAdditionalData(partitioningSubmitDTO2))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningSubmitDTO3))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
@@ -116,7 +116,7 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Seq[AdditionalDataDTO]") {
           for {
             result <- PartitioningService.getPartitioningAdditionalData(partitioningSubmitDTO1)
-          } yield assertTrue(result.isInstanceOf[Seq[AdditionalDataDTO]])
+          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningSubmitDTO2).exit)(

@@ -36,9 +36,14 @@ trait TestData {
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
 
   // Measure
-  protected val measureDTO1: MeasureDTO = MeasureDTO("count", Seq("*"))
+  protected val measureDTO1: MeasureDTO = MeasureDTO("count", Seq("1"))
+  protected val measureDTO2: MeasureDTO = MeasureDTO("count", Seq("*"))
 
   // Additional Data
+  protected val additionalDataDTO1: AdditionalDataDTO = Map("key" -> Option("value"))
+  protected val additionalDataDTO2: AdditionalDataDTO = Map.empty
+
+  // Additional Data submit DTO
   protected val additionalDataSubmitDTO1: AdditionalDataSubmitDTO = AdditionalDataSubmitDTO(
     partitioning = Seq.empty,
     additionalData = Map.empty,

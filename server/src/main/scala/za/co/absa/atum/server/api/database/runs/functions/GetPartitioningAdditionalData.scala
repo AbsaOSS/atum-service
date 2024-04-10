@@ -20,7 +20,7 @@ import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
 import play.api.libs.json.Json
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.model.PartitioningForDB
@@ -33,10 +33,10 @@ import zio.{Task, URLayer, ZIO, ZLayer}
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningSubmitDTO, AdditionalDataDTO, Task]
+  extends DoobieMultipleResultFunction[PartitioningSubmitDTO, (String, Option[String]), Task]
   {
 
-    override def sql(values: PartitioningSubmitDTO)(implicit read: Read[AdditionalDataDTO]): Fragment = {
+    override def sql(values: PartitioningSubmitDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningJsonString = Json.toJson(partitioning).toString
 
