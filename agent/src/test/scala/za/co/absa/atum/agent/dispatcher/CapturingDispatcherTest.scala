@@ -95,7 +95,7 @@ class CapturingDispatcherTest extends AnyWordSpec with Matchers {
       val expected = List(
         CapturedCall(nameOf(dispatcher.saveCheckpoint _), checkpoint1, ()),
         CapturedCall(nameOf(dispatcher.createPartitioning _), partitioning2Submit, AtumContextDTO(partitioning2)),
-        CapturedCall(nameOf(dispatcher.saveCheckpoint _), checkpoint2, ()),
+        CapturedCall(nameOf(dispatcher.saveCheckpoint _), checkpoint2, ())
       )
       dispatcher.captures shouldBe expected
     }

@@ -20,6 +20,7 @@ import com.typesafe.config.Config
 import za.co.absa.atum.model.dto._
 
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.UnaryOperator
 import scala.collection.immutable.Queue
 
 /**
@@ -37,7 +38,10 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    * This method is used to clear all captured data.
    */
   def clear(): Unit = {
-    capturesRef.updateAndGet((_: Queue[CapturedCall]) => Queue.empty)
+    val updateFunction = new UnaryOperator[Queue[CapturedCall]] {
+      override def apply(queue: Queue[CapturedCall]): Queue[CapturedCall] = Queue.empty
+    }
+    capturesRef.updateAndGet(updateFunction)
   }
 
   /**
@@ -88,13 +92,17 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
     val functionName = Thread.currentThread().getStackTrace()(2).getMethodName
     val capture = CapturedCall(functionName, input, result)
 
-    capturesRef.updateAndGet((queue: Queue[CapturedCall]) => {
-      if ((captureLimit > 0) && (queue.size >= captureLimit)) {
-        queue.dequeue._2.enqueue(capture)
-      } else {
-        queue.enqueue(capture)
+    val captureFunctions = new UnaryOperator[Queue[CapturedCall]] {
+      override def apply(queue: Queue[CapturedCall]): Queue[CapturedCall] = {
+        if ((captureLimit > 0) && (queue.size >= captureLimit)) {
+          queue.dequeue._2.enqueue(capture)
+        } else {
+          queue.enqueue(capture)
+        }
       }
-    })
+    }
+
+    capturesRef.updateAndGet(captureFunctions)
 
     result
   }
@@ -105,7 +113,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    *  @param checkpoint : CheckpointDTO to be saved.
    */
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    captureFunctionCall(checkpoint, Unit)
+    captureFunctionCall(checkpoint, ())
   }
 
   /**
@@ -114,7 +122,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    *  @param additionalData the data to be saved.
    */
   override protected[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
-    captureFunctionCall(additionalData, Unit)
+    captureFunctionCall(additionalData, ())
   }
 
   /**

@@ -24,7 +24,7 @@ import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, Partit
 /**
  *  Entity that communicate with the API, primarily focused on spawning Atum Context(s).
  */
-abstract class AtumAgent private[agent] () {
+trait AtumAgent {
 
   private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
