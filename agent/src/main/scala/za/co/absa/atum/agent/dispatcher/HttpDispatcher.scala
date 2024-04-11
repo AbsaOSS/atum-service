@@ -85,5 +85,5 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
 }
 
 object HttpDispatcher {
-  private val UrlKey = "url"
+  private val UrlKey = "atum.dispatcher.http.url"
 }
