@@ -18,13 +18,11 @@ package za.co.absa.atum.server.api.controller
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, MeasureDTO}
+import za.co.absa.atum.model.dto.{AtumContextDTO, MeasureDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.fadb.exceptions.ErrorInDataException
-import za.co.absa.fadb.status.FunctionStatus
+import za.co.absa.atum.server.model.InternalServerErrorResponse
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._
