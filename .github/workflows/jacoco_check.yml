@@ -50,7 +50,7 @@ jobs:
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
         id: jacoco-agent
-        uses: $madrapps/jacoco-report@{{ env.jaCocoReportVersion }}
+        uses: madrapps/jacoco-report@${{ env.jaCocoReportVersion }}
         with:
           name: agent-jacoco-report
           paths: ${{ github.workspace }}/agent/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
