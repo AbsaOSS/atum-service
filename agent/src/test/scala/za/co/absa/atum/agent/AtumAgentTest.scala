@@ -16,10 +16,10 @@
 
 package za.co.absa.atum.agent
 
-import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
 import org.scalatest.funsuite.AnyFunSuiteLike
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher, CapturingDispatcher}
+import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
 
 class AtumAgentTest extends AnyFunSuiteLike {
 
@@ -79,11 +79,18 @@ class AtumAgentTest extends AnyFunSuiteLike {
       case _                      => fail("Expected CapturingDispatcher")
     }
 
-    val e = intercept[UnsupportedOperationException] {
+    val eUnknown = intercept[UnsupportedOperationException] {
       AtumAgent.dispatcherFromConfig(configOf(Map("atum.dispatcher.type" -> "unknown")))
     }
-    assert(e.getMessage.contains("Unsupported dispatcher type: 'unknown'"))
-    info("and unknown dispatcher type throws exception as expected")
+    assert(eUnknown.getMessage.contains("Unsupported dispatcher type: 'unknown'"))
+    info("unknown dispatcher type throws exception as expected")
+
+    val eNoConfig = intercept[ConfigException.Missing] {
+      AtumAgent.dispatcherFromConfig(configOf(Map.empty))
+    }
+    assert(eNoConfig.getMessage.contains("No configuration setting found for key"))
+    info("missing dispatcher configuration throws exception as expected")
+
   }
 
 }
