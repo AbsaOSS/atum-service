@@ -24,6 +24,7 @@ on:
 env:
   scalaLong12: 2.13.11
   scalaShort12: "2.13"
+  jaCocoReportVersion: v1.6.0
   overall: 80.0
   changed: 80.0
 
@@ -49,7 +50,7 @@ jobs:
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
         id: jacoco-agent
-        uses: madrapps/jacoco-report@v1.6.1
+        uses: madrapps/jacoco-report@{{ env.jaCocoReportVersion }}
         with:
           name: agent-jacoco-report
           paths: ${{ github.workspace }}/agent/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
@@ -62,7 +63,7 @@ jobs:
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
         id: jacoco-model
-        uses: madrapps/jacoco-report@v1.6.1
+        uses: madrapps/jacoco-report@{{ env.jaCocoReportVersion }}
         with:
           name: model-jacoco-report
           paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
