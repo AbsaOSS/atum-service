@@ -17,6 +17,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
+import shapeless.tag
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.ConfigProviderSpec
@@ -52,7 +53,7 @@ class WriteCheckpointSpec extends ConfigProviderSpec {
           writeCheckpoint <- ZIO.service[WriteCheckpoint]
           result <- writeCheckpoint(checkpointDTO)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
-      }
+      } @@ TestAspect.tag("IntegrationTest")
     ).provide(
       WriteCheckpoint.layer,
       PostgresDatabaseProvider.layer,

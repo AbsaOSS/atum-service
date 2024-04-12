@@ -17,6 +17,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
+import shapeless.tag
 import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.ConfigProviderSpec
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
@@ -41,7 +42,7 @@ class CreatePartitioningIfNotExistsSpec extends ConfigProviderSpec {
           createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
           result <- createPartitioningIfNotExists(partitioningSubmitDTO)
         } yield assertTrue(result.isRight)
-      }
+      } @@ TestAspect.tag("IntegrationTest")
     ).provide(
       CreatePartitioningIfNotExists.layer,
       PostgresDatabaseProvider.layer,

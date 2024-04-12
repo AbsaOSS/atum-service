@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.runs
 
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
@@ -52,7 +53,7 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
       |""".stripMargin
   )
 
-  test("Get partitioning additional data returns additional data for partitioning with additional data") {
+  test("Get partitioning additional data returns additional data for partitioning with additional data", IntegrationTestTag) {
     table("runs.partitionings").insert(
       add("partitioning", partitioning1)
         .add("created_by", "Joseph")
@@ -119,7 +120,7 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
 
   }
 
-  test("Get partitioning additional data should return no records for partitioning without additional data") {
+  test("Get partitioning additional data should return no records for partitioning without additional data", IntegrationTestTag) {
     table("runs.partitionings").insert(
       add("partitioning", partitioning2)
         .add("created_by", "Joseph")
@@ -142,7 +143,7 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
     }
   }
 
-  test("Get partitioning additional data should return error status code on non existing partitioning") {
+  test("Get partitioning additional data should return error status code on non existing partitioning", IntegrationTestTag) {
     val partitioning = JsonBString(
       """
         |{

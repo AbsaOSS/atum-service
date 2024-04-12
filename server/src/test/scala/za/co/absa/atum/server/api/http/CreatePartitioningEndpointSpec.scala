@@ -68,7 +68,7 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(equalTo(Right(createAtumContextDTO(partitioningSubmitDTO1)), StatusCode.Ok))
-      },
+      } @@ TestAspect.tag("IntegrationTest"),
       test("Returns expected BadRequest") {
         val response = request
           .body(partitioningSubmitDTO2)
@@ -77,7 +77,7 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
-      },
+      } @@ TestAspect.tag("IntegrationTest"),
       test("Returns expected InternalServerError") {
         val response = request
           .body(partitioningSubmitDTO3)
@@ -86,7 +86,7 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.InternalServerError))
-      }
+      } @@ TestAspect.tag("IntegrationTest")
     )
   }.provide(
     createPartitioningEndpointMockLayer

@@ -50,13 +50,13 @@ class CheckpointControllerSpec extends ZIOSpecDefault with TestData {
           for {
             result <- CheckpointController.createCheckpoint(checkpointDTO1)
           } yield assertTrue(result == checkpointDTO1)
-        },
+        } @@ TestAspect.tag("IntegrationTest"),
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(CheckpointController.createCheckpoint(checkpointDTO3).exit)(failsWithA[InternalServerErrorResponse])
         },
         test("Returns expected GeneralErrorResponse") {
           assertZIO(CheckpointController.createCheckpoint(checkpointDTO2).exit)(failsWithA[GeneralErrorResponse])
-        }
+        } @@ TestAspect.tag("IntegrationTest")
       )
     ).provide(
       CheckpointControllerImpl.layer,

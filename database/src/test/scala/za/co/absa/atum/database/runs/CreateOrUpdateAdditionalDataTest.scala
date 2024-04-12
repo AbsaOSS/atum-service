@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.runs
 
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
@@ -38,7 +39,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
       |""".stripMargin
   )
 
-  test("Partitioning and AD present, delete & re-insert, and also 'ignore' of AD records performed") {
+  test("Partitioning and AD present, delete & re-insert, and also 'ignore' of AD records performed", IntegrationTestTag) {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -102,7 +103,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
     }
   }
 
-  test("Partitioning and AD present, new AD records inserted, nothing backed up") {
+  test("Partitioning and AD present, new AD records inserted, nothing backed up", IntegrationTestTag) {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -168,7 +169,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
    }
   }
 
-  test("Partitioning and AD present, but no new AD records were backed-up or inserted, no changes detected") {
+  test("Partitioning and AD present, but no new AD records were backed-up or inserted, no changes detected", IntegrationTestTag) {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -216,7 +217,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 0)
   }
 
-  test("Partitioning not present, no action taken") {
+  test("Partitioning not present, no action taken", IntegrationTestTag) {
 
     val inputADToInsert = CustomDBType(
       """

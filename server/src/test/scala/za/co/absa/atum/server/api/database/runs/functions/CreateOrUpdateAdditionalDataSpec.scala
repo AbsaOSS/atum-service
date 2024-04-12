@@ -46,7 +46,7 @@ class CreateOrUpdateAdditionalDataSpec extends ConfigProviderSpec {
           createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
           result <- createOrUpdateAdditionalData(additionalDataSubmitDTO)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
-      }
+      } @@ TestAspect.tag("IntegrationTest")
     ).provide(
       CreateOrUpdateAdditionalData.layer,
       PostgresDatabaseProvider.layer,

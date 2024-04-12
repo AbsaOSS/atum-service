@@ -56,17 +56,17 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO1)
           } yield assertTrue(result == expectedAtumContextDTO)
-        },
+        } @@ TestAspect.tag("IntegrationTest"),
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
             failsWithA[InternalServerErrorResponse]
           )
-        },
+        } @@ TestAspect.tag("IntegrationTest"),
         test("Returns expected GeneralErrorResponse") {
           assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO2).exit)(
             failsWithA[GeneralErrorResponse]
           )
-        }
+        } @@ TestAspect.tag("IntegrationTest")
       )
     ).provide(
       PartitioningControllerImpl.layer,

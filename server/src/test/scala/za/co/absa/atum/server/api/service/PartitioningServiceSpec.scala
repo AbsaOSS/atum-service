@@ -49,17 +49,17 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO1)
           } yield assertTrue(result.isRight)
-        },
+        } @@ TestAspect.tag("IntegrationTest"),
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO2)
           } yield assertTrue(result.isLeft)
-        },
+        } @@ TestAspect.tag("IntegrationTest"),
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
             failsWithA[ServiceError]
           )
-        }
+        } @@ TestAspect.tag("IntegrationTest")
       )
     ).provide(
       PartitioningServiceImpl.layer,

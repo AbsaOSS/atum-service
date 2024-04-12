@@ -68,7 +68,7 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(equalTo(Right(checkpointDTO1), StatusCode.Created))
-      },
+      } @@ TestAspect.tag("IntegrationTest"),
       test("Returns expected BadRequest") {
         val response = request
           .body(checkpointDTO2)
@@ -77,7 +77,7 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
-      },
+      } @@ TestAspect.tag("IntegrationTest"),
       test("Returns expected InternalServerError") {
         val response = request
           .body(checkpointDTO3)
@@ -86,7 +86,7 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.InternalServerError))
-      }
+      } @@ TestAspect.tag("IntegrationTest")
     )
   }.provide(
     checkpointControllerMockLayer

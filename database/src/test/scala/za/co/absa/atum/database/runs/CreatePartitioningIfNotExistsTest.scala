@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.runs
 
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
@@ -51,7 +52,7 @@ class CreatePartitioningIfNotExistsTest extends DBTestSuite{
       |""".stripMargin
   )
 
-  test("Partitioning created") {
+  test("Partitioning created", IntegrationTestTag) {
     val partitioningID = function(fncCreatePartitioningIfNotExists)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
@@ -91,7 +92,7 @@ class CreatePartitioningIfNotExistsTest extends DBTestSuite{
       assert(!flowsResult.hasNext)
     }
   }
-  test("Partitioning created with parent partitioning that already exists") {
+  test("Partitioning created with parent partitioning that already exists", IntegrationTestTag) {
     val parentPartitioningID = function(fncCreatePartitioningIfNotExists)
       .setParam("i_partitioning", parentPartitioning)
       .setParam("i_by_user", "Albert Einstein")
@@ -126,7 +127,7 @@ class CreatePartitioningIfNotExistsTest extends DBTestSuite{
     )
   }
 
-  test("Partitioning already exists") {
+  test("Partitioning already exists", IntegrationTestTag) {
     val partitioningID = function(fncCreatePartitioningIfNotExists)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
@@ -156,7 +157,7 @@ class CreatePartitioningIfNotExistsTest extends DBTestSuite{
     )
   }
 
-  test("Partitioning exists, but parent is added") {
+  test("Partitioning exists, but parent is added", IntegrationTestTag) {
     val partitioningID = function(fncCreatePartitioningIfNotExists)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")

@@ -17,6 +17,7 @@
 package za.co.absa.atum.database.runs
 
 import org.postgresql.util.PSQLException
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
@@ -69,7 +70,7 @@ class IsPartitioningValidTest extends DBTestSuite {
       |""".stripMargin
   )
 
-  test("Partitioning is valid (strict check)") {
+  test("Partitioning is valid (strict check)", IntegrationTestTag) {
    function(fncIsPartitioningValid)
       .setParam("i_partitioning", partitioningValid)
       .execute { queryResult =>
@@ -82,7 +83,7 @@ class IsPartitioningValidTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is valid but has null values (strict check)") {
+  test("Partitioning is valid but has null values (strict check)", IntegrationTestTag) {
     val caught = intercept[PSQLException](
       function(fncIsPartitioningValid)
         .setParam("i_partitioning", partitioningValidWithNullValues)
@@ -94,7 +95,7 @@ class IsPartitioningValidTest extends DBTestSuite {
     )
   }
 
-  test("Partitioning is valid but has null values (non-strict check)") {
+  test("Partitioning is valid but has null values (non-strict check)", IntegrationTestTag) {
     function(fncIsPartitioningValid)
       .setParam("i_partitioning", partitioningValidWithNullValues)
       .setParam("i_strict_check", false)
@@ -108,7 +109,7 @@ class IsPartitioningValidTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is invalid") {
+  test("Partitioning is invalid", IntegrationTestTag) {
     val caught = intercept[PSQLException](
       function(fncIsPartitioningValid)
         .setParam("i_partitioning", partitioningInvalid)

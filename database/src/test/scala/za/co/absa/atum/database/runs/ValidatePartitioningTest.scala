@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.runs
 
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
@@ -164,7 +165,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       |""".stripMargin
   )
 
-  test("Partitioning is valid (strict check)") {
+  test("Partitioning is valid (strict check)", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningValid)
       .execute { queryResult =>
@@ -172,7 +173,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is valid, even when keys have whitespaces (without them they would be duplicated)") {
+  test("Partitioning is valid, even when keys have whitespaces (without them they would be duplicated)", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningValidWhitespacesInKeys)
       .execute { queryResult =>
@@ -180,7 +181,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is valid but has null values (strict check)") {
+  test("Partitioning is valid but has null values (strict check)", IntegrationTestTag) {
       function(fncValidatePartitioning)
         .setParam("i_partitioning", partitioningValidWithNullValues)
         .execute { queryResult =>
@@ -194,7 +195,7 @@ class ValidatePartitioningTest extends DBTestSuite {
         }
   }
 
-  test("Partitioning is valid, but one key doesn't have a value (strict check)") {
+  test("Partitioning is valid, but one key doesn't have a value (strict check)", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningValidMissingValue)
       .execute { queryResult =>
@@ -212,7 +213,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is valid, but one key doesn't have a value (non-strict check)") {
+  test("Partitioning is valid, but one key doesn't have a value (non-strict check)", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningValidMissingValue)
       .setParam("i_strict_check", false)
@@ -221,7 +222,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is valid, but keys don't correspond to values (non-strict check)") {
+  test("Partitioning is valid, but keys don't correspond to values (non-strict check)", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningValidValuesNotCorrespondToKeys)
       .setParam("i_strict_check", false)
@@ -230,7 +231,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is valid, but keys don't correspond to values (strict check)") {
+  test("Partitioning is valid, but keys don't correspond to values (strict check)", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningValidValuesNotCorrespondToKeys)
       .execute { queryResult =>
@@ -248,7 +249,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is invalid, incompatible version") {
+  test("Partitioning is invalid, incompatible version", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningInvalidIncompatibleVersion)
       .execute { queryResult =>
@@ -262,7 +263,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is valid, but it has redundant attribute") {
+  test("Partitioning is valid, but it has redundant attribute", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningValidRedundantAttribute)
       .execute { queryResult =>
@@ -270,7 +271,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is invalid, valid JSON but incorrect structure (attribute missing)") {
+  test("Partitioning is invalid, valid JSON but incorrect structure (attribute missing)", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningInvalidBadJSONStructure1)
       .execute { queryResult =>
@@ -284,7 +285,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is invalid, duplicated partition keys") {
+  test("Partitioning is invalid, duplicated partition keys", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningInvalidDuplicatedKeys)
       .execute { queryResult =>
@@ -300,7 +301,7 @@ class ValidatePartitioningTest extends DBTestSuite {
       }
   }
 
-  test("Partitioning is invalid, multiple problems") {
+  test("Partitioning is invalid, multiple problems", IntegrationTestTag) {
     function(fncValidatePartitioning)
       .setParam("i_partitioning", partitioningInvalidMultipleProblems)
       .execute { queryResult =>

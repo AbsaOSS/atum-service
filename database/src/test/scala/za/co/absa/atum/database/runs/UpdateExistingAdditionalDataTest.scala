@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.runs
 
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
@@ -38,7 +39,7 @@ class UpdateExistingAdditionalDataTest extends DBTestSuite{
     |""".stripMargin
   )
 
-  test("Partitioning and AD present, multiple AD records backed up") {
+  test("Partitioning and AD present, multiple AD records backed up", IntegrationTestTag) {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -121,7 +122,7 @@ class UpdateExistingAdditionalDataTest extends DBTestSuite{
 
   }
 
-  test("Partitioning and AD present, but the input AD are the same as in DB, no backup") {
+  test("Partitioning and AD present, but the input AD are the same as in DB, no backup", IntegrationTestTag) {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)

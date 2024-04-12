@@ -130,14 +130,6 @@ lazy val database = (projectMatrix in file("database"))
       },
       libraryDependencies ++= Dependencies.databaseDependencies,
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
-      test := {}
     ): _*
   )
   .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
-
-lazy val dbTest = taskKey[Unit]("Launch DB tests")
-
-dbTest := {
-  println("Running DB tests")
-  (database.jvm(Versions.serviceScalaVersion) / Test / test).value
-}

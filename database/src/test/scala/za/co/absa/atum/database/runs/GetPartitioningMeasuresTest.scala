@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.runs
 
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
@@ -23,7 +24,7 @@ import za.co.absa.balta.classes.setter.CustomDBType
 class GetPartitioningMeasuresTest extends DBTestSuite {
   private val fncGetPartitioningMeasures = "runs.get_partitioning_measures"
 
-  test("Get partitioning measures should return partitioning measures for partitioning with measures") {
+  test("Get partitioning measures should return partitioning measures for partitioning with measures", IntegrationTestTag) {
     val partitioning = JsonBString(
       """
         |{
@@ -85,7 +86,7 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
     }
   }
 
-  test("Get partitioning measures should return error status code on non existing partitioning") {
+  test("Get partitioning measures should return error status code on non existing partitioning", IntegrationTestTag) {
     val partitioning = JsonBString(
       """
         |{
@@ -108,7 +109,7 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
       }
   }
 
-  test("Get partitioning measures should return no data status code on partitioning without measures") {
+  test("Get partitioning measures should return no data status code on partitioning without measures", IntegrationTestTag) {
     val partitioning = JsonBString(
       """
         |{
