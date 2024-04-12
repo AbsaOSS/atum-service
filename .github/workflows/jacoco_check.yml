@@ -24,6 +24,7 @@ on:
 env:
   scalaLong12: 2.13.11
   scalaShort12: "2.13"
+  jaCocoReportVersion: v1.6.1
   overall: 80.0
   changed: 80.0
 

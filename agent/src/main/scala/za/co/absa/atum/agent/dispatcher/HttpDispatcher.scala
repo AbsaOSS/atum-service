@@ -24,9 +24,11 @@ import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
 
-class HttpDispatcher(config: Config) extends Dispatcher with Logging {
+class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Logging {
+  import HttpDispatcher._
 
-  private val serverUrl = config.getString("url")
+  val serverUrl: String = config.getString(UrlKey)
+
   private val currentApiVersion = "/api/v1"
   private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createPartitioning")
   private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createCheckpoint")
@@ -41,7 +43,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
   logInfo("using http dispatcher")
   logInfo(s"serverUrl $serverUrl")
 
-  override def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
+  override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
     val request = commonAtumRequest
       .post(createPartitioningEndpoint)
       .body(SerializationUtils.asJson(partitioning))
@@ -53,7 +55,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     )
   }
 
-  override def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+  override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     val request = commonAtumRequest
       .post(createCheckpointEndpoint)
       .body(SerializationUtils.asJson(checkpoint))
@@ -63,7 +65,7 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     handleResponseBody(response)
   }
 
-  override def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
+  override protected[agent] def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
     val request = commonAtumRequest
       .post(createAdditionalDataEndpoint)
       .body(SerializationUtils.asJson(additionalDataSubmitDTO))
@@ -80,4 +82,8 @@ class HttpDispatcher(config: Config) extends Dispatcher with Logging {
     }
   }
 
+}
+
+object HttpDispatcher {
+  private val UrlKey = "atum.dispatcher.http.url"
 }
