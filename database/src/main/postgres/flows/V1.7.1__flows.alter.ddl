@@ -15,3 +15,4 @@
 
 ALTER TABLE flows.flows
     ADD COLUMN IF NOT EXISTS fk_primary_partitioning BIGINT;
+    
