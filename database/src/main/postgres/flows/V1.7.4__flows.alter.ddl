@@ -15,4 +15,3 @@
 
 ALTER TABLE flows.flows
     ALTER COLUMN fk_primary_partitioning SET NOT NULL;
-    
