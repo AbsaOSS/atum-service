@@ -60,18 +60,18 @@ jobs:
           title: JaCoCo agent module code coverage report - scala ${{ env.scalaLong12 }}
           update-comment: true
       #  model module code coverage
-#      - name: Add coverage to PR
-#        if: steps.jacocorun.outcome == 'success'
-#        id: jacoco-model
-#        uses: madrapps/jacoco-report@v1.6.1
-#        with:
-#          name: model-jacoco-report
-#          paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          min-coverage-overall: ${{ env.overall }}
-#          min-coverage-changed-file: ${{ env.changed }}
-#          title: JaCoCo model module code coverage report - scala ${{ env.scalaLong12 }}
-#          update-comment: true
+      - name: Add coverage to PR
+        if: steps.jacocorun.outcome == 'success'
+        id: jacoco-model
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          name: model-jacoco-report
+          paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: ${{ env.overall }}
+          min-coverage-changed-file: ${{ env.changed }}
+          title: JaCoCo model module code coverage report - scala ${{ env.scalaLong12 }}
+          update-comment: true
 #      - name: Get the Coverage info
 #        if: steps.jacocorun.outcome == 'success'
 #        run: |
