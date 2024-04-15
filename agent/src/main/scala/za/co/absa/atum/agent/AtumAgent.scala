@@ -18,55 +18,49 @@ package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
-import za.co.absa.atum.agent.dispatcher.{ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, Dispatcher, HttpDispatcher}
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
- * Entity that communicate with the API, primarily focused on spawning Atum Context(s).
+ *  Entity that communicate with the API, primarily focused on spawning Atum Context(s).
  */
-class AtumAgent private[agent] () {
+trait AtumAgent {
 
   private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
-  val config: Config = ConfigFactory.load()
-
-  private val dispatcher = config.getString("atum.dispatcher.type") match {
-    case "http" => new HttpDispatcher(config.getConfig("atum.dispatcher.http"))
-    case "console" => new ConsoleDispatcher
-    case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
-  }
+  val dispatcher: Dispatcher
 
   /**
-   * Returns a user under who's security context the JVM is running.
-   * It's purpose is for auditing in author/createdBy fields.
+   *  Returns a user under who's security context the JVM is running.
+   *  It's purpose is for auditing in author/createdBy fields.
    *
-   * Important: It's not supposed to be used for authorization as it can be spoofed!
+   *  Important: It's not supposed to be used for authorization as it can be spoofed!
    *
-   * @return Current user.
+   *  @return Current user.
    */
   private[agent] def currentUser: String = System.getProperty("user.name") // platform independent
 
   /**
-   * Sends `CheckpointDTO` to the AtumService API
+   *  Sends `CheckpointDTO` to the AtumService API
    *
-   * @param checkpoint Already initialized Checkpoint object to store
+   *  @param checkpoint Already initialized Checkpoint object to store
    */
-  private [agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+  private[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     dispatcher.saveCheckpoint(checkpoint)
   }
 
   /**
-   * Sends the `Metadata` to the Atumservice API
-   * @param additionalData the metadata to be saved to the server.
+   *  Sends the `Metadata` to the Atumservice API
+   *  @param additionalData the metadata to be saved to the server.
    */
-  private [agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
+  private[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
     dispatcher.saveAdditionalData(additionalData)
   }
 
   /**
-   * Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
+   *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
    *
-   * Note: if partitioning doesn't exist in the store yet, a new one will be created with the author stored in
+   *  Note: if partitioning doesn't exist in the store yet, a new one will be created with the author stored in
    *    `AtumAgent.currentUser`. If partitioning already exists, this attribute will be ignored because there
    *    already is an author who previously created the partitioning in the data store. Each Atum Context thus
    *    can have different author potentially.
@@ -86,11 +80,11 @@ class AtumAgent private[agent] () {
   }
 
   /**
-   * Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
-   * Retrieves the data from AtumService API.
-   * @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
-   * @param parentAtumContext Parent AtumContext.
-   * @return Atum context object
+   *  Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
+   *  Retrieves the data from AtumService API.
+   *  @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
+   *  @param parentAtumContext Parent AtumContext.
+   *  @return Atum context object
    */
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
     val authorIfNew = AtumAgent.currentUser
@@ -119,4 +113,17 @@ class AtumAgent private[agent] () {
 
 }
 
-object AtumAgent extends AtumAgent
+object AtumAgent extends AtumAgent {
+
+  override val dispatcher: Dispatcher = dispatcherFromConfig()
+
+  def dispatcherFromConfig(config: Config = ConfigFactory.load()): Dispatcher = {
+    config.getString("atum.dispatcher.type") match {
+      case "http" => new HttpDispatcher(config)
+      case "console" => new ConsoleDispatcher(config)
+      case "capture" => new CapturingDispatcher(config)
+      case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+    }
+  }
+
+}
