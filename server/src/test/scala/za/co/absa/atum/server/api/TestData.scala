@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -34,6 +34,16 @@ trait TestData {
 
   protected val partitioningSubmitDTO3: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
+
+  val additionalDataDTO: AdditionalDataDTO = Map(
+    "key1" -> Some("value1"),
+    "key2" -> None,
+    "key3" -> Some("value3")
+  )
+  // Partitioning DTO
+  protected val partitioningDTO1: PartitioningDTO = Seq.empty
+  protected val partitioningDTO2: PartitioningDTO = Seq.empty
+  protected val partitioningDTO3: PartitioningDTO = Seq.empty
 
   // Measure
   protected val measureDTO1: MeasureDTO = MeasureDTO("count", Seq("1"))

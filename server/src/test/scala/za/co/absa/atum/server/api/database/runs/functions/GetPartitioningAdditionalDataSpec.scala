@@ -32,14 +32,10 @@ class GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
 
     suite("GetPartitioningAdditionalDataSuite")(
       test("Returns expected sequence of (String, Option[String])") {
-        val partitioningSubmitDTO = PartitioningSubmitDTO(
-          partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
-          parentPartitioning = Some(Seq(PartitionDTO("pKey1", "pVal1"), PartitionDTO("pKey2", "pVal2"))),
-          authorIfNew = "newAuthor"
-        )
+        val partitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
         for {
           getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
-          result <- getPartitioningAdditionalData(partitioningSubmitDTO)
+          result <- getPartitioningAdditionalData(partitioningDTO)
         } yield assertTrue(result.nonEmpty)
       }
     ).provide(

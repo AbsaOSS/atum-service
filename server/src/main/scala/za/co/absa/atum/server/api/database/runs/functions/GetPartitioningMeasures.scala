@@ -20,7 +20,7 @@ import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
 import play.api.libs.json.Json
-import za.co.absa.atum.model.dto.{MeasureDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{MeasureDTO, PartitioningDTO}
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.doobie.DoobieEngine
@@ -29,15 +29,14 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
-
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningSubmitDTO, MeasureDTO, Task]
+  extends DoobieMultipleResultFunction[PartitioningDTO, MeasureDTO, Task]
   {
 
-  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[MeasureDTO]): Fragment = {
-    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
+  override def sql(values: PartitioningDTO)(implicit read: Read[MeasureDTO]): Fragment = {
+    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values)
     val partitioningJsonString = Json.toJson(partitioning).toString
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(

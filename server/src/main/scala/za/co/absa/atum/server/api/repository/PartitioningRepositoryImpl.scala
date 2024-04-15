@@ -16,15 +16,12 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, MeasureDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.api.database.runs.functions.{
-  CreateOrUpdateAdditionalData,
-  CreatePartitioningIfNotExists,
-  GetPartitioningAdditionalData,
-  GetPartitioningMeasures}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
+import zio.prelude.ZivariantOps
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
@@ -34,9 +31,9 @@ class PartitioningRepositoryImpl(
 ) extends PartitioningRepository with BaseRepository {
 
   override def createPartitioningIfNotExists(
-    partitioning: PartitioningSubmitDTO
+    partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    dbCallWithStatus(createPartitioningIfNotExistsFn(partitioning), "createPartitioningIfNotExists")
+    dbCallWithStatus(createPartitioningIfNotExistsFn(partitioningSubmitDTO), "createPartitioningIfNotExists")
   }
 
   override def createOrUpdateAdditionalData(
@@ -45,21 +42,25 @@ class PartitioningRepositoryImpl(
     dbCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningSubmitDTO):
+  override def getPartitioningMeasures(partitioning: PartitioningDTO):
     IO[DatabaseError, Seq[MeasureDTO]] = {
-    getPartitioningMeasuresFn(partitioning)
-      .mapError(err => DatabaseError(err.getMessage))
+    getPartitioningMeasuresFn(partitioning).mapLeft(err => DatabaseError(err.getMessage))
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningSubmitDTO):
+  override def getPartitioningAdditionalData(partitioning: PartitioningDTO):
     IO[DatabaseError, AdditionalDataDTO] = {
     getPartitioningAdditionalDataFn(partitioning).mapBoth(err => DatabaseError(err.getMessage), _.toMap)
   }
 }
 
 object PartitioningRepositoryImpl {
-  val layer: URLayer[CreatePartitioningIfNotExists with GetPartitioningMeasures with
-    GetPartitioningAdditionalData with CreateOrUpdateAdditionalData, PartitioningRepository] = ZLayer {
+  val layer: URLayer[
+    CreatePartitioningIfNotExists
+      with GetPartitioningMeasures
+      with GetPartitioningAdditionalData
+      with CreateOrUpdateAdditionalData,
+    PartitioningRepository
+  ] = ZLayer {
     for {
       createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]

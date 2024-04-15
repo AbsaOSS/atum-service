@@ -38,7 +38,6 @@ $$
 
 -- Status codes:
 --      11 - OK
---      16 - Record not found for the given partitioning
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------

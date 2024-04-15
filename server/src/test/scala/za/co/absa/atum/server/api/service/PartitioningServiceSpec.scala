@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.service
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AtumContextDTO, MeasureDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, MeasureDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.PartitioningRepository
@@ -46,18 +46,16 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO3))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.getPartitioningMeasures(partitioningSubmitDTO1))
+  when(partitioningRepositoryMock.getPartitioningMeasures(partitioningDTO1))
     .thenReturn(ZIO.succeed(Seq.empty[MeasureDTO]))
-  when(partitioningRepositoryMock.getPartitioningMeasures(partitioningSubmitDTO2))
-    .thenReturn(ZIO.fail(DatabaseError("boom!")))
-  when(partitioningRepositoryMock.getPartitioningMeasures(partitioningSubmitDTO3))
+  when(partitioningRepositoryMock.getPartitioningMeasures(partitioningDTO2))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningSubmitDTO1))
+  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO1))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
-  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningSubmitDTO2))
+  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO2))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
-  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningSubmitDTO3))
+  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO3))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
 
 
@@ -103,11 +101,11 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
       suite("GetPartitioningMeasuresSuite")(
         test("Returns expected Right with Seq[MeasureDTO]") {
           for {
-            result <- PartitioningService.getPartitioningMeasures(partitioningSubmitDTO1)
+            result <- PartitioningService.getPartitioningMeasures(partitioningDTO1)
           } yield assertTrue(result.isInstanceOf[Seq[MeasureDTO]])
         },
         test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.getPartitioningMeasures(partitioningSubmitDTO2).exit)(
+          assertZIO(PartitioningService.getPartitioningMeasures(partitioningDTO2).exit)(
             failsWithA[ServiceError]
           )
         }
@@ -115,27 +113,11 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
       suite("GetPartitioningAdditionalDataSuite")(
         test("Returns expected Right with Seq[AdditionalDataDTO]") {
           for {
-            result <- PartitioningService.getPartitioningAdditionalData(partitioningSubmitDTO1)
+            result <- PartitioningService.getPartitioningAdditionalData(partitioningDTO1)
           } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
         },
         test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningSubmitDTO2).exit)(
-            failsWithA[ServiceError]
-          )
-        }
-      ),
-      suite("ReturnAtumContextSuite")(
-        test("Returns expected AtumContextDTO") {
-          for {
-            result <- PartitioningService.returnAtumContext(partitioningSubmitDTO1)
-          } yield {
-            print("Results: ", result.partitioning)
-            assertTrue(result.isInstanceOf[AtumContextDTO])
-            assertTrue(result.partitioning == partitioningSubmitDTO1.partitioning)
-          }
-        },
-        test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.returnAtumContext(partitioningSubmitDTO2).exit)(
+          assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningDTO2).exit)(
             failsWithA[ServiceError]
           )
         }
