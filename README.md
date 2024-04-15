@@ -136,6 +136,53 @@ To make this project runnable via IntelliJ, do the following:
   is configured according to your needs
 
 
+## How to Run Integration Tests
+
+### Test controls
+
+The project uses the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-Practices.html#.sbtrc) file to manage and control the execution of integration tests. The Integration tests are the ones with the tag `Integration test.` Below are the commands configured in the `.sbtrc` file to facilitate different testing scenarios:
+
+### Tests execution
+
+- **Run Unit Tests**: Use the `test` command to execute all tests, skipping all Integration tests. 
+```
+sbt "project agent" ++2.13.11 test "project model" ++2.13.11 test
+```
+- with alias in .sbtrc and Java 8:
+```
+alias test=; testOnly -l IntegrationTest
+
+# `-l IntegrationTest`: This switch excludes all tests labeled as `IntegrationTest,` allowing only only executing unit tests.
+```
+- **Run Integration Tests Only**: Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
+```
+sbt "project server" ++2.13.11 testIT
+```
+- with alias in .sbtrc and Java 11:
+```
+alias testIT=; testOnly -- -t IntegrationTest
+
+# `-- -t IntegrationTest`: This switch targets only those tests marked with the `IntegrationTest` tag.
+```
+- **Run Database-Related Integration Tests Only**: The `testDB` command targets integration tests specifically tagged to test database interactions.
+```
+sbt "project database" ++2.13.11 testDB
+```
+- with alias in .sbtrc and Java 8:
+```
+alias testDB=; testOnly -t IntegrationTest
+
+# `-t IntegrationTest`: Similar to the `testIT` command, but used here to potentially combine with other tags specific to database testing if needed.
+```
+- **Run All Tests**: If you need to perform a comprehensive test check that includes both unit and integration tests, use the `testAll` command. This ensures that all testable code in the project is verified.
+```
+alias testAll=; testOnly
+```
+
+### Why testIT and testDB?
+- Integration test in modules `database` and `server` are implemented differently.
+- Current implementation requires two different way how to control them.
+
 ## How to Release
 
 Please see [this file](RELEASE.md) for more details.
