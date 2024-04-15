@@ -1,5 +1,4 @@
 # Test run control
-alias test=; testOnly -l IntegrationTest
-alias testDB=; testOnly -t IntegrationTest
+alias test=; testOnly -- -l IntegrationTest
 alias testIT=; testOnly -- -t IntegrationTest
 alias testAll=; testOnly
