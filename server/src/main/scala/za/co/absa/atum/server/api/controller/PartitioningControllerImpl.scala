@@ -29,8 +29,9 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   override def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
     for {
       _ <- partitioningService.createPartitioningIfNotExists(partitioningSubmitDTO)
-        .mapError(error => InternalServerErrorResponse(error.message))
-      measures <- partitioningService.getPartitioningMeasures(partitioningSubmitDTO.partitioning).mapError { serviceError: ServiceError =>
+        .mapError(serviceError => InternalServerErrorResponse(serviceError.message))
+      measures <- partitioningService.getPartitioningMeasures(partitioningSubmitDTO.partitioning)
+        .mapError { serviceError: ServiceError =>
         InternalServerErrorResponse(serviceError.message)
       }
       additionalData <- partitioningService.getPartitioningAdditionalData(partitioningSubmitDTO.partitioning).mapError { serviceError: ServiceError =>

@@ -16,16 +16,21 @@
 
 package za.co.absa.atum.server.api
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitionDTO, PartitioningDTO, PartitioningSubmitDTO}
 
 import java.time.ZonedDateTime
 import java.util.UUID
 
 trait TestData {
 
-  // Partitioning
+  // Partitioning DTO
+  protected val partitioningDTO1: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
+  protected val partitioningDTO2: PartitioningDTO = Seq(PartitionDTO("Invali", "invalid"), PartitionDTO("invalid", "invalid"))
+  protected val partitioningDTO3: PartitioningDTO = Seq.empty
+
+  // Partitioning submit DTO
   protected val partitioningSubmitDTO1: PartitioningSubmitDTO = PartitioningSubmitDTO(
-    partitioning = Seq.empty,
+    partitioning = partitioningDTO1,
     parentPartitioning = None,
     authorIfNew = ""
   )
@@ -40,10 +45,6 @@ trait TestData {
     "key2" -> None,
     "key3" -> Some("value3")
   )
-  // Partitioning DTO
-  protected val partitioningDTO1: PartitioningDTO = Seq.empty
-  protected val partitioningDTO2: PartitioningDTO = Seq.empty
-  protected val partitioningDTO3: PartitioningDTO = Seq.empty
 
   // Measure
   protected val measureDTO1: MeasureDTO = MeasureDTO("count", Seq("1"))
