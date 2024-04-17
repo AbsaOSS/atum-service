@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.ConfigProviderSpec
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
@@ -32,7 +32,7 @@ class GetPartitioningMeasuresSpec extends ConfigProviderSpec {
 
     suite("GetPartitioningMeasuresSuite")(
       test("Returns expected sequence of Measures") {
-        val partitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
+        val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
 
         for {
           getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]

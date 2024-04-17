@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.ConfigProviderSpec
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
@@ -32,11 +32,11 @@ class GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
 
     suite("GetPartitioningAdditionalDataSuite")(
       test("Returns expected sequence of (String, Option[String])") {
-        val partitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
+        val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
         for {
           getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
           result <- getPartitioningAdditionalData(partitioningDTO)
-        } yield assertTrue(result.nonEmpty)
+        } yield assertTrue(result.nonEmpty && result.isInstanceOf[Seq[(String, Option[String])]])
       }
     ).provide(
       GetPartitioningAdditionalData.layer,

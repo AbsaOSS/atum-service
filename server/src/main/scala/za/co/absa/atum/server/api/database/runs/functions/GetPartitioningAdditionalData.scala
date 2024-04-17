@@ -34,14 +34,13 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStrin
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[PartitioningDTO, (String, Option[String]), Task]
   {
-
+    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
     override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
     val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)
     val partitioningJsonString = Json.toJson(partitioning).toString
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
-                      import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                       partitioningJsonString
                    }
                 ) ${Fragment.const(alias)};"""

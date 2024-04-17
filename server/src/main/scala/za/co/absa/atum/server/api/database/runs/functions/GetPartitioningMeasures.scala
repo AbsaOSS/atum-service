@@ -32,16 +32,16 @@ import zio.interop.catz._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningDTO, MeasureDTO, Task]
+  extends DoobieMultipleResultFunction[PartitioningDTO, Option[MeasureDTO], Task]
   {
+    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
 
-  override def sql(values: PartitioningDTO)(implicit read: Read[MeasureDTO]): Fragment = {
+    override def sql(values: PartitioningDTO)(implicit read: Read[Option[MeasureDTO]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values)
     val partitioningJsonString = Json.toJson(partitioning).toString
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     partitioningJsonString
                   }
                 ) ${Fragment.const(alias)};"""

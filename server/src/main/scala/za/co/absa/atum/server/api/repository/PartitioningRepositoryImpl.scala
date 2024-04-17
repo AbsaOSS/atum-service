@@ -17,7 +17,12 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningMeasures}
+import za.co.absa.atum.server.api.database.runs.functions.{
+  CreateOrUpdateAdditionalData,
+  CreatePartitioningIfNotExists,
+  GetPartitioningAdditionalData,
+  GetPartitioningMeasures
+}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
@@ -43,7 +48,7 @@ class PartitioningRepositoryImpl(
   }
 
   override def getPartitioningMeasures(partitioning: PartitioningDTO):
-    IO[DatabaseError, Seq[MeasureDTO]] = {
+    IO[DatabaseError, Either[Error, Seq[MeasureDTO]]] = {
     getPartitioningMeasuresFn(partitioning).mapLeft(err => DatabaseError(err.getMessage))
   }
 

@@ -63,7 +63,7 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("PartitioningServiceSuite")(
+    suite("PartitioningServiceSpec")(
       suite("CreatePartitioningIfNotExistsSuite")(
         test("Returns expected Right with Unit") {
           for {

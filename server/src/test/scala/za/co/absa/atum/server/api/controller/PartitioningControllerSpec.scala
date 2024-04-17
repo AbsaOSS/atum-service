@@ -47,7 +47,7 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("PartitioningControllerSuite")(
+    suite("PartitioningControllerSpec")(
       suite("CreatePartitioningIfNotExistsSuite")(
         test("Returns expected AtumContextDTO") {
           val expectedAtumContextDTO = AtumContextDTO(

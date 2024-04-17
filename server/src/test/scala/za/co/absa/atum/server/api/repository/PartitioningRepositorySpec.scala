@@ -62,7 +62,7 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
   // Get Partitioning Measures Mocks
   private val getPartitioningMeasuresMock = mock(classOf[GetPartitioningMeasures])
 
-  when(getPartitioningMeasuresMock.apply(partitioningDTO1)).thenReturn(ZIO.succeed(Seq()))
+  when(getPartitioningMeasuresMock.apply(partitioningDTO1)).thenReturn(ZIO.succeed(Seq().empty))
   when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
   when(getPartitioningMeasuresMock.apply(partitioningDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
@@ -79,7 +79,7 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("PartitioningRepositorySuite")(
+    suite("PartitioningRepositorySpec")(
       suite("CreatePartitioningIfNotExistsSuite")(
         test("Returns expected Right with Unit") {
           for {
