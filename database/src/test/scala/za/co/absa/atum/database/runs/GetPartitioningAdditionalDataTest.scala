@@ -72,7 +72,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
         .add("created_by", "Joseph")
         .add("ad_name", "ad_1")
         .add("ad_value", "This is the additional data for Joseph")
-        .add("updated_by", "Joseph")
     )
 
     table("runs.additional_data").insert(
@@ -80,7 +79,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
         .add("created_by", "Joseph")
         .add("ad_name", "ad_2")
         .add("ad_value", "This is the additional data for Joseph")
-        .add("updated_by", "Joseph")
     )
 
     table("runs.additional_data").insert(
@@ -88,7 +86,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
         .add("created_by", "Daniel")
         .add("ad_name", "ad_3")
         .add("ad_value", "This is the additional data for Daniel")
-        .add("updated_by", "Daniel")
     )
 
     function(fncGetPartitioningAdditionalData)

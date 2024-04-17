@@ -47,9 +47,11 @@ class PartitioningRepositoryImpl(
     dbCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningDTO):
-    IO[DatabaseError, Either[Error, Seq[MeasureDTO]]] = {
-    getPartitioningMeasuresFn(partitioning).mapLeft(err => DatabaseError(err.getMessage))
+  override def getPartitioningMeasures(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, Seq[MeasureDTO]] = {
+    val m = getPartitioningMeasuresFn(partitioning)
+    m.mapLeft(err => DatabaseError(err.getMessage))
   }
 
   override def getPartitioningAdditionalData(partitioning: PartitioningDTO):

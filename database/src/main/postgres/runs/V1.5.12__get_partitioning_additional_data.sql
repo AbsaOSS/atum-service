@@ -21,11 +21,10 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_additional_data(
     OUT ad_name                 TEXT,
     OUT ad_value                TEXT
 ) RETURNS SETOF record AS
-
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.get_partitioning_additional_data(1)
+-- Function: runs.get_partitioning_additional_data(2)
 --      Returns additional data for the given partitioning
 --
 -- Parameters:
@@ -39,6 +38,7 @@ $$
 --
 -- Status codes:
 --      11 - OK
+--      16 - Record not found for the given partitioning
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -63,6 +63,12 @@ BEGIN
     FROM runs.additional_data AS ad
     WHERE ad.fk_partitioning = _fk_partitioning;
 
+    IF NOT FOUND THEN
+        status := 16;
+        status_text := 'No additional data found for the given partitioning.';
+        RETURN NEXT;
+        RETURN;
+    END IF;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
