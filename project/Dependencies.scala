@@ -70,6 +70,8 @@ object Dependencies {
     val sttpPlayJson = "3.9.3"
 
     val awssdk = "2.23.15"
+
+    val scalaNameof = "4.0.0"
   }
 
 
@@ -225,6 +227,8 @@ object Dependencies {
 
     lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
 
+    lazy val nameOf = "com.github.dwickern" %% "scala-nameof" % Versions.scalaNameof % Provided // it's provided, as it's a macro needed only at runtime
+
     Seq(
       sparkCore,
       sparkSql,
@@ -232,7 +236,8 @@ object Dependencies {
       sparkCommons,
       sparkCommonsTest,
       sttp,
-      logback
+      logback,
+      nameOf
     )
   }
 
