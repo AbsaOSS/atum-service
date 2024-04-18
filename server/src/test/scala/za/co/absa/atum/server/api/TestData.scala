@@ -28,8 +28,8 @@ trait TestData {
     PartitionDTO("key2", "val2")
   )
   protected val partitioningDTO2: PartitioningDTO = Seq(
-    PartitionDTO("Invali", "invalid"),
-    PartitionDTO("invalid", "invalid")
+    PartitionDTO("key2", "value2"),
+    PartitionDTO("key3", "value3")
   )
   protected val partitioningDTO3: PartitioningDTO = Seq.empty
 
