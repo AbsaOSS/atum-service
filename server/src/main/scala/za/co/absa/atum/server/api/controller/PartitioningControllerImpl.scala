@@ -31,11 +31,12 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       _ <- partitioningService.createPartitioningIfNotExists(partitioningSubmitDTO)
         .mapError(serviceError => InternalServerErrorResponse(serviceError.message))
       measures <- partitioningService.getPartitioningMeasures(partitioningSubmitDTO.partitioning)
-        .mapError { serviceError: ServiceError =>
-        InternalServerErrorResponse(serviceError.message)
+        .mapError {
+          serviceError: ServiceError => InternalServerErrorResponse(serviceError.message)
       }
-      additionalData <- partitioningService.getPartitioningAdditionalData(partitioningSubmitDTO.partitioning).mapError { serviceError: ServiceError =>
-        InternalServerErrorResponse(serviceError.message)
+      additionalData <- partitioningService.getPartitioningAdditionalData(partitioningSubmitDTO.partitioning)
+        .mapError {
+          serviceError: ServiceError => InternalServerErrorResponse(serviceError.message)
       }
     } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalData)
   }

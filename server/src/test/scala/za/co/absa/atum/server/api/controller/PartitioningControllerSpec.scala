@@ -18,7 +18,6 @@ package za.co.absa.atum.server.api.controller
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{AtumContextDTO, MeasureDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
@@ -37,7 +36,7 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.right(()))
   when(partitioningServiceMock.getPartitioningMeasures(partitioningDTO1))
     .thenReturn(ZIO.succeed(Seq(measureDTO2)))
-  when(partitioningServiceMock.getPartitioningAdditionalData(partitioningDTO2))
+  when(partitioningServiceMock.getPartitioningAdditionalData(partitioningDTO1))
     .thenReturn(ZIO.succeed(Map.empty))
 
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
@@ -50,17 +49,9 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
     suite("PartitioningControllerSpec")(
       suite("CreatePartitioningIfNotExistsSuite")(
         test("Returns expected AtumContextDTO") {
-          val expectedAtumContextDTO = AtumContextDTO(
-            partitioning = partitioningSubmitDTO1.partitioning,
-            measures = Set(MeasureDTO("count", Seq("*"))),
-            additionalData = Map.empty
-          )
           for {
             result <- PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO1)
-          } yield assertTrue {
-            println(result)
-            result == expectedAtumContextDTO
-          }
+          } yield assertTrue (result == expectedAtumContextDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO2).exit)(

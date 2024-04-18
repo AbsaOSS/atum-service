@@ -16,16 +16,21 @@
 
 package za.co.absa.atum.server.api
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitionDTO, PartitioningDTO, PartitioningSubmitDTO}
-
+import za.co.absa.atum.model.dto._
 import java.time.ZonedDateTime
 import java.util.UUID
 
 trait TestData {
 
   // Partitioning DTO
-  protected val partitioningDTO1: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
-  protected val partitioningDTO2: PartitioningDTO = Seq(PartitionDTO("Invali", "invalid"), PartitionDTO("invalid", "invalid"))
+  protected val partitioningDTO1: PartitioningDTO = Seq(
+    PartitionDTO("key1", "val1"),
+    PartitionDTO("key2", "val2")
+  )
+  protected val partitioningDTO2: PartitioningDTO = Seq(
+    PartitionDTO("Invali", "invalid"),
+    PartitionDTO("invalid", "invalid")
+  )
   protected val partitioningDTO3: PartitioningDTO = Seq.empty
 
   // Partitioning submit DTO
@@ -76,6 +81,13 @@ trait TestData {
   protected val atumContextDTO2: AtumContextDTO = atumContextDTO1.copy(
     partitioning = partitioningSubmitDTO1.partitioning,
     measures = Set(MeasureDTO("count", Seq("1")))
+  )
+
+  // Expected Atum context
+  protected val expectedAtumContextDTO1: AtumContextDTO = AtumContextDTO(
+    partitioning = partitioningSubmitDTO1.partitioning,
+    measures = Set(measureDTO2),
+    additionalData = Map.empty
   )
 
   // Checkpoint
