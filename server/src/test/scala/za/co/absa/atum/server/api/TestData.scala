@@ -83,12 +83,6 @@ trait TestData {
     measures = Set(MeasureDTO("count", Seq("1")))
   )
 
-//  protected val atumContextDTO3: AtumContextDTO = AtumContextDTO(
-//    partitioning = partitioningSubmitDTO1.partitioning,
-//    measures = Set(measureDTO2),
-//    additionalData = Map.empty
-//  )
-
   // Checkpoint
   protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
     id = UUID.randomUUID(),
