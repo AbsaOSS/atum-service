@@ -73,8 +73,8 @@ trait TestData {
 
   // Atum Context
   protected val atumContextDTO1: AtumContextDTO = AtumContextDTO(
-    partitioning = Seq.empty,
-    measures = Set(MeasureDTO("count", Seq("*"))),
+    partitioning = partitioningSubmitDTO1.partitioning,
+    measures = Set(measureDTO1, measureDTO2),
     additionalData = Map.empty
   )
 
@@ -83,12 +83,11 @@ trait TestData {
     measures = Set(MeasureDTO("count", Seq("1")))
   )
 
-  // Expected Atum context
-  protected val expectedAtumContextDTO1: AtumContextDTO = AtumContextDTO(
-    partitioning = partitioningSubmitDTO1.partitioning,
-    measures = Set(measureDTO2),
-    additionalData = Map.empty
-  )
+//  protected val atumContextDTO3: AtumContextDTO = AtumContextDTO(
+//    partitioning = partitioningSubmitDTO1.partitioning,
+//    measures = Set(measureDTO2),
+//    additionalData = Map.empty
+//  )
 
   // Checkpoint
   protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(

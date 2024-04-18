@@ -35,7 +35,7 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
     .thenReturn(ZIO.right(()))
   when(partitioningServiceMock.getPartitioningMeasures(partitioningDTO1))
-    .thenReturn(ZIO.succeed(Seq(measureDTO2)))
+    .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
   when(partitioningServiceMock.getPartitioningAdditionalData(partitioningDTO1))
     .thenReturn(ZIO.succeed(Map.empty))
 
@@ -51,7 +51,7 @@ class PartitioningControllerSpec extends ZIOSpecDefault with TestData {
         test("Returns expected AtumContextDTO") {
           for {
             result <- PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO1)
-          } yield assertTrue (result == expectedAtumContextDTO1)
+          } yield assertTrue (result == atumContextDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO2).exit)(
