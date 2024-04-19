@@ -53,7 +53,7 @@ $$
 DECLARE
     _fk_partitioning    BIGINT;
 BEGIN
-    _fk_partitioning = runs._get_key_segmentation(i_partitioning);
+    _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
