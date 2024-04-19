@@ -30,7 +30,7 @@ class GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("GetPartitioningAdditionalDataSuite")(
+    suite("GetPartitioningAdditionalDataSpec")(
       test("Returns expected sequence of (String, Option[String])") {
         val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
         for {

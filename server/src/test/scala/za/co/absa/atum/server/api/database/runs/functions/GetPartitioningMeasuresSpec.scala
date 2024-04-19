@@ -30,7 +30,7 @@ class GetPartitioningMeasuresSpec extends ConfigProviderSpec {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("GetPartitioningMeasuresSuite")(
+    suite("GetPartitioningMeasuresSpec")(
       test("Returns expected sequence of Measures") {
         val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
 

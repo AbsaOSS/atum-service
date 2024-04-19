@@ -26,7 +26,9 @@ import zio._
 class PartitioningControllerImpl(partitioningService: PartitioningService)
   extends PartitioningController with BaseController {
 
-  override def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO] = {
+  override def createPartitioningIfNotExists(
+    partitioningSubmitDTO: PartitioningSubmitDTO
+      ): IO[ErrorResponse, AtumContextDTO] = {
     for {
       _ <- partitioningService.createPartitioningIfNotExists(partitioningSubmitDTO)
         .mapError(serviceError => InternalServerErrorResponse(serviceError.message))
