@@ -45,19 +45,29 @@ trait TestData {
   protected val partitioningSubmitDTO3: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
 
-  val additionalDataDTO: AdditionalDataDTO = Map(
-    "key1" -> Some("value1"),
-    "key2" -> None,
-    "key3" -> Some("value3")
-  )
-
   // Measure
   protected val measureDTO1: MeasureDTO = MeasureDTO("count", Seq("1"))
   protected val measureDTO2: MeasureDTO = MeasureDTO("count", Seq("*"))
 
   // Additional Data
-  protected val additionalDataDTO1: AdditionalDataDTO = Map("key" -> Option("value"))
-  protected val additionalDataDTO2: AdditionalDataDTO = Map.empty
+  protected val additionalDataDTO1: AdditionalDataDTO = Map(
+    "key1" -> Some("value1"),
+    "key2" -> None,
+    "key3" -> Some("value3")
+  )
+  protected  val additionalDataDTO2: AdditionalDataDTO = Map(
+    "key1" -> Some("value1"),
+    "key2" -> Some("value2"),
+    "key3" -> Some("value3")
+  )
+  protected val additionalDataDTO3: AdditionalDataDTO = Map.empty
+
+  // Additional Data DTO as a sequence
+  protected val additionalDataDTOSeq1: Seq[(String, Option[String])] = Seq(
+    "key1" -> Some("value1"),
+    "key2" -> None,
+    "key3" -> Some("value3")
+  )
 
   // Additional Data submit DTO
   protected val additionalDataSubmitDTO1: AdditionalDataSubmitDTO = AdditionalDataSubmitDTO(

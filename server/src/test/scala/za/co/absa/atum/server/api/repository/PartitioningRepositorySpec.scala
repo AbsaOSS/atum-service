@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.AdditionalDataDTO
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, MeasureDTO}
 import za.co.absa.atum.server.api.database.runs.functions.{
   CreateOrUpdateAdditionalData,
   CreatePartitioningIfNotExists,
@@ -30,7 +30,6 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
 import zio._
-import zio.prelude.data.Optional.AllValuesAreNullable
 import zio.test.Assertion.failsWithA
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
@@ -63,18 +62,17 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
   // Get Partitioning Measures Mocks
   private val getPartitioningMeasuresMock = mock(classOf[GetPartitioningMeasures])
 
-  when(getPartitioningMeasuresMock.apply(partitioningDTO1)).thenReturn{ZIO.succeed(Seq().empty)}
-  when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
-  when(getPartitioningMeasuresMock.apply(partitioningDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningMeasuresMock.apply(partitioningDTO1)).thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
+  when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   private val getPartitioningMeasuresMockLayer = ZLayer.succeed(getPartitioningMeasuresMock)
 
   // Get Partitioning Additional Data Mocks
   private val getPartitioningAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
 
-  when(getPartitioningAdditionalDataMock.apply(partitioningDTO1)).thenReturn(ZIO.succeed(Seq()))
-  when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
-  when(getPartitioningAdditionalDataMock.apply(partitioningDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningAdditionalDataMock.apply(partitioningDTO1))
+    .thenReturn(ZIO.succeed(additionalDataDTOSeq1))
+  when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
 
@@ -121,15 +119,10 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
         test("Returns expected Seq") {
           for {
             result <- PartitioningRepository.getPartitioningMeasures(partitioningDTO1)
-          } yield assertTrue(result.getOrElse(Seq()).isEmpty)
+          } yield assertTrue(result.isInstanceOf[Seq[MeasureDTO]] && result == Seq(measureDTO1, measureDTO2))
         },
         test("Returns expected Exception") {
           assertZIO(PartitioningRepository.getPartitioningMeasures(partitioningDTO2).exit)(
-            failsWithA[DatabaseError]
-          )
-        },
-        test("Returns expected Exception") {
-          assertZIO(PartitioningRepository.getPartitioningMeasures(partitioningDTO3).exit)(
             failsWithA[DatabaseError]
           )
         }
@@ -139,15 +132,10 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
         test("Returns expected Right with empty Map") {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
+          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO] && result == additionalDataDTO1)
         },
         test("Returns expected Left with DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningDTO2).exit)(
-            failsWithA[DatabaseError]
-          )
-        },
-        test("Returns expected Exception") {
-          assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningDTO3).exit)(
             failsWithA[DatabaseError]
           )
         }
