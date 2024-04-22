@@ -2,7 +2,6 @@ package za.co.absa.atum.database.runs
 
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
-import za.co.absa.balta.classes.setter.CustomDBType
 
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -40,6 +39,9 @@ class GetPartitioningCheckpoints extends DBTestSuite{
       |""".stripMargin
   )
 
+  private val i_limit = 10
+  private val i_checkpoint_name = "checkpoint_1"
+
   private val measurement1 = JsonBString("""1""".stripMargin)
 
   test("Get partitioning checkpoints returns checkpoints for partitioning with checkpoints") {
@@ -74,6 +76,8 @@ class GetPartitioningCheckpoints extends DBTestSuite{
 
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning", partitioning1)
+      .setParam("i_limit", i_limit)
+      .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(11))

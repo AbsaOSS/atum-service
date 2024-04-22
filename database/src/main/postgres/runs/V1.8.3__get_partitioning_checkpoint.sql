@@ -13,26 +13,31 @@
  * limitations under the License.
  */
 
+-- Function: runs.get_partitioning_checkpoints(JSONB, INT, TEXT)
 CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
-    IN  i_fk_partitioning  BIGINT,
-    OUT status             INTEGER,
-    OUT status_text        TEXT,
-    OUT id_checkpoint      UUID,
-    OUT checkpoint_name    TEXT,
-    OUT measure_name       TEXT,
-    OUT measure_columns    TEXT[],
-    OUT measurement_value  JSONB,
-    OUT checkpoint_time    TIMESTAMP WITH TIME ZONE
+    IN i_partitioning              JSONB,
+    IN i_limit                     INT DEFAULT 5,
+    IN i_checkpoint_name           TEXT DEFAULT NULL,
+    OUT status                     INTEGER,
+    OUT status_text                TEXT,
+    OUT id_checkpoint              UUID,
+    OUT checkpoint_name            TEXT,
+    OUT measure_name               TEXT,
+    OUT measure_columns            TEXT[],
+    OUT measurement_value          JSONB,
+    OUT i_checkpoint_start_time    TIMESTAMP WITH TIME ZONE
 )
     RETURNS SETOF record AS
 $$
     -------------------------------------------------------------------------------
 --
--- Function: runs.get_partitioning_checkpoints(JSONB)
+-- Function: runs.get_partitioning_checkpoints(JSONB, INT, TEXT)
 --      Returns all the checkpoint for the given partitioning
 --
 -- Parameters:
 --      i_partitioning      - partitioning for requested checkpoints
+--      i_limit             - limit of the number of checkpoints to return
+--      i_checkpoint_name   - name of the checkpoint to filter by
 --
 -- Returns:
 --      status              - Status code
@@ -51,9 +56,9 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _fk_partitioning    BIGINT;
+    _fk_partitioning                    BIGINT;
 BEGIN
-    _fk_partitioning = runs._get_id_partitioning(i_fk_partitioning);
+    _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
@@ -71,7 +76,7 @@ BEGIN
             md.measure_name,
             md.measured_columns,
             m.measurement_value,
-            c.process_start_time AS checkpoint_time
+            c.process_start_time
         FROM
             runs.checkpoints c
         JOIN
@@ -79,10 +84,13 @@ BEGIN
         JOIN
             runs.measure_definitions md ON m.fk_measure_definition = md.id_measure_definition
         WHERE
-                c.fk_partitioning = i_fk_partitioning
+            c.fk_partitioning = _fk_partitioning
+        AND
+            c.checkpoint_name = i_checkpoint_name
         ORDER BY
             c.process_start_time,
-            c.id_checkpoint;
+            c.id_checkpoint
+        LIMIT i_limit;
 
         IF NOT FOUND THEN
             status := 16;
@@ -94,5 +102,5 @@ END;
 $$
 
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
-ALTER FUNCTION runs.get_partitioning_checkpoints(JSONB) OWNER TO atum_owner;
+ALTER FUNCTION runs.get_partitioning_checkpoints(JSONB, INT, TEXT) OWNER TO atum_owner;
 
