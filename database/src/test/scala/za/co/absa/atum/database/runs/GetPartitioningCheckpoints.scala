@@ -39,10 +39,25 @@ class GetPartitioningCheckpoints extends DBTestSuite{
       |""".stripMargin
   )
 
+  private val parentPartitioning = JsonBString(
+    """
+      |{
+      |  "version": 1,
+      |  "keys": ["key1", "key3"],
+      |  "keysToValues": {
+      |    "key1": "valueX",
+      |    "key3": "valueZ"
+      |  }
+      |}
+      |""".stripMargin
+  )
+
   private val i_limit = 10
   private val i_checkpoint_name = "checkpoint_1"
 
   private val measurement1 = JsonBString("""1""".stripMargin)
+
+  private val measured_columns = "[col_1, col_2, col_3]"
 
   test("Get partitioning checkpoints returns checkpoints for partitioning with checkpoints") {
 
@@ -69,9 +84,16 @@ class GetPartitioningCheckpoints extends DBTestSuite{
     )
 
     table("runs.measurements").insert(
-      add("fk_checkpoint", uuid)
+      add("fk_checkpoint", fkPartitioning1)
         .add("fk_measure_definition", 1)
         .add("measurement_value", measurement1)
+    )
+
+    table("runs.measure_definitions").insert(
+      add("fk_partitioning", fkPartitioning1)
+        .add("created_by", "Daniel")
+        .add("measure_name", "measure_1")
+        .add("measured_columns", measured_columns)
     )
 
     function(fncGetPartitioningCheckpoints)
@@ -89,7 +111,7 @@ class GetPartitioningCheckpoints extends DBTestSuite{
         assert(results.getBoolean("measured_by_atum_agent").contains(true))
         assert(results.getString("created_by").contains("Daniel"))
         assert(results.getInt("measurement_value").contains(1))
-        assert(results.getString("measurement_name").contains("measurement_1"))
+        assert(results.getString("measure_name").contains("measurement_1"))
         assert(!queryResult.hasNext)
       }
 
