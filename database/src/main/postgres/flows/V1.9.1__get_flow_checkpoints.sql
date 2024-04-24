@@ -45,7 +45,7 @@ $$
 --      i_partitioning_of_flow  - partitioning to use for identifying the flow associate with checkpoints
 --                                that will be retrieved
 --      i_limit                 - (optional) maximum number of checkpoints retrieved
---                                if zero or lower specified, all data will be returned, i.e. no limit will be applied
+--                                if 0 specified, all data will be returned, i.e. no limit will be applied
 --      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --
 --      Note: checkpoint name uniqueness is not enforced by the data model, so there can be multiple different
@@ -102,16 +102,10 @@ BEGIN
             WHERE F.fk_primary_partitioning = _fk_partitioning
               AND CP.fk_partitioning = PF.fk_partitioning
           )
-      AND CASE
-            WHEN i_checkpoint_name IS NOT NULL THEN CP.checkpoint_name = i_checkpoint_name
-            ELSE TRUE
-          END
+      AND (i_checkpoint_name IS NULL OR CP.checkpoint_name = i_checkpoint_name)
     ORDER BY CP.process_start_time,
              CP.id_checkpoint
-    LIMIT CASE
-            WHEN i_limit <= 0 THEN NULL -- NULL means no limit will be applied, same as LIMIT ALL
-            ELSE i_limit
-          END;
+    LIMIT nullif(i_limit, 0); -- NULL means no limit will be applied, it's same as LIMIT ALL
 
     IF NOT FOUND THEN
         status := 16;
