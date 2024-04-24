@@ -266,6 +266,8 @@ class GetFlowCheckpointsTest extends DBTestSuite {
     assert(actualMeasures.map(_.measureColumns).toSet == Set(Seq("col1"), Seq("a", "b")))
     actualMeasures.foreach { currVal =>
       val currValStr = currVal.measurementValue.value
+      // Exact comparison is not trivial, we would need to deserialize (and potentially introduce some case classes
+      // for this) and modify the JSON strings - not worth it, this should be enough as a sanity check.
       assert (currValStr.contains(""""value": "2.71"""") || currValStr.contains(""""value": "3""""))
     }
   }
