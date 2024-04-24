@@ -63,7 +63,7 @@ $$
 --      checkpoint_time     - time
 --
 -- Status codes:
---      11                  - Flow created
+--      11                  - OK
 --      16                  - No checkpoints found
 --      41                  - Partitioning not found
 --
@@ -77,7 +77,7 @@ BEGIN
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
-        status_text := 'The partitioning does not exist.';
+        status_text := 'Partitioning not found';
         RETURN NEXT;
         RETURN;
     END IF;
@@ -109,7 +109,7 @@ BEGIN
 
     IF NOT FOUND THEN
         status := 16;
-        status_text := 'No checkpoints were found for the given flow.';
+        status_text := 'No checkpoints found';
         RETURN NEXT;
         RETURN;
     END IF;

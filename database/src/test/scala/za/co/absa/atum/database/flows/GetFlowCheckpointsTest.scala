@@ -124,7 +124,7 @@ class GetFlowCheckpointsTest extends DBTestSuite {
 
         val row = queryResult.next()
         assert(row.getInt("status").contains(16))
-        assert(row.getString("status_text").contains("No checkpoints were found for the given flow."))
+        assert(row.getString("status_text").contains("No checkpoints found"))
 
         assert(!queryResult.hasNext)
       }

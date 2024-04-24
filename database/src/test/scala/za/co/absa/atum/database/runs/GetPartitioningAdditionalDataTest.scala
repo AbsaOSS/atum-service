@@ -128,7 +128,7 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(16))
-        assert(results.getString("status_text").contains("No additional data found for the given partitioning."))
+        assert(results.getString("status_text").contains("No additional data found"))
         assert(results.getString("ad_name").isEmpty)
         assert(!queryResult.hasNext)
       }
@@ -156,7 +156,7 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(41))
-        assert(results.getString("status_text").contains("The partitioning does not exist."))
+        assert(results.getString("status_text").contains("Partitioning not found"))
         assert(!queryResult.hasNext)
       }
   }

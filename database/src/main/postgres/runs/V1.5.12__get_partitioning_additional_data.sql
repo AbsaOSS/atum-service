@@ -38,7 +38,7 @@ $$
 --
 -- Status codes:
 --      11 - OK
---      16 - Record not found for the given partitioning
+--      16 - No additional data found
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ BEGIN
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
-        status_text := 'The partitioning does not exist.';
+        status_text := 'Partitioning not found';
         RETURN NEXT;
         RETURN;
     END IF;
@@ -65,7 +65,7 @@ BEGIN
 
     IF NOT FOUND THEN
         status := 16;
-        status_text := 'No additional data found for the given partitioning.';
+        status_text := 'No additional data found';
         RETURN NEXT;
         RETURN;
     END IF;
