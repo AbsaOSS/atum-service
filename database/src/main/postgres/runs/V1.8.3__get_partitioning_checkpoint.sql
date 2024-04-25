@@ -25,14 +25,15 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     OUT measure_name               TEXT,
     OUT measure_columns            TEXT[],
     OUT measurement_value          JSONB,
-    OUT i_checkpoint_start_time    TIMESTAMP WITH TIME ZONE
+    OUT checkpoint_start_time    TIMESTAMP WITH TIME ZONE,
+    OUT checkpoint_end_time        TIMESTAMP WITH TIME ZONE
 )
     RETURNS SETOF record AS
 $$
     -------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_checkpoints(JSONB, INT, TEXT)
---      Returns all the checkpoint for the given partitioning
+--      Returns all the checkpoint for the given partitioning and checkpoint name
 --
 -- Parameters:
 --      i_partitioning      - partitioning for requested checkpoints
@@ -40,14 +41,15 @@ $$
 --      i_checkpoint_name   - name of the checkpoint to filter by
 --
 -- Returns:
---      status              - Status code
---      status_text         - Status message
---      id_checkpoint       - ID of the checkpoint
---      checkpoint_name     - Name of the checkpoint
---      measure_name        - Name of the measure
---      measure_columns     - Columns of the measure
---      measurement_value   - Value of the measurement
---      checkpoint_time     - Time of the checkpoint
+--      status                  - Status code
+--      status_text             - Status message
+--      id_checkpoint           - ID of the checkpoint
+--      checkpoint_name         - Name of the checkpoint
+--      measure_name            - Name of the measure
+--      measure_columns         - Columns of the measure
+--      measurement_value       - Value of the measurement
+--      checkpoint_start_time   - Time of the checkpoint
+--      checkpoint_end_time     - End time of the checkpoint computation
 --
 -- Status codes:
 --      11 - OK
@@ -76,7 +78,8 @@ BEGIN
             md.measure_name,
             md.measured_columns,
             m.measurement_value,
-            c.process_start_time
+            c.process_start_time AS checkpoint_start_time,
+            c.process_end_time AS checkpoint_end_time
         FROM
             runs.checkpoints c
         JOIN
@@ -86,11 +89,11 @@ BEGIN
         WHERE
             c.fk_partitioning = _fk_partitioning
         AND
-            c.checkpoint_name = i_checkpoint_name
+            (i_checkpoint_name IS NULL OR c.checkpoint_name = i_checkpoint_name)
         ORDER BY
             c.process_start_time,
             c.id_checkpoint
-        LIMIT i_limit;
+        LIMIT nullif(i_limit, 0);
 
         IF NOT FOUND THEN
             status := 16;
@@ -102,5 +105,8 @@ END;
 $$
 
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+
 ALTER FUNCTION runs.get_partitioning_checkpoints(JSONB, INT, TEXT) OWNER TO atum_owner;
+
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_checkpoints(JSONB, INT, TEXT) TO atum_owner;
 
