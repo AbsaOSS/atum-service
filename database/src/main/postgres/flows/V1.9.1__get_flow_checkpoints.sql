@@ -64,7 +64,6 @@ $$
 --
 -- Status codes:
 --      11                  - OK
---      16                  - No checkpoints found
 --      41                  - Partitioning not found
 --
 --
@@ -106,13 +105,6 @@ BEGIN
     ORDER BY CP.process_start_time,
              CP.id_checkpoint
     LIMIT nullif(i_limit, 0); -- NULL means no limit will be applied, it's same as LIMIT ALL
-
-    IF NOT FOUND THEN
-        status := 16;
-        status_text := 'No checkpoints found';
-        RETURN NEXT;
-        RETURN;
-    END IF;
 
 END;
 $$
