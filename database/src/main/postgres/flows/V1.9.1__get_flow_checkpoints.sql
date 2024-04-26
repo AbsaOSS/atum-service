@@ -66,11 +66,11 @@ $$
 --      11                  - OK
 --      41                  - Partitioning not found
 --
---
 -------------------------------------------------------------------------------
 
 DECLARE
     _fk_partitioning BIGINT;
+    _fk_flow BIGINT;
 BEGIN
     _fk_partitioning = runs._get_id_partitioning(i_partitioning_of_flow);
 
@@ -81,26 +81,25 @@ BEGIN
         RETURN;
     END IF;
 
+    SELECT id_flow
+    FROM flows.flows
+    WHERE fk_primary_partitioning = _fk_partitioning
+    INTO _fk_flow;
+
     RETURN QUERY
     SELECT 11 AS status, 'OK' AS status_text,
            CP.id_checkpoint, CP.checkpoint_name,
            MD.measure_name, MD.measured_columns,
            M.measurement_value,
            CP.process_start_time AS checkpoint_start_time, CP.process_end_time AS checkpoint_end_time
-    FROM runs.checkpoints AS CP
+    FROM flows.partitioning_to_flow AS PF
+    JOIN runs.checkpoints AS CP
+      ON PF.fk_partitioning = CP.fk_partitioning
     JOIN runs.measurements AS M
       ON CP.id_checkpoint = M.fk_checkpoint
     JOIN runs.measure_definitions AS MD
       ON M.fk_measure_definition = MD.id_measure_definition
-    WHERE EXISTS (
-            -- Identification of a flow and all partitionings related to it.
-            SELECT 1
-            FROM flows.flows AS F
-            JOIN flows.partitioning_to_flow AS PF
-              ON F.id_flow = PF.fk_flow
-            WHERE F.fk_primary_partitioning = _fk_partitioning
-              AND CP.fk_partitioning = PF.fk_partitioning
-          )
+    WHERE PF.fk_flow = _fk_flow
       AND (i_checkpoint_name IS NULL OR CP.checkpoint_name = i_checkpoint_name)
     ORDER BY CP.process_start_time,
              CP.id_checkpoint

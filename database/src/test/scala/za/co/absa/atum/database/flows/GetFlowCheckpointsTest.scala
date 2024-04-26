@@ -120,12 +120,6 @@ class GetFlowCheckpointsTest extends DBTestSuite {
     function(fncGetFlowCheckpoints)
       .setParam("i_partitioning_of_flow", partitioning)
       .execute { queryResult =>
-        assert(queryResult.hasNext)
-
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(16))
-        assert(row.getString("status_text").contains("No checkpoints found"))
-
         assert(!queryResult.hasNext)
       }
   }
