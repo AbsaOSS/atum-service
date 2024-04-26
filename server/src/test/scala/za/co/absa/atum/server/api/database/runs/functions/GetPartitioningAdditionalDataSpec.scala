@@ -16,17 +16,15 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import org.junit.runner.RunWith
 import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.ConfigProviderSpec
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import zio._
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
+import zio.test.Assertion._
 
-@RunWith(classOf[ZTestJUnitRunner])
-class GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
+object GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -35,13 +33,13 @@ class GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
         val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
         for {
           getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
-          result <- getPartitioningAdditionalData(partitioningDTO)
-        } yield assertTrue(result.isInstanceOf[Seq[(String, Option[String])]])
+          exit <- getPartitioningAdditionalData(partitioningDTO).exit
+        } yield assert(exit)(failsWithA[doobie.util.invariant.NonNullableColumnRead])
       }
     ).provide(
       GetPartitioningAdditionalData.layer,
       PostgresDatabaseProvider.layer,
-      TestTransactorProvider.layerWithRollback
+      TestTransactorProvider.layerWithRollback,
     )
 
   }
