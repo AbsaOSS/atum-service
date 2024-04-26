@@ -37,7 +37,7 @@ $$
 --      i_id_checkpoint             - reference to the checkpoint this measure belongs into
 --      i_checkpoint_name           - name of the checkpoint
 --      i_process_start_time        - the start of processing (measuring) of the checkpoint
---      i_i_process_end_time        - the end of the processing (measuring) of the checkpoint
+--      i_process_end_time          - the end of the processing (measuring) of the checkpoint
 --      i_measurements              - array of JSON objects of the following format (values of the keys are examples only)
 --                                    {
 --                                      "measure": {

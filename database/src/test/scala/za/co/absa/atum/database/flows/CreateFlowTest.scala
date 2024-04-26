@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import za.co.absa.balta.DBTestSuite
 import scala.util.Random
 
 
-class CreateFlow extends DBTestSuite {
-  private val fncGetPartitioningMeasures = "flows._create_flow"
+class CreateFlowTest extends DBTestSuite {
+  private val fncCreateFlow = "flows._create_flow"
 
   test("Create flow") {
     val partitioningId: Long = Random.nextLong()
     val user = "Geralt of Rivia"
-    val flowID = function(fncGetPartitioningMeasures)
+    val flowID = function(fncCreateFlow)
       .setParam("i_fk_partitioning", partitioningId)
       .setParam("i_by_user", user)
       .execute { queryResult =>

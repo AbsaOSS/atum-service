@@ -13,6 +13,6 @@
  * limitations under the License.
  */
 
-ALTER COLUMN fk_primary_partitioning SET NOT NULL;
+ALTER TABLE flows.flows ALTER COLUMN fk_primary_partitioning SET NOT NULL;
 
 CREATE UNIQUE INDEX  IF NOT EXISTS unq_flows ON flows.flows (fk_primary_partitioning);
