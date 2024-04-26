@@ -83,7 +83,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
         assert(!queryResult.hasNext)
       }
 
-    assert(table("runs.additional_data").count() == 4)
+    assert(table("runs.additional_data").count() == 3)
     assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 3)
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 1)
 
@@ -147,7 +147,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
         assert(!queryResult.hasNext)
       }
 
-    assert(table("runs.additional_data").count() == 6)
+    assert(table("runs.additional_data").count() == 5)
     assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 5)
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 0)
 
