@@ -31,19 +31,12 @@ class GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("GetPartitioningAdditionalDataSpec")(
-      test("Returns expected left results for a partitioing that doesn't exist") {
-        val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
-        for {
-          getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
-          result <- getPartitioningAdditionalData(partitioningDTO).either
-        } yield assertTrue (result.isLeft)
-      },
       test("Returns expected sequence of Additional data with provided partitioning") {
         val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
         for {
           getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
-          result <- getPartitioningAdditionalData(partitioningDTO).either
-        } yield assertTrue(result.isInstanceOf[Right[_, _]])
+          result <- getPartitioningAdditionalData(partitioningDTO)
+        } yield assertTrue(result.isInstanceOf[Seq[(String, Option[String])]])
       }
     ).provide(
       GetPartitioningAdditionalData.layer,

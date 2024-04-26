@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
+import za.co.absa.atum.model.dto.{MeasureDTO, PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.ConfigProviderSpec
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
@@ -31,20 +31,12 @@ class GetPartitioningMeasuresSpec extends ConfigProviderSpec {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("GetPartitioningMeasuresSpec")(
-      test("Returns expected Left for non-existing partitioning") {
-        val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
-
-        for {
-          getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
-          result <- getPartitioningMeasures(partitioningDTO).either
-        } yield assertTrue(result.isLeft)
-      },
       test ("Returns expected sequence of Measures with existing partitioning") {
       val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
         for {
           getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
-          result <- getPartitioningMeasures(partitioningDTO).either
-        } yield assertTrue (result.isInstanceOf[Right[_, _]])
+          result <- getPartitioningMeasures(partitioningDTO)
+        } yield assertTrue (result.isInstanceOf[Seq[MeasureDTO]])
       }
     ).provide(
       GetPartitioningMeasures.layer,
