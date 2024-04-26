@@ -31,7 +31,7 @@ class GetPartitioningMeasuresSpec extends ConfigProviderSpec {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("GetPartitioningMeasuresSpec")(
-      test("Returns expected sequence of Measures") {
+      test("Returns expected Left for non-existing partitioning") {
         val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2"))
 
         for {
@@ -45,10 +45,7 @@ class GetPartitioningMeasuresSpec extends ConfigProviderSpec {
         for {
           getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
           result <- getPartitioningMeasures(partitioningDTO).either
-        } yield assertTrue{
-          println("Returned results: " + result)
-          result.isInstanceOf[Right[_, _]]
-        }
+        } yield assertTrue (result.isInstanceOf[Right[_, _]])
 
       }
     ).provide(

@@ -16,7 +16,10 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO, AdditionalDataSubmitDTO,
+  MeasureDTO, PartitioningDTO, PartitioningSubmitDTO
+}
 import za.co.absa.atum.server.api.database.runs.functions.{
   CreateOrUpdateAdditionalData,
   CreatePartitioningIfNotExists,

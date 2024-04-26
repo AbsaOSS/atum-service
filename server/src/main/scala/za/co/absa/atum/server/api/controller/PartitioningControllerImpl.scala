@@ -32,17 +32,14 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     for {
       _ <- partitioningService.createPartitioningIfNotExists(partitioningSubmitDTO)
         .mapError(serviceError => InternalServerErrorResponse(serviceError.message))
-//      _ <- ZIO.logInfo(s"Partitioning ${partitioningSubmitDTO} created")
       measures <- partitioningService.getPartitioningMeasures(partitioningSubmitDTO.partitioning)
         .mapError {
           serviceError: ServiceError => InternalServerErrorResponse(serviceError.message)
       }
-//      _ <- ZIO.logInfo(s"Measures for partitioning ${partitioningSubmitDTO} retrievedM")
       additionalData <- partitioningService.getPartitioningAdditionalData(partitioningSubmitDTO.partitioning)
         .mapError {
           serviceError: ServiceError => InternalServerErrorResponse(serviceError.message)
       }
-//      _ <- ZIO.logInfo(s"Additional data for partitioning ${partitioningSubmitDTO} retrievedA")
     } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalData)
   }
 

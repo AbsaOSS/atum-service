@@ -34,19 +34,19 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[PartitioningDTO, MeasureDTO, Task]
   {
+    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
+
+    override val fieldsToSelect: Seq[String] = Seq("measure_name", "measured_columns")
+
     override def sql(values: PartitioningDTO)(implicit read: Read[MeasureDTO]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values)
     val partitioningJsonString = Json.toJson(partitioning).toString
-//    println(partitioning)
-    println(partitioningJsonString)
-    val sqlResults = sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
+
+    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     partitioningJsonString
                   }
                 ) ${Fragment.const(alias)};"""
-    println(sqlResults)
-      sqlResults
   }
 
 }

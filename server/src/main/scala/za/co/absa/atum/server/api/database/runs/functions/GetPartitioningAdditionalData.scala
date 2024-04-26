@@ -35,6 +35,9 @@ class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: Doobie
   extends DoobieMultipleResultFunction[PartitioningDTO, (String, Option[String]), Task]
   {
     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
+
+    override val fieldsToSelect: Seq[String] = Seq("ad_name", "ad_value")
+
     override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
     val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)
     val partitioningJsonString = Json.toJson(partitioning).toString
