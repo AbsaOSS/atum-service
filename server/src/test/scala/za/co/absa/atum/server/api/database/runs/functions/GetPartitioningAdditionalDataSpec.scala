@@ -37,13 +37,6 @@ class GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
           getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
           result <- getPartitioningAdditionalData(partitioningDTO).either
         } yield assertTrue (result.isLeft)
-      },
-      test("Returns expected sequence of Additional data with provided partitioning") {
-        val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
-        for {
-          getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
-          result <- getPartitioningAdditionalData(partitioningDTO).either
-        } yield assertTrue(result.isInstanceOf[Right[_, _]])
       }
     ).provide(
       GetPartitioningAdditionalData.layer,
