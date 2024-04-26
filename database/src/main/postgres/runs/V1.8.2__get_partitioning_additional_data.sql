@@ -50,7 +50,7 @@ BEGIN
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
-        status_text := 'The partitioning does not exist.';
+        status_text := 'Partitioning not found';
         RETURN NEXT;
         RETURN;
     END IF;
