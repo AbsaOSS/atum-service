@@ -38,6 +38,13 @@ class GetPartitioningMeasuresSpec extends ConfigProviderSpec {
           getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
           result <- getPartitioningMeasures(partitioningDTO).either
         } yield assertTrue(result.isLeft)
+      },
+      test ("Returns expected sequence of Measures with existing partitioning") {
+      val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
+        for {
+          getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
+          result <- getPartitioningMeasures(partitioningDTO).either
+        } yield assertTrue (result.isInstanceOf[Right[_, _]])
       }
     ).provide(
       GetPartitioningMeasures.layer,

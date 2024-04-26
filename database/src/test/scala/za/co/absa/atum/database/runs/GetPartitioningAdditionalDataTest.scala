@@ -158,43 +158,4 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
       }
   }
 
-  // Integration test
-  test("Testing actual data") {
-    val partitioning = JsonBString(
-      """
-        |{
-        |   "version": 1,
-        |   "keys": ["string1", "string2"],
-        |   "keysToValues": {
-        |     "string1": "string1",
-        |     "string2": "string2"
-        |   }
-        |}
-        |""".stripMargin
-    )
-
-    function("runs.get_partitioning_additional_data")
-      .setParam("i_partitioning", partitioning)
-      .execute { queryResult =>
-        var rowCount = 0
-
-        queryResult.foreach(row => {
-
-          rowCount += 1
-
-          println(s"Row number ${rowCount}")
-          println(s"Row: ${row}")
-          val columnCount = row.resultSet.getMetaData.getColumnCount
-          for (i <- 1 to columnCount) {
-            println(s"Column ${i}: ${row.resultSet.getString(i)}")
-          }
-          println()
-
-        })
-
-        println()
-        println(s"Total rows: $rowCount")
-      }
-  }
-
 }
