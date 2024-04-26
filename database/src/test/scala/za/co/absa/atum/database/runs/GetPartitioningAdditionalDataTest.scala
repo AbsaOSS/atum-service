@@ -63,7 +63,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
         .add("created_by", "Daniel")
     )
 
-
     val fkPartitioning1: Long = table("runs.partitionings").fieldValue("partitioning", partitioning1, "id_partitioning").get.get
     val fkPartitioning2: Long = table("runs.partitionings").fieldValue("partitioning", partitioning2, "id_partitioning").get.get
 
@@ -153,7 +152,7 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(41))
-        assert(results.getString("status_text").contains("The partitioning does not exist."))
+        assert(results.getString("status_text").contains("Partitioning not found"))
         assert(!queryResult.hasNext)
       }
   }
