@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
 import zio.IO
@@ -24,8 +24,17 @@ import zio.macros.accessible
 
 @accessible
 trait PartitioningRepository {
-  def createPartitioningIfNotExists(partitioning: PartitioningSubmitDTO):
-    IO[DatabaseError, Either[StatusException, Unit]]
+  def createPartitioningIfNotExists(
+    partitioningSubmitDTO: PartitioningSubmitDTO
+  ): IO[DatabaseError, Either[StatusException, Unit]]
+
+  def getPartitioningMeasures(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, Seq[MeasureDTO]]
+
+  def getPartitioningAdditionalData(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, AdditionalDataDTO]
 
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
     IO[DatabaseError, Either[StatusException, Unit]]
