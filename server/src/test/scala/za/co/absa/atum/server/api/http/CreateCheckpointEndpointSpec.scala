@@ -23,7 +23,7 @@ import sttp.client3.playJson._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.CheckpointSubmitDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
@@ -56,10 +56,10 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
 
     val request = basicRequest
       .post(uri"https://test.com/api/v1/createCheckpoint")
-      .response(asJson[CheckpointDTO])
+      .response(asJson[CheckpointSubmitDTO])
 
     suite("CreateCheckpointEndpointSuite")(
-      test("Returns expected CheckpointDTO") {
+      test("Returns expected CheckpointSubmitDTO") {
         val response = request
           .body(checkpointDTO1)
           .send(backendStub)

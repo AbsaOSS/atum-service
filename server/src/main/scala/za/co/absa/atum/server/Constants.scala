@@ -22,10 +22,12 @@ object Constants {
 
     final val Api = "api"
     final val V1 = "v1"
+    final val V2 = "v2"
 
     final val CreatePartitioning = "createPartitioning"
     final val CreateOrUpdateAdditionalData = "createOrUpdateAdditionalData"
     final val CreateCheckpoint = "createCheckpoint"
+    final val GetFlowCheckpoints = "getFlowCheckpoints"
 
     final val Health = "health"
     final val ZioMetrics = "zio-metrics"

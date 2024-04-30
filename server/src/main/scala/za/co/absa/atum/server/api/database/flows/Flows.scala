@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.http
+package za.co.absa.atum.server.api.database.flows
 
-import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
-import zio.RIO
-import zio.metrics.connectors.prometheus.PrometheusPublisher
+import za.co.absa.fadb.DBSchema
+import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 
-object HttpEnv {
-
-  type Env = PartitioningController with CheckpointController with FlowController with PrometheusPublisher
-  // naming effect types as `F` is a convention in Scala community
-  type F[A] = RIO[Env, A]
-
-}
+object Flows extends DBSchema

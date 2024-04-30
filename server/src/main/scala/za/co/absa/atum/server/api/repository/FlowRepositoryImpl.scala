@@ -16,24 +16,23 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.CheckpointSubmitDTO
-import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryResultDTO}
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.fadb.exceptions.StatusException
 import zio._
 
-class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository with BaseRepository {
+class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints) extends FlowRepository with BaseRepository {
 
-  override def writeCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
-    dbCallWithStatus(writeCheckpointFn(checkpointDTO), "writeCheckpoint")
+  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointQueryResultDTO]] = {
+    dbCall(getFlowCheckpointsFn(checkpointQueryDTO), "getFlowCheckpoints")
   }
 
 }
 
-object CheckpointRepositoryImpl {
-  val layer: URLayer[WriteCheckpoint, CheckpointRepository] = ZLayer {
+object FlowRepositoryImpl {
+  val layer: URLayer[GetFlowCheckpoints, FlowRepository] = ZLayer {
     for {
-      writeCheckpoint <- ZIO.service[WriteCheckpoint]
-    } yield new CheckpointRepositoryImpl(writeCheckpoint)
+      getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
+    } yield new FlowRepositoryImpl(getFlowCheckpoints)
   }
 }

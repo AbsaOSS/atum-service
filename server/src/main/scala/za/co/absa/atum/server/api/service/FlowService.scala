@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.http
+package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
-import zio.RIO
-import zio.metrics.connectors.prometheus.PrometheusPublisher
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryResultDTO}
+import za.co.absa.atum.server.api.exception.ServiceError
+import zio._
+import zio.macros.accessible
 
-object HttpEnv {
-
-  type Env = PartitioningController with CheckpointController with FlowController with PrometheusPublisher
-  // naming effect types as `F` is a convention in Scala community
-  type F[A] = RIO[Env, A]
-
+@accessible
+trait FlowService {
+  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointQueryResultDTO]]
 }

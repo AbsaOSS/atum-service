@@ -22,6 +22,16 @@ import zio._
 
 trait BaseService {
 
+  def repositoryCall[R](
+     repositoryCall: IO[DatabaseError, R],
+     operationName: String
+   ): IO[ServiceError, R] = {
+    repositoryCall
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to perform '$operationName': $message")
+      }
+  }
+
   def repositoryCallWithStatus[R](
     repositoryCall: IO[DatabaseError, Either[StatusException, R]],
     operationName: String

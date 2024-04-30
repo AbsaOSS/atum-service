@@ -16,27 +16,26 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.CheckpointSubmitDTO
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryResultDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.api.repository.CheckpointRepository
-import za.co.absa.fadb.exceptions.StatusException
+import za.co.absa.atum.server.api.repository.FlowRepository
 import zio._
 
-class CheckpointServiceImpl(checkpointRepository: CheckpointRepository)
-  extends CheckpointService with BaseService {
+class FlowServiceImpl(flowRepository: FlowRepository)
+  extends FlowService with BaseService {
 
-  override def saveCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[ServiceError, Either[StatusException, Unit]] = {
-    repositoryCallWithStatus(
-      checkpointRepository.writeCheckpoint(checkpointDTO), "saveCheckpoint"
+  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointQueryResultDTO]] = {
+    repositoryCall(
+      flowRepository.getFlowCheckpoints(checkpointQueryDTO), "getFlowCheckpoints"
     )
   }
 
 }
 
-object CheckpointServiceImpl {
-  val layer: URLayer[CheckpointRepository, CheckpointService] = ZLayer {
+object FlowServiceImpl {
+  val layer: URLayer[FlowRepository, FlowService] = ZLayer {
     for {
-      checkpointRepository <- ZIO.service[CheckpointRepository]
-    } yield new CheckpointServiceImpl(checkpointRepository)
+      flowRepository <- ZIO.service[FlowRepository]
+    } yield new FlowServiceImpl(flowRepository)
   }
 }

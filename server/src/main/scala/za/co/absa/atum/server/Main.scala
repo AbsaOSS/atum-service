@@ -17,11 +17,12 @@
 package za.co.absa.atum.server
 
 import za.co.absa.atum.server.api.controller._
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
 import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.http.Server
-import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, PartitioningRepositoryImpl}
-import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, PartitioningServiceImpl}
+import za.co.absa.atum.server.api.repository.{CheckpointRepositoryImpl, FlowRepositoryImpl, PartitioningRepositoryImpl}
+import za.co.absa.atum.server.api.service.{CheckpointServiceImpl, FlowServiceImpl, PartitioningServiceImpl}
 import za.co.absa.atum.server.aws.AwsSecretsProviderImpl
 import za.co.absa.atum.server.config.JvmMonitoringConfig
 import zio._
@@ -42,13 +43,17 @@ object Main extends ZIOAppDefault with Server {
         .provide(
           PartitioningControllerImpl.layer,
           CheckpointControllerImpl.layer,
+          FlowControllerImpl.layer,
           PartitioningServiceImpl.layer,
           CheckpointServiceImpl.layer,
+          FlowServiceImpl.layer,
           PartitioningRepositoryImpl.layer,
           CheckpointRepositoryImpl.layer,
+          FlowRepositoryImpl.layer,
           CreatePartitioningIfNotExists.layer,
           CreateOrUpdateAdditionalData.layer,
           WriteCheckpoint.layer,
+          GetFlowCheckpoints.layer,
           PostgresDatabaseProvider.layer,
           TransactorProvider.layer,
           AwsSecretsProviderImpl.layer,

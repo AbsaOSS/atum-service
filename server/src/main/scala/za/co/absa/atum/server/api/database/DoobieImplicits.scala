@@ -18,10 +18,8 @@ package za.co.absa.atum.server.api.database
 
 import cats.Show
 import cats.data.NonEmptyList
-
 import doobie.{Get, Put}
 import doobie.postgres.implicits._
-
 import org.postgresql.jdbc.PgArray
 import org.postgresql.util.PGobject
 

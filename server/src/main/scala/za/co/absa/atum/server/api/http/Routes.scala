@@ -25,7 +25,7 @@ import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
-import za.co.absa.atum.server.api.controller.{CheckpointController, PartitioningController}
+import za.co.absa.atum.server.api.controller.{CheckpointController, PartitioningController, FlowController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
 import zio._
 import zio.interop.catz._
@@ -41,6 +41,7 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
       createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists),
       createServerEndpoint(createOrUpdateAdditionalDataEndpoint, PartitioningController.createOrUpdateAdditionalData),
+      createServerEndpoint(getFlowCheckpointsEndpoint, FlowController.getFlowCheckpoints),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit),
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
@@ -50,7 +51,9 @@ trait Routes extends Endpoints with ServerOptions {
     Http4sServerInterpreter[HttpEnv.F]().toRoutes(HttpMetrics.prometheusMetrics.metricsEndpoint)
 
   private def createSwaggerRoutes: HttpRoutes[HttpEnv.F] = {
-    val endpoints = List(createCheckpointEndpoint, createPartitioningEndpoint, createOrUpdateAdditionalDataEndpoint)
+    val endpoints = List(
+      createCheckpointEndpoint, createPartitioningEndpoint, createOrUpdateAdditionalDataEndpoint, getFlowCheckpointsEndpoint
+    )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, SwaggerApiName, SwaggerApiVersion))
       .toRoutes

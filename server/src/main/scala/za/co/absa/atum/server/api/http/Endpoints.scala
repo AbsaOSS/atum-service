@@ -21,19 +21,19 @@ import sttp.tapir.{PublicEndpoint, endpoint}
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO, AdditionalDataSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointQueryDTO, CheckpointQueryResultDTO, CheckpointSubmitDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.PlayJsonImplicits._
 
 trait Endpoints extends BaseEndpoints {
 
-  protected val createCheckpointEndpoint: PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
+  protected val createCheckpointEndpoint: PublicEndpoint[CheckpointSubmitDTO, ErrorResponse, CheckpointSubmitDTO, Any] = {
     apiV1.post
       .in(CreateCheckpoint)
-      .in(jsonBody[CheckpointDTO])
+      .in(jsonBody[CheckpointSubmitDTO])
       .out(statusCode(StatusCode.Created))
-      .out(jsonBody[CheckpointDTO])
+      .out(jsonBody[CheckpointSubmitDTO])
   }
 
   protected val createPartitioningEndpoint
@@ -52,6 +52,15 @@ trait Endpoints extends BaseEndpoints {
       .in(jsonBody[AdditionalDataSubmitDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[AdditionalDataSubmitDTO])
+  }
+
+  protected val getFlowCheckpointsEndpoint
+    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, Seq[CheckpointQueryResultDTO], Any] = {
+    apiV2.post
+      .in(GetFlowCheckpoints)
+      .in(jsonBody[CheckpointQueryDTO])
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[Seq[CheckpointQueryResultDTO]])
   }
 
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {

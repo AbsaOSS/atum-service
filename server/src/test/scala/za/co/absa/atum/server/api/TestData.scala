@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AdditionalDataDTO, AtumContextDTO, CheckpointDTO, MeasureDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AdditionalDataDTO, AtumContextDTO, CheckpointSubmitDTO, MeasureDTO, PartitioningSubmitDTO}
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -48,7 +48,7 @@ trait TestData {
     additionalDataSubmitDTO1.copy(author = "yetAnotherADAuthor")
 
   // Checkpoint
-  protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
+  protected val checkpointDTO1: CheckpointSubmitDTO = CheckpointSubmitDTO(
     id = UUID.randomUUID(),
     name = "name",
     author = "author",
@@ -57,9 +57,9 @@ trait TestData {
     processEndTime = None,
     measurements = Set.empty
   )
-  protected val checkpointDTO2: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
+  protected val checkpointDTO2: CheckpointSubmitDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
-  protected val checkpointDTO3: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
+  protected val checkpointDTO3: CheckpointSubmitDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
