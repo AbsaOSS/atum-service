@@ -30,6 +30,9 @@ object DoobieImplicits {
   private implicit val showPGobject: Show[PGobject] = Show.show(_.getValue.take(250))
   private implicit val showPgArray: Show[PgArray] = Show.fromToString
 
+  implicit val getMapWithOptionStringValues: Get[Map[String, Option[String]]] = Get[Map[String, String]]
+      .tmap(map => map.map { case (k, v) => k -> Option(v) })
+
   object Sequence {
 
     implicit val get: Get[Seq[String]] = Get[List[String]].map(_.toSeq)
