@@ -29,7 +29,7 @@ import za.co.absa.fadb.doobie.DoobieEngine
 import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import zio._
 import zio.interop.catz._
-//import doobie.postgres._
+
 import doobie.postgres.implicits._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 

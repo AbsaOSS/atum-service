@@ -18,6 +18,6 @@ package za.co.absa.atum.model.dto
 
 case class CheckpointQueryDTO(
   partitioning: PartitioningDTO,
-  limit: Int,
+  limit: Option[Int],
   checkpointName: Option[String]
 )
