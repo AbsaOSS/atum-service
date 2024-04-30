@@ -38,7 +38,13 @@ object JacocoSetup {
   }
 
   def jacocoProjectExcludes(): Seq[String] = {
-    Seq()
+    Seq(
+      "**.model.*",
+      "**.api.http.*",
+      "**.config.*",
+      "za.co.absa.atum.server.Main*",
+      "za.co.absa.atum.server.Constants*"
+    )
   }
 
 }
