@@ -53,7 +53,6 @@ $$
 --
 -- Status codes:
 --      11 - OK
---      16 - No record found for the given partitioning
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -95,12 +94,6 @@ BEGIN
             c.id_checkpoint
         LIMIT nullif(i_limit, 0);
 
-        IF NOT FOUND THEN
-            status := 16;
-            status_text := 'No checkpoints were found for the given partitioning.';
-            RETURN NEXT;
-            RETURN;
-        END IF;
 END;
 $$
 
