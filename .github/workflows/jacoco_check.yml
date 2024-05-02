@@ -22,7 +22,7 @@ on:
     types: [ opened, edited, synchronize, reopened ]
 
 env:
-  jacocoReportVersion: "v1.6.1"
+  jacocoReportVersion: v1.6.1
   scalaLong12: 2.13.11
   scalaShort12: "2.13"
   overall: 60.0
