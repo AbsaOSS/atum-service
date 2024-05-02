@@ -22,6 +22,7 @@ on:
     types: [ opened, edited, synchronize, reopened ]
 
 env:
+  jacocoReportVersion: "v1.6.1"
   scalaLong13: 2.13.11
   scalaShort13: "2.13"
   overall: 75.0
@@ -63,7 +64,7 @@ jobs:
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
         id: jacoco-server
-        uses: madrapps/jacoco-report@v1.6.1
+        uses: madrapps/jacoco-report@${{ env.jacocoReportVersion }}
         with:
           paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort13 }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
