@@ -151,7 +151,7 @@ sbt "project agent" ++2.13.11 test "project model" ++2.13.11 test
 ```
 alias test=; testOnly -- -l IntegrationTest
 
-# `-l IntegrationTest`: This switch excludes all tests labeled as `IntegrationTest,` allowing only only executing unit tests.
+# `-l IntegrationTest`: This switch excludes all tests labeled as `IntegrationTest,` allowing only executing unit tests.
 ```
 ### Run Integration Tests Only
 Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
