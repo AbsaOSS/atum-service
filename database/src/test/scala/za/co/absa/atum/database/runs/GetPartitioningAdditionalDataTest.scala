@@ -64,7 +64,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
         .add("created_by", "Daniel")
     )
 
-
     val fkPartitioning1: Long = table("runs.partitionings").fieldValue("partitioning", partitioning1, "id_partitioning").get.get
     val fkPartitioning2: Long = table("runs.partitionings").fieldValue("partitioning", partitioning2, "id_partitioning").get.get
 
@@ -73,7 +72,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
         .add("created_by", "Joseph")
         .add("ad_name", "ad_1")
         .add("ad_value", "This is the additional data for Joseph")
-        .add("updated_by", "Joseph")
     )
 
     table("runs.additional_data").insert(
@@ -81,7 +79,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
         .add("created_by", "Joseph")
         .add("ad_name", "ad_2")
         .add("ad_value", "This is the additional data for Joseph")
-        .add("updated_by", "Joseph")
     )
 
     table("runs.additional_data").insert(
@@ -89,7 +86,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
         .add("created_by", "Daniel")
         .add("ad_name", "ad_3")
         .add("ad_value", "This is the additional data for Daniel")
-        .add("updated_by", "Daniel")
     )
 
     function(fncGetPartitioningAdditionalData)
@@ -131,10 +127,6 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
     function(fncGetPartitioningAdditionalData)
       .setParam("i_partitioning", partitioning2)
       .execute { queryResult =>
-        val results = queryResult.next()
-        assert(results.getInt("status").contains(16))
-        assert(results.getString("status_text").contains("No additional data found for the given partitioning."))
-        assert(results.getString("ad_name").isEmpty)
         assert(!queryResult.hasNext)
       }
 
@@ -161,7 +153,7 @@ class GetPartitioningAdditionalDataTest extends DBTestSuite{
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(41))
-        assert(results.getString("status_text").contains("The partitioning does not exist."))
+        assert(results.getString("status_text").contains("Partitioning not found"))
         assert(!queryResult.hasNext)
       }
   }

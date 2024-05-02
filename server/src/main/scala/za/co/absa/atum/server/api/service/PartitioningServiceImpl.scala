@@ -16,21 +16,27 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO,
+  AdditionalDataSubmitDTO,
+  MeasureDTO,
+  PartitioningDTO,
+  PartitioningSubmitDTO
+}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.PartitioningRepository
 import za.co.absa.fadb.exceptions.StatusException
+import za.co.absa.atum.server.api.exception.DatabaseError
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   extends PartitioningService with BaseService {
 
-  override def createPartitioningIfNotExists(
-    partitioning: PartitioningSubmitDTO
-  ): IO[ServiceError, Either[StatusException, Unit]] = {
+  override def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO):
+  IO[ServiceError, Either[StatusException, Unit]] = {
     repositoryCallWithStatus(
-      partitioningRepository.createPartitioningIfNotExists(partitioning), "createPartitioningIfNotExists"
-    )
+      partitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO), "createPartitioningIfNotExists"
+    ).mapError(error => ServiceError(error.message))
   }
 
   override def createOrUpdateAdditionalData(
@@ -38,7 +44,21 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   ): IO[ServiceError, Either[StatusException, Unit]] = {
     repositoryCallWithStatus(
       partitioningRepository.createOrUpdateAdditionalData(additionalData), "createOrUpdateAdditionalData"
-    )
+    ).mapError(error => ServiceError(error.message))
+  }
+
+  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]] = {
+    partitioningRepository.getPartitioningMeasures(partitioning)
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to retrieve partitioning measures': $message")
+      }
+  }
+
+  override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[ServiceError, AdditionalDataDTO] = {
+    partitioningRepository.getPartitioningAdditionalData(partitioning)
+      .mapError { case DatabaseError(message) =>
+        ServiceError(s"Failed to retrieve partitioning additional data': $message")
+      }
   }
 
 }

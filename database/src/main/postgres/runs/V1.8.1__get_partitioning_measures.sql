@@ -38,7 +38,6 @@ $$
 
 -- Status codes:
 --      11 - OK
---      16 - No measures found
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -63,12 +62,6 @@ BEGIN
     FROM runs.measure_definitions AS md
     WHERE md.fk_partitioning = _fk_partitioning;
 
-    IF NOT FOUND THEN
-        status := 16;
-        status_text := 'No measures found';
-        RETURN NEXT;
-        RETURN;
-    END IF;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;

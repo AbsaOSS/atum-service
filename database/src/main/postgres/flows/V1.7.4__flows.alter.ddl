@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,15 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+ALTER TABLE flows.flows ALTER COLUMN fk_primary_partitioning SET NOT NULL;
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.model.ErrorResponse
-import zio.IO
-import zio.macros.accessible
-
-@accessible
-trait PartitioningController {
-  def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
-  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
-}
+CREATE UNIQUE INDEX  IF NOT EXISTS unq_flows ON flows.flows (fk_primary_partitioning);
