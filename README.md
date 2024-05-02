@@ -140,7 +140,7 @@ To make this project runnable via IntelliJ, do the following:
 
 ### Test controls
 
-The project uses the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-Practices.html#.sbtrc) file to manage and control the execution of integration tests. The Integration tests are the ones with the tag `Integration test.` Below are the commands configured in the `.sbtrc` file to facilitate different testing scenarios:
+The project uses the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-Practices.html#.sbtrc) file to manage and control the execution of integration tests. The Integration tests are the ones with the tag `IntegrationTest.` Below are the commands configured in the `.sbtrc` file to facilitate different testing scenarios:
 
 ### Run Unit Tests
 Use the `test` command to execute all tests, skipping all Integration tests. 
