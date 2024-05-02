@@ -22,14 +22,14 @@ import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import zio.test.Assertion.failsWithA
 import zio.{Scope, ZIO}
-import zio.test.{Spec, TestEnvironment, assert}
+import zio.test.{Spec, TestAspect, TestEnvironment, assert}
 
 object GetPartitioningMeasuresSpec extends ConfigProviderSpec {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("GetPartitioningMeasuresSpec")(
-      test ("Returns expected sequence of Measures with existing partitioning") {
+      test("Returns expected sequence of Measures with existing partitioning") {
       val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
         for {
           getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
@@ -40,7 +40,7 @@ object GetPartitioningMeasuresSpec extends ConfigProviderSpec {
       GetPartitioningMeasures.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
-    )
+    ) @@ TestAspect.ifPropSet("runIntegration")
 
   }
 

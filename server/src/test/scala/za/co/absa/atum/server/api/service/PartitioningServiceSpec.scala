@@ -66,34 +66,34 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO1)
           } yield assertTrue(result.isRight)
-        }  @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO2)
           } yield assertTrue(result.isLeft)
-        }  @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
             failsWithA[ServiceError]
           )
-        }  @@ TestAspect.tag("IntegrationTest")
+        }
       ),
       suite("CreateOrUpdateAdditionalDataSuite")(
         test("Returns expected Right with Unit") {
           for {
             result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
           } yield assertTrue(result.isRight)
-        }  @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO2)
           } yield assertTrue(result.isLeft)
-        }  @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
             failsWithA[ServiceError]
           )
-        }  @@ TestAspect.tag("IntegrationTest")
+        }
       ),
       suite("GetPartitioningMeasuresSuite")(
         test("Returns expected Right with Seq[MeasureDTO]") {
@@ -103,29 +103,29 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
             result.isInstanceOf[Seq[MeasureDTO]]
             result == Seq(measureDTO1, measureDTO2)
           }
-        }  @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningMeasures(partitioningDTO2).exit)(
             failsWithA[ServiceError]
           )
-        } @@ TestAspect.tag("IntegrationTest")
+        }
       ),
       suite("GetPartitioningAdditionalDataSuite")(
         test("Returns expected Right with Seq[AdditionalDataDTO]") {
           for {
             result <- PartitioningService.getPartitioningAdditionalData(partitioningDTO1)
           } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
-        }  @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningDTO2).exit)(
             failsWithA[ServiceError]
           )
-        } @@ TestAspect.tag("IntegrationTest")
+        }
       )
     ).provide(
       PartitioningServiceImpl.layer,
       partitioningRepositoryMockLayer
-    )
+    ) @@ TestAspect.ifPropNotSet("runIntegration")
 
   }
 }

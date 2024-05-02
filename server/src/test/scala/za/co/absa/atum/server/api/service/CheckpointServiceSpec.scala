@@ -49,16 +49,16 @@ class CheckpointServiceSpec extends ZIOSpecDefault with TestData {
           for {
             result <- CheckpointService.saveCheckpoint(checkpointDTO1)
           } yield assertTrue(result.isRight)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected Left with StatusException") {
           for {
             result <- CheckpointService.saveCheckpoint(checkpointDTO2)
           } yield assertTrue(result.isLeft)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected ServiceError") {
           assertZIO(CheckpointService.saveCheckpoint(checkpointDTO3).exit)(failsWithA[ServiceError])
-        } @@ TestAspect.tag("IntegrationTest")
-      )
+        }
+      ) @@ TestAspect.ifPropNotSet("runIntegration")
     ).provide(
       CheckpointServiceImpl.layer,
       checkpointRepositoryMockLayer

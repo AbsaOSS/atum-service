@@ -84,17 +84,17 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO1)
           } yield assertTrue(result.isRight)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO2)
           } yield assertTrue(result.isLeft)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
             failsWithA[DatabaseError]
           )
-        } @@ TestAspect.tag("IntegrationTest")
+        }
       ),
 
       suite("CreateOrUpdateAdditionalDataSuite")(
@@ -102,12 +102,12 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
           } yield assertTrue(result.isRight)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO2)
           } yield assertTrue(result.isLeft)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
             failsWithA[DatabaseError]
@@ -133,12 +133,12 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(partitioningDTO1)
           } yield assertTrue(result.isInstanceOf[AdditionalDataDTO] && result == additionalDataDTO1)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected Left with DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningDTO2).exit)(
             failsWithA[DatabaseError]
           )
-        } @@ TestAspect.tag("IntegrationTest")
+        }
       )
     ).provide(
       PartitioningRepositoryImpl.layer,
@@ -146,7 +146,7 @@ class PartitioningRepositorySpec extends ZIOSpecDefault with TestData {
       getPartitioningMeasuresMockLayer,
       getPartitioningAdditionalDataMockLayer,
       createOrUpdateAdditionalDataMockLayer
-    )
+    ) @@ TestAspect.ifPropNotSet("runIntegration")
 
   }
 

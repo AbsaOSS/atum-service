@@ -47,8 +47,8 @@ class AwsSecretsProviderSpec extends ConfigProviderSpec {
           awsConfig <- ZIO.config[AwsConfig](AwsConfig.config)
           awsSecretValue <- AwsSecretsProvider.getSecretValue(awsConfig.dbPasswordSecretName)
         } yield assertTrue(dummySecretValue == awsSecretValue)
-      } @@ TestAspect.tag("IntegrationTest")
-    )
+      }
+    ) @@ TestAspect.ifPropNotSet("runIntegration")
 
   }.provide(
     testAwsSecretsProviderLayer

@@ -17,9 +17,9 @@ docker rm aul_db
 ```
 
 ### Using local postgres instance
-
+- create database `atum_db`
+- migrate scripts
 ```zsh
-# migrate scripts
 sbt flywayMigrate
 ```
 

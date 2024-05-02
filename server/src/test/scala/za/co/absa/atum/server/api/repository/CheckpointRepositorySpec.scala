@@ -49,16 +49,16 @@ class CheckpointRepositorySpec extends ZIOSpecDefault with TestData {
           for {
             result <- CheckpointRepository.writeCheckpoint(checkpointDTO1)
           } yield assertTrue(result.isRight)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected Left with StatusException") {
           for {
             result <- CheckpointRepository.writeCheckpoint(checkpointDTO2)
           } yield assertTrue(result.isLeft)
-        } @@ TestAspect.tag("IntegrationTest"),
+        },
         test("Returns expected DatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])
-        } @@ TestAspect.tag("IntegrationTest")
-      )
+        }
+      ) @@ TestAspect.ifPropNotSet("runIntegration")
     ).provide(CheckpointRepositoryImpl.layer, writeCheckpointMockLayer)
 
   }

@@ -38,6 +38,6 @@ object GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
       GetPartitioningAdditionalData.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback,
-    )
+    ) @@ TestAspect.ifPropSet("runIntegration")
   }
 }

@@ -145,6 +145,9 @@ The project uses the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-P
 ### Run Unit Tests
 Use the `test` command to execute all tests, skipping all Integration tests. 
 ```
+sbt "project server" test           -- TODO/check removed ++version
+```
+```
 sbt "project agent" ++2.13.11 test "project model" ++2.13.11 test
 ```
 - with alias in .sbtrc:
@@ -153,21 +156,16 @@ alias test=; testOnly -- -l IntegrationTest
 
 # `-l IntegrationTest`: This switch excludes all tests labeled as `IntegrationTest,` allowing only executing unit tests.
 ```
-### Run Integration Tests Only
+### Run Integration Tests
 Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
 ```
-sbt "project server" ++2.13.11 testIT
+sbt "project server" integrationTest    -- TODO/check removed ++version
 ```
 - with alias in .sbtrc:
 ```
 alias testIT=; testOnly -- -t IntegrationTest
 
 # `-- -t IntegrationTest`: This switch targets only those tests marked with the `IntegrationTest` tag.
-```
-### Run All Tests
-If you need to perform a comprehensive test check that includes both unit and integration tests, use the `testAll` command. This ensures that all testable code in the project is verified.
-```
-alias testAll=; testOnly
 ```
 
 ## How to Release
