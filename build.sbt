@@ -76,7 +76,7 @@ lazy val server = (projectMatrix in file("server"))
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
       jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-server"),
       serverMergeStrategy,
-      commands += Command.command("integrationTest") { state =>
+      commands += Command.command("testIT") { state =>
         // Apply javaOptions and fork settings only for this command execution
         val settings = Seq(
           "set (Test / fork) := true",
