@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.flows
 
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
@@ -93,7 +94,7 @@ class GetFlowCheckpointsTest extends DBTestSuite {
       |""".stripMargin
   )
 
-  test("Testing get_flow_checkpoints, partitioning and flow exist, but there are no checkpoints") {
+  test("Testing get_flow_checkpoints, partitioning and flow exist, but there are no checkpoints", IntegrationTestTag) {
     val partitioningId: Long = Random.nextLong()
     table("runs.partitionings").insert(
       add("id_partitioning", partitioningId)
@@ -124,7 +125,7 @@ class GetFlowCheckpointsTest extends DBTestSuite {
       }
   }
 
-  test("Testing get_flow_checkpoints, partitioning, flow and checkpoints all exist") {
+  test("Testing get_flow_checkpoints, partitioning, flow and checkpoints all exist", IntegrationTestTag) {
     val partitioningId: Long = Random.nextLong()
     table("runs.partitionings").insert(
       add("id_partitioning", partitioningId)

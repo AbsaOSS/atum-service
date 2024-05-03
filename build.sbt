@@ -134,7 +134,7 @@ lazy val model = (projectMatrix in file("model"))
         log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")
       },
       (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
-      jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent: model")
+      jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-model")
     ): _*
   )
   .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
@@ -148,7 +148,7 @@ lazy val database = (projectMatrix in file("database"))
         log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")
       },
       libraryDependencies ++= Dependencies.databaseDependencies,
-      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
+      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value
     ): _*
   )
   .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))

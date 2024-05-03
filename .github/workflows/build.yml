@@ -74,3 +74,37 @@ jobs:
 
       - name: Build and run tests
         run: sbt "project server" ++${{matrix.scala}} testIT doc
+
+  build-database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: atum_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    strategy:
+      matrix:
+        scala: [2.13.11]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.8"
+
+      - name: Prepare testing database
+        run: sbt flywayMigrate
+
+      - name: Build and run tests
+        run: sbt "project database" ++${{matrix.scala}} testDB doc

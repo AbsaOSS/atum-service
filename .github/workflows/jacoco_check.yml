@@ -22,8 +22,8 @@ on:
     types: [ opened, edited, synchronize, reopened ]
 
 env:
-  scalaLong12: 2.13.11
-  scalaShort12: "2.13"
+  scalaLong: 2.13.11
+  scalaShort: "2.13"
   overall: 60.0
   changed: 80.0
 
@@ -43,8 +43,8 @@ jobs:
         continue-on-error: true
         id: jacocorun
         run: |
-          sbt "project agent; jacoco"
-          sbt "project model; jacoco"
+          sbt "project agent; ++${{ env.scalaLong }} jacoco"
+          sbt "project model; ++${{ env.scalaLong }} jacoco"
       #  agent module code coverage
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
@@ -52,11 +52,11 @@ jobs:
         uses: madrapps/jacoco-report@v1.6.1
         with:
           name: agent-jacoco-report
-          paths: ${{ github.workspace }}/agent/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/agent/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{ env.overall }}
           min-coverage-changed-file: ${{ env.changed }}
-          title: JaCoCo agent module code coverage report - scala ${{ env.scalaLong12 }}
+          title: JaCoCo agent module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       #  model module code coverage
       - name: Add coverage to PR
@@ -65,11 +65,11 @@ jobs:
         uses: madrapps/jacoco-report@v1.6.1
         with:
           name: model-jacoco-report
-          paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort12 }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{ env.overall }}
           min-coverage-changed-file: ${{ env.changed }}
-          title: JaCoCo model module code coverage report - scala ${{ env.scalaLong12 }}
+          title: JaCoCo model module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Get the Coverage info
         if: steps.jacocorun.outcome == 'success'

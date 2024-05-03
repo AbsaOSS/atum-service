@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.database.flows
 
+import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 
 import scala.util.Random
@@ -24,7 +25,7 @@ import scala.util.Random
 class CreateFlowTest extends DBTestSuite {
   private val fncCreateFlow = "flows._create_flow"
 
-  test("Create flow") {
+  test("Create flow", IntegrationTestTag) {
     val partitioningId: Long = Random.nextLong()
     val user = "Geralt of Rivia"
     val flowID = function(fncCreateFlow)

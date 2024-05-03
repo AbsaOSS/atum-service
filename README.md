@@ -1,5 +1,27 @@
 # Atum Service
 
+- [Atum Service](#atum-service)
+    - [Modules](#modules)
+        - [Agent `agent/`](#agent-agent)
+        - [Server `server/`](#server-server)
+        - [Data Model `model/`](#data-model-model)
+        - [Database `database/`](#database-database)
+    - [Vocabulary](#vocabulary)
+        - [Atum Agent](#atum-agent)
+        - [Partitioning](#partitioning)
+        - [Atum Context](#atum-context)
+        - [Measure](#measure)
+        - [Measurement](#measurement)
+        - [Checkpoint](#checkpoint)
+        - [Data Flow](#data-flow)
+    - [How to generate Code coverage report](#how-to-generate-code-coverage-report)
+    - [How to Run in IntelliJ](#how-to-run-in-intellij)
+    - [How to Run Tests](#how-to-run-tests)
+        - [Test controls](#test-controls)
+        - [Run Unit Tests](#run-unit-tests)
+        - [Run Integration Tests](#run-integration-tests)
+    - [How to Release](#how-to-release)
+
 Atum Service is a data completeness and accuracy application meant to be used for data processed by Apache Spark.
 
 One of the challenges regulated industries face is the requirement to track and prove that their systems preserve
@@ -121,10 +143,13 @@ even if it involves multiple applications or ETL pipelines.
 
 ## How to generate Code coverage report
 ```sbt
-sbt jacoco - not more valid - will be updated
+sbt "project agent" ++2.13.11 jacoco
 ```
+```sbt
+sbt "project model" ++2.13.11 jacoco
 ```
-sbt "project server" jacocoServer           -- TODO/check removed ++version
+```sbt
+sbt "project server" ++2.13.11 jacocoServer
 ```
 
 Code coverage wil be generated on path:
@@ -138,7 +163,6 @@ To make this project runnable via IntelliJ, do the following:
 - Make sure that your configuration in `server/src/main/resources/reference.conf` 
   is configured according to your needs
 
-
 ## How to Run Tests
 
 ### Test controls
@@ -147,28 +171,29 @@ The project uses the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-P
 
 ### Run Unit Tests
 Use the `test` command to execute all tests, skipping all Integration tests. 
-```
-sbt "project server" test           -- TODO/check removed ++version
-```
+- requires java 8
 ```
 sbt "project agent" ++2.13.11 test "project model" ++2.13.11 test
 ```
-- with alias in .sbtrc:
 ```
-alias test=; testOnly -- -l IntegrationTest
+sbt "project database" ++2.13.11 test
+```
+- requires java 11
+```
+sbt "project server" ++2.13.11 test
+```
 
-# `-l IntegrationTest`: This switch excludes all tests labeled as `IntegrationTest,` allowing only executing unit tests.
-```
 ### Run Integration Tests
-Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
+Use the `testDB` command to execute all tests marked as Integration tests, skipping all other tests.
+- requires java 8
 ```
-sbt "project server" testIT    -- TODO/check removed ++version
+sbt "project database" ++2.13.11 testDB
 ```
-- with alias in .sbtrc:
-```
-alias testIT=; testOnly -- -t IntegrationTest
 
-# `-- -t IntegrationTest`: This switch targets only those tests marked with the `IntegrationTest` tag.
+Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
+- requires java 11
+```
+sbt "project server" ++2.13.11 testIT
 ```
 
 ## How to Release

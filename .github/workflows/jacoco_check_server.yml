@@ -22,8 +22,8 @@ on:
     types: [ opened, edited, synchronize, reopened ]
 
 env:
-  scalaLong13: 2.13.11
-  scalaShort13: "2.13"
+  scalaLong: 2.13.11
+  scalaShort: "2.13"
   overall: 75.0
   changed: 75.0
 
@@ -58,18 +58,18 @@ jobs:
       - name: Build and run tests
         continue-on-error: true
         id: jacocorun
-        run: sbt "project server; jacocoServer"
+        run: sbt "project server; ++${{ env.scalaLong }} jacocoServer"
       #  server module code coverage
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'
         id: jacoco-server
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort13 }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{env.overall }}
           min-coverage-changed-files: ${{ env.changed }}
-          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong13 }}
+          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Get the Coverage info
         if: steps.jacocorun.outcome == 'success'
