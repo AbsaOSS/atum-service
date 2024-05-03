@@ -121,12 +121,15 @@ even if it involves multiple applications or ETL pipelines.
 
 ## How to generate Code coverage report
 ```sbt
-sbt jacoco
+sbt jacoco - not more valid - will be updated
 ```
+```
+sbt "project server" jacocoServer           -- TODO/check removed ++version
+```
+
 Code coverage wil be generated on path:
 ```
-{project-root}/atum-service/target/spark{spark_version}-jvm-{scala_version}/jacoco/report/html
-{project-root}/atum-service-test/target/jvm-{scala_version}/jacoco/report/html
+{project-root}/{module}/target/jvm-{scala_version}/jacoco/report/html
 ```
 
 ## How to Run in IntelliJ
@@ -159,7 +162,7 @@ alias test=; testOnly -- -l IntegrationTest
 ### Run Integration Tests
 Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
 ```
-sbt "project server" integrationTest    -- TODO/check removed ++version
+sbt "project server" testIT    -- TODO/check removed ++version
 ```
 - with alias in .sbtrc:
 ```

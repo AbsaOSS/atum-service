@@ -84,6 +84,16 @@ lazy val server = (projectMatrix in file("server"))
           "test"
         )
         settings.foldLeft(state)((currentState, setting) => Command.process(setting, currentState))
+      },
+      commands += Command.command("jacocoServer") { state =>
+        // Apply javaOptions and fork settings only for this command execution
+        val settings = Seq(
+          "jacoco",
+          "set (Test / fork) := true",
+          "set (Test / javaOptions) += \"-DrunIntegration\"",
+          "jacoco"
+        )
+        settings.foldLeft(state)((currentState, setting) => Command.process(setting, currentState))
       }
     ): _*
   )
