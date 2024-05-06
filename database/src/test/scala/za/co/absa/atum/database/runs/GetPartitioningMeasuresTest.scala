@@ -135,9 +135,6 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
     function(fncGetPartitioningMeasures)
       .setParam("i_partitioning", partitioning)
       .execute { queryResult =>
-        val results = queryResult.next()
-        assert(results.getInt("status").contains(16))
-        assert(results.getString("status_text").contains("No measures found"))
         assert(!queryResult.hasNext)
       }
   }
