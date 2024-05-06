@@ -15,5 +15,3 @@
 
 ALTER TABLE flows.flows
     ADD COLUMN IF NOT EXISTS fk_primary_partitioning BIGINT;
-
-CREATE UNIQUE INDEX  IF NOT EXISTS unq_flows ON flows.flows (fk_primary_partitioning);
