@@ -36,7 +36,7 @@ $$
 --      Returns all the checkpoint for the given partitioning and checkpoint name
 --
 -- Parameters:
---      i_partitioning      - partitioning for requested checkpoints
+--      i_partitioning      - partitioning of requested checkpoints
 --      i_limit             - limit of the number of checkpoints to return
 --      i_checkpoint_name   - (optional) if specified, returns data related to particular checkpoint's name
 --
