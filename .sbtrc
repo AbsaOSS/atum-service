@@ -1,2 +1,2 @@
 alias test=; testOnly -- -l IntegrationTest
-alias testDB=; testOnly -- -n IntegrationTest
+alias testDB=; project database; testOnly

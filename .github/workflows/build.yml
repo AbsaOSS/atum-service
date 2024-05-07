@@ -39,7 +39,7 @@ jobs:
           java-version: "adopt@1.8"
 
       - name: Build and run unit tests
-        run: sbt "project agent" ++${{matrix.scala}} test doc "project model" ++${{matrix.scala}} test doc
+        run: sbt "project agent" test doc "project model" test doc
 
   build-server:
     runs-on: ubuntu-latest
@@ -69,11 +69,14 @@ jobs:
         with:
           java-version: "adopt@1.11.0-11"
 
+      - name: Build and run unit tests
+        run: sbt "project server" test
+
       - name: Prepare testing database
         run: sbt flywayMigrate
 
       - name: Build and run integration tests
-        run: sbt "project server" ++${{matrix.scala}} testIT doc
+        run: sbt "project server" testIT doc
 
   build-database:
     runs-on: ubuntu-latest
@@ -103,8 +106,12 @@ jobs:
         with:
           java-version: "adopt@1.8"
 
+      # Fails on balta dbConnection error issue: https://github.com/AbsaOSS/balta/issues/23
+#      - name: Build and run unit tests
+#        run: sbt "project database" test
+
       - name: Prepare testing database
         run: sbt flywayMigrate
 
       - name: Build and run database tests
-        run: sbt "project database" ++${{matrix.scala}} testDB doc
+        run: sbt testDB doc

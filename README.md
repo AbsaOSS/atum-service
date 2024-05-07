@@ -189,7 +189,7 @@ sbt "project server" test
 Use the `testDB` command to execute all tests marked as Integration tests, skipping all other tests.
 - requires java 8 & based on sbt alias solution
 ```
-sbt "project database" testDB
+sbt testDB
 ```
 
 Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
