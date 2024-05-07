@@ -44,7 +44,7 @@ $$
 -- Parameters:
 --      i_partitioning_of_flow  - partitioning to use for identifying the flow associate with checkpoints
 --                                that will be retrieved
---      i_limit                 - (optional) maximum number of data returned
+--      i_limit                 - (optional) maximum number of checkpoint's measurements to return
 --                                if 0 specified, all data will be returned, i.e. no limit will be applied
 --      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --

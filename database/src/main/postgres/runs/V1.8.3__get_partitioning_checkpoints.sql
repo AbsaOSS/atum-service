@@ -33,11 +33,12 @@ $$
     -------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_checkpoints(JSONB, INT, TEXT)
---      Returns all the checkpoint for the given partitioning and checkpoint name
+--      Retrieves all checkpoints (measures and their measurement details) related to a
+--      given partitioning (and checkpoint name, if specified).
 --
 -- Parameters:
 --      i_partitioning      - partitioning of requested checkpoints
---      i_limit                 - (optional) maximum number of data returned
+--      i_limit                 - (optional) maximum number of checkpoint's measurements to return
 --                                if 0 specified, all data will be returned, i.e. no limit will be applied
 --      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --

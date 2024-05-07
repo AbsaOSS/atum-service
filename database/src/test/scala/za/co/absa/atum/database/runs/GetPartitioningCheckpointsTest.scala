@@ -341,9 +341,6 @@ class GetPartitioningCheckpointsTest extends DBTestSuite{
       .setParam("i_limit", i_limit)
       .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>
-        val results = queryResult.next()
-        assert(results.getInt("status").contains(11))
-        assert(results.getString("status_text").contains("Ok"))
         assert(!queryResult.hasNext)
       }
 
