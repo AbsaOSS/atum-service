@@ -171,27 +171,27 @@ The project uses the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-P
 
 ### Run Unit Tests
 Use the `test` command to execute all tests, skipping all Integration tests. 
-- requires java 8
+- requires java 8 & based on sbt alias solution - exclude active
 ```
 sbt "project agent" test "project model" test
 ```
 ```
 sbt "project database" test
 ```
-- requires java 11
+- requires java 11 & based on sbt custom command solution - system property not set
 ```
 sbt "project server" test
 ```
 
 ### Run Integration Tests
 Use the `testDB` command to execute all tests marked as Integration tests, skipping all other tests.
-- requires java 8
+- requires java 8 & based on sbt alias solution
 ```
 sbt "project database" testDB
 ```
 
 Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
-- requires java 11
+- requires java 11 & based on sbt custom command solution
 ```
 sbt "project server" testIT
 ```
