@@ -48,7 +48,7 @@ class AwsSecretsProviderSpec extends ConfigProviderSpec {
           awsSecretValue <- AwsSecretsProvider.getSecretValue(awsConfig.dbPasswordSecretName)
         } yield assertTrue(dummySecretValue == awsSecretValue)
       }
-    ) @@ TestAspect.ifPropNotSet("runIntegration")
+    )
 
   }.provide(
     testAwsSecretsProviderLayer
