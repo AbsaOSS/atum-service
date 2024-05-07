@@ -143,13 +143,13 @@ even if it involves multiple applications or ETL pipelines.
 
 ## How to generate Code coverage report
 ```sbt
-sbt "project agent" ++2.13.11 jacoco
+sbt "project agent" jacoco
 ```
 ```sbt
-sbt "project model" ++2.13.11 jacoco
+sbt "project model" jacoco
 ```
 ```sbt
-sbt "project server" ++2.13.11 jacocoServer
+sbt "project server" jacocoServer
 ```
 
 Code coverage wil be generated on path:
@@ -173,27 +173,27 @@ The project uses the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-P
 Use the `test` command to execute all tests, skipping all Integration tests. 
 - requires java 8
 ```
-sbt "project agent" ++2.13.11 test "project model" ++2.13.11 test
+sbt "project agent" test "project model" test
 ```
 ```
-sbt "project database" ++2.13.11 test
+sbt "project database" test
 ```
 - requires java 11
 ```
-sbt "project server" ++2.13.11 test
+sbt "project server" test
 ```
 
 ### Run Integration Tests
 Use the `testDB` command to execute all tests marked as Integration tests, skipping all other tests.
 - requires java 8
 ```
-sbt "project database" ++2.13.11 testDB
+sbt "project database" testDB
 ```
 
 Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
 - requires java 11
 ```
-sbt "project server" ++2.13.11 testIT
+sbt "project server" testIT
 ```
 
 ## How to Release
