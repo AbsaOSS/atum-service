@@ -37,10 +37,9 @@ $$
 --
 -- Parameters:
 --      i_partitioning      - partitioning of requested checkpoints
---      i_limit             - limit of the number of checkpoints to return
---      i_limit             - (optional) maximum number of checkpoints retrieved
---                            if 0 specified, all data will be returned, i.e. no limit will be applied
---      i_checkpoint_name   - (optional) if specified, returns data related to particular checkpoint's name
+--      i_limit                 - (optional) maximum number of data returned
+--                                if 0 specified, all data will be returned, i.e. no limit will be applied
+--      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --
 -- Returns:
 --      status                  - Status code

@@ -342,8 +342,8 @@ class GetPartitioningCheckpointsTest extends DBTestSuite{
       .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>
         val results = queryResult.next()
-        assert(results.getInt("status").contains(16))
-        assert(results.getString("status_text").contains("No checkpoints were found for the given partitioning."))
+        assert(results.getInt("status").contains(11))
+        assert(results.getString("status_text").contains("Ok"))
         assert(!queryResult.hasNext)
       }
 

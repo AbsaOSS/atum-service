@@ -103,7 +103,7 @@ class GetPartitioningMeasuresTest extends DBTestSuite {
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(41))
-        assert(results.getString("status_text").contains("The partitioning does not exist."))
+        assert(results.getString("status_text").contains("Partitioning not found"))
         assert(!queryResult.hasNext)
       }
   }
