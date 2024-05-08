@@ -25,7 +25,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     OUT measure_name               TEXT,
     OUT measure_columns            TEXT[],
     OUT measurement_value          JSONB,
-    OUT checkpoint_start_time    TIMESTAMP WITH TIME ZONE,
+    OUT checkpoint_start_time      TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time        TIMESTAMP WITH TIME ZONE
 )
     RETURNS SETOF record AS
@@ -33,12 +33,14 @@ $$
     -------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_checkpoints(JSONB, INT, TEXT)
---      Returns all the checkpoint for the given partitioning and checkpoint name
+--      Retrieves all checkpoints (measures and their measurement details) related to a
+--      given partitioning (and checkpoint name, if specified).
 --
 -- Parameters:
---      i_partitioning      - partitioning for requested checkpoints
---      i_limit             - limit of the number of checkpoints to return
---      i_checkpoint_name   - name of the checkpoint to filter by
+--      i_partitioning      - partitioning of requested checkpoints
+--      i_limit                 - (optional) maximum number of checkpoint's measurements to return
+--                                if 0 specified, all data will be returned, i.e. no limit will be applied
+--      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --
 -- Returns:
 --      status                  - Status code

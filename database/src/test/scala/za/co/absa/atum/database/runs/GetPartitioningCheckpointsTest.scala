@@ -8,7 +8,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 import scala.util.Random
 
-class GetPartitioningCheckpoints extends DBTestSuite{
+class GetPartitioningCheckpointsTest extends DBTestSuite{
 
   private val fncGetPartitioningCheckpoints = "runs.get_partitioning_checkpoints"
 
