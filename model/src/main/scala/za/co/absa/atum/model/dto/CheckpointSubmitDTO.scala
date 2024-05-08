@@ -19,7 +19,7 @@ package za.co.absa.atum.model.dto
 import java.time.ZonedDateTime
 import java.util.UUID
 
-case class CheckpointDTO(
+case class CheckpointSubmitDTO(
   id: UUID,
   name: String,
   author: String,

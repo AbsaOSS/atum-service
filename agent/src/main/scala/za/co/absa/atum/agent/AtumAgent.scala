@@ -19,7 +19,7 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, Dispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointSubmitDTO, PartitioningSubmitDTO}
 
 /**
  *  Entity that communicate with the API, primarily focused on spawning Atum Context(s).
@@ -41,11 +41,11 @@ trait AtumAgent {
   private[agent] def currentUser: String = System.getProperty("user.name") // platform independent
 
   /**
-   *  Sends `CheckpointDTO` to the AtumService API
+   *  Sends `CheckpointSubmitDTO` to the AtumService API
    *
    *  @param checkpoint Already initialized Checkpoint object to store
    */
-  private[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+  private[agent] def saveCheckpoint(checkpoint: CheckpointSubmitDTO): Unit = {
     dispatcher.saveCheckpoint(checkpoint)
   }
 

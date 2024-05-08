@@ -25,7 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.{Measure, MeasureResult, MeasurementBuilder, UnknownMeasure}
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.CheckpointSubmitDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
 class AtumContextTest extends AnyFlatSpec with Matchers {
@@ -93,7 +93,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
 
     atumContext.createCheckpoint("testCheckpoint", df)
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    val argument = ArgumentCaptor.forClass(classOf[CheckpointSubmitDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
 
     assert(argument.getValue.name == "testCheckpoint")
@@ -121,7 +121,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     atumContext.createCheckpointOnProvidedData(
       checkpointName = "name", measurements = measurements)
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    val argument = ArgumentCaptor.forClass(classOf[CheckpointSubmitDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
 
     assert(argument.getValue.name == "name")
@@ -165,7 +165,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     val df = spark.createDataFrame(rdd, schema)
       .createCheckpoint("checkPointNameCount")
 
-    val argumentFirst = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    val argumentFirst = ArgumentCaptor.forClass(classOf[CheckpointSubmitDTO])
     verify(mockAgent, times(1)).saveCheckpoint(argumentFirst.capture())
 
     assert(argumentFirst.getValue.name == "checkPointNameCount")
@@ -178,7 +178,7 @@ class AtumContextTest extends AnyFlatSpec with Matchers {
     when(mockAgent.currentUser).thenReturn(authorTest + "Another")  // maybe a process changed the author / current user
     df.createCheckpoint("checkPointNameSum")
 
-    val argumentSecond = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    val argumentSecond = ArgumentCaptor.forClass(classOf[CheckpointSubmitDTO])
     verify(mockAgent, times(2)).saveCheckpoint(argumentSecond.capture())
 
     assert(argumentSecond.getValue.name == "checkPointNameSum")

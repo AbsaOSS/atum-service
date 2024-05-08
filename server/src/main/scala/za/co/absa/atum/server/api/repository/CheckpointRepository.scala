@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointQueryDTO, CheckpointQueryResultDTO}
+import za.co.absa.atum.model.dto.{CheckpointSubmitDTO, CheckpointQueryDTO, CheckpointQueryResultDTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
@@ -24,7 +24,7 @@ import zio.macros.accessible
 
 @accessible
 trait CheckpointRepository {
-  def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]]
+  def writeCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[DatabaseError, Either[StatusException, Unit]]
 
   def getPartitioningCheckpoints(partitioningName: CheckpointQueryDTO):
     IO[DatabaseError, Seq[CheckpointQueryResultDTO]]

@@ -77,8 +77,8 @@ object PlayJsonImplicits {
   implicit val readsPartitionDTO: Reads[PartitionDTO] = Json.reads[PartitionDTO]
   implicit val writesPartitionDTO: Writes[PartitionDTO] = Json.writes[PartitionDTO]
 
-  implicit val readsCheckpointDTO: Reads[CheckpointDTO] = Json.reads[CheckpointDTO]
-  implicit val writesCheckpointDTO: Writes[CheckpointDTO] = Json.writes[CheckpointDTO]
+  implicit val readsCheckpointDTO: Reads[CheckpointSubmitDTO] = Json.reads[CheckpointSubmitDTO]
+  implicit val writesCheckpointDTO: Writes[CheckpointSubmitDTO] = Json.writes[CheckpointSubmitDTO]
 
   implicit val readsPartitioningSubmitDTO: Reads[PartitioningSubmitDTO] = Json.reads[PartitioningSubmitDTO]
   implicit val writesPartitioningSubmitDTO: Writes[PartitioningSubmitDTO] = Json.writes[PartitioningSubmitDTO]

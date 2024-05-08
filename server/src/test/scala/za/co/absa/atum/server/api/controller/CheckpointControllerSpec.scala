@@ -46,7 +46,7 @@ class CheckpointControllerSpec extends ZIOSpecDefault with TestData {
 
     suite("CheckpointControllerSuite")(
       suite("CreateCheckpointSuite")(
-        test("Returns expected CheckpointDTO") {
+        test("Returns expected CheckpointSubmitDTO") {
           for {
             result <- CheckpointController.createCheckpoint(checkpointDTO1)
           } yield assertTrue(result == checkpointDTO1)

@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointQueryDTO, CheckpointQueryResultDTO}
+import za.co.absa.atum.model.dto.{CheckpointSubmitDTO, CheckpointQueryDTO, CheckpointQueryResultDTO}
 import za.co.absa.atum.server.api.database.runs.functions.{GetPartitioningCheckpoints, WriteCheckpoint}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
@@ -28,13 +28,13 @@ class CheckpointRepositoryImpl(
   )
   extends CheckpointRepository with BaseRepository {
 
-  override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
+  override def writeCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
     dbCallWithStatus(writeCheckpointFn(checkpointDTO), "writeCheckpoint")
   }
 
   override def getPartitioningCheckpoints(partitioningName: CheckpointQueryDTO):
     IO[DatabaseError, Seq[CheckpointQueryResultDTO]] = {
-    getPartitioningCheckpointsFn(partitioningName).mapError(err => DatabaseError(err.getMessage))
+    dbCall(getPartitioningCheckpointsFn(partitioningName).mapError(err => DatabaseError(err.getMessage)), "getPartitioningCheckpoints")
   }
 
 }
