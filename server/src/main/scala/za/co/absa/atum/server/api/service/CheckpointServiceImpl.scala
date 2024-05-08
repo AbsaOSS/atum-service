@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointSubmitDTO, CheckpointQueryDTO, CheckpointQueryResultDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.CheckpointRepository
 import za.co.absa.fadb.exceptions.StatusException
@@ -25,10 +25,17 @@ import zio._
 class CheckpointServiceImpl(checkpointRepository: CheckpointRepository)
   extends CheckpointService with BaseService {
 
-  override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]] = {
+  override def saveCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[ServiceError, Either[StatusException, Unit]] = {
     repositoryCallWithStatus(
       checkpointRepository.writeCheckpoint(checkpointDTO), "saveCheckpoint"
     )
+  }
+
+  override def getPartitioningCheckpoint(checkpointQueryDTO: CheckpointQueryDTO):
+    IO[ServiceError, Seq[CheckpointQueryResultDTO]] = {
+      repositoryCall(
+        checkpointRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoint"
+      )
   }
 
 }
