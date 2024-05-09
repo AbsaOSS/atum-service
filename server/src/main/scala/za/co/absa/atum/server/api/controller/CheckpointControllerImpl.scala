@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.CheckpointSubmitDTO
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.ErrorResponse
 import zio._
@@ -24,8 +24,8 @@ import zio._
 class CheckpointControllerImpl(checkpointService: CheckpointService)
   extends CheckpointController with BaseController {
 
-  override def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO] = {
-    serviceCallWithStatus[Unit, CheckpointDTO](
+  override def createCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[ErrorResponse, CheckpointSubmitDTO] = {
+    serviceCallWithStatus[Unit, CheckpointSubmitDTO](
       checkpointService.saveCheckpoint(checkpointDTO),
       _ => checkpointDTO
     )

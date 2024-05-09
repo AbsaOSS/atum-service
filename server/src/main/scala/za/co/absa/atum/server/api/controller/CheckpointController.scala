@@ -16,12 +16,13 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.CheckpointSubmitDTO
 import za.co.absa.atum.server.model.ErrorResponse
 import zio.IO
 import zio.macros.accessible
 
 @accessible
 trait CheckpointController {
-  def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
+  def createCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[ErrorResponse, CheckpointSubmitDTO]
+
 }
