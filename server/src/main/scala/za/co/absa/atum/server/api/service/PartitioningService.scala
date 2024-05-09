@@ -16,7 +16,10 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointQueryDTO,
+  CheckpointQueryResultDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO
+}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.fadb.exceptions.StatusException
 import zio.IO
@@ -36,4 +39,6 @@ trait PartitioningService {
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
     IO[ServiceError, Either[StatusException, Unit]]
 
+  def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
+  IO[ServiceError, Seq[CheckpointQueryResultDTO]]
 }

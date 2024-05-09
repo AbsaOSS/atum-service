@@ -16,25 +16,16 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{CheckpointSubmitDTO, CheckpointQueryDTO, CheckpointQueryResultDTO}
+import za.co.absa.atum.model.dto.CheckpointSubmitDTO
 import za.co.absa.atum.server.api.database.runs.functions.{GetPartitioningCheckpoints, WriteCheckpoint}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
 
-class CheckpointRepositoryImpl(
-    writeCheckpointFn: WriteCheckpoint,
-    getPartitioningCheckpointsFn: GetPartitioningCheckpoints
-  )
-  extends CheckpointRepository with BaseRepository {
+class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository with BaseRepository {
 
   override def writeCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
     dbCallWithStatus(writeCheckpointFn(checkpointDTO), "writeCheckpoint")
-  }
-
-  override def getPartitioningCheckpoints(partitioningName: CheckpointQueryDTO):
-    IO[DatabaseError, Seq[CheckpointQueryResultDTO]] = {
-    dbCall(getPartitioningCheckpointsFn(partitioningName).mapError(err => DatabaseError(err.getMessage)), "getPartitioningCheckpoints")
   }
 
 }
@@ -43,7 +34,6 @@ object CheckpointRepositoryImpl {
   val layer: URLayer[WriteCheckpoint with GetPartitioningCheckpoints, CheckpointRepository] = ZLayer {
     for {
       writeCheckpoint <- ZIO.service[WriteCheckpoint]
-      getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
-    } yield new CheckpointRepositoryImpl(writeCheckpoint, getPartitioningCheckpoints)
+    } yield new CheckpointRepositoryImpl(writeCheckpoint)
   }
 }

@@ -17,13 +17,12 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO, AdditionalDataSubmitDTO,
-  MeasureDTO, PartitioningDTO, PartitioningSubmitDTO
+  AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointQueryDTO,
+  CheckpointQueryResultDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO
 }
 import za.co.absa.atum.server.api.database.runs.functions.{
-  CreateOrUpdateAdditionalData,
-  CreatePartitioningIfNotExists,
-  GetPartitioningAdditionalData,
+  CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists,
+  GetPartitioningAdditionalData, GetPartitioningCheckpoints,
   GetPartitioningMeasures
 }
 import za.co.absa.atum.server.api.exception.DatabaseError
@@ -35,7 +34,8 @@ class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
-  createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData
+  createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
+  getPartitioningCheckpointsFn: GetPartitioningCheckpoints
 ) extends PartitioningRepository with BaseRepository {
 
   override def createPartitioningIfNotExists(
@@ -61,6 +61,11 @@ class PartitioningRepositoryImpl(
     IO[DatabaseError, AdditionalDataDTO] = {
     getPartitioningAdditionalDataFn(partitioning).mapBoth(err => DatabaseError(err.getMessage), _.toMap)
   }
+
+  override def getPartitioningCheckpoints(partitioningName: CheckpointQueryDTO):
+  IO[DatabaseError, Seq[CheckpointQueryResultDTO]] = {
+    dbCall(getPartitioningCheckpointsFn(partitioningName).mapError(err => DatabaseError(err.getMessage)), "getPartitioningCheckpoints")
+  }
 }
 
 object PartitioningRepositoryImpl {
@@ -68,7 +73,8 @@ object PartitioningRepositoryImpl {
     CreatePartitioningIfNotExists
       with GetPartitioningMeasures
       with GetPartitioningAdditionalData
-      with CreateOrUpdateAdditionalData,
+      with CreateOrUpdateAdditionalData
+      with GetPartitioningCheckpoints,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -76,10 +82,12 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
+      getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       getPartitioningMeasures,
       getPartitioningAdditionalData,
-      createOrUpdateAdditionalData)
+      createOrUpdateAdditionalData,
+      getPartitioningCheckpoints)
   }
 }
