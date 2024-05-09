@@ -58,7 +58,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   IO[ErrorResponse, Seq[CheckpointQueryResultDTO]] = {
     serviceCall[Seq[CheckpointQueryResultDTO], Seq[CheckpointQueryResultDTO]](
       partitioningService.getPartitioningCheckpoints(checkpointQueryDTO),
-      r => r
+      results => results
     )
   }
 
