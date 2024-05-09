@@ -30,6 +30,7 @@ import zio._
 import zio.interop.catz._
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import doobie.postgres.implicits._
 
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
 extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointQueryResultDTO, Task] {
