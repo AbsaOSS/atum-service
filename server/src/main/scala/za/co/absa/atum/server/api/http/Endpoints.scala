@@ -54,12 +54,13 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[AdditionalDataSubmitDTO])
   }
 
-  protected val getPartitioningCheckpointsEndpoint: PublicEndpoint[CheckpointQueryDTO, ErrorResponse, CheckpointQueryResultDTO, Any] = {
+  protected val getPartitioningCheckpointsEndpoint
+    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, Seq[CheckpointQueryResultDTO], Any] = {
     apiV2.get
       .in(GetPartitioningCheckpoints)
       .in(jsonBody[CheckpointQueryDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[CheckpointQueryResultDTO])
+      .out(jsonBody[Seq[CheckpointQueryResultDTO]])
   }
 
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
