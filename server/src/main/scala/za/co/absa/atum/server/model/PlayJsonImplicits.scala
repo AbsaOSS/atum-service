@@ -93,6 +93,9 @@ object PlayJsonImplicits {
   implicit val readsAtumContextDTO: Reads[AtumContextDTO] = Json.reads[AtumContextDTO]
   implicit val writesAtumContextDTO: Writes[AtumContextDTO] = Json.writes[AtumContextDTO]
 
+  implicit val readMeasureResultDTO1: Reads[MeasureResultDTO] = Json.reads[MeasureResultDTO]
+  implicit val writesMeasureResultDTO1: Writes[MeasureResultDTO] = Json.writes[MeasureResultDTO]
+
   implicit val readsCheckpointQueryDTO: Reads[CheckpointQueryDTO] = Json.reads[CheckpointQueryDTO]
   implicit val writesCheckpointQueryDTO: Writes[CheckpointQueryDTO] = Json.writes[CheckpointQueryDTO]
 

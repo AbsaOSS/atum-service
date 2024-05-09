@@ -20,36 +20,36 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 // TODO REMOVE
-case class MeasureResultDTO1(
-  mainValue: MeasureResultDTO1.TypedValue1,
-  // TODO READ doobie Map[String, MeasureResultDTO1.TypedValue1]
-   supportValues: Map[String, String /*MeasureResultDTO1.TypedValue1*/] = Map.empty
-)
-
-object MeasureResultDTO1 {
-  case class TypedValue1(
-    value: String,
-    // TODO READ doobie sealed trait ResultValueType
-    valueType: String//ResultValueType1
-  )
-
-  sealed trait ResultValueType1
-
-  object ResultValueType1 {
-    case object String extends ResultValueType1
-    case object Long extends ResultValueType1
-    case object BigDecimal extends ResultValueType1
-    case object Double extends ResultValueType1
-  }
-
-}
+//case class MeasureResultDTO1(
+//  mainValue: MeasureResultDTO1.TypedValue1,
+//  // TODO READ doobie Map[String, MeasureResultDTO1.TypedValue1]
+//   supportValues: Map[String, String /*MeasureResultDTO1.TypedValue1*/] = Map.empty
+//)
+//
+//object MeasureResultDTO1 {
+//  case class TypedValue1(
+//    value: String,
+//    // TODO READ doobie sealed trait ResultValueType
+//    valueType: String//ResultValueType1
+//  )
+//
+//  sealed trait ResultValueType1
+//
+//  object ResultValueType1 {
+//    case object String extends ResultValueType1
+//    case object Long extends ResultValueType1
+//    case object BigDecimal extends ResultValueType1
+//    case object Double extends ResultValueType1
+//  }
+//
+//}
 
 case class CheckpointQueryResultDTO(
   idCheckpoint: UUID,
   checkpointName: String,
   measureName: String,
   measureColumns: Seq[String],
-  measurementValue: MeasureResultDTO1, // TODO MeasureResultDTO
+  measurementValue: MeasureResultDTO, // TODO MeasureResultDTO
   checkpointStartTime: ZonedDateTime,
   checkpointEndTime:  Option[ZonedDateTime],
 )
