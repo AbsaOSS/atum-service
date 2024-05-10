@@ -29,7 +29,7 @@ import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 
 @RunWith(classOf[ZTestJUnitRunner])
-class CheckpointRepositorySpec extends ZIOSpecDefault with TestData {
+class CheckpointRepositoryIntegrationSpec extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
 
@@ -43,7 +43,7 @@ class CheckpointRepositorySpec extends ZIOSpecDefault with TestData {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("CheckpointRepositorySuite")(
+    suite("CheckpointRepositoryIntegrationSuite")(
       suite("WriteCheckpointSuite")(
         test("Returns expected Right with Unit") {
           for {
@@ -58,7 +58,7 @@ class CheckpointRepositorySpec extends ZIOSpecDefault with TestData {
         test("Returns expected DatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])
         }
-      ) @@ TestAspect.ifPropNotSet("runIntegration")
+      )
     ).provide(CheckpointRepositoryImpl.layer, writeCheckpointMockLayer)
 
   }

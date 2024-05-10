@@ -29,7 +29,7 @@ import zio._
 import zio.test.junit.ZTestJUnitRunner
 
 @RunWith(classOf[ZTestJUnitRunner])
-class CheckpointServiceSpec extends ZIOSpecDefault with TestData {
+class CheckpointServiceIntegrationSpec extends ZIOSpecDefault with TestData {
 
   private val checkpointRepositoryMock = mock(classOf[CheckpointRepository])
 
@@ -43,7 +43,7 @@ class CheckpointServiceSpec extends ZIOSpecDefault with TestData {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("CheckpointServiceSuite")(
+    suite("CheckpointServiceIntegrationSuite")(
       suite("SaveCheckpointSuite")(
         test("Returns expected Right with Unit") {
           for {
@@ -58,7 +58,7 @@ class CheckpointServiceSpec extends ZIOSpecDefault with TestData {
         test("Returns expected ServiceError") {
           assertZIO(CheckpointService.saveCheckpoint(checkpointDTO3).exit)(failsWithA[ServiceError])
         }
-      ) @@ TestAspect.ifPropNotSet("runIntegration")
+      )
     ).provide(
       CheckpointServiceImpl.layer,
       checkpointRepositoryMockLayer

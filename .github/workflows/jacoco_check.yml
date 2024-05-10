@@ -43,8 +43,8 @@ jobs:
         continue-on-error: true
         id: jacocorun
         run: |
-          sbt "project agent; ++${{ env.scalaLong }} jacoco"
-          sbt "project model; ++${{ env.scalaLong }} jacoco"
+          sbt "project agent; jacoco"
+          sbt "project model; jacoco"
       #  agent module code coverage
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'

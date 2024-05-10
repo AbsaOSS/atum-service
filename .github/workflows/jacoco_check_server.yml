@@ -58,7 +58,7 @@ jobs:
       - name: Build and run tests
         continue-on-error: true
         id: jacocorun
-        run: sbt "project server" ++${{ env.scalaLong }} jacocoServer
+        run: sbt "project server" jacoco
       #  server module code coverage
       - name: Add coverage to PR
         if: steps.jacocorun.outcome == 'success'

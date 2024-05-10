@@ -16,12 +16,11 @@
 
 package za.co.absa.atum.database.runs
 
-import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-class UpdateExistingAdditionalDataTest extends DBTestSuite{
+class UpdateExistingAdditionalDataIntegrationTest extends DBTestSuite{
 
   private val fncUpdateExistingAdditionalData = "runs._update_existing_additional_data"
 
@@ -39,7 +38,7 @@ class UpdateExistingAdditionalDataTest extends DBTestSuite{
     |""".stripMargin
   )
 
-  test("Partitioning and AD present, multiple AD records backed up", IntegrationTestTag) {
+  test("Partitioning and AD present, multiple AD records backed up") {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -122,7 +121,7 @@ class UpdateExistingAdditionalDataTest extends DBTestSuite{
 
   }
 
-  test("Partitioning and AD present, but the input AD are the same as in DB, no backup", IntegrationTestTag) {
+  test("Partitioning and AD present, but the input AD are the same as in DB, no backup") {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)

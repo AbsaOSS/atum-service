@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.database.runs
 
-import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
@@ -24,7 +23,7 @@ import za.co.absa.balta.classes.setter.CustomDBType
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class WriteCheckpointTest extends DBTestSuite {
+class WriteCheckpointIntegrationTest extends DBTestSuite {
 
   private val partitioning = JsonBString(
     """
@@ -41,7 +40,7 @@ class WriteCheckpointTest extends DBTestSuite {
       |""".stripMargin
   )
 
-  test("Write new checkpoint without data", IntegrationTestTag) {
+  test("Write new checkpoint without data") {
     val uuid = UUID.randomUUID
     val startTime = OffsetDateTime.parse("1992-08-03T10:00:00Z")
     val endTime = OffsetDateTime.parse("2022-11-05T08:00:00Z")
@@ -94,7 +93,7 @@ class WriteCheckpointTest extends DBTestSuite {
 
   }
 
-  test("Write new checkpoint", IntegrationTestTag){
+  test("Write new checkpoint"){
     val uuid = UUID.randomUUID
     val user = "Franz Kafka"
     val startTime = OffsetDateTime.parse("1992-08-03T10:00:00Z")
@@ -217,7 +216,7 @@ class WriteCheckpointTest extends DBTestSuite {
     }
   }
 
-  test("Checkpoint already exists", IntegrationTestTag) {
+  test("Checkpoint already exists") {
     val uuid = UUID.randomUUID
     val origAuthor = "John von Neumann"
     table("runs.partitionings").insert(
@@ -262,7 +261,7 @@ class WriteCheckpointTest extends DBTestSuite {
     }
   }
 
-  test("Partitioning of the checkpoint does not exist", IntegrationTestTag) {
+  test("Partitioning of the checkpoint does not exist") {
     val uuid = UUID.randomUUID
     val count = table("runs.checkpoints").count()
     function("runs.write_checkpoint")

@@ -24,9 +24,9 @@ import zio._
 import zio.test._
 import zio.test.Assertion._
 
-object GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
+object GetPartitioningAdditionalDataIntegrationSpec extends ConfigProviderSpec {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
-    suite("GetPartitioningAdditionalDataSpec")(
+    suite("GetPartitioningAdditionalDataIntegrationSpec")(
       test("Returns expected sequence of Additional data with provided partitioning") {
         val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("stringA", "stringB"), PartitionDTO("string2", "string2"))
         for {
@@ -38,6 +38,6 @@ object GetPartitioningAdditionalDataSpec extends ConfigProviderSpec {
       GetPartitioningAdditionalData.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback,
-    ) @@ TestAspect.ifPropSet("runIntegration")
+    )
   }
 }

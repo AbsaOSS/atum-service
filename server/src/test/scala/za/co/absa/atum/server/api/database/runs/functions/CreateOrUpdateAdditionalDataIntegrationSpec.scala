@@ -28,11 +28,11 @@ import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 
 @RunWith(classOf[ZTestJUnitRunner])
-class CreateOrUpdateAdditionalDataSpec extends ConfigProviderSpec {
+class CreateOrUpdateAdditionalDataIntegrationSpec extends ConfigProviderSpec {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("CreateOrUpdateAdditionalDataSuite")(
+    suite("CreateOrUpdateAdditionalDataIntegrationSuite")(
       test("Returns expected Right with Unit") {
         val additionalDataSubmitDTO = AdditionalDataSubmitDTO(
           partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
@@ -51,7 +51,7 @@ class CreateOrUpdateAdditionalDataSpec extends ConfigProviderSpec {
       CreateOrUpdateAdditionalData.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
-    ) @@ TestAspect.ifPropSet("runIntegration")
+    )
 
   }
 

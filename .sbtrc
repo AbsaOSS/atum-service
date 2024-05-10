@@ -1,2 +1,9 @@
-alias test=; testOnly -- -l IntegrationTest
-alias testDB=; project database; testOnly
+# CPS QA types aliases
+# * Unit tests
+alias test=; testOnly *UnitTest *UnitSpec
+
+# * Integration tests
+alias testIT=; testOnly *IntegrationTest *IntegrationSpec
+
+# project specific aliases
+alias testDB=; project database; testOnly *IntegrationTest

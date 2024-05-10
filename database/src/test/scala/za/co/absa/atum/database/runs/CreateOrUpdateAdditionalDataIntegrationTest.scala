@@ -16,12 +16,11 @@
 
 package za.co.absa.atum.database.runs
 
-import za.co.absa.atum.tags.IntegrationTestTag
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
+class CreateOrUpdateAdditionalDataIntegrationTest extends DBTestSuite{
 
   private val fncCreateOrUpdateAdditionalData = "runs.create_or_update_additional_data"
 
@@ -39,7 +38,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
       |""".stripMargin
   )
 
-  test("Partitioning and AD present, delete & re-insert, and also 'ignore' of AD records performed", IntegrationTestTag) {
+  test("Partitioning and AD present, delete & re-insert, and also 'ignore' of AD records performed") {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -103,7 +102,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
     }
   }
 
-  test("Partitioning and AD present, new AD records inserted, nothing backed up", IntegrationTestTag) {
+  test("Partitioning and AD present, new AD records inserted, nothing backed up") {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -169,7 +168,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
    }
   }
 
-  test("Partitioning and AD present, but no new AD records were backed-up or inserted, no changes detected", IntegrationTestTag) {
+  test("Partitioning and AD present, but no new AD records were backed-up or inserted, no changes detected") {
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -217,7 +216,7 @@ class CreateOrUpdateAdditionalDataTest extends DBTestSuite{
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 0)
   }
 
-  test("Partitioning not present, no action taken", IntegrationTestTag) {
+  test("Partitioning not present, no action taken") {
 
     val inputADToInsert = CustomDBType(
       """

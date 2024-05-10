@@ -1,4 +1,20 @@
-package za.co.absa.atum.database.runs
+/*
+ * Copyright 2021 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package za.co.absa.atum.database.flows
 
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
@@ -8,11 +24,11 @@ import java.time.OffsetDateTime
 import java.util.UUID
 import scala.util.Random
 
-class GetPartitioningCheckpointsTest extends DBTestSuite{
 
-  private val fncGetPartitioningCheckpoints = "runs.get_partitioning_checkpoints"
+class GetFlowCheckpointsIntegrationTest extends DBTestSuite {
+  private val fncGetFlowCheckpoints = "flows.get_flow_checkpoints"
 
-  case class MeasuredDetails(
+  case class MeasuredDetails (
     measureName: String,
     measureColumns: Seq[String],
     measurementValue: JsonBString
@@ -31,40 +47,6 @@ class GetPartitioningCheckpointsTest extends DBTestSuite{
       |}
       |""".stripMargin
   )
-
-  private val partitioning1 = JsonBString(
-    """
-      |{
-      |   "version": 1,
-      |   "keys": ["keyX", "keyY", "keyZ"],
-      |   "keysToValues": {
-      |     "keyX": "value1",
-      |     "keyZ": "value3",
-      |     "keyY": "value2"
-      |   }
-      |}
-      |""".stripMargin
-  )
-
-  private val partitioning2 = JsonBString(
-    """
-      |{
-      |  "version": 1,
-      |  "keys": ["key1", "key3", "key2", "key4"],
-      |  "keysToValues": {
-      |    "key1": "valueX",
-      |    "key2": "valueY",
-      |    "key3": "valueZ",
-      |    "key4": "valueA"
-      |  }
-      |}
-      |""".stripMargin
-  )
-
-  private val i_limit = 10
-  private val i_checkpoint_name = "checkpoint_1"
-
-  private val measurement1 = JsonBString("""1""".stripMargin)
 
   private val measurementCnt = JsonBString(
     """
@@ -111,85 +93,38 @@ class GetPartitioningCheckpointsTest extends DBTestSuite{
       |""".stripMargin
   )
 
-  private val measured_columns = CustomDBType("""{"col2"}""", "TEXT[]")
-
-  test("Get partitioning checkpoints returns checkpoints for partitioning with checkpoints") {
-
-    val uuid = UUID.randomUUID
-    val startTime = OffsetDateTime.parse("1992-08-03T10:00:00Z")
-    val endTime = OffsetDateTime.parse("2022-11-05T08:00:00Z")
-
-    val id_measure_definition: Long = 1
-
+  test("Testing get_flow_checkpoints, partitioning and flow exist, but there are no checkpoints") {
+    val partitioningId: Long = Random.nextLong()
     table("runs.partitionings").insert(
-      add("partitioning", partitioning1)
-        .add("created_by", "Daniel")
+      add("id_partitioning", partitioningId)
+        .add("partitioning", partitioning)
+        .add("created_by", "Joseph")
     )
 
-    val fkPartitioning1: Long = table("runs.partitionings")
-      .fieldValue("partitioning", partitioning1, "id_partitioning").get.get
-
-    table("runs.checkpoints").insert(
-      add("id_checkpoint", uuid)
-        .add("fk_partitioning", fkPartitioning1)
-        .add("checkpoint_name", "checkpoint_1")
-        .add("process_start_time", startTime)
-        .add("process_end_time", endTime)
-        .add("measured_by_atum_agent", true)
-        .add("created_by", "Daniel")
+    val flowId: Long = Random.nextLong()
+    table("flows.flows").insert(
+      add("id_flow", flowId)
+        .add("flow_name", "test_flow1")
+        .add("flow_description", "Test Flow 1")
+        .add("from_pattern", false)
+        .add("created_by", "ObviouslySomeTest")
+        .add("fk_primary_partitioning", partitioningId)
     )
 
-    table("runs.measure_definitions").insert(
-      add("id_measure_definition", id_measure_definition)
-      .add("fk_partitioning", fkPartitioning1)
-        .add("created_by", "Daniel")
-        .add("measure_name", "measure_1")
-        .add("measured_columns", measured_columns)
+    table("flows.partitioning_to_flow").insert(
+      add("fk_flow", flowId)
+        .add("fk_partitioning", partitioningId)
+        .add("created_by", "ObviouslySomeTest")
     )
 
-    table("runs.measurements").insert(
-      add("fk_checkpoint", uuid)
-        .add("fk_measure_definition", id_measure_definition)
-        .add("measurement_value", measurement1)
-    )
-
-
-    function(fncGetPartitioningCheckpoints)
-      .setParam("i_partitioning", partitioning1)
-      .setParam("i_limit", i_limit)
-      .setParam("i_checkpoint_name", i_checkpoint_name)
+    function(fncGetFlowCheckpoints)
+      .setParam("i_partitioning_of_flow", partitioning)
       .execute { queryResult =>
-        val results = queryResult.next()
-        assert(results.getInt("status").contains(11))
-        assert(results.getString("status_text").contains("Ok"))
-        assert(results.getString("checkpoint_name").contains("checkpoint_1"))
-        assert(results.getUUID("id_checkpoint").contains(uuid))
-        assert(results.getOffsetDateTime("checkpoint_start_time").contains(startTime))
-        assert(results.getOffsetDateTime("checkpoint_end_time").contains(endTime))
-        assert(results.getInt("measurement_value").contains(1))
-        assert(results.getString("measure_name").contains("measure_1"))
         assert(!queryResult.hasNext)
       }
-
-    function(fncGetPartitioningCheckpoints)
-      .setParam("i_partitioning", partitioning1)
-      .setParam("i_limit", i_limit)
-      .execute { queryResult =>
-        val results = queryResult.next()
-        assert(results.getInt("status").contains(11))
-        assert(results.getString("status_text").contains("Ok"))
-        assert(results.getString("checkpoint_name").contains("checkpoint_1"))
-        assert(results.getUUID("id_checkpoint").contains(uuid))
-        assert(results.getOffsetDateTime("checkpoint_start_time").contains(startTime))
-        assert(results.getOffsetDateTime("checkpoint_end_time").contains(endTime))
-        assert(results.getInt("measurement_value").contains(1))
-        assert(!queryResult.hasNext)
-      }
-
   }
 
-  test("Get partitioning checkpoints return multiple checkpoints on a partitioning with checkpoints") {
-
+  test("Testing get_flow_checkpoints, partitioning, flow and checkpoints all exist") {
     val partitioningId: Long = Random.nextLong()
     table("runs.partitionings").insert(
       add("id_partitioning", partitioningId)
@@ -284,14 +219,14 @@ class GetPartitioningCheckpointsTest extends DBTestSuite{
         .add("measurement_value", measurementSum)
     )
 
-    val actualMeasures: Seq[MeasuredDetails] = function(fncGetPartitioningCheckpoints)
-      .setParam("i_partitioning", partitioning)
+    val actualMeasures: Seq[MeasuredDetails] = function(fncGetFlowCheckpoints)
+      .setParam("i_partitioning_of_flow", partitioning)
       .setParam("i_checkpoint_name", "CheckpointNameCntAndAvg")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row1 = queryResult.next()
         assert(row1.getInt("status").contains(11))
-        assert(row1.getString("status_text").contains("Ok"))
+        assert(row1.getString("status_text").contains("OK"))
         assert(row1.getUUID("id_checkpoint").contains(checkpointId))
         assert(row1.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
         assert(row1.getOffsetDateTime("checkpoint_start_time").contains(startTime))
@@ -305,7 +240,7 @@ class GetPartitioningCheckpointsTest extends DBTestSuite{
 
         val row2 = queryResult.next()
         assert(row2.getInt("status").contains(11))
-        assert(row2.getString("status_text").contains("Ok"))
+        assert(row2.getString("status_text").contains("OK"))
         assert(row2.getUUID("id_checkpoint").contains(checkpointId))
         assert(row2.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
         assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTime))
@@ -325,25 +260,9 @@ class GetPartitioningCheckpointsTest extends DBTestSuite{
     assert(actualMeasures.map(_.measureColumns).toSet == Set(Seq("col1"), Seq("a", "b")))
     actualMeasures.foreach { currVal =>
       val currValStr = currVal.measurementValue.value
-      assert(currValStr.contains(""""value": "2.71"""") || currValStr.contains(""""value": "3""""))
+      // Exact comparison is not trivial, we would need to deserialize (and potentially introduce some case classes
+      // for this) and modify the JSON strings - not worth it, this should be enough as a sanity check.
+      assert (currValStr.contains(""""value": "2.71"""") || currValStr.contains(""""value": "3""""))
     }
   }
-
-  test("Get partitioning checkpoints returns no checkpoints for partitioning without checkpoints") {
-
-    table("runs.partitionings").insert(
-      add("partitioning", partitioning2)
-        .add("created_by", "Daniel")
-    )
-
-    function(fncGetPartitioningCheckpoints)
-      .setParam("i_partitioning", partitioning2)
-      .setParam("i_limit", i_limit)
-      .setParam("i_checkpoint_name", i_checkpoint_name)
-      .execute { queryResult =>
-        assert(!queryResult.hasNext)
-      }
-
-  }
-
 }

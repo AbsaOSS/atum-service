@@ -17,47 +17,37 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
-import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
-import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.ConfigProviderSpec
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.fadb.exceptions.DataNotFoundException
-import za.co.absa.fadb.status.FunctionStatus
 import zio._
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
 @RunWith(classOf[ZTestJUnitRunner])
-class WriteCheckpointSpec extends ConfigProviderSpec {
+class CreatePartitioningIfNotExistsIntegrationSpec extends ConfigProviderSpec {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("WriteCheckpointSuite")(
-      test("Returns expected Left with DataNotFoundException as related partitioning is not in the database") {
-        val checkpointDTO = CheckpointDTO(
-          id = UUID.randomUUID(),
-          name = "name",
-          author = "author",
+    suite("CreatePartitioningIfNotExistsIntegrationSuite")(
+      test("Returns expected Right with Unit") {
+        val partitioningSubmitDTO = PartitioningSubmitDTO(
           partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
-          processStartTime = ZonedDateTime.now(),
-          processEndTime = None,
-          measurements =
-            Set(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))))
+          parentPartitioning = Some(Seq(PartitionDTO("pKey1", "pVal1"), PartitionDTO("pKey2", "pVal2"))),
+          authorIfNew = "newAuthor"
         )
         for {
-          writeCheckpoint <- ZIO.service[WriteCheckpoint]
-          result <- writeCheckpoint(checkpointDTO)
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+          createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
+          result <- createPartitioningIfNotExists(partitioningSubmitDTO)
+        } yield assertTrue(result.isRight)
       }
     ).provide(
-      WriteCheckpoint.layer,
+      CreatePartitioningIfNotExists.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     ) @@ TestAspect.ifPropSet("runIntegration")
+
   }
 
 }

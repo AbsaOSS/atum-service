@@ -18,60 +18,60 @@ package za.co.absa.atum.server.api.http
 
 import org.mockito.Mockito.{mock, when}
 import sttp.client3._
-import sttp.client3.playJson._
 import sttp.client3.testing.SttpBackendStub
+import sttp.client3.playJson._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.AtumContextDTO
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.controller.PartitioningController
+import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import zio.test.Assertion.equalTo
-import zio._
 import zio.test._
-import za.co.absa.atum.server.model.PlayJsonImplicits.{readsAtumContextDTO, writesPartitioningSubmitDTO}
+import zio._
+import za.co.absa.atum.server.model.PlayJsonImplicits.{readsCheckpointDTO, writesCheckpointDTO}
+import zio.test.Assertion.equalTo
 
-object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with TestData {
+object CreateCheckpointEndpointIntegrationSpec extends ZIOSpecDefault with Endpoints with TestData {
 
-  private val createPartitioningEndpointMock = mock(classOf[PartitioningController])
+  private val checkpointControllerMock = mock(classOf[CheckpointController])
 
-  when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
-    .thenReturn(ZIO.succeed(createAtumContextDTO(partitioningSubmitDTO1)))
-  when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
+  when(checkpointControllerMock.createCheckpoint(checkpointDTO1))
+    .thenReturn(ZIO.succeed(checkpointDTO1))
+  when(checkpointControllerMock.createCheckpoint(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO3))
+  when(checkpointControllerMock.createCheckpoint(checkpointDTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
 
-  private val createPartitioningEndpointMockLayer = ZLayer.succeed(createPartitioningEndpointMock)
+  private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
-  private val createPartitioningServerEndpoint =
-    createPartitioningEndpoint.zServerLogic(PartitioningController.createPartitioningIfNotExists)
+  private val createCheckpointServerEndpoint =
+    createCheckpointEndpoint.zServerLogic(CheckpointController.createCheckpoint)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
-    val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
-      .whenServerEndpoint(createPartitioningServerEndpoint)
+    val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
+      .whenServerEndpoint(createCheckpointServerEndpoint)
       .thenRunLogic()
       .backend()
 
     val request = basicRequest
-      .post(uri"https://test.com/api/v1/createPartitioning")
-      .response(asJson[AtumContextDTO])
+      .post(uri"https://test.com/api/v1/createCheckpoint")
+      .response(asJson[CheckpointDTO])
 
-    suite("CreatePartitioningEndpointSuite")(
-      test("Returns expected AtumContextDTO") {
+    suite("CreateCheckpointEndpointIntegrationSuite")(
+      test("Returns expected CheckpointDTO") {
         val response = request
-          .body(partitioningSubmitDTO1)
+          .body(checkpointDTO1)
           .send(backendStub)
 
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-        assertZIO(body <&> statusCode)(equalTo(Right(createAtumContextDTO(partitioningSubmitDTO1)), StatusCode.Ok))
+        assertZIO(body <&> statusCode)(equalTo(Right(checkpointDTO1), StatusCode.Created))
       },
       test("Returns expected BadRequest") {
         val response = request
-          .body(partitioningSubmitDTO2)
+          .body(checkpointDTO2)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -80,7 +80,7 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
       },
       test("Returns expected InternalServerError") {
         val response = request
-          .body(partitioningSubmitDTO3)
+          .body(checkpointDTO3)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -89,7 +89,7 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
       }
     )
   }.provide(
-    createPartitioningEndpointMockLayer
-  ) @@ TestAspect.ifPropNotSet("runIntegration")
+    checkpointControllerMockLayer
+  )
 
 }
