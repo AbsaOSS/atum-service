@@ -149,7 +149,7 @@ sbt "project agent" jacoco
 sbt "project model" jacoco
 ```
 ```sbt
-sbt "project server" jacocoServer
+sbt "project server" jacoco
 ```
 
 Code coverage wil be generated on path:
@@ -173,27 +173,27 @@ The project uses
 
 ### Run Unit Tests
 Use the `test` command to execute all tests, skipping all Integration tests. 
-- requires java 8 & based on sbt alias solution - exclude active
+- requires java 8
 ```
 sbt "project agent" test "project model" test
 ```
 ```
 sbt "project database" test
 ```
-- requires java 11 & based on sbt custom command solution - system property not set
+- requires java 11
 ```
 sbt "project server" test
 ```
 
 ### Run Integration Tests
-Use the `testDB` command to execute all tests marked as Integration tests in `database` module, skipping all other tests.
-- requires java 8 & based on sbt alias solution
+Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules
+- requires java 8
 ```
 sbt testDB
 ```
 
-Use the `testIT` command to execute all tests marked as Integration tests, skipping all other tests.
-- requires java 11 & based on sbt custom command solution
+Use the `testIT` command to execute all Integration tests, skipping all other test types.
+- requires java 11
 ```
 sbt testIT
 ```
