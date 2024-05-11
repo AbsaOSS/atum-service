@@ -142,12 +142,14 @@ even if it involves multiple applications or ETL pipelines.
 
 
 ## How to generate Code coverage report
+- requires java 8
 ```sbt
 sbt "project agent" jacoco
 ```
 ```sbt
 sbt "project model" jacoco
 ```
+- requires java 11
 ```sbt
 sbt "project server" jacoco
 ```
@@ -167,12 +169,10 @@ To make this project runnable via IntelliJ, do the following:
 
 ### Test controls
 
-The project uses 
-- the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-Practices.html#.sbtrc) file to manage and control the execution of integration tests. The Integration tests are the ones with the tag `IntegrationTest.` Below are the commands configured in the `.sbtrc` file to facilitate different testing scenarios:
-- the sbt custom commands (server module only)
+See the commands configured in the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-Practices.html#.sbtrc) file to provide different testing profiles.
 
 ### Run Unit Tests
-Use the `test` command to execute all tests, skipping all Integration tests. 
+Use the `test` command to execute all unit tests, skipping all other types of tests. 
 - requires java 8
 ```
 sbt "project agent" test "project model" test
@@ -186,17 +186,19 @@ sbt "project server" test
 ```
 
 ### Run Integration Tests
-Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules
-- requires java 8
-```
-sbt testDB
-```
-
 Use the `testIT` command to execute all Integration tests, skipping all other test types.
 - requires java 11
 ```
 sbt testIT
 ```
+
+Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules.
+- requires java 8
+- Hint: project custom command
+```
+sbt testDB
+```
+
 
 ## How to Release
 
