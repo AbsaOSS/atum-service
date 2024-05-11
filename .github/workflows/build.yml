@@ -113,5 +113,5 @@ jobs:
       - name: Prepare testing database
         run: sbt flywayMigrate
 
-      - name: Build and run database tests
+      - name: Build and run database/integration tests
         run: sbt testDB doc
