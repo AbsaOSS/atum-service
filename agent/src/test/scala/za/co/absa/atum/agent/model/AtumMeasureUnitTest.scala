@@ -26,7 +26,7 @@ import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase
 
-class AtumMeasureTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
+class AtumMeasureUnitTest extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 
   "Measure" should "be based on the dataframe" in {
 

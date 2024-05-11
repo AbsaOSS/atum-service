@@ -35,7 +35,7 @@ import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 
 @RunWith(classOf[ZTestJUnitRunner])
-class PartitioningRepositoryIntegrationSpec extends ZIOSpecDefault with TestData {
+class PartitioningRepositoryIntegrationTest extends ZIOSpecDefault with TestData {
 
   // Create Partitioning Mocks
   private val createPartitioningIfNotExistsMock = mock(classOf[CreatePartitioningIfNotExists])
@@ -78,7 +78,7 @@ class PartitioningRepositoryIntegrationSpec extends ZIOSpecDefault with TestData
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("PartitioningRepositoryIntegrationSpec")(
+    suite("PartitioningRepositoryIntegrationTest")(
       suite("CreatePartitioningIfNotExistsSuite")(
         test("Returns expected Right with Unit") {
           for {

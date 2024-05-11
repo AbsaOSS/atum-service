@@ -20,7 +20,7 @@ import zio.config.typesafe.TypesafeConfigProvider
 import zio.test.ZIOSpec
 import zio.{Runtime, ZLayer}
 
-abstract class ConfigProviderSpec extends ZIOSpec[Unit] {
+abstract class ConfigProviderTest extends ZIOSpec[Unit] {
 
   override def bootstrap: ZLayer[Any, Any, Unit] =
     Runtime.setConfigProvider(TypesafeConfigProvider.fromResourcePath())

@@ -28,7 +28,7 @@ import za.co.absa.atum.agent.model.{Measure, MeasureResult, MeasurementBuilder, 
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 
-class AtumContextTest extends AnyFlatSpec with Matchers {
+class AtumContextUnitTest extends AnyFlatSpec with Matchers {
 
   "withMeasureAddedOrOverwritten" should "add a new measure if not exists, overwrite it otherwise" in {
 

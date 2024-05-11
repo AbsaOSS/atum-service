@@ -17,31 +17,27 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
-import za.co.absa.atum.server.ConfigProviderSpec
+import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import zio.test.Assertion.failsWithA
-import zio.test.{Spec, TestEnvironment, assert}
-import zio.{Scope, ZIO}
+import zio._
+import zio.test._
+import zio.test.Assertion._
 
-object GetPartitioningMeasuresIntegrationSpec extends ConfigProviderSpec {
-
+object GetPartitioningAdditionalDataIntegrationTest extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
-
-    suite("GetPartitioningMeasuresIntegrationSpec")(
-      test("Returns expected sequence of Measures with existing partitioning") {
-      val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
+    suite("GetPartitioningAdditionalDataIntegrationTest")(
+      test("Returns expected sequence of Additional data with provided partitioning") {
+        val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("stringA", "stringB"), PartitionDTO("string2", "string2"))
         for {
-          getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
-          result <- getPartitioningMeasures(partitioningDTO).exit
-        } yield assert(result)(failsWithA[doobie.util.invariant.NonNullableColumnRead])
+          getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
+          exit <- getPartitioningAdditionalData(partitioningDTO).exit
+        } yield assert(exit)(failsWithA[doobie.util.invariant.NonNullableColumnRead])
       }
     ).provide(
-      GetPartitioningMeasures.layer,
+      GetPartitioningAdditionalData.layer,
       PostgresDatabaseProvider.layer,
-      TestTransactorProvider.layerWithRollback
+      TestTransactorProvider.layerWithRollback,
     )
-
   }
-
 }

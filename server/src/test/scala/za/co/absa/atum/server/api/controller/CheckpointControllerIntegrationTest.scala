@@ -30,7 +30,7 @@ import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 
 @RunWith(classOf[ZTestJUnitRunner])
-class CheckpointControllerIntegrationSpec extends ZIOSpecDefault with TestData {
+class CheckpointControllerIntegrationTest extends ZIOSpecDefault with TestData {
 
   private val checkpointServiceMock = mock(classOf[CheckpointService])
 

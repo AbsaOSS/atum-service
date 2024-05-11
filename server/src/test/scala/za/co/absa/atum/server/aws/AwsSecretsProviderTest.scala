@@ -21,14 +21,14 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{mock, when}
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
 import software.amazon.awssdk.services.secretsmanager.model.{GetSecretValueRequest, GetSecretValueResponse}
-import za.co.absa.atum.server.ConfigProviderSpec
+import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.config.AwsConfig
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 import zio.{Scope, ZIO, ZLayer}
 
 @RunWith(classOf[ZTestJUnitRunner])
-class AwsSecretsProviderSpec extends ConfigProviderSpec {
+class AwsSecretsProviderTest extends ConfigProviderTest {
 
   private val secretsManagerClientMock = mock(classOf[SecretsManagerClient])
 

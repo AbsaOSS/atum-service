@@ -19,12 +19,12 @@ package za.co.absa.atum.model.utils
 import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
-import SerializationUtilsTest.StringLinearization
+import SerializationUtilsUnitTest.StringLinearization
 
 import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
-class SerializationUtilsTest extends AnyFlatSpecLike {
+class SerializationUtilsUnitTest extends AnyFlatSpecLike {
 
   // AdditionalDataDTO
   "asJson" should "serialize AdditionalDataDTO into json string" in {
@@ -426,7 +426,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
 
 }
 
-object SerializationUtilsTest {
+object SerializationUtilsUnitTest {
   implicit class StringLinearization(val str: String) extends AnyVal {
     def linearize: String = {
       str.stripMargin.replace("\r", "").replace("\n", "")

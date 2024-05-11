@@ -32,7 +32,7 @@ import zio._
 import za.co.absa.atum.server.model.PlayJsonImplicits.{readsCheckpointDTO, writesCheckpointDTO}
 import zio.test.Assertion.equalTo
 
-object CreateCheckpointEndpointIntegrationSpec extends ZIOSpecDefault with Endpoints with TestData {
+object CreateCheckpointEndpointIntegrationTest extends ZIOSpecDefault with Endpoints with TestData {
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 

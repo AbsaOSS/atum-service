@@ -14,55 +14,52 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.server.api.repository
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
+import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
-import za.co.absa.atum.server.api.repository.CheckpointRepository
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
+import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
-import zio._
 import zio.test.junit.ZTestJUnitRunner
 
 @RunWith(classOf[ZTestJUnitRunner])
-class CheckpointServiceIntegrationSpec extends ZIOSpecDefault with TestData {
+class CheckpointRepositoryIntegrationTest extends ZIOSpecDefault with TestData {
 
-  private val checkpointRepositoryMock = mock(classOf[CheckpointRepository])
+  private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
 
-  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO1)).thenReturn(ZIO.right(()))
-  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2))
+  when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(()))
+  when(writeCheckpointMock.apply(checkpointDTO2))
     .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
-  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO3))
-    .thenReturn(ZIO.fail(DatabaseError("boom!")))
+  when(writeCheckpointMock.apply(checkpointDTO3))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
 
-  private val checkpointRepositoryMockLayer = ZLayer.succeed(checkpointRepositoryMock)
+  private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("CheckpointServiceIntegrationSuite")(
-      suite("SaveCheckpointSuite")(
+    suite("CheckpointRepositoryIntegrationSuite")(
+      suite("WriteCheckpointSuite")(
         test("Returns expected Right with Unit") {
           for {
-            result <- CheckpointService.saveCheckpoint(checkpointDTO1)
+            result <- CheckpointRepository.writeCheckpoint(checkpointDTO1)
           } yield assertTrue(result.isRight)
         },
         test("Returns expected Left with StatusException") {
           for {
-            result <- CheckpointService.saveCheckpoint(checkpointDTO2)
+            result <- CheckpointRepository.writeCheckpoint(checkpointDTO2)
           } yield assertTrue(result.isLeft)
         },
-        test("Returns expected ServiceError") {
-          assertZIO(CheckpointService.saveCheckpoint(checkpointDTO3).exit)(failsWithA[ServiceError])
+        test("Returns expected DatabaseError") {
+          assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])
         }
       )
-    ).provide(
-      CheckpointServiceImpl.layer,
-      checkpointRepositoryMockLayer
-    )
+    ).provide(CheckpointRepositoryImpl.layer, writeCheckpointMockLayer)
 
   }
 
