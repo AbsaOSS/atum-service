@@ -31,16 +31,12 @@ import zio.interop.catz._
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
-import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-
+import doobie.postgres.circe.jsonb.implicits._
 import io.circe.syntax.EncoderOps
 import io.circe.generic.auto._
 
-import doobie.postgres.circe.json.implicits._
-import doobie.postgres.circe.jsonb.implicits._
-
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointMeasurements, Task] {
+  extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointMeasurements, Task] {
 
   override val fieldsToSelect: Seq[String] = Seq(
     "id_checkpoint", "checkpoint_name", "measure_name",
@@ -54,7 +50,7 @@ extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointMeasurements,
 
     sql"""SELECT ${Fragment.const(selectEntry)}
           FROM ${Fragment.const(functionName)}(
-                  ${partitioning},
+                  $partitioning,
                   ${values.limit},
                   ${values.checkpointName},
                 ) AS ${Fragment.const(alias)};"""
