@@ -174,6 +174,7 @@ object Dependencies {
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
+    lazy val circe = "org.tpolecat" %% "doobie-postgres-circe" % "1.0.0-RC2"
 
     // aws
     lazy val awsSecretsManagerSdk = awsSdkOrg % "secretsmanager" % Versions.awssdk
@@ -186,6 +187,7 @@ object Dependencies {
 
     Seq(
       faDbDoobie,
+      circe,
       zioCore,
       zioMacros,
       zioLogging,

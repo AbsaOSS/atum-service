@@ -17,9 +17,7 @@
 package za.co.absa.atum.server.api.controller
 
 
-import za.co.absa.atum.model.dto.{
-  AdditionalDataSubmitDTO, AtumContextDTO, CheckpointQueryDTO, CheckpointQueryResultDTO, PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, CheckpointQueryDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
@@ -55,8 +53,8 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   }
 
   override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
-  IO[ErrorResponse, Seq[CheckpointQueryResultDTO]] = {
-    serviceCall[Seq[CheckpointQueryResultDTO], Seq[CheckpointQueryResultDTO]](
+  IO[ErrorResponse, Seq[CheckpointDTO]] = {
+    serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
       partitioningService.getPartitioningCheckpoints(checkpointQueryDTO),
       results => results
     )

@@ -94,7 +94,7 @@ trait TestData {
   )
 
   // Checkpoint
-  protected val checkpointDTO1: CheckpointSubmitDTO = CheckpointSubmitDTO(
+  protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
     id = UUID.randomUUID(),
     name = "name",
     author = "author",
@@ -103,9 +103,9 @@ trait TestData {
     processEndTime = None,
     measurements = Set.empty
   )
-  protected val checkpointDTO2: CheckpointSubmitDTO = checkpointDTO1.copy(id = UUID.randomUUID())
+  protected val checkpointDTO2: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
-  protected val checkpointDTO3: CheckpointSubmitDTO = checkpointDTO1.copy(id = UUID.randomUUID())
+  protected val checkpointDTO3: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))

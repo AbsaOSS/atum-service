@@ -18,13 +18,17 @@ package za.co.absa.atum.server.api.database
 
 import cats.Show
 import cats.data.NonEmptyList
-
 import doobie.{Get, Put}
 import doobie.postgres.implicits._
-
+import doobie.util.Read
+import io.circe.{Decoder, Json}
 import org.postgresql.jdbc.PgArray
 import org.postgresql.util.PGobject
+import za.co.absa.atum.model.dto.{MeasureResultDTO, PartitioningDTO}
+import za.co.absa.atum.server.model.CheckpointMeasurements
 
+import java.time.ZonedDateTime
+import java.util.UUID
 import scala.util.{Failure, Success, Try}
 
 object DoobieImplicits {
@@ -156,6 +160,30 @@ object DoobieImplicits {
         )
     }
 
+    implicit val decodeResultValueType: Decoder[MeasureResultDTO.ResultValueType] = Decoder.decodeString.emap {
+      case "String" => Right(MeasureResultDTO.ResultValueType.String)
+      case "Long" => Right(MeasureResultDTO.ResultValueType.Long)
+      case "BigDecimal" => Right(MeasureResultDTO.ResultValueType.BigDecimal)
+      case "Double" => Right(MeasureResultDTO.ResultValueType.Double)
+      case other => Left(s"Cannot decode $other as ResultValueType")
+    }
+
+    implicit val decodeTypedValue: Decoder[MeasureResultDTO.TypedValue] = Decoder.forProduct2("value", "valueType")(MeasureResultDTO.TypedValue.apply)
+    implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] = Decoder.forProduct2("mainValue", "supportValues")(MeasureResultDTO.apply)
+
+//    implicit val readSeqString: Read[Seq[String]] = Read[(String, String, String)].map {
+//      case (col1, col2, col3) => Seq(col1, col2, col3)
+//    }
+//
+//    implicit val read: Read[CheckpointMeasurements] = Read[(
+//      UUID, String, String, Boolean, PartitioningDTO, String, Seq[String], Json, ZonedDateTime, Option[ZonedDateTime]
+//      )].map { case (
+//        idCheckpoint, checkpointName, author, measuredByAtumAgent, partitioning, measureName, measureColumns,
+//        measurementValue, checkpointStartTime, checkpointEndTime) =>
+//        CheckpointMeasurements(idCheckpoint, checkpointName, author, measuredByAtumAgent, partitioning,
+//          measureName, measureColumns, measurementValue, checkpointStartTime, checkpointEndTime
+//        )
+//    }
   }
 
 }

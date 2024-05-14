@@ -57,6 +57,9 @@ object PlayJsonImplicits {
     }
   }
 
+  implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
+  implicit val writesMeasureDTO: Writes[MeasureDTO] = Json.writes[MeasureDTO]
+
   implicit val readsTypedValue: Reads[MeasureResultDTO.TypedValue] = Json.reads[MeasureResultDTO.TypedValue]
   implicit val writesTypedValue: Writes[MeasureResultDTO.TypedValue] = Json.writes[MeasureResultDTO.TypedValue]
 
@@ -65,12 +68,7 @@ object PlayJsonImplicits {
       (__ \ "supportValues").readNullable[Map[String, TypedValue]].map(_.getOrElse(Map.empty))
       )(MeasureResultDTO.apply _)
   }
-
   implicit val writesMeasureResultDTO: Writes[MeasureResultDTO] = Json.writes[MeasureResultDTO]
-  implicit val readMeasureResultDTO: Reads[MeasureResultDTO] = Json.reads[MeasureResultDTO]
-
-  implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
-  implicit val writesMeasureDTO: Writes[MeasureDTO] = Json.writes[MeasureDTO]
 
   implicit val readsMeasurementDTO: Reads[MeasurementDTO] = Json.reads[MeasurementDTO]
   implicit val writesMeasurementDTO: Writes[MeasurementDTO] = Json.writes[MeasurementDTO]
@@ -78,8 +76,8 @@ object PlayJsonImplicits {
   implicit val readsPartitionDTO: Reads[PartitionDTO] = Json.reads[PartitionDTO]
   implicit val writesPartitionDTO: Writes[PartitionDTO] = Json.writes[PartitionDTO]
 
-  implicit val readsCheckpointDTO: Reads[CheckpointSubmitDTO] = Json.reads[CheckpointSubmitDTO]
-  implicit val writesCheckpointDTO: Writes[CheckpointSubmitDTO] = Json.writes[CheckpointSubmitDTO]
+  implicit val readsCheckpointDTO: Reads[CheckpointDTO] = Json.reads[CheckpointDTO]
+  implicit val writesCheckpointDTO: Writes[CheckpointDTO] = Json.writes[CheckpointDTO]
 
   implicit val readsPartitioningSubmitDTO: Reads[PartitioningSubmitDTO] = Json.reads[PartitioningSubmitDTO]
   implicit val writesPartitioningSubmitDTO: Writes[PartitioningSubmitDTO] = Json.writes[PartitioningSubmitDTO]
@@ -96,8 +94,5 @@ object PlayJsonImplicits {
 
   implicit val readsCheckpointQueryDTO: Reads[CheckpointQueryDTO] = Json.reads[CheckpointQueryDTO]
   implicit val writesCheckpointQueryDTO: Writes[CheckpointQueryDTO] = Json.writes[CheckpointQueryDTO]
-
-  implicit val readsCheckpointQueryResultDTO: Reads[CheckpointQueryResultDTO] = Json.reads[CheckpointQueryResultDTO]
-  implicit val writesCheckpointQueryResultDTO: Writes[CheckpointQueryResultDTO] = Json.writes[CheckpointQueryResultDTO]
 
 }

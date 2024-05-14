@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointSubmitDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  *  This class provides a contract for different dispatchers. It has a constructor foe eventual creation via reflection.
@@ -35,9 +35,9 @@ abstract class Dispatcher(config: Config) {
 
   /**
    *  This method is used to save checkpoint to server.
-   *  @param checkpoint: CheckpointSubmitDTO to be saved.
+   *  @param checkpoint: CheckpointDTO to be saved.
    */
-  protected[agent] def saveCheckpoint(checkpoint: CheckpointSubmitDTO): Unit
+  protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 
   /**
    * This method is used to save the additional data to the server.

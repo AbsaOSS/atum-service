@@ -16,16 +16,10 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointQueryDTO,
-  CheckpointQueryResultDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO
-}
-import za.co.absa.atum.server.api.database.runs.functions.{
-  CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists,
-  GetPartitioningAdditionalData, GetPartitioningCheckpoints,
-  GetPartitioningMeasures
-}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointQueryDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningCheckpoints, GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.model.CheckpointMeasurements
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
 import zio.prelude.ZivariantOps
@@ -63,7 +57,7 @@ class PartitioningRepositoryImpl(
   }
 
   override def getPartitioningCheckpoints(partitioningName: CheckpointQueryDTO):
-  IO[DatabaseError, Seq[CheckpointQueryResultDTO]] = {
+  IO[DatabaseError, Seq[CheckpointMeasurements]] = {
     dbCall(getPartitioningCheckpointsFn(partitioningName).mapError(err => DatabaseError(err.getMessage)), "getPartitioningCheckpoints")
   }
 }

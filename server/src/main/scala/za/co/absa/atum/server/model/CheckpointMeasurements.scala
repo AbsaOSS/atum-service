@@ -14,18 +14,27 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.model
+
+import io.circe.Json
+import za.co.absa.atum.model.dto.PartitioningDTO
 
 import java.time.ZonedDateTime
 import java.util.UUID
+//import doobie.implicits.javatime._
+//import doobie.util.{Get, Read}
+//import doobie.postgres.circe.json.implicits.jsonGet
+//import doobie.postgres.circe.jsonb.implicits.jsonbGet
 
-case class CheckpointSubmitDTO(
-  id: UUID,
-  name: String,
+case class CheckpointMeasurements(
+  idCheckpoint: UUID,
+  checkpointName: String,
   author: String,
   measuredByAtumAgent: Boolean = false,
   partitioning: PartitioningDTO,
-  processStartTime: ZonedDateTime,
-  processEndTime: Option[ZonedDateTime],
-  measurements: Set[MeasurementDTO]
+  measureName: String,
+  measureColumns: Seq[String],
+  measurementValue: Json, // TODO MeasureResultDTO
+  checkpointStartTime: ZonedDateTime,
+  checkpointEndTime:  Option[ZonedDateTime]
 )

@@ -110,9 +110,9 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
   /**
    *  This method is used to save checkpoint to server.
    *
-   *  @param checkpoint : CheckpointSubmitDTO to be saved.
+   *  @param checkpoint : CheckpointDTO to be saved.
    */
-  override protected[agent] def saveCheckpoint(checkpoint: CheckpointSubmitDTO): Unit = {
+  override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     captureFunctionCall(checkpoint, ())
   }
 

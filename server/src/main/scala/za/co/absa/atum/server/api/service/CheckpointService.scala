@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.CheckpointSubmitDTO
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
@@ -24,6 +24,6 @@ import zio.macros.accessible
 
 @accessible
 trait CheckpointService {
-  def saveCheckpoint(checkpointDTO: CheckpointSubmitDTO): IO[ServiceError, Either[StatusException, Unit]]
+  def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, Unit]]
 
 }

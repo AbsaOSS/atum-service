@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.model.dto
 
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.model.ErrorResponse
-import zio.IO
-import zio.macros.accessible
+import java.time.ZonedDateTime
+import java.util.UUID
 
-@accessible
-trait CheckpointController {
-  def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
-
-}
+case class CheckpointDTO(
+  id: UUID,
+  name: String,
+  author: String,
+  measuredByAtumAgent: Boolean = false,
+  partitioning: PartitioningDTO,
+  processStartTime: ZonedDateTime,
+  processEndTime: Option[ZonedDateTime],
+  measurements: Set[MeasurementDTO]
+)

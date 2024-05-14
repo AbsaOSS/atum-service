@@ -81,7 +81,7 @@ class AtumContext private[agent] (
     val measurementDTOs = takeMeasurements(dataToMeasure)
     val endTime = ZonedDateTime.now()
 
-    val checkpointDTO = CheckpointSubmitDTO(
+    val checkpointDTO = CheckpointDTO(
       id = UUID.randomUUID(),
       name = checkpointName,
       author = agent.currentUser,
@@ -106,7 +106,7 @@ class AtumContext private[agent] (
   def createCheckpointOnProvidedData(checkpointName: String, measurements: Map[Measure, MeasureResult]): AtumContext = {
     val dateTimeNow = ZonedDateTime.now()
 
-    val checkpointDTO = CheckpointSubmitDTO(
+    val checkpointDTO = CheckpointDTO(
       id = UUID.randomUUID(),
       name = checkpointName,
       author = agent.currentUser,

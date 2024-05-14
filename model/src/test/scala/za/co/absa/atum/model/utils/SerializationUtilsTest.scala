@@ -149,8 +149,8 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     assert(actualAtumContextDTO == expectedAtumContextDTO)
   }
 
-  // CheckpointSubmitDTO
-  "asJson" should "serialize CheckpointSubmitDTO into json string" in {
+  // CheckpointDTO
+  "asJson" should "serialize CheckpointDTO into json string" in {
     val uuid = UUID.randomUUID()
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneId.of("CET"))
@@ -163,7 +163,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
       )
     )
 
-    val checkpointDTO = CheckpointSubmitDTO(
+    val checkpointDTO = CheckpointDTO(
       id = uuid,
       name = "checkpoint",
       author = "author",
@@ -193,7 +193,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
     assert(actualCheckpointDTOJson == expectedCheckpointDTOJson)
   }
 
-  "fromJson" should "deserialize CheckpointSubmitDTO from json string" in {
+  "fromJson" should "deserialize CheckpointDTO from json string" in {
     val uuid = UUID.randomUUID()
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneOffset.ofHours(2))
@@ -222,7 +222,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
       )
     )
 
-    val expectedCheckpointDTO = CheckpointSubmitDTO(
+    val expectedCheckpointDTO = CheckpointDTO(
       id = uuid,
       name = "checkpoint",
       author = "author",
@@ -233,7 +233,7 @@ class SerializationUtilsTest extends AnyFlatSpecLike {
       measurements = setMeasurementDTO
     )
 
-    val actualCheckpointDTO = SerializationUtils.fromJson[CheckpointSubmitDTO](checkpointDTOJson)
+    val actualCheckpointDTO = SerializationUtils.fromJson[CheckpointDTO](checkpointDTOJson)
 
     assert(actualCheckpointDTO == expectedCheckpointDTO)
   }
