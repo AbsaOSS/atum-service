@@ -25,9 +25,6 @@ on:
 jobs:
   build-agent-and-model:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        scala: [2.11.12, 2.12.18, 2.13.11]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -102,9 +99,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    strategy:
-      matrix:
-        scala: [2.13.11]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
