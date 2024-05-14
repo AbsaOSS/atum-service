@@ -17,21 +17,14 @@
 package za.co.absa.atum.server.model
 
 import io.circe.Json
-import za.co.absa.atum.model.dto.PartitioningDTO
-
 import java.time.ZonedDateTime
 import java.util.UUID
-//import doobie.implicits.javatime._
-//import doobie.util.{Get, Read}
-//import doobie.postgres.circe.json.implicits.jsonGet
-//import doobie.postgres.circe.jsonb.implicits.jsonbGet
 
 case class CheckpointMeasurements(
   idCheckpoint: UUID,
   checkpointName: String,
   author: String,
   measuredByAtumAgent: Boolean = false,
-  partitioning: PartitioningDTO,
   measureName: String,
   measureColumns: Seq[String],
   measurementValue: Json, // TODO MeasureResultDTO
