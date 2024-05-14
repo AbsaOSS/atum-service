@@ -31,7 +31,6 @@ case class CheckpointMeasurements(
   checkpointName: String,
   author: String,
   measuredByAtumAgent: Boolean = false,
-  partitioning: PartitioningDTO,
   measureName: String,
   measureColumns: Seq[String],
   measurementValue: Json, // TODO MeasureResultDTO
