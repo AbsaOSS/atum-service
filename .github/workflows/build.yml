@@ -41,7 +41,22 @@ jobs:
       - name: Build and run unit tests
         run: sbt "project agent" test doc "project model" test doc
 
-  build-server:
+  build-server-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.11.0-11"
+
+      - name: Build and run unit tests
+        run: sbt "project server" test
+
+  build-server-integration:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -65,9 +80,6 @@ jobs:
         uses: olafurpg/setup-scala@v14
         with:
           java-version: "adopt@1.11.0-11"
-
-      - name: Build and run unit tests
-        run: sbt "project server" test
 
       - name: Prepare testing database
         run: sbt flywayMigrate
