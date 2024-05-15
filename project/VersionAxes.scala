@@ -79,7 +79,7 @@ object VersionAxes {
     }
 
     def singleRow(scalaVersion: String,
-                 dependenciesFnc:  => Seq[ModuleID],
+                 dependenciesFnc: => Seq[ModuleID],
                  settings: Def.SettingsDefinition*): ProjectMatrix = {
       projectMatrix.customRow(
         scalaVersions = Seq(scalaVersion),

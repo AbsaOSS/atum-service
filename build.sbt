@@ -90,7 +90,7 @@ lazy val agent = (projectMatrix in file("agent"))
   .dependsOn(model)
 
 /**
- * Module `mode` is the data model for data exchange with server
+ * Module `model` is the data model for data exchange with server
  */
 lazy val model = (projectMatrix in file("model"))
   .settings(
