@@ -4,6 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -13,32 +14,31 @@
  * limitations under the License.
  */
 
-
- CREATE OR REPLACE FUNCTION runs.get_partitioning_measures(
-     IN i_partitioning          JSONB,
-     OUT status                 INTEGER,
-     OUT status_text            TEXT,
-     OUT measure_name           TEXT,
-     OUT measured_columns       TEXT[]
- ) RETURNS SETOF record AS
+CREATE OR REPLACE FUNCTION runs.get_partitioning_additional_data(
+    IN  i_partitioning          JSONB,
+    OUT status                  INTEGER,
+    OUT status_text             TEXT,
+    OUT ad_name                 TEXT,
+    OUT ad_value                TEXT
+) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.get_partitioning_measures(1)
---      Returns measures for the given partitioning
+-- Function: runs.get_partitioning_additional_data(2)
+--      Returns additional data for the given partitioning
 --
 -- Parameters:
---      i_partitioning      - partitioning we are asking the measures for
+--      i_partitioning      - partitioning for requested additional data
 --
 -- Returns:
 --      status              - Status code
 --      status_text         - Status message
---      measure_name        - Name of the measure
---      measured_columns    - Array of columns associated with the measure
-
+--      ad_name             - Name of the additional data
+--      ad_value            - Value of the additional data
+--
 -- Status codes:
 --      11 - OK
---      16 - No measures found
+--      16 - No additional data found
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -55,17 +55,17 @@ BEGIN
         RETURN;
     END IF;
 
-    status := 11;
-    status_text := 'OK';
+    status = 11;
+    status_text = 'OK';
 
     RETURN QUERY
-    SELECT status, status_text, md.measure_name, md.measured_columns
-    FROM runs.measure_definitions AS md
-    WHERE md.fk_partitioning = _fk_partitioning;
+    SELECT status, status_text, ad.ad_name, ad.ad_value
+    FROM runs.additional_data AS ad
+    WHERE ad.fk_partitioning = _fk_partitioning;
 
     IF NOT FOUND THEN
         status := 16;
-        status_text := 'No measures found';
+        status_text := 'No additional data found';
         RETURN NEXT;
         RETURN;
     END IF;
@@ -73,5 +73,5 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.get_partitioning_measures(JSONB) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.get_partitioning_measures(JSONB) TO atum_user;
+ALTER FUNCTION runs.get_partitioning_additional_data(JSONB) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_additional_data(JSONB) TO atum_user;
