@@ -24,16 +24,17 @@ object JacocoSetup {
   private val jacocoReportCommonSettings: JacocoReportSettings = JacocoReportSettings(
     formats = Seq(JacocoReportFormats.HTML, JacocoReportFormats.XML)
   )
+  
+  private def now: String = {
+    val utcDateTime = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC"))
+    s"as of ${DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm Z z").format(utcDateTime)}"
+  }
 
   def jacocoSettings(sparkVersion: String, scalaVersion: String, moduleName: String): JacocoReportSettings = {
-    val utcDateTime = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC"))
-    val now = s"as of ${DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm Z z").format(utcDateTime)}"
     jacocoReportCommonSettings.withTitle(s"Jacoco Report on `$moduleName` for spark:$sparkVersion - scala:$scalaVersion [$now]")
   }
 
   def jacocoSettings(scalaVersion: String, moduleName: String): JacocoReportSettings = {
-    val utcDateTime = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC"))
-    val now = s"as of ${DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm Z z").format(utcDateTime)}"
     jacocoReportCommonSettings.withTitle(s"Jacoco Report on `$moduleName` for scala:$scalaVersion [$now]")
   }
 

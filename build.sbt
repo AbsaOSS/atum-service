@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-import Dependencies._
-import JacocoSetup._
 import sbt.Keys.name
+import sbt.*
+import Dependencies.*
+import Dependencies.Versions.spark3
+import VersionAxes.*
 
 ThisBuild / organization := "za.co.absa.atum-service"
 sonatypeProfileName := "za.co.absa"
 
-ThisBuild / scalaVersion := Versions.scala213  // default version
+ThisBuild / scalaVersion := Setup.scala213  // default version
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -29,26 +31,22 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 publish / skip := true
 
-lazy val printSparkScalaVersion = taskKey[Unit]("Print Spark and Scala versions for atum-service is being built for.")
-lazy val printScalaVersion = taskKey[Unit]("Print Scala versions for atum-service is being built for.")
+initialize := {
+  val _ = initialize.value // Ensure previous initializations are run
+
+  val requiredJavaVersion = VersionNumber("17")
+  val current = VersionNumber(sys.props("java.specification.version"))
+  // Assert that the JVM meets the minimum required version, for example, Java 17
+  //assert(specVersion.toDouble >= 17, "Java 17 or above is required to run this project.")
+  println(s"Running on Java version $current")
+}
 
 lazy val commonSettings = Seq(
-  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
+  scalacOptions ++= Setup.commonScalacOptions,
   Test / parallelExecution := false,
-  jacocoExcludes := jacocoProjectExcludes()
+  jacocoExcludes := JacocoSetup.jacocoProjectExcludes()
 )
 
-val serverMergeStrategy = assembly / assemblyMergeStrategy := {
-  case PathList("META-INF", "services", xs @ _*) => MergeStrategy.filterDistinctLines
-  case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
-  case PathList("META-INF", "resources", "webjars", "swagger-ui", _*) => MergeStrategy.singleOrError
-  case PathList("META-INF", _*) => MergeStrategy.discard
-  case PathList("META-INF", "versions", "9", xs@_*) => MergeStrategy.discard
-  case PathList("module-info.class") => MergeStrategy.discard
-  case "application.conf" => MergeStrategy.concat
-  case "reference.conf" => MergeStrategy.concat
-  case _ => MergeStrategy.first
-}
 
 enablePlugins(FlywayPlugin)
 flywayUrl := FlywayConfiguration.flywayUrl
@@ -58,86 +56,68 @@ flywayLocations := FlywayConfiguration.flywayLocations
 flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
 libraryDependencies ++= flywayDependencies
 
+/**
+ * Module `server` is the service application that collects and stores measured data And upo request retrives them
+ */
 lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-server",
-      libraryDependencies ++= Dependencies.serverDependencies ++ testDependencies,
-      javacOptions ++= Seq("-source", "11", "-target", "11", "-Xlint"),
-      scalacOptions ++= Seq("-release", "11", "-Ymacro-annotations"),
+      javacOptions ++= Setup.serviceJavacOptions,
       Compile / packageBin / publishArtifact := false,
-      printScalaVersion := {
-        val log = streams.value.log
-        log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")
-      },
-      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-      jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-server"),
-      serverMergeStrategy
+      Setup.serverMergeStrategy
     ): _*
   )
   .enablePlugins(AssemblyPlugin)
   .enablePlugins(AutomateHeaderPlugin)
-  .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
+  .singleRow(Setup.serviceScalaVersion, Dependencies.serverDependencies)
   .dependsOn(model)
 
+/**
+ * Module `agent` is the library to be plugged into the Spark application to measure the data and send it to the server
+ */
 lazy val agent = (projectMatrix in file("agent"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-agent",
-      javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-      libraryDependencies ++= jsonSerdeDependencies ++ testDependencies ++ Dependencies.agentDependencies(
-        if (scalaVersion.value == Versions.scala211) Versions.spark2 else Versions.spark3,
-        scalaVersion.value
-      ),
-      printSparkScalaVersion := {
-        val log = streams.value.log
-        val sparkVer = sparkVersionForScala(scalaVersion.value)
-        log.info(s"Building ${name.value} with Spark $sparkVer, Scala ${scalaVersion.value}")
-      },
-      (Compile / compile) := ((Compile / compile) dependsOn printSparkScalaVersion).value,
-      jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent")
+      javacOptions ++= Setup.clientJavacOptions
     ): _*
   )
-  .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
+  .sparkRow(SparkVersionAxis(spark3), Setup.clientSupportedScalaVersions, Dependencies.agentDependencies)
   .dependsOn(model)
 
+/**
+ * Module `mode` is the data model for data exchange with server
+ */
 lazy val model = (projectMatrix in file("model"))
   .settings(
     commonSettings ++ Seq(
       name         := "atum-model",
-      javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
-      libraryDependencies ++= jsonSerdeDependencies ++ testDependencies ++ Dependencies.modelDependencies(scalaVersion.value),
-      printScalaVersion := {
-        val log = streams.value.log
-        log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")
-      },
-      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
-      jacocoReportSettings := jacocoSettings(scalaVersion.value, "atum-agent: model")
+      javacOptions ++= Setup.clientJavacOptions,
     ): _*
   )
-  .jvmPlatform(scalaVersions = Versions.clientSupportedScalaVersions)
+  .scalasRow(Setup.clientSupportedScalaVersions, Dependencies.modelDependencies)
 
+/**
+ * Module `database` is the source of database structures of the service
+ */
 lazy val database = (projectMatrix in file("database"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-database",
-      printScalaVersion := {
-        val log = streams.value.log
-        log.info(s"Building ${name.value} with Scala ${scalaVersion.value}")
-      },
-      libraryDependencies ++= Dependencies.databaseDependencies,
-      (Compile / compile) := ((Compile / compile) dependsOn printScalaVersion).value,
+      javacOptions ++= Setup.serviceJavacOptions,
       test := {}
     ): _*
   )
-  .jvmPlatform(scalaVersions = Seq(Versions.serviceScalaVersion))
+  .singleRow(Setup.serviceScalaVersion, Dependencies.databaseDependencies)
 
+//----------------------------------------------------------------------------------------------------------------------
 lazy val dbTest = taskKey[Unit]("Launch DB tests")
 
 dbTest := {
   println("Running DB tests")
-  (database.jvm(Versions.serviceScalaVersion) / Test / test).value
+  (database.jvm(Setup.serviceScalaVersion) / Test / test).value
 }
