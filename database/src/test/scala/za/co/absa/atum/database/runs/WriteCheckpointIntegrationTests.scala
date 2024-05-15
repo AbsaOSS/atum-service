@@ -23,7 +23,7 @@ import za.co.absa.balta.classes.setter.CustomDBType
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class WriteCheckpointIntegrationTest extends DBTestSuite {
+class WriteCheckpointIntegrationTests extends DBTestSuite {
 
   private val partitioning = JsonBString(
     """

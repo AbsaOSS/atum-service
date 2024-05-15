@@ -20,7 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureDTO
 
-class MeasuresBuilderUnitTest extends AnyFlatSpecLike {
+class MeasuresBuilderUnitTests extends AnyFlatSpecLike {
 
   "mapToMeasures" should "map MeasureDTO into Measure for supported measures" in {
     val supportedMeasures = Set(

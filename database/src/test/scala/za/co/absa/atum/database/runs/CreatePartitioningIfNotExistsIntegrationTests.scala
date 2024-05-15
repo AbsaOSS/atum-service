@@ -19,7 +19,7 @@ package za.co.absa.atum.database.runs
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
-class CreatePartitioningIfNotExistsIntegrationTest extends DBTestSuite{
+class CreatePartitioningIfNotExistsIntegrationTests extends DBTestSuite{
 
   private val fncCreatePartitioningIfNotExists = "runs.create_partitioning_if_not_exists"
 

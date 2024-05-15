@@ -22,7 +22,7 @@ import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 
-class MeasurementBuilderUnitTest extends AnyFlatSpec {
+class MeasurementBuilderUnitTests extends AnyFlatSpec {
 
   "buildMeasurementDTO" should
     "build MeasurementDTO for BigDecimal type of result value when Measure and MeasureResult provided" in {

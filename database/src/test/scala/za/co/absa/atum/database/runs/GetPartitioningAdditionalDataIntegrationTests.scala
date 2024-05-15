@@ -19,7 +19,7 @@ package za.co.absa.atum.database.runs
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
-class GetPartitioningAdditionalDataIntegrationTest extends DBTestSuite{
+class GetPartitioningAdditionalDataIntegrationTests extends DBTestSuite{
 
   private val fncGetPartitioningAdditionalData = "runs.get_partitioning_additional_data"
 

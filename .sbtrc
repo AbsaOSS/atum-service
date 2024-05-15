@@ -15,15 +15,15 @@
 #
 
 # Aliases in this file expected usage of test file naming conventions:
-#   - "UnitTest" suffix for test files and Suites which define unit tests
-#   - "IntegrationTest" suffix for test files and Suites which define integration tests
+#   - "UnitTests" suffix for test files and Suites which define unit tests
+#   - "IntegrationTests" suffix for test files and Suites which define integration tests
 
 # CPS QA types aliases
 # * Unit tests
-alias test=; testOnly *UnitTest
+alias test=; testOnly *UnitTests
 
 # * Integration tests
-alias testIT=; testOnly *IntegrationTest
+alias testIT=; testOnly *IntegrationTests
 
 # Project specific aliases
 alias testDB=; project database; testOnly *

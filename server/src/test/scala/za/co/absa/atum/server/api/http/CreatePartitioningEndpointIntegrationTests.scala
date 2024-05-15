@@ -32,7 +32,7 @@ import zio._
 import zio.test._
 import za.co.absa.atum.server.model.PlayJsonImplicits.{readsAtumContextDTO, writesPartitioningSubmitDTO}
 
-object CreatePartitioningEndpointIntegrationTest extends ZIOSpecDefault with Endpoints with TestData {
+object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val createPartitioningEndpointMock = mock(classOf[PartitioningController])
 
@@ -58,7 +58,7 @@ object CreatePartitioningEndpointIntegrationTest extends ZIOSpecDefault with End
       .post(uri"https://test.com/api/v1/createPartitioning")
       .response(asJson[AtumContextDTO])
 
-    suite("CreatePartitioningEndpointIntegrationSuite")(
+    suite("CreatePartitioningEndpointSuite")(
       test("Returns expected AtumContextDTO") {
         val response = request
           .body(partitioningSubmitDTO1)

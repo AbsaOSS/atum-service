@@ -16,31 +16,37 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
+import org.junit.runner.RunWith
+import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import zio.test.Assertion.failsWithA
-import zio.test.{Spec, TestEnvironment, assert}
-import zio.{Scope, ZIO}
+import zio._
+import zio.test._
+import zio.test.junit.ZTestJUnitRunner
 
-object GetPartitioningMeasuresIntegrationTest extends ConfigProviderTest {
+@RunWith(classOf[ZTestJUnitRunner])
+class CreatePartitioningIfNotExistsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("GetPartitioningMeasuresIntegrationTest")(
-      test("Returns expected sequence of Measures with existing partitioning") {
-      val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
+    suite("CreatePartitioningIfNotExistsSuite")(
+      test("Returns expected Right with Unit") {
+        val partitioningSubmitDTO = PartitioningSubmitDTO(
+          partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
+          parentPartitioning = Some(Seq(PartitionDTO("pKey1", "pVal1"), PartitionDTO("pKey2", "pVal2"))),
+          authorIfNew = "newAuthor"
+        )
         for {
-          getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
-          result <- getPartitioningMeasures(partitioningDTO).exit
-        } yield assert(result)(failsWithA[doobie.util.invariant.NonNullableColumnRead])
+          createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
+          result <- createPartitioningIfNotExists(partitioningSubmitDTO)
+        } yield assertTrue(result.isRight)
       }
     ).provide(
-      GetPartitioningMeasures.layer,
+      CreatePartitioningIfNotExists.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
-    )
+    ) @@ TestAspect.ifPropSet("runIntegration")
 
   }
 

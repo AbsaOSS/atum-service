@@ -17,8 +17,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import org.junit.runner.RunWith
-import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
-import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitionDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
@@ -28,36 +27,32 @@ import zio._
 import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
 @RunWith(classOf[ZTestJUnitRunner])
-class WriteCheckpointIntegrationTest extends ConfigProviderTest {
+class CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("WriteCheckpointIntegrationSuite")(
-      test("Returns expected Left with DataNotFoundException as related partitioning is not in the database") {
-        val checkpointDTO = CheckpointDTO(
-          id = UUID.randomUUID(),
-          name = "name",
-          author = "author",
+    suite("CreateOrUpdateAdditionalDataIntegrationSuite")(
+      test("Returns expected Right with Unit") {
+        val additionalDataSubmitDTO = AdditionalDataSubmitDTO(
           partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
-          processStartTime = ZonedDateTime.now(),
-          processEndTime = None,
-          measurements =
-            Set(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))))
+          additionalData =  Map[String, Option[String]](
+            "ownership" -> Some("total"),
+            "role" -> Some("primary")
+          ),
+          author = "testAuthor"
         )
         for {
-          writeCheckpoint <- ZIO.service[WriteCheckpoint]
-          result <- writeCheckpoint(checkpointDTO)
+          createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
+          result <- createOrUpdateAdditionalData(additionalDataSubmitDTO)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
-      WriteCheckpoint.layer,
+      CreateOrUpdateAdditionalData.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )
+
   }
 
 }

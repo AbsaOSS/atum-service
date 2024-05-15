@@ -25,7 +25,7 @@ import java.util.UUID
 import scala.util.Random
 
 
-class GetFlowCheckpointsIntegrationTest extends DBTestSuite {
+class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
   private val fncGetFlowCheckpoints = "flows.get_flow_checkpoints"
 
   case class MeasuredDetails (

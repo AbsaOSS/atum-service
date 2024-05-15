@@ -26,7 +26,7 @@ import java.util.UUID
 import com.github.dwickern.macros.NameOf._
 import za.co.absa.atum.agent.dispatcher.CapturingDispatcher.CapturedCall
 
-class CapturingDispatcherUnitTest extends AnyWordSpec with Matchers {
+class CapturingDispatcherUnitTests extends AnyWordSpec with Matchers {
   private val DefaultProcessStartTime = ZonedDateTime.parse("2024-03-11T00:00:00Z")
 
   private def config(captureLimit: Int): Config = {

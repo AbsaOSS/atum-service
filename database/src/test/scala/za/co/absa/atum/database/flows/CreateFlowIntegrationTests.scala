@@ -21,7 +21,7 @@ import za.co.absa.balta.DBTestSuite
 import scala.util.Random
 
 
-class CreateFlowIntegrationTest extends DBTestSuite {
+class CreateFlowIntegrationTests extends DBTestSuite {
   private val fncCreateFlow = "flows._create_flow"
 
   test("Create flow") {

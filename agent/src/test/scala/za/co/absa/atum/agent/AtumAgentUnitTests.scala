@@ -21,7 +21,7 @@ import org.scalatest.funsuite.AnyFunSuiteLike
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
 
-class AtumAgentUnitTest extends AnyFunSuiteLike {
+class AtumAgentUnitTests extends AnyFunSuiteLike {
 
   test("AtumAgent creates AtumContext(s) as expected") {
     val atumAgent = AtumAgent

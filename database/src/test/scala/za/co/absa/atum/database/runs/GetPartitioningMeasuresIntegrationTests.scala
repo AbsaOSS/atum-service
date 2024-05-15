@@ -20,7 +20,7 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-class GetPartitioningMeasuresIntegrationTest extends DBTestSuite {
+class GetPartitioningMeasuresIntegrationTests extends DBTestSuite {
   private val fncGetPartitioningMeasures = "runs.get_partitioning_measures"
 
   test("Get partitioning measures should return partitioning measures for partitioning with measures") {

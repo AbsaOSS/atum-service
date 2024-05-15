@@ -20,7 +20,7 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-class UpdateExistingAdditionalDataIntegrationTest extends DBTestSuite{
+class UpdateExistingAdditionalDataIntegrationTests extends DBTestSuite{
 
   private val fncUpdateExistingAdditionalData = "runs._update_existing_additional_data"
 
