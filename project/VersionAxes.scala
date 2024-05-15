@@ -39,10 +39,10 @@ object VersionAxes {
 
   implicit class ProjectExtension(val projectMatrix: ProjectMatrix) extends AnyVal {
 
-    def sparkRow(sparkAxis: SparkVersionAxis,
-                 scalaVersions: Seq[String],
-                 dependenciesFnc: (String, String) => Seq[ModuleID],
-                 settings: Def.SettingsDefinition*): ProjectMatrix = {
+    def addSparkCrossBuild(sparkAxis: SparkVersionAxis,
+                           scalaVersions: Seq[String],
+                           dependenciesFnc: (String, String) => Seq[ModuleID],
+                           settings: Def.SettingsDefinition*): ProjectMatrix = {
       val sparkVersion = sparkAxis.sparkVersion
       scalaVersions.foldLeft(projectMatrix) { case (currentProjectMatrix, scalaVersion) =>
         currentProjectMatrix.customRow(
@@ -60,9 +60,9 @@ object VersionAxes {
       }
     }
 
-    def scalasRow(scalaVersions: Seq[String],
-                  dependenciesFnc: String => Seq[ModuleID],
-                  settings: Def.SettingsDefinition*): ProjectMatrix = {
+    def addScalaCrossBuild(scalaVersions: Seq[String],
+                           dependenciesFnc: String => Seq[ModuleID],
+                           settings: Def.SettingsDefinition*): ProjectMatrix = {
       scalaVersions.foldLeft(projectMatrix)((currentProjectMatrix, scalaVersion) =>
         currentProjectMatrix.customRow(
           scalaVersions = Seq(scalaVersion),
@@ -78,9 +78,9 @@ object VersionAxes {
       )
     }
 
-    def singleRow(scalaVersion: String,
-                 dependenciesFnc: => Seq[ModuleID],
-                 settings: Def.SettingsDefinition*): ProjectMatrix = {
+    def addSingleScalaBuild(scalaVersion: String,
+                            dependenciesFnc: => Seq[ModuleID],
+                            settings: Def.SettingsDefinition*): ProjectMatrix = {
       projectMatrix.customRow(
         scalaVersions = Seq(scalaVersion),
         axisValues = Seq(VirtualAxis.jvm),

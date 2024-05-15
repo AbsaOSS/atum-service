@@ -73,7 +73,7 @@ lazy val server = (projectMatrix in file("server"))
   )
   .enablePlugins(AssemblyPlugin)
   .enablePlugins(AutomateHeaderPlugin)
-  .singleRow(Setup.serviceScalaVersion, Dependencies.serverDependencies)
+  .addSingleScalaBuild(Setup.serviceScalaVersion, Dependencies.serverDependencies)
   .dependsOn(model)
 
 /**
@@ -86,7 +86,7 @@ lazy val agent = (projectMatrix in file("agent"))
       javacOptions ++= Setup.clientJavacOptions
     ): _*
   )
-  .sparkRow(SparkVersionAxis(spark3), Setup.clientSupportedScalaVersions, Dependencies.agentDependencies)
+  .addSparkCrossBuild(SparkVersionAxis(spark3), Setup.clientSupportedScalaVersions, Dependencies.agentDependencies)
   .dependsOn(model)
 
 /**
@@ -99,7 +99,7 @@ lazy val model = (projectMatrix in file("model"))
       javacOptions ++= Setup.clientJavacOptions,
     ): _*
   )
-  .scalasRow(Setup.clientSupportedScalaVersions, Dependencies.modelDependencies)
+  .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.modelDependencies)
 
 /**
  * Module `database` is the source of database structures of the service
@@ -112,7 +112,7 @@ lazy val database = (projectMatrix in file("database"))
       test := {}
     ): _*
   )
-  .singleRow(Setup.serviceScalaVersion, Dependencies.databaseDependencies)
+  .addSingleScalaBuild(Setup.serviceScalaVersion, Dependencies.databaseDependencies)
 
 //----------------------------------------------------------------------------------------------------------------------
 lazy val dbTest = taskKey[Unit]("Launch DB tests")

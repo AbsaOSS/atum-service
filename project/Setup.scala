@@ -1,10 +1,3 @@
-import sbt.Keys.javacOptions
-import sbt.TaskKey
-import sbtassembly.AssemblyKeys.assemblyMergeStrategy
-import sbtassembly.AssemblyPlugin.autoImport
-import sbtassembly.AssemblyPlugin.autoImport.{MergeStrategy, assembly}
-import sbtassembly.PathList
-
 /*
  * Copyright 2024 ABSA Group Limited
  *
@@ -20,6 +13,10 @@ import sbtassembly.PathList
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import sbtassembly.AssemblyKeys.assemblyMergeStrategy
+import sbtassembly.AssemblyPlugin.autoImport.{MergeStrategy, assembly}
+import sbtassembly.PathList
 
 
 object Setup {
@@ -46,7 +43,6 @@ object Setup {
       Seq("-target", "8", "-release", "8")
     }
   }
- // val clientScalacOptions: Seq[String] = Seq("-Ymacro-annotations")
 
   val serverMergeStrategy = assembly / assemblyMergeStrategy := {
     case PathList("META-INF", "services", xs @ _*) => MergeStrategy.filterDistinctLines
