@@ -46,7 +46,7 @@ class CreatePartitioningIfNotExistsIntegrationTests extends ConfigProviderTest {
       CreatePartitioningIfNotExists.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
-    ) @@ TestAspect.ifPropSet("runIntegration")
+    )
 
   }
 
