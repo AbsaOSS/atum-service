@@ -19,26 +19,21 @@ import sbt.*
 import Dependencies.*
 import Dependencies.Versions.spark3
 import VersionAxes.*
+//import za.co.absa.commons.version.Version
 
-ThisBuild / organization := "za.co.absa.atum-service"
-sonatypeProfileName := "za.co.absa"
-
-ThisBuild / scalaVersion := Setup.scala213  // default version
+ThisBuild / scalaVersion := Setup.scala213.asString  // default version TODO
 
 ThisBuild / versionScheme := Some("early-semver")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-publish / skip := true
-
 initialize := {
   val _ = initialize.value // Ensure previous initializations are run
 
-  val requiredJavaVersion = VersionNumber("17")
-  val current = VersionNumber(sys.props("java.specification.version"))
-  // Assert that the JVM meets the minimum required version, for example, Java 17
-  //assert(specVersion.toDouble >= 17, "Java 17 or above is required to run this project.")
-  println(s"Running on Java version $current")
+  val requiredJavaVersion = VersionNumber("11")
+  val currentJavaVersion = VersionNumber(sys.props("java.specification.version"))
+  println(s"Running on Java version $currentJavaVersion, required is at least version $requiredJavaVersion")
+  //this routine can be used to assert the required Java version
 }
 
 lazy val commonSettings = Seq(
@@ -56,6 +51,7 @@ flywayLocations := FlywayConfiguration.flywayLocations
 flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
 libraryDependencies ++= flywayDependencies
 
+
 /**
  * Module `server` is the service application that collects and stores measured data And upo request retrives them
  */
@@ -63,7 +59,7 @@ lazy val server = (projectMatrix in file("server"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-server",
-      javacOptions ++= Setup.serviceJavacOptions,
+      javacOptions ++= Setup.serverAndDbJavacOptions,
       Compile / packageBin / publishArtifact := false,
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
@@ -73,7 +69,7 @@ lazy val server = (projectMatrix in file("server"))
   )
   .enablePlugins(AssemblyPlugin)
   .enablePlugins(AutomateHeaderPlugin)
-  .addSingleScalaBuild(Setup.serviceScalaVersion, Dependencies.serverDependencies)
+  .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.serverDependencies)
   .dependsOn(model)
 
 /**
@@ -108,16 +104,16 @@ lazy val database = (projectMatrix in file("database"))
   .settings(
     commonSettings ++ Seq(
       name := "atum-database",
-      javacOptions ++= Setup.serviceJavacOptions,
+      javacOptions ++= Setup.serverAndDbJavacOptions,
       test := {}
     ): _*
   )
-  .addSingleScalaBuild(Setup.serviceScalaVersion, Dependencies.databaseDependencies)
+  .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.databaseDependencies)
 
 //----------------------------------------------------------------------------------------------------------------------
 lazy val dbTest = taskKey[Unit]("Launch DB tests")
 
 dbTest := {
   println("Running DB tests")
-  (database.jvm(Setup.serviceScalaVersion) / Test / test).value
+  (database.jvm(Setup.serverAndDbScalaVersion.asString) / Test / test).value
 }

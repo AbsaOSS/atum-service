@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
+import sbt.taskKey
 import sbtassembly.AssemblyKeys.assemblyMergeStrategy
 import sbtassembly.AssemblyPlugin.autoImport.{MergeStrategy, assembly}
 import sbtassembly.PathList
+import za.co.absa.commons.version.Version
 
 
 object Setup {
-
   //supported Scala versions
-//  val scala212 = Version.asSemVer("2.12.18") TODO
-//  val scala213 = Version.asSemVer("2.13.11")
-  val scala212 = "2.12.18"
-  val scala213 = "2.13.11"
+  val scala211: Version = Version.asSemVer("2.11.12")
+  val scala212: Version = Version.asSemVer("2.12.18")
+  val scala213: Version = Version.asSemVer("2.13.11")
 
-  val serviceScalaVersion: String = scala213
-  val clientSupportedScalaVersions: Seq[String] = Seq(scala212, scala213)
+  val serverAndDbScalaVersion: Version = scala213 //covers REST server and database modules
+  val clientSupportedScalaVersions: Seq[Version] = Seq(scala212, scala213)
 
   val commonScalacOptions: Seq[String] = Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
 
-  val serviceJavacOptions: Seq[String] = Seq("-source", "11", "-target", "11", "-Xlint")
-  val serviceScalacOptions: Seq[String] = Seq("-release", "11", "-Ymacro-annotations")
+  val serverAndDbJavacOptions: Seq[String] = Seq("-source", "11", "-target", "11", "-Xlint")
+  val serverAndDbScalacOptions: Seq[String] = Seq("-release", "11", "-Ymacro-annotations")
 
   val clientJavacOptions: Seq[String] = Seq("-source", "1.8", "-target", "1.8", "-Xlint")
-  def clientScalacOptions(scalaVersion: String): Seq[String] = {
-    if (scalaVersion == scala213) {
+  def clientScalacOptions(scalaVersion: Version): Seq[String] = {
+    if (scalaVersion >= scala213) {
       Seq("-release", "8", "-Ymacro-annotations")
     } else {
       Seq("-target", "8", "-release", "8")
@@ -45,11 +45,11 @@ object Setup {
   }
 
   val serverMergeStrategy = assembly / assemblyMergeStrategy := {
-    case PathList("META-INF", "services", xs @ _*) => MergeStrategy.filterDistinctLines
+    case PathList("META-INF", "services") => MergeStrategy.filterDistinctLines
     case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
     case PathList("META-INF", "resources", "webjars", "swagger-ui", _*) => MergeStrategy.singleOrError
     case PathList("META-INF", _*) => MergeStrategy.discard
-    case PathList("META-INF", "versions", "9", xs@_*) => MergeStrategy.discard
+    case PathList("META-INF", "versions", "9") => MergeStrategy.discard
     case PathList("module-info.class") => MergeStrategy.discard
     case "application.conf" => MergeStrategy.concat
     case "reference.conf" => MergeStrategy.concat

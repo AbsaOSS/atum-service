@@ -14,13 +14,13 @@
  */
 
 import sbt.*
+import za.co.absa.commons.version.{Component, Version}
 
 object Dependencies {
 
   object Versions {
+    val spark2 = "2.4.7"
     val spark3 = "3.3.2"
-
-    val scala211 = "2.11.12"
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
@@ -48,11 +48,16 @@ object Dependencies {
 
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"
-    def json4s(scalaVersion: String): String = {
-      Versions.truncateVersion(scalaVersion, 2) match {
-        case "2.11" => json4s_spark2
-        case "2.12" => json4s_spark3
-        case "2.13" => json4s_spark3
+    def json4s(scalaVersion: Version): String = {
+      // TODO done this impractical way until https://github.com/AbsaOSS/commons/issues/134
+      val maj2 = Component("2")
+      val min11 = Component("11")
+      val min12 = Component("12")
+      val min13 = Component("13")
+      scalaVersion.components match {
+        case Seq(`maj2`, `min11`, _) => json4s_spark2
+        case Seq(`maj2`, `min12`, _) => json4s_spark3
+        case Seq(`maj2`, `min13`, _) => json4s_spark3
         case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
       }
     }
@@ -74,6 +79,8 @@ object Dependencies {
     val awssdk = "2.23.15"
 
     val scalaNameof = "4.0.0"
+
+    val absaCommons = "2.0.0"
 
     def truncateVersion(version: String, parts: Int): String = {
       version.split("\\.").take(parts).mkString(".")
@@ -98,7 +105,7 @@ object Dependencies {
     )
   }
 
-  private def jsonSerdeDependencies(scalaVersion: String): Seq[ModuleID] = {
+  private def jsonSerdeDependencies(scalaVersion: Version): Seq[ModuleID] = {
     val json4sVersion = Versions.json4s(scalaVersion)
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
@@ -195,9 +202,9 @@ object Dependencies {
       testDependencies
   }
 
-  def agentDependencies(sparkVersion: String, scalaVersion: String): Seq[ModuleID] = {
+  def agentDependencies(sparkVersion: String, scalaVersion: Version): Seq[ModuleID] = {
     val sparkMinorVersion = Versions.getVersionUpToMinor(sparkVersion)
-    val scalaMinorVersion = Versions.getVersionUpToMinor(scalaVersion)
+    val scalaMinorVersion = Versions.getVersionUpToMinor(scalaVersion.asString)
 
     lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion % Provided
     lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
@@ -225,7 +232,7 @@ object Dependencies {
       testDependencies
   }
 
-  def modelDependencies(scalaVersion: String): Seq[ModuleID] = {
+  def modelDependencies(scalaVersion: Version): Seq[ModuleID] = {
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 

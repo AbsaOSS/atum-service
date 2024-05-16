@@ -18,11 +18,12 @@ import sbt.Keys.*
 import sbt.internal.ProjectMatrix
 import JacocoSetup.jacocoSettings
 import com.github.sbt.jacoco.JacocoKeys.jacocoReportSettings
+import za.co.absa.commons.version.Version
 
 
 object VersionAxes {
 
-  lazy val printVersionInfo = taskKey[Unit]("Print main dependency versions atum-service is being built for.")
+  lazy val printVersionInfo = taskKey[Unit]("Print main component versions atum-service is being built for.")
 
   case class SparkVersionAxis(sparkVersion: String) extends sbt.VirtualAxis.WeakAxis {
 
@@ -40,19 +41,19 @@ object VersionAxes {
   implicit class ProjectExtension(val projectMatrix: ProjectMatrix) extends AnyVal {
 
     def addSparkCrossBuild(sparkAxis: SparkVersionAxis,
-                           scalaVersions: Seq[String],
-                           dependenciesFnc: (String, String) => Seq[ModuleID],
+                           scalaVersions: Seq[Version],
+                           dependenciesFnc: (String, Version) => Seq[ModuleID],
                            settings: Def.SettingsDefinition*): ProjectMatrix = {
       val sparkVersion = sparkAxis.sparkVersion
       scalaVersions.foldLeft(projectMatrix) { case (currentProjectMatrix, scalaVersion) =>
         currentProjectMatrix.customRow(
-          scalaVersions = Seq(scalaVersion),
+          scalaVersions = Seq(scalaVersion.asString),
           axisValues = Seq(sparkAxis, VirtualAxis.jvm),
           _.settings(
             moduleName := camelCaseToLowerDashCase(name.value + sparkAxis.directorySuffix),
             scalacOptions ++= Setup.clientScalacOptions(scalaVersion),
             libraryDependencies ++= dependenciesFnc(sparkVersion, scalaVersion),
-            printVersionInfo := streams.value.log.info(s"Building ${name.value} with Spark $sparkVersion, Scala $scalaVersion"),
+            printVersionInfo := streams.value.log.info(s"Building ${name.value} with Spark $sparkVersion, Scala ${scalaVersion.asString}"),
             (Compile / compile) := ((Compile / compile) dependsOn printVersionInfo).value,
             jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion, name.value),
           ).settings(settings *)
@@ -60,17 +61,17 @@ object VersionAxes {
       }
     }
 
-    def addScalaCrossBuild(scalaVersions: Seq[String],
-                           dependenciesFnc: String => Seq[ModuleID],
+    def addScalaCrossBuild(scalaVersions: Seq[Version],
+                           dependenciesFnc: Version => Seq[ModuleID],
                            settings: Def.SettingsDefinition*): ProjectMatrix = {
       scalaVersions.foldLeft(projectMatrix)((currentProjectMatrix, scalaVersion) =>
         currentProjectMatrix.customRow(
-          scalaVersions = Seq(scalaVersion),
+          scalaVersions = Seq(scalaVersion.asString),
           axisValues = Seq(VirtualAxis.jvm),
           _.settings(
             scalacOptions ++= Setup.clientScalacOptions(scalaVersion),
             libraryDependencies ++= dependenciesFnc(scalaVersion),
-            printVersionInfo := streams.value.log.info(s"Building ${name.value} with Scala $scalaVersion"),
+            printVersionInfo := streams.value.log.info(s"Building ${name.value} with Scala ${scalaVersion.asString}"),
             (Compile / compile) := ((Compile / compile) dependsOn printVersionInfo).value,
             jacocoReportSettings := jacocoSettings(scalaVersion, name.value),
           ).settings(settings *)
@@ -78,16 +79,16 @@ object VersionAxes {
       )
     }
 
-    def addSingleScalaBuild(scalaVersion: String,
+    def addSingleScalaBuild(scalaVersion: Version,
                             dependenciesFnc: => Seq[ModuleID],
                             settings: Def.SettingsDefinition*): ProjectMatrix = {
       projectMatrix.customRow(
-        scalaVersions = Seq(scalaVersion),
+        scalaVersions = Seq(scalaVersion.asString),
         axisValues = Seq(VirtualAxis.jvm),
         _.settings(
           libraryDependencies ++= dependenciesFnc,
-          scalacOptions ++= Setup.serviceScalacOptions,
-          printVersionInfo := streams.value.log.info(s"Building ${name.value} with Scala $scalaVersion"),
+          scalacOptions ++= Setup.serverAndDbScalacOptions,
+          printVersionInfo := streams.value.log.info(s"Building ${name.value} with Scala ${scalaVersion.asString}"),
           (Compile / compile) := ((Compile / compile) dependsOn printVersionInfo).value,
           jacocoReportSettings := jacocoSettings(scalaVersion, name.value),
         ).settings(settings *)
