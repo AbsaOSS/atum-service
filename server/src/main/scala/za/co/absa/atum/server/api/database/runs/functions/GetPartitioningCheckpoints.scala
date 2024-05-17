@@ -39,8 +39,14 @@ class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEng
   extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointMeasurements, Task] {
 
   override val fieldsToSelect: Seq[String] = Seq(
-    "id_checkpoint", "checkpoint_name", "measure_name",
-    "measure_columns", "measurement_value", "checkpoint_start_time",
+    "id_checkpoint",
+    "checkpoint_name",
+    "author",
+    "measured_by_atum_agent",
+    "measure_name",
+    "measure_columns",
+    "measurement_value",
+    "checkpoint_start_time",
     "checkpoint_end_time",
   )
 

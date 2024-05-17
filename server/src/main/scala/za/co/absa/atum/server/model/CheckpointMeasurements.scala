@@ -27,7 +27,7 @@ case class CheckpointMeasurements(
   measuredByAtumAgent: Boolean = false,
   measureName: String,
   measureColumns: Seq[String],
-  measurementValue: Json, // TODO MeasureResultDTO
+  measurementValue: Json,
   checkpointStartTime: ZonedDateTime,
   checkpointEndTime:  Option[ZonedDateTime]
 )
