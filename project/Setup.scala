@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import sbt.taskKey
+import com.github.sbt.jacoco.JacocoKeys.jacocoExcludes
+import sbt.*
+import sbt.Keys.*
 import sbtassembly.AssemblyKeys.assemblyMergeStrategy
 import sbtassembly.AssemblyPlugin.autoImport.{MergeStrategy, assembly}
 import sbtassembly.PathList
@@ -26,6 +28,12 @@ object Setup {
   val scala211: Version = Version.asSemVer("2.11.12")
   val scala212: Version = Version.asSemVer("2.12.18")
   val scala213: Version = Version.asSemVer("2.13.11")
+
+  lazy val commonSettings: Seq[SettingsDefinition] = Seq(
+    scalacOptions ++= Setup.commonScalacOptions,
+    Test / parallelExecution := false,
+    jacocoExcludes := JacocoSetup.jacocoProjectExcludes(),
+  )
 
   val serverAndDbScalaVersion: Version = scala213 //covers REST server and database modules
   val clientSupportedScalaVersions: Seq[Version] = Seq(scala212, scala213)

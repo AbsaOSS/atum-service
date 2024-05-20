@@ -19,7 +19,6 @@ import sbt.*
 import Dependencies.*
 import Dependencies.Versions.spark3
 import VersionAxes.*
-//import za.co.absa.commons.version.Version
 
 ThisBuild / scalaVersion := Setup.scala213.asString  // default version TODO
 
@@ -36,13 +35,6 @@ initialize := {
   //this routine can be used to assert the required Java version
 }
 
-lazy val commonSettings = Seq(
-  scalacOptions ++= Setup.commonScalacOptions,
-  Test / parallelExecution := false,
-  jacocoExcludes := JacocoSetup.jacocoProjectExcludes()
-)
-
-
 enablePlugins(FlywayPlugin)
 flywayUrl := FlywayConfiguration.flywayUrl
 flywayUser := FlywayConfiguration.flywayUser
@@ -57,7 +49,7 @@ libraryDependencies ++= flywayDependencies
  */
 lazy val server = (projectMatrix in file("server"))
   .settings(
-    commonSettings ++ Seq(
+    Setup.commonSettings ++ Seq(
       name := "atum-server",
       javacOptions ++= Setup.serverAndDbJavacOptions,
       Compile / packageBin / publishArtifact := false,
@@ -76,8 +68,9 @@ lazy val server = (projectMatrix in file("server"))
  * Module `agent` is the library to be plugged into the Spark application to measure the data and send it to the server
  */
 lazy val agent = (projectMatrix in file("agent"))
+  .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings(
-    commonSettings ++ Seq(
+    Setup.commonSettings ++ Seq(
       name := "atum-agent",
       javacOptions ++= Setup.clientJavacOptions
     ): _*
@@ -89,8 +82,9 @@ lazy val agent = (projectMatrix in file("agent"))
  * Module `model` is the data model for data exchange with server
  */
 lazy val model = (projectMatrix in file("model"))
+  .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings(
-    commonSettings ++ Seq(
+    Setup.commonSettings ++ Seq(
       name         := "atum-model",
       javacOptions ++= Setup.clientJavacOptions,
     ): _*
@@ -101,8 +95,9 @@ lazy val model = (projectMatrix in file("model"))
  * Module `database` is the source of database structures of the service
  */
 lazy val database = (projectMatrix in file("database"))
+  .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings(
-    commonSettings ++ Seq(
+    Setup.commonSettings ++ Seq(
       name := "atum-database",
       javacOptions ++= Setup.serverAndDbJavacOptions,
       test := {}
