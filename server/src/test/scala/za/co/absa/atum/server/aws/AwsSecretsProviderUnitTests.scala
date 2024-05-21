@@ -28,7 +28,7 @@ import zio.test.junit.ZTestJUnitRunner
 import zio.{Scope, ZIO, ZLayer}
 
 @RunWith(classOf[ZTestJUnitRunner])
-class AwsSecretsProviderTest extends ConfigProviderTest {
+class AwsSecretsProviderUnitTests extends ConfigProviderTest {
 
   private val secretsManagerClientMock = mock(classOf[SecretsManagerClient])
 

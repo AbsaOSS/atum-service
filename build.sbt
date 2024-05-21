@@ -35,7 +35,9 @@ lazy val printScalaVersion = taskKey[Unit]("Print Scala versions for atum-servic
 lazy val commonSettings = Seq(
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
   Test / parallelExecution := false,
-  jacocoExcludes := jacocoProjectExcludes()
+  jacocoExcludes := jacocoProjectExcludes(),
+  (assembly / test) := {},
+  (publish / test) := { (Test / testOnly).toTask(" *UnitTests").value }
 )
 
 val serverMergeStrategy = assembly / assemblyMergeStrategy := {
