@@ -42,9 +42,8 @@ $$
 --      i_partitioning      - partitioning of requested checkpoints
 --      i_limit                 - (optional) maximum number of checkpoint's measurements to return
 --                                if 0 specified, all data will be returned, i.e. no limit will be applied
---      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --
--- Returns:
+-- Returns:--      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --      status                  - Status code
 --      status_text             - Status message
 --      id_checkpoint           - ID of the checkpoint
