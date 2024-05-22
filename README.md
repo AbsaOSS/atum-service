@@ -27,6 +27,13 @@ It provides functionality for computing and pushing control metrics to the API l
 
 For more information, see the [Vocabulary section](#Vocabulary) or `agent/README.md` for more technical documentation.
 
+#### Spark 2.4 support
+Because there are some java level incompatibilities between Spark 2.4 and Spark 3.x whe build on Java 11+, we have to 
+drop support for Spark 2.4. If you need the agent to work with Spark 2.4 follow these steps:
+* Switch to Java 8
+* In `'build.sbt'` change the matrix rows, to be Spark 2.4 and Scala 2.11 for modules _agent_ and _model_
+* Build these two modules and use them in your project
+
 ### Server `server/`
 An API under construction that communicates with the Agent and with the persistent storage. It also provides measure 
 configuration to the agent.
