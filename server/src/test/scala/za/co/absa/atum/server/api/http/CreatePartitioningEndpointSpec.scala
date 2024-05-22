@@ -48,7 +48,8 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
 
   private val createPartitioningServerEndpoint =
     createPartitioningEndpoint.zServerLogic(
-      PartitioningController.createPartitioningIfNotExists _ andThen (_.map(SingleSuccessResponse(_)))
+//      PartitioningController.createPartitioningIfNotExists _ andThen (_.map(SingleSuccessResponse(_)))
+      PartitioningController.createPartitioningIfNotExists
     )
 
   def spec: Spec[TestEnvironment with Scope, Any] = {

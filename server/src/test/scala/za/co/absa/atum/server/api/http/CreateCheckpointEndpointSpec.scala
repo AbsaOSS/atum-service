@@ -48,7 +48,8 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
 
   private val createCheckpointServerEndpoint =
     createCheckpointEndpoint.zServerLogic(
-      CheckpointController.createCheckpoint _ andThen(_.map(SingleSuccessResponse(_)))
+      CheckpointController.createCheckpoint
+//      CheckpointController.createCheckpoint _ andThen(_.map(SingleSuccessResponse(_)))
     )
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
