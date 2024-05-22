@@ -27,7 +27,7 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.PlayJsonImplicits.{readsCheckpointDTO, writesCheckpointDTO}
+import za.co.absa.atum.server.model.PlayJsonImplicits._
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
@@ -47,10 +47,7 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
   private val createCheckpointServerEndpoint =
-    createCheckpointEndpoint.zServerLogic(
-      CheckpointController.createCheckpoint
-//      CheckpointController.createCheckpoint _ andThen(_.map(SingleSuccessResponse(_)))
-    )
+    createCheckpointEndpoint.zServerLogic(CheckpointController.createCheckpoint)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
@@ -60,7 +57,7 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
 
     val request = basicRequest
       .post(uri"https://test.com/api/v1/createCheckpoint")
-      .response(asJson[CheckpointDTO])
+      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
 
     suite("CreateCheckpointEndpointSuite")(
       test("Returns expected CheckpointDTO") {
@@ -71,7 +68,7 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1)), StatusCode.Created))
+        assertZIO(body <*> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1)), StatusCode.Created))
       },
       test("Returns expected BadRequest") {
         val response = request

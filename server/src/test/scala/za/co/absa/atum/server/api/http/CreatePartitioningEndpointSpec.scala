@@ -27,7 +27,7 @@ import za.co.absa.atum.model.dto.AtumContextDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
 import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.PlayJsonImplicits.{readsAtumContextDTO, writesPartitioningSubmitDTO}
+import za.co.absa.atum.server.model.PlayJsonImplicits._
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
@@ -47,10 +47,7 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
   private val createPartitioningEndpointMockLayer = ZLayer.succeed(createPartitioningEndpointMock)
 
   private val createPartitioningServerEndpoint =
-    createPartitioningEndpoint.zServerLogic(
-//      PartitioningController.createPartitioningIfNotExists _ andThen (_.map(SingleSuccessResponse(_)))
-      PartitioningController.createPartitioningIfNotExists
-    )
+    createPartitioningEndpoint.zServerLogic(PartitioningController.createPartitioningIfNotExists)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
@@ -60,7 +57,7 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
 
     val request = basicRequest
       .post(uri"https://test.com/api/v1/createPartitioning")
-      .response(asJson[AtumContextDTO])
+      .response(asJson[SingleSuccessResponse[AtumContextDTO]])
 
     suite("CreatePartitioningEndpointSuite")(
       test("Returns expected AtumContextDTO") {
@@ -71,7 +68,9 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-        assertZIO(body <&> statusCode)(equalTo(Right(createAtumContextDTO(partitioningSubmitDTO1)), StatusCode.Ok))
+        assertZIO(body <&> statusCode)(
+          equalTo(Right(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))), StatusCode.Ok)
+        )
       },
       test("Returns expected BadRequest") {
         val response = request

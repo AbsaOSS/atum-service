@@ -94,7 +94,7 @@ object PlayJsonImplicits {
   implicit val readsAtumContextDTO: Reads[AtumContextDTO] = Json.reads[AtumContextDTO]
   implicit val writesAtumContextDTO: Writes[AtumContextDTO] = Json.writes[AtumContextDTO]
 
-  implicit def readsSingleApiResponse[T: Reads]: Reads[SingleSuccessResponse[T]] = Json.reads[SingleSuccessResponse[T]]
-  implicit def writesSingleApiResponse[T: Writes]: Writes[SingleSuccessResponse[T]] = Json.writes[SingleSuccessResponse[T]]
+  implicit def readsSingleSuccessResponse[T: Reads]: Reads[SingleSuccessResponse[T]] = Json.reads[SingleSuccessResponse[T]]
+  implicit def writesSingleSuccessResponse[T: Writes]: Writes[SingleSuccessResponse[T]] = Json.writes[SingleSuccessResponse[T]]
 
 }
