@@ -17,41 +17,43 @@
 package za.co.absa.atum.server.api.http
 
 import sttp.model.StatusCode
-import sttp.tapir.{PublicEndpoint, endpoint}
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO, AdditionalDataSubmitDTO}
+import sttp.tapir.{PublicEndpoint, endpoint}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.Constants.Endpoints._
-import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
 import za.co.absa.atum.server.model.PlayJsonImplicits._
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 
 trait Endpoints extends BaseEndpoints {
 
-  protected val createCheckpointEndpoint: PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
+  protected val createCheckpointEndpoint
+    : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
     apiV1.post
       .in(CreateCheckpoint)
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
-      .out(jsonBody[CheckpointDTO])
+      .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
   }
 
   protected val createPartitioningEndpoint
-    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, AtumContextDTO, Any] = {
+    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
     apiV1.post
       .in(CreatePartitioning)
       .in(jsonBody[PartitioningSubmitDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[AtumContextDTO])
+      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
   }
 
   protected val createOrUpdateAdditionalDataEndpoint
-    : PublicEndpoint[AdditionalDataSubmitDTO, ErrorResponse, AdditionalDataSubmitDTO, Any] = {
+    : PublicEndpoint[AdditionalDataSubmitDTO, ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO], Any] = {
     apiV1.post
       .in(CreateOrUpdateAdditionalData)
       .in(jsonBody[AdditionalDataSubmitDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[AdditionalDataSubmitDTO])
+      .out(jsonBody[SingleSuccessResponse[AdditionalDataSubmitDTO]])
   }
 
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {

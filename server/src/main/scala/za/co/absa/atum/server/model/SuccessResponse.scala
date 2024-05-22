@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.server.model
 
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
-import zio.IO
-import zio.macros.accessible
+object SuccessResponse {
 
-@accessible
-trait CheckpointController {
-  def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]]
+  sealed trait SuccessResponse
+
+  case class SingleSuccessResponse[T](data: T) extends SuccessResponse
+  case class MultiSuccessResponse[T](data: Seq[T]) extends SuccessResponse
+
 }

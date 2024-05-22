@@ -26,18 +26,19 @@ import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.AtumContextDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
-import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import zio.test.Assertion.equalTo
-import zio._
-import zio.test._
+import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.PlayJsonImplicits.{readsAtumContextDTO, writesPartitioningSubmitDTO}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import zio._
+import zio.test.Assertion.equalTo
+import zio.test._
 
 object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with TestData {
 
   private val createPartitioningEndpointMock = mock(classOf[PartitioningController])
 
   when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
-    .thenReturn(ZIO.succeed(createAtumContextDTO(partitioningSubmitDTO1)))
+    .thenReturn(ZIO.succeed(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))))
   when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
   when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO3))

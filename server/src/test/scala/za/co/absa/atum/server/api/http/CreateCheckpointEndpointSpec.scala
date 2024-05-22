@@ -18,26 +18,27 @@ package za.co.absa.atum.server.api.http
 
 import org.mockito.Mockito.{mock, when}
 import sttp.client3._
-import sttp.client3.testing.SttpBackendStub
 import sttp.client3.playJson._
+import sttp.client3.testing.SttpBackendStub
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
-import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import zio.test._
-import zio._
+import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.PlayJsonImplicits.{readsCheckpointDTO, writesCheckpointDTO}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import zio._
 import zio.test.Assertion.equalTo
+import zio.test._
 
 object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with TestData {
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
   when(checkpointControllerMock.createCheckpoint(checkpointDTO1))
-    .thenReturn(ZIO.succeed(checkpointDTO1))
+    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1)))
   when(checkpointControllerMock.createCheckpoint(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
   when(checkpointControllerMock.createCheckpoint(checkpointDTO3))

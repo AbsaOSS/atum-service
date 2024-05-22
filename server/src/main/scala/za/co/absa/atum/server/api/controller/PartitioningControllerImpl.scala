@@ -16,39 +16,47 @@
 
 package za.co.absa.atum.server.api.controller
 
-
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.ErrorResponse.{ErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
-  extends PartitioningController with BaseController {
+    extends PartitioningController
+    with BaseController {
 
   override def createPartitioningIfNotExists(
     partitioningSubmitDTO: PartitioningSubmitDTO
-      ): IO[ErrorResponse, AtumContextDTO] = {
-    for {
-      _ <- partitioningService.createPartitioningIfNotExists(partitioningSubmitDTO)
+  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]] = {
+    val atumContextDTOEffect = for {
+      _ <- partitioningService
+        .createPartitioningIfNotExists(partitioningSubmitDTO)
         .mapError(serviceError => InternalServerErrorResponse(serviceError.message))
-      measures <- partitioningService.getPartitioningMeasures(partitioningSubmitDTO.partitioning)
-        .mapError {
-          serviceError: ServiceError => InternalServerErrorResponse(serviceError.message)
-      }
-      additionalData <- partitioningService.getPartitioningAdditionalData(partitioningSubmitDTO.partitioning)
-        .mapError {
-          serviceError: ServiceError => InternalServerErrorResponse(serviceError.message)
-      }
+      measures <- partitioningService
+        .getPartitioningMeasures(partitioningSubmitDTO.partitioning)
+        .mapError { serviceError: ServiceError =>
+          InternalServerErrorResponse(serviceError.message)
+        }
+      additionalData <- partitioningService
+        .getPartitioningAdditionalData(partitioningSubmitDTO.partitioning)
+        .mapError { serviceError: ServiceError =>
+          InternalServerErrorResponse(serviceError.message)
+        }
     } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalData)
+
+    mapToSingleSingleSuccessResponse(atumContextDTOEffect)
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
-  ): IO[ErrorResponse, AdditionalDataSubmitDTO] = {
-    serviceCallWithStatus[Unit, AdditionalDataSubmitDTO](
-      partitioningService.createOrUpdateAdditionalData(additionalData),
-      _ => additionalData
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]] = {
+    mapToSingleSingleSuccessResponse(
+      serviceCallWithStatus[Unit, AdditionalDataSubmitDTO](
+        partitioningService.createOrUpdateAdditionalData(additionalData),
+        _ => additionalData
+      )
     )
   }
 

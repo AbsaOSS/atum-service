@@ -17,12 +17,18 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.IO
 import zio.macros.accessible
 
 @accessible
 trait PartitioningController {
-  def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
-  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
+  def createPartitioningIfNotExists(
+    partitioningSubmitDTO: PartitioningSubmitDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]]
+
+  def createOrUpdateAdditionalData(
+    additionalData: AdditionalDataSubmitDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]]
 }

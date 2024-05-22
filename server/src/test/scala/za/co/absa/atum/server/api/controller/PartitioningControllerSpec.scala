@@ -1,27 +1,28 @@
 /*
-* Copyright 2021 ABSA Group Limited
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2021 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
-import zio.test.Assertion.{equalTo, failsWithA}
+import za.co.absa.atum.server.model.ErrorResponse.InternalServerErrorResponse
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
+import zio.test.Assertion.{equalTo, failsWithA}
 import zio.test._
 
 object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
@@ -46,7 +47,7 @@ object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
         test("Returns expected AtumContextDTO") {
           for {
             result <- PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO1)
-          } yield assertTrue (result == atumContextDTO1)
+          } yield assertTrue(result == SingleSuccessResponse(atumContextDTO1))
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO2).exit)(
@@ -56,9 +57,11 @@ object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
       ),
       suite("CreateOrUpdateAdditionalDataSuite")(
         test("Returns expected AdditionalDataSubmitDTO") {
-          assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO1))(equalTo(additionalDataSubmitDTO1))
+          assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO1))(
+            equalTo(SingleSuccessResponse(additionalDataSubmitDTO1))
+          )
         },
-        test ("Returns expected InternalServerErrorResponse") {
+        test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )
