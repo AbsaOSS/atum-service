@@ -28,7 +28,7 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.PlayJsonImplicits.{readsCheckpointDTO, writesCheckpointDTO}
-import za.co.absa.atum.server.model.SuccessResponse.{SingleSuccessResponse, mapToSingleSingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
