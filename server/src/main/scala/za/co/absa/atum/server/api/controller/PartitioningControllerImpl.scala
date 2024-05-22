@@ -46,13 +46,13 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
         }
     } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalData)
 
-    mapToSingleSingleSuccessResponse(atumContextDTOEffect)
+    mapToSingleSuccessResponse(atumContextDTOEffect)
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]] = {
-    mapToSingleSingleSuccessResponse(
+    mapToSingleSuccessResponse(
       serviceCallWithStatus[Unit, AdditionalDataSubmitDTO](
         partitioningService.createOrUpdateAdditionalData(additionalData),
         _ => additionalData

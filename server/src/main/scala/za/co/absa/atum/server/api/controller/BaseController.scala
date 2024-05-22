@@ -42,13 +42,13 @@ trait BaseController {
 
   }
 
-  protected def mapToSingleSingleSuccessResponse[A](
+  protected def mapToSingleSuccessResponse[A](
     effect: IO[ErrorResponse, A]
   ): IO[ErrorResponse, SingleSuccessResponse[A]] = {
     effect.map(SingleSuccessResponse(_))
   }
 
-  protected def mapToSingleMultiSuccessResponse[A](
+  protected def mapToMultiSuccessResponse[A](
     effect: IO[ErrorResponse, Seq[A]]
   ): IO[ErrorResponse, MultiSuccessResponse[A]] = {
     effect.map(MultiSuccessResponse(_))
