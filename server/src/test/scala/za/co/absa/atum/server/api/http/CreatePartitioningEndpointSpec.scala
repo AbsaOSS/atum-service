@@ -47,7 +47,9 @@ object CreatePartitioningEndpointSpec extends ZIOSpecDefault with Endpoints with
   private val createPartitioningEndpointMockLayer = ZLayer.succeed(createPartitioningEndpointMock)
 
   private val createPartitioningServerEndpoint =
-    createPartitioningEndpoint.zServerLogic(PartitioningController.createPartitioningIfNotExists)
+    createPartitioningEndpoint.zServerLogic(
+      PartitioningController.createPartitioningIfNotExists _ andThen (_.map(SingleSuccessResponse(_)))
+    )
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
