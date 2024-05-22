@@ -68,7 +68,7 @@ object CreateCheckpointEndpointSpec extends ZIOSpecDefault with Endpoints with T
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-        assertZIO(body <*> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1)), StatusCode.Created))
+        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1)), StatusCode.Created))
       },
       test("Returns expected BadRequest") {
         val response = request
