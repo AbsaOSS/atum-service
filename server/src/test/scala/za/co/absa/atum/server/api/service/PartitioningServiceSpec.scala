@@ -18,10 +18,11 @@ package za.co.absa.atum.server.api.service
 
 import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, MeasureDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, CheckpointDTO, MeasureDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.PartitioningRepository
+import za.co.absa.atum.server.model.CheckpointMeasurements
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
 import zio.test.Assertion.failsWithA
@@ -54,6 +55,11 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO1))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO2))
+    .thenReturn(ZIO.fail(DatabaseError("boom!")))
+
+  when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO1))
+    .thenReturn(ZIO.succeed(Seq(checkpointMeasurements1, checkpointMeasurements2)))
+  when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO2))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
@@ -118,6 +124,19 @@ class PartitioningServiceSpec extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningDTO2).exit)(
+            failsWithA[ServiceError]
+          )
+        }
+      ),
+
+      suite("GetPartitioningCheckpointsSuite")(
+        test("Returns expected Right with Seq[CheckpointMeasurements]") {
+          for {
+            result <- PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO1)
+          } yield assertTrue(result.isInstanceOf[Seq[CheckpointDTO]])
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(
             failsWithA[ServiceError]
           )
         }

@@ -159,6 +159,17 @@ trait TestData {
     checkpointEndTime = Some(ZonedDateTime.now())
   )
 
+  protected val checkpointMeasurements2: CheckpointMeasurements = CheckpointMeasurements(
+    idCheckpoint = UUID.randomUUID(),
+    checkpointName = "name",
+    author = "author",
+    measureName = measureDTO2.measureName,
+    measureColumns = measureDTO2.measuredColumns,
+    measurementValue = defaultJson,
+    checkpointStartTime = ZonedDateTime.now(),
+    checkpointEndTime = Some(ZonedDateTime.now())
+  )
+
   // Checkpoint DTO
   protected val checkpointDTO: CheckpointDTO = CheckpointDTO(
     id = UUID.randomUUID(),
