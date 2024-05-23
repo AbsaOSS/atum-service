@@ -43,7 +43,6 @@ flywayLocations := FlywayConfiguration.flywayLocations
 flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
 libraryDependencies ++= flywayDependencies
 
-
 /**
  * Module `server` is the service application that collects and stores measured data And upo request retrives them
  */

@@ -1,5 +1,27 @@
 # Atum Service
 
+- [Atum Service](#atum-service)
+    - [Modules](#modules)
+        - [Agent `agent/`](#agent-agent)
+        - [Server `server/`](#server-server)
+        - [Data Model `model/`](#data-model-model)
+        - [Database `database/`](#database-database)
+    - [Vocabulary](#vocabulary)
+        - [Atum Agent](#atum-agent)
+        - [Partitioning](#partitioning)
+        - [Atum Context](#atum-context)
+        - [Measure](#measure)
+        - [Measurement](#measurement)
+        - [Checkpoint](#checkpoint)
+        - [Data Flow](#data-flow)
+    - [How to generate Code coverage report](#how-to-generate-code-coverage-report)
+    - [How to Run in IntelliJ](#how-to-run-in-intellij)
+    - [How to Run Tests](#how-to-run-tests)
+        - [Test controls](#test-controls)
+        - [Run Unit Tests](#run-unit-tests)
+        - [Run Integration Tests](#run-integration-tests)
+    - [How to Release](#how-to-release)
+
 Atum Service is a data completeness and accuracy application meant to be used for data processed by Apache Spark.
 
 One of the challenges regulated industries face is the requirement to track and prove that their systems preserve
@@ -130,10 +152,10 @@ even if it involves multiple applications or ETL pipelines.
 ```sbt
 sbt jacoco
 ```
+
 Code coverage wil be generated on path:
 ```
-{project-root}/atum-service/target/spark{spark_version}-jvm-{scala_version}/jacoco/report/html
-{project-root}/atum-service-test/target/jvm-{scala_version}/jacoco/report/html
+{project-root}/{module}/target/jvm-{scala_version}/jacoco/report/html
 ```
 
 ## How to Run in IntelliJ
@@ -141,6 +163,30 @@ Code coverage wil be generated on path:
 To make this project runnable via IntelliJ, do the following:
 - Make sure that your configuration in `server/src/main/resources/reference.conf` 
   is configured according to your needs
+
+## How to Run Tests
+
+### Test controls
+
+See the commands configured in the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-Practices.html#.sbtrc) file to provide different testing profiles.
+
+### Run Unit Tests
+Use the `test` command to execute all unit tests, skipping all other types of tests. 
+```
+sbt test
+```
+
+### Run Integration Tests
+Use the `testIT` command to execute all Integration tests, skipping all other test types.
+```
+sbt testIT
+```
+
+Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules.
+- Hint: project custom command
+```
+sbt testDB
+```
 
 
 ## How to Release
