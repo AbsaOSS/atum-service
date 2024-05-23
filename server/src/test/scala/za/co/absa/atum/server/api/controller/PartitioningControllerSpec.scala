@@ -47,7 +47,7 @@ object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(ServiceError("boom!")))
 
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO1))
-    .thenReturn(ZIO.succeed(Seq(checkpointDTO1, checkpointDTO2)))
+    .thenReturn(ZIO.succeed(Seq(checkpointDTO1, checkpointDTO4)))
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO2))
     .thenReturn(ZIO.succeed(Seq.empty))
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
@@ -84,7 +84,7 @@ object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
         test("Returns expected Seq[MeasureDTO]") {
           for {
             result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue(result == Seq(checkpointDTO1, checkpointDTO2))
+          } yield assertTrue(result == Seq(checkpointDTO1, checkpointDTO4))
         },
         test("Returns expected empty sequence") {
           for {

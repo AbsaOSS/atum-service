@@ -170,17 +170,6 @@ trait TestData {
     checkpointEndTime = Some(ZonedDateTime.now())
   )
 
-  // Checkpoint DTO
-  protected val checkpointDTO: CheckpointDTO = CheckpointDTO(
-    id = UUID.randomUUID(),
-    name = "name",
-    author = "author",
-    partitioning = checkpointQueryDTO1.partitioning,
-    processStartTime = ZonedDateTime.now(),
-    processEndTime = None,
-    measurements = measurementsDTO1.toSet
-  )
-
   // Additional Data submit DTO
   protected val additionalDataSubmitDTO1: AdditionalDataSubmitDTO = AdditionalDataSubmitDTO(
     partitioning = Seq.empty,
@@ -205,8 +194,20 @@ trait TestData {
     measures = Set(MeasureDTO("count", Seq("1")))
   )
 
-  // Checkpoint
+  // Checkpoint DTO
   protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
+    id = UUID.randomUUID(),
+    name = "name",
+    author = "author",
+    partitioning = checkpointQueryDTO1.partitioning,
+    processStartTime = ZonedDateTime.now(),
+    processEndTime = None,
+    measurements = measurementsDTO1.toSet
+  )
+
+  protected val checkpointDTO2: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
+
+  protected val checkpointDTO4: CheckpointDTO = CheckpointDTO(
     id = UUID.randomUUID(),
     name = "name",
     author = "author",
@@ -215,8 +216,6 @@ trait TestData {
     processEndTime = None,
     measurements = Set.empty
   )
-
-  protected val checkpointDTO2: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
   protected val checkpointDTO3: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
