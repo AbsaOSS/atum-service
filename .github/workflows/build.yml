@@ -25,9 +25,6 @@ on:
 jobs:
   build-agent-and-model:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        scala: [2.11.12, 2.12.18, 2.13.11]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -38,10 +35,25 @@ jobs:
         with:
           java-version: "adopt@1.8"
 
-      - name: Build and run tests
-        run: sbt "project agent" ++${{matrix.scala}} test doc "project model" ++${{matrix.scala}} test doc
+      - name: Build and run unit tests
+        run: sbt "project agent" test doc "project model" test doc
 
-  build-server:
+  build-server-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.11.0-11"
+
+      - name: Build and run unit tests
+        run: sbt "project server" test
+
+  build-server-integration:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -56,9 +68,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    strategy:
-      matrix:
-        scala: [2.13.11]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -72,5 +81,40 @@ jobs:
       - name: Prepare testing database
         run: sbt flywayMigrate
 
-      - name: Build and run tests
-        run: sbt "project server" ++${{matrix.scala}} test doc
+      - name: Build and run integration tests
+        run: sbt "project server" testIT doc
+
+  build-database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: atum_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.8"
+
+      # Fails on balta dbConnection error issue: https://github.com/AbsaOSS/balta/issues/23
+#      - name: Build and run unit tests
+#        run: sbt "project database" test
+
+      - name: Prepare testing database
+        run: sbt flywayMigrate
+
+      - name: Build and run database/integration tests
+        run: sbt testDB doc

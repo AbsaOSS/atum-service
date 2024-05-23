@@ -33,6 +33,8 @@ object Setup {
     scalacOptions ++= Setup.commonScalacOptions,
     Test / parallelExecution := false,
     jacocoExcludes := JacocoSetup.jacocoProjectExcludes(),
+    (assembly / test) := {},
+    (publish / test) := { (Test / testOnly).toTask(" *UnitTests").value }
   )
 
   val serverAndDbScalaVersion: Version = scala213 //covers REST server and database modules
