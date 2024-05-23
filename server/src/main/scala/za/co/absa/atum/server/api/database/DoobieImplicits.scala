@@ -162,7 +162,6 @@ object DoobieImplicits {
     case MeasureResultDTO.ResultValueType.Long        => "Long"
     case MeasureResultDTO.ResultValueType.BigDecimal  => "BigDecimal"
     case MeasureResultDTO.ResultValueType.Double      => "Double"
-    case _ => "QWEQWEQWE"
   }
 
   implicit val decodeResultValueType: Decoder[MeasureResultDTO.ResultValueType] = Decoder.decodeString.emap {
