@@ -40,8 +40,6 @@ case class CheckpointFromDB(
 object CheckpointFromDB {
 
   private def extractMainValue(json: Json): Either[Error, MeasureResultDTO.TypedValue] = {
-    println(json.toString())
-    println(json)
     json.as[MeasureResultDTO].map(_.mainValue)
   }
 
