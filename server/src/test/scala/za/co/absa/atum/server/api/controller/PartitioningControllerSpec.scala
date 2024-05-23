@@ -17,6 +17,7 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
@@ -26,19 +27,32 @@ import zio._
 import zio.test._
 
 object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
+
   private val partitioningServiceMock = mock(classOf[PartitioningService])
+
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
     .thenReturn(ZIO.right(()))
-  when(partitioningServiceMock.getPartitioningMeasures(partitioningDTO1))
-    .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
-  when(partitioningServiceMock.getPartitioningAdditionalData(partitioningDTO1))
-    .thenReturn(ZIO.succeed(Map.empty))
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(ServiceError("boom!")))
+
+  when(partitioningServiceMock.getPartitioningMeasures(partitioningDTO1))
+    .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
+
+  when(partitioningServiceMock.getPartitioningAdditionalData(partitioningDTO1))
+    .thenReturn(ZIO.succeed(Map.empty))
+
   when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1))
     .thenReturn(ZIO.right(()))
   when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
     .thenReturn(ZIO.fail(ServiceError("boom!")))
+
+  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO1))
+    .thenReturn(ZIO.succeed(Seq(checkpointDTO1, checkpointDTO2)))
+  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO2))
+    .thenReturn(ZIO.succeed(Seq.empty))
+  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
+    .thenReturn(ZIO.fail(ServiceError("boom!")))
+
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -61,6 +75,24 @@ object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
         },
         test ("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+
+      suite("GetPartitioningMeasuresSuite")(
+        test("Returns expected Seq[MeasureDTO]") {
+          for {
+            result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO1)
+          } yield assertTrue(result == Seq(checkpointDTO1, checkpointDTO2))
+        },
+        test("Returns expected empty sequence") {
+          for {
+            result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO2)
+          } yield assertTrue(result == Seq.empty)
+        },
+        test("Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO3).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }
