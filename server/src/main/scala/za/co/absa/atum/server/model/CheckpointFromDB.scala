@@ -39,8 +39,11 @@ case class CheckpointFromDB(
 
 object CheckpointFromDB {
 
-  private def extractMainValue(json: Json): Either[Error, MeasureResultDTO.TypedValue] =
+  private def extractMainValue(json: Json): Either[Error, MeasureResultDTO.TypedValue] = {
+    println(json.toString())
+    println(json)
     json.as[MeasureResultDTO].map(_.mainValue)
+  }
 
   private def extractSupportValues(json: Json): Either[Error, Map[String, MeasureResultDTO.TypedValue]] =
     json.as[MeasureResultDTO].map(_.supportValues)
