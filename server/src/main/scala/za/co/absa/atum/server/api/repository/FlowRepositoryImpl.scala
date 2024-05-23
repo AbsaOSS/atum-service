@@ -16,14 +16,15 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryResultDTO}
+import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 
 class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints) extends FlowRepository with BaseRepository {
 
-  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointQueryResultDTO]] = {
+  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]] = {
     dbCall(getFlowCheckpointsFn(checkpointQueryDTO), "getFlowCheckpoints")
   }
 

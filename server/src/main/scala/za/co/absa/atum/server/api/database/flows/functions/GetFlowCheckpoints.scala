@@ -20,11 +20,11 @@ import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
 import play.api.libs.json.Json
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryResultDTO}
+import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
-import za.co.absa.atum.server.model.PartitioningForDB
+import za.co.absa.atum.server.model.{CheckpointFromDB, PartitioningForDB}
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.doobie.DoobieEngine
 import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
@@ -37,7 +37,7 @@ import io.circe.syntax.EncoderOps
 import io.circe.generic.auto._
 
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointQueryResultDTO, Task] {
+    extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task] {
 
   override val fieldsToSelect: Seq[String] = Seq(
     "id_checkpoint",
@@ -48,7 +48,7 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
     "checkpoint_start_time", "checkpoint_end_time",
   )
 
-  override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointQueryResultDTO]): Fragment = {
+  override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointFromDB]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningNormalized = Json.toJson(partitioning).toString
 
