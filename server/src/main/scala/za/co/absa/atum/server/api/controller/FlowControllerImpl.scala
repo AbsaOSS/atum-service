@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryResultDTO, CheckpointSubmitDTO}
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointDTO}
 import za.co.absa.atum.server.api.service.FlowService
 import za.co.absa.atum.server.model.ErrorResponse
 import zio._
@@ -24,8 +24,8 @@ import zio._
 class FlowControllerImpl(flowService: FlowService)
   extends FlowController with BaseController {
 
-  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ErrorResponse, Seq[CheckpointQueryResultDTO]] = {
-    serviceCall[Seq[CheckpointQueryResultDTO], Seq[CheckpointQueryResultDTO]](
+  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ErrorResponse, Seq[CheckpointDTO]] = {
+    serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
       flowService.getFlowCheckpoints(checkpointQueryDTO),
       r => r
     )

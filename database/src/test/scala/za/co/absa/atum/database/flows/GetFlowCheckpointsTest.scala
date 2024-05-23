@@ -229,12 +229,14 @@ class GetFlowCheckpointsTest extends DBTestSuite {
         assert(row1.getString("status_text").contains("OK"))
         assert(row1.getUUID("id_checkpoint").contains(checkpointId))
         assert(row1.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
+        assert(row1.getString("author").contains("ObviouslySomeTest"))
+        assert(row1.getBoolean("measured_by_atum_agent").contains(true))
         assert(row1.getOffsetDateTime("checkpoint_start_time").contains(startTime))
         assert(row1.getOffsetDateTime("checkpoint_end_time").contains(endTime))
 
         val measure1 = MeasuredDetails(
           row1.getString("measure_name").get,
-          row1.getArray[String]("measure_columns").map(_.toList).get,
+          row1.getArray[String]("measured_columns").map(_.toList).get,
           row1.getJsonB("measurement_value").get
         )
 
@@ -243,12 +245,14 @@ class GetFlowCheckpointsTest extends DBTestSuite {
         assert(row2.getString("status_text").contains("OK"))
         assert(row2.getUUID("id_checkpoint").contains(checkpointId))
         assert(row2.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
+        assert(row1.getString("author").contains("ObviouslySomeTest"))
+        assert(row1.getBoolean("measured_by_atum_agent").contains(true))
         assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTime))
         assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTime))
 
         val measure2 = MeasuredDetails(
           row2.getString("measure_name").get,
-          row2.getArray[String]("measure_columns").map(_.toList).get,
+          row2.getArray[String]("measured_columns").map(_.toList).get,
           row2.getJsonB("measurement_value").get
         )
 

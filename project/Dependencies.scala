@@ -28,6 +28,7 @@ object Dependencies {
     val balta = "0.1.0"
 
     val jacksonModuleScala = "2.14.2"
+    val circeVersion = "0.14.5"
 
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
@@ -115,12 +116,17 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
+    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeVersion
+    lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeVersion
+
     Seq(
       jacksonModuleScala,
       json4sExt,
       json4sCore,
       json4sJackson,
-      json4sNative
+      json4sNative,
+      circeCore,
+      circeParser,
     )
   }
 
@@ -163,6 +169,7 @@ object Dependencies {
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
+    lazy val pgCirceDoobie = "org.tpolecat" %% "doobie-postgres-circe" % "1.0.0-RC2"
 
     // aws
     lazy val awsSecretsManagerSdk = awsSdkOrg % "secretsmanager" % Versions.awssdk
@@ -175,6 +182,7 @@ object Dependencies {
 
     Seq(
       faDbDoobie,
+      pgCirceDoobie,
       zioCore,
       zioMacros,
       zioLogging,
@@ -244,7 +252,7 @@ object Dependencies {
       jsonSerdeDependencies(scalaVersion)
   }
 
- def databaseDependencies: Seq[ModuleID] = {
+  def databaseDependencies: Seq[ModuleID] = {
     lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % Test
     lazy val balta =      "za.co.absa"      %% "balta"      % Versions.balta      % Test
 

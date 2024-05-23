@@ -16,40 +16,19 @@
 
 package za.co.absa.atum.model.dto
 
+import io.circe.Json
 import java.time.ZonedDateTime
 import java.util.UUID
 
-// TODO REMOVE
-case class MeasureResultDTO1(
-                             mainValue: MeasureResultDTO1.TypedValue1,
-                             // TODO READ doobie Map[String, MeasureResultDTO1.TypedValue1]
-                             supportValues: Map[String, String /*MeasureResultDTO1.TypedValue1*/] = Map.empty
-                           )
-
-object MeasureResultDTO1 {
-  case class TypedValue1(
-                         value: String,
-                          // TODO READ doobie sealed trait ResultValueType
-                         valueType: String//ResultValueType1
-                       )
-
-  sealed trait ResultValueType1
-
-  object ResultValueType1 {
-    case object String extends ResultValueType1
-    case object Long extends ResultValueType1
-    case object BigDecimal extends ResultValueType1
-    case object Double extends ResultValueType1
-  }
-
-}
-
+// TODO move to server?! It's not gonna be used for API communication - it's only for internal DB model (db -> scala)
 case class CheckpointQueryResultDTO(
-  idCheckpoint: UUID,
-  checkpointName: String,
-  measureName: String,
-  measureColumns: Seq[String],
-  measurementValue: MeasureResultDTO1, // TODO MeasureResultDTO
-  checkpointStartTime: ZonedDateTime,
-  checkpointEndTime:  Option[ZonedDateTime],
-)
+   idCheckpoint: UUID,
+   checkpointName: String,
+   author: String,
+   measuredByAtumAgent: Boolean = false,
+   measureName: String,
+   measuredColumns: Seq[String],
+   measurementValue: Json,
+   checkpointStartTime: ZonedDateTime,
+   checkpointEndTime:  Option[ZonedDateTime]
+ )

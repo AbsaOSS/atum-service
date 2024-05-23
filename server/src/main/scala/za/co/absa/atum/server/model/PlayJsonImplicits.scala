@@ -19,7 +19,6 @@ package za.co.absa.atum.server.model
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
-import za.co.absa.atum.model.dto.MeasureResultDTO1.ResultValueType1
 import za.co.absa.atum.model.dto._
 
 object PlayJsonImplicits {
@@ -58,6 +57,9 @@ object PlayJsonImplicits {
     }
   }
 
+  implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
+  implicit val writesMeasureDTO: Writes[MeasureDTO] = Json.writes[MeasureDTO]
+
   implicit val readsTypedValue: Reads[MeasureResultDTO.TypedValue] = Json.reads[MeasureResultDTO.TypedValue]
   implicit val writesTypedValue: Writes[MeasureResultDTO.TypedValue] = Json.writes[MeasureResultDTO.TypedValue]
 
@@ -69,17 +71,14 @@ object PlayJsonImplicits {
 
   implicit val writesMeasureResultDTO: Writes[MeasureResultDTO] = Json.writes[MeasureResultDTO]
 
-  implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
-  implicit val writesMeasureDTO: Writes[MeasureDTO] = Json.writes[MeasureDTO]
-
   implicit val readsMeasurementDTO: Reads[MeasurementDTO] = Json.reads[MeasurementDTO]
   implicit val writesMeasurementDTO: Writes[MeasurementDTO] = Json.writes[MeasurementDTO]
 
   implicit val readsPartitionDTO: Reads[PartitionDTO] = Json.reads[PartitionDTO]
   implicit val writesPartitionDTO: Writes[PartitionDTO] = Json.writes[PartitionDTO]
 
-  implicit val readsCheckpointDTO: Reads[CheckpointSubmitDTO] = Json.reads[CheckpointSubmitDTO]
-  implicit val writesCheckpointDTO: Writes[CheckpointSubmitDTO] = Json.writes[CheckpointSubmitDTO]
+  implicit val readsCheckpointDTO: Reads[CheckpointDTO] = Json.reads[CheckpointDTO]
+  implicit val writesCheckpointDTO: Writes[CheckpointDTO] = Json.writes[CheckpointDTO]
 
   implicit val readsPartitioningSubmitDTO: Reads[PartitioningSubmitDTO] = Json.reads[PartitioningSubmitDTO]
   implicit val writesPartitioningSubmitDTO: Writes[PartitioningSubmitDTO] = Json.writes[PartitioningSubmitDTO]
@@ -96,46 +95,4 @@ object PlayJsonImplicits {
 
   implicit val readsCheckpointQueryDTO: Reads[CheckpointQueryDTO] = Json.reads[CheckpointQueryDTO]
   implicit val writesCheckpointQueryDTO: Writes[CheckpointQueryDTO] = Json.writes[CheckpointQueryDTO]
-
-
-  // TODO REMOVE
-
-
-  implicit val resultValueTypeReads1: Reads[ResultValueType1] = new Reads[ResultValueType1] {
-    override def reads(json: JsValue): JsResult[ResultValueType1] = json match {
-      case JsString("String") => JsSuccess(ResultValueType1.String)
-      case JsString("Long") => JsSuccess(ResultValueType1.Long)
-      case JsString("BigDecimal") => JsSuccess(ResultValueType1.BigDecimal)
-      case JsString("Double") => JsSuccess(ResultValueType1.Double)
-      case _ => JsError("Invalid ResultValueType1")
-    }
-  }
-
-  implicit val resultValueTypeWrites1: Writes[ResultValueType1] = new Writes[ResultValueType1] {
-    def writes(resultValueType: ResultValueType1): JsValue = resultValueType match {
-      case ResultValueType1.String       => Json.toJson("String")
-      case ResultValueType1.Long         => Json.toJson("Long")
-      case ResultValueType1.BigDecimal   => Json.toJson("BigDecimal")
-      case ResultValueType1.Double       => Json.toJson("Double")
-    }
-  }
-
-  implicit val readsTypedValue1: Reads[MeasureResultDTO1.TypedValue1] = Json.reads[MeasureResultDTO1.TypedValue1]
-  implicit val writesTypedValue1: Writes[MeasureResultDTO1.TypedValue1] = Json.writes[MeasureResultDTO1.TypedValue1]
-
-  implicit val readsMeasureResultDTO1: Reads[MeasureResultDTO1] = {
-    ((__ \ "mainValue").read[MeasureResultDTO1.TypedValue1] and
-      (__ \ "supportValues").readNullable[Map[String, String /* MeasureResultDTO1.TypedValue1 */]].map(_.getOrElse(Map.empty))
-      )(MeasureResultDTO1.apply _)
-  }
-
-  implicit val writesMeasureResultDTO1: Writes[MeasureResultDTO1] = Json.writes[MeasureResultDTO1]
-
-
-
-
-  implicit val readsCheckpointQueryResultDTO: Reads[CheckpointQueryResultDTO] = Json.reads[CheckpointQueryResultDTO]
-  implicit val writesCheckpointQueryResultDTO: Writes[CheckpointQueryResultDTO] = Json.writes[CheckpointQueryResultDTO]
-
-
 }

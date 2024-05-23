@@ -15,18 +15,20 @@
  */
 
 CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
-    IN i_partitioning_of_flow JSONB,
-    IN i_limit                INT DEFAULT 5,
-    IN i_checkpoint_name      TEXT DEFAULT NULL,
-    OUT status                INTEGER,
-    OUT status_text           TEXT,
-    OUT id_checkpoint         UUID,
-    OUT checkpoint_name       TEXT,
-    OUT measure_name          TEXT,
-    OUT measure_columns       TEXT[],
-    OUT measurement_value     JSONB,
-    OUT checkpoint_start_time TIMESTAMP WITH TIME ZONE,
-    OUT checkpoint_end_time   TIMESTAMP WITH TIME ZONE
+    IN i_partitioning_of_flow  JSONB,
+    IN i_limit                 INT DEFAULT 5,
+    IN i_checkpoint_name       TEXT DEFAULT NULL,
+    OUT status                 INTEGER,
+    OUT status_text            TEXT,
+    OUT id_checkpoint          UUID,
+    OUT checkpoint_name        TEXT,
+    OUT author                 TEXT,
+    OUT measured_by_atum_agent BOOLEAN,
+    OUT measure_name           TEXT,
+    OUT measured_columns       TEXT[],
+    OUT measurement_value      JSONB,
+    OUT checkpoint_start_time  TIMESTAMP WITH TIME ZONE,
+    OUT checkpoint_end_time    TIMESTAMP WITH TIME ZONE
 ) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
@@ -53,14 +55,17 @@ $$
 --          specifying `i_checkpoint_name` parameter
 --
 -- Returns:
---      status              - Status code
---      status_text         - Status text
---      id_checkpoint       - id of retrieved checkpoint
---      checkpoint_name     - name of retrieved checkpoint
---      measure_name        - measure name associated with a given checkpoint
---      measure_columns     - measure columns associated with a given checkpoint
---      measurement_value   - measurement details associated with a given checkpoint
---      checkpoint_time     - time
+--      status                 - Status code
+--      status_text            - Status text
+--      id_checkpoint          - ID of retrieved checkpoint
+--      checkpoint_name        - Name of the retrieved checkpoint
+--      author                 - Author of the checkpoint
+--      measured_by_atum_agent - Flag indicating whether the checkpoint was measured by Atum Agent
+--                               (if false, data supplied manually)
+--      measure_name           - measure name associated with a given checkpoint
+--      measured_columns       - measure columns associated with a given checkpoint
+--      measurement_value      - measurement details associated with a given checkpoint
+--      checkpoint_time        - time
 --
 -- Status codes:
 --      11                  - OK
@@ -89,6 +94,7 @@ BEGIN
     RETURN QUERY
     SELECT 11 AS status, 'OK' AS status_text,
            CP.id_checkpoint, CP.checkpoint_name,
+           CP.created_by AS author, CP.measured_by_atum_agent,
            MD.measure_name, MD.measured_columns,
            M.measurement_value,
            CP.process_start_time AS checkpoint_start_time, CP.process_end_time AS checkpoint_end_time

@@ -23,6 +23,7 @@ import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryResultDTO}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
+import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.doobie.DoobieEngine
@@ -31,7 +32,9 @@ import zio._
 import zio.interop.catz._
 
 import doobie.postgres.implicits._
-import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import doobie.postgres.circe.jsonb.implicits._
+import io.circe.syntax.EncoderOps
+import io.circe.generic.auto._
 
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointQueryResultDTO, Task] {
@@ -39,7 +42,9 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
   override val fieldsToSelect: Seq[String] = Seq(
     "id_checkpoint",
     "checkpoint_name",
-    "measure_name", "measure_columns", "measurement_value",
+    "author",
+    "measured_by_atum_agent",
+    "measure_name", "measured_columns", "measurement_value",
     "checkpoint_start_time", "checkpoint_end_time",
   )
 
@@ -54,7 +59,7 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
                     partitioningNormalized
                   },
                   ${values.limit},
-                  ${values.checkpointName},
+                  ${values.checkpointName}
                 ) AS ${Fragment.const(alias)};"""
   }
 

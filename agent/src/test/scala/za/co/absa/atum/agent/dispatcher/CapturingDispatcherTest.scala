@@ -19,7 +19,7 @@ package za.co.absa.atum.agent.dispatcher
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointSubmitDTO, PartitionDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitionDTO, PartitioningDTO, PartitioningSubmitDTO}
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -35,8 +35,8 @@ class CapturingDispatcherTest extends AnyWordSpec with Matchers {
     emptyCfg.withValue("atum.dispatcher.capture.capture-limit", value)
   }
 
-  private def createCheckpoint(partition: PartitioningDTO): CheckpointSubmitDTO =
-    CheckpointSubmitDTO(
+  private def createCheckpoint(partition: PartitioningDTO): CheckpointDTO =
+    CheckpointDTO(
       id = UUID.randomUUID(),
       name = "name",
       author = "author",

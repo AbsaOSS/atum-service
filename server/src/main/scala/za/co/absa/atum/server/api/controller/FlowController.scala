@@ -16,12 +16,12 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryResultDTO}
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointDTO}
 import za.co.absa.atum.server.model.ErrorResponse
 import zio.IO
 import zio.macros.accessible
 
 @accessible
 trait FlowController {
-  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ErrorResponse, Seq[CheckpointQueryResultDTO]]
+  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ErrorResponse, Seq[CheckpointDTO]]
 }
