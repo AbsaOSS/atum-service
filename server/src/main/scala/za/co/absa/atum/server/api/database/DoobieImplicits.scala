@@ -20,7 +20,7 @@ import cats.Show
 import cats.data.NonEmptyList
 import doobie.postgres.implicits._
 import doobie.{Get, Put}
-import io.circe.Decoder
+import io.circe.{Decoder, Encoder}
 import org.postgresql.jdbc.PgArray
 import org.postgresql.util.PGobject
 import za.co.absa.atum.model.dto.MeasureResultDTO
@@ -155,7 +155,14 @@ object DoobieImplicits {
           }
         )
     }
+  }
 
+  implicit val encodeResultValueType: Encoder[MeasureResultDTO.ResultValueType] = Encoder.encodeString.contramap {
+    case MeasureResultDTO.ResultValueType.String      => "String"
+    case MeasureResultDTO.ResultValueType.Long        => "Long"
+    case MeasureResultDTO.ResultValueType.BigDecimal  => "BigDecimal"
+    case MeasureResultDTO.ResultValueType.Double      => "Double"
+    case _ => "QWEQWEQWE"
   }
 
   implicit val decodeResultValueType: Decoder[MeasureResultDTO.ResultValueType] = Decoder.decodeString.emap {
@@ -166,11 +173,12 @@ object DoobieImplicits {
     case other        => Left(s"Cannot decode $other as ResultValueType")
   }
 
+  implicit val encodeTypedValue: Encoder[MeasureResultDTO.TypedValue] =
+    Encoder.forProduct2("value", "valueType")(tv => (tv.value, tv.valueType))
+
   implicit val decodeTypedValue: Decoder[MeasureResultDTO.TypedValue] =
     Decoder.forProduct2("value", "valueType")(MeasureResultDTO.TypedValue.apply)
 
   implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] =
     Decoder.forProduct2("mainValue", "supportValues")(MeasureResultDTO.apply)
-
-
 }
