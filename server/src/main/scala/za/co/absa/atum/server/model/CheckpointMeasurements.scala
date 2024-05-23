@@ -29,5 +29,5 @@ case class CheckpointMeasurements(
   measureColumns: Seq[String],
   measurementValue: Json,
   checkpointStartTime: ZonedDateTime,
-  checkpointEndTime:  Option[ZonedDateTime]
+  checkpointEndTime: Option[ZonedDateTime]
 )

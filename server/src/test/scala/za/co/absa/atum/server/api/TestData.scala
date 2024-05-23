@@ -16,9 +16,15 @@
 
 package za.co.absa.atum.server.api
 
+import io.circe.{Json, parser}
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.server.model.CheckpointMeasurements
+
 import java.time.ZonedDateTime
 import java.util.UUID
+import MeasureResultDTO.TypedValue
+import MeasureResultDTO._
+import MeasureResultDTO.ResultValueType._
 
 trait TestData {
 
@@ -39,6 +45,25 @@ trait TestData {
     parentPartitioning = None,
     authorIfNew = ""
   )
+
+  protected val checkpointQueryDTO1: CheckpointQueryDTO = CheckpointQueryDTO(
+    partitioning = partitioningDTO1,
+    limit = Option(2),
+    checkpointName = Option("checkpointName")
+  )
+
+  protected val checkpointQueryDTO2: CheckpointQueryDTO = CheckpointQueryDTO(
+    partitioning = partitioningDTO2,
+    limit = Option(5),
+    checkpointName = Option("noCheckpoints")
+  )
+
+  protected val checkpointQueryDTO3: CheckpointQueryDTO = CheckpointQueryDTO(
+    partitioning = partitioningDTO3,
+    limit = None,
+    checkpointName = None
+  )
+
   protected val partitioningSubmitDTO2: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "differentAuthor")
 
@@ -62,11 +87,87 @@ trait TestData {
   )
   protected val additionalDataDTO3: AdditionalDataDTO = Map.empty
 
+  val mainValue = TypedValue(
+    value = "exampleMainValue",
+    valueType = String
+  )
+
+  val supportValue1 = TypedValue(
+    value = "123456789",
+    valueType = Long
+  )
+
+  val supportValue2 = TypedValue(
+    value = "12345.6789",
+    valueType = BigDecimal
+  )
+
+  // Measure Result DTO
+  protected val measureResultDTO1: MeasureResultDTO = MeasureResultDTO(
+    mainValue = mainValue,
+    supportValues = Map(
+      "key1" -> supportValue1,
+      "key2" -> supportValue2
+    )
+  )
+
+  protected val measureResultDTO2: MeasureResultDTO = MeasureResultDTO(
+    mainValue = mainValue,
+    supportValues = Map(
+      "key1" -> supportValue1,
+      "key2" -> supportValue2
+    )
+  )
+
+  // Measurement DTO
+  protected val measurementsDTO1: Seq[MeasurementDTO] = Seq(
+    MeasurementDTO(measureDTO1, measureResultDTO1),
+    MeasurementDTO(measureDTO2, measureResultDTO2)
+  )
+
   // Additional Data DTO as a sequence
   protected val additionalDataDTOSeq1: Seq[(String, Option[String])] = Seq(
     "key1" -> Some("value1"),
     "key2" -> None,
     "key3" -> Some("value3")
+  )
+
+  // Additional Data DTO as a map
+  val defaultJsonString: String =
+    """
+  {
+    "value": 1,
+    "name": "default",
+    "details": {
+      "info": "defaultInfo"
+    }
+  }
+  """
+
+  val defaultJson: Json = parser.parse(defaultJsonString).getOrElse(Json.Null)
+
+
+  // CheckpointMeasurement DTO
+  protected val checkpointMeasurements1: CheckpointMeasurements = CheckpointMeasurements(
+    idCheckpoint = UUID.randomUUID(),
+    checkpointName = "name",
+    author = "author",
+    measureName = measureDTO1.measureName,
+    measureColumns = measureDTO1.measuredColumns,
+    measurementValue = defaultJson,
+    checkpointStartTime = ZonedDateTime.now(),
+    checkpointEndTime = Some(ZonedDateTime.now())
+  )
+
+  // Checkpoint DTO
+  protected val checkpointDTO: CheckpointDTO = CheckpointDTO(
+    id = UUID.randomUUID(),
+    name = "name",
+    author = "author",
+    partitioning = checkpointQueryDTO1.partitioning,
+    processStartTime = ZonedDateTime.now(),
+    processEndTime = None,
+    measurements = measurementsDTO1.toSet
   )
 
   // Additional Data submit DTO
@@ -103,6 +204,7 @@ trait TestData {
     processEndTime = None,
     measurements = Set.empty
   )
+
   protected val checkpointDTO2: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
   protected val checkpointDTO3: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())

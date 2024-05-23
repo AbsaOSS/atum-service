@@ -8,7 +8,7 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.model.CheckpointMeasurements
 import zio.test.Assertion.failsWithA
 import zio.{Scope, ZIO}
-import zio.test.{Spec, TestEnvironment, assert}
+import zio.test._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbGet
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence._
