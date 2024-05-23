@@ -25,7 +25,7 @@ import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
 
-object FlowControllerSpec extends ZIOSpecDefault with TestData {
+object FlowControllerIntegrationTests extends ZIOSpecDefault with TestData {
   private val flowServiceMock = mock(classOf[FlowService])
   when(flowServiceMock.getFlowCheckpoints(checkpointQueryDTO1))
     .thenReturn(ZIO.fail(ServiceError("boom!")))
@@ -36,7 +36,7 @@ object FlowControllerSpec extends ZIOSpecDefault with TestData {
   private val flowServiceMockLayer = ZLayer.succeed(flowServiceMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
-    suite("FlowControllerSpec")(
+    suite("FlowControllerSuite")(
       suite("GetFlowCheckpointsSuite")(
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(FlowController.getFlowCheckpoints(checkpointQueryDTO1).exit)(

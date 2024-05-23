@@ -28,7 +28,7 @@ import zio.test._
 import zio.test.junit.ZTestJUnitRunner
 
 @RunWith(classOf[ZTestJUnitRunner])
-class FlowServiceSpec extends ZIOSpecDefault with TestData {
+class FlowServiceIntegrationTests extends ZIOSpecDefault with TestData {
   private val flowRepositoryMock = mock(classOf[FlowRepository])
 
   when(flowRepositoryMock.getFlowCheckpoints(checkpointQueryDTO1)).thenReturn(ZIO.fail(DatabaseError("boom!")))
@@ -39,7 +39,7 @@ class FlowServiceSpec extends ZIOSpecDefault with TestData {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("FlowServiceSpec")(
+    suite("FlowServiceSuite")(
       suite("GetFlowCheckpointsSuite")(
         test("Returns expected ServiceError") {
           assertZIO(FlowService.getFlowCheckpoints(checkpointQueryDTO1).exit)(
