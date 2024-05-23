@@ -19,7 +19,6 @@ import sbt.*
 import Dependencies.*
 import Dependencies.Versions.spark3
 import VersionAxes.*
-import JacocoSetup.*
 
 ThisBuild / scalaVersion := Setup.scala213.asString  // default version TODO
 
@@ -43,15 +42,6 @@ flywayPassword := FlywayConfiguration.flywayPassword
 flywayLocations := FlywayConfiguration.flywayLocations
 flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
 libraryDependencies ++= flywayDependencies
-
-//lazy val commonSettings = Seq(
-//  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
-//  Test / parallelExecution := false,
-//  jacocoExcludes := jacocoProjectExcludes(),
-//  (assembly / test) := {},
-//  (publish / test) := { (Test / testOnly).toTask(" *UnitTests").value }
-//)
-
 
 /**
  * Module `server` is the service application that collects and stores measured data And upo request retrives them

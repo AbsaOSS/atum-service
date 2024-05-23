@@ -149,16 +149,8 @@ even if it involves multiple applications or ETL pipelines.
 
 
 ## How to generate Code coverage report
-- requires java 8
 ```sbt
-sbt "project agent" jacoco
-```
-```sbt
-sbt "project model" jacoco
-```
-- requires java 11
-```sbt
-sbt "project server" jacoco
+sbt jacoco
 ```
 
 Code coverage wil be generated on path:
@@ -180,27 +172,17 @@ See the commands configured in the `.sbtrc` [(link)](https://www.scala-sbt.org/1
 
 ### Run Unit Tests
 Use the `test` command to execute all unit tests, skipping all other types of tests. 
-- requires java 8
 ```
-sbt "project agent" test "project model" test
-```
-```
-sbt "project database" test
-```
-- requires java 11
-```
-sbt "project server" test
+sbt test
 ```
 
 ### Run Integration Tests
 Use the `testIT` command to execute all Integration tests, skipping all other test types.
-- requires java 11
 ```
 sbt testIT
 ```
 
 Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules.
-- requires java 8
 - Hint: project custom command
 ```
 sbt testDB
