@@ -44,7 +44,7 @@ class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEng
     "author",
     "measured_by_atum_agent",
     "measure_name",
-    "measure_columns",
+    "measured_columns",
     "measurement_value",
     "checkpoint_start_time",
     "checkpoint_end_time",

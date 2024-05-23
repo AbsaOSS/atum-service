@@ -25,7 +25,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     OUT author                     TEXT,
     OUT measuredByAtumAgent        BOOLEAN,
     OUT measure_name               TEXT,
-    OUT measure_columns            TEXT[],
+    OUT measured_columns            TEXT[],
     OUT measurement_value          JSONB,
     OUT checkpoint_start_time      TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time        TIMESTAMP WITH TIME ZONE

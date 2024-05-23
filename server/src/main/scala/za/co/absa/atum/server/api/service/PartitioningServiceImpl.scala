@@ -61,7 +61,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]] = {
     repositoryCall(
       partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoint"
-    ).mapBoth(error => ServiceError(error.message), {
+    ).map {
       checkpointMeasurementsSeq =>
         checkpointMeasurementsSeq.map { cm =>
           CheckpointDTO(
@@ -95,7 +95,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
             )
           )
         }
-    })
+    }
   }
 
 }
