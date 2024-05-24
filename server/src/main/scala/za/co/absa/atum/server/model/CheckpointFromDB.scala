@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.model
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitioningDTO}
-import io.circe.{Error, Json}
+import io.circe.{DecodingFailure, Json}
 import io.circe.generic.auto._
 
 import java.time.ZonedDateTime
@@ -39,38 +39,32 @@ case class CheckpointFromDB(
 
 object CheckpointFromDB {
 
-  private def extractMainValue(json: Json): Either[Error, MeasureResultDTO.TypedValue] = {
-    json.as[MeasureResultDTO].map(_.mainValue)
-  }
-
-  private def extractSupportValues(json: Json): Either[Error, Map[String, MeasureResultDTO.TypedValue]] =
-    json.as[MeasureResultDTO].map(_.supportValues)
-
-  def toCheckpointDTO(partitioning: PartitioningDTO, checkpointQueryResult: CheckpointFromDB): CheckpointDTO = {
-
-    val measureResultOrErr = for {
-      mainValue <- extractMainValue(checkpointQueryResult.measurementValue)
-      supportValues <- extractSupportValues(checkpointQueryResult.measurementValue)
-    } yield MeasureResultDTO(mainValue, supportValues)
+  def toCheckpointDTO(
+    partitioning: PartitioningDTO,
+    checkpointQueryResult: CheckpointFromDB
+  ): Either[DecodingFailure, CheckpointDTO] = {
+    val measureResultOrErr = checkpointQueryResult.measurementValue.as[MeasureResultDTO]
 
     measureResultOrErr match {
-      case Left(err) => throw err
+      case Left(err) => Left(err)
       case Right(measureResult) =>
-        CheckpointDTO(
-          id = checkpointQueryResult.idCheckpoint,
-          name = checkpointQueryResult.checkpointName,
-          author = checkpointQueryResult.author,
-          measuredByAtumAgent = checkpointQueryResult.measuredByAtumAgent,
-          partitioning = partitioning,
-          processStartTime = checkpointQueryResult.checkpointStartTime,
-          processEndTime = checkpointQueryResult.checkpointEndTime,
-          measurements = Set(
-            MeasurementDTO(
-              measure = MeasureDTO(
-                measureName = checkpointQueryResult.measureName,
-                measuredColumns = checkpointQueryResult.measuredColumns
-              ),
-              result = measureResult
+        Right(
+          CheckpointDTO(
+            id = checkpointQueryResult.idCheckpoint,
+            name = checkpointQueryResult.checkpointName,
+            author = checkpointQueryResult.author,
+            measuredByAtumAgent = checkpointQueryResult.measuredByAtumAgent,
+            partitioning = partitioning,
+            processStartTime = checkpointQueryResult.checkpointStartTime,
+            processEndTime = checkpointQueryResult.checkpointEndTime,
+            measurements = Set(
+              MeasurementDTO(
+                measure = MeasureDTO(
+                  measureName = checkpointQueryResult.measureName,
+                  measuredColumns = checkpointQueryResult.measuredColumns
+                ),
+                result = measureResult
+              )
             )
           )
         )

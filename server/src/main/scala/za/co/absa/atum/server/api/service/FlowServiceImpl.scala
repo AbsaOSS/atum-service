@@ -27,14 +27,16 @@ class FlowServiceImpl(flowRepository: FlowRepository)
   extends FlowService with BaseService {
 
   override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]] = {
-    repositoryCall(
-      flowRepository.getFlowCheckpoints(checkpointQueryDTO), "getFlowCheckpoints"
-    ).map({
-      checkpointQueryResults =>
-        checkpointQueryResults.map { checkpointQueryResult =>
-          CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointQueryResult)
-        }
-    })
+    for {
+      checkpointsFromDB <- repositoryCall(
+        flowRepository.getFlowCheckpoints(checkpointQueryDTO), "getFlowCheckpoints"
+      )
+      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {
+        checkpointFromDB =>
+          ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
+            .mapError(error => ServiceError(error.getMessage))
+      }
+    } yield checkpointDTOs
   }
 
 }
