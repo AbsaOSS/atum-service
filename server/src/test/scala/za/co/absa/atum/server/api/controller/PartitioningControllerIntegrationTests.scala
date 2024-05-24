@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
