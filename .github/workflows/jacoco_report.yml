@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: JaCoCo report
+name: JaCoCo Report
 
 on:
   pull_request:
@@ -29,7 +29,7 @@ env:
 
 jobs:
   build-test-and-measure:
-    name: Build, test and measure
+    name: Build, Test and Measure
     runs-on: ubuntu-latest
 
     services:

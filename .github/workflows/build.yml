@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: Build all modules
+name: Build All Modules
 
 on:
   pull_request:
@@ -24,7 +24,7 @@ on:
 
 jobs:
   test-agent-and-model:
-    name: Test agent and model
+    name: Test Agent and Model
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -43,7 +43,7 @@ jobs:
         run: sbt "project model" testIT "project agent_spark3" testIT
 
   test-database-and-server:
-    name: Test database and server
+    name: Test Database and Server
     runs-on: ubuntu-latest
     services:
       postgres:
