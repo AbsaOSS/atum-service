@@ -26,8 +26,7 @@ import zio.test.Assertion.{equalTo, failsWithA}
 import zio._
 import zio.test._
 
-object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
-
+object PartitioningControllerIntegrationTests extends ZIOSpecDefault with TestData {
   private val partitioningServiceMock = mock(classOf[PartitioningService])
 
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
@@ -56,7 +55,7 @@ object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
-    suite("PartitioningControllerSpec")(
+    suite("PartitioningControllerSuite")(
       suite("CreatePartitioningIfNotExistsSuite")(
         test("Returns expected AtumContextDTO") {
           for {
@@ -73,7 +72,7 @@ object PartitioningControllerSpec extends ZIOSpecDefault with TestData {
         test("Returns expected AdditionalDataSubmitDTO") {
           assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO1))(equalTo(additionalDataSubmitDTO1))
         },
-        test ("Returns expected InternalServerErrorResponse") {
+        test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )

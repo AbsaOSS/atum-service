@@ -17,16 +17,15 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    val partitioningDTO: PartitioningDTO = Seq(
+    val partitioningDTO1: PartitioningDTO = Seq(
       PartitionDTO("string1", "string1"),
       PartitionDTO("string2", "string2")
     )
 
-
     suite("GetPartitioningCheckpointsIntegrationTests")(
       test("Returns expected sequence of Checkpoints with existing partitioning") {
         val partitioningQueryDTO: CheckpointQueryDTO = CheckpointQueryDTO(
-          partitioning = partitioningDTO,
+          partitioning = partitioningDTO1,
           limit = Some(10),
           checkpointName = Some("checkpointName")
         )
