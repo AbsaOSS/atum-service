@@ -40,7 +40,7 @@ jobs:
         run: sbt "project model" test doc "project agent_spark3" test doc
 
       - name: Build and run integration tests
-        run: sbt "project model" testIT "project agent_spark3" test IT
+        run: sbt "project model" testIT "project agent_spark3" testIT
 
   test-database-and-server:
     name: Test database and server
