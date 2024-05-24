@@ -77,7 +77,7 @@ jobs:
         uses: madrapps/jacoco-report@v1.6.1
         with:
           name: agent-jacoco-report
-          paths: ${{ github.workspace }}/agent_spark3/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
+          paths: ${{ github.workspace }}/agent/target/spark3-jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{ env.overall }}
           min-coverage-changed-file: ${{ env.changed }}
