@@ -12,14 +12,14 @@ docker run --name=atum_db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=atum_db -
 sbt flywayMigrate
 
 # kill & remove docker container (optional; only if using dockerized postgres instance)
-docker kill aul_db
-docker rm aul_db
+docker kill atum_db
+docker rm atum_db
 ```
 
 ### Using local postgres instance
-
+- create database `atum_db`
+- migrate scripts
 ```zsh
-# migrate scripts
 sbt flywayMigrate
 ```
 
