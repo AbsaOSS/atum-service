@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+ThisBuild / organization := "za.co.absa.atum-service"
+sonatypeProfileName := "za.co.absa"
+
+publish / skip := true //skipping publishing of the root of the project, publishing only some submodules
+
 ThisBuild / scmInfo := Some(
   ScmInfo(
     browseUrl = url("https://github.com/AbsaOSS/atum-service/tree/master"),

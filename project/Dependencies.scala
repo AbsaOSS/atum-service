@@ -13,20 +13,14 @@
  * limitations under the License.
  */
 
-import sbt._
+import sbt.*
+import za.co.absa.commons.version.{Component, Version}
 
 object Dependencies {
 
   object Versions {
-    val spark2 = "2.4.8"
+    val spark2 = "2.4.7"
     val spark3 = "3.3.2"
-
-    val scala211 = "2.11.12"
-    val scala212 = "2.12.18"
-    val scala213 = "2.13.11"
-
-    val serviceScalaVersion: String = scala213
-    val clientSupportedScalaVersions: Seq[String] = Seq(scala211, scala212, scala213)
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
@@ -54,6 +48,19 @@ object Dependencies {
 
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"
+    def json4s(scalaVersion: Version): String = {
+      // TODO done this impractical way until https://github.com/AbsaOSS/commons/issues/134
+      val maj2 = Component("2")
+      val min11 = Component("11")
+      val min12 = Component("12")
+      val min13 = Component("13")
+      scalaVersion.components match {
+        case Seq(`maj2`, `min11`, _) => json4s_spark2
+        case Seq(`maj2`, `min12`, _) => json4s_spark3
+        case Seq(`maj2`, `min13`, _) => json4s_spark3
+        case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
+      }
+    }
 
     val logback = "1.2.3"
 
@@ -72,41 +79,23 @@ object Dependencies {
     val awssdk = "2.23.15"
 
     val scalaNameof = "4.0.0"
-  }
 
+    val absaCommons = "2.0.0"
 
-  private def truncateVersion(version: String, parts: Int): String = {
-    version.split("\\.").take(parts).mkString(".")
-  }
+    def truncateVersion(version: String, parts: Int): String = {
+      version.split("\\.").take(parts).mkString(".")
+    }
 
-  def getVersionUpToMinor(version: String): String = {
-    truncateVersion(version, 2)
-  }
+    def getVersionUpToMinor(version: String): String = {
+      truncateVersion(version, 2)
+    }
 
-  def getVersionUpToMajor(version: String): String = {
-    truncateVersion(version, 1)
-  }
-
-  // this is just for the compile-depended printing task
-  def sparkVersionForScala(scalaVersion: String): String = {
-    truncateVersion(scalaVersion, 2) match {
-      case "2.11" => Versions.spark2
-      case "2.12" => Versions.spark3
-      case "2.13" => Versions.spark3
-      case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
+    def getVersionUpToMajor(version: String): String = {
+      truncateVersion(version, 1)
     }
   }
 
-  def json4sVersionForScala(scalaVersion: String): String = {
-    truncateVersion(scalaVersion, 2) match {
-      case "2.11" => Versions.json4s_spark2
-      case "2.12" => Versions.json4s_spark3
-      case "2.13" => Versions.json4s_spark3
-      case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
-    }
-  }
-
-  def testDependencies: Seq[ModuleID] = {
+  private def testDependencies: Seq[ModuleID] = {
     lazy val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
     lazy val mockito = "org.mockito" %% "mockito-scala" % Versions.scalaMockito % Test
 
@@ -116,8 +105,8 @@ object Dependencies {
     )
   }
 
-  def jsonSerdeDependencies: Seq[ModuleID] = {
-    val json4sVersion = json4sVersionForScala(Versions.scala212)
+  private def jsonSerdeDependencies(scalaVersion: Version): Seq[ModuleID] = {
+    val json4sVersion = Versions.json4s(scalaVersion)
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
 
@@ -211,12 +200,13 @@ object Dependencies {
       zioTestSbt,
       zioTestJunit,
       sbtJunitInterface
-    )
+    ) ++
+      testDependencies
   }
 
-  def agentDependencies(sparkVersion: String, scalaVersion: String): Seq[ModuleID] = {
-    val sparkMinorVersion = getVersionUpToMinor(sparkVersion)
-    val scalaMinorVersion = getVersionUpToMinor(scalaVersion)
+  def agentDependencies(sparkVersion: String, scalaVersion: Version): Seq[ModuleID] = {
+    val sparkMinorVersion = Versions.getVersionUpToMinor(sparkVersion)
+    val scalaMinorVersion = Versions.getVersionUpToMinor(scalaVersion.asString)
 
     lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion % Provided
     lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
@@ -240,14 +230,20 @@ object Dependencies {
       sttp,
       logback,
       nameOf
-    )
+    ) ++
+      testDependencies
   }
 
-  def modelDependencies(scalaVersion: String): Seq[ModuleID] = {
+  def modelDependencies(scalaVersion: Version): Seq[ModuleID] = {
     lazy val specs2core =     "org.specs2"      %% "specs2-core"  % Versions.specs2 % Test
     lazy val typeSafeConfig = "com.typesafe"     % "config"       % Versions.typesafeConfig
 
-    Seq(specs2core, typeSafeConfig)
+    Seq(
+      specs2core,
+      typeSafeConfig
+    ) ++
+      testDependencies ++
+      jsonSerdeDependencies(scalaVersion)
   }
 
  def databaseDependencies: Seq[ModuleID] = {

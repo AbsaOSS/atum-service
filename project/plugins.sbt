@@ -17,7 +17,7 @@
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.2.4")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
-addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.1")
+addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.10.0")
 
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.2")
 
@@ -27,7 +27,7 @@ addSbtPlugin("io.github.davidmweber" % "flyway-sbt" % "7.4.0")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
 
 // Plugins to build the server module as a jar file
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.2.0")
 
 // sbt-jacoco dependency downloading
 lazy val ow2Version = "9.5"
