@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: JaCoCo report agent and module
+name: JaCoCo Report
 
 on:
   pull_request:
@@ -28,9 +28,23 @@ env:
   changed: 80.0
 
 jobs:
-  test:
-    name: Build and test
+  build-test-and-measure:
+    name: Build, Test and Measure
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: atum_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - name: Checkout code
@@ -38,38 +52,45 @@ jobs:
       - name: Setup Scala
         uses: olafurpg/setup-scala@v14
         with:
-          java-version: "adopt@1.8"
+          java-version: "adopt@1.11.0-11"
+      - name: Prepare testing database
+        run: sbt flywayMigrate
       - name: Build and run tests
         continue-on-error: true
         id: jacocorun
-        run: |
-          sbt "project agent; jacoco"
-          sbt "project model; jacoco"
-      #  agent module code coverage
-      - name: Add coverage to PR
-        if: steps.jacocorun.outcome == 'success'
-        id: jacoco-agent
-        uses: madrapps/jacoco-report@v1.6.1
-        with:
-          name: agent-jacoco-report
-          paths: ${{ github.workspace }}/agent/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: ${{ env.overall }}
-          min-coverage-changed-file: ${{ env.changed }}
-          title: JaCoCo agent module code coverage report - scala ${{ env.scalaLong }}
-          update-comment: true
-      #  model module code coverage
-      - name: Add coverage to PR
+        run: sbt jacoco
+      - name: Add coverage to PR (model)
         if: steps.jacocorun.outcome == 'success'
         id: jacoco-model
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          name: model-jacoco-report
           paths: ${{ github.workspace }}/model/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{ env.overall }}
-          min-coverage-changed-file: ${{ env.changed }}
+          min-coverage-changed-files: ${{ env.changed }}
           title: JaCoCo model module code coverage report - scala ${{ env.scalaLong }}
+          update-comment: true
+      - name: Add coverage to PR (agent)
+        if: steps.jacocorun.outcome == 'success'
+        id: jacoco-agent
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          paths: ${{ github.workspace }}/agent/target/spark3-jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: ${{ env.overall }}
+          min-coverage-changed-files: ${{ env.changed }}
+          title: JaCoCo agent module code coverage report - scala ${{ env.scalaLong }}
+          update-comment: true
+      - name: Add coverage to PR (server)
+        if: steps.jacocorun.outcome == 'success'
+        id: jacoco-server
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          paths: ${{ github.workspace }}/server/target/jvm-${{ env.scalaShort }}/jacoco/report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: ${{env.overall }}
+          min-coverage-changed-files: ${{ env.changed }}
+          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Get the Coverage info
         if: steps.jacocorun.outcome == 'success'
@@ -78,6 +99,8 @@ jobs:
           echo "Changed Files coverage ${{ steps.jacoco-agent.outputs.coverage-changed-files }}"
           echo "Total model module coverage ${{ steps.jacoco-model.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco-model.outputs.coverage-changed-files }}"
+          echo "Total server module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ env.changed }}%
         if: steps.jacocorun.outcome == 'success'
         uses: actions/github-script@v6

@@ -50,7 +50,7 @@ It provides functionality for computing and pushing control metrics to the API l
 For more information, see the [Vocabulary section](#Vocabulary) or `agent/README.md` for more technical documentation.
 
 #### Spark 2.4 support
-Because there are some java level incompatibilities between Spark 2.4 and Spark 3.x whe build on Java 11+, we have to 
+Because there are some java level incompatibilities between Spark 2.4 and Spark 3.x when build on Java 11+, we have to 
 drop support for Spark 2.4. If you need the agent to work with Spark 2.4 follow these steps:
 * Switch to Java 8
 * In `'build.sbt'` change the matrix rows, to be Spark 2.4 and Scala 2.11 for modules _agent_ and _model_
@@ -127,7 +127,7 @@ executing the calculation against a given Spark DataFrame.
 Some `Measures` define no columns (such as `count`), some require exactly one column (such as `sum` of values for 
 particular column), and some require more columns (such as `hash` function).
 
-### Measurement 
+### Measurement
 
 Practically speaking, a single `Measurement` contains a `Measure` and result associated with it. 
 

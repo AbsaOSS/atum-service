@@ -22,7 +22,8 @@ on:
     types: [ opened, synchronize, reopened ]
 
 jobs:
-  license-test:
+  license-check:
+    name: License Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
