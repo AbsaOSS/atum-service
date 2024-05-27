@@ -96,6 +96,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tag-name: ${{ github.event.inputs.tagName }}
           chapters: |
             [
               {"title": "Breaking Changes 💥", "label": "breaking-change"},
