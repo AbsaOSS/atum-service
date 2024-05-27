@@ -22,6 +22,7 @@ object Constants {
 
     final val Api = "api"
     final val V1 = "v1"
+    final val V2 = "v2"
 
     final val CreatePartitioning = "createPartitioning"
     final val CreateOrUpdateAdditionalData = "createOrUpdateAdditionalData"
