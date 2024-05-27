@@ -47,7 +47,7 @@ object CheckpointControllerIntegrationTests extends ZIOSpecDefault with TestData
         test("Returns expected CheckpointDTO") {
           for {
             result <- CheckpointController.createCheckpointV1(checkpointDTO1)
-          } yield assertTrue(result == SingleSuccessResponse(checkpointDTO1))
+          } yield assertTrue(result == checkpointDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(failsWithA[InternalServerErrorResponse])

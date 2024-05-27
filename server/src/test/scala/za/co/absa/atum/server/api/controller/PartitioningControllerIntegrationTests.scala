@@ -48,7 +48,7 @@ object PartitioningControllerIntegrationTests extends ZIOSpecDefault with TestDa
         test("Returns expected AtumContextDTO") {
           for {
             result <- PartitioningController.createPartitioningIfNotExistsV1(partitioningSubmitDTO1)
-          } yield assertTrue(result == SingleSuccessResponse(atumContextDTO1))
+          } yield assertTrue(result == atumContextDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createPartitioningIfNotExistsV1(partitioningSubmitDTO2).exit)(

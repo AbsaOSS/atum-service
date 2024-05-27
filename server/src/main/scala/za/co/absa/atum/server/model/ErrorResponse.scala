@@ -29,19 +29,19 @@ object ErrorResponse {
   implicit val reads: Reads[ErrorResponse] = Json.reads[ErrorResponse]
   implicit val writes: Writes[ErrorResponse] = Json.writes[ErrorResponse]
 
-  final case class BadRequestResponse(message: String, override val requestId: UUID = UUID.randomUUID())
+  final case class BadRequestResponse(message: String, requestId: String = UUID.randomUUID().toString)
       extends ErrorResponse
 
   implicit val readsBadRequestResponse: Reads[BadRequestResponse] = Json.reads[BadRequestResponse]
   implicit val writesBadRequestResponse: Writes[BadRequestResponse] = Json.writes[BadRequestResponse]
 
-  final case class GeneralErrorResponse(message: String, override val requestId: UUID = UUID.randomUUID())
+  final case class GeneralErrorResponse(message: String, requestId: String = UUID.randomUUID().toString)
       extends ErrorResponse
 
   implicit val readsGeneralErrorResponse: Reads[GeneralErrorResponse] = Json.reads[GeneralErrorResponse]
   implicit val writesGeneralErrorResponse: Writes[GeneralErrorResponse] = Json.writes[GeneralErrorResponse]
 
-  final case class InternalServerErrorResponse(message: String, override val requestId: UUID = UUID.randomUUID())
+  final case class InternalServerErrorResponse(message: String, requestId: String = UUID.randomUUID().toString)
       extends ErrorResponse
 
   implicit val readsInternalServerErrorResponse: Reads[InternalServerErrorResponse] =

@@ -22,10 +22,10 @@ object SuccessResponse {
 
   sealed trait SuccessResponse extends ResponseEnvelope
 
-  case class SingleSuccessResponse[T](data: T, override val requestId: UUID = UUID.randomUUID())
+  case class SingleSuccessResponse[T](data: T, requestId: String = UUID.randomUUID().toString)
     extends SuccessResponse
 
-  case class MultiSuccessResponse[T](data: Seq[T], override val requestId: UUID = UUID.randomUUID())
-      extends SuccessResponse
+  case class MultiSuccessResponse[T](data: Seq[T], requestId: String = UUID.randomUUID().toString)
+    extends SuccessResponse
 
 }

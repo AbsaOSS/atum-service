@@ -17,11 +17,10 @@
 package za.co.absa.atum.server.api.http
 
 import sttp.model.StatusCode
-import sttp.tapir.generic.auto.schemaForCaseClass
+import sttp.tapir._
+import sttp.tapir.generic.auto._
 import sttp.tapir.json.play.jsonBody
-import sttp.tapir.ztapir._
-import sttp.tapir.{EndpointOutput, PublicEndpoint}
-import za.co.absa.atum.server.Constants.Endpoints._
+import za.co.absa.atum.server.Constants.Endpoints.{Api, V1, V2}
 import za.co.absa.atum.server.model.ErrorResponse._
 
 trait BaseEndpoints {

@@ -16,8 +16,6 @@
 
 package za.co.absa.atum.server.model
 
-import java.util.UUID
-
 trait ResponseEnvelope {
-  def requestId: UUID
+  def requestId: String
 }
