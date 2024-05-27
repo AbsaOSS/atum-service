@@ -39,9 +39,9 @@ object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with En
 
   when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO1))
     .thenReturn(ZIO.succeed(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))))
-  when(createPartitioningEndpointMock.createPartitioningIfNotExistsV1(partitioningSubmitDTO2))
+  when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(createPartitioningEndpointMock.createPartitioningIfNotExistsV1(partitioningSubmitDTO3))
+  when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
 
   private val createPartitioningEndpointMockLayer = ZLayer.succeed(createPartitioningEndpointMock)
