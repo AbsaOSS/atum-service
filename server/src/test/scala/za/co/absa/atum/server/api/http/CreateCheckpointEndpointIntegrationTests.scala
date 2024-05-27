@@ -37,18 +37,17 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
-  when(checkpointControllerMock.createCheckpoint(checkpointDTO1))
-//    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1)))
-    .thenReturn(ZIO.succeed(checkpointDTO1))
-  when(checkpointControllerMock.createCheckpoint(checkpointDTO2))
+  when(checkpointControllerMock.createCheckpointV2(checkpointDTO1))
+    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1)))
+  when(checkpointControllerMock.createCheckpointV2(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(checkpointControllerMock.createCheckpoint(checkpointDTO3))
+  when(checkpointControllerMock.createCheckpointV2(checkpointDTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
   private val createCheckpointServerEndpoint =
-    createCheckpointEndpoint.zServerLogic(CheckpointController.createCheckpoint)
+    createCheckpointEndpointV2.zServerLogic(CheckpointController.createCheckpointV2)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
@@ -58,8 +57,7 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
 
     val request = basicRequest
       .post(uri"https://test.com/api/v1/createCheckpoint")
-//      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
-      .response(asJson[CheckpointDTO])
+      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
 
     suite("CreateCheckpointEndpointSuite")(
       test("Returns expected CheckpointDTO") {
@@ -70,8 +68,7 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-//        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1)), StatusCode.Created))
-        assertZIO(body <&> statusCode)(equalTo(Right(checkpointDTO1), StatusCode.Created))
+        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1)), StatusCode.Created))
       },
       test("Returns expected BadRequest") {
         val response = request

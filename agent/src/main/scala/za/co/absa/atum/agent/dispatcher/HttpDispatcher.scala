@@ -29,10 +29,11 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
 
   val serverUrl: String = config.getString(UrlKey)
 
-  private val currentApiVersion = "/api/v1"
-  private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createPartitioning")
-  private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/createCheckpoint")
-  private val createAdditionalDataEndpoint = Uri.unsafeParse(s"$serverUrl$currentApiVersion/writeAdditionalData")
+  private val apiV1 = "/api/v1"
+  private val apiV2 = "/api/v1"
+  private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createPartitioning")
+  private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createCheckpoint")
+  private val createAdditionalDataEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/writeAdditionalData")
 
   private val commonAtumRequest = basicRequest
     .header("Content-Type", "application/json")

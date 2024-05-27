@@ -29,7 +29,7 @@ import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 
 trait Endpoints extends BaseEndpoints {
 
-  protected val createCheckpointEndpoint
+  protected val createCheckpointEndpointV1
 //    : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
     : PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
     apiV1.post
@@ -40,20 +40,36 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[CheckpointDTO])
   }
 
-  protected val createPartitioningEndpoint
-//    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
+  protected val createCheckpointEndpointV2
+      : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
+    apiV2.post
+      .in(CreateCheckpoint)
+      .in(jsonBody[CheckpointDTO])
+      .out(statusCode(StatusCode.Created))
+      .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
+  }
+
+  protected val createPartitioningEndpointV1
     : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, AtumContextDTO, Any] = {
     apiV1.post
       .in(CreatePartitioning)
       .in(jsonBody[PartitioningSubmitDTO])
       .out(statusCode(StatusCode.Ok))
-//      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
       .out(jsonBody[AtumContextDTO])
   }
 
-  protected val createOrUpdateAdditionalDataEndpoint
+  protected val createPartitioningEndpointV2
+    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
+    apiV2.post
+      .in(CreatePartitioning)
+      .in(jsonBody[PartitioningSubmitDTO])
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
+  }
+
+  protected val createOrUpdateAdditionalDataEndpointV2
     : PublicEndpoint[AdditionalDataSubmitDTO, ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO], Any] = {
-    apiV1.post
+    apiV2.post
       .in(CreateOrUpdateAdditionalData)
       .in(jsonBody[AdditionalDataSubmitDTO])
       .out(statusCode(StatusCode.Ok))

@@ -24,10 +24,13 @@ import zio.macros.accessible
 
 @accessible
 trait PartitioningController {
-  def createPartitioningIfNotExists(
+  def createPartitioningIfNotExistsV1(
     partitioningSubmitDTO: PartitioningSubmitDTO
-//  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]]
   ): IO[ErrorResponse, AtumContextDTO]
+
+  def createPartitioningIfNotExistsV2(
+    partitioningSubmitDTO: PartitioningSubmitDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]]
 
   def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO

@@ -24,16 +24,19 @@ import zio._
 
 class CheckpointControllerImpl(checkpointService: CheckpointService) extends CheckpointController with BaseController {
 
-  override def createCheckpoint(
+  override def createCheckpointV1(
     checkpointDTO: CheckpointDTO
-//  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]] = {
   ): IO[ErrorResponse, CheckpointDTO] = {
-//    mapToSingleSuccessResponse(
-      serviceCallWithStatus[Unit, CheckpointDTO](
-        checkpointService.saveCheckpoint(checkpointDTO),
-        _ => checkpointDTO
-      )
-//    )
+    serviceCallWithStatus[Unit, CheckpointDTO](
+      checkpointService.saveCheckpoint(checkpointDTO),
+      _ => checkpointDTO
+    )
+  }
+
+  override def createCheckpointV2(
+    checkpointDTO: CheckpointDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]] = {
+    mapToSingleSuccessResponse(createCheckpointV1(checkpointDTO))
   }
 
 }
