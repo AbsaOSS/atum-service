@@ -14,17 +14,17 @@
 # limitations under the License.
 #
 
-name: FormatCheck
+name: Format Check
 
 on:
   pull_request:
-    branches: [ master, develop ]
-    types: [ assigned, opened, synchronize, reopened, labeled ]
+    branches: [ master ]
+    types: [ assigned, opened, synchronize ]
 
 jobs:
-  scalafmt:
+  scala-format-check:
+    name: Scala Format Check
     runs-on: ubuntu-latest
-    name: Scalafmt Check
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
