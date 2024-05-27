@@ -43,7 +43,7 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),
       createServerEndpoint(createPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
       createServerEndpoint(createOrUpdateAdditionalDataEndpointV2, PartitioningController.createOrUpdateAdditionalData),
-      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit),
+      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
   }
@@ -52,7 +52,13 @@ trait Routes extends Endpoints with ServerOptions {
     Http4sServerInterpreter[HttpEnv.F]().toRoutes(HttpMetrics.prometheusMetrics.metricsEndpoint)
 
   private def createSwaggerRoutes: HttpRoutes[HttpEnv.F] = {
-    val endpoints = List(createCheckpointEndpointV1, createPartitioningEndpointV1, createOrUpdateAdditionalDataEndpointV2)
+    val endpoints = List(
+      createCheckpointEndpointV1,
+      createCheckpointEndpointV2,
+      createPartitioningEndpointV1,
+      createPartitioningEndpointV2,
+      createOrUpdateAdditionalDataEndpointV2
+    )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, SwaggerApiName, SwaggerApiVersion))
       .toRoutes
