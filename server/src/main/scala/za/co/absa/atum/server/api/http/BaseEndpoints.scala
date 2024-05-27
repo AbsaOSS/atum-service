@@ -20,10 +20,15 @@ import sttp.model.StatusCode
 import sttp.tapir._
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.play.jsonBody
+import sttp.tapir.typelevel.MatchType
 import za.co.absa.atum.server.Constants.Endpoints.{Api, V1, V2}
 import za.co.absa.atum.server.model.ErrorResponse._
 
+import java.util.UUID
+
 trait BaseEndpoints {
+
+  implicit val uuidMatchType: MatchType[UUID] = (a: Any) => a.isInstanceOf[UUID]
 
   private val badRequestOneOfVariant: EndpointOutput.OneOfVariant[BadRequestResponse] = {
     oneOfVariantFromMatchType(
