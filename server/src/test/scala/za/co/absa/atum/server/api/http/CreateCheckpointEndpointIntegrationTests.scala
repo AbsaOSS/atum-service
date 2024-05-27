@@ -38,7 +38,7 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
   when(checkpointControllerMock.createCheckpointV2(checkpointDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1)))
+    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1, uuid)))
   when(checkpointControllerMock.createCheckpointV2(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
   when(checkpointControllerMock.createCheckpointV2(checkpointDTO3))
@@ -68,7 +68,7 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1)), StatusCode.Created))
+        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1, uuid)), StatusCode.Created))
       },
       test("Returns expected BadRequest") {
         val response = request

@@ -33,12 +33,14 @@ import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
+import java.util.UUID
+
 object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val createPartitioningEndpointMock = mock(classOf[PartitioningController])
 
   when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))))
+    .thenReturn(ZIO.succeed(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1), uuid)))
   when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
   when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO3))
@@ -69,7 +71,7 @@ object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with En
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(
-          equalTo(Right(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))), StatusCode.Ok)
+          equalTo(Right(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1), uuid)), StatusCode.Ok)
         )
       },
       test("Returns expected BadRequest") {

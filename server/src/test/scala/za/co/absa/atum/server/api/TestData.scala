@@ -22,6 +22,8 @@ import java.util.UUID
 
 trait TestData {
 
+  protected val uuid = UUID.randomUUID()
+
   // Partitioning DTO
   protected val partitioningDTO1: PartitioningDTO = Seq(
     PartitionDTO("key1", "val1"),
