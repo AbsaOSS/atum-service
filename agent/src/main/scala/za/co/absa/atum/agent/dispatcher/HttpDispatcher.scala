@@ -30,7 +30,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
   val serverUrl: String = config.getString(UrlKey)
 
   private val apiV1 = "/api/v1"
-  private val apiV2 = "/api/v1"
+  private val apiV2 = "/api/v2"
   private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createPartitioning")
   private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createCheckpoint")
   private val createAdditionalDataEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/writeAdditionalData")
