@@ -18,14 +18,6 @@ package za.co.absa.atum.server.model
 
 import java.util.UUID
 
-object SuccessResponse {
-
-  sealed trait SuccessResponse extends ResponseEnvelope
-
-  case class SingleSuccessResponse[T](data: T, override val requestId: UUID = UUID.randomUUID())
-    extends SuccessResponse
-
-  case class MultiSuccessResponse[T](data: Seq[T], override val requestId: UUID = UUID.randomUUID())
-      extends SuccessResponse
-
+trait ResponseEnvelope {
+  def requestId: UUID
 }

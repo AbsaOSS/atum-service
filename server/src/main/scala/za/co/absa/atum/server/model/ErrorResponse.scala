@@ -18,28 +18,35 @@ package za.co.absa.atum.server.model
 
 import play.api.libs.json.{Json, Reads, Writes}
 
+import java.util.UUID
+
 object ErrorResponse {
 
-  sealed trait ErrorResponse {
+  sealed trait ErrorResponse extends ResponseEnvelope {
     def message: String
   }
 
   implicit val reads: Reads[ErrorResponse] = Json.reads[ErrorResponse]
   implicit val writes: Writes[ErrorResponse] = Json.writes[ErrorResponse]
 
-  final case class BadRequestResponse(message: String) extends ErrorResponse
+  final case class BadRequestResponse(message: String, override val requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
   implicit val readsBadRequestResponse: Reads[BadRequestResponse] = Json.reads[BadRequestResponse]
   implicit val writesBadRequestResponse: Writes[BadRequestResponse] = Json.writes[BadRequestResponse]
 
-  final case class GeneralErrorResponse(message: String) extends ErrorResponse
+  final case class GeneralErrorResponse(message: String, override val requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
   implicit val readsGeneralErrorResponse: Reads[GeneralErrorResponse] = Json.reads[GeneralErrorResponse]
   implicit val writesGeneralErrorResponse: Writes[GeneralErrorResponse] = Json.writes[GeneralErrorResponse]
 
-  final case class InternalServerErrorResponse(message: String) extends ErrorResponse
+  final case class InternalServerErrorResponse(message: String, override val requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
-  implicit val readsInternalServerErrorResponse: Reads[InternalServerErrorResponse] = Json.reads[InternalServerErrorResponse]
-  implicit val writesInternalServerErrorResponse: Writes[InternalServerErrorResponse] = Json.writes[InternalServerErrorResponse]
+  implicit val readsInternalServerErrorResponse: Reads[InternalServerErrorResponse] =
+    Json.reads[InternalServerErrorResponse]
+  implicit val writesInternalServerErrorResponse: Writes[InternalServerErrorResponse] =
+    Json.writes[InternalServerErrorResponse]
 
 }
