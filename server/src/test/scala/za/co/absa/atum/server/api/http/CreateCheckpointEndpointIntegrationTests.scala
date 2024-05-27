@@ -56,7 +56,7 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
       .backend()
 
     val request = basicRequest
-      .post(uri"https://test.com/api/v1/createCheckpoint")
+      .post(uri"https://test.com/api/v2/createCheckpoint")
       .response(asJson[SingleSuccessResponse[CheckpointDTO]])
 
     suite("CreateCheckpointEndpointSuite")(

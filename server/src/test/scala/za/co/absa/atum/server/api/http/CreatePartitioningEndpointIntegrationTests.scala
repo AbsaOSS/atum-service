@@ -56,7 +56,7 @@ object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with En
       .backend()
 
     val request = basicRequest
-      .post(uri"https://test.com/api/v1/createPartitioning")
+      .post(uri"https://test.com/api/v2/createPartitioning")
       .response(asJson[SingleSuccessResponse[AtumContextDTO]])
 
     suite("CreatePartitioningEndpointSuite")(
