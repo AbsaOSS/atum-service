@@ -24,6 +24,11 @@ import zio.macros.accessible
 
 @accessible
 trait CheckpointController {
-  def createCheckpointV2(checkpointDTO: CheckpointDTO): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]]
+
   def createCheckpointV1(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
+
+  def createCheckpointV2(
+    checkpointDTO: CheckpointDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]]
+
 }
