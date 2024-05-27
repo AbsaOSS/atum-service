@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: Dependent Issues
+name: Dependent Items
 
 on:
   issues:
@@ -40,7 +40,8 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  check:
+  dependent-items-check:
+    name: Dependent Items Check
     runs-on: ubuntu-latest
     steps:
       - uses: z0al/dependent-issues@v1.5.2
