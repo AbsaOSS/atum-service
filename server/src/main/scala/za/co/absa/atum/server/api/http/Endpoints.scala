@@ -30,21 +30,25 @@ import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 trait Endpoints extends BaseEndpoints {
 
   protected val createCheckpointEndpoint
-    : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
+//    : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
+    : PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
     apiV1.post
       .in(CreateCheckpoint)
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
-      .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
+//      .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
+      .out(jsonBody[CheckpointDTO])
   }
 
   protected val createPartitioningEndpoint
-    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
+//    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
+    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, AtumContextDTO, Any] = {
     apiV1.post
       .in(CreatePartitioning)
       .in(jsonBody[PartitioningSubmitDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
+//      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
+      .out(jsonBody[AtumContextDTO])
   }
 
   protected val createOrUpdateAdditionalDataEndpoint

@@ -38,7 +38,8 @@ object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with En
   private val createPartitioningEndpointMock = mock(classOf[PartitioningController])
 
   when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))))
+//    .thenReturn(ZIO.succeed(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))))
+    .thenReturn(ZIO.succeed(createAtumContextDTO(partitioningSubmitDTO1)))
   when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
   when(createPartitioningEndpointMock.createPartitioningIfNotExists(partitioningSubmitDTO3))
@@ -57,7 +58,8 @@ object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with En
 
     val request = basicRequest
       .post(uri"https://test.com/api/v1/createPartitioning")
-      .response(asJson[SingleSuccessResponse[AtumContextDTO]])
+//      .response(asJson[SingleSuccessResponse[AtumContextDTO]])
+      .response(asJson[AtumContextDTO])
 
     suite("CreatePartitioningEndpointSuite")(
       test("Returns expected AtumContextDTO") {
@@ -69,7 +71,8 @@ object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with En
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(
-          equalTo(Right(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))), StatusCode.Ok)
+//          equalTo(Right(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1))), StatusCode.Ok)
+          equalTo(Right(createAtumContextDTO(partitioningSubmitDTO1)), StatusCode.Ok)
         )
       },
       test("Returns expected BadRequest") {
