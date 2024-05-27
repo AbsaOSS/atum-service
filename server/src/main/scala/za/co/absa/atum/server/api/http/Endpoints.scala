@@ -30,13 +30,11 @@ import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 trait Endpoints extends BaseEndpoints {
 
   protected val createCheckpointEndpointV1
-//    : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
     : PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
     apiV1.post
       .in(CreateCheckpoint)
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
-//      .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
       .out(jsonBody[CheckpointDTO])
   }
 
