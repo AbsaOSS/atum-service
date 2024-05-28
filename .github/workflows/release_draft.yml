@@ -81,6 +81,7 @@ jobs:
               type: 'commit',
               tagger: {
                 name: context.actor,
+                email: `${context.actor}@users.noreply.github.com`,
                 date: new Date().toISOString()
               }
             });
