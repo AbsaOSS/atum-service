@@ -71,7 +71,7 @@ jobs:
             const ref = `refs/tags/${tag}`;
             const sha = context.sha; // The SHA of the commit to tag
 
-            const tagObject = await github.git.createTag({
+            const tagObject = await github.rest.git.createTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag: tag,
