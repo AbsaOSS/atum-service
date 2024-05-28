@@ -70,8 +70,9 @@ jobs:
             const tag = core.getInput('tag-name')
             const ref = `refs/tags/${tag}`;
             const sha = context.sha; // The SHA of the commit to tag
+            const tagMessage = 'Releasing new version';
 
-            const tagObject = await github.git.createTag({
+            const tagObject = await github.rest.git.createTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag: tag,
@@ -80,6 +81,7 @@ jobs:
               type: 'commit',
               tagger: {
                 name: context.actor,
+                email: `${context.actor}@users.noreply.github.com`,
                 date: new Date().toISOString()
               }
             });
