@@ -16,14 +16,12 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointDTO, CheckpointQueryDTO,
-  MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitioningDTO, PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.PartitioningRepository
 import za.co.absa.fadb.exceptions.StatusException
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
@@ -59,51 +57,15 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   }
 
   override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]] = {
-    //    repositoryCall(
-    //      partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoint"
-    //    ).map {
-    //      checkpointMeasurementsSeq =>
-    //        checkpointMeasurementsSeq.map { cm =>
-    //          CheckpointDTO(
-    //            id = cm.idCheckpoint,
-    //            name = cm.checkpointName,
-    //            author = cm.author,
-    //            measuredByAtumAgent = cm.measuredByAtumAgent,
-    //            partitioning = checkpointQueryDTO.partitioning,
-    //            processStartTime = cm.checkpointStartTime,
-    //            processEndTime = cm.checkpointEndTime,
-    //            measurements = Set(
-    //              MeasurementDTO(
-    //                measure = MeasureDTO(
-    //                  measureName = cm.measureName,
-    //                  measuredColumns = cm.measureColumns
-    //                ),
-    //                result = MeasureResultDTO(
-    //                  mainValue = MeasureResultDTO.TypedValue(
-    //                    value = cm.measurementValue.hcursor.downField("value").as[String].getOrElse(""),
-    //                    valueType = cm.measurementValue.hcursor.downField("valueType").as[String].getOrElse("") match {
-    //                      case "String" => MeasureResultDTO.ResultValueType.String
-    //                      case "Long" => MeasureResultDTO.ResultValueType.Long
-    //                      case "BigDecimal" => MeasureResultDTO.ResultValueType.BigDecimal
-    //                      case "Double" => MeasureResultDTO.ResultValueType.Double
-    //                      case _ => MeasureResultDTO.ResultValueType.String
-    //                    }
-    //                  ),
-    //                  supportValues = Map.empty
-    //                )
-    //              )
-    //            )
-    //          )
-    //        }
-    //    }
+
     for {
-      checkpointsFromDB <- repositoryCall(partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoints")
-      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {checkpointsFromDB =>
-        ZIO.fromEither(CheckpointsFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointsFromDB)
-          .mapError{ case DatabaseError(message) =>
-            ServiceError(s"Failed to convert checkpoint to checkpointDTO: $message")
-          }
-        )
+      checkpointsFromDB <- repositoryCall(
+        partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoints"
+      )
+      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {
+        checkpointFromDB =>
+          ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
+            .mapError(error => ServiceError(error.getMessage))
       }
     } yield checkpointDTOs
 
