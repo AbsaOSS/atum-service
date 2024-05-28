@@ -19,21 +19,27 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
-import play.api.libs.json.Json
+//import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
+import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.model.{CheckpointMeasurements, PartitioningForDB}
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.doobie.DoobieEngine
 import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import zio._
 import zio.interop.catz._
-import za.co.absa.atum.server.api.database.runs.Runs
+
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+
 import io.circe.syntax.EncoderOps
 import io.circe.generic.auto._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
 
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointMeasurements, Task] {
@@ -52,11 +58,11 @@ class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEng
 
   override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointMeasurements]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson
-    //val partitioning = Json.toJson(partitioning).toString // TODO: convert to Json from Circe instead of this "normalization"
+    val partitioningNormalized = partitioning.noSpaces
 
     sql"""SELECT ${Fragment.const(selectEntry)}
           FROM ${Fragment.const(functionName)}(
-                  $partitioning,
+                  $partitioningNormalized,
                   ${values.limit},
                   ${values.checkpointName},
                 ) AS ${Fragment.const(alias)};"""
