@@ -55,7 +55,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToSingleSuccessResponse(createPartitioningIfNotExistsV1(partitioningSubmitDTO))
   }
 
-  override def createOrUpdateAdditionalData(
+  override def createOrUpdateAdditionalDataV2(
     additionalData: AdditionalDataSubmitDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]] = {
     mapToSingleSuccessResponse(

@@ -59,13 +59,13 @@ object PartitioningControllerIntegrationTests extends ZIOSpecDefault with TestDa
       suite("CreateOrUpdateAdditionalDataSuite")(
         test("Returns expected AdditionalDataSubmitDTO") {
           for {
-            result <- PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
+            result <- PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO1)
             expected = SingleSuccessResponse(additionalDataSubmitDTO1, uuid)
             actual = result.copy(requestId = uuid)
           } yield assert(actual)(equalTo(expected))
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit)(
+          assertZIO(PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }
