@@ -26,23 +26,21 @@ import java.util.UUID
 import za.co.absa.atum.server.api.database.DoobieImplicits.decodeResultValueType
 
 case class CheckpointFromDB(
-                             idCheckpoint: UUID,
-                             checkpointName: String,
-                             author: String,
-                             measuredByAtumAgent: Boolean = false,
-                             measureName: String,
-                             measuredColumns: Seq[String],
-                             measurementValue: Json,
-                             checkpointStartTime: ZonedDateTime,
-                             checkpointEndTime:  Option[ZonedDateTime]
-                           )
+   idCheckpoint: UUID,
+   checkpointName: String,
+   author: String,
+   measuredByAtumAgent: Boolean = false,
+   measureName: String,
+   measuredColumns: Seq[String],
+   measurementValue: Json,
+   checkpointStartTime: ZonedDateTime,
+   checkpointEndTime:  Option[ZonedDateTime]
+)
 
 object CheckpointFromDB {
 
-  def toCheckpointDTO(
-                       partitioning: PartitioningDTO,
-                       checkpointQueryResult: CheckpointFromDB
-                     ): Either[DecodingFailure, CheckpointDTO] = {
+  def toCheckpointDTO(partitioning: PartitioningDTO, checkpointQueryResult: CheckpointFromDB
+  ): Either[DecodingFailure, CheckpointDTO] = {
     val measureResultOrErr = checkpointQueryResult.measurementValue.as[MeasureResultDTO]
 
     measureResultOrErr match {

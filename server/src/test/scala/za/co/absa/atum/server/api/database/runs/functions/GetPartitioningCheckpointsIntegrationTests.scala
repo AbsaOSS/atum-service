@@ -5,7 +5,7 @@ import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.model.dto.{CheckpointQueryDTO, PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.model.CheckpointMeasurements
+import za.co.absa.atum.server.model.CheckpointFromDB
 import zio.test.Assertion.failsWithA
 import zio.{Scope, ZIO}
 import zio.test._
@@ -30,7 +30,7 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
           checkpointName = Some("checkpointName")
         )
         // Read[CheckpointMeasurements] implicit validation
-        Read[CheckpointMeasurements]
+        Read[CheckpointFromDB]
 
         for {
           getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]

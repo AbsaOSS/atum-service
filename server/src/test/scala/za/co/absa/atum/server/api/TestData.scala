@@ -18,12 +18,11 @@ package za.co.absa.atum.server.api
 
 import io.circe.{Json, parser}
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.CheckpointMeasurements
+import za.co.absa.atum.server.model.CheckpointFromDB
 
 import java.time.ZonedDateTime
 import java.util.UUID
 import MeasureResultDTO.TypedValue
-import MeasureResultDTO._
 import MeasureResultDTO.ResultValueType._
 
 trait TestData {
@@ -148,23 +147,23 @@ trait TestData {
 
 
   // CheckpointMeasurement DTO
-  protected val checkpointMeasurements1: CheckpointMeasurements = CheckpointMeasurements(
+  protected val CheckpointFromDB1: CheckpointFromDB = CheckpointFromDB(
     idCheckpoint = UUID.randomUUID(),
     checkpointName = "name",
     author = "author",
     measureName = measureDTO1.measureName,
-    measureColumns = measureDTO1.measuredColumns,
+    measuredColumns = measureDTO1.measuredColumns,
     measurementValue = defaultJson,
     checkpointStartTime = ZonedDateTime.now(),
     checkpointEndTime = Some(ZonedDateTime.now())
   )
 
-  protected val checkpointMeasurements2: CheckpointMeasurements = CheckpointMeasurements(
+  protected val CheckpointFromDB2: CheckpointFromDB = CheckpointFromDB(
     idCheckpoint = UUID.randomUUID(),
     checkpointName = "name",
     author = "author",
     measureName = measureDTO2.measureName,
-    measureColumns = measureDTO2.measuredColumns,
+    measuredColumns = measureDTO2.measuredColumns,
     measurementValue = defaultJson,
     checkpointStartTime = ZonedDateTime.now(),
     checkpointEndTime = Some(ZonedDateTime.now())

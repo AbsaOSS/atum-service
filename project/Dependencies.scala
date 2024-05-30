@@ -28,7 +28,7 @@ object Dependencies {
     val balta = "0.1.0"
 
     val jacksonModuleScala = "2.14.2"
-    val circeVersion = "0.14.7"
+    val circeVersion = "0.14.5"
 
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
@@ -116,7 +116,7 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
-    lazy val circeCore = "org.tpolecat" %% "doobie-postgres-circe" % Versions.circeVersion
+    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeVersion
     lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeVersion
 
     Seq(

@@ -133,7 +133,10 @@ class PartitioningServiceIntegrationTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Seq[CheckpointMeasurements]") {
           for {
             result <- PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue(result.isInstanceOf[Seq[CheckpointDTO]])
+          } yield assertTrue{
+            result.isInstanceOf[Seq[CheckpointDTO]]
+            result == Seq(checkpointMeasurements1, checkpointMeasurements2)
+          }
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(

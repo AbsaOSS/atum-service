@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointQueryDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointMeasurements
+import za.co.absa.atum.server.model.CheckpointFromDB
 import za.co.absa.fadb.exceptions.StatusException
 import zio.IO
 import zio.macros.accessible
@@ -41,5 +41,5 @@ trait PartitioningRepository {
     IO[DatabaseError, Either[StatusException, Unit]]
 
   def getPartitioningCheckpoints(partitioningQueryDetails: CheckpointQueryDTO):
-  IO[DatabaseError, Seq[CheckpointMeasurements]]
+  IO[DatabaseError, Seq[CheckpointFromDB]]
 }

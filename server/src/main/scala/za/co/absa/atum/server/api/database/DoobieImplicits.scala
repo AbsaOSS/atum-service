@@ -156,29 +156,30 @@ object DoobieImplicits {
         )
     }
 
-    implicit val encodeResultValueType: Encoder[MeasureResultDTO.ResultValueType] = Encoder.encodeString.contramap {
-      case MeasureResultDTO.ResultValueType.String => "String"
-      case MeasureResultDTO.ResultValueType.Long => "Long"
-      case MeasureResultDTO.ResultValueType.BigDecimal => "BigDecimal"
-      case MeasureResultDTO.ResultValueType.Double => "Double"
-    }
-
-    implicit val decodeResultValueType: Decoder[MeasureResultDTO.ResultValueType] = Decoder.decodeString.emap {
-      case "String" => Right(MeasureResultDTO.ResultValueType.String)
-      case "Long" => Right(MeasureResultDTO.ResultValueType.Long)
-      case "BigDecimal" => Right(MeasureResultDTO.ResultValueType.BigDecimal)
-      case "Double" => Right(MeasureResultDTO.ResultValueType.Double)
-      case other => Left(s"Cannot decode $other as ResultValueType")
-    }
-
-    implicit val encodeTypedValue: Encoder[MeasureResultDTO.TypedValue] =
-      Encoder.forProduct2("value", "valueType")(tv => (tv.value, tv.valueType))
-    implicit val decodeTypedValue: Decoder[MeasureResultDTO.TypedValue] =
-      Decoder.forProduct2("value", "valueType")(MeasureResultDTO.TypedValue.apply)
-
-    implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] =
-      Decoder.forProduct2("mainValue", "supportValues")(MeasureResultDTO.apply)
-
   }
+
+  implicit val encodeResultValueType: Encoder[MeasureResultDTO.ResultValueType] = Encoder.encodeString.contramap {
+    case MeasureResultDTO.ResultValueType.String => "String"
+    case MeasureResultDTO.ResultValueType.Long => "Long"
+    case MeasureResultDTO.ResultValueType.BigDecimal => "BigDecimal"
+    case MeasureResultDTO.ResultValueType.Double => "Double"
+  }
+
+  implicit val decodeResultValueType: Decoder[MeasureResultDTO.ResultValueType] = Decoder.decodeString.emap {
+    case "String" => Right(MeasureResultDTO.ResultValueType.String)
+    case "Long" => Right(MeasureResultDTO.ResultValueType.Long)
+    case "BigDecimal" => Right(MeasureResultDTO.ResultValueType.BigDecimal)
+    case "Double" => Right(MeasureResultDTO.ResultValueType.Double)
+    case other => Left(s"Cannot decode $other as ResultValueType")
+  }
+
+  implicit val encodeTypedValue: Encoder[MeasureResultDTO.TypedValue] =
+    Encoder.forProduct2("value", "valueType")(tv => (tv.value, tv.valueType))
+
+  implicit val decodeTypedValue: Decoder[MeasureResultDTO.TypedValue] =
+    Decoder.forProduct2("value", "valueType")(MeasureResultDTO.TypedValue.apply)
+
+  implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] =
+    Decoder.forProduct2("mainValue", "supportValues")(MeasureResultDTO.apply)
 
 }
