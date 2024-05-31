@@ -21,7 +21,7 @@ import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.PartitioningRepository
 import za.co.absa.fadb.exceptions.StatusException
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.CheckpointFromDBObject
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
@@ -56,21 +56,21 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
       }
   }
 
-  override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]] = {
-
+  override def getPartitioningCheckpoints(
+      checkpointQueryDTO: CheckpointQueryDTO
+   ): IO[ServiceError, Seq[CheckpointDTO]] = {
     for {
       checkpointsFromDB <- repositoryCall(
         partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoints"
       )
       checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {
         checkpointFromDB =>
-          ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
-            .mapError(error => ServiceError(error.getMessage))
+          ZIO.fromEither(CheckpointFromDBObject.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
+        .mapError(error => ServiceError(error.getMessage))
       }
     } yield checkpointDTOs
 
   }
-
 }
 
 object PartitioningServiceImpl {

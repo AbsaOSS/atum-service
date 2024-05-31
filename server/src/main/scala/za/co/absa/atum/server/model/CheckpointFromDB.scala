@@ -37,7 +37,7 @@ case class CheckpointFromDB(
    checkpointEndTime:  Option[ZonedDateTime]
 )
 
-object CheckpointFromDB {
+object CheckpointFromDBObject {
 
   def toCheckpointDTO(partitioning: PartitioningDTO, checkpointQueryResult: CheckpointFromDB
   ): Either[DecodingFailure, CheckpointDTO] = {

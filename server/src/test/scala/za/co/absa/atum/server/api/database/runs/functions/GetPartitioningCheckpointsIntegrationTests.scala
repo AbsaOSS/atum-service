@@ -9,6 +9,7 @@ import za.co.absa.atum.server.model.CheckpointFromDB
 import zio.test.Assertion.failsWithA
 import zio.{Scope, ZIO}
 import zio.test._
+
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbGet
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence._
@@ -18,8 +19,8 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     val partitioningDTO1: PartitioningDTO = Seq(
-      PartitionDTO("string1", "string1"),
-      PartitionDTO("string2", "string2")
+      PartitionDTO("stringA", "stringA"),
+      PartitionDTO("stringB", "stringB")
     )
 
     suite("GetPartitioningCheckpointsIntegrationTests")(
@@ -29,7 +30,7 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
           limit = Some(10),
           checkpointName = Some("checkpointName")
         )
-        // Read[CheckpointMeasurements] implicit validation
+        // Read[CheckpointFromDB] implicit validation
         Read[CheckpointFromDB]
 
         for {

@@ -147,23 +147,23 @@ trait TestData {
 
 
   // CheckpointMeasurement DTO
-  protected val CheckpointFromDB1: CheckpointFromDB = CheckpointFromDB(
+  protected val checkpointFromDB1: CheckpointFromDB = CheckpointFromDB(
     idCheckpoint = UUID.randomUUID(),
     checkpointName = "name",
     author = "author",
     measureName = measureDTO1.measureName,
-    measuredColumns = measureDTO1.measuredColumns,
+    measuredColumns = Seq(measureDTO1.measuredColumns.toString()),
     measurementValue = defaultJson,
     checkpointStartTime = ZonedDateTime.now(),
     checkpointEndTime = Some(ZonedDateTime.now())
   )
 
-  protected val CheckpointFromDB2: CheckpointFromDB = CheckpointFromDB(
+  protected val checkpointFromDB2: CheckpointFromDB = CheckpointFromDB(
     idCheckpoint = UUID.randomUUID(),
     checkpointName = "name",
     author = "author",
     measureName = measureDTO2.measureName,
-    measuredColumns = measureDTO2.measuredColumns,
+    measuredColumns = Seq(measureDTO2.measuredColumns.toString()),
     measurementValue = defaultJson,
     checkpointStartTime = ZonedDateTime.now(),
     checkpointEndTime = Some(ZonedDateTime.now())
@@ -210,6 +210,7 @@ trait TestData {
     id = UUID.randomUUID(),
     name = "name",
     author = "author",
+    measuredByAtumAgent = true,
     partitioning = Seq.empty,
     processStartTime = ZonedDateTime.now(),
     processEndTime = None,
