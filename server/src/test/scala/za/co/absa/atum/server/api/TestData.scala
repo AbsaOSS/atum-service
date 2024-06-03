@@ -63,15 +63,15 @@ trait TestData {
     checkpointName = None
   )
 
+  // PartitioningSubmitDTO with different author
   protected val partitioningSubmitDTO2: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "differentAuthor")
-
   protected val partitioningSubmitDTO3: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
 
   // Measure
-  protected val measureDTO1: MeasureDTO = MeasureDTO("count", Seq("1"))
-  protected val measureDTO2: MeasureDTO = MeasureDTO("count", Seq("*"))
+  protected val measureDTO1: MeasureDTO = MeasureDTO("count1", Seq("col_A1", "col_B1"))
+  protected val measureDTO2: MeasureDTO = MeasureDTO("count2", Seq("col_A2", "col_B2"))
 
   // Additional Data
   protected val additionalDataDTO1: AdditionalDataDTO = Map(
@@ -86,17 +86,17 @@ trait TestData {
   )
   protected val additionalDataDTO3: AdditionalDataDTO = Map.empty
 
-  val mainValue = TypedValue(
-    value = "exampleMainValue",
-    valueType = String
+  val mainValue: TypedValue = TypedValue(
+    value = "123",
+    valueType = Long
   )
 
-  val supportValue1 = TypedValue(
+  val supportValue1: TypedValue = TypedValue(
     value = "123456789",
     valueType = Long
   )
 
-  val supportValue2 = TypedValue(
+  val supportValue2: TypedValue = TypedValue(
     value = "12345.6789",
     valueType = BigDecimal
   )
@@ -120,7 +120,10 @@ trait TestData {
 
   // Measurement DTO
   protected val measurementsDTO1: Seq[MeasurementDTO] = Seq(
-    MeasurementDTO(measureDTO1, measureResultDTO1),
+    MeasurementDTO(measureDTO1, measureResultDTO1)
+  )
+
+  protected val measurementsDTO2: Seq[MeasurementDTO] = Seq(
     MeasurementDTO(measureDTO2, measureResultDTO2)
   )
 
@@ -131,42 +134,84 @@ trait TestData {
     "key3" -> Some("value3")
   )
 
+  // Checkpoint DTO
+  protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
+    id = UUID.randomUUID(),
+    name = "name",
+    author = "author",
+    partitioning = checkpointQueryDTO1.partitioning,
+    processStartTime = ZonedDateTime.now(),
+    processEndTime = Some(ZonedDateTime.now()),
+    measurements = measurementsDTO1.toSet
+  )
+
+  protected val checkpointDTO2: CheckpointDTO = CheckpointDTO(
+    id = UUID.randomUUID(),
+    name = "name2",
+    author = "author2",
+    partitioning = checkpointQueryDTO1.partitioning,
+    processStartTime = ZonedDateTime.now(),
+    processEndTime = Some(ZonedDateTime.now()),
+    measurements = measurementsDTO2.toSet
+  )
+
+  protected val checkpointDTO3: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
+
   // Additional Data DTO as a map
-  val defaultJsonString: String =
-    """
-  {
-    "value": 1,
-    "name": "default",
-    "details": {
-      "info": "defaultInfo"
-    }
-  }
-  """
+  val defaultJsonString: String = """
+      |{
+      |  "mainValue": {
+      |    "value": "123",
+      |    "valueType": "Long"
+      |  },
+      |  "supportValues": {
+      |    "key1": {
+      |      "value": "123456789",
+      |      "valueType": "Long"
+      |    },
+      |    "key2": {
+      |      "value": "12345.6789",
+      |      "valueType": "BigDecimal"
+      |    }
+      |  }
+      |}
+      |""".stripMargin
 
-  val defaultJson: Json = parser.parse(defaultJsonString).getOrElse(Json.Null)
+  protected val defaultJson: Json = parser.parse(defaultJsonString).getOrElse(throw new Exception("Failed to pass JSON"))
 
-
-  // CheckpointMeasurement DTO
+  // Checkpoint from DB DTO
   protected val checkpointFromDB1: CheckpointFromDB = CheckpointFromDB(
-    idCheckpoint = UUID.randomUUID(),
+    idCheckpoint = checkpointDTO1.id,
     checkpointName = "name",
     author = "author",
     measureName = measureDTO1.measureName,
-    measuredColumns = Seq(measureDTO1.measuredColumns.toString()),
+    measuredColumns = Seq("col_A1", "col_B1"),
     measurementValue = defaultJson,
-    checkpointStartTime = ZonedDateTime.now(),
-    checkpointEndTime = Some(ZonedDateTime.now())
+    checkpointStartTime = checkpointDTO1.processStartTime,
+    checkpointEndTime = checkpointDTO1.processEndTime
   )
 
   protected val checkpointFromDB2: CheckpointFromDB = CheckpointFromDB(
-    idCheckpoint = UUID.randomUUID(),
+    idCheckpoint = checkpointDTO2.id,
+    checkpointName = "name2",
+    author = "author2",
+    measureName = measureDTO2.measureName,
+    measuredColumns = Seq("col_A2", "col_B2"),
+    measurementValue = defaultJson,
+    checkpointStartTime = checkpointDTO2.processStartTime,
+    checkpointEndTime = checkpointDTO2.processEndTime
+  )
+
+  protected val checkpointFromDB3: CheckpointFromDB = CheckpointFromDB(
+    idCheckpoint = checkpointDTO1.id,
     checkpointName = "name",
     author = "author",
-    measureName = measureDTO2.measureName,
-    measuredColumns = Seq(measureDTO2.measuredColumns.toString()),
+    measuredByAtumAgent = true,
+    measureName = "cnt",
+    measuredColumns = Seq("col3_A", "col3_B"),
     measurementValue = defaultJson,
-    checkpointStartTime = ZonedDateTime.now(),
-    checkpointEndTime = Some(ZonedDateTime.now())
+    checkpointStartTime = checkpointDTO3.processStartTime,
+    checkpointEndTime = None,
   )
 
   // Additional Data submit DTO
@@ -192,32 +237,6 @@ trait TestData {
     partitioning = partitioningSubmitDTO1.partitioning,
     measures = Set(MeasureDTO("count", Seq("1")))
   )
-
-  // Checkpoint DTO
-  protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
-    id = UUID.randomUUID(),
-    name = "name",
-    author = "author",
-    partitioning = checkpointQueryDTO1.partitioning,
-    processStartTime = ZonedDateTime.now(),
-    processEndTime = None,
-    measurements = measurementsDTO1.toSet
-  )
-
-  protected val checkpointDTO2: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
-
-  protected val checkpointDTO4: CheckpointDTO = CheckpointDTO(
-    id = UUID.randomUUID(),
-    name = "name",
-    author = "author",
-    measuredByAtumAgent = true,
-    partitioning = Seq.empty,
-    processStartTime = ZonedDateTime.now(),
-    processEndTime = None,
-    measurements = Set.empty
-  )
-
-  protected val checkpointDTO3: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))

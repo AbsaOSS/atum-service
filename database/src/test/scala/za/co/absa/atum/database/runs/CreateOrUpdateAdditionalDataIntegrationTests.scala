@@ -83,7 +83,7 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
         assert(!queryResult.hasNext)
       }
 
-    assert(table("runs.additional_data").count() == 4)
+    assert(table("runs.additional_data").count() == 3)
     assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 3)
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 1)
 
@@ -151,21 +151,21 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
     assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 5)
     assert(table("runs.additional_data_history").count(add("fk_partitioning", fkPartitioning)) == 0)
 
-   val expectedDataInAdTable = Seq(
-     ("PrimaryOwner", "TechnicalManagerX", "Bot"),
-     ("SecondaryOwner", "AnalystY", "Bot"),
-     ("SomeNewKey", "SomeNewValue", "MikeRusty"),
-     ("IsDatasetInHDFS", "true", "MikeRusty"),
-     ("DatasetContentSensitivityLevel", "1", "MikeRusty"),
-   )
-   expectedDataInAdTable.foreach { case (adNameExp, adValExp, adCreatedByExp) =>
-     table("runs.additional_data").where(add("ad_name", adNameExp)) {
-       resultSet =>
-         val row = resultSet.next()
-         assert(row.getString("ad_value").contains(adValExp))
-         assert(row.getString("created_by").contains(adCreatedByExp))
-     }
-   }
+    val expectedDataInAdTable = Seq(
+      ("PrimaryOwner", "TechnicalManagerX", "Bot"),
+      ("SecondaryOwner", "AnalystY", "Bot"),
+      ("SomeNewKey", "SomeNewValue", "MikeRusty"),
+      ("IsDatasetInHDFS", "true", "MikeRusty"),
+      ("DatasetContentSensitivityLevel", "1", "MikeRusty"),
+    )
+    expectedDataInAdTable.foreach { case (adNameExp, adValExp, adCreatedByExp) =>
+      table("runs.additional_data").where(add("ad_name", adNameExp)) {
+        resultSet =>
+          val row = resultSet.next()
+          assert(row.getString("ad_value").contains(adValExp))
+          assert(row.getString("created_by").contains(adCreatedByExp))
+      }
+    }
   }
 
   test("Partitioning and AD present, but no new AD records were backed-up or inserted, no changes detected") {

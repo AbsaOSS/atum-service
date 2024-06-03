@@ -133,7 +133,6 @@ class PartitioningServiceIntegrationTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO1)
           } yield assertTrue{
-            println("Results: ", result)
             result.isInstanceOf[Seq[CheckpointDTO]]
             result == Seq(checkpointDTO1, checkpointDTO2)
           }
