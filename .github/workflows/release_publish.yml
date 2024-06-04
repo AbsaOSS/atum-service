@@ -20,20 +20,46 @@ on:
     types: [released]
 
 jobs:
-  publish:
+  publish-to-sonatype:
+    name: Publish to Sonatype
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: olafurpg/setup-scala@v14
-      - name: Run sbt ci-release (produces jar as well)
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.8"
+
+      - name: Run sbt ci-release
         run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+
+  publish-server-jar:
+    name: Publish server jar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.11.0-11"
+      - name: Run sbt assembly (produces jar)
+        run: sbt assembly
 
       - name: Find JAR file
         id: find_jar
