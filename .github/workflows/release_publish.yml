@@ -58,7 +58,7 @@ jobs:
         uses: olafurpg/setup-scala@v14
         with:
           java-version: "adopt@1.11.0-11"
-      - name: Run sbt ci-release (produces jar as well)
+      - name: Run sbt assembly (produces jar)
         run: sbt assembly
 
       - name: Find JAR file
