@@ -16,9 +16,8 @@
 
 name: Release - publish artifacts
 on:
-  workflow_dispatch:
-#  release:
-#    types: [released]
+  release:
+    types: [released]
 
 jobs:
 #  publish-to-sonatype:
