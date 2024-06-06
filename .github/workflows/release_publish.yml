@@ -16,9 +16,8 @@
 
 name: Release - publish artifacts
 on:
-  workflow_dispatch:
-#  release:
-#    types: [released]
+  release:
+    types: [released]
 
 jobs:
 #  publish-to-sonatype:
@@ -72,9 +71,7 @@ jobs:
           echo "Published file: ${{ env.JAR_PATH }}"
           echo "In repo: ${{ github.repository }}"
 
-#          echo "Server release: ${{ github.event.release.tag_name }}"
-
       - name: Upload JAR file to GitHub Release
-        run: gh release upload v0.2.0 ${{ env.JAR_PATH }} --repo ${{ github.repository }}
+        run: gh release upload ${{ github.event.release.tag_name }} ${{ env.JAR_PATH }} --repo ${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
