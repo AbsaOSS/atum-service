@@ -36,7 +36,7 @@ jobs:
           java-version: "adopt@1.8"
 
       - name: Run sbt ci-release
-        run: sbt ci-release
+        run: sbt "project model" ci-release "project agent_spark3" ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -63,7 +63,19 @@ jobs:
 
       - name: Find JAR file
         id: find_jar
-        run: echo "JAR_PATH=$(find . -name 'server/target/jvm-2.13/*.jar' | head -n 1)" >> $GITHUB_ENV
+        run: echo "JAR_PATH=$(find server/target/jvm-2.13/ -type f -name 'atum-server-assembly-*.jar' | head -n 1)" >> $GITHUB_ENV
+
+      - name: Info on publish
+        run: |
+          echo "Server release: ${{ github.event.release.tag_name }}"
+          echo "Published file: ${{ env.JAR_PATH }}"
+          echo "In repo: ${{ github.repository }}"
+
+      - name: Info on publish
+        run: |
+          echo "Server release: ${{ github.event.release.tag_name }}"
+          echo "Published file: ${{ env.JAR_PATH }}"
+          echo "In repo: ${{ github.repository }}"
 
       - name: Upload JAR file to GitHub Release
         run: gh release upload ${{ github.event.release.tag_name }} ${{ env.JAR_PATH }} --repo ${{ github.repository }}
