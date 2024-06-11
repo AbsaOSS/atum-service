@@ -54,7 +54,7 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[AdditionalDataSubmitDTO])
   }
 
-  protected val getPartitioningCheckpointsEndpoint
+  protected val getPartitioningCheckpointsEndpointV2
     : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, Seq[CheckpointDTO], Any] = {
     apiV2.get
       .in(GetPartitioningCheckpoints)
