@@ -25,7 +25,7 @@ import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
 
-object FlowControllerIntegrationTests extends ZIOSpecDefault with TestData {
+object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
   private val flowServiceMock = mock(classOf[FlowService])
   when(flowServiceMock.getFlowCheckpoints(checkpointQueryDTO1))
     .thenReturn(ZIO.fail(ServiceError("boom!")))

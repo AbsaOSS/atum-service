@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import org.junit.runner.RunWith
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitionDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
@@ -25,10 +24,8 @@ import za.co.absa.fadb.exceptions.DataNotFoundException
 import za.co.absa.fadb.status.FunctionStatus
 import zio._
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest {
+object CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 

@@ -27,7 +27,7 @@ class FlowControllerImpl(flowService: FlowService)
   override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ErrorResponse, Seq[CheckpointDTO]] = {
     serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
       flowService.getFlowCheckpoints(checkpointQueryDTO),
-      flowCheckpoints => flowCheckpoints
+      identity
     )
   }
 

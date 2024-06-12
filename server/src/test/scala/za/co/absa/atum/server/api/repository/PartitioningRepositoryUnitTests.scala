@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.repository
 
-import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, MeasureDTO}
 import za.co.absa.atum.server.api.database.runs.functions.{
@@ -32,10 +31,8 @@ import za.co.absa.fadb.status.FunctionStatus
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class PartitioningRepositoryIntegrationTests extends ZIOSpecDefault with TestData {
+object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   // Create Partitioning Mocks
   private val createPartitioningIfNotExistsMock = mock(classOf[CreatePartitioningIfNotExists])

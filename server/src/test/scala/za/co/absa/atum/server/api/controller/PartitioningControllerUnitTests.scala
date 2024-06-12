@@ -25,7 +25,7 @@ import zio.test.Assertion.{equalTo, failsWithA}
 import zio._
 import zio.test._
 
-object PartitioningControllerIntegrationTests extends ZIOSpecDefault with TestData {
+object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   private val partitioningServiceMock = mock(classOf[PartitioningService])
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
     .thenReturn(ZIO.right(()))

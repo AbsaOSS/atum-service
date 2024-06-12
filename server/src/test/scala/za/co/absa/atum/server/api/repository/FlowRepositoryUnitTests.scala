@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.repository
 
-import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
@@ -24,10 +23,8 @@ import za.co.absa.atum.server.api.exception.DatabaseError
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class FlowRepositoryIntegrationTests extends ZIOSpecDefault with TestData {
+object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getFlowCheckpointsMock = mock(classOf[GetFlowCheckpoints])
 

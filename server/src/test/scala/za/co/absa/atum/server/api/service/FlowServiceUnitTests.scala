@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.service
 
-import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
@@ -25,10 +24,8 @@ import za.co.absa.atum.server.api.repository.FlowRepository
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class FlowServiceIntegrationTests extends ZIOSpecDefault with TestData {
+object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
   private val flowRepositoryMock = mock(classOf[FlowRepository])
 
   when(flowRepositoryMock.getFlowCheckpoints(checkpointQueryDTO1)).thenReturn(ZIO.fail(DatabaseError("boom!")))
