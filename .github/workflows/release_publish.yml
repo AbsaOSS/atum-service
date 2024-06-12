@@ -20,14 +20,22 @@ on:
     types: [released]
 
 jobs:
-  publish:
+  publish-to-sonatype:
+    name: Publish to Sonatype
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: olafurpg/setup-scala@v14
-      - name: Run sbt ci-release (produces jar as well)
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.8"
+
+      - name: Run sbt ci-release
         run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
@@ -35,9 +43,33 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
 
+
+  publish-server-jar:
+    name: Publish server jar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: coursier/cache-action@v5
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.11.0-11"
+      - name: Run sbt assembly (produces jar)
+        run: sbt assembly
+
       - name: Find JAR file
         id: find_jar
-        run: echo "JAR_PATH=$(find . -name 'server/target/jvm-2.13/*.jar' | head -n 1)" >> $GITHUB_ENV
+        run: echo "JAR_PATH=$(find server/target/jvm-2.13/ -type f -name 'atum-server-assembly-*.jar' | head -n 1)" >> $GITHUB_ENV
+
+      - name: Info on publish
+        run: |
+          echo "Server release: ${{ github.event.release.tag_name }}"
+          echo "Published file: ${{ env.JAR_PATH }}"
+          echo "In repo: ${{ github.repository }}"
 
       - name: Upload JAR file to GitHub Release
         run: gh release upload ${{ github.event.release.tag_name }} ${{ env.JAR_PATH }} --repo ${{ github.repository }}

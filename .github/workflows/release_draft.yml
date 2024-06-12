@@ -70,7 +70,7 @@ jobs:
             const tag = core.getInput('tag-name')
             const ref = `refs/tags/${tag}`;
             const sha = context.sha; // The SHA of the commit to tag
-            const tagMessage = 'Releasing new version';
+            const tagMessage = `${tag} released by GitHub Action`;
 
             const tagObject = await github.rest.git.createTag({
               owner: context.repo.owner,

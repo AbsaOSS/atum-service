@@ -43,14 +43,14 @@ object Setup {
   val commonScalacOptions: Seq[String] = Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
 
   val serverAndDbJavacOptions: Seq[String] = Seq("-source", "11", "-target", "11", "-Xlint")
-  val serverAndDbScalacOptions: Seq[String] = Seq("-release", "11", "-Ymacro-annotations")
+  val serverAndDbScalacOptions: Seq[String] = Seq("-Ymacro-annotations")
 
   val clientJavacOptions: Seq[String] = Seq("-source", "1.8", "-target", "1.8", "-Xlint")
   def clientScalacOptions(scalaVersion: Version): Seq[String] = {
     if (scalaVersion >= scala213) {
       Seq("-release", "8", "-Ymacro-annotations")
     } else {
-      Seq("-target", "8", "-release", "8")
+      Seq("-release", "8", "-target:8")
     }
   }
 
