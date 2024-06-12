@@ -55,7 +55,8 @@ lazy val server = (projectMatrix in file("server"))
       packageBin := (Compile / assembly).value,
       artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-      Setup.serverMergeStrategy
+      Setup.serverMergeStrategy,
+      publish / skip := true
     ): _*
   )
   .enablePlugins(AssemblyPlugin)
@@ -99,15 +100,8 @@ lazy val database = (projectMatrix in file("database"))
     Setup.commonSettings ++ Seq(
       name := "atum-database",
       javacOptions ++= Setup.serverAndDbJavacOptions,
-      test := {}
+      publish / skip := true
     ): _*
   )
   .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.databaseDependencies)
 
-//----------------------------------------------------------------------------------------------------------------------
-lazy val dbTest = taskKey[Unit]("Launch DB tests")
-
-dbTest := {
-  println("Running DB tests")
-  (database.jvm(Setup.serverAndDbScalaVersion.asString) / Test / test).value
-}
