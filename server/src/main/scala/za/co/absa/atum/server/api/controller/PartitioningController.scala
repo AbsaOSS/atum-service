@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, CheckpointQueryDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.model.ErrorResponse
 import zio.IO
 import zio.macros.accessible
@@ -25,4 +25,5 @@ import zio.macros.accessible
 trait PartitioningController {
   def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[ErrorResponse, AtumContextDTO]
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ErrorResponse, AdditionalDataSubmitDTO]
+  def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ErrorResponse, Seq[CheckpointDTO]]
 }

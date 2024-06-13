@@ -57,6 +57,9 @@ object PlayJsonImplicits {
     }
   }
 
+  implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
+  implicit val writesMeasureDTO: Writes[MeasureDTO] = Json.writes[MeasureDTO]
+
   implicit val readsTypedValue: Reads[MeasureResultDTO.TypedValue] = Json.reads[MeasureResultDTO.TypedValue]
   implicit val writesTypedValue: Writes[MeasureResultDTO.TypedValue] = Json.writes[MeasureResultDTO.TypedValue]
 
@@ -65,11 +68,7 @@ object PlayJsonImplicits {
       (__ \ "supportValues").readNullable[Map[String, TypedValue]].map(_.getOrElse(Map.empty))
       )(MeasureResultDTO.apply _)
   }
-
   implicit val writesMeasureResultDTO: Writes[MeasureResultDTO] = Json.writes[MeasureResultDTO]
-
-  implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
-  implicit val writesMeasureDTO: Writes[MeasureDTO] = Json.writes[MeasureDTO]
 
   implicit val readsMeasurementDTO: Reads[MeasurementDTO] = Json.reads[MeasurementDTO]
   implicit val writesMeasurementDTO: Writes[MeasurementDTO] = Json.writes[MeasurementDTO]
@@ -92,5 +91,8 @@ object PlayJsonImplicits {
 
   implicit val readsAtumContextDTO: Reads[AtumContextDTO] = Json.reads[AtumContextDTO]
   implicit val writesAtumContextDTO: Writes[AtumContextDTO] = Json.writes[AtumContextDTO]
+
+  implicit val readsCheckpointQueryDTO: Reads[CheckpointQueryDTO] = Json.reads[CheckpointQueryDTO]
+  implicit val writesCheckpointQueryDTO: Writes[CheckpointQueryDTO] = Json.writes[CheckpointQueryDTO]
 
 }

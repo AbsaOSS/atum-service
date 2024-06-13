@@ -23,10 +23,11 @@ import za.co.absa.atum.server.api.database.runs.functions.{
   CreateOrUpdateAdditionalData,
   CreatePartitioningIfNotExists,
   GetPartitioningAdditionalData,
-  GetPartitioningMeasures
-}
+  GetPartitioningCheckpoints,
+  GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.model.CheckpointFromDB
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
 import zio._
@@ -75,6 +76,15 @@ class PartitioningRepositoryIntegrationTests extends ZIOSpecDefault with TestDat
   when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
+
+  // Get Partitioning Checkpoints Mocks
+  private val getPartitioningCheckpointsMock = mock(classOf[GetPartitioningCheckpoints])
+
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO1)).thenReturn(ZIO.succeed(Seq(checkpointFromDB1)))
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO3)).thenReturn(ZIO.succeed(Seq.empty))
+
+  private val getPartitioningCheckpointsMockLayer = ZLayer.succeed(getPartitioningCheckpointsMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -139,13 +149,32 @@ class PartitioningRepositoryIntegrationTests extends ZIOSpecDefault with TestDat
             failsWithA[DatabaseError]
           )
         }
+      ),
+
+      suite("GetPartitioningCheckpointsSuite")(
+        test("Returns expected Seq") {
+          for {
+            result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO1)
+          } yield assertTrue(result.isInstanceOf[Seq[CheckpointFromDB]] && result == Seq(checkpointFromDB1))
+        },
+        test("Returns expected DatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(
+            failsWithA[DatabaseError]
+          )
+        },
+        test("Returns expected Seq.empty") {
+          for {
+            result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO3)
+          } yield assertTrue(result.isInstanceOf[Seq[CheckpointFromDB]] && result.isEmpty)
+        }
       )
     ).provide(
       PartitioningRepositoryImpl.layer,
       createPartitioningIfNotExistsMockLayer,
       getPartitioningMeasuresMockLayer,
       getPartitioningAdditionalDataMockLayer,
-      createOrUpdateAdditionalDataMockLayer
+      createOrUpdateAdditionalDataMockLayer,
+      getPartitioningCheckpointsMockLayer
     )
 
   }

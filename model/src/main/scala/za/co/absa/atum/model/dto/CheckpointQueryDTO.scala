@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.model.dto
 
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.model.ErrorResponse
-import zio.IO
-import zio.macros.accessible
-
-@accessible
-trait CheckpointController {
-  def createCheckpoint(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
-
-}
+case class CheckpointQueryDTO(
+  partitioning: PartitioningDTO,
+  limit: Option[Int],
+  checkpointName: Option[String]
+)

@@ -25,4 +25,5 @@ import zio.macros.accessible
 @accessible
 trait CheckpointRepository {
   def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]]
+
 }
