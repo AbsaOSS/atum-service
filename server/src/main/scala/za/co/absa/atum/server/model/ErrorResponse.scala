@@ -18,32 +18,35 @@ package za.co.absa.atum.server.model
 
 import play.api.libs.json.{Json, Reads, Writes}
 
-sealed trait ErrorResponse {
-  def message: String
-}
+import java.util.UUID
 
 object ErrorResponse {
+
+  sealed trait ErrorResponse extends ResponseEnvelope {
+    def message: String
+  }
+
   implicit val reads: Reads[ErrorResponse] = Json.reads[ErrorResponse]
   implicit val writes: Writes[ErrorResponse] = Json.writes[ErrorResponse]
-}
 
-final case class BadRequestResponse(message: String) extends ErrorResponse
+  final case class BadRequestResponse(message: String, requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
-object BadRequestResponse {
-  implicit val reads: Reads[BadRequestResponse] = Json.reads[BadRequestResponse]
-  implicit val writes: Writes[BadRequestResponse] = Json.writes[BadRequestResponse]
-}
+  implicit val readsBadRequestResponse: Reads[BadRequestResponse] = Json.reads[BadRequestResponse]
+  implicit val writesBadRequestResponse: Writes[BadRequestResponse] = Json.writes[BadRequestResponse]
 
-final case class GeneralErrorResponse(message: String) extends ErrorResponse
+  final case class GeneralErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
-object GeneralErrorResponse {
-  implicit val reads: Reads[GeneralErrorResponse] = Json.reads[GeneralErrorResponse]
-  implicit val writes: Writes[GeneralErrorResponse] = Json.writes[GeneralErrorResponse]
-}
+  implicit val readsGeneralErrorResponse: Reads[GeneralErrorResponse] = Json.reads[GeneralErrorResponse]
+  implicit val writesGeneralErrorResponse: Writes[GeneralErrorResponse] = Json.writes[GeneralErrorResponse]
 
-final case class InternalServerErrorResponse(message: String) extends ErrorResponse
+  final case class InternalServerErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
-object InternalServerErrorResponse {
-  implicit val reads: Reads[InternalServerErrorResponse] = Json.reads[InternalServerErrorResponse]
-  implicit val writes: Writes[InternalServerErrorResponse] = Json.writes[InternalServerErrorResponse]
+  implicit val readsInternalServerErrorResponse: Reads[InternalServerErrorResponse] =
+    Json.reads[InternalServerErrorResponse]
+  implicit val writesInternalServerErrorResponse: Writes[InternalServerErrorResponse] =
+    Json.writes[InternalServerErrorResponse]
+
 }

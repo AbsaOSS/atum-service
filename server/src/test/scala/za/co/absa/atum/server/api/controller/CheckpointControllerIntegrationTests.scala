@@ -16,21 +16,19 @@
 
 package za.co.absa.atum.server.api.controller
 
-import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class CheckpointControllerIntegrationTests extends ZIOSpecDefault with TestData {
+object CheckpointControllerIntegrationTests extends ZIOSpecDefault with TestData {
 
   private val checkpointServiceMock = mock(classOf[CheckpointService])
 
@@ -48,14 +46,14 @@ class CheckpointControllerIntegrationTests extends ZIOSpecDefault with TestData 
       suite("CreateCheckpointSuite")(
         test("Returns expected CheckpointDTO") {
           for {
-            result <- CheckpointController.createCheckpoint(checkpointDTO1)
+            result <- CheckpointController.createCheckpointV1(checkpointDTO1)
           } yield assertTrue(result == checkpointDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(CheckpointController.createCheckpoint(checkpointDTO3).exit)(failsWithA[InternalServerErrorResponse])
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(failsWithA[InternalServerErrorResponse])
         },
         test("Returns expected GeneralErrorResponse") {
-          assertZIO(CheckpointController.createCheckpoint(checkpointDTO2).exit)(failsWithA[GeneralErrorResponse])
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(failsWithA[GeneralErrorResponse])
         }
       )
     ).provide(

@@ -22,8 +22,10 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     OUT status_text                TEXT,
     OUT id_checkpoint              UUID,
     OUT checkpoint_name            TEXT,
+    OUT author                     TEXT,
+    OUT measured_by_atum_agent     BOOLEAN,
     OUT measure_name               TEXT,
-    OUT measure_columns            TEXT[],
+    OUT measured_columns           TEXT[],
     OUT measurement_value          JSONB,
     OUT checkpoint_start_time      TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time        TIMESTAMP WITH TIME ZONE
@@ -37,16 +39,18 @@ $$
 --      given partitioning (and checkpoint name, if specified).
 --
 -- Parameters:
---      i_partitioning      - partitioning of requested checkpoints
+--      i_partitioning          - partitioning of requested checkpoints
 --      i_limit                 - (optional) maximum number of checkpoint's measurements to return
 --                                if 0 specified, all data will be returned, i.e. no limit will be applied
---      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --
 -- Returns:
+--      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --      status                  - Status code
 --      status_text             - Status message
 --      id_checkpoint           - ID of the checkpoint
 --      checkpoint_name         - Name of the checkpoint
+--      author                  - Author of the checkpoint
+--      measuredByAtumAgent     - Flag indicating whether the checkpoint was measured by ATUM agent
 --      measure_name            - Name of the measure
 --      measure_columns         - Columns of the measure
 --      measurement_value       - Value of the measurement
@@ -74,26 +78,28 @@ BEGIN
         SELECT
             11 AS status,
             'Ok' AS status_text,
-            c.id_checkpoint,
-            c.checkpoint_name,
+            C.id_checkpoint,
+            C.checkpoint_name,
+            C.created_by AS author,
+            C.measured_by_atum_agent,
             md.measure_name,
             md.measured_columns,
-            m.measurement_value,
-            c.process_start_time AS checkpoint_start_time,
-            c.process_end_time AS checkpoint_end_time
+            M.measurement_value,
+            C.process_start_time AS checkpoint_start_time,
+            C.process_end_time AS checkpoint_end_time
         FROM
-            runs.checkpoints c
+            runs.checkpoints C
         JOIN
-            runs.measurements m ON c.id_checkpoint = m.fk_checkpoint
+            runs.measurements M ON C.id_checkpoint = M.fk_checkpoint
         JOIN
-            runs.measure_definitions md ON m.fk_measure_definition = md.id_measure_definition
+            runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
         WHERE
-            c.fk_partitioning = _fk_partitioning
+            C.fk_partitioning = _fk_partitioning
         AND
-            (i_checkpoint_name IS NULL OR c.checkpoint_name = i_checkpoint_name)
+            (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
         ORDER BY
-            c.process_start_time,
-            c.id_checkpoint
+            C.process_start_time,
+            C.id_checkpoint
         LIMIT nullif(i_limit, 0);
 
 END;

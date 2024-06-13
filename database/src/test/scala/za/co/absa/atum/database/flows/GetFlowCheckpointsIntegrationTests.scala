@@ -234,7 +234,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
 
         val measure1 = MeasuredDetails(
           row1.getString("measure_name").get,
-          row1.getArray[String]("measure_columns").map(_.toList).get,
+          row1.getArray[String]("measured_columns").map(_.toList).get,
           row1.getJsonB("measurement_value").get
         )
 
@@ -248,7 +248,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
 
         val measure2 = MeasuredDetails(
           row2.getString("measure_name").get,
-          row2.getArray[String]("measure_columns").map(_.toList).get,
+          row2.getArray[String]("measured_columns").map(_.toList).get,
           row2.getJsonB("measurement_value").get
         )
 

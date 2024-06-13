@@ -22,6 +22,16 @@ import zio._
 
 trait BaseRepository {
 
+  def dbCall[R](
+    dbFuncCall: Task[R],
+    operationName: String
+  ): IO[DatabaseError, R] = {
+    dbFuncCall
+      .zipLeft(ZIO.logDebug(s"Operation '$operationName' succeeded in database"))
+      .mapError(error => DatabaseError(error.getMessage))
+      .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
+  }
+
   def dbCallWithStatus[R](
     dbFuncCall: Task[Either[StatusException, R]],
     operationName: String
