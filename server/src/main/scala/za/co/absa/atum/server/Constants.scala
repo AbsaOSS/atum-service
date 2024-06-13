@@ -24,15 +24,18 @@ object Constants {
     final val V1 = "v1"
     final val V2 = "v2"
 
-    final val CreatePartitioning = "createPartitioning"
-    final val CreateOrUpdateAdditionalData = "createOrUpdateAdditionalData"
-    final val CreateCheckpoint = "createCheckpoint"
-    final val GetPartitioningCheckpoints = "getPartitioningCheckpoints"
-    final val GetFlowCheckpoints = "getFlowCheckpoints"
+    // todo to uppercase no hyphen for v1, backward compatibility
+    // todo - better API paths??
+    final val CreatePartitioning = "create-partitioning"
+    final val CreateCheckpoint = "create-checkpoint"
+
+    final val CreateOrUpdateAdditionalData = "upsert-additional-data"
+
+    final val GetPartitioningCheckpoints = "get-partitioning-checkpoints"
+    final val GetFlowCheckpoints = "get-flow-checkpoints"
 
     final val Health = "health"
     final val ZioMetrics = "zio-metrics"
-
   }
 
   final val SwaggerApiName = "Atum API"
