@@ -87,16 +87,16 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
       suite("GetPartitioningCheckpointsSuite")(
         test("Returns expected Seq[MeasureDTO]") {
           for {
-            result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO1)
+            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO1)
           } yield assertTrue(result.data == Seq(checkpointDTO1, checkpointDTO2))
         },
         test("Returns expected empty sequence") {
           for {
-            result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO2)
+            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO2)
           } yield assertTrue(result.data == Seq.empty[CheckpointDTO])
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO3).exit)(
+          assertZIO(PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO3).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }

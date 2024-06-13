@@ -47,7 +47,7 @@ object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected CheckpointDTO") {
           for {
             result <- FlowController.getFlowCheckpointsV2(checkpointQueryDTO2)
-          } yield assertTrue (result == Seq(checkpointDTO2))
+          } yield assertTrue (result.data == Seq(checkpointDTO2))
         }
 
       )
