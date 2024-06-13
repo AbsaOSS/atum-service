@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.controller
+package za.co.absa.atum.server.model
 
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
-import zio.IO
-import zio.macros.accessible
+import java.util.UUID
 
-@accessible
-trait CheckpointController {
+object SuccessResponse {
 
-  def createCheckpointV1(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
+  sealed trait SuccessResponse extends ResponseEnvelope
 
-  def createCheckpointV2(
-    checkpointDTO: CheckpointDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]]
+  case class SingleSuccessResponse[T](data: T, requestId: UUID = UUID.randomUUID())
+    extends SuccessResponse
+
+  case class MultiSuccessResponse[T](data: Seq[T], requestId: UUID = UUID.randomUUID())
+    extends SuccessResponse
 
 }

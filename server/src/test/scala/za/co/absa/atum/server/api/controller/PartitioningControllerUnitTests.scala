@@ -17,12 +17,14 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
-import zio.test.Assertion.{equalTo, failsWithA}
+import za.co.absa.atum.server.model.ErrorResponse.InternalServerErrorResponse
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio._
+import zio.test.Assertion.{equalTo, failsWithA}
 import zio.test._
 
 object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
@@ -58,21 +60,25 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
       suite("CreatePartitioningIfNotExistsSuite")(
         test("Returns expected AtumContextDTO") {
           for {
-            result <- PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO1)
-          } yield assertTrue (result == atumContextDTO1)
+            result <- PartitioningController.createPartitioningIfNotExistsV1(partitioningSubmitDTO1)
+          } yield assertTrue(result == atumContextDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.createPartitioningIfNotExists(partitioningSubmitDTO2).exit)(
+          assertZIO(PartitioningController.createPartitioningIfNotExistsV1(partitioningSubmitDTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }
       ),
       suite("CreateOrUpdateAdditionalDataSuite")(
         test("Returns expected AdditionalDataSubmitDTO") {
-          assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO1))(equalTo(additionalDataSubmitDTO1))
+          for {
+            result <- PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO1)
+            expected = SingleSuccessResponse(additionalDataSubmitDTO1, uuid)
+            actual = result.copy(requestId = uuid)
+          } yield assert(actual)(equalTo(expected))
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit)(
+          assertZIO(PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }
@@ -82,12 +88,12 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Seq[MeasureDTO]") {
           for {
             result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue(result == Seq(checkpointDTO1, checkpointDTO2))
+          } yield assertTrue(result.data == Seq(checkpointDTO1, checkpointDTO2))
         },
         test("Returns expected empty sequence") {
           for {
             result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO2)
-          } yield assertTrue(result == Seq.empty)
+          } yield assertTrue(result.data == Seq.empty[CheckpointDTO])
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO3).exit)(

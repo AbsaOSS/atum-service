@@ -20,6 +20,7 @@ import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 
 object PlayJsonImplicits {
 
@@ -57,9 +58,6 @@ object PlayJsonImplicits {
     }
   }
 
-  implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
-  implicit val writesMeasureDTO: Writes[MeasureDTO] = Json.writes[MeasureDTO]
-
   implicit val readsTypedValue: Reads[MeasureResultDTO.TypedValue] = Json.reads[MeasureResultDTO.TypedValue]
   implicit val writesTypedValue: Writes[MeasureResultDTO.TypedValue] = Json.writes[MeasureResultDTO.TypedValue]
 
@@ -68,7 +66,11 @@ object PlayJsonImplicits {
       (__ \ "supportValues").readNullable[Map[String, TypedValue]].map(_.getOrElse(Map.empty))
       )(MeasureResultDTO.apply _)
   }
+
   implicit val writesMeasureResultDTO: Writes[MeasureResultDTO] = Json.writes[MeasureResultDTO]
+
+  implicit val readsMeasureDTO: Reads[MeasureDTO] = Json.reads[MeasureDTO]
+  implicit val writesMeasureDTO: Writes[MeasureDTO] = Json.writes[MeasureDTO]
 
   implicit val readsMeasurementDTO: Reads[MeasurementDTO] = Json.reads[MeasurementDTO]
   implicit val writesMeasurementDTO: Writes[MeasurementDTO] = Json.writes[MeasurementDTO]
@@ -91,6 +93,9 @@ object PlayJsonImplicits {
 
   implicit val readsAtumContextDTO: Reads[AtumContextDTO] = Json.reads[AtumContextDTO]
   implicit val writesAtumContextDTO: Writes[AtumContextDTO] = Json.writes[AtumContextDTO]
+
+  implicit def formatSingleSuccessResponse[T: Format]: Format[SingleSuccessResponse[T]] = Json.format[SingleSuccessResponse[T]]
+  implicit def formatMultiSuccessResponse[T: Format]: Format[MultiSuccessResponse[T]] = Json.format[MultiSuccessResponse[T]]
 
   implicit val readsCheckpointQueryDTO: Reads[CheckpointQueryDTO] = Json.reads[CheckpointQueryDTO]
   implicit val writesCheckpointQueryDTO: Writes[CheckpointQueryDTO] = Json.writes[CheckpointQueryDTO]

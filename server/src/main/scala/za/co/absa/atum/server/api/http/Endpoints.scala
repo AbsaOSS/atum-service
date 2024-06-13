@@ -17,18 +17,20 @@
 package za.co.absa.atum.server.api.http
 
 import sttp.model.StatusCode
-import sttp.tapir.{PublicEndpoint, endpoint}
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointQueryDTO, CheckpointDTO, PartitioningSubmitDTO}
+import sttp.tapir.{PublicEndpoint, endpoint}
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
-import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
 import za.co.absa.atum.server.model.PlayJsonImplicits._
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 
 trait Endpoints extends BaseEndpoints {
 
-  protected val createCheckpointEndpoint: PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
+  protected val createCheckpointEndpointV1
+    : PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
     apiV1.post
       .in(CreateCheckpoint)
       .in(jsonBody[CheckpointDTO])
@@ -36,7 +38,16 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[CheckpointDTO])
   }
 
-  protected val createPartitioningEndpoint
+  protected val createCheckpointEndpointV2
+      : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
+    apiV2.post
+      .in(CreateCheckpoint)
+      .in(jsonBody[CheckpointDTO])
+      .out(statusCode(StatusCode.Created))
+      .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
+  }
+
+  protected val createPartitioningEndpointV1
     : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, AtumContextDTO, Any] = {
     apiV1.post
       .in(CreatePartitioning)
@@ -45,22 +56,31 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[AtumContextDTO])
   }
 
-  protected val createOrUpdateAdditionalDataEndpoint
-    : PublicEndpoint[AdditionalDataSubmitDTO, ErrorResponse, AdditionalDataSubmitDTO, Any] = {
-    apiV1.post
+  protected val createPartitioningEndpointV2
+    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
+    apiV2.post
+      .in(CreatePartitioning)
+      .in(jsonBody[PartitioningSubmitDTO])
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
+  }
+
+  protected val createOrUpdateAdditionalDataEndpointV2
+    : PublicEndpoint[AdditionalDataSubmitDTO, ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO], Any] = {
+    apiV2.post
       .in(CreateOrUpdateAdditionalData)
       .in(jsonBody[AdditionalDataSubmitDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[AdditionalDataSubmitDTO])
+      .out(jsonBody[SingleSuccessResponse[AdditionalDataSubmitDTO]])
   }
 
   protected val getPartitioningCheckpointsEndpointV2
-    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, Seq[CheckpointDTO], Any] = {
+    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
     apiV2.get
       .in(GetPartitioningCheckpoints)
       .in(jsonBody[CheckpointQueryDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[Seq[CheckpointDTO]])
+      .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
   }
 
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
