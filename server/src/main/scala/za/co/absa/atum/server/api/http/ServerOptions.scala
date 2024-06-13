@@ -27,7 +27,7 @@ import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.r
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.ztapir.{headers, statusCode}
-import za.co.absa.atum.server.model.BadRequestResponse
+import za.co.absa.atum.server.model.ErrorResponse.BadRequestResponse
 import zio.interop.catz._
 
 trait ServerOptions {

@@ -38,10 +38,13 @@ trait Routes extends Endpoints with ServerOptions {
       if (httpMonitoringConfig.enabled) Some(HttpMetrics.prometheusMetrics.metricsInterceptor()) else None
     }
     val endpoints = List(
-      createServerEndpoint(createCheckpointEndpoint, CheckpointController.createCheckpoint),
-      createServerEndpoint(createPartitioningEndpoint, PartitioningController.createPartitioningIfNotExists),
-      createServerEndpoint(createOrUpdateAdditionalDataEndpoint, PartitioningController.createOrUpdateAdditionalData),
-      createServerEndpoint(getFlowCheckpointsEndpoint, FlowController.getFlowCheckpoints),
+      createServerEndpoint(createCheckpointEndpointV1, CheckpointController.createCheckpointV1),
+      createServerEndpoint(createCheckpointEndpointV2, CheckpointController.createCheckpointV2),
+      createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),
+      createServerEndpoint(createPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
+      createServerEndpoint(createOrUpdateAdditionalDataEndpointV2, PartitioningController.createOrUpdateAdditionalDataV2),
+      createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpoints),
+      createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit),
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
@@ -52,7 +55,13 @@ trait Routes extends Endpoints with ServerOptions {
 
   private def createSwaggerRoutes: HttpRoutes[HttpEnv.F] = {
     val endpoints = List(
-      createCheckpointEndpoint, createPartitioningEndpoint, createOrUpdateAdditionalDataEndpoint, getFlowCheckpointsEndpoint
+      createCheckpointEndpointV1,
+      createCheckpointEndpointV2,
+      createPartitioningEndpointV1,
+      createPartitioningEndpointV2,
+      createOrUpdateAdditionalDataEndpointV2,
+      getPartitioningCheckpointsEndpointV2,
+      getFlowCheckpointsEndpointV2,
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, SwaggerApiName, SwaggerApiVersion))

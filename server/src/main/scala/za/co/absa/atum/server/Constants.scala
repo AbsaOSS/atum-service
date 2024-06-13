@@ -27,6 +27,7 @@ object Constants {
     final val CreatePartitioning = "createPartitioning"
     final val CreateOrUpdateAdditionalData = "createOrUpdateAdditionalData"
     final val CreateCheckpoint = "createCheckpoint"
+    final val GetPartitioningCheckpoints = "getPartitioningCheckpoints"
     final val GetFlowCheckpoints = "getFlowCheckpoints"
 
     final val Health = "health"

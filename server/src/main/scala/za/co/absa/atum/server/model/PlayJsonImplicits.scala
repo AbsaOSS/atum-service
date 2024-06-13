@@ -20,6 +20,7 @@ import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 
 object PlayJsonImplicits {
 
@@ -92,6 +93,9 @@ object PlayJsonImplicits {
 
   implicit val readsAtumContextDTO: Reads[AtumContextDTO] = Json.reads[AtumContextDTO]
   implicit val writesAtumContextDTO: Writes[AtumContextDTO] = Json.writes[AtumContextDTO]
+
+  implicit def formatSingleSuccessResponse[T: Format]: Format[SingleSuccessResponse[T]] = Json.format[SingleSuccessResponse[T]]
+  implicit def formatMultiSuccessResponse[T: Format]: Format[MultiSuccessResponse[T]] = Json.format[MultiSuccessResponse[T]]
 
   implicit val readsCheckpointQueryDTO: Reads[CheckpointQueryDTO] = Json.reads[CheckpointQueryDTO]
   implicit val writesCheckpointQueryDTO: Writes[CheckpointQueryDTO] = Json.writes[CheckpointQueryDTO]

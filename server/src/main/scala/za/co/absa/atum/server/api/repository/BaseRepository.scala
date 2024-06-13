@@ -23,8 +23,8 @@ import zio._
 trait BaseRepository {
 
   def dbCall[R](
-   dbFuncCall: Task[R],
-   operationName: String
+    dbFuncCall: Task[R],
+    operationName: String
   ): IO[DatabaseError, R] = {
     dbFuncCall
       .zipLeft(ZIO.logDebug(s"Operation '$operationName' succeeded in database"))

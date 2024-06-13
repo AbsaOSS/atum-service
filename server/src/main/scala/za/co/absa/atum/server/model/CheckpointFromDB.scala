@@ -35,7 +35,7 @@ case class CheckpointFromDB(
    measurementValue: Json,  // it's easier to convert this attribute to our `MeasurementDTO` after we received this as JSON from DB
    checkpointStartTime: ZonedDateTime,
    checkpointEndTime:  Option[ZonedDateTime]
- )
+)
 
 object CheckpointFromDB {
 

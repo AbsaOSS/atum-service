@@ -15,9 +15,9 @@
  */
 
 CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
-    IN i_partitioning_of_flow  JSONB,
-    IN i_limit                 INT DEFAULT 5,
-    IN i_checkpoint_name       TEXT DEFAULT NULL,
+    IN  i_partitioning_of_flow JSONB,
+    IN  i_limit                INT DEFAULT 5,
+    IN  i_checkpoint_name      TEXT DEFAULT NULL,
     OUT status                 INTEGER,
     OUT status_text            TEXT,
     OUT id_checkpoint          UUID,

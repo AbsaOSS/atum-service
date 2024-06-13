@@ -17,7 +17,8 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.ErrorResponse.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.fadb.exceptions.StatusException
 import zio._
 
@@ -54,5 +55,17 @@ trait BaseController {
           ZIO.succeed(onSuccessFnc(result))
       }
 
+  }
+
+  protected def mapToSingleSuccessResponse[A](
+    effect: IO[ErrorResponse, A]
+  ): IO[ErrorResponse, SingleSuccessResponse[A]] = {
+    effect.map(SingleSuccessResponse(_))
+  }
+
+  protected def mapToMultiSuccessResponse[A](
+    effect: IO[ErrorResponse, Seq[A]]
+  ): IO[ErrorResponse, MultiSuccessResponse[A]] = {
+    effect.map(MultiSuccessResponse(_))
   }
 }
