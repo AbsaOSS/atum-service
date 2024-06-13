@@ -27,7 +27,7 @@ import MeasureResultDTO.ResultValueType._
 
 trait TestData {
 
-  protected val uuid = UUID.randomUUID()
+  protected val uuid: UUID = UUID.randomUUID()
 
   // Partitioning DTO
   protected val partitioningDTO1: PartitioningDTO = Seq(

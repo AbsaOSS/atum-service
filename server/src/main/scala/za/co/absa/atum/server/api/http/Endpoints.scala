@@ -84,7 +84,7 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val getFlowCheckpointsEndpointV2
-    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, Seq[CheckpointDTO], Any] = {
+    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
     apiV2.post
       .in(GetFlowCheckpoints)
       .in(jsonBody[CheckpointQueryDTO])

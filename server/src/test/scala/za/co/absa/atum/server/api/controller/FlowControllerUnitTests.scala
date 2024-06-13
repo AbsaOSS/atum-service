@@ -20,7 +20,7 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.FlowService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
+import za.co.absa.atum.server.model.ErrorResponse.InternalServerErrorResponse
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
@@ -39,14 +39,14 @@ object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
     suite("FlowControllerSuite")(
       suite("GetFlowCheckpointsSuite")(
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(FlowController.getFlowCheckpoints(checkpointQueryDTO1).exit)(
+          assertZIO(FlowController.getFlowCheckpointsV2(checkpointQueryDTO1).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         },
 
         test("Returns expected CheckpointDTO") {
           for {
-            result <- FlowController.getFlowCheckpoints(checkpointQueryDTO2)
+            result <- FlowController.getFlowCheckpointsV2(checkpointQueryDTO2)
           } yield assertTrue (result == Seq(checkpointDTO2))
         }
 
