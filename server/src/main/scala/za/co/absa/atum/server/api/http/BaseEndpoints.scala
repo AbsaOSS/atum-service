@@ -70,4 +70,12 @@ trait BaseEndpoints {
     baseEndpoint.in(Api / V2)
   }
 
+  def pathToAPIv1CompatibleFormat(apiURLPath: String): String = {
+    // this is basically kebab-case/snake_case to camelCase
+    val inputParts = apiURLPath.split("[_-]")
+
+    // Capitalize the first letter of each part except the first one (lowercase always)
+    inputParts.head.toLowerCase + inputParts.tail.map(_.capitalize).mkString("")
+  }
+
 }

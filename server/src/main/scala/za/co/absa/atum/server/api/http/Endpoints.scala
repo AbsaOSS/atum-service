@@ -32,7 +32,7 @@ trait Endpoints extends BaseEndpoints {
   protected val createCheckpointEndpointV1
     : PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
     apiV1.post
-      .in(CreateCheckpoint)
+      .in(pathToAPIv1CompatibleFormat(CreateCheckpoint))
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[CheckpointDTO])
@@ -41,7 +41,7 @@ trait Endpoints extends BaseEndpoints {
   protected val createCheckpointEndpointV2
       : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
     apiV2.post
-      .in(CreateCheckpoint)
+      .in(pathToAPIv1CompatibleFormat(CreateCheckpoint))
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
