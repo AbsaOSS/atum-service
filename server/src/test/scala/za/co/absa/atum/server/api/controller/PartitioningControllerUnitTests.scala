@@ -17,11 +17,12 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.ErrorResponse.InternalServerErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio._
 import zio.test.Assertion.{equalTo, failsWithA}
 import zio.test._
@@ -87,12 +88,12 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Seq[MeasureDTO]") {
           for {
             result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue(result == Seq(checkpointDTO1, checkpointDTO2))
+          } yield assertTrue(result.data == Seq(checkpointDTO1, checkpointDTO2))
         },
         test("Returns expected empty sequence") {
           for {
             result <- PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO2)
-          } yield assertTrue(result == Seq.empty)
+          } yield assertTrue(result.data == Seq.empty[CheckpointDTO])
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.getPartitioningCheckpoints(checkpointQueryDTO3).exit)(
