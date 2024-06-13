@@ -25,7 +25,7 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
 import za.co.absa.atum.server.model.PlayJsonImplicits._
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 
 trait Endpoints extends BaseEndpoints {
 
@@ -75,12 +75,12 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val getPartitioningCheckpointsEndpointV2
-    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, Seq[CheckpointDTO], Any] = {
+    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
     apiV2.get
       .in(GetPartitioningCheckpoints)
       .in(jsonBody[CheckpointQueryDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[Seq[CheckpointDTO]])
+      .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
   }
 
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
