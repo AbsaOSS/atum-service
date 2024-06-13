@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.service
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.FlowRepository
@@ -47,7 +46,6 @@ object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- FlowService.getFlowCheckpoints(checkpointQueryDTO2)
           } yield assertTrue{
-            result.isInstanceOf[Seq[CheckpointDTO]]
             result == Seq(checkpointDTO2)
           }
         },

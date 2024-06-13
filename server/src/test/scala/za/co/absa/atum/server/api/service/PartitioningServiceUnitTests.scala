@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.service
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, CheckpointDTO, MeasureDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.PartitioningRepository
@@ -102,7 +101,6 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.getPartitioningMeasures(partitioningDTO1)
           } yield assertTrue{
-            result.isInstanceOf[Seq[MeasureDTO]]
             result == Seq(measureDTO1, measureDTO2)
           }
         },
@@ -116,7 +114,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Seq[AdditionalDataDTO]") {
           for {
             result <- PartitioningService.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
+          } yield assertTrue{result == additionalDataDTO1}
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningDTO2).exit)(
@@ -129,8 +127,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO1)
           } yield assertTrue{
-            result.isInstanceOf[Seq[CheckpointDTO]]
-            result == Seq(checkpointDTO1, checkpointDTO2)
+            result == Seq(checkpointDTO1, checkpointDTO2.copy(partitioning = checkpointDTO1.partitioning))
           }
         },
         test("Returns expected ServiceError") {
