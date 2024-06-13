@@ -43,7 +43,7 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),
       createServerEndpoint(createPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
       createServerEndpoint(createOrUpdateAdditionalDataEndpointV2, PartitioningController.createOrUpdateAdditionalDataV2),
-      createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpoints),
+      createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
       createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit),
     )
