@@ -97,4 +97,7 @@ object PlayJsonImplicits {
   implicit def formatSingleSuccessResponse[T: Format]: Format[SingleSuccessResponse[T]] = Json.format[SingleSuccessResponse[T]]
   implicit def formatMultiSuccessResponse[T: Format]: Format[MultiSuccessResponse[T]] = Json.format[MultiSuccessResponse[T]]
 
+  implicit val readsCheckpointQueryDTO: Reads[CheckpointQueryDTO] = Json.reads[CheckpointQueryDTO]
+  implicit val writesCheckpointQueryDTO: Writes[CheckpointQueryDTO] = Json.writes[CheckpointQueryDTO]
+
 }

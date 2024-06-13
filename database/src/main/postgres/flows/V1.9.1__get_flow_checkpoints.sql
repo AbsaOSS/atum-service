@@ -23,7 +23,7 @@ CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
     OUT id_checkpoint         UUID,
     OUT checkpoint_name       TEXT,
     OUT measure_name          TEXT,
-    OUT measure_columns       TEXT[],
+    OUT measured_columns      TEXT[],
     OUT measurement_value     JSONB,
     OUT checkpoint_start_time TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time   TIMESTAMP WITH TIME ZONE
@@ -58,7 +58,7 @@ $$
 --      id_checkpoint       - id of retrieved checkpoint
 --      checkpoint_name     - name of retrieved checkpoint
 --      measure_name        - measure name associated with a given checkpoint
---      measure_columns     - measure columns associated with a given checkpoint
+--      measured_columns    - measure columns associated with a given checkpoint
 --      measurement_value   - measurement details associated with a given checkpoint
 --      checkpoint_time     - time
 --

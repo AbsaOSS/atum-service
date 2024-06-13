@@ -24,6 +24,21 @@ import zio._
 
 trait BaseController {
 
+  def serviceCall[A, B](
+    serviceCall: IO[ServiceError, A],
+    onSuccessFnc: A => B
+  ): IO[ErrorResponse, B] = {
+
+    serviceCall
+      .mapError { serviceError: ServiceError =>
+        InternalServerErrorResponse(serviceError.message)
+      }
+      .flatMap {
+        result => ZIO.succeed(onSuccessFnc(result))
+      }
+
+  }
+
   def serviceCallWithStatus[A, B](
     serviceCall: IO[ServiceError, Either[StatusException, A]],
     onSuccessFnc: A => B
