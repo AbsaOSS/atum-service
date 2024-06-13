@@ -41,7 +41,7 @@ trait Endpoints extends BaseEndpoints {
   protected val createCheckpointEndpointV2
       : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
     apiV2.post
-      .in(pathToAPIv1CompatibleFormat(CreateCheckpoint))
+      .in(CreateCheckpoint)
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
@@ -50,7 +50,7 @@ trait Endpoints extends BaseEndpoints {
   protected val createPartitioningEndpointV1
     : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, AtumContextDTO, Any] = {
     apiV1.post
-      .in(CreatePartitioning)
+      .in(pathToAPIv1CompatibleFormat(CreatePartitioning))
       .in(jsonBody[PartitioningSubmitDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[AtumContextDTO])
