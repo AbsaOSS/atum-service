@@ -73,4 +73,4 @@ jobs:
               console.log('"Release notes" found in comments');
             }
       - name: Info
-        run: echo "All good! ${{ github.event.issue.pull_request }} -"
+        run: echo "All good! ${{ github.event}} 2-"
