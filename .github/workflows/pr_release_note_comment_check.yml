@@ -18,8 +18,10 @@ name:  PR Release Note Comment Check
 
 on:
   issue_comment:
-#    types:
-#      - created
+    types:
+      - created
+      - edited
+      - deleted
 #  pull_request:
 #    types:
 #      - opened
