@@ -21,14 +21,13 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._
 
-object CheckpointControllerIntegrationTests extends ZIOSpecDefault with TestData {
+object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
 
   private val checkpointServiceMock = mock(classOf[CheckpointService])
 

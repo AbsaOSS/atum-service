@@ -25,54 +25,56 @@ import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.controller.CheckpointController
+import za.co.absa.atum.server.api.controller.FlowController
 import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.PlayJsonImplicits._
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.SuccessResponse.MultiSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
-object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
+object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
-  private val checkpointControllerMock = mock(classOf[CheckpointController])
+  private val flowControllerMock = mock(classOf[FlowController])
 
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1, uuid)))
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO2))
+  when(flowControllerMock.getFlowCheckpointsV2(checkpointQueryDTO1))
+    .thenReturn(ZIO.succeed(MultiSuccessResponse(Seq(checkpointDTO1, checkpointDTO2), uuid)))
+  when(flowControllerMock.getFlowCheckpointsV2(checkpointQueryDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO3))
+  when(flowControllerMock.getFlowCheckpointsV2(checkpointQueryDTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
 
-  private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
+  private val flowControllerMockLayer = ZLayer.succeed(flowControllerMock)
 
-  private val createCheckpointServerEndpoint =
-    createCheckpointEndpointV2.zServerLogic(CheckpointController.createCheckpointV2)
+  private val getFlowCheckpointsServerEndpoint =
+    getFlowCheckpointsEndpointV2.zServerLogic(FlowController.getFlowCheckpointsV2)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
-    val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
-      .whenServerEndpoint(createCheckpointServerEndpoint)
+    val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[FlowController]))
+      .whenServerEndpoint(getFlowCheckpointsServerEndpoint)
       .thenRunLogic()
       .backend()
 
     val request = basicRequest
-      .post(uri"https://test.com/api/v2/createCheckpoint")
-      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
+      .post(uri"https://test.com/api/v2/get-flow-checkpoints")
+      .response(asJson[MultiSuccessResponse[CheckpointDTO]])
 
-    suite("CreateCheckpointEndpointSuite")(
+    suite("GetFlowCheckpointsEndpointSuite")(
       test("Returns expected CheckpointDTO") {
         val response = request
-          .body(checkpointDTO1)
+          .body(checkpointQueryDTO1)
           .send(backendStub)
 
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1, uuid)), StatusCode.Created))
+        val expectedResult = MultiSuccessResponse(Seq(checkpointDTO1, checkpointDTO2), uuid)
+
+        assertZIO(body <&> statusCode)(equalTo(Right(expectedResult), StatusCode.Ok))
       },
       test("Returns expected BadRequest") {
         val response = request
-          .body(checkpointDTO2)
+          .body(checkpointQueryDTO2)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -81,7 +83,7 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
       },
       test("Returns expected InternalServerError") {
         val response = request
-          .body(checkpointDTO3)
+          .body(checkpointQueryDTO3)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -90,7 +92,7 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
       }
     )
   }.provide(
-    checkpointControllerMockLayer
+    flowControllerMockLayer
   )
 
 }
