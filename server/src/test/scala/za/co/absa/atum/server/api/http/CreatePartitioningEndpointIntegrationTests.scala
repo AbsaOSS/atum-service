@@ -30,7 +30,7 @@ import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorRe
 import zio.test.Assertion.equalTo
 import zio._
 import zio.test._
-import za.co.absa.atum.server.model.PlayJsonImplicits.{readsAtumContextDTO, writesPartitioningSubmitDTO}
+import za.co.absa.atum.server.model.CirceJsonImplicits.{decodeAtumContextDTO, encodePartitioningSubmitDTO}
 
 object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
 

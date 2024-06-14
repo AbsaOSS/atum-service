@@ -30,7 +30,7 @@ import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
 import play.api.libs.json.Json
-import za.co.absa.atum.server.model.PlayJsonImplicits.writesMeasurementDTO
+import za.co.absa.atum.server.model.CirceJsonImplicit._
 
 import doobie.postgres.implicits._
 

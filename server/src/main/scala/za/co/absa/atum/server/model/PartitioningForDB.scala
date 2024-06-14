@@ -16,14 +16,36 @@
 
 package za.co.absa.atum.server.model
 
-import play.api.libs.json.{Json, Writes}
+//import play.api.libs.json.{Json, Writes}
+//import za.co.absa.atum.model.dto.PartitioningDTO
+//
+//private[server] case class PartitioningForDB private (
+//  version: Int = 1,
+//  keys: Seq[String],
+//  keysToValues: Map[String, String]
+//)
+//
+//object PartitioningForDB {
+//
+//  def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
+//    val allKeys = partitioning.map(_.key)
+//    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
+//
+//    PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
+//  }
+//
+//  implicit val writes: Writes[PartitioningForDB] = Json.writes
+//
+//}
+
+import io.circe._, io.circe.generic.semiauto._
 import za.co.absa.atum.model.dto.PartitioningDTO
 
 private[server] case class PartitioningForDB private (
-  version: Int = 1,
-  keys: Seq[String],
-  keysToValues: Map[String, String]
-)
+                                                       version: Int = 1,
+                                                       keys: Seq[String],
+                                                       keysToValues: Map[String, String]
+                                                     )
 
 object PartitioningForDB {
 
@@ -34,6 +56,6 @@ object PartitioningForDB {
     PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
   }
 
-  implicit val writes: Writes[PartitioningForDB] = Json.writes
+  implicit val encodePartitioningForDB: Encoder[PartitioningForDB] = deriveEncoder
 
 }

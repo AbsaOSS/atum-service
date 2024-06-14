@@ -74,6 +74,7 @@ object Dependencies {
     val http4sBlazeBackend = "0.23.15"
     val http4sPrometheus = "0.23.6"
     val playJson = "3.0.1"
+    val circeJson = "0.14.7"
     val sttpPlayJson = "3.9.3"
 
     val awssdk = "2.23.15"
@@ -114,6 +115,8 @@ object Dependencies {
     lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
+
+    lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
 
     Seq(
       jacksonModuleScala,
@@ -161,6 +164,12 @@ object Dependencies {
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
     lazy val sttpPlayJson = sttpClient3Org %% "play-json" % Versions.sttpPlayJson % Test
 
+    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
+    lazy val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeJson
+    lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeJson
+    lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Versions.circeJson
+    lazy val circeSttp = "com.softwaremill.sttp.client3" %% "circe" % Versions.sttp
+
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
 
@@ -191,7 +200,11 @@ object Dependencies {
       tapirPlayJson,
       tapirPrometheus,
       tapirStubServer,
+      circeGenericExtras,
       playJson,
+      circeCore,
+      circeGeneric,
+      circeParser,
       sttpPlayJson,
       awsSecretsManagerSdk,
       zioTest,

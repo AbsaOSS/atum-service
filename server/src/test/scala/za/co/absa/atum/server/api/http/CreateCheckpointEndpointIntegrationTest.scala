@@ -29,7 +29,7 @@ import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
 import zio.test._
 import zio._
-import za.co.absa.atum.server.model.PlayJsonImplicits.{readsCheckpointDTO, writesCheckpointDTO}
+import za.co.absa.atum.server.model.CirceJsonImplicits.{decodeCheckpointDTO, encodeCheckpointDTO}
 import zio.test.Assertion.equalTo
 
 object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {

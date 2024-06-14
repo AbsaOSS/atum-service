@@ -24,7 +24,7 @@ import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO, AdditionalDataSubmitDTO}
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.PlayJsonImplicits._
+import za.co.absa.atum.server.model.CirceJsonImplicits._
 
 trait Endpoints extends BaseEndpoints {
 
