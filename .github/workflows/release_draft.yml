@@ -119,7 +119,7 @@ jobs:
               {"title": "Bugfixes 🛠", "label": "bug"}
             ]
           warnings: true
-          skip-release-notes: no RN
+          skip-release-notes: "no RN"
       - name: Create draft release
         uses: softprops/action-gh-release@v1
         env:
