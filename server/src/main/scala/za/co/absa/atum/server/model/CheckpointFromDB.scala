@@ -18,12 +18,9 @@ package za.co.absa.atum.server.model
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitioningDTO}
 import io.circe.{DecodingFailure, Json}
-import io.circe.generic.auto._
 
 import java.time.ZonedDateTime
 import java.util.UUID
-
-import za.co.absa.atum.server.api.database.DoobieImplicits.decodeResultValueType
 
 case class CheckpointFromDB(
    idCheckpoint: UUID,
