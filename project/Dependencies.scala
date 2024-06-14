@@ -28,6 +28,7 @@ object Dependencies {
     val balta = "0.1.0"
 
     val jacksonModuleScala = "2.14.2"
+    val circeVersion = "0.14.5"
 
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
@@ -74,7 +75,6 @@ object Dependencies {
     val http4sBlazeBackend = "0.23.15"
     val http4sPrometheus = "0.23.6"
     val playJson = "3.0.1"
-    val circeJson = "0.14.7"
     val sttpPlayJson = "3.9.3"
 
     val awssdk = "2.23.15"
@@ -116,14 +116,17 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
-    lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
+    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeVersion
+    lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeVersion
 
     Seq(
       jacksonModuleScala,
       json4sExt,
       json4sCore,
       json4sJackson,
-      json4sNative
+      json4sNative,
+      circeCore,
+      circeParser
     )
   }
 
@@ -164,14 +167,9 @@ object Dependencies {
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
     lazy val sttpPlayJson = sttpClient3Org %% "play-json" % Versions.sttpPlayJson % Test
 
-    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
-    lazy val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeJson
-    lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeJson
-    lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Versions.circeJson
-    lazy val circeSttp = "com.softwaremill.sttp.client3" %% "circe" % Versions.sttp
-
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
+    lazy val pgCirceDoobie = "org.tpolecat" %% "doobie-postgres-circe" % "1.0.0-RC2"
 
     // aws
     lazy val awsSecretsManagerSdk = awsSdkOrg % "secretsmanager" % Versions.awssdk
@@ -184,6 +182,7 @@ object Dependencies {
 
     Seq(
       faDbDoobie,
+      pgCirceDoobie,
       zioCore,
       zioMacros,
       zioLogging,
@@ -200,11 +199,7 @@ object Dependencies {
       tapirPlayJson,
       tapirPrometheus,
       tapirStubServer,
-      circeGenericExtras,
       playJson,
-      circeCore,
-      circeGeneric,
-      circeParser,
       sttpPlayJson,
       awsSecretsManagerSdk,
       zioTest,

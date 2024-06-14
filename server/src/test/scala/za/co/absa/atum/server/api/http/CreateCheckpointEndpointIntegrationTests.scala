@@ -18,35 +18,36 @@ package za.co.absa.atum.server.api.http
 
 import org.mockito.Mockito.{mock, when}
 import sttp.client3._
-import sttp.client3.testing.SttpBackendStub
 import sttp.client3.playJson._
+import sttp.client3.testing.SttpBackendStub
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
-import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import zio.test._
+import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import za.co.absa.atum.server.model.CirceJsonImplicits.{decodeCheckpointDTO, encodeCheckpointDTO}
 import zio.test.Assertion.equalTo
+import zio.test._
 
 object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
-  when(checkpointControllerMock.createCheckpoint(checkpointDTO1))
-    .thenReturn(ZIO.succeed(checkpointDTO1))
-  when(checkpointControllerMock.createCheckpoint(checkpointDTO2))
+  when(checkpointControllerMock.createCheckpointV2(checkpointDTO1))
+    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1, uuid)))
+  when(checkpointControllerMock.createCheckpointV2(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(checkpointControllerMock.createCheckpoint(checkpointDTO3))
+  when(checkpointControllerMock.createCheckpointV2(checkpointDTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
   private val createCheckpointServerEndpoint =
-    createCheckpointEndpoint.zServerLogic(CheckpointController.createCheckpoint)
+    createCheckpointEndpointV2.zServerLogic(CheckpointController.createCheckpointV2)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
@@ -55,8 +56,8 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
       .backend()
 
     val request = basicRequest
-      .post(uri"https://test.com/api/v1/createCheckpoint")
-      .response(asJson[CheckpointDTO])
+      .post(uri"https://test.com/api/v2/createCheckpoint")
+      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
 
     suite("CreateCheckpointEndpointSuite")(
       test("Returns expected CheckpointDTO") {
@@ -67,7 +68,7 @@ object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endp
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-        assertZIO(body <&> statusCode)(equalTo(Right(checkpointDTO1), StatusCode.Created))
+        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1, uuid)), StatusCode.Created))
       },
       test("Returns expected BadRequest") {
         val response = request

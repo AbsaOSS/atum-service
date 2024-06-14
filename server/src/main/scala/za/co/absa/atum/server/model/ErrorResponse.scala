@@ -50,30 +50,35 @@ package za.co.absa.atum.server.model
 
 import io.circe._, io.circe.generic.semiauto._
 
-sealed trait ErrorResponse {
-  def message: String
-}
+import java.util.UUID
 
 object ErrorResponse {
   implicit val decodeErrorResponse: Decoder[ErrorResponse] = deriveDecoder
   implicit val encodeErrorResponse: Encoder[ErrorResponse] = deriveEncoder
 }
 
-final case class BadRequestResponse(message: String) extends ErrorResponse
+  sealed trait ErrorResponse extends ResponseEnvelope {
+    def message: String
+  }
+
+  final case class BadRequestResponse(message: String, requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
 object BadRequestResponse {
   implicit val decodeBadRequestResponse: Decoder[BadRequestResponse] = deriveDecoder
   implicit val encodeBadRequestResponse: Encoder[BadRequestResponse] = deriveEncoder
 }
 
-final case class GeneralErrorResponse(message: String) extends ErrorResponse
+  final case class GeneralErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
 object GeneralErrorResponse {
   implicit val decodeGeneralErrorResponse: Decoder[GeneralErrorResponse] = deriveDecoder
   implicit val encodeGeneralErrorResponse: Encoder[GeneralErrorResponse] = deriveEncoder
 }
 
-final case class InternalServerErrorResponse(message: String) extends ErrorResponse
+  final case class InternalServerErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
+      extends ErrorResponse
 
 object InternalServerErrorResponse {
   implicit val decodeInternalServerErrorResponse: Decoder[InternalServerErrorResponse] = deriveDecoder
