@@ -25,7 +25,7 @@ on:
 
 jobs:
   check-for-release-notes-comments:
-    if: ${{ github.event.issue.pull_request }}
+#    if: ${{ github.event.issue.pull_request }}
     name:  Check For Release Notes Comments
     runs-on: ubuntu-latest
     steps:
