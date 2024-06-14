@@ -17,11 +17,18 @@
 name:  PR Release Note Comment Check
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
-    branches: [ master ]
   issue_comment:
-    types: [created, edited, deleted]
+#    types:
+#      - created
+#  pull_request:
+#    types:
+#      - opened
+#      - synchronize
+#      - reopened
+#      - edited
+#      - labeled
+#      - unlabeled
+#    branches: [ master ]
 
 jobs:
   check-for-release-notes-comments:
@@ -54,7 +61,7 @@ jobs:
         with:
           script: |
             const comments = ${{ steps.get-comments.outputs.result }};
-            const releaseNotesRegex = /release notes/i;
+            const releaseNotesRegex = /release notes:?/i;
             const hasReleaseNotes = comments.some(comment => releaseNotesRegex.test(comment));
 
             if (!hasReleaseNotes) {
