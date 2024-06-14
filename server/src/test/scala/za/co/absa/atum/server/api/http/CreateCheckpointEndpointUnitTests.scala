@@ -33,7 +33,7 @@ import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
-object CreateCheckpointEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
+object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 

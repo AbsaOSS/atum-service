@@ -33,7 +33,7 @@ import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
-object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
+object CreatePartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val createPartitioningEndpointMock = mock(classOf[PartitioningController])
 

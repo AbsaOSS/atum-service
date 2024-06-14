@@ -33,7 +33,7 @@ import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
-object GetFlowCheckpointsEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
+object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val flowControllerMock = mock(classOf[FlowController])
 
