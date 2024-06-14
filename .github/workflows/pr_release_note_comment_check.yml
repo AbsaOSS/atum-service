@@ -34,10 +34,21 @@ on:
 
 jobs:
   check-for-release-notes-comments:
-#    if: ${{ github.event.issue.pull_request }}
+    if: ${{ ( github.event_name == 'pull_request') || (github.event.issue.pull_request) }}
     name:  Check For Release Notes Comments
     runs-on: ubuntu-latest
     steps:
+      - name: Get PR branch
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+
+      - name: Set latest commit status as pending
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: pending
+
       - name: Fetch all PR comments
         if: ${{ ! contains( github.event.pull_request.labels.*.name, 'no RN') }}
         id: get-comments
@@ -72,7 +83,10 @@ jobs:
             } else {
               console.log('"Release notes" found in comments');
             }
-      - name: Info
-        run: echo "All good!"
-      - run: echo "event name is:" ${{ github.event_name }}
-      - run: echo "event type is:" ${{ github.event.action }}
+      - name: Set latest commit status as ${{ job.status }}
+        uses: myrotvorets/set-commit-status-action@master
+        if: always()
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
