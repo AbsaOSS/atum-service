@@ -18,12 +18,9 @@ package za.co.absa.atum.server.model
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitioningDTO}
 import io.circe.{DecodingFailure, Json}
-import io.circe.generic.auto._
 
 import java.time.ZonedDateTime
 import java.util.UUID
-
-import za.co.absa.atum.server.api.database.DoobieImplicits.decodeResultValueType
 
 case class CheckpointFromDB(
    idCheckpoint: UUID,
@@ -32,14 +29,16 @@ case class CheckpointFromDB(
    measuredByAtumAgent: Boolean = false,
    measureName: String,
    measuredColumns: Seq[String],
-   measurementValue: Json,
+   measurementValue: Json,  // it's easier to convert this attribute to our `MeasurementDTO` after we received this as JSON from DB
    checkpointStartTime: ZonedDateTime,
    checkpointEndTime:  Option[ZonedDateTime]
 )
 
 object CheckpointFromDB {
 
-  def toCheckpointDTO(partitioning: PartitioningDTO, checkpointQueryResult: CheckpointFromDB
+  def toCheckpointDTO(
+    partitioning: PartitioningDTO,
+    checkpointQueryResult: CheckpointFromDB
   ): Either[DecodingFailure, CheckpointDTO] = {
     val measureResultOrErr = checkpointQueryResult.measurementValue.as[MeasureResultDTO]
 
@@ -70,4 +69,3 @@ object CheckpointFromDB {
   }
 
 }
-

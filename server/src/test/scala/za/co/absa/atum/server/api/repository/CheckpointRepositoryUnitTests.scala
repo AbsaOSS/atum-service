@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.repository
 
-import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
 import za.co.absa.atum.server.api.exception.DatabaseError
@@ -26,10 +25,8 @@ import za.co.absa.fadb.status.FunctionStatus
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class CheckpointRepositoryIntegrationTests extends ZIOSpecDefault with TestData {
+object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
 

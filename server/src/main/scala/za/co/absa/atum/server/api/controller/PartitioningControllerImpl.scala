@@ -66,13 +66,13 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
-  override def getPartitioningCheckpoints(
+  override def getPartitioningCheckpointsV2(
     checkpointQueryDTO: CheckpointQueryDTO
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
     mapToMultiSuccessResponse(
       serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
         partitioningService.getPartitioningCheckpoints(checkpointQueryDTO),
-        checkpoints => checkpoints
+        identity
       )
     )
   }

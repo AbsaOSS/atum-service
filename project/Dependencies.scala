@@ -126,7 +126,7 @@ object Dependencies {
       json4sJackson,
       json4sNative,
       circeCore,
-      circeParser
+      circeParser,
     )
   }
 
@@ -252,7 +252,7 @@ object Dependencies {
       jsonSerdeDependencies(scalaVersion)
   }
 
- def databaseDependencies: Seq[ModuleID] = {
+  def databaseDependencies: Seq[ModuleID] = {
     lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % Test
     lazy val balta =      "za.co.absa"      %% "balta"      % Versions.balta      % Test
 
