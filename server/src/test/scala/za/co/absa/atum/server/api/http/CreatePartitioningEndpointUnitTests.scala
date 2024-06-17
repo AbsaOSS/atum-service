@@ -33,9 +33,7 @@ import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
-import java.util.UUID
-
-object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
+object CreatePartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val createPartitioningEndpointMock = mock(classOf[PartitioningController])
 
@@ -58,7 +56,7 @@ object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with En
       .backend()
 
     val request = basicRequest
-      .post(uri"https://test.com/api/v2/createPartitioning")
+      .post(uri"https://test.com/api/v2/create-partitioning")
       .response(asJson[SingleSuccessResponse[AtumContextDTO]])
 
     suite("CreatePartitioningEndpointSuite")(

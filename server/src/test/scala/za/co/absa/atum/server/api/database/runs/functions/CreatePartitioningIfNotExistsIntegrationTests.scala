@@ -16,17 +16,14 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import org.junit.runner.RunWith
 import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import zio._
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class CreatePartitioningIfNotExistsIntegrationTests extends ConfigProviderTest {
+object CreatePartitioningIfNotExistsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 

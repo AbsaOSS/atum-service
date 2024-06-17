@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.service
 
-import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
@@ -26,10 +25,8 @@ import za.co.absa.fadb.status.FunctionStatus
 import zio.test.Assertion.failsWithA
 import zio.test._
 import zio._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class CheckpointServiceIntegrationTests extends ZIOSpecDefault with TestData {
+object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
 
   private val checkpointRepositoryMock = mock(classOf[CheckpointRepository])
 
