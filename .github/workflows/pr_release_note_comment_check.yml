@@ -74,6 +74,7 @@ jobs:
         with:
           script: |
             const comments = ${{ steps.get-comments.outputs.result }};
+            console.log("Comments: ${{ steps.get-comments.outputs.result }}");
             const releaseNotesRegex = /release notes?:?/i;
             const hasReleaseNotes = comments.some(comment => releaseNotesRegex.test(comment));
 
