@@ -21,14 +21,13 @@ import sttp.tapir.{PublicEndpoint, endpoint}
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.play.jsonBody
 import sttp.tapir.ztapir._
-import sttp.tapir.{PublicEndpoint, endpoint}
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
-import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
-//import za.co.absa.atum.server.model.PlayJsonImplicits._
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.PlayJsonImplicits._
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.atum.server.model.CirceJsonImplicits._
+import sttp.tapir.{PublicEndpoint, endpoint}
 
 trait Endpoints extends BaseEndpoints {
 

@@ -76,6 +76,7 @@ object Dependencies {
     val http4sPrometheus = "0.23.6"
     val playJson = "3.0.1"
     val sttpPlayJson = "3.9.3"
+    val sttpCirceJson = "4.0.0-M16"
 
     val awssdk = "2.23.15"
 
@@ -140,6 +141,7 @@ object Dependencies {
     val logbackOrg = "ch.qos.logback"
     val awsSdkOrg = "software.amazon.awssdk"
     val sttpClient3Org = "com.softwaremill.sttp.client3"
+    val sttpClient4Org = "com.softwaremill.sttp.client4"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
@@ -166,6 +168,8 @@ object Dependencies {
     // json
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
     lazy val sttpPlayJson = sttpClient3Org %% "play-json" % Versions.sttpPlayJson % Test
+    lazy val sttpCirceJson = sttpClient4Org %% "circe" % Versions.sttpCirceJson % Test
+
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
@@ -201,6 +205,7 @@ object Dependencies {
       tapirStubServer,
       playJson,
       sttpPlayJson,
+      sttpCirceJson,
       awsSecretsManagerSdk,
       zioTest,
       zioTestSbt,

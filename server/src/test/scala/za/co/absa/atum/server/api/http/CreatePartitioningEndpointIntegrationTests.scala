@@ -17,22 +17,33 @@
 package za.co.absa.atum.server.api.http
 
 import org.mockito.Mockito.{mock, when}
-import sttp.client3._
-import sttp.client3.playJson._
-import sttp.client3.testing.SttpBackendStub
+//import sttp.client3._
+//import sttp.client3.playJson._
+//import sttp.client3.testing.SttpBackendStub
+import sttp.client4._
+import sttp.client4.circe._
+import io.circe.generic.auto._
+import sttp.client4.testing._
+//import scala.concurrent.Future
+//import scala.concurrent.ExecutionContext.Implicits.global
+//import sttp.client4._
+//import sttp.client4.testing._
+//import sttp.client4.circe._
+//import io.circe.generic.auto._
+
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.AtumContextDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
-import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
 //import za.co.absa.atum.server.model.PlayJsonImplicits._
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
-import za.co.absa.atum.server.model.CirceJsonImplicits.{decodeAtumContextDTO, encodePartitioningSubmitDTO}
+//import za.co.absa.atum.server.model.CirceJsonImplicits.{decodeAtumContextDTO, encodePartitioningSubmitDTO}
 
 object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with Endpoints with TestData {
 
@@ -51,10 +62,15 @@ object CreatePartitioningEndpointIntegrationTests extends ZIOSpecDefault with En
     createPartitioningEndpointV2.zServerLogic(PartitioningController.createPartitioningIfNotExistsV2)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
-    val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
-      .whenServerEndpoint(createPartitioningServerEndpoint)
-      .thenRunLogic()
-      .backend()
+    val backendStub = SttpBackendStub(new RIOMonadError[PartitioningController])
+      .whenRequestMatches(_ => true)
+      .thenRespondWrapped(
+        createPartitioningServerEndpoint.logic(_)
+          .foldM(
+            e => ZIO.succeed(Response(e, StatusCode.BadRequest)),
+            s => ZIO.succeed(Response.ok(s))
+          )
+      )
 
     val request = basicRequest
       .post(uri"https://test.com/api/v2/createPartitioning")
