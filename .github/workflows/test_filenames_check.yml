@@ -1,0 +1,25 @@
+name: Test Filenames Check
+
+on:
+  pull_request:
+    branches: [ master ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  test_filenames_check:
+    name: Test Filenames Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Filename Inspector
+        id: scan-test-files
+        uses: AbsaOSS/filename-inspector@v0.1.0
+        with:
+          name_patterns: '*UnitTest.*,*IntegrationTest.*'
+          paths: '**/src/test/scala/**'
+          excludes: 'src/exclude_dir/*.py,tests/exclude_file.py'
+          report_format: 'console'
+          verbose_logging: 'false'
+          fail_on_violation: 'true'

@@ -91,5 +91,4 @@ jobs:
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          status: failure
-          # ${{ job.status }}
+          status: ${{ job.status }}
