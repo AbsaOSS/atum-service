@@ -20,8 +20,6 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
-import io.circe.syntax._
-import io.circe.generic.auto._
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.fadb.DBSchema
@@ -32,6 +30,8 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
+import io.circe.syntax._
+import io.circe.generic.auto._
 
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task]

@@ -14,46 +14,44 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database.runs.functions
+package za.co.absa.atum.server.api.database.flows.functions
 
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
+import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.Runs
+import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.model.{CheckpointFromDB, PartitioningForDB}
 import za.co.absa.fadb.DBSchema
 import za.co.absa.fadb.doobie.DoobieEngine
 import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import zio._
 import zio.interop.catz._
-import io.circe.syntax._
-import io.circe.generic.auto._
 
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
-import doobie.postgres.circe.jsonb.implicits.jsonbGet
+
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import io.circe.syntax.EncoderOps
+import io.circe.generic.auto._
 
-class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task] {
+class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+    extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task] {
 
   override val fieldsToSelect: Seq[String] = Seq(
     "id_checkpoint",
     "checkpoint_name",
     "author",
     "measured_by_atum_agent",
-    "measure_name",
-    "measured_columns",
-    "measurement_value",
-    "checkpoint_start_time",
-    "checkpoint_end_time",
+    "measure_name", "measured_columns", "measurement_value",
+    "checkpoint_start_time", "checkpoint_end_time",
   )
 
   override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointFromDB]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = partitioning.asJson.noSpaces
+    val partitioningNormalized = Json.toJson(partitioning).toString
 
     sql"""SELECT ${Fragment.const(selectEntry)}
           FROM ${Fragment.const(functionName)}(
@@ -65,12 +63,13 @@ class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEng
                   ${values.checkpointName}
                 ) AS ${Fragment.const(alias)};"""
   }
+
 }
 
-object GetPartitioningCheckpoints {
-  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpoints] = ZLayer {
+object GetFlowCheckpoints {
+  val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpoints] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new GetPartitioningCheckpoints()(Runs, dbProvider.dbEngine)
+    } yield new GetFlowCheckpoints()(Flows, dbProvider.dbEngine)
   }
 }

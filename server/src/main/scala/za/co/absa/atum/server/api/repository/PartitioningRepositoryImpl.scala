@@ -64,9 +64,9 @@ class PartitioningRepositoryImpl(
     getPartitioningAdditionalDataFn(partitioning).mapBoth(err => DatabaseError(err.getMessage), _.toMap)
   }
 
-  override def getPartitioningCheckpoints(partitioningName: CheckpointQueryDTO):
+  override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
   IO[DatabaseError, Seq[CheckpointFromDB]] = {
-    dbCall(getPartitioningCheckpointsFn(partitioningName), "getPartitioningCheckpoints")
+    dbCall(getPartitioningCheckpointsFn(checkpointQueryDTO), "getPartitioningCheckpoints")
   }
 }
 

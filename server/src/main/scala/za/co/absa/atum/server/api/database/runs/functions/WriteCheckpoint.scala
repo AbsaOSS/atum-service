@@ -29,8 +29,8 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
-import play.api.libs.json.Json
-import za.co.absa.atum.server.model.CirceJsonImplicit._
+import io.circe.syntax._
+import io.circe.generic.auto._
 
 import doobie.postgres.implicits._
 
@@ -40,11 +40,12 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
 
   override def sql(values: CheckpointDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = Json.toJson(partitioning).toString
+    val partitioningNormalized = partitioning.asJson.noSpaces
+
     // List[String] containing json data has to be properly escaped
     // It would be safer to use Json data type and derive Put instance
     val measurementsNormalized = {
-      values.measurements.map(x => s"\"${Json.toJson(x).toString.replaceAll("\"", "\\\\\"")}\"")
+      values.measurements.map(x => x.asJson.noSpaces)
     }
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(

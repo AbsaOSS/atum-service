@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import org.junit.runner.RunWith
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.ConfigProviderTest
@@ -26,13 +25,11 @@ import za.co.absa.fadb.exceptions.DataNotFoundException
 import za.co.absa.fadb.status.FunctionStatus
 import zio._
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
 import java.time.ZonedDateTime
 import java.util.UUID
 
-@RunWith(classOf[ZTestJUnitRunner])
-class WriteCheckpointIntegrationTests extends ConfigProviderTest {
+object WriteCheckpointIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 

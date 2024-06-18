@@ -48,7 +48,8 @@ package za.co.absa.atum.server.model
 //  implicit val writes: Writes[InternalServerErrorResponse] = Json.writes[InternalServerErrorResponse]
 //}
 
-import io.circe._, io.circe.generic.semiauto._
+import io.circe._
+import io.circe.generic.semiauto._
 
 import java.util.UUID
 

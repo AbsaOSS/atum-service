@@ -16,27 +16,18 @@
 
 package za.co.absa.atum.server.api.repository
 
-import org.junit.runner.RunWith
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, MeasureDTO}
-import za.co.absa.atum.server.api.database.runs.functions.{
-  CreateOrUpdateAdditionalData,
-  CreatePartitioningIfNotExists,
-  GetPartitioningAdditionalData,
-  GetPartitioningCheckpoints,
-  GetPartitioningMeasures}
-import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.runs.functions._
+import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import za.co.absa.fadb.exceptions.ErrorInDataException
 import za.co.absa.fadb.status.FunctionStatus
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
-import zio.test.junit.ZTestJUnitRunner
 
-@RunWith(classOf[ZTestJUnitRunner])
-class PartitioningRepositoryIntegrationTests extends ZIOSpecDefault with TestData {
+object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   // Create Partitioning Mocks
   private val createPartitioningIfNotExistsMock = mock(classOf[CreatePartitioningIfNotExists])
@@ -129,7 +120,7 @@ class PartitioningRepositoryIntegrationTests extends ZIOSpecDefault with TestDat
         test("Returns expected Seq") {
           for {
             result <- PartitioningRepository.getPartitioningMeasures(partitioningDTO1)
-          } yield assertTrue(result.isInstanceOf[Seq[MeasureDTO]] && result == Seq(measureDTO1, measureDTO2))
+          } yield assertTrue(result == Seq(measureDTO1, measureDTO2))
         },
         test("Returns expected Exception") {
           assertZIO(PartitioningRepository.getPartitioningMeasures(partitioningDTO2).exit)(
@@ -142,7 +133,7 @@ class PartitioningRepositoryIntegrationTests extends ZIOSpecDefault with TestDat
         test("Returns expected Right with empty Map") {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO] && result == additionalDataDTO1)
+          } yield assertTrue(result == additionalDataDTO1)
         },
         test("Returns expected Left with DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningDTO2).exit)(
@@ -155,7 +146,7 @@ class PartitioningRepositoryIntegrationTests extends ZIOSpecDefault with TestDat
         test("Returns expected Seq") {
           for {
             result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue(result.isInstanceOf[Seq[CheckpointFromDB]] && result == Seq(checkpointFromDB1))
+          } yield assertTrue(result == Seq(checkpointFromDB1))
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(

@@ -19,7 +19,6 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
-import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.PartitioningDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
@@ -29,6 +28,9 @@ import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import za.co.absa.fadb.doobie.DoobieEngine
 import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
+import io.circe.syntax._
+import io.circe.generic.auto._
+
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
@@ -40,7 +42,7 @@ class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: Doobie
 
     override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
     val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)
-    val partitioningJsonString = Json.toJson(partitioning).toString
+    val partitioningJsonString = partitioning.asJson.noSpaces
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
