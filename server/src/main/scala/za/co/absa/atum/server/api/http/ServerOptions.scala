@@ -18,7 +18,8 @@ package za.co.absa.atum.server.api.http
 
 import sttp.monad.MonadError
 import sttp.tapir.DecodeResult
-import sttp.tapir.json.play.jsonBody
+import sttp.tapir.generic.auto.schemaForCaseClass
+import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.server.http4s.Http4sServerOptions
 import sttp.tapir.server.interceptor.DecodeFailureContext
 import sttp.tapir.server.interceptor.decodefailure.DecodeFailureHandler
