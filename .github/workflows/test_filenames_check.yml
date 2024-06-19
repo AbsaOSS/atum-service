@@ -15,7 +15,7 @@ jobs:
 
       - name: Filename Inspector
         id: scan-test-files
-        uses: AbsaOSS/filename-inspector@v0.1.0
+        uses: AbsaOSS/filename-inspector@master
         with:
           name_patterns: '*UnitTest.*,*IntegrationTest.*'
           paths: '**/src/test/scala/**'

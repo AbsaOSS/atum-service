@@ -73,7 +73,7 @@ jobs:
           echo "ISSUE_NUMBERS=${{ steps.find-issues.outputs.issueNumbers }}" >> $GITHUB_ENV
 
       - name: Post Comment to Issues
-        if: ${{ steps.get-comments.outputs.releaseNoteBody }} && ${{ steps.find-issues.outputs.issueNumbers }}
+        if: ${{ (steps.get-comments.outputs.releaseNoteBody) && (steps.find-issues.outputs.issueNumbers) }}
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
