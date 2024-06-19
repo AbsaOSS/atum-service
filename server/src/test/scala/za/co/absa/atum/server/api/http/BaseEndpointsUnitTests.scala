@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.http
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-class BaseEndpointsUnitTest extends AnyFlatSpec {
+class BaseEndpointsUnitTests extends AnyFlatSpec {
 
   object BaseEndpointsForTests extends BaseEndpoints
 
@@ -61,7 +61,7 @@ class BaseEndpointsUnitTest extends AnyFlatSpec {
 
     val input = "_create_check_point"
     val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
-    val expected = "createCheckPoint"
+    val expected = "CreateCheckPoint"
     assert(actual == expected)
   }
 
