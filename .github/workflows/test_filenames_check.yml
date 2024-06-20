@@ -19,8 +19,6 @@ jobs:
         with:
           name_patterns: '*UnitTest.*,*IntegrationTest.*'
           paths: '**/src/test/scala/**'
-          excludes: 'src/exclude_dir/*.py,tests/exclude_file.py'
           report_format: 'console'
           verbose_logging: 'false'
           fail_on_violation: 'true'
-          
