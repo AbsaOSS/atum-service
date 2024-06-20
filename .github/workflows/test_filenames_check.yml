@@ -33,7 +33,7 @@ jobs:
         id: scan-test-files
         uses: AbsaOSS/filename-inspector@master
         with:
-          name-patterns: '*UnitTest.*,*IntegrationTest.*'
+          name-patterns: '*UnitTests.*,*IntegrationTests.*'
           paths: '**/src/test/scala/**'
           report-format: 'console'
           verbose-logging: 'false'
