@@ -16,20 +16,22 @@
 
 package za.co.absa.atum.server.api.http
 
+import io.circe.generic.auto._
+import io.circe.syntax.EncoderOps
 import org.mockito.Mockito.{mock, when}
-import sttp.client3._
-import sttp.client3.playJson._
 import sttp.client3.testing.SttpBackendStub
+import sttp.client3.{UriContext, basicRequest}
+import sttp.client3.circe._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
-import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.CirceJsonImplicits._
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
-import za.co.absa.atum.server.model.CirceJsonImplicits.{decodeCheckpointDTO, encodeCheckpointDTO}
 import zio.test.Assertion.equalTo
 import zio.test._
 
@@ -46,8 +48,8 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
-  private val createCheckpointServerEndpoint =
-    createCheckpointEndpointV2.zServerLogic(CheckpointController.createCheckpointV2)
+  private val createCheckpointServerEndpoint = createCheckpointEndpointV2
+    .zServerLogic(CheckpointController.createCheckpointV2)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
@@ -62,7 +64,7 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
     suite("CreateCheckpointEndpointSuite")(
       test("Returns expected CheckpointDTO") {
         val response = request
-          .body(checkpointDTO1)
+          .body(checkpointDTO1.asJson.noSpaces)
           .send(backendStub)
 
         val body = response.map(_.body)
@@ -72,7 +74,7 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected BadRequest") {
         val response = request
-          .body(checkpointDTO2)
+          .body(checkpointDTO2.asJson.noSpaces)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -81,7 +83,7 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected InternalServerError") {
         val response = request
-          .body(checkpointDTO3)
+          .body(checkpointDTO3.asJson.noSpaces)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -92,5 +94,4 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
   }.provide(
     checkpointControllerMockLayer
   )
-
 }

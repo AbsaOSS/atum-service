@@ -31,7 +31,6 @@ import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
 import io.circe.syntax._
-import io.circe.generic.auto._
 
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task]

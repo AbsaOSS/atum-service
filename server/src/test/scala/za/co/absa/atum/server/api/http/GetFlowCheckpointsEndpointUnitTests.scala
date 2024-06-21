@@ -16,18 +16,18 @@
 
 package za.co.absa.atum.server.api.http
 
+import io.circe.generic.auto._
 import org.mockito.Mockito.{mock, when}
-import sttp.client3._
-import sttp.client3.playJson._
 import sttp.client3.testing.SttpBackendStub
+import sttp.client3.{UriContext, basicRequest}
+import sttp.client3.circe._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.FlowController
-import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.PlayJsonImplicits._
+import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.MultiSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo

@@ -16,8 +16,9 @@
 
 package za.co.absa.atum.server.model
 
-import io.circe._, io.circe.generic.semiauto._
-import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
+import io.circe._
+import io.circe.generic.semiauto._
+import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
 import za.co.absa.atum.model.dto._
 
 object CirceJsonImplicits {

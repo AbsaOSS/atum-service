@@ -16,37 +16,6 @@
 
 package za.co.absa.atum.server.model
 
-//import play.api.libs.json.{Json, Reads, Writes}
-//
-//sealed trait ErrorResponse {
-//  def message: String
-//}
-//
-//object ErrorResponse {
-//  implicit val reads: Reads[ErrorResponse] = Json.reads[ErrorResponse]
-//  implicit val writes: Writes[ErrorResponse] = Json.writes[ErrorResponse]
-//}
-//
-//final case class BadRequestResponse(message: String) extends ErrorResponse
-//
-//object BadRequestResponse {
-//  implicit val reads: Reads[BadRequestResponse] = Json.reads[BadRequestResponse]
-//  implicit val writes: Writes[BadRequestResponse] = Json.writes[BadRequestResponse]
-//}
-//
-//final case class GeneralErrorResponse(message: String) extends ErrorResponse
-//
-//object GeneralErrorResponse {
-//  implicit val reads: Reads[GeneralErrorResponse] = Json.reads[GeneralErrorResponse]
-//  implicit val writes: Writes[GeneralErrorResponse] = Json.writes[GeneralErrorResponse]
-//}
-//
-//final case class InternalServerErrorResponse(message: String) extends ErrorResponse
-//
-//object InternalServerErrorResponse {
-//  implicit val reads: Reads[InternalServerErrorResponse] = Json.reads[InternalServerErrorResponse]
-//  implicit val writes: Writes[InternalServerErrorResponse] = Json.writes[InternalServerErrorResponse]
-//}
 
 import io.circe._
 import io.circe.generic.semiauto._

@@ -31,7 +31,6 @@ import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 import zio.interop.catz._
 import io.circe.syntax._
-import io.circe.generic.auto._
 
 import doobie.postgres.implicits._
 

@@ -29,7 +29,6 @@ import za.co.absa.fadb.doobie.DoobieEngine
 import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
 import io.circe.syntax._
-import io.circe.generic.auto._
 
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
 

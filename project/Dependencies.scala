@@ -28,7 +28,6 @@ object Dependencies {
     val balta = "0.1.0"
 
     val jacksonModuleScala = "2.14.2"
-    val circeVersion = "0.14.5"
 
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
@@ -76,7 +75,8 @@ object Dependencies {
     val http4sPrometheus = "0.23.6"
     val playJson = "3.0.1"
     val sttpPlayJson = "3.9.3"
-    val sttpCirceJson = "4.0.0-M16"
+    val circeJson = "0.14.7"
+    val sttpCirceJson = "3.9.7"
 
     val awssdk = "2.23.15"
 
@@ -117,8 +117,10 @@ object Dependencies {
     lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
     lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
-    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeVersion
-    lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeVersion
+    // Circe dependencies
+    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
+    lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeJson
+    lazy val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeJson
 
     Seq(
       jacksonModuleScala,
@@ -128,6 +130,7 @@ object Dependencies {
       json4sNative,
       circeCore,
       circeParser,
+      circeGeneric,
     )
   }
 
@@ -141,7 +144,6 @@ object Dependencies {
     val logbackOrg = "ch.qos.logback"
     val awsSdkOrg = "software.amazon.awssdk"
     val sttpClient3Org = "com.softwaremill.sttp.client3"
-    val sttpClient4Org = "com.softwaremill.sttp.client4"
 
     // zio
     lazy val zioCore = zioOrg %% "zio" % Versions.zio
@@ -165,11 +167,21 @@ object Dependencies {
     lazy val tapirPrometheus = tapirOrg %% "tapir-prometheus-metrics" % Versions.tapir
     lazy val tapirStubServer = tapirOrg %% "tapir-sttp-stub-server" % Versions.tapir % Test
 
+    lazy val tapirCirce = tapirOrg %% "tapir-json-circe" % Versions.tapir
+    lazy val tapirOpenApiDocs = tapirOrg %% "tapir-openapi-docs" % Versions.tapir
+    lazy val tapirOpenApiCirceYaml = tapirOrg %% "tapir-openapi-circe-yaml" % Versions.tapir
+    lazy val tapirHttp4sServer = tapirOrg %% "tapir-http4s-server" % Versions.tapir
+    lazy val tapirCore = tapirOrg %% "tapir-core" % Versions.tapir
+    lazy val tapirSwaggerUi = tapirOrg %% "tapir-swagger-ui-http4s" % Versions.tapir
+
     // json
     lazy val playJson = playOrg %% "play-json" % Versions.playJson
     lazy val sttpPlayJson = sttpClient3Org %% "play-json" % Versions.sttpPlayJson % Test
-    lazy val sttpCirceJson = sttpClient4Org %% "circe" % Versions.sttpCirceJson % Test
 
+    // STTP core and Circe integration
+    lazy val sttpCirce = sttpClient3Org %% "circe" % Versions.sttpCirceJson % Test
+    lazy val sttpCore = sttpClient3Org %% "core" % Versions.sttpCirceJson
+    lazy val clientBackend = sttpClient3Org %% "async-http-client-backend-zio" % Versions.sttpCirceJson
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
@@ -201,11 +213,13 @@ object Dependencies {
       tapirHttp4sZio,
       tapirSwagger,
       tapirPlayJson,
+      tapirCirce,
       tapirPrometheus,
       tapirStubServer,
       playJson,
       sttpPlayJson,
-      sttpCirceJson,
+      sttpCirce,
+      sttpCore,
       awsSecretsManagerSdk,
       zioTest,
       zioTestSbt,
