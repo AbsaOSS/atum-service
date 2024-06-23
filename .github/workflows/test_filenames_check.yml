@@ -37,8 +37,8 @@ jobs:
           paths: '**/src/test/scala/**'
           report-format: 'console'
           excludes: |
-            'server/src/test/scala/za/co/absa/atum/server/api/TestData.scala,
-            server/src/test/scala/za/co/absa/atum/server/api/TestTransactorProvider.scala,
-            server/src/test/scala/za/co/absa/atum/server/ConfigProviderTest.scala'
+            'server/src/test/scala/za/co/absa/atum/server/api/TestData.scala',
+            'server/src/test/scala/za/co/absa/atum/server/api/TestTransactorProvider.scala',
+            'server/src/test/scala/za/co/absa/atum/server/ConfigProviderTest.scala'
           verbose-logging: 'false'
           fail-on-violation: 'true'
