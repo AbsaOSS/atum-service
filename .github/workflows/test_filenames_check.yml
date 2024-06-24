@@ -1,0 +1,41 @@
+#
+# Copyright 2021 ABSA Group Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: Test Filenames Check
+
+on:
+  pull_request:
+    branches: [ master ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  test_filenames_check:
+    name: Test Filenames Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Filename Inspector
+        id: scan-test-files
+        uses: AbsaOSS/filename-inspector@master
+        with:
+          name-patterns: '*UnitTests.*,*IntegrationTests.*'
+          paths: '**/src/test/scala/**'
+          report-format: 'console'
+          excludes: 'server/src/test/scala/za/co/absa/atum/server/api/TestData.scala,server/src/test/scala/za/co/absa/atum/server/api/TestTransactorProvider.scala,server/src/test/scala/za/co/absa/atum/server/ConfigProviderTest.scala'
+          verbose-logging: 'false'
+          fail-on-violation: 'true'
