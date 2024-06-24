@@ -32,7 +32,12 @@ import zio.interop.catz._
 import io.circe.syntax._
 import io.circe.generic.auto._
 
+import za.co.absa.atum.model.dto.MeasureResultDTO._
+import za.co.absa.atum.server.model.CirceJsonImplicits._
+import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import doobie.postgres.circe.jsonb.implicits.jsonbGet
 import doobie.postgres.implicits._
+import doobie.postgres.circe.jsonb.implicits._
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task]
@@ -48,7 +53,7 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
       values.measurements.map(x => x.asJson.noSpaces)
     }
 
-    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
+    val sqlDebug = sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     partitioningNormalized
@@ -64,6 +69,8 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
                   ${values.measuredByAtumAgent},
                   ${values.author}
                 ) ${Fragment.const(alias)};"""
+    println(sqlDebug)
+    sqlDebug
   }
 }
 

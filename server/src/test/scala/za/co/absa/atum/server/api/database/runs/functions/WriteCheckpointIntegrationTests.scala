@@ -16,8 +16,8 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
+import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitionDTO}
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
-import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
@@ -41,7 +41,7 @@ object WriteCheckpointIntegrationTests extends ConfigProviderTest {
           author = "author",
           partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
           processStartTime = ZonedDateTime.now(),
-          processEndTime = None,
+          processEndTime = Option(ZonedDateTime.now()),
           measurements =
             Set(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))))
         )

@@ -73,8 +73,6 @@ object Dependencies {
     val tapir = "1.9.6"
     val http4sBlazeBackend = "0.23.15"
     val http4sPrometheus = "0.23.6"
-    val playJson = "3.0.1"
-    val sttpPlayJson = "3.9.3"
     val circeJson = "0.14.7"
     val sttpCirceJson = "3.9.7"
 
@@ -174,10 +172,6 @@ object Dependencies {
     lazy val tapirCore = tapirOrg %% "tapir-core" % Versions.tapir
     lazy val tapirSwaggerUi = tapirOrg %% "tapir-swagger-ui-http4s" % Versions.tapir
 
-    // json
-    lazy val playJson = playOrg %% "play-json" % Versions.playJson
-    lazy val sttpPlayJson = sttpClient3Org %% "play-json" % Versions.sttpPlayJson % Test
-
     // STTP core and Circe integration
     lazy val sttpCirce = sttpClient3Org %% "circe" % Versions.sttpCirceJson % Test
     lazy val sttpCore = sttpClient3Org %% "core" % Versions.sttpCirceJson
@@ -216,8 +210,6 @@ object Dependencies {
       tapirCirce,
       tapirPrometheus,
       tapirStubServer,
-      playJson,
-      sttpPlayJson,
       sttpCirce,
       sttpCore,
       awsSecretsManagerSdk,

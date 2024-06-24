@@ -17,6 +17,7 @@
 package za.co.absa.atum.model.dto
 
 import io.circe.{Decoder, Encoder}
+import io.circe.generic.auto._
 
 case class MeasureResultDTO(
   mainValue: MeasureResultDTO.TypedValue,
