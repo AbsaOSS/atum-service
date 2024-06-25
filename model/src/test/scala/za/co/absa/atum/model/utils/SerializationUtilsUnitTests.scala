@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.model.utils
 
+import io.circe.generic.auto._
 import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
 import za.co.absa.atum.model.dto._
@@ -41,7 +42,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val expectedAdditionalDataJson =
       """
         |{"partitioning":[{"key":"key","value":"val"}],
-        |"additionalData":{"key1":"val1","key2":"val2"},
+        |"additionalData":{"key1":"val1","key2":"val2","key3":null},
         |"author":"testAuthor"}
         |""".linearize
     val actualAdditionalDataJson = SerializationUtils.asJson(additionalDataDTO)
@@ -343,7 +344,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       authorIfNew = "authorTest"
     )
 
-    val expectedPartitioningDTOJson = """{"partitioning":[{"key":"key","value":"val"}],"authorIfNew":"authorTest"}"""
+    val expectedPartitioningDTOJson = """{"partitioning":[{"key":"key","value":"val"}],"parentPartitioning":null,"authorIfNew":"authorTest"}"""
     val actualPartitioningDTOJson = SerializationUtils.asJson(partitioningDTO)
 
     assert(actualPartitioningDTOJson == expectedPartitioningDTOJson)

@@ -35,11 +35,12 @@ object WriteCheckpointIntegrationTests extends ConfigProviderTest {
 
     suite("WriteCheckpointSuite")(
       test("Returns expected Left with DataNotFoundException as related partitioning is not in the database") {
+
         val checkpointDTO = CheckpointDTO(
           id = UUID.randomUUID(),
           name = "name",
           author = "author",
-          partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
+          partitioning = Seq(PartitionDTO("key2", "value2")),
           processStartTime = ZonedDateTime.now(),
           processEndTime = Option(ZonedDateTime.now()),
           measurements =
@@ -53,7 +54,7 @@ object WriteCheckpointIntegrationTests extends ConfigProviderTest {
     ).provide(
       WriteCheckpoint.layer,
       PostgresDatabaseProvider.layer,
-      TestTransactorProvider.layerWithRollback
+      TestTransactorProvider.layerWithoutRollback
     )
   }
 

@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.Fragment
-import doobie.implicits._
+import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.model.PartitioningForDB
@@ -31,13 +31,12 @@ import zio._
 import zio.interop.catz._
 import io.circe.syntax._
 import io.circe.generic.auto._
-
 import za.co.absa.atum.model.dto.MeasureResultDTO._
 import za.co.absa.atum.server.model.CirceJsonImplicits._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.circe.jsonb.implicits.jsonbGet
 import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
+import io.circe.Json
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task]
@@ -50,7 +49,7 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     // List[String] containing json data has to be properly escaped
     // It would be safer to use Json data type and derive Put instance
     val measurementsNormalized = {
-      values.measurements.map(x => x.asJson.noSpaces)
+      values.measurements.toList.map(_.asJson)
     }
 
     val sqlDebug = sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
@@ -63,8 +62,8 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
                   ${values.processStartTime},
                   ${values.processEndTime},
                   ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbArrayPutUsingString
-                    measurementsNormalized.toList
+                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbArrayPut
+                    measurementsNormalized
                   },
                   ${values.measuredByAtumAgent},
                   ${values.author}

@@ -20,6 +20,7 @@ import cats.Show
 import cats.data.NonEmptyList
 import doobie.{Get, Put}
 import doobie.postgres.implicits._
+import io.circe.Json
 import org.postgresql.jdbc.PgArray
 import org.postgresql.util.PGobject
 
@@ -42,7 +43,7 @@ object DoobieImplicits {
 
   object Json {
 
-    implicit val jsonArrayPutUsingString: Put[List[String]] = {
+    implicit val jsonArrayPut: Put[List[Json]] = {
       Put.Advanced
         .other[PGobject](
           NonEmptyList.of("json[]")
@@ -50,7 +51,7 @@ object DoobieImplicits {
         .tcontramap { a =>
           val o = new PGobject
           o.setType("json[]")
-          o.setValue(a.mkString("{", ",", "}"))
+          o.setValue(a.map(x => s"\"${x.noSpaces.replaceAll("\"", """\"""")}\"").mkString("{", ",", "}"))
           o
         }
     }
@@ -100,7 +101,7 @@ object DoobieImplicits {
 
   object Jsonb {
 
-    implicit val jsonbArrayPutUsingString: Put[List[String]] = {
+    implicit val jsonbArrayPut: Put[List[Json]] = {
       Put.Advanced
         .other[PGobject](
           NonEmptyList.of("jsonb[]")
@@ -108,7 +109,7 @@ object DoobieImplicits {
         .tcontramap { a =>
           val o = new PGobject
           o.setType("jsonb[]")
-          o.setValue(a.mkString("{", ",", "}"))
+          o.setValue(a.map(x => s"\"${x.noSpaces.replaceAll("\"", """\"""")}\"").mkString("{", ",", "}"))
           o
         }
     }

@@ -50,8 +50,8 @@ class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieE
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     partitioningJsonString
                   },
-                                ${values.authorIfNew},
-                                ${
+                  ${values.authorIfNew},
+                  ${
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     parentPartitioningJsonString
                   }

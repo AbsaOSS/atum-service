@@ -16,33 +16,36 @@
 
 package za.co.absa.atum.model.utils
 
-import org.json4s.JsonAST.JString
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{write, writePretty}
-import org.json4s.{CustomSerializer, Formats, JNull, NoTypeHints, ext}
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType._
 
+import io.circe.{Decoder, Encoder}
+import io.circe.syntax._
+import io.circe.parser._
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 object SerializationUtils {
 
-  implicit private val formatsJson: Formats =
-    Serialization.formats(NoTypeHints).withBigDecimal +
-      ext.UUIDSerializer +
-      ZonedDateTimeSerializer +
-      ResultValueTypeSerializer
 
-  // TODO "yyyy-MM-dd'T'hh:mm:ss.SSS'Z'" OR TODO "yyyy-MM-dd HH:mm:ss.SSSSSSX"
   val timestampFormat: DateTimeFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
+
+  implicit val encodeZonedDateTime: Encoder[ZonedDateTime] = Encoder.encodeString.contramap[ZonedDateTime](_.format(timestampFormat))
+  implicit val decodeZonedDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { str =>
+    Right(ZonedDateTime.parse(str, timestampFormat))
+  }
+
+  implicit val encodeUUID: Encoder[UUID] = Encoder.encodeString.contramap[UUID](_.toString)
+  implicit val decodeUUID: Decoder[UUID] = Decoder.decodeString.emap { str =>
+    Right(UUID.fromString(str))
+  }
 
   /**
    * The method returns arbitrary object as a Json string.
    *
    * @return A string representing the object in Json format
    */
-  def asJson[T <: AnyRef](obj: T): String = {
-    write[T](obj)
+  def asJson[T: Encoder](obj: T): String = {
+    obj.asJson.noSpaces
   }
 
   /**
@@ -50,8 +53,8 @@ object SerializationUtils {
    *
    * @return A string representing the object in Json format
    */
-  def asJsonPretty[T <: AnyRef](obj: T): String = {
-    writePretty[T](obj)
+  def asJsonPretty[T: Encoder](obj: T): String = {
+    obj.asJson.spaces2
   }
 
   /**
@@ -59,27 +62,34 @@ object SerializationUtils {
    *
    * @return An object deserialized from the Json string
    */
-  def fromJson[T <: AnyRef](jsonStr: String)(implicit m: Manifest[T]): T = {
-    Serialization.read[T](jsonStr)
+  def fromJson[T: Decoder](jsonStr: String): T = {
+    decode[T](jsonStr) match {
+      case Right(value) => value
+      case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")
+    }
   }
 
-  private case object ResultValueTypeSerializer extends CustomSerializer[ResultValueType](format => (
-    {
-      case JString(resultValType) => resultValType match {
-        case "String"       => String
-        case "Long"         => Long
-        case "BigDecimal"   => BigDecimal
-        case "Double"       => Double
-      }
-      case JNull => null
-    },
-    {
-      case resultValType: ResultValueType => resultValType match {
-        case String       => JString("String")
-        case Long         => JString("Long")
-        case BigDecimal   => JString("BigDecimal")
-        case Double       => JString("Double")
-      }
-    }))
+  sealed trait ResultValueType
+  object ResultValueType {
+    case object String extends ResultValueType
+    case object Long extends ResultValueType
+    case object BigDecimal extends ResultValueType
+    case object Double extends ResultValueType
+
+    implicit val encodeResultValueType: Encoder[ResultValueType] = Encoder.encodeString.contramap {
+      case ResultValueType.String => "String"
+      case ResultValueType.Long => "Long"
+      case ResultValueType.BigDecimal => "BigDecimal"
+      case ResultValueType.Double => "Double"
+    }
+
+    implicit val decodeResultValueType: Decoder[ResultValueType] = Decoder.decodeString.emap {
+      case "String" => Right(ResultValueType.String)
+      case "Long" => Right(ResultValueType.Long)
+      case "BigDecimal" => Right(ResultValueType.BigDecimal)
+      case "Double" => Right(ResultValueType.Double)
+      case other => Left(s"Cannot decode $other as ResultValueType")
+    }
+  }
 
 }

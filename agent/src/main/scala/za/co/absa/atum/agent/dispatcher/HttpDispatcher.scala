@@ -23,6 +23,7 @@ import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.model.utils.SerializationUtils
+import io.circe.generic.auto._
 
 class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Logging {
   import HttpDispatcher._
