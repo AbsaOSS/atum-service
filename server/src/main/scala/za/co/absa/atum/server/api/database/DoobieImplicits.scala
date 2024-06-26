@@ -51,7 +51,14 @@ object DoobieImplicits {
         .tcontramap { a =>
           val o = new PGobject
           o.setType("json[]")
-          o.setValue(a.map(x => s"\"${x.noSpaces.replaceAll("\"", """\"""")}\"").mkString("{", ",", "}"))
+          val arrayElements = a.map { x =>
+            // Convert to compact JSON string and escape inner quotes
+            val escapedJsonString = x.noSpaces.replace("\"", "\\\"")
+            // Wrap in double quotes for the array element
+            s"\"$escapedJsonString\""
+          }
+          // Join all elements into a single string wrapped in curly braces
+          o.setValue(arrayElements.mkString("{", ",", "}"))
           o
         }
     }
@@ -109,7 +116,14 @@ object DoobieImplicits {
         .tcontramap { a =>
           val o = new PGobject
           o.setType("jsonb[]")
-          o.setValue(a.map(x => s"\"${x.noSpaces.replaceAll("\"", """\"""")}\"").mkString("{", ",", "}"))
+          val arrayElements = a.map { x =>
+            // Convert to compact JSON string and escape inner quotes
+            val escapedJsonString = x.noSpaces.replace("\"", "\\\"")
+            // Wrap in double quotes for the array element
+            s"\"$escapedJsonString\""
+          }
+          // Join all elements into a single string wrapped in curly braces
+          o.setValue(arrayElements.mkString("{", ",", "}"))
           o
         }
     }

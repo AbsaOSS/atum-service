@@ -40,7 +40,7 @@ object WriteCheckpointIntegrationTests extends ConfigProviderTest {
           id = UUID.randomUUID(),
           name = "name",
           author = "author",
-          partitioning = Seq(PartitionDTO("key2", "value2")),
+          partitioning = Seq(PartitionDTO("key4", "value4")),
           processStartTime = ZonedDateTime.now(),
           processEndTime = Option(ZonedDateTime.now()),
           measurements =

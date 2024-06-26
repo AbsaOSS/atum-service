@@ -52,7 +52,7 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
       values.measurements.toList.map(_.asJson)
     }
 
-    val sqlDebug = sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
+    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
                   ${
                     import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
                     partitioningNormalized
@@ -68,8 +68,6 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
                   ${values.measuredByAtumAgent},
                   ${values.author}
                 ) ${Fragment.const(alias)};"""
-    println(sqlDebug)
-    sqlDebug
   }
 }
 
