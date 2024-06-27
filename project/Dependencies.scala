@@ -46,22 +46,6 @@ object Dependencies {
 
     val fadb = "0.3.0"
 
-    val json4s_spark2 = "3.5.3"
-    val json4s_spark3 = "3.7.0-M11"
-    def json4s(scalaVersion: Version): String = {
-      // TODO done this impractical way until https://github.com/AbsaOSS/commons/issues/134
-      val maj2 = Component("2")
-      val min11 = Component("11")
-      val min12 = Component("12")
-      val min13 = Component("13")
-      scalaVersion.components match {
-        case Seq(`maj2`, `min11`, _) => json4s_spark2
-        case Seq(`maj2`, `min12`, _) => json4s_spark3
-        case Seq(`maj2`, `min13`, _) => json4s_spark3
-        case _ => throw new IllegalArgumentException("Only Scala 2.11, 2.12, and 2.13 are currently supported.")
-      }
-    }
-
     val logback = "1.2.3"
 
     val zio = "2.0.19"
@@ -106,14 +90,8 @@ object Dependencies {
   }
 
   private def jsonSerdeDependencies(scalaVersion: Version): Seq[ModuleID] = {
-    val json4sVersion = Versions.json4s(scalaVersion)
 
     lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
-
-    lazy val json4sExt = "org.json4s" %% "json4s-ext" % json4sVersion
-    lazy val json4sCore = "org.json4s" %% "json4s-core" % json4sVersion
-    lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % json4sVersion
-    lazy val json4sNative = "org.json4s" %% "json4s-native" % json4sVersion % Provided
 
     // Circe dependencies
     lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
@@ -122,10 +100,6 @@ object Dependencies {
 
     Seq(
       jacksonModuleScala,
-      json4sExt,
-      json4sCore,
-      json4sJackson,
-      json4sNative,
       circeCore,
       circeParser,
       circeGeneric,

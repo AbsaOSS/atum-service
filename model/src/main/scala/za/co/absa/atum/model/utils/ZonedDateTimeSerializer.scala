@@ -16,17 +16,19 @@
 
 package za.co.absa.atum.model.utils
 
-import org.json4s.JsonAST.JString
-import org.json4s.{CustomSerializer, JNull}
-
+import io.circe.{Decoder, Encoder}
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
-case object ZonedDateTimeSerializer extends CustomSerializer[ZonedDateTime](_ => (
-  {
-    case JString(s) => ZonedDateTime.parse(s, SerializationUtils.timestampFormat)
-    case JNull => null
-  },
-  {
-    case d: ZonedDateTime => JString(SerializationUtils.timestampFormat.format(d))
+object ZonedDateTimeSerializer {
+  implicit val encodeZonedDateTime: Encoder[ZonedDateTime] = Encoder.encodeString.contramap(
+    _.format(DateTimeFormatter.ISO_ZONED_DATE_TIME))
+
+  implicit val decodeZonedDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { str =>
+    try {
+      Right(ZonedDateTime.parse(str, DateTimeFormatter.ISO_ZONED_DATE_TIME))
+    } catch {
+      case e: Throwable => Left(e.getMessage)
+    }
   }
-))
+}
