@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.utils
+package za.co.absa.atum.model
 
 import io.circe.{Decoder, Encoder}
 

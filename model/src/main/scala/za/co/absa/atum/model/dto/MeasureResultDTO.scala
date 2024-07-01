@@ -18,7 +18,7 @@ package za.co.absa.atum.model.dto
 
 import io.circe._
 import io.circe.generic.semiauto._
-import za.co.absa.atum.model.utils.ResultValueType
+import za.co.absa.atum.model.ResultValueType
 
 case class MeasureResultDTO(
  mainValue: MeasureResultDTO.TypedValue,

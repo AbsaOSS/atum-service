@@ -23,7 +23,7 @@ import za.co.absa.atum.server.model.CheckpointFromDB
 import java.time.ZonedDateTime
 import java.util.UUID
 import MeasureResultDTO.TypedValue
-import za.co.absa.atum.model.utils.ResultValueType
+import za.co.absa.atum.model.ResultValueType
 
 trait TestData {
 

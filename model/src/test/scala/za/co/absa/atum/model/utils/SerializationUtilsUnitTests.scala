@@ -19,6 +19,7 @@ package za.co.absa.atum.model.utils
 import io.circe.generic.auto._
 import io.circe.syntax.EncoderOps
 import org.scalatest.flatspec.AnyFlatSpecLike
+import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.utils.JsonUtils.fromJson

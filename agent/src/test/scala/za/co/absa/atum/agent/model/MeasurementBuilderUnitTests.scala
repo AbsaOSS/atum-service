@@ -20,8 +20,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
 import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.agent.model.AtumMeasure._
+import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
-import za.co.absa.atum.model.utils.ResultValueType
 
 class MeasurementBuilderUnitTests extends AnyFlatSpec {
 

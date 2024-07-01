@@ -23,7 +23,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumAgent
 import za.co.absa.atum.agent.AtumContext.{AtumPartitions, DatasetWrapper}
 import za.co.absa.atum.agent.model.AtumMeasure._
-import za.co.absa.atum.model.utils.ResultValueType
+import za.co.absa.atum.model.ResultValueType
 import za.co.absa.spark.commons.test.SparkTestBase
 
 class AtumMeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase { self =>
