@@ -16,7 +16,20 @@
 
 package za.co.absa.atum.model
 
+
+import io.circe.generic.semiauto._
+import io.circe._
+
 package object dto {
   type PartitioningDTO = Seq[PartitionDTO]
   type AdditionalDataDTO = Map[String, Option[String]]
+
+  // Implicit encoders and decoders for PartitioningDTO
+  implicit val decodePartitioningDTO: Decoder[PartitioningDTO] = Decoder.decodeSeq[PartitionDTO]
+  implicit val encodePartitioningDTO: Encoder[PartitioningDTO] = Encoder.encodeSeq[PartitionDTO]
+
+  // Implicit encoders and decoders for AdditionalDataDTO
+  implicit val decodeAdditionalDataDTO: Decoder[AdditionalDataDTO] = Decoder.decodeMap[String, Option[String]]
+  implicit val encodeAdditionalDataDTO: Encoder[AdditionalDataDTO] = Encoder.encodeMap[String, Option[String]]
+
 }

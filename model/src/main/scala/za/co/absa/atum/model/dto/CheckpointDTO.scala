@@ -16,8 +16,15 @@
 
 package za.co.absa.atum.model.dto
 
+import io.circe.generic.semiauto._
+import io.circe._
+
 import java.time.ZonedDateTime
 import java.util.UUID
+
+import za.co.absa.atum.model.dto._
+//import za.co.absa.atum.model.dto.MeasurementDTO._
+//import za.co.absa.atum.model.dto.PartitionDTO._
 
 case class CheckpointDTO(
   id: UUID,
@@ -29,3 +36,8 @@ case class CheckpointDTO(
   processEndTime: Option[ZonedDateTime],
   measurements: Set[MeasurementDTO]
 )
+
+object CheckpointDTO {
+  implicit val decodeCheckpointDTO: Decoder[CheckpointDTO] = deriveDecoder
+  implicit val encodeCheckpointDTO: Encoder[CheckpointDTO] = deriveEncoder
+}

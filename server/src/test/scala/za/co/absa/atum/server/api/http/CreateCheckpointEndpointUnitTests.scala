@@ -29,7 +29,7 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.CirceJsonImplicits._
+import za.co.absa.atum.model.utils.JsonImplicits._
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo

@@ -16,49 +16,53 @@
 
 package za.co.absa.atum.model.dto
 
-import io.circe.{Decoder, Encoder}
+import io.circe._
 
+sealed trait ResultValueType
+
+object ResultValueType {
+  case object String extends ResultValueType
+
+  case object Long extends ResultValueType
+  case object BigDecimal extends ResultValueType
+  case object Double extends ResultValueType
+
+  implicit val encodeResultValueType: Encoder[ResultValueType] = Encoder.encodeString.contramap {
+    case ResultValueType.String => "String"
+    case ResultValueType.Long => "Long"
+    case ResultValueType.BigDecimal => "BigDecimal"
+    case ResultValueType.Double => "Double"
+  }
+
+  implicit val decodeResultValueType: Decoder[ResultValueType] = Decoder.decodeString.emap {
+    case "String" => Right(ResultValueType.String)
+    case "Long" => Right(ResultValueType.Long)
+    case "BigDecimal" => Right(ResultValueType.BigDecimal)
+    case "Double" => Right(ResultValueType.Double)
+    case other => Left(s"Cannot decode $other as ResultValueType")
+  }
+
+}
 case class MeasureResultDTO(
-  mainValue: MeasureResultDTO.TypedValue,
-  supportValues: Map[String, MeasureResultDTO.TypedValue] = Map.empty
+  mainValue: TypedValue,
+  supportValues: Map[String, TypedValue] = Map.empty
 )
 
-object MeasureResultDTO {
-  case class TypedValue(
-    value: String,
-    valueType: ResultValueType
-  )
+case class TypedValue(
+                       value: String,
+                       valueType: ResultValueType
+                     )
 
-  sealed trait ResultValueType
+object TypedValue {
 
-  object ResultValueType {
-    case object String extends ResultValueType
-    case object Long extends ResultValueType
-    case object BigDecimal extends ResultValueType
-    case object Double extends ResultValueType
-  }
-
-
-  implicit val encodeResultValueType: Encoder[MeasureResultDTO.ResultValueType] = Encoder.encodeString.contramap {
-    case MeasureResultDTO.ResultValueType.String      => "String"
-    case MeasureResultDTO.ResultValueType.Long        => "Long"
-    case MeasureResultDTO.ResultValueType.BigDecimal  => "BigDecimal"
-    case MeasureResultDTO.ResultValueType.Double      => "Double"
-  }
-
-  implicit val decodeResultValueType: Decoder[MeasureResultDTO.ResultValueType] = Decoder.decodeString.emap {
-    case "String"     => Right(MeasureResultDTO.ResultValueType.String)
-    case "Long"       => Right(MeasureResultDTO.ResultValueType.Long)
-    case "BigDecimal" => Right(MeasureResultDTO.ResultValueType.BigDecimal)
-    case "Double"     => Right(MeasureResultDTO.ResultValueType.Double)
-    case other        => Left(s"Cannot decode $other as ResultValueType")
-  }
-
-  implicit val encodeTypedValue: Encoder[MeasureResultDTO.TypedValue] =
+  implicit val encodeTypedValue: Encoder[TypedValue] =
     Encoder.forProduct2("value", "valueType")(tv => (tv.value, tv.valueType))
 
-  implicit val decodeTypedValue: Decoder[MeasureResultDTO.TypedValue] =
-    Decoder.forProduct2("value", "valueType")(MeasureResultDTO.TypedValue.apply)
+  implicit val decodeTypedValue: Decoder[TypedValue] =
+    Decoder.forProduct2("value", "valueType")(TypedValue.apply)
+
+}
+object MeasureResultDTO {
 
   implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] =
     Decoder.forProduct2("mainValue", "supportValues")(MeasureResultDTO.apply)

@@ -32,7 +32,7 @@ import zio.interop.catz._
 import io.circe.syntax._
 import io.circe.generic.auto._
 import za.co.absa.atum.model.dto.MeasureResultDTO._
-import za.co.absa.atum.server.model.CirceJsonImplicits._
+import za.co.absa.atum.model.utils.JsonImplicits._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.circe.jsonb.implicits.jsonbGet
 import doobie.postgres.implicits._
