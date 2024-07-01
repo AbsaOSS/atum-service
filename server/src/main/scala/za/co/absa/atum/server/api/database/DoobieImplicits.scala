@@ -41,6 +41,18 @@ object DoobieImplicits {
 
   }
 
+  private def circeJsonListToPGJsonArrayString(jsonList: List[Json]): String = {
+    val arrayElements = jsonList.map { x =>
+      // Convert to compact JSON string and escape inner quotes
+      val escapedJsonString = x.noSpaces.replace("\"", "\\\"")
+      // Wrap in double quotes for the array element
+      s"\"$escapedJsonString\""
+    }
+
+    // Join all elements into a single string wrapped in curly braces
+    arrayElements.mkString("{", ",", "}")
+  }
+
   object Json {
 
     implicit val jsonArrayPut: Put[List[Json]] = {
@@ -51,14 +63,7 @@ object DoobieImplicits {
         .tcontramap { a =>
           val o = new PGobject
           o.setType("json[]")
-          val arrayElements = a.map { x =>
-            // Convert to compact JSON string and escape inner quotes
-            val escapedJsonString = x.noSpaces.replace("\"", "\\\"")
-            // Wrap in double quotes for the array element
-            s"\"$escapedJsonString\""
-          }
-          // Join all elements into a single string wrapped in curly braces
-          o.setValue(arrayElements.mkString("{", ",", "}"))
+          o.setValue(circeJsonListToPGJsonArrayString(a))
           o
         }
     }
@@ -116,14 +121,7 @@ object DoobieImplicits {
         .tcontramap { a =>
           val o = new PGobject
           o.setType("jsonb[]")
-          val arrayElements = a.map { x =>
-            // Convert to compact JSON string and escape inner quotes
-            val escapedJsonString = x.noSpaces.replace("\"", "\\\"")
-            // Wrap in double quotes for the array element
-            s"\"$escapedJsonString\""
-          }
-          // Join all elements into a single string wrapped in curly braces
-          o.setValue(arrayElements.mkString("{", ",", "}"))
+          o.setValue(circeJsonListToPGJsonArrayString(a))
           o
         }
     }
