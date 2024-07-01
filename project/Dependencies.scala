@@ -27,8 +27,6 @@ object Dependencies {
     val scalaLangJava8Compat = "1.0.2"
     val balta = "0.1.0"
 
-    val jacksonModuleScala = "2.14.2"
-
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
 
@@ -91,15 +89,12 @@ object Dependencies {
 
   private def jsonSerdeDependencies(scalaVersion: Version): Seq[ModuleID] = {
 
-    lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
-
     // Circe dependencies
     lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
     lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeJson
     lazy val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeJson
 
     Seq(
-      jacksonModuleScala,
       circeCore,
       circeParser,
       circeGeneric,
