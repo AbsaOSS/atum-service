@@ -17,54 +17,25 @@
 package za.co.absa.atum.model.dto
 
 import io.circe._
+import io.circe.generic.semiauto._
+import za.co.absa.atum.model.utils.ResultValueType
 
-sealed trait ResultValueType
-
-object ResultValueType {
-  case object String extends ResultValueType
-
-  case object Long extends ResultValueType
-  case object BigDecimal extends ResultValueType
-  case object Double extends ResultValueType
-
-  implicit val encodeResultValueType: Encoder[ResultValueType] = Encoder.encodeString.contramap {
-    case ResultValueType.String => "String"
-    case ResultValueType.Long => "Long"
-    case ResultValueType.BigDecimal => "BigDecimal"
-    case ResultValueType.Double => "Double"
-  }
-
-  implicit val decodeResultValueType: Decoder[ResultValueType] = Decoder.decodeString.emap {
-    case "String" => Right(ResultValueType.String)
-    case "Long" => Right(ResultValueType.Long)
-    case "BigDecimal" => Right(ResultValueType.BigDecimal)
-    case "Double" => Right(ResultValueType.Double)
-    case other => Left(s"Cannot decode $other as ResultValueType")
-  }
-
-}
 case class MeasureResultDTO(
-  mainValue: TypedValue,
-  supportValues: Map[String, TypedValue] = Map.empty
+ mainValue: MeasureResultDTO.TypedValue,
+ supportValues: Map[String, MeasureResultDTO.TypedValue] = Map.empty
 )
 
-case class TypedValue(
-                       value: String,
-                       valueType: ResultValueType
-                     )
-
-object TypedValue {
-
-  implicit val encodeTypedValue: Encoder[TypedValue] =
-    Encoder.forProduct2("value", "valueType")(tv => (tv.value, tv.valueType))
-
-  implicit val decodeTypedValue: Decoder[TypedValue] =
-    Decoder.forProduct2("value", "valueType")(TypedValue.apply)
-
-}
 object MeasureResultDTO {
+  case class TypedValue(
+     value: String,
+     valueType: ResultValueType
+  )
 
-  implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] =
-    Decoder.forProduct2("mainValue", "supportValues")(MeasureResultDTO.apply)
+  object TypedValue {
+    implicit val encodeTypedValue: Encoder[TypedValue] = deriveEncoder
+    implicit val decodeTypedValue: Decoder[TypedValue] = deriveDecoder
+  }
 
+  implicit val encodeMeasureResultDTO: Encoder[MeasureResultDTO] = deriveEncoder
+  implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] = deriveDecoder
 }

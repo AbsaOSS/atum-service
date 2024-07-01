@@ -21,7 +21,7 @@ import org.apache.spark.sql.types.{DataType, DecimalType, LongType, StringType}
 import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
+import za.co.absa.atum.model.utils.ResultValueType
 
 /**
  *  Type of different measures to be applied to the columns.

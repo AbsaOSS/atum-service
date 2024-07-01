@@ -16,17 +16,16 @@
 
 package za.co.absa.atum.server.model
 
-
 import io.circe.generic.semiauto._
 import io.circe.{Decoder, Encoder}
 import za.co.absa.atum.model.dto.PartitioningDTO
 import scala.collection.immutable.Seq
 
 private[server] case class PartitioningForDB private (
-                                                       version: Int = 1,
-                                                       keys: Seq[String],
-                                                       keysToValues: Map[String, String]
-                                                     )
+  version: Int = 1,
+  keys: Seq[String],
+  keysToValues: Map[String, String]
+)
 
 object PartitioningForDB {
 

@@ -17,9 +17,11 @@
 package za.co.absa.atum.model.utils
 
 import io.circe.generic.auto._
+import io.circe.syntax.EncoderOps
 import org.scalatest.flatspec.AnyFlatSpecLike
-import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
+import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.utils.JsonUtils.fromJson
 import za.co.absa.atum.model.utils.SerializationUtilsTest.StringLinearization
 
 import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
@@ -45,7 +47,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"additionalData":{"key1":"val1","key2":"val2","key3":null},
         |"author":"testAuthor"}
         |""".linearize
-    val actualAdditionalDataJson = SerializationUtils.asJson(additionalDataDTO)
+    val actualAdditionalDataJson = additionalDataDTO.asJson.noSpaces
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
@@ -66,7 +68,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       ),
       "testAuthor"
     )
-    val actualAdditionalDataDTO = SerializationUtils.fromJson[AdditionalDataSubmitDTO](additionalDataDTOJson)
+    val actualAdditionalDataDTO = fromJson[AdditionalDataSubmitDTO](additionalDataDTOJson)
 
     assert(actualAdditionalDataDTO == expectedAdditionalDataDTO)
   }
@@ -75,7 +77,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val additionalDataDTO = AdditionalDataSubmitDTO(Seq.empty, Map.empty, "testAuthor")
 
     val expectedAdditionalDataJson = """{"partitioning":[],"additionalData":{},"author":"testAuthor"}"""
-    val actualAdditionalDataJson = SerializationUtils.asJson(additionalDataDTO)
+    val actualAdditionalDataJson = additionalDataDTO.asJson.noSpaces
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
@@ -85,7 +87,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
 
     val expectedAdditionalDataDTO = AdditionalDataSubmitDTO(Seq.empty, Map.empty, "testAuthor")
 
-    val actualAdditionalDataDTO = SerializationUtils.fromJson[AdditionalDataSubmitDTO](additionalDataDTOJsonString)
+    val actualAdditionalDataDTO = fromJson[AdditionalDataSubmitDTO](additionalDataDTOJsonString)
 
     assert(actualAdditionalDataDTO == expectedAdditionalDataDTO)
   }
@@ -104,7 +106,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"measures":[{"measureName":"count","measuredColumns":["col"]}],
         |"additionalData":{}
         |}""".linearize
-    val actualAdditionalDataJson = SerializationUtils.asJson(atumContextDTO)
+    val actualAdditionalDataJson = atumContextDTO.asJson.noSpaces
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
@@ -123,7 +125,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
 
     val expectedAtumContextDTO = AtumContextDTO(partitioning = seqPartitionDTO, measures = seqMeasureDTO)
 
-    val actualAtumContextDTO = SerializationUtils.fromJson[AtumContextDTO](atumContextDTOJson)
+    val actualAtumContextDTO = fromJson[AtumContextDTO](atumContextDTOJson)
 
     assert(actualAtumContextDTO == expectedAtumContextDTO)
   }
@@ -134,7 +136,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val atumContextDTO = AtumContextDTO(partitioning = seqPartitionDTO)
 
     val expectedAdditionalDataJson = """{"partitioning":[{"key":"key","value":"val"}],"measures":[],"additionalData":{}}"""
-    val actualAdditionalDataJson = SerializationUtils.asJson(atumContextDTO)
+    val actualAdditionalDataJson = atumContextDTO.asJson.noSpaces
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
@@ -145,7 +147,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val expectedSeqPartitionDTO = Seq(PartitionDTO("key", "val"))
 
     val expectedAtumContextDTO = AtumContextDTO(partitioning = expectedSeqPartitionDTO)
-    val actualAtumContextDTO = SerializationUtils.fromJson[AtumContextDTO](atumContextDTOJson)
+    val actualAtumContextDTO = fromJson[AtumContextDTO](atumContextDTOJson)
 
     assert(actualAtumContextDTO == expectedAtumContextDTO)
   }
@@ -189,7 +191,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
          |"result":{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}}]
          |}
          |""".linearize
-    val actualCheckpointDTOJson = SerializationUtils.asJson(checkpointDTO)
+    val actualCheckpointDTOJson = checkpointDTO.asJson.noSpaces
 
     assert(actualCheckpointDTOJson == expectedCheckpointDTOJson)
   }
@@ -234,7 +236,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       measurements = setMeasurementDTO
     )
 
-    val actualCheckpointDTO = SerializationUtils.fromJson[CheckpointDTO](checkpointDTOJson)
+    val actualCheckpointDTO = fromJson[CheckpointDTO](checkpointDTOJson)
 
     assert(actualCheckpointDTO == expectedCheckpointDTO)
   }
@@ -244,7 +246,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val measureDTO = MeasureDTO("count", Seq("col"))
 
     val expectedMeasureDTOJson = """{"measureName":"count","measuredColumns":["col"]}"""
-    val actualMeasureDTOJson = SerializationUtils.asJson(measureDTO)
+    val actualMeasureDTOJson = measureDTO.asJson.noSpaces
 
     assert(actualMeasureDTOJson == expectedMeasureDTOJson)
   }
@@ -253,7 +255,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val measureDTOJson = """{"measureName":"count","measuredColumns":["col"]}"""
 
     val expectedMeasureDTO = MeasureDTO("count", Seq("col"))
-    val actualMeasureDTO = SerializationUtils.fromJson[MeasureDTO](measureDTOJson)
+    val actualMeasureDTO = fromJson[MeasureDTO](measureDTOJson)
 
     assert(actualMeasureDTO == expectedMeasureDTO)
   }
@@ -273,7 +275,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"supportValues":{}}
         |}
         |""".linearize
-    val actualMeasurementDTOJson = SerializationUtils.asJson(measurementDTO)
+    val actualMeasurementDTOJson = measurementDTO.asJson.noSpaces
 
     assert(actualMeasurementDTOJson == expectedMeasurementDTOJson)
   }
@@ -291,7 +293,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
 
     val expectedMeasurementDTO = MeasurementDTO(measureDTO, measureResultDTO)
-    val actualMeasurementDTO = SerializationUtils.fromJson[MeasurementDTO](measurementDTOJson)
+    val actualMeasurementDTO = fromJson[MeasurementDTO](measurementDTOJson)
 
     assert(actualMeasurementDTO == expectedMeasurementDTO)
   }
@@ -301,7 +303,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
 
     val expectedMeasureResultDTOJson = """{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}"""
-    val actualMeasureResultDTOJson = SerializationUtils.asJson(measureResultDTO)
+    val actualMeasureResultDTOJson = measureResultDTO.asJson.noSpaces
 
     assert(actualMeasureResultDTOJson == expectedMeasureResultDTOJson)
   }
@@ -310,7 +312,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val measureResultDTOJson = """{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}"""
 
     val expectedMeasureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
-    val actualMeasureResultDTO = SerializationUtils.fromJson[MeasureResultDTO](measureResultDTOJson)
+    val actualMeasureResultDTO = fromJson[MeasureResultDTO](measureResultDTOJson)
 
     assert(actualMeasureResultDTO == expectedMeasureResultDTO)
   }
@@ -320,7 +322,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val partitionDTO = PartitionDTO("key", "val")
 
     val expectedPartitionDTOJson = """{"key":"key","value":"val"}"""
-    val actualPartitionDTOJson = SerializationUtils.asJson(partitionDTO)
+    val actualPartitionDTOJson = partitionDTO.asJson.noSpaces
 
     assert(actualPartitionDTOJson == expectedPartitionDTOJson)
   }
@@ -329,7 +331,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val partitionDTOJson = """{"key":"key","value":"val"}"""
 
     val expectedPartitionDTO = PartitionDTO("key", "val")
-    val actualPartitionDTO = SerializationUtils.fromJson[PartitionDTO](partitionDTOJson)
+    val actualPartitionDTO = fromJson[PartitionDTO](partitionDTOJson)
 
     assert(actualPartitionDTO == expectedPartitionDTO)
   }
@@ -345,7 +347,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     )
 
     val expectedPartitioningDTOJson = """{"partitioning":[{"key":"key","value":"val"}],"parentPartitioning":null,"authorIfNew":"authorTest"}"""
-    val actualPartitioningDTOJson = SerializationUtils.asJson(partitioningDTO)
+    val actualPartitioningDTOJson = partitioningDTO.asJson.noSpaces
 
     assert(actualPartitioningDTOJson == expectedPartitioningDTOJson)
   }
@@ -360,7 +362,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       authorIfNew = "authorTest"
     )
 
-    val actualPartitioningDTO = SerializationUtils.fromJson[PartitioningSubmitDTO](partitioningDTOJson)
+    val actualPartitioningDTO = fromJson[PartitioningSubmitDTO](partitioningDTOJson)
 
     assert(actualPartitioningDTO == expectedPartitioningDTO)
   }
@@ -383,7 +385,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"authorIfNew":"authorTest"
         |}
         |""".linearize
-    val actualPartitioningDTOJson = SerializationUtils.asJson(partitioningDTO)
+    val actualPartitioningDTOJson = partitioningDTO.asJson.noSpaces
 
     assert(actualPartitioningDTOJson == expectedPartitioningDTOJson)
   }
@@ -397,7 +399,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     )
 
     val expectedPartitionDTOJson = """[{"key":"key1","value":"val1"},{"key":"key2","value":"val2"},{"key":"key3","value":"val3"}]"""
-    val actualPartitionDTOJson = SerializationUtils.asJson(partitionDTO)
+    val actualPartitionDTOJson = partitionDTO.asJson.noSpaces
 
     assert(actualPartitionDTOJson == expectedPartitionDTOJson)
   }
@@ -420,7 +422,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       authorIfNew = "authorTest"
     )
 
-    val actualPartitioningDTO = SerializationUtils.fromJson[PartitioningSubmitDTO](partitioningDTOJson)
+    val actualPartitioningDTO = fromJson[PartitioningSubmitDTO](partitioningDTOJson)
 
     assert(actualPartitioningDTO == expectedPartitioningDTO)
   }

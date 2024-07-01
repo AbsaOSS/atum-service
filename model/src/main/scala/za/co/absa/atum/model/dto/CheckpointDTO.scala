@@ -22,10 +22,6 @@ import io.circe._
 import java.time.ZonedDateTime
 import java.util.UUID
 
-import za.co.absa.atum.model.dto._
-//import za.co.absa.atum.model.dto.MeasurementDTO._
-//import za.co.absa.atum.model.dto.PartitionDTO._
-
 case class CheckpointDTO(
   id: UUID,
   name: String,

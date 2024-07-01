@@ -28,7 +28,6 @@ import za.co.absa.atum.model.dto.AtumContextDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
 import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.model.utils.JsonImplicits._
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
