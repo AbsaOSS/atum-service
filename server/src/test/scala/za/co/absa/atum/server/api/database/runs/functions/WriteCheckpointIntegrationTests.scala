@@ -54,7 +54,7 @@ object WriteCheckpointIntegrationTests extends ConfigProviderTest {
     ).provide(
       WriteCheckpoint.layer,
       PostgresDatabaseProvider.layer,
-      TestTransactorProvider.layerWithoutRollback
+      TestTransactorProvider.layerWithRollback
     )
   }
 
