@@ -87,7 +87,7 @@ object Dependencies {
     )
   }
 
-  private def jsonSerdeDependencies(): Seq[ModuleID] = {
+  private def jsonSerdeDependencies: Seq[ModuleID] = {
 
     // Circe dependencies
     lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
@@ -229,7 +229,7 @@ object Dependencies {
       typeSafeConfig
     ) ++
       testDependencies ++
-      jsonSerdeDependencies(scalaVersion)
+      jsonSerdeDependencies
   }
 
   def databaseDependencies: Seq[ModuleID] = {
