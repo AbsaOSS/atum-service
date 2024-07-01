@@ -34,13 +34,6 @@ object DoobieImplicits {
   implicit val getMapWithOptionStringValues: Get[Map[String, Option[String]]] = Get[Map[String, String]]
       .tmap(map => map.map { case (k, v) => k -> Option(v) })
 
-  object Sequence {
-
-    implicit val get: Get[Seq[String]] = Get[List[String]].map(_.toSeq)
-    implicit val put: Put[Seq[String]] = Put[List[String]].contramap(_.toList)
-
-  }
-
   private def circeJsonListToPGJsonArrayString(jsonList: List[Json]): String = {
     val arrayElements = jsonList.map { x =>
       // Convert to compact JSON string and escape inner quotes
@@ -49,8 +42,14 @@ object DoobieImplicits {
       s"\"$escapedJsonString\""
     }
 
-    // Join all elements into a single string wrapped in curly braces
     arrayElements.mkString("{", ",", "}")
+  }
+
+  object Sequence {
+
+    implicit val get: Get[Seq[String]] = Get[List[String]].map(_.toSeq)
+    implicit val put: Put[Seq[String]] = Put[List[String]].contramap(_.toList)
+
   }
 
   object Json {
