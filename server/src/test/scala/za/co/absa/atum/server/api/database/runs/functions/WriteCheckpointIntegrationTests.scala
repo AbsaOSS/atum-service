@@ -16,8 +16,7 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitionDTO}
-import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
+import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitionDTO, ResultValueType, TypedValue}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider

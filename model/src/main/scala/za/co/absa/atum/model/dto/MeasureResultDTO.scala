@@ -48,6 +48,16 @@ case class MeasureResultDTO(
   supportValues: Map[String, TypedValue] = Map.empty
 )
 
+object MeasureResultDTO {
+
+  implicit val encodeMeasureResultDTO: Encoder[MeasureResultDTO] =
+    Encoder.forProduct2("mainValue", "supportValues")(m => (m.mainValue, m.supportValues))
+
+  implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] =
+    Decoder.forProduct2("mainValue", "supportValues")(MeasureResultDTO.apply)
+
+}
+
 case class TypedValue(
                        value: String,
                        valueType: ResultValueType
@@ -62,9 +72,4 @@ object TypedValue {
     Decoder.forProduct2("value", "valueType")(TypedValue.apply)
 
 }
-object MeasureResultDTO {
 
-  implicit val decodeMeasureResultDTO: Decoder[MeasureResultDTO] =
-    Decoder.forProduct2("mainValue", "supportValues")(MeasureResultDTO.apply)
-
-}

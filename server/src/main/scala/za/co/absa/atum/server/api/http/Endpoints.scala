@@ -26,7 +26,7 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
-import za.co.absa.atum.model.utils.JsonImplicits._
+
 import sttp.tapir.{PublicEndpoint, endpoint}
 
 

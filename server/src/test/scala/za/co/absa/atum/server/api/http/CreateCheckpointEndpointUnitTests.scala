@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.http
 
-import io.circe.generic.auto._
+//import io.circe.generic.auto._
 import io.circe.syntax.EncoderOps
 import org.mockito.Mockito.{mock, when}
 import sttp.client3.testing.SttpBackendStub
@@ -29,7 +29,6 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.model.utils.JsonImplicits._
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo

@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
+import za.co.absa.atum.model.dto.ResultValueType
 
 /**
  *  This trait defines a contract for a measure result.

@@ -25,8 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.{Measure, MeasureResult, MeasurementBuilder, UnknownMeasure}
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
+import za.co.absa.atum.model.dto.{CheckpointDTO, ResultValueType}
 
 class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 

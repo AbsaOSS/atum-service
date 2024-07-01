@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
-import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO}
+import za.co.absa.atum.model.dto.{MeasureDTO, MeasureResultDTO, MeasurementDTO, TypedValue}
 
 /**
  * This object provides a functionality to convert a measurement to its DTO representation.
@@ -41,7 +41,7 @@ private [agent] object MeasurementBuilder {
     val measureDTO = MeasureDTO(measure.measureName, measure.measuredColumns)
 
     val measureResultDTO = MeasureResultDTO(
-      MeasureResultDTO.TypedValue(measureResult.resultValue.toString, measureResult.resultValueType)
+      TypedValue(measureResult.resultValue.toString, measureResult.resultValueType)
     )
     MeasurementDTO(measureDTO, measureResultDTO)
   }

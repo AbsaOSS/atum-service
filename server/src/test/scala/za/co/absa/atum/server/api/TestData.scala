@@ -22,8 +22,6 @@ import za.co.absa.atum.server.model.CheckpointFromDB
 
 import java.time.ZonedDateTime
 import java.util.UUID
-import MeasureResultDTO.TypedValue
-import MeasureResultDTO.ResultValueType._
 
 trait TestData {
 
@@ -73,17 +71,17 @@ trait TestData {
 
   val mainValue: TypedValue = TypedValue(
     value = "123",
-    valueType = Long
+    valueType = ResultValueType.Long
   )
 
   val supportValue1: TypedValue = TypedValue(
     value = "123456789",
-    valueType = Long
+    valueType = ResultValueType.Long
   )
 
   val supportValue2: TypedValue = TypedValue(
     value = "12345.6789",
-    valueType = BigDecimal
+    valueType = ResultValueType.BigDecimal
   )
 
   // Measure Result DTO
