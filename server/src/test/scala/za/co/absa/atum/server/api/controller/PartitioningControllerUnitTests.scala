@@ -21,8 +21,8 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.ErrorResponse.InternalServerErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.InternalServerErrorResponse
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.{equalTo, failsWithA}
 import zio.test._

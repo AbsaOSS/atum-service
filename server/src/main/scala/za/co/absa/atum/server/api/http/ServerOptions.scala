@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.http
 import sttp.monad.MonadError
 import sttp.tapir.DecodeResult
 import sttp.tapir.generic.auto.schemaForCaseClass
-import sttp.tapir.json.play.jsonBody
+import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.server.http4s.Http4sServerOptions
 import sttp.tapir.server.interceptor.DecodeFailureContext
 import sttp.tapir.server.interceptor.decodefailure.DecodeFailureHandler
@@ -27,7 +27,7 @@ import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.r
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.ztapir.{headers, statusCode}
-import za.co.absa.atum.server.model.ErrorResponse.BadRequestResponse
+import za.co.absa.atum.server.model.BadRequestResponse
 import zio.interop.catz._
 
 trait ServerOptions {

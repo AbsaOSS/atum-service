@@ -16,17 +16,23 @@
 
 package za.co.absa.atum.model.utils
 
-import org.json4s.JsonAST.JString
-import org.json4s.{CustomSerializer, JNull}
+import io.circe.{Encoder, Decoder}
+import io.circe.syntax._
+import io.circe.parser.decode
 
-import java.time.ZonedDateTime
-
-case object ZonedDateTimeSerializer extends CustomSerializer[ZonedDateTime](_ => (
-  {
-    case JString(s) => ZonedDateTime.parse(s, SerializationUtils.timestampFormat)
-    case JNull => null
-  },
-  {
-    case d: ZonedDateTime => JString(SerializationUtils.timestampFormat.format(d))
+object JsonUtils {
+  def asJson[T: Encoder](obj: T): String = {
+    obj.asJson.noSpaces
   }
-))
+
+  def asJsonPretty[T: Encoder](obj: T): String = {
+    obj.asJson.spaces2
+  }
+
+  def fromJson[T: Decoder](jsonStr: String): T = {
+    decode[T](jsonStr) match {
+      case Right(value) => value
+      case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")
+    }
+  }
+}

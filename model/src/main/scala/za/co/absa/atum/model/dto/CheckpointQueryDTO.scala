@@ -16,8 +16,16 @@
 
 package za.co.absa.atum.model.dto
 
+import io.circe.generic.semiauto._
+import io.circe._
+
 case class CheckpointQueryDTO(
   partitioning: PartitioningDTO,
   limit: Option[Int],
   checkpointName: Option[String]
 )
+
+object CheckpointQueryDTO {
+  implicit val decodeCheckpointQueryDTO: Decoder[CheckpointQueryDTO] = deriveDecoder
+  implicit val encodeCheckpointQueryDTO: Encoder[CheckpointQueryDTO] = deriveEncoder
+}

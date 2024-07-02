@@ -16,7 +16,15 @@
 
 package za.co.absa.atum.model.dto
 
+import io.circe._
+import io.circe.generic.semiauto._
+
 case class MeasureDTO(
   measureName: String,
   measuredColumns: Seq[String]
 )
+
+object MeasureDTO {
+  implicit val decodeMeasureDTO: Decoder[MeasureDTO] = deriveDecoder[MeasureDTO]
+  implicit val encoderMeasureDTO: Encoder[MeasureDTO] = deriveEncoder[MeasureDTO]
+}

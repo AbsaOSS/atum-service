@@ -20,6 +20,7 @@ import cats.Show
 import cats.data.NonEmptyList
 import doobie.{Get, Put}
 import doobie.postgres.implicits._
+import io.circe.Json
 import org.postgresql.jdbc.PgArray
 import org.postgresql.util.PGobject
 
@@ -33,6 +34,17 @@ object DoobieImplicits {
   implicit val getMapWithOptionStringValues: Get[Map[String, Option[String]]] = Get[Map[String, String]]
       .tmap(map => map.map { case (k, v) => k -> Option(v) })
 
+  private def circeJsonListToPGJsonArrayString(jsonList: List[Json]): String = {
+    val arrayElements = jsonList.map { x =>
+      // Convert to compact JSON string and escape inner quotes
+      val escapedJsonString = x.noSpaces.replace("\"", "\\\"")
+      // Wrap in double quotes for the array element
+      s"\"$escapedJsonString\""
+    }
+
+    arrayElements.mkString("{", ",", "}")
+  }
+
   object Sequence {
 
     implicit val get: Get[Seq[String]] = Get[List[String]].map(_.toSeq)
@@ -42,7 +54,7 @@ object DoobieImplicits {
 
   object Json {
 
-    implicit val jsonArrayPutUsingString: Put[List[String]] = {
+    implicit val jsonArrayPut: Put[List[Json]] = {
       Put.Advanced
         .other[PGobject](
           NonEmptyList.of("json[]")
@@ -50,7 +62,7 @@ object DoobieImplicits {
         .tcontramap { a =>
           val o = new PGobject
           o.setType("json[]")
-          o.setValue(a.mkString("{", ",", "}"))
+          o.setValue(circeJsonListToPGJsonArrayString(a))
           o
         }
     }
@@ -100,7 +112,7 @@ object DoobieImplicits {
 
   object Jsonb {
 
-    implicit val jsonbArrayPutUsingString: Put[List[String]] = {
+    implicit val jsonbArrayPut: Put[List[Json]] = {
       Put.Advanced
         .other[PGobject](
           NonEmptyList.of("jsonb[]")
@@ -108,7 +120,7 @@ object DoobieImplicits {
         .tcontramap { a =>
           val o = new PGobject
           o.setType("jsonb[]")
-          o.setValue(a.mkString("{", ",", "}"))
+          o.setValue(circeJsonListToPGJsonArrayString(a))
           o
         }
     }

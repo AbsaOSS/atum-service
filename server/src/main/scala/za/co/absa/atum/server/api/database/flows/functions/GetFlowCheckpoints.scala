@@ -19,7 +19,6 @@ package za.co.absa.atum.server.api.database.flows.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
-import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
@@ -51,7 +50,7 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
 
   override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointFromDB]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = Json.toJson(partitioning).toString
+    val partitioningNormalized = partitioning.asJson.noSpaces
 
     sql"""SELECT ${Fragment.const(selectEntry)}
           FROM ${Fragment.const(functionName)}(

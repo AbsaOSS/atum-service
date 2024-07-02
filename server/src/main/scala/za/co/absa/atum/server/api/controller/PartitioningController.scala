@@ -23,7 +23,7 @@ import za.co.absa.atum.model.dto.{
   CheckpointQueryDTO,
   PartitioningSubmitDTO
 }
-import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
+import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio.IO
 import zio.macros.accessible

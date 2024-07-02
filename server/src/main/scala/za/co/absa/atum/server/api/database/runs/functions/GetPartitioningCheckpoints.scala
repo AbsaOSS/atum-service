@@ -19,7 +19,6 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
-import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
@@ -29,14 +28,12 @@ import za.co.absa.fadb.doobie.DoobieEngine
 import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import zio._
 import zio.interop.catz._
+import io.circe.syntax._
 
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.circe.jsonb.implicits.jsonbGet
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import io.circe.syntax.EncoderOps
-import io.circe.generic.auto._
-
 
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task] {
@@ -55,7 +52,7 @@ class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEng
 
   override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointFromDB]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = Json.toJson(partitioning).toString
+    val partitioningNormalized = partitioning.asJson.noSpaces
 
     sql"""SELECT ${Fragment.const(selectEntry)}
           FROM ${Fragment.const(functionName)}(

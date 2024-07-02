@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.model.ErrorResponse.ErrorResponse
+import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.IO
 import zio.macros.accessible
