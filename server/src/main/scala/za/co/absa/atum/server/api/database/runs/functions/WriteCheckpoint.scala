@@ -45,7 +45,7 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningNormalized = partitioning.asJson.noSpaces
 
-    // List[String] containing json data has to be properly escaped
+    // List[StringValue] containing json data has to be properly escaped
     // It would be safer to use Json data type and derive Put instance
     val measurementsNormalized = {
       values.measurements.toList.map(_.asJson)

@@ -73,17 +73,17 @@ trait TestData {
 
   val mainValue: TypedValue = TypedValue(
     value = "123",
-    valueType = ResultValueType.Long
+    valueType = ResultValueType.LongValue
   )
 
   val supportValue1: TypedValue = TypedValue(
     value = "123456789",
-    valueType = ResultValueType.Long
+    valueType = ResultValueType.LongValue
   )
 
   val supportValue2: TypedValue = TypedValue(
     value = "12345.6789",
-    valueType = ResultValueType.BigDecimal
+    valueType = ResultValueType.BigDecimalValue
   )
 
   // Measure Result DTO

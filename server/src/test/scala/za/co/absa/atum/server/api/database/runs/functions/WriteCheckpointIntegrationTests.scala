@@ -45,7 +45,7 @@ object WriteCheckpointIntegrationTests extends ConfigProviderTest {
           processStartTime = ZonedDateTime.now(),
           processEndTime = Option(ZonedDateTime.now()),
           measurements =
-            Set(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))))
+            Set(MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.LongValue))))
         )
         for {
           writeCheckpoint <- ZIO.service[WriteCheckpoint]

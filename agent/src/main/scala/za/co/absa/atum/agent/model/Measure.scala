@@ -57,7 +57,7 @@ object AtumMeasure {
       }
 
     override def measuredColumns: Seq[String] = Seq.empty
-    override val resultValueType: ResultValueType = ResultValueType.Long
+    override val resultValueType: ResultValueType = ResultValueType.LongValue
   }
   object RecordCount {
     private[agent] val measureName: String = "count"
@@ -76,7 +76,7 @@ object AtumMeasure {
       }
 
     override def measuredColumns: Seq[String] = measuredCols
-    override val resultValueType: ResultValueType = ResultValueType.Long
+    override val resultValueType: ResultValueType = ResultValueType.LongValue
   }
   object DistinctRecordCount {
     private[agent] val measureName: String = "distinctCount"
@@ -93,7 +93,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType = ResultValueType.BigDecimal
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
   }
   object SumOfValuesOfColumn {
     private[agent] val measureName: String = "aggregatedTotal"
@@ -110,7 +110,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType = ResultValueType.BigDecimal
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
   }
   object AbsSumOfValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTotal"
@@ -125,7 +125,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType = ResultValueType.String
+    override val resultValueType: ResultValueType = ResultValueType.StringValue
   }
   object SumOfHashesOfColumn {
     private[agent] val measureName: String = "hashCrc32"
@@ -138,10 +138,10 @@ object AtumMeasure {
   ): Column = {
     dataType match {
       case _: LongType =>
-        // This is protection against long overflow, e.g. Long.MaxValue = 9223372036854775807:
-        //   scala> sc.parallelize(List(Long.MaxValue, 1)).toDF.agg(sum("value")).take(1)(0)(0)
+        // This is protection against long overflow, e.g. LongValue.MaxValue = 9223372036854775807:
+        //   scala> sc.parallelize(List(LongValue.MaxValue, 1)).toDF.agg(sum("value")).take(1)(0)(0)
         //   res11: Any = -9223372036854775808
-        // Converting to BigDecimal fixes the issue
+        // Converting to BigDecimalValue fixes the issue
         column.cast(DecimalType(38, 0))
       case _: StringType =>
         // Support for string type aggregation
@@ -170,21 +170,21 @@ object AtumMeasure {
 
   /**
    *  This method converts a given value to string.
-   *  It is a workaround for different serializers generating different JSONs for BigDecimal.
+   *  It is a workaround for different serializers generating different JSONs for BigDecimalValue.
    *  See https://stackoverflow.com/questions/61973058/json-serialization-of-bigdecimal-returns-scientific-notation
    *
    *  @param value A value to convert
    *  @return A string representation of the value
    */
   private def workaroundBigDecimalIssues(value: Any): String =
-    // If aggregated value is java.math.BigDecimal, convert it to scala.math.BigDecimal
+    // If aggregated value is java.math.BigDecimalValue, convert it to scala.math.BigDecimalValue
     value match {
       case v: java.math.BigDecimal =>
-        // Convert the value to string to workaround different serializers generate different JSONs for BigDecimal
+        // Convert the value to string to workaround different serializers generate different JSONs for BigDecimalValue
         v.stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)
           .toPlainString // converts to normal string (6E+2 -> "600")
       case v: BigDecimal =>
-        // Convert the value to string to workaround different serializers generate different JSONs for BigDecimal
+        // Convert the value to string to workaround different serializers generate different JSONs for BigDecimalValue
         new java.math.BigDecimal(
           v.toString()
         ).stripTrailingZeros // removes trailing zeros (2001.500000 -> 2001.5, but can introduce scientific notation (600.000 -> 6E+2)

@@ -162,7 +162,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val setMeasurementDTO = Set(
       MeasurementDTO(
         measure = MeasureDTO("count", Seq("col")), result = MeasureResultDTO(
-          mainValue = TypedValue("1", ResultValueType.Long)
+          mainValue = TypedValue("1", ResultValueType.LongValue)
         )
       )
     )
@@ -221,7 +221,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val setMeasurementDTO = Set(
       MeasurementDTO(
         measure = MeasureDTO("count", Seq("col")), result = MeasureResultDTO(
-          mainValue = TypedValue("1", ResultValueType.Long)
+          mainValue = TypedValue("1", ResultValueType.LongValue)
         )
       )
     )
@@ -264,7 +264,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
   // MeasurementDTO
   "asJson" should "serialize MeasurementDTO into json string" in {
     val measureDTO = MeasureDTO("count", Seq("col"))
-    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
+    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.LongValue))
 
     val measurementDTO = MeasurementDTO(measureDTO, measureResultDTO)
 
@@ -291,7 +291,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |""".stripMargin
 
     val measureDTO = MeasureDTO("count", Seq("col"))
-    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
+    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.LongValue))
 
     val expectedMeasurementDTO = MeasurementDTO(measureDTO, measureResultDTO)
     val actualMeasurementDTO = fromJson[MeasurementDTO](measurementDTOJson)
@@ -301,7 +301,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
 
   // MeasureResultDTO
   "asJson" should "serialize MeasureResultDTO into json string" in {
-    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
+    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.LongValue))
 
     val expectedMeasureResultDTOJson = """{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}"""
     val actualMeasureResultDTOJson = measureResultDTO.asJson.noSpaces
@@ -312,7 +312,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
   "fromJson" should "deserialize MeasureResultDTO from json string" in {
     val measureResultDTOJson = """{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}"""
 
-    val expectedMeasureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
+    val expectedMeasureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.LongValue))
     val actualMeasureResultDTO = fromJson[MeasureResultDTO](measureResultDTOJson)
 
     assert(actualMeasureResultDTO == expectedMeasureResultDTO)

@@ -100,7 +100,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(argument.getValue.author == authorTest)
     assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
     assert(argument.getValue.measurements.head.result.mainValue.value == "3")
-    assert(argument.getValue.measurements.head.result.mainValue.valueType == ResultValueType.Long)
+    assert(argument.getValue.measurements.head.result.mainValue.valueType == ResultValueType.LongValue)
   }
 
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
@@ -115,7 +115,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     val measurements: Map[Measure, MeasureResult] = Map(
       RecordCount("col")          -> MeasureResult(1L),
       SumOfValuesOfColumn("col")  -> MeasureResult(BigDecimal(1)),
-      UnknownMeasure("customMeasureName", Seq("col"), ResultValueType.BigDecimal) -> MeasureResult(BigDecimal(1))
+      UnknownMeasure("customMeasureName", Seq("col"), ResultValueType.BigDecimalValue) -> MeasureResult(BigDecimal(1))
     )
 
     atumContext.createCheckpointOnProvidedData(
@@ -172,7 +172,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(argumentFirst.getValue.author == authorTest)
     assert(argumentFirst.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
     assert(argumentFirst.getValue.measurements.head.result.mainValue.value == "4")
-    assert(argumentFirst.getValue.measurements.head.result.mainValue.valueType == ResultValueType.Long)
+    assert(argumentFirst.getValue.measurements.head.result.mainValue.valueType == ResultValueType.LongValue)
 
     atumContext.addMeasure(SumOfValuesOfColumn("columnForSum"))
     when(mockAgent.currentUser).thenReturn(authorTest + "Another")  // maybe a process changed the author / current user
@@ -185,7 +185,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(argumentSecond.getValue.author == authorTest + "Another")
     assert(argumentSecond.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
     assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.value == "22.5")
-    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.valueType == ResultValueType.BigDecimal)
+    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.valueType == ResultValueType.BigDecimalValue)
   }
 
   "addAdditionalData" should "add key/value pair to map for additional data" in {

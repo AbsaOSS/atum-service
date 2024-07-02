@@ -20,23 +20,23 @@ import io.circe.{Decoder, Encoder}
 
 sealed trait ResultValueType
 object ResultValueType {
-  case object String extends ResultValueType
-  case object Long extends ResultValueType
-  case object BigDecimal extends ResultValueType
-  case object Double extends ResultValueType
+  case object StringValue extends ResultValueType
+  case object LongValue extends ResultValueType
+  case object BigDecimalValue extends ResultValueType
+  case object DoubleValue extends ResultValueType
 
   implicit val encodeResultValueType: Encoder[ResultValueType] = Encoder.encodeString.contramap {
-    case ResultValueType.String => "String"
-    case ResultValueType.Long => "Long"
-    case ResultValueType.BigDecimal => "BigDecimal"
-    case ResultValueType.Double => "Double"
+    case ResultValueType.StringValue => "String"
+    case ResultValueType.LongValue => "Long"
+    case ResultValueType.BigDecimalValue => "BigDecimal"
+    case ResultValueType.DoubleValue => "Double"
   }
 
   implicit val decodeResultValueType: Decoder[ResultValueType] = Decoder.decodeString.emap {
-    case "String" => Right(ResultValueType.String)
-    case "Long" => Right(ResultValueType.Long)
-    case "BigDecimal" => Right(ResultValueType.BigDecimal)
-    case "Double" => Right(ResultValueType.Double)
+    case "String" => Right(ResultValueType.StringValue)
+    case "Long" => Right(ResultValueType.LongValue)
+    case "BigDecimal" => Right(ResultValueType.BigDecimalValue)
+    case "Double" => Right(ResultValueType.DoubleValue)
     case other => Left(s"Cannot decode $other as ResultValueType")
   }
 }

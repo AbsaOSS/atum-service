@@ -42,7 +42,7 @@ class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEn
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
     val partitioningJsonString = partitioning.asJson.noSpaces
 
-    // implicits from Doobie can't handle Map[String, Option[String]] -> HStore, so we converted None to null basically
+    // implicits from Doobie can't handle Map[StringValue, Option[StringValue]] -> HStore, so we converted None to null basically
     val additionalDataNormalized = values.additionalData.map{ case (k, v) => (k, v.orNull)}
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(

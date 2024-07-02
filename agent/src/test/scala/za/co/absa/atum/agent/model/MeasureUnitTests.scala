@@ -92,17 +92,17 @@ class MeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase { se
 
     // Assertions
     assert(dfPersonCntResult.resultValue == "1000")
-    assert(dfPersonCntResult.resultValueType == ResultValueType.Long)
+    assert(dfPersonCntResult.resultValueType == ResultValueType.LongValue)
     assert(dfFullCntResult.resultValue == "1000")
-    assert(dfFullCntResult.resultValueType == ResultValueType.Long)
+    assert(dfFullCntResult.resultValueType == ResultValueType.LongValue)
     assert(dfFullSalaryAbsSumResult.resultValue == "2987144")
-    assert(dfFullSalaryAbsSumResult.resultValueType == ResultValueType.BigDecimal)
+    assert(dfFullSalaryAbsSumResult.resultValueType == ResultValueType.BigDecimalValue)
     assert(dfFullHashResult.resultValue == "2044144307532")
-    assert(dfFullHashResult.resultValueType == ResultValueType.String)
+    assert(dfFullHashResult.resultValueType == ResultValueType.StringValue)
     assert(dfExtraPersonSalarySumResult.resultValue == "2986144")
-    assert(dfExtraPersonSalarySumResult.resultValueType == ResultValueType.BigDecimal)
+    assert(dfExtraPersonSalarySumResult.resultValueType == ResultValueType.BigDecimalValue)
     assert(dfFullSalarySumResult.resultValue == "2987144")
-    assert(dfFullSalarySumResult.resultValueType == ResultValueType.BigDecimal)
+    assert(dfFullSalarySumResult.resultValueType == ResultValueType.BigDecimalValue)
   }
 
 }

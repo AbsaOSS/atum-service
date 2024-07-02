@@ -26,7 +26,7 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 class MeasurementBuilderUnitTests extends AnyFlatSpec {
 
   "buildMeasurementDTO" should
-    "build MeasurementDTO for BigDecimal type of result value when Measure and MeasureResult provided" in {
+    "build MeasurementDTO for BigDecimalValue type of result value when Measure and MeasureResult provided" in {
 
     val measure = SumOfValuesOfColumn("col")
     val measureResult = MeasureResult(BigDecimal(1))
@@ -36,7 +36,7 @@ class MeasurementBuilderUnitTests extends AnyFlatSpec {
     val expectedMeasureDTO = MeasureDTO("aggregatedTotal", Seq("col"))
 
     val expectedMeasureResultDTO = MeasureResultDTO(
-      TypedValue("1", ResultValueType.BigDecimal)
+      TypedValue("1", ResultValueType.BigDecimalValue)
     )
 
     assert(measurementDTO.measure == expectedMeasureDTO)
@@ -44,13 +44,13 @@ class MeasurementBuilderUnitTests extends AnyFlatSpec {
   }
 
   "buildMeasurementDTO" should
-    "build MeasurementDTO for BigDecimal type of result value when Measurement provided" in {
+    "build MeasurementDTO for BigDecimalValue type of result value when Measurement provided" in {
 
     val measure = SumOfValuesOfColumn("col")
     val measureResult = MeasureResult(BigDecimal(3.14))
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measure, measureResult)
 
-    val expectedTypedValue = TypedValue("3.14", ResultValueType.BigDecimal)
+    val expectedTypedValue = TypedValue("3.14", ResultValueType.BigDecimalValue)
 
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
@@ -60,27 +60,27 @@ class MeasurementBuilderUnitTests extends AnyFlatSpec {
       "when Measurement provided" in {
 
     val measure = SumOfValuesOfColumn("col")
-    val measureResult = MeasureResult("stringValue", ResultValueType.BigDecimal)
+    val measureResult = MeasureResult("string", ResultValueType.BigDecimalValue)
 
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measure, measureResult)
 
-    val expectedTypedValue = TypedValue("stringValue", ResultValueType.BigDecimal)
+    val expectedTypedValue = TypedValue("string", ResultValueType.BigDecimalValue)
 
     assert(measurementDTO.result.mainValue == expectedTypedValue)
   }
 
   "buildMeasurementDTO" should
-    "build MeasurementDTO for BigDecimal type of result value when measured by Agent" in {
+    "build MeasurementDTO for BigDecimalValue type of result value when measured by Agent" in {
 
     val measure = SumOfValuesOfColumn("col")
-    val measureResult = MeasureResult("1", ResultValueType.BigDecimal)
+    val measureResult = MeasureResult("1", ResultValueType.BigDecimalValue)
 
     val measurementDTO = MeasurementBuilder.buildMeasurementDTO(measure, measureResult)
 
     val expectedMeasureDTO = MeasureDTO("aggregatedTotal", Seq("col"))
 
     val expectedMeasureResultDTO = MeasureResultDTO(
-      TypedValue("1", ResultValueType.BigDecimal)
+      TypedValue("1", ResultValueType.BigDecimalValue)
     )
 
     assert(measurementDTO.measure == expectedMeasureDTO)
@@ -89,25 +89,25 @@ class MeasurementBuilderUnitTests extends AnyFlatSpec {
 
   "buildAndValidateMeasurementsDTO" should "build Seq[MeasurementDTO] for multiple measures, all unique" in {
     val measurements: Map[Measure, MeasureResult] = Map(
-      DistinctRecordCount(Seq("col")) -> MeasureResult("1", ResultValueType.Long),
+      DistinctRecordCount(Seq("col")) -> MeasureResult("1", ResultValueType.LongValue),
       SumOfValuesOfColumn("col1")     -> MeasureResult(BigDecimal(1.2)),
       SumOfValuesOfColumn("col2")     -> MeasureResult(BigDecimal(1.3)),
-      UnknownMeasure("unknownMeasure", Seq("col"), ResultValueType.BigDecimal) -> MeasureResult(BigDecimal(1.1))
+      UnknownMeasure("unknownMeasure", Seq("col"), ResultValueType.BigDecimalValue) -> MeasureResult(BigDecimal(1.1))
     )
     val measurementDTOs = MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements)
 
     val expectedMeasurementDTO = Set(
       MeasurementDTO(
-        MeasureDTO("distinctCount", Seq("col")), MeasureResultDTO(TypedValue("1", ResultValueType.Long))
+        MeasureDTO("distinctCount", Seq("col")), MeasureResultDTO(TypedValue("1", ResultValueType.LongValue))
       ),
       MeasurementDTO(
-        MeasureDTO("aggregatedTotal", Seq("col1")), MeasureResultDTO(TypedValue("1.2", ResultValueType.BigDecimal))
+        MeasureDTO("aggregatedTotal", Seq("col1")), MeasureResultDTO(TypedValue("1.2", ResultValueType.BigDecimalValue))
       ),
       MeasurementDTO(
-        MeasureDTO("aggregatedTotal", Seq("col2")), MeasureResultDTO(TypedValue("1.3", ResultValueType.BigDecimal))
+        MeasureDTO("aggregatedTotal", Seq("col2")), MeasureResultDTO(TypedValue("1.3", ResultValueType.BigDecimalValue))
       ),
       MeasurementDTO(
-        MeasureDTO("unknownMeasure", Seq("col")), MeasureResultDTO(TypedValue("1.1", ResultValueType.BigDecimal))
+        MeasureDTO("unknownMeasure", Seq("col")), MeasureResultDTO(TypedValue("1.1", ResultValueType.BigDecimalValue))
       )
     )
 
@@ -150,7 +150,7 @@ class MeasurementBuilderUnitTests extends AnyFlatSpec {
     val measure = SumOfValuesOfColumn("col")
 
     assertThrows[MeasurementException](
-      MeasurementBuilder.buildAndValidateMeasurementsDTO(Map(measure -> MeasureResult("stringValue", ResultValueType.String)))
+      MeasurementBuilder.buildAndValidateMeasurementsDTO(Map(measure -> MeasureResult("string", ResultValueType.StringValue)))
     )
   }
 }
