@@ -25,6 +25,7 @@ import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.utils.JsonSyntaxSerialization.asJsonString
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
@@ -62,7 +63,7 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
     suite("CreateCheckpointEndpointSuite")(
       test("Returns expected CheckpointDTO") {
         val response = request
-          .body(checkpointDTO1.asJson.noSpaces)
+          .body(asJsonString(checkpointDTO1))
           .send(backendStub)
 
         val body = response.map(_.body)
@@ -72,7 +73,7 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected BadRequest") {
         val response = request
-          .body(checkpointDTO2.asJson.noSpaces)
+          .body(asJsonString(checkpointDTO2))
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -81,7 +82,7 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected InternalServerError") {
         val response = request
-          .body(checkpointDTO3.asJson.noSpaces)
+          .body(asJsonString(checkpointDTO3))
           .send(backendStub)
 
         val statusCode = response.map(_.code)
