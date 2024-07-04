@@ -21,14 +21,14 @@ import io.circe.generic.semiauto._
 import za.co.absa.atum.model.ResultValueType
 
 case class MeasureResultDTO(
- mainValue: MeasureResultDTO.TypedValue,
- supportValues: Map[String, MeasureResultDTO.TypedValue] = Map.empty
+  mainValue: MeasureResultDTO.TypedValue,
+  supportValues: Map[String, MeasureResultDTO.TypedValue] = Map.empty
 )
 
 object MeasureResultDTO {
   case class TypedValue(
-     value: String,
-     valueType: ResultValueType
+    value: String,
+    valueType: ResultValueType
   )
 
   object TypedValue {
