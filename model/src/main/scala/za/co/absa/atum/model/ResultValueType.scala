@@ -19,6 +19,7 @@ package za.co.absa.atum.model
 import io.circe.{Decoder, Encoder}
 
 sealed trait ResultValueType
+
 object ResultValueType {
   case object StringValue extends ResultValueType
   case object LongValue extends ResultValueType

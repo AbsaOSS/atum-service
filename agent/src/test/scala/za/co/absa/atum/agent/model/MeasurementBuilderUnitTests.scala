@@ -26,7 +26,7 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 class MeasurementBuilderUnitTests extends AnyFlatSpec {
 
   "buildMeasurementDTO" should
-    "build MeasurementDTO for BigDecimalValue type of result value when Measure and MeasureResult provided" in {
+    "build MeasurementDTO for BigDecimal type of result value when Measure and MeasureResult provided" in {
 
     val measure = SumOfValuesOfColumn("col")
     val measureResult = MeasureResult(BigDecimal(1))
@@ -44,7 +44,7 @@ class MeasurementBuilderUnitTests extends AnyFlatSpec {
   }
 
   "buildMeasurementDTO" should
-    "build MeasurementDTO for BigDecimalValue type of result value when Measurement provided" in {
+    "build MeasurementDTO for BigDecimal type of result value when Measurement provided" in {
 
     val measure = SumOfValuesOfColumn("col")
     val measureResult = MeasureResult(BigDecimal(3.14))
@@ -70,7 +70,7 @@ class MeasurementBuilderUnitTests extends AnyFlatSpec {
   }
 
   "buildMeasurementDTO" should
-    "build MeasurementDTO for BigDecimalValue type of result value when measured by Agent" in {
+    "build MeasurementDTO for BigDecimal type of result value when measured by Agent" in {
 
     val measure = SumOfValuesOfColumn("col")
     val measureResult = MeasureResult("1", ResultValueType.BigDecimalValue)
