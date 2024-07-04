@@ -21,15 +21,15 @@ import io.circe.syntax._
 import io.circe.parser.decode
 
 object JsonUtils {
-  def asJson[T: Encoder](obj: T): String = {
+  def asJsonString[T: Encoder](obj: T): String = {
     obj.asJson.noSpaces
   }
 
-  def asJsonPretty[T: Encoder](obj: T): String = {
+  def asJsonStringPretty[T: Encoder](obj: T): String = {
     obj.asJson.spaces2
   }
 
-  def fromJson[T: Decoder](jsonStr: String): T = {
+  def fromJsonString[T: Decoder](jsonStr: String): T = {
     decode[T](jsonStr) match {
       case Right(value) => value
       case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")

@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.http
 
 
-import io.circe.generic.auto.{exportDecoder, exportEncoder}
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.ztapir._

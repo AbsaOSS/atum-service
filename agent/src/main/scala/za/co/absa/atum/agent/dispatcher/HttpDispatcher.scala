@@ -22,9 +22,8 @@ import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
-import io.circe.generic.auto._
 import io.circe.syntax.EncoderOps
-import za.co.absa.atum.model.utils.JsonUtils.fromJson
+import za.co.absa.atum.model.utils.JsonUtils.fromJsonString
 
 class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Logging {
   import HttpDispatcher._
@@ -53,7 +52,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
 
     val response = backend.send(request)
 
-    fromJson[AtumContextDTO](
+    fromJsonString[AtumContextDTO](
       handleResponseBody(response)
     )
   }

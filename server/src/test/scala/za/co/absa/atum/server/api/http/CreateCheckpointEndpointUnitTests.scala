@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.http
 
-//import io.circe.generic.auto._
 import io.circe.syntax.EncoderOps
 import org.mockito.Mockito.{mock, when}
 import sttp.client3.testing.SttpBackendStub
