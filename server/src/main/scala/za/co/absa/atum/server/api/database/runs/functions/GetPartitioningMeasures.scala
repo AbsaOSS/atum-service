@@ -31,22 +31,20 @@ import zio.interop.catz._
 import io.circe.syntax._
 
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[PartitioningDTO, MeasureDTO, Task]
   {
-    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
 
     override val fieldsToSelect: Seq[String] = Seq("measure_name", "measured_columns")
 
     override def sql(values: PartitioningDTO)(implicit read: Read[MeasureDTO]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values)
-    val partitioningJsonString = partitioning.asJson.noSpaces
+    val partitioningJson = partitioning.asJson
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  ${
-                    partitioningJsonString
-                  }
+                  $partitioningJson
                 ) ${Fragment.const(alias)};"""
   }
 

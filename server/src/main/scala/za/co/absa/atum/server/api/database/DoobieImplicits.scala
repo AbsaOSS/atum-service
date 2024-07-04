@@ -20,7 +20,7 @@ import cats.Show
 import cats.data.NonEmptyList
 import doobie.{Get, Put}
 import doobie.postgres.implicits._
-import io.circe.Json
+import io.circe.{Json => CirceJson}
 import org.postgresql.jdbc.PgArray
 import org.postgresql.util.PGobject
 
@@ -28,13 +28,12 @@ import scala.util.{Failure, Success, Try}
 
 object DoobieImplicits {
 
-  private implicit val showPGobject: Show[PGobject] = Show.show(_.getValue.take(250))
   private implicit val showPgArray: Show[PgArray] = Show.fromToString
 
   implicit val getMapWithOptionStringValues: Get[Map[String, Option[String]]] = Get[Map[String, String]]
       .tmap(map => map.map { case (k, v) => k -> Option(v) })
 
-  private def circeJsonListToPGJsonArrayString(jsonList: List[Json]): String = {
+  private def circeJsonListToPGJsonArrayString(jsonList: List[CirceJson]): String = {
     val arrayElements = jsonList.map { x =>
       // Convert to compact JSON string and escape inner quotes
       val escapedJsonString = x.noSpaces.replace("\"", "\\\"")
@@ -43,6 +42,13 @@ object DoobieImplicits {
     }
 
     arrayElements.mkString("{", ",", "}")
+  }
+
+  private def pgArrayToListOfCirceJson(pgArray: PgArray): Either[String, List[CirceJson]] = {
+    Try(pgArray.getArray.asInstanceOf[List[String]].map(CirceJson.fromString)) match {
+      case Failure(exception) => Left(exception.toString)
+      case Success(value) => Right(value)
+    }
   }
 
   object Sequence {
@@ -54,7 +60,7 @@ object DoobieImplicits {
 
   object Json {
 
-    implicit val jsonArrayPut: Put[List[Json]] = {
+    implicit val jsonArrayPut: Put[List[CirceJson]] = {
       Put.Advanced
         .other[PGobject](
           NonEmptyList.of("json[]")
@@ -67,52 +73,19 @@ object DoobieImplicits {
         }
     }
 
-    implicit val jsonArrayGetUsingString: Get[List[String]] = {
-      def parsePgArray(a: PgArray): Either[String, List[String]] = {
-        Try(a.getArray.asInstanceOf[List[String]]) match {
-          case Failure(exception) => Left(exception.toString)
-          case Success(value) => Right(value)
-        }
-      }
-
+    implicit val jsonArrayGet: Get[List[CirceJson]] = {
       Get.Advanced
         .other[PgArray](
           NonEmptyList.of("json[]")
         )
-        .temap(a => parsePgArray(a))
-    }
-
-    implicit val jsonPutUsingString: Put[String] = {
-      Put.Advanced
-        .other[PGobject](
-          NonEmptyList.of("json")
-        )
-        .tcontramap { a =>
-          val o = new PGobject
-          o.setType("json")
-          o.setValue(a)
-          o
-        }
-    }
-
-    implicit val jsonGetUsingString: Get[String] = {
-      Get.Advanced
-        .other[PGobject](
-          NonEmptyList.of("json")
-        )
-        .temap(a =>
-          Try(a.getValue) match {
-            case Failure(exception) => Left(exception.toString)
-            case Success(value) => Right(value)
-          }
-        )
+        .temap(pgArray => pgArrayToListOfCirceJson(pgArray))
     }
 
   }
 
   object Jsonb {
 
-    implicit val jsonbArrayPut: Put[List[Json]] = {
+    implicit val jsonbArrayPut: Put[List[CirceJson]] = {
       Put.Advanced
         .other[PGobject](
           NonEmptyList.of("jsonb[]")
@@ -125,45 +98,12 @@ object DoobieImplicits {
         }
     }
 
-    implicit val jsonbArrayGetUsingString: Get[List[String]] = {
-      def parsePgArray(a: PgArray): Either[String, List[String]] = {
-        Try(a.getArray.asInstanceOf[List[String]]) match {
-          case Failure(exception) => Left(exception.toString)
-          case Success(value) => Right(value)
-        }
-      }
-
+    implicit val jsonbArrayGet: Get[List[CirceJson]] = {
       Get.Advanced
         .other[PgArray](
           NonEmptyList.of("jsonb[]")
         )
-        .temap(a => parsePgArray(a))
-    }
-
-    implicit val jsonbPutUsingString: Put[String] = {
-      Put.Advanced
-        .other[PGobject](
-          NonEmptyList.of("jsonb")
-        )
-        .tcontramap { a =>
-          val o = new PGobject
-          o.setType("jsonb")
-          o.setValue(a)
-          o
-        }
-    }
-
-    implicit val jsonbGetUsingString: Get[String] = {
-      Get.Advanced
-        .other[PGobject](
-          NonEmptyList.of("jsonb")
-        )
-        .temap(a =>
-          Try(a.getValue) match {
-            case Failure(exception) => Left(exception.toString)
-            case Success(value) => Right(value)
-          }
-        )
+        .temap(pgArray => pgArrayToListOfCirceJson(pgArray) )
     }
   }
 

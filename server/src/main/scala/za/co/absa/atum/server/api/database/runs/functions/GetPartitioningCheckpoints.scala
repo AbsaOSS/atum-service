@@ -31,9 +31,9 @@ import zio.interop.catz._
 import io.circe.syntax._
 
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
-import doobie.postgres.circe.jsonb.implicits.jsonbGet
 import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import doobie.postgres.circe.jsonb.implicits.jsonbGet
 
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task] {
@@ -52,14 +52,11 @@ class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEng
 
   override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointFromDB]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = partitioning.asJson.noSpaces
+    val partitioningNormalized = partitioning.asJson
 
     sql"""SELECT ${Fragment.const(selectEntry)}
           FROM ${Fragment.const(functionName)}(
-                  ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-                    partitioningNormalized
-                  },
+                  $partitioningNormalized,
                   ${values.limit},
                   ${values.checkpointName}
                 ) AS ${Fragment.const(alias)};"""

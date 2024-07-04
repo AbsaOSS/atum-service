@@ -32,6 +32,7 @@ import zio.interop.catz._
 import io.circe.syntax._
 
 import doobie.postgres.implicits._
+import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task]
@@ -39,16 +40,13 @@ class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEn
 
   override def sql(values: AdditionalDataSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningJsonString = partitioning.asJson.noSpaces
+    val partitioningJson = partitioning.asJson
 
     // implicits from Doobie can't handle Map[String, Option[String]] -> HStore, so we converted None to null basically
     val additionalDataNormalized = values.additionalData.map{ case (k, v) => (k, v.orNull)}
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-                    partitioningJsonString
-                  },
+                  $partitioningJson,
                   $additionalDataNormalized,
                   ${values.author}
                 ) ${Fragment.const(alias)};"""
