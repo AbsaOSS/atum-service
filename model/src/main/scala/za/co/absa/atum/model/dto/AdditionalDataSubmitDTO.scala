@@ -27,6 +27,6 @@ case class AdditionalDataSubmitDTO (
 )
 
 object AdditionalDataSubmitDTO {
-  implicit val decodeAdditionalDataSubmitDTO: Decoder[AdditionalDataSubmitDTO] = deriveDecoder
-  implicit val encodeAdditionalDataSubmitDTO: Encoder[AdditionalDataSubmitDTO] = deriveEncoder
+  implicit val decodeAdditionalDataSubmitDTO: Decoder[AdditionalDataSubmitDTO] = deriveDecoder[AdditionalDataSubmitDTO]
+  implicit val encodeAdditionalDataSubmitDTO: Encoder[AdditionalDataSubmitDTO] = deriveEncoder[AdditionalDataSubmitDTO]
 }
