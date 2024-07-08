@@ -24,8 +24,6 @@ object JsonSyntaxExtensions {
 
     implicit class JsonSerializationSyntax[T: Encoder](obj: T) {
       def asJsonString: String = obj.asJson.noSpaces
-
-      def asJsonStringPretty: String = obj.asJson.spaces2
     }
 
     implicit class JsonDeserializationSyntax(jsonStr: String) {
