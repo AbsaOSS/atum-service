@@ -22,13 +22,13 @@ import io.circe.{Decoder, Encoder}
 
 object JsonSyntaxExtensions {
 
-    implicit class JsonSerializationSyntax[T: Encoder](val obj: T) {
+    implicit class JsonSerializationSyntax[T: Encoder](obj: T) {
       def asJsonString: String = obj.asJson.noSpaces
 
       def asJsonStringPretty: String = obj.asJson.spaces2
     }
 
-    implicit class JsonDeserializationSyntax(val jsonStr: String) {
+    implicit class JsonDeserializationSyntax(jsonStr: String) {
       def as[T: Decoder]: T = {
         decode[T](jsonStr) match {
           case Right(value) => value
