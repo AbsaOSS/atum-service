@@ -20,20 +20,21 @@ import io.circe.parser.decode
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
 
-object JsonSyntaxSerialization {
-  def asJsonString[T: Encoder](obj: T): String = {
-    obj.asJson.noSpaces
-  }
+object JsonSyntaxExtensions {
 
-  def asJsonStringPretty[T: Encoder](obj: T): String = {
-    obj.asJson.spaces2
-  }
+    implicit class JsonSerializationSyntax[T: Encoder](val obj: T) {
+      def asJsonString: String = obj.asJson.noSpaces
 
-  def fromJson[T: Decoder](jsonStr: String): T = {
-    decode[T](jsonStr) match {
-      case Right(value) => value
-      case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")
+      def asJsonStringPretty: String = obj.asJson.spaces2
     }
-  }
+
+    implicit class JsonDeserializationSyntax(val jsonStr: String) {
+      def as[T: Decoder]: T = {
+        decode[T](jsonStr) match {
+          case Right(value) => value
+          case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")
+        }
+      }
+    }
 
 }

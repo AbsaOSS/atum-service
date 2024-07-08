@@ -22,7 +22,7 @@ import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
-import za.co.absa.atum.model.utils.JsonSyntaxSerialization.{asJsonString, fromJson}
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 
 class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Logging {
   import HttpDispatcher._
@@ -47,17 +47,17 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
     val request = commonAtumRequest
       .post(createPartitioningEndpoint)
-      .body(asJsonString(partitioning))
+      .body(partitioning.asJsonString)
 
     val response = backend.send(request)
 
-    fromJson[AtumContextDTO](handleResponseBody(response))
+   handleResponseBody(response).as[AtumContextDTO]
   }
 
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
     val request = commonAtumRequest
       .post(createCheckpointEndpoint)
-      .body(asJsonString(checkpoint))
+      .body(checkpoint.asJsonString)
 
     val response = backend.send(request)
 
@@ -67,7 +67,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
   override protected[agent] def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
     val request = commonAtumRequest
       .post(createAdditionalDataEndpoint)
-      .body(asJsonString(additionalDataSubmitDTO))
+      .body(additionalDataSubmitDTO.asJsonString)
 
     val response = backend.send(request)
 
