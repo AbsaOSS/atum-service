@@ -106,7 +106,6 @@ object Dependencies {
     val tapirOrg = "com.softwaremill.sttp.tapir"
     val http4sOrg = "org.http4s"
     val faDbOrg = "za.co.absa.fa-db"
-    val playOrg = "org.playframework"
     val sbtOrg = "com.github.sbt"
     val logbackOrg = "ch.qos.logback"
     val awsSdkOrg = "software.amazon.awssdk"

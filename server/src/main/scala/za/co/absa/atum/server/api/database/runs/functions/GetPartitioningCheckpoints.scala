@@ -33,7 +33,7 @@ import io.circe.syntax._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
-import doobie.postgres.circe.jsonb.implicits.jsonbGet
+import doobie.postgres.circe.json.implicits.jsonGet
 
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task] {
