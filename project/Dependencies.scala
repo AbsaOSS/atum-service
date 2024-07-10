@@ -45,7 +45,7 @@ object Dependencies {
 
     val postgresql = "42.6.0"
 
-    val fadb = "0.3.0"
+    val fadb = "0.4.1"
 
     val json4s_spark2 = "3.5.3"
     val json4s_spark3 = "3.7.0-M11"
@@ -134,7 +134,7 @@ object Dependencies {
     val zioOrg = "dev.zio"
     val tapirOrg = "com.softwaremill.sttp.tapir"
     val http4sOrg = "org.http4s"
-    val faDbOrg = "za.co.absa.fa-db"
+    val faDbOrg = "za.co.absa.db.fa-db"
     val playOrg = "org.playframework"
     val sbtOrg = "com.github.sbt"
     val logbackOrg = "ch.qos.logback"

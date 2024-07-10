@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
-import za.co.absa.fadb.exceptions.StatusException
+import za.co.absa.db.fadb.exceptions.StatusException
 import zio._
 
 trait BaseService {

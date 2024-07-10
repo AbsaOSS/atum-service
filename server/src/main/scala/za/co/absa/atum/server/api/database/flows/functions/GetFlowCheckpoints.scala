@@ -24,9 +24,9 @@ import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.model.{CheckpointFromDB, PartitioningForDB}
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.doobie.DoobieEngine
-import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
+import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.doobie.DoobieEngine
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import zio._
 import zio.interop.catz._
 

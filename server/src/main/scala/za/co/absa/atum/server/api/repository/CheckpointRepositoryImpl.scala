@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.repository
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.fadb.exceptions.StatusException
+import za.co.absa.db.fadb.exceptions.StatusException
 import zio._
 
 class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository with BaseRepository {

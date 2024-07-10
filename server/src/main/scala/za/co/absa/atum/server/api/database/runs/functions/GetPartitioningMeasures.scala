@@ -22,9 +22,9 @@ import doobie.util.Read
 import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.{MeasureDTO, PartitioningDTO}
 import za.co.absa.atum.server.model.PartitioningForDB
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.doobie.DoobieEngine
-import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
+import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.doobie.DoobieEngine
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._

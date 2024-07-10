@@ -21,8 +21,8 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.fadb.exceptions.ErrorInDataException
-import za.co.absa.fadb.status.FunctionStatus
+import za.co.absa.db.fadb.exceptions.ErrorInDataException
+import za.co.absa.db.fadb.status.FunctionStatus
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._

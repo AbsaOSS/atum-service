@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database
 
 import doobie.Transactor
-import za.co.absa.fadb.doobie.DoobieEngine
+import za.co.absa.db.fadb.doobie.DoobieEngine
 import zio._
 import zio.interop.catz._
 

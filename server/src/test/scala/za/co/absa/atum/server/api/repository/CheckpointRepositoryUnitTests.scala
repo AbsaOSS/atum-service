@@ -20,8 +20,8 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.fadb.exceptions.ErrorInDataException
-import za.co.absa.fadb.status.FunctionStatus
+import za.co.absa.db.fadb.exceptions.ErrorInDataException
+import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._

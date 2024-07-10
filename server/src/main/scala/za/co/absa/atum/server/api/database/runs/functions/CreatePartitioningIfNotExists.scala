@@ -22,10 +22,10 @@ import doobie.util.Read
 import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.server.model.PartitioningForDB
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.doobie.{DoobieEngine, StatusWithData}
-import za.co.absa.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
-import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
+import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.doobie.{DoobieEngine, StatusWithData}
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
+import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
