@@ -19,7 +19,6 @@ package za.co.absa.atum.server.api.database.flows.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
-import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
@@ -33,9 +32,9 @@ import zio.interop.catz._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 
 import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import doobie.postgres.circe.json.implicits.jsonGet
 import io.circe.syntax.EncoderOps
-import io.circe.generic.auto._
 
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task] {
@@ -51,14 +50,11 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
 
   override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointFromDB]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = Json.toJson(partitioning).toString
+    val partitioningNormalized = partitioning.asJson
 
     sql"""SELECT ${Fragment.const(selectEntry)}
           FROM ${Fragment.const(functionName)}(
-                  ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-                    partitioningNormalized
-                  },
+                  $partitioningNormalized,
                   ${values.limit},
                   ${values.checkpointName}
                 ) AS ${Fragment.const(alias)};"""

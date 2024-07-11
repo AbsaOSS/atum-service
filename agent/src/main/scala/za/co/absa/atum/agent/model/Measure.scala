@@ -21,7 +21,7 @@ import org.apache.spark.sql.types.{DataType, DecimalType, LongType, StringType}
 import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.atum.agent.core.MeasurementProcessor
 import za.co.absa.atum.agent.core.MeasurementProcessor.MeasurementFunction
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
+import za.co.absa.atum.model.ResultValueType
 
 /**
  *  Type of different measures to be applied to the columns.
@@ -57,7 +57,7 @@ object AtumMeasure {
       }
 
     override def measuredColumns: Seq[String] = Seq.empty
-    override val resultValueType: ResultValueType = ResultValueType.Long
+    override val resultValueType: ResultValueType = ResultValueType.LongValue
   }
   object RecordCount {
     private[agent] val measureName: String = "count"
@@ -76,7 +76,7 @@ object AtumMeasure {
       }
 
     override def measuredColumns: Seq[String] = measuredCols
-    override val resultValueType: ResultValueType = ResultValueType.Long
+    override val resultValueType: ResultValueType = ResultValueType.LongValue
   }
   object DistinctRecordCount {
     private[agent] val measureName: String = "distinctCount"
@@ -93,7 +93,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType = ResultValueType.BigDecimal
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
   }
   object SumOfValuesOfColumn {
     private[agent] val measureName: String = "aggregatedTotal"
@@ -110,7 +110,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType = ResultValueType.BigDecimal
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
   }
   object AbsSumOfValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTotal"
@@ -125,7 +125,7 @@ object AtumMeasure {
     }
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
-    override val resultValueType: ResultValueType = ResultValueType.String
+    override val resultValueType: ResultValueType = ResultValueType.StringValue
   }
   object SumOfHashesOfColumn {
     private[agent] val measureName: String = "hashCrc32"

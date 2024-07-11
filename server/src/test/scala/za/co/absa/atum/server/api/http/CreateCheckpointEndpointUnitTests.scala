@@ -17,17 +17,16 @@
 package za.co.absa.atum.server.api.http
 
 import org.mockito.Mockito.{mock, when}
-import sttp.client3._
-import sttp.client3.playJson._
 import sttp.client3.testing.SttpBackendStub
+import sttp.client3.{UriContext, basicRequest}
+import sttp.client3.circe._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
-import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.PlayJsonImplicits._
+import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
@@ -46,8 +45,8 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
-  private val createCheckpointServerEndpoint =
-    createCheckpointEndpointV2.zServerLogic(CheckpointController.createCheckpointV2)
+  private val createCheckpointServerEndpoint = createCheckpointEndpointV2
+    .zServerLogic(CheckpointController.createCheckpointV2)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
@@ -92,5 +91,4 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
   }.provide(
     checkpointControllerMockLayer
   )
-
 }

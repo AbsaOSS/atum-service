@@ -16,7 +16,8 @@
 
 package za.co.absa.atum.server.model
 
-import play.api.libs.json.{Json, Writes}
+import io.circe.generic.semiauto._
+import io.circe.{Decoder, Encoder}
 import za.co.absa.atum.model.dto.PartitioningDTO
 
 private[server] case class PartitioningForDB private (
@@ -28,12 +29,12 @@ private[server] case class PartitioningForDB private (
 object PartitioningForDB {
 
   def fromSeqPartitionDTO(partitioning: PartitioningDTO): PartitioningForDB = {
-    val allKeys = partitioning.map(_.key)
-    val mapOfKeysAndValues = partitioning.map(p => p.key -> p.value).toMap[String, String]
+    val allKeys: Seq[String] = partitioning.map(_.key)
+    val mapOfKeysAndValues: Map[String, String] = partitioning.map(p => p.key -> p.value).toMap
 
     PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
   }
 
-  implicit val writes: Writes[PartitioningForDB] = Json.writes
-
+  implicit val encoder: Encoder[PartitioningForDB] = deriveEncoder
+  implicit val decoder: Decoder[PartitioningForDB] = deriveDecoder
 }

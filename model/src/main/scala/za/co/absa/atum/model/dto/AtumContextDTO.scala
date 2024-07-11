@@ -16,8 +16,17 @@
 
 package za.co.absa.atum.model.dto
 
+
+import io.circe.generic.semiauto._
+import io.circe._
+
 case class AtumContextDTO(
   partitioning: PartitioningDTO,
   measures: Set[MeasureDTO] = Set.empty,
   additionalData: AdditionalDataDTO = Map.empty
 )
+
+object AtumContextDTO {
+  implicit val decodeAtumContextDTO: Decoder[AtumContextDTO] = deriveDecoder
+  implicit val encodeAtumContextDTO: Encoder[AtumContextDTO] = deriveEncoder
+}
