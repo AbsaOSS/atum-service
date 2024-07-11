@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.model.ErrorResponse.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.db.fadb.exceptions.StatusException
 import zio._

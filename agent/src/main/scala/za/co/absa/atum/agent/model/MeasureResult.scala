@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent.model
 
 import za.co.absa.atum.agent.exception.AtumAgentException.MeasurementException
-import za.co.absa.atum.model.dto.MeasureResultDTO.ResultValueType
+import za.co.absa.atum.model.ResultValueType
 
 /**
  *  This trait defines a contract for a measure result.
@@ -80,13 +80,13 @@ object MeasureResult {
     resultValue match {
 
       case l: Long =>
-        MeasureResultProvided[Long](l, ResultValueType.Long)
+        MeasureResultProvided[Long](l, ResultValueType.LongValue)
       case d: Double =>
-        MeasureResultProvided[Double](d, ResultValueType.Double)
+        MeasureResultProvided[Double](d, ResultValueType.DoubleValue)
       case bd: BigDecimal =>
-        MeasureResultProvided[BigDecimal](bd, ResultValueType.BigDecimal)
+        MeasureResultProvided[BigDecimal](bd, ResultValueType.BigDecimalValue)
       case s: String =>
-        MeasureResultProvided[String](s, ResultValueType.String)
+        MeasureResultProvided[String](s, ResultValueType.StringValue)
 
       case unsupportedType =>
         val className = unsupportedType.getClass.getSimpleName

@@ -16,37 +16,41 @@
 
 package za.co.absa.atum.server.model
 
-import play.api.libs.json.{Json, Reads, Writes}
+
+import io.circe._
+import io.circe.generic.semiauto._
 
 import java.util.UUID
 
 object ErrorResponse {
+  implicit val decodeErrorResponse: Decoder[ErrorResponse] = deriveDecoder
+  implicit val encodeErrorResponse: Encoder[ErrorResponse] = deriveEncoder
+}
 
   sealed trait ErrorResponse extends ResponseEnvelope {
     def message: String
   }
 
-  implicit val reads: Reads[ErrorResponse] = Json.reads[ErrorResponse]
-  implicit val writes: Writes[ErrorResponse] = Json.writes[ErrorResponse]
-
   final case class BadRequestResponse(message: String, requestId: UUID = UUID.randomUUID())
       extends ErrorResponse
 
-  implicit val readsBadRequestResponse: Reads[BadRequestResponse] = Json.reads[BadRequestResponse]
-  implicit val writesBadRequestResponse: Writes[BadRequestResponse] = Json.writes[BadRequestResponse]
+object BadRequestResponse {
+  implicit val decodeBadRequestResponse: Decoder[BadRequestResponse] = deriveDecoder
+  implicit val encodeBadRequestResponse: Encoder[BadRequestResponse] = deriveEncoder
+}
 
   final case class GeneralErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
       extends ErrorResponse
 
-  implicit val readsGeneralErrorResponse: Reads[GeneralErrorResponse] = Json.reads[GeneralErrorResponse]
-  implicit val writesGeneralErrorResponse: Writes[GeneralErrorResponse] = Json.writes[GeneralErrorResponse]
+object GeneralErrorResponse {
+  implicit val decodeGeneralErrorResponse: Decoder[GeneralErrorResponse] = deriveDecoder
+  implicit val encodeGeneralErrorResponse: Encoder[GeneralErrorResponse] = deriveEncoder
+}
 
   final case class InternalServerErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
       extends ErrorResponse
 
-  implicit val readsInternalServerErrorResponse: Reads[InternalServerErrorResponse] =
-    Json.reads[InternalServerErrorResponse]
-  implicit val writesInternalServerErrorResponse: Writes[InternalServerErrorResponse] =
-    Json.writes[InternalServerErrorResponse]
-
+object InternalServerErrorResponse {
+  implicit val decodeInternalServerErrorResponse: Decoder[InternalServerErrorResponse] = deriveDecoder
+  implicit val encodeInternalServerErrorResponse: Encoder[InternalServerErrorResponse] = deriveEncoder
 }

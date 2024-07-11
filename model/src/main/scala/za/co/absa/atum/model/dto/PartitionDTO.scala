@@ -16,7 +16,15 @@
 
 package za.co.absa.atum.model.dto
 
+import io.circe.generic.semiauto._
+import io.circe._
+
 case class PartitionDTO(
   key: String,
   value: String
 )
+
+object PartitionDTO {
+  implicit val decodePartitionDTO: Decoder[PartitionDTO] = deriveDecoder
+  implicit val encodePartitionDTO: Encoder[PartitionDTO] = deriveEncoder
+}

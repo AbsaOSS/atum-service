@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.Fragment
-import doobie.implicits._
+import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.model.PartitioningForDB
@@ -29,9 +29,12 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import zio.interop.catz._
-import play.api.libs.json.Json
-import za.co.absa.atum.server.model.PlayJsonImplicits.writesMeasurementDTO
-
+import io.circe.syntax._
+import za.co.absa.atum.model.dto.MeasureResultDTO._
+import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbArrayPut
+import doobie.postgres.circe.jsonb.implicits.jsonbGet
+import doobie.postgres.circe.jsonb.implicits.jsonbPut
 import doobie.postgres.implicits._
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
@@ -40,26 +43,21 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
 
   override def sql(values: CheckpointDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = Json.toJson(partitioning).toString
+    val partitioningNormalized = partitioning.asJson
+
     // List[String] containing json data has to be properly escaped
     // It would be safer to use Json data type and derive Put instance
     val measurementsNormalized = {
-      values.measurements.map(x => s"\"${Json.toJson(x).toString.replaceAll("\"", "\\\\\"")}\"")
+      values.measurements.toList.map(_.asJson)
     }
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
-                    partitioningNormalized
-                  },
+                  $partitioningNormalized,
                   ${values.id},
                   ${values.name},
                   ${values.processStartTime},
                   ${values.processEndTime},
-                  ${
-                    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbArrayPutUsingString
-                    measurementsNormalized.toList
-                  },
+                  $measurementsNormalized,
                   ${values.measuredByAtumAgent},
                   ${values.author}
                 ) ${Fragment.const(alias)};"""

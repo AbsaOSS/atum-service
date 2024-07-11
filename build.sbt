@@ -104,4 +104,3 @@ lazy val database = (projectMatrix in file("database"))
     ): _*
   )
   .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.databaseDependencies)
-

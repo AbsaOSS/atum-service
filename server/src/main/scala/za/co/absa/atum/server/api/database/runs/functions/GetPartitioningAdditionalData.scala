@@ -19,7 +19,6 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import doobie.util.Read
-import play.api.libs.json.Json
 import za.co.absa.atum.model.dto.PartitioningDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
@@ -29,23 +28,23 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
+import io.circe.syntax._
+
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
+import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunction[PartitioningDTO, (String, Option[String]), Task]
   {
-    import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbPutUsingString
 
     override val fieldsToSelect: Seq[String] = Seq("ad_name", "ad_value")
 
     override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
     val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)
-    val partitioningJsonString = Json.toJson(partitioning).toString
+    val partitioningJson = partitioning.asJson
 
     sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  ${
-                      partitioningJsonString
-                   }
+                  $partitioningJson
                 ) ${Fragment.const(alias)};"""
   }
 

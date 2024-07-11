@@ -17,8 +17,10 @@
 package za.co.absa.atum.model.utils
 
 import org.scalatest.flatspec.AnyFlatSpecLike
-import za.co.absa.atum.model.dto.MeasureResultDTO.{ResultValueType, TypedValue}
+import za.co.absa.atum.model.ResultValueType
+import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.model.utils.SerializationUtilsTest.StringLinearization
 
 import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
@@ -27,7 +29,7 @@ import java.util.UUID
 class SerializationUtilsUnitTests extends AnyFlatSpecLike {
 
   // AdditionalDataDTO
-  "asJson" should "serialize AdditionalDataDTO into json string" in {
+  "asJsonString" should "serialize AdditionalDataDTO into json string" in {
     val additionalDataDTO = AdditionalDataSubmitDTO(
       Seq(PartitionDTO("key", "val")),
       Map[String, Option[String]](
@@ -41,10 +43,10 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val expectedAdditionalDataJson =
       """
         |{"partitioning":[{"key":"key","value":"val"}],
-        |"additionalData":{"key1":"val1","key2":"val2"},
+        |"additionalData":{"key1":"val1","key2":"val2","key3":null},
         |"author":"testAuthor"}
         |""".linearize
-    val actualAdditionalDataJson = SerializationUtils.asJson(additionalDataDTO)
+    val actualAdditionalDataJson = additionalDataDTO.asJsonString
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
@@ -55,42 +57,45 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |{"partitioning":[{"key":"key","value":"val"}],
         |"additionalData":{"key1":"val1","key2":"val2"},
         |"author":"testAuthor"}
-        |""".linearize
+        |""".stripMargin
 
     val expectedAdditionalDataDTO = AdditionalDataSubmitDTO(
-      Seq[PartitionDTO](PartitionDTO("key", "val")),
-      Map[String, Option[String]](
+      Seq(PartitionDTO("key", "val")),
+      Map(
         "key1" -> Some("val1"),
         "key2" -> Some("val2")
       ),
       "testAuthor"
     )
-    val actualAdditionalDataDTO = SerializationUtils.fromJson[AdditionalDataSubmitDTO](additionalDataDTOJson)
+    val actualAdditionalDataDTO = additionalDataDTOJson.as[AdditionalDataSubmitDTO]
 
     assert(actualAdditionalDataDTO == expectedAdditionalDataDTO)
   }
 
-  "asJson" should "serialize empty AdditionalDataDTO into json string" in {
+  "asJsonString" should "serialize empty AdditionalDataDTO into json string" in {
     val additionalDataDTO = AdditionalDataSubmitDTO(Seq.empty, Map.empty, "testAuthor")
 
     val expectedAdditionalDataJson = """{"partitioning":[],"additionalData":{},"author":"testAuthor"}"""
-    val actualAdditionalDataJson = SerializationUtils.asJson(additionalDataDTO)
+    val actualAdditionalDataJson = additionalDataDTO.asJsonString
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
 
   "fromJson" should "deserialize empty AdditionalDataDTO from json string" in {
-    val additionalDataDTOJsonString = """{"partitioning":[],"additionalData":{},"author":"testAuthor"}"""
+    val additionalDataDTOJsonString =
+      """
+        |{"partitioning":[],"additionalData":{},"author":"testAuthor"}
+        |""".stripMargin
 
     val expectedAdditionalDataDTO = AdditionalDataSubmitDTO(Seq.empty, Map.empty, "testAuthor")
 
-    val actualAdditionalDataDTO = SerializationUtils.fromJson[AdditionalDataSubmitDTO](additionalDataDTOJsonString)
+    val actualAdditionalDataDTO = additionalDataDTOJsonString.as[AdditionalDataSubmitDTO]
 
     assert(actualAdditionalDataDTO == expectedAdditionalDataDTO)
   }
 
   // AtumContextDTO
-  "asJson" should "serialize AtumContextDTO into json string" in {
+  "asJsonString" should "serialize AtumContextDTO into json string" in {
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val seqMeasureDTO = Set(MeasureDTO("count", Seq("col")))
 
@@ -103,7 +108,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"measures":[{"measureName":"count","measuredColumns":["col"]}],
         |"additionalData":{}
         |}""".linearize
-    val actualAdditionalDataJson = SerializationUtils.asJson(atumContextDTO)
+    val actualAdditionalDataJson = atumContextDTO.asJsonString
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
@@ -115,25 +120,25 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"partitioning":[{"key":"key","value":"val"}],
         |"measures":[{"measureName":"count","measuredColumns":["col"]}],
         |"additionalData":{}
-        |}""".linearize
+        |}""".stripMargin
 
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val seqMeasureDTO = Set(MeasureDTO("count", Seq("col")))
 
     val expectedAtumContextDTO = AtumContextDTO(partitioning = seqPartitionDTO, measures = seqMeasureDTO)
 
-    val actualAtumContextDTO = SerializationUtils.fromJson[AtumContextDTO](atumContextDTOJson)
+    val actualAtumContextDTO = atumContextDTOJson.as[AtumContextDTO]
 
     assert(actualAtumContextDTO == expectedAtumContextDTO)
   }
 
-  "asJson" should "serialize AtumContextDTO without measures into json string" in {
+  "asJsonString" should "serialize AtumContextDTO without measures into json string" in {
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
 
     val atumContextDTO = AtumContextDTO(partitioning = seqPartitionDTO)
 
     val expectedAdditionalDataJson = """{"partitioning":[{"key":"key","value":"val"}],"measures":[],"additionalData":{}}"""
-    val actualAdditionalDataJson = SerializationUtils.asJson(atumContextDTO)
+    val actualAdditionalDataJson = atumContextDTO.asJsonString
 
     assert(actualAdditionalDataJson == expectedAdditionalDataJson)
   }
@@ -144,13 +149,13 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val expectedSeqPartitionDTO = Seq(PartitionDTO("key", "val"))
 
     val expectedAtumContextDTO = AtumContextDTO(partitioning = expectedSeqPartitionDTO)
-    val actualAtumContextDTO = SerializationUtils.fromJson[AtumContextDTO](atumContextDTOJson)
+    val actualAtumContextDTO = atumContextDTOJson.as[AtumContextDTO]
 
     assert(actualAtumContextDTO == expectedAtumContextDTO)
   }
 
   // CheckpointDTO
-  "asJson" should "serialize CheckpointDTO into json string" in {
+  "asJsonString" should "serialize CheckpointDTO into json string" in {
     val uuid = UUID.randomUUID()
     val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
     val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneId.of("CET"))
@@ -158,7 +163,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val setMeasurementDTO = Set(
       MeasurementDTO(
         measure = MeasureDTO("count", Seq("col")), result = MeasureResultDTO(
-          mainValue = TypedValue("1", ResultValueType.Long)
+          mainValue = TypedValue("1", ResultValueType.LongValue)
         )
       )
     )
@@ -188,7 +193,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
          |"result":{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}}]
          |}
          |""".linearize
-    val actualCheckpointDTOJson = SerializationUtils.asJson(checkpointDTO)
+    val actualCheckpointDTOJson = checkpointDTO.asJsonString
 
     assert(actualCheckpointDTOJson == expectedCheckpointDTOJson)
   }
@@ -211,13 +216,13 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
          |"measurements":[{"measure":{"measureName":"count","measuredColumns":["col"]},
          |"result":{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}}]
          |}
-         |""".linearize
+         |""".stripMargin
 
 
     val setMeasurementDTO = Set(
       MeasurementDTO(
         measure = MeasureDTO("count", Seq("col")), result = MeasureResultDTO(
-          mainValue = TypedValue("1", ResultValueType.Long)
+          mainValue = TypedValue("1", ResultValueType.LongValue)
         )
       )
     )
@@ -233,17 +238,17 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       measurements = setMeasurementDTO
     )
 
-    val actualCheckpointDTO = SerializationUtils.fromJson[CheckpointDTO](checkpointDTOJson)
+    val actualCheckpointDTO = checkpointDTOJson.as[CheckpointDTO]
 
     assert(actualCheckpointDTO == expectedCheckpointDTO)
   }
 
   // MeasureDTO
-  "asJson" should "serialize MeasureDTO into json string" in {
+  "asJsonString" should "serialize MeasureDTO into json string" in {
     val measureDTO = MeasureDTO("count", Seq("col"))
 
     val expectedMeasureDTOJson = """{"measureName":"count","measuredColumns":["col"]}"""
-    val actualMeasureDTOJson = SerializationUtils.asJson(measureDTO)
+    val actualMeasureDTOJson = measureDTO.asJsonString
 
     assert(actualMeasureDTOJson == expectedMeasureDTOJson)
   }
@@ -252,15 +257,15 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val measureDTOJson = """{"measureName":"count","measuredColumns":["col"]}"""
 
     val expectedMeasureDTO = MeasureDTO("count", Seq("col"))
-    val actualMeasureDTO = SerializationUtils.fromJson[MeasureDTO](measureDTOJson)
+    val actualMeasureDTO = measureDTOJson.as[MeasureDTO]
 
     assert(actualMeasureDTO == expectedMeasureDTO)
   }
 
   // MeasurementDTO
-  "asJson" should "serialize MeasurementDTO into json string" in {
+  "asJsonString" should "serialize MeasurementDTO into json string" in {
     val measureDTO = MeasureDTO("count", Seq("col"))
-    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
+    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.LongValue))
 
     val measurementDTO = MeasurementDTO(measureDTO, measureResultDTO)
 
@@ -272,7 +277,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"supportValues":{}}
         |}
         |""".linearize
-    val actualMeasurementDTOJson = SerializationUtils.asJson(measurementDTO)
+    val actualMeasurementDTOJson = measurementDTO.asJsonString
 
     assert(actualMeasurementDTOJson == expectedMeasurementDTOJson)
   }
@@ -287,20 +292,20 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |""".stripMargin
 
     val measureDTO = MeasureDTO("count", Seq("col"))
-    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
+    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.LongValue))
 
     val expectedMeasurementDTO = MeasurementDTO(measureDTO, measureResultDTO)
-    val actualMeasurementDTO = SerializationUtils.fromJson[MeasurementDTO](measurementDTOJson)
+    val actualMeasurementDTO = measurementDTOJson.as[MeasurementDTO]
 
     assert(actualMeasurementDTO == expectedMeasurementDTO)
   }
 
   // MeasureResultDTO
-  "asJson" should "serialize MeasureResultDTO into json string" in {
-    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
+  "asJsonString" should "serialize MeasureResultDTO into json string" in {
+    val measureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.LongValue))
 
     val expectedMeasureResultDTOJson = """{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}"""
-    val actualMeasureResultDTOJson = SerializationUtils.asJson(measureResultDTO)
+    val actualMeasureResultDTOJson = measureResultDTO.asJsonString
 
     assert(actualMeasureResultDTOJson == expectedMeasureResultDTOJson)
   }
@@ -308,18 +313,18 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
   "fromJson" should "deserialize MeasureResultDTO from json string" in {
     val measureResultDTOJson = """{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}"""
 
-    val expectedMeasureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.Long))
-    val actualMeasureResultDTO = SerializationUtils.fromJson[MeasureResultDTO](measureResultDTOJson)
+    val expectedMeasureResultDTO = MeasureResultDTO(mainValue = TypedValue("1", ResultValueType.LongValue))
+    val actualMeasureResultDTO = measureResultDTOJson.as[MeasureResultDTO]
 
     assert(actualMeasureResultDTO == expectedMeasureResultDTO)
   }
 
   // PartitionDTO
-  "asJson" should "serialize PartitionDTO into json string" in {
+  "asJsonString" should "serialize PartitionDTO into json string" in {
     val partitionDTO = PartitionDTO("key", "val")
 
     val expectedPartitionDTOJson = """{"key":"key","value":"val"}"""
-    val actualPartitionDTOJson = SerializationUtils.asJson(partitionDTO)
+    val actualPartitionDTOJson = partitionDTO.asJsonString
 
     assert(actualPartitionDTOJson == expectedPartitionDTOJson)
   }
@@ -328,13 +333,13 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     val partitionDTOJson = """{"key":"key","value":"val"}"""
 
     val expectedPartitionDTO = PartitionDTO("key", "val")
-    val actualPartitionDTO = SerializationUtils.fromJson[PartitionDTO](partitionDTOJson)
+    val actualPartitionDTO = partitionDTOJson.as[PartitionDTO]
 
     assert(actualPartitionDTO == expectedPartitionDTO)
   }
 
   // PartitioningDTO
-  "asJson" should "serialize PartitioningDTO into json string" in {
+  "asJsonString" should "serialize PartitioningDTO into json string" in {
     val partitionDTO = PartitionDTO("key", "val")
 
     val partitioningDTO = PartitioningSubmitDTO(
@@ -343,8 +348,8 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       authorIfNew = "authorTest"
     )
 
-    val expectedPartitioningDTOJson = """{"partitioning":[{"key":"key","value":"val"}],"authorIfNew":"authorTest"}"""
-    val actualPartitioningDTOJson = SerializationUtils.asJson(partitioningDTO)
+    val expectedPartitioningDTOJson = """{"partitioning":[{"key":"key","value":"val"}],"parentPartitioning":null,"authorIfNew":"authorTest"}"""
+    val actualPartitioningDTOJson = partitioningDTO.asJsonString
 
     assert(actualPartitioningDTOJson == expectedPartitioningDTOJson)
   }
@@ -359,12 +364,12 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       authorIfNew = "authorTest"
     )
 
-    val actualPartitioningDTO = SerializationUtils.fromJson[PartitioningSubmitDTO](partitioningDTOJson)
+    val actualPartitioningDTO = partitioningDTOJson.as[PartitioningSubmitDTO]
 
     assert(actualPartitioningDTO == expectedPartitioningDTO)
   }
 
-  "asJson" should "serialize PartitioningDTO with parent partitioning into json string" in {
+  "asJsonString" should "serialize PartitioningDTO with parent partitioning into json string" in {
     val partitionDTO = PartitionDTO("key", "val")
     val parentPartitionDTO = PartitionDTO("parentKey", "parentVal")
 
@@ -382,13 +387,12 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"authorIfNew":"authorTest"
         |}
         |""".linearize
-    val actualPartitioningDTOJson = SerializationUtils.asJson(partitioningDTO)
+    val actualPartitioningDTOJson = partitioningDTO.asJsonString
 
     assert(actualPartitioningDTOJson == expectedPartitioningDTOJson)
   }
 
-
-  "asJson" should "serialize Seq[PartitionDTO] into json string" in {
+  "asJsonString" should "serialize Seq[PartitionDTO] into json string" in {
     val partitionDTO = Seq(
       PartitionDTO("key1", "val1"),
       PartitionDTO("key2", "val2"),
@@ -396,7 +400,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     )
 
     val expectedPartitionDTOJson = """[{"key":"key1","value":"val1"},{"key":"key2","value":"val2"},{"key":"key3","value":"val3"}]"""
-    val actualPartitionDTOJson = SerializationUtils.asJson(partitionDTO)
+    val actualPartitionDTOJson = partitionDTO.asJsonString
 
     assert(actualPartitionDTOJson == expectedPartitionDTOJson)
   }
@@ -409,7 +413,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
         |"parentPartitioning":[{"key":"parentKey","value":"parentVal"}],
         |"authorIfNew":"authorTest"
         |}
-        |""".linearize
+        |""".stripMargin
 
     val expectedPartitionDTO = PartitionDTO("key", "val")
     val expectedParentPartitionDTO = PartitionDTO("parentKey", "parentVal")
@@ -419,7 +423,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       authorIfNew = "authorTest"
     )
 
-    val actualPartitioningDTO = SerializationUtils.fromJson[PartitioningSubmitDTO](partitioningDTOJson)
+    val actualPartitioningDTO = partitioningDTOJson.as[PartitioningSubmitDTO]
 
     assert(actualPartitioningDTO == expectedPartitioningDTO)
   }

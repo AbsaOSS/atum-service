@@ -23,7 +23,7 @@ import za.co.absa.atum.server.model.CheckpointFromDB
 import java.time.ZonedDateTime
 import java.util.UUID
 import MeasureResultDTO.TypedValue
-import MeasureResultDTO.ResultValueType._
+import za.co.absa.atum.model.ResultValueType
 
 trait TestData {
 
@@ -73,17 +73,17 @@ trait TestData {
 
   val mainValue: TypedValue = TypedValue(
     value = "123",
-    valueType = Long
+    valueType = ResultValueType.LongValue
   )
 
   val supportValue1: TypedValue = TypedValue(
     value = "123456789",
-    valueType = Long
+    valueType = ResultValueType.LongValue
   )
 
   val supportValue2: TypedValue = TypedValue(
     value = "12345.6789",
-    valueType = BigDecimal
+    valueType = ResultValueType.BigDecimalValue
   )
 
   // Measure Result DTO
@@ -194,7 +194,7 @@ trait TestData {
     author = "author",
     measuredByAtumAgent = true,
     measureName = measureDTO1.measureName,
-    measuredColumns = measureDTO1.measuredColumns,
+    measuredColumns = measureDTO1.measuredColumns.toIndexedSeq,
     measurementValue = parser
       .parse(
         """
@@ -229,7 +229,7 @@ trait TestData {
       author = "author2",
       measuredByAtumAgent = true,
       measureName = measureDTO2.measureName,
-      measuredColumns = measureDTO2.measuredColumns,
+      measuredColumns = measureDTO2.measuredColumns.toIndexedSeq,
       checkpointStartTime = checkpointDTO2.processStartTime,
       checkpointEndTime = checkpointDTO2.processEndTime
 
