@@ -27,7 +27,7 @@ import io.circe.parser._
 
 import scala.util.Try
 
-package object DoobieImplicits {
+object DoobieImplicits {
 
   private implicit val showPgArray: Show[PgArray] = Show.fromToString
 

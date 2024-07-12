@@ -35,7 +35,7 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task]
+  extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task](values => Seq(fr"$values"))
     with StandardStatusHandling {
 
   override def sql(values: AdditionalDataSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {

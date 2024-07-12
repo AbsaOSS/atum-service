@@ -34,7 +34,7 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningDTO, MeasureDTO, Task]
+  extends DoobieMultipleResultFunction[PartitioningDTO, MeasureDTO, Task](values => Seq(fr"$values"))
   {
 
     override val fieldsToSelect: Seq[String] = Seq("measure_name", "measured_columns")

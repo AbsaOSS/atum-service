@@ -34,7 +34,7 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStrin
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningDTO, (String, Option[String]), Task]
+  extends DoobieMultipleResultFunction[PartitioningDTO, (String, Option[String]), Task](values => Seq(fr"$values"))
   {
 
     override val fieldsToSelect: Seq[String] = Seq("ad_name", "ad_value")

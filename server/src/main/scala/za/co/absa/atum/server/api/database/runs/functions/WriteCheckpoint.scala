@@ -38,7 +38,7 @@ import doobie.postgres.circe.jsonb.implicits.jsonbPut
 import doobie.postgres.implicits._
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task]
+    extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task](values => Seq(fr"$values"))
     with StandardStatusHandling {
 
   override def sql(values: CheckpointDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {

@@ -37,7 +37,8 @@ import doobie.postgres.circe.json.implicits.jsonGet
 import io.circe.syntax.EncoderOps
 
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task] {
+    extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task](values => Seq(fr"$values"))
+    {
 
   override val fieldsToSelect: Seq[String] = Seq(
     "id_checkpoint",

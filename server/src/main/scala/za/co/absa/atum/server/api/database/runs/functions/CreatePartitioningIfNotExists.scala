@@ -35,7 +35,7 @@ import io.circe.syntax._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task]
+  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](values => Seq(fr"$values"))
     with StandardStatusHandling {
 
   override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
