@@ -23,7 +23,7 @@ import za.co.absa.atum.model.dto.{MeasureDTO, PartitioningDTO}
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
-import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
@@ -34,10 +34,10 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningDTO, MeasureDTO, Task](values => Seq(fr"$values"))
+  extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, MeasureDTO, Task](values => Seq(fr"$values"))
   {
 
-    override val fieldsToSelect: Seq[String] = Seq("measure_name", "measured_columns")
+    override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "measure_name", "measured_columns")
 
     override def sql(values: PartitioningDTO)(implicit read: Read[MeasureDTO]): Fragment = {
     val partitioning = PartitioningForDB.fromSeqPartitionDTO(values)

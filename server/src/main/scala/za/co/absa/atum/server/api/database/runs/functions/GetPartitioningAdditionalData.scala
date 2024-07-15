@@ -24,20 +24,19 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
-import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
 import io.circe.syntax._
-
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningDTO, (String, Option[String]), Task](values => Seq(fr"$values"))
+  extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, (String, Option[String]), Task](values => Seq(fr"$values"))
   {
 
-    override val fieldsToSelect: Seq[String] = Seq("ad_name", "ad_value")
+    override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "ad_name", "ad_value")
 
     override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
     val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)

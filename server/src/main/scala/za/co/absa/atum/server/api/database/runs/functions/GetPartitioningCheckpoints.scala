@@ -25,21 +25,22 @@ import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.model.{CheckpointFromDB, PartitioningForDB}
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
-import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import zio._
 import zio.interop.catz._
 import io.circe.syntax._
-
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 import doobie.postgres.circe.json.implicits.jsonGet
 
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[CheckpointQueryDTO, CheckpointFromDB, Task](values => Seq(fr"$values"))
+  extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task](values => Seq(fr"$values"))
   {
 
   override val fieldsToSelect: Seq[String] = Seq(
+    "status",
+    "status_text",
     "id_checkpoint",
     "checkpoint_name",
     "author",
