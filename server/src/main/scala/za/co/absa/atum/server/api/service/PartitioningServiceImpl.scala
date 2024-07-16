@@ -22,13 +22,14 @@ import za.co.absa.atum.server.api.repository.PartitioningRepository
 import za.co.absa.db.fadb.exceptions.StatusException
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.db.fadb.status
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   extends PartitioningService with BaseService {
 
   override def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO):
-  IO[ServiceError, Either[StatusException, Unit]] = {
+  IO[ServiceError, Either[StatusException, status.Row[Unit]]] = {
     repositoryCallWithStatus(
       partitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO), "createPartitioningIfNotExists"
     ).mapError(error => ServiceError(error.message))
@@ -36,20 +37,25 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
-  ): IO[ServiceError, Either[StatusException, Unit]] = {
+  ): IO[ServiceError, Either[StatusException, status.Row[Unit]]] = {
     repositoryCallWithStatus(
       partitioningRepository.createOrUpdateAdditionalData(additionalData), "createOrUpdateAdditionalData"
     ).mapError(error => ServiceError(error.message))
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]] = {
-    partitioningRepository.getPartitioningMeasures(partitioning)
-      .mapError { case DatabaseError(message) =>
-        ServiceError(s"Failed to retrieve partitioning measures': $message")
-      }
+  override def getPartitioningMeasures(partitioning: PartitioningDTO):
+  IO[ServiceError, Either[StatusException, Seq[status.Row[MeasureDTO]]]] = {
+//    partitioningRepository.getPartitioningMeasures(partitioning)
+//      .mapError { case DatabaseError(message) =>
+//        ServiceError(s"Failed to retrieve partitioning measures': $message")
+//      }
+    repositoryCallWithStatus(
+      partitioningRepository.getPartitioningMeasures(partitioning), "getPartitioningMeasures"
+    ).mapError (error => ServiceError(error.message))
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[ServiceError, AdditionalDataDTO] = {
+  override def getPartitioningAdditionalData(partitioning: PartitioningDTO):
+  IO[ServiceError, Either[StatusException, status.Row[AdditionalDataDTO]]] = {
     partitioningRepository.getPartitioningAdditionalData(partitioning)
       .mapError { case DatabaseError(message) =>
         ServiceError(s"Failed to retrieve partitioning additional data': $message")
@@ -58,9 +64,9 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
 
   override def getPartitioningCheckpoints(
       checkpointQueryDTO: CheckpointQueryDTO
-   ): IO[ServiceError, Seq[CheckpointDTO]] = {
+   ): IO[ServiceError, Either[StatusException, Seq[status.Row[CheckpointDTO]]]] = {
     for {
-      checkpointsFromDB <- repositoryCall(
+      checkpointsFromDB <- repositoryCallWithStatus(
         partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoints"
       )
       checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {

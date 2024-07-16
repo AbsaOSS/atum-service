@@ -21,6 +21,7 @@ import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.db.fadb.status
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
@@ -59,7 +60,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     additionalData: AdditionalDataSubmitDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]] = {
     mapToSingleSuccessResponse(
-      serviceCallWithStatus[Unit, AdditionalDataSubmitDTO](
+      serviceCallWithStatus[status.Row[Unit], AdditionalDataSubmitDTO](
         partitioningService.createOrUpdateAdditionalData(additionalData),
         _ => additionalData
       )

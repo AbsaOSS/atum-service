@@ -35,25 +35,13 @@ import io.circe.syntax._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](values => Seq(fr"$values"))
-    with StandardStatusHandling {
-
-  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
-    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningJson = partitioning.asJson
-
-    val parentPartitioningJson = values.parentPartitioning.map { parentPartitioning =>
-      val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
-      parentPartitioningForDB.asJson
-    }
-
-    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  $partitioningJson,
-                  ${values.authorIfNew},
-                  $parentPartitioningJson
-                ) ${Fragment.const(alias)};"""
-  }
-}
+  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](
+    values => Seq(
+      fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
+      fr"${values.authorIfNew}",
+      fr"${values.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
+    )
+  ) with StandardStatusHandling
 
 object CreatePartitioningIfNotExists {
   val layer: URLayer[PostgresDatabaseProvider, CreatePartitioningIfNotExists] = ZLayer {

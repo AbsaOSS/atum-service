@@ -20,11 +20,13 @@ import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.db.fadb.exceptions.StatusException
+import za.co.absa.db.fadb.status
 import zio._
+import zio.interop.catz.asyncInstance
 
 class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository with BaseRepository {
 
-  override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, Unit]] = {
+  override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Either[StatusException, status.Row[Unit]]] = {
     dbCallWithStatus(writeCheckpointFn(checkpointDTO), "writeCheckpoint")
   }
 

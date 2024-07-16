@@ -35,23 +35,13 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task](values => Seq(fr"$values"))
-    with StandardStatusHandling {
-
-  override def sql(values: AdditionalDataSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
-    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningJson = partitioning.asJson
-
-    // implicits from Doobie can't handle Map[String, Option[String]] -> HStore, so we converted None to null basically
-    val additionalDataNormalized = values.additionalData.map{ case (k, v) => (k, v.orNull)}
-
-    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  $partitioningJson,
-                  $additionalDataNormalized,
-                  ${values.author}
-                ) ${Fragment.const(alias)};"""
-  }
-}
+  extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task](
+    values => Seq(
+      fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
+      fr"${values.additionalData.map{ case (k, v) => (k, v.orNull)}}",
+      fr"${values.author}"
+    )
+  ) with StandardStatusHandling
 
 object CreateOrUpdateAdditionalData {
   val layer: URLayer[PostgresDatabaseProvider, CreateOrUpdateAdditionalData] = ZLayer {

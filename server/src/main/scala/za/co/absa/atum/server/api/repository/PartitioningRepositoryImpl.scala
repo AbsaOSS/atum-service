@@ -69,7 +69,6 @@ class PartitioningRepositoryImpl(
       .map(_.toMap.getOrElse("additional_data", null)),
       "getPartitioningAdditionalData")
   }
-  // mapBoth(err => DatabaseError(err.getMessage), _.toMap)
 
   override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
   IO[DatabaseError, Either[StatusException, Seq[status.Row[CheckpointFromDB]]]] = {

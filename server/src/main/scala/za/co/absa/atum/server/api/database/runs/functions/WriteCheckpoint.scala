@@ -38,31 +38,18 @@ import doobie.postgres.circe.jsonb.implicits.jsonbPut
 import doobie.postgres.implicits._
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task](values => Seq(fr"$values"))
-    with StandardStatusHandling {
-
-  override def sql(values: CheckpointDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
-    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = partitioning.asJson
-
-    // List[String] containing json data has to be properly escaped
-    // It would be safer to use Json data type and derive Put instance
-    val measurementsNormalized = {
-      values.measurements.toList.map(_.asJson)
-    }
-
-    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  $partitioningNormalized,
-                  ${values.id},
-                  ${values.name},
-                  ${values.processStartTime},
-                  ${values.processEndTime},
-                  $measurementsNormalized,
-                  ${values.measuredByAtumAgent},
-                  ${values.author}
-                ) ${Fragment.const(alias)};"""
-  }
-}
+    extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task](
+      values => Seq(
+        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
+        fr"${values.id}",
+        fr"${values.name}",
+        fr"${values.processStartTime}",
+        fr"${values.processEndTime}",
+        fr"${values.measurements.toList.map(_.asJson)}",
+        fr"${values.measuredByAtumAgent}",
+        fr"${values.author}"
+      ))
+    with StandardStatusHandling
 
 object WriteCheckpoint {
   val layer: URLayer[PostgresDatabaseProvider, WriteCheckpoint] = ZLayer {

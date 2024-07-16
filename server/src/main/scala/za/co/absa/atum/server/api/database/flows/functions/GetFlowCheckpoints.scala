@@ -16,9 +16,7 @@
 
 package za.co.absa.atum.server.api.database.flows.functions
 
-import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
-import doobie.util.Read
 import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
@@ -33,35 +31,17 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 import doobie.postgres.circe.json.implicits.jsonGet
 import io.circe.syntax.EncoderOps
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
+import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task](values => Seq(fr"$values"))
-    {
-
-  override val fieldsToSelect: Seq[String] = Seq(
-    "status",
-    "status_text",
-    "id_checkpoint",
-    "checkpoint_name",
-    "author",
-    "measured_by_atum_agent",
-    "measure_name", "measured_columns", "measurement_value",
-    "checkpoint_start_time", "checkpoint_end_time",
-  )
-
-  override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointFromDB]): Fragment = {
-    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = partitioning.asJson
-
-    sql"""SELECT ${Fragment.const(selectEntry)}
-          FROM ${Fragment.const(functionName)}(
-                  $partitioningNormalized,
-                  ${values.limit},
-                  ${values.checkpointName}
-                ) AS ${Fragment.const(alias)};"""
-  }
-
-}
+    extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task](
+      values => Seq(
+        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
+        fr"${values.limit}",
+        fr"${values.checkpointName}"
+      )
+    ) with StandardStatusHandling with ByFirstErrorStatusAggregator
 
 object GetFlowCheckpoints {
   val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpoints] = ZLayer {

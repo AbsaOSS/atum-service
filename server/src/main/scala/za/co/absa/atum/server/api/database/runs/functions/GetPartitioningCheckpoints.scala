@@ -23,7 +23,7 @@ import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.model.{CheckpointFromDB, PartitioningForDB}
-import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.{DBSchema, status}
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import zio._
@@ -33,37 +33,35 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 import doobie.postgres.circe.json.implicits.jsonGet
+import za.co.absa.db.fadb.status.aggregation.implementations.{ByFirstErrorStatusAggregator, ByFirstRowStatusAggregator}
+import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
+import za.co.absa.db.fadb.status.{FailedOrRow, FailedOrRows}
 
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task](values => Seq(fr"$values"))
+  extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task] (
+      values => Seq(
+        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
+        fr"${values.limit}",
+        fr"${values.checkpointName}"
+      )
+    ) with StandardStatusHandling with ByFirstErrorStatusAggregator
   {
 
-  override val fieldsToSelect: Seq[String] = Seq(
-    "status",
-    "status_text",
-    "id_checkpoint",
-    "checkpoint_name",
-    "author",
-    "measured_by_atum_agent",
-    "measure_name",
-    "measured_columns",
-    "measurement_value",
-    "checkpoint_start_time",
-    "checkpoint_end_time",
-  )
+//  override val fieldsToSelect: Seq[String] = Seq(
+//    "status",
+//    "status_text",
+//    "id_checkpoint",
+//    "checkpoint_name",
+//    "author",
+//    "measured_by_atum_agent",
+//    "measure_name",
+//    "measured_columns",
+//    "measurement_value",
+//    "checkpoint_start_time",
+//    "checkpoint_end_time",
+//  )
 
-  override def sql(values: CheckpointQueryDTO)(implicit read: Read[CheckpointFromDB]): Fragment = {
-    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningNormalized = partitioning.asJson
-
-    sql"""SELECT ${Fragment.const(selectEntry)}
-          FROM ${Fragment.const(functionName)}(
-                  $partitioningNormalized,
-                  ${values.limit},
-                  ${values.checkpointName}
-                ) AS ${Fragment.const(alias)};"""
   }
-}
 
 object GetPartitioningCheckpoints {
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpoints] = ZLayer {

@@ -31,23 +31,27 @@ import zio.{Task, URLayer, ZIO, ZLayer}
 import io.circe.syntax._
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
+import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, (String, Option[String]), Task](values => Seq(fr"$values"))
-  {
-
-    override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "ad_name", "ad_value")
-
-    override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
-    val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)
-    val partitioningJson = partitioning.asJson
-
-    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  $partitioningJson
-                ) ${Fragment.const(alias)};"""
-  }
-
-}
+  extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, (String, Option[String]), Task](
+    values => Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}"))
+    with StandardStatusHandling with ByFirstErrorStatusAggregator
+//  {
+//
+//    override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "ad_name", "ad_value")
+//
+//    override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
+//    val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)
+//    val partitioningJson = partitioning.asJson
+//
+//    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
+//                  $partitioningJson
+//                ) ${Fragment.const(alias)};"""
+//  }
+//
+//}
 
 object GetPartitioningAdditionalData {
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAdditionalData] = ZLayer {

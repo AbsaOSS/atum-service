@@ -19,22 +19,23 @@ package za.co.absa.atum.server.api.service
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointDTO, CheckpointQueryDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.db.fadb.exceptions.StatusException
-import zio.IO
+import za.co.absa.db.fadb.status
+import zio.{IO, ZIO}
 import zio.macros.accessible
 
 @accessible
 trait PartitioningService {
   def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO):
-    IO[ServiceError, Either[StatusException, Unit]]
+  IO[ServiceError, Either[StatusException, status.Row[Unit]]]
 
   def getPartitioningMeasures(partitioning: PartitioningDTO):
-    IO[ServiceError, Seq[MeasureDTO]]
+  IO[ServiceError, Either[StatusException, Seq[status.Row[MeasureDTO]]]]
 
   def getPartitioningAdditionalData(partitioning: PartitioningDTO):
-    IO[ServiceError, AdditionalDataDTO]
+  IO[ServiceError, Either[StatusException, status.Row[AdditionalDataDTO]]]
 
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
-    IO[ServiceError, Either[StatusException, Unit]]
+  IO[ServiceError, Either[StatusException, status.Row[Unit]]]
 
   def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
   IO[ServiceError, Seq[CheckpointDTO]]

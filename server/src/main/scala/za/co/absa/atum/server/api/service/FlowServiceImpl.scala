@@ -32,7 +32,7 @@ class FlowServiceImpl(flowRepository: FlowRepository)
         flowRepository.getFlowCheckpoints(checkpointQueryDTO), "getFlowCheckpoints"
       )
       checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {
-        checkpointFromDB =>
+        checkpointFromDB:  =>
           ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
             .mapError(error => ServiceError(error.getMessage))
       }
