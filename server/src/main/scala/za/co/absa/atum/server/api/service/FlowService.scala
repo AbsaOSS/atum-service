@@ -16,12 +16,14 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointDTO}
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointQueryDTO}
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.db.fadb.exceptions.StatusException
+import za.co.absa.db.fadb.status
 import zio._
 import zio.macros.accessible
 
 @accessible
 trait FlowService {
-  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]]
+  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Either[StatusException, Seq[status.Row[CheckpointDTO]]]]
 }

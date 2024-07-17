@@ -65,16 +65,13 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   override def getPartitioningCheckpoints(
       checkpointQueryDTO: CheckpointQueryDTO
    ): IO[ServiceError, Either[StatusException, Seq[status.Row[CheckpointDTO]]]] = {
-    for {
-      checkpointsFromDB <- repositoryCallWithStatus(
+      repositoryCallWithStatus(
         partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoints"
-      )
-      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {
-        checkpointFromDB =>
-          ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
-        .mapError(error => ServiceError(error.getMessage))
-      }
-    } yield checkpointDTOs
+      ).mapBoth(error => ServiceError(error.getMessage), {
+        case Left(value) => Left(value)
+        case Right(value) => Right(value.map(x => CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, x.data)))
+      })
+
 
   }
 }

@@ -21,6 +21,7 @@ import io.circe.{DecodingFailure, Json}
 
 import java.time.ZonedDateTime
 import java.util.UUID
+import scala.Right
 
 case class CheckpointFromDB(
    idCheckpoint: UUID,
