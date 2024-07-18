@@ -33,23 +33,6 @@ trait BaseRepository {
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
 
-  def dbCallWithStatusR[R](
-    dbFuncCall: Task[Either[StatusException, R]],
-    operationName: String
-  ): IO[DatabaseError, Either[StatusException, R]] = {
-    dbFuncCall
-      .tap {
-        case Left(statusException) =>
-          ZIO.logError(
-            s"Exception caused by operation: '$operationName': " +
-              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
-          )
-        case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
-      }
-      .mapError(error => DatabaseError(error.getMessage))
-      .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
-  }
-
   def dbCallWithStatus[R](
      dbFuncCall: Task[Either[StatusException, R]],
      operationName: String

@@ -20,23 +20,19 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.FlowRepository
 import za.co.absa.atum.server.model.CheckpointFromDB
-import za.co.absa.db.fadb.exceptions.StatusException
-import za.co.absa.db.fadb.status
 import zio._
 
 
 class FlowServiceImpl(flowRepository: FlowRepository)
   extends FlowService with BaseService {
 
-  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
-  IO[ServiceError, Either[StatusException, Seq[status.Row[CheckpointDTO]]]] = {
+  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]] = {
     for {
       checkpointsFromDB <- repositoryCall(
         flowRepository.getFlowCheckpoints(checkpointQueryDTO), "getFlowCheckpoints"
-      ).mapError(error => ServiceError(error.message))
-        .flatMap(ZIO.fromEither(_))
+      )
       checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {
-        checkpointFromDB  =>
+        checkpointFromDB =>
           ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
             .mapError(error => ServiceError(error.getMessage))
       }
