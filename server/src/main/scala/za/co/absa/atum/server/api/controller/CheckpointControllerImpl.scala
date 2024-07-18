@@ -27,7 +27,7 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
   override def createCheckpointV1(
     checkpointDTO: CheckpointDTO
   ): IO[ErrorResponse, CheckpointDTO] = {
-    serviceCallWithStatus[Unit, CheckpointDTO](
+    serviceCall[Unit, CheckpointDTO](
       checkpointService.saveCheckpoint(checkpointDTO),
       _ => checkpointDTO
     )

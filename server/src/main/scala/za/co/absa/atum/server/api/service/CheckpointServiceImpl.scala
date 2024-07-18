@@ -19,15 +19,13 @@ package za.co.absa.atum.server.api.service
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.CheckpointRepository
-import za.co.absa.db.fadb.exceptions.StatusException
-import za.co.absa.db.fadb.status
 import zio._
 
 class CheckpointServiceImpl(checkpointRepository: CheckpointRepository)
   extends CheckpointService with BaseService {
 
-  override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Either[StatusException, status.Row[Unit]]] = {
-    repositoryCallWithStatus(
+  override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit] = {
+    repositoryCall(
       checkpointRepository.writeCheckpoint(checkpointDTO), "saveCheckpoint"
     )
   }
