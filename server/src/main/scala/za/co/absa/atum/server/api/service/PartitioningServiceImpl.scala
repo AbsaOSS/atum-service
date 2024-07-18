@@ -69,10 +69,10 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
         partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoints"
       ).mapBoth(error => ServiceError(error.getMessage), {
         case Left(value) => Left(value)
-        case Right(value) => Right(value.map(x => CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, x.data)))
+        case Right(value) => Right(value.map(x => CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, x.data)
+          .flatMap(_)
+        ))
       })
-
-
   }
 }
 

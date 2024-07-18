@@ -47,31 +47,31 @@ class PartitioningRepositoryImpl(
 
   override def createPartitioningIfNotExists(
     partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[DatabaseError, Either[StatusException, status.Row[Unit]]] = {
+  ): IO[DatabaseError, Unit] = {
     dbCallWithStatus(createPartitioningIfNotExistsFn(partitioningSubmitDTO), "createPartitioningIfNotExists")
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
-  ): IO[DatabaseError, Either[StatusException, status.Row[Unit]]] = {
+  ): IO[DatabaseError, Unit] = {
     dbCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
   }
 
   override def getPartitioningMeasures(
     partitioning: PartitioningDTO
-  ): IO[DatabaseError, Either[StatusException, Seq[status.Row[MeasureDTO]]]] = {
+  ): IO[DatabaseError, Seq[MeasureDTO]] = {
     dbCallWithStatus(getPartitioningMeasuresFn(partitioning), "getPartitioningMeasures")
   }
 
   override def getPartitioningAdditionalData(partitioning: PartitioningDTO):
-  IO[DatabaseError, Either[StatusException, status.Row[AdditionalDataDTO]]] = {
+  IO[DatabaseError, AdditionalDataDTO] = {
     dbCallWithStatus(getPartitioningAdditionalDataFn(partitioning)
-      .map(_.toMap.getOrElse("additional_data", null)),
-      "getPartitioningAdditionalData")
+      .map(_.toMap.getOrElse("additional_data", null)), "getPartitioningAdditionalData"
+    )
   }
 
   override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
-  IO[DatabaseError, Either[StatusException, Seq[status.Row[CheckpointFromDB]]]] = {
+  IO[DatabaseError, Seq[CheckpointFromDB]] = {
     dbCallWithStatus(getPartitioningCheckpointsFn(checkpointQueryDTO), "getPartitioningCheckpoints")
   }
 }
