@@ -42,15 +42,27 @@ trait BaseRepository {
         case Left(statusException) =>
           ZIO.logError(
             s"Exception caused by operation: '$operationName': " +
-              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+              s"(${statusException.status.statusCode}), ${statusException.status.statusText}"
           )
         case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
       }
-      .mapError(error => DatabaseError(error.getMessage))
+      .mapError {
+        case statusException: StatusException =>
+          DatabaseError(
+            s"Exception caused by operation: '$operationName': " +
+              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+          )
+        case error =>
+          DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
+      }
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
       .flatMap {
-        case Left(_) => fail(DatabaseError("Failed to execute operation in database"))
+        case Left(statusException) => fail(DatabaseError(
+            s"Failed to execute operation in database: " +
+              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+          ))
         case Right(value) => succeed(value)
       }
   }
+
 }

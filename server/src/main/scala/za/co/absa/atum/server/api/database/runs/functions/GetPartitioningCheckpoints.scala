@@ -23,7 +23,7 @@ import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.model.{CheckpointFromDB, PartitioningForDB}
-import za.co.absa.db.fadb.{DBSchema, status}
+import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import zio._
@@ -33,9 +33,8 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
 import doobie.postgres.circe.json.implicits.jsonGet
-import za.co.absa.db.fadb.status.aggregation.implementations.{ByFirstErrorStatusAggregator, ByFirstRowStatusAggregator}
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
-import za.co.absa.db.fadb.status.{FailedOrRow, FailedOrRows}
 
 class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task] (
