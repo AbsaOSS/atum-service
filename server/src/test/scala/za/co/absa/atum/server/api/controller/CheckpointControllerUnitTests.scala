@@ -20,9 +20,6 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.ErrorResponse.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.db.fadb.exceptions.ErrorInDataException
-import za.co.absa.db.fadb.status.FunctionStatus
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._
@@ -31,9 +28,9 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
 
   private val checkpointServiceMock = mock(classOf[CheckpointService])
 
-  when(checkpointServiceMock.saveCheckpoint(checkpointDTO1)).thenReturn(ZIO.right(()))
+  when(checkpointServiceMock.saveCheckpoint(checkpointDTO1)).thenReturn(ZIO.succeed(()))
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO2))
-    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
+    .thenReturn(ZIO.fail(ServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO3))
     .thenReturn(ZIO.fail(ServiceError("boom!")))
 
@@ -49,10 +46,10 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == checkpointDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(failsWithA[InternalServerErrorResponse])
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(failsWithA[ServiceError])
         },
         test("Returns expected GeneralErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(failsWithA[GeneralErrorResponse])
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(failsWithA[ServiceError])
         }
       )
     ).provide(

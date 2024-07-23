@@ -20,9 +20,7 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.PartitioningRepository
-import za.co.absa.db.fadb.exceptions.ErrorInDataException
-import za.co.absa.db.fadb.status.FunctionStatus
-import zio.test.Assertion.failsWithA
+import zio.test.Assertion.{equalTo, failsWithA, isLeft, isRight, isUnit}
 import zio.test._
 import zio._
 
@@ -30,15 +28,15 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
 
   private val partitioningRepositoryMock = mock(classOf[PartitioningRepository])
 
-  when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO1)).thenReturn(ZIO.right(()))
+  when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO1)).thenReturn(ZIO.succeed(()))
   when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
-    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
+    .thenReturn(ZIO.fail(DatabaseError("error in data")))
   when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO3))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1)).thenReturn(ZIO.right(()))
+  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1)).thenReturn(ZIO.succeed(()))
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
-    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in AD data"))))
+    .thenReturn(ZIO.fail(DatabaseError("error in AD data")))
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO3))
     .thenReturn(ZIO.fail(DatabaseError("boom!")))
 
@@ -66,12 +64,12 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO1)
-          } yield assertTrue(result.isRight)
+          } yield assert(result)(isRight(isUnit))
         },
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO2)
-          } yield assertTrue(result.isLeft)
+          } yield assert(result)(isLeft(equalTo(DatabaseError("error in data"))))
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
@@ -83,12 +81,12 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
-          } yield assertTrue(result.isRight)
+          } yield assert(result)(isRight(isUnit))
         },
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO2)
-          } yield assertTrue(result.isLeft)
+          } yield assert(result)(isLeft(equalTo(DatabaseError("error in AD data"))))
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(

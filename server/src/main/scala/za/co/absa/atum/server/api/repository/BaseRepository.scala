@@ -18,7 +18,6 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.db.fadb.exceptions.StatusException
-import zio.ZIO.{fail, succeed}
 import zio._
 
 trait BaseRepository {
@@ -33,6 +32,38 @@ trait BaseRepository {
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
 
+//  def dbCallWithStatus[R](
+//     dbFuncCall: Task[Either[StatusException, R]],
+//     operationName: String
+//   ): IO[DatabaseError, R] = {
+//    dbFuncCall
+//      .tap {
+//        case Left(statusException) =>
+//          ZIO.logError(
+//            s"Exception caused by operation: '$operationName': " +
+//              s"(${statusException.status.statusCode}), ${statusException.status.statusText}"
+//          )
+//        case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
+//      }
+//      .mapError {
+//        case statusException: StatusException =>
+//          DatabaseError(
+//            s"Exception caused by operation: '$operationName': " +
+//              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+//          )
+//        case error =>
+//          DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
+//      }
+//      .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
+//      .flatMap {
+//        case Left(statusException) => fail(DatabaseError(
+//            s"Failed to execute operation in database: " +
+//              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+//          ))
+//        case Right(value) => succeed(value)
+//      }
+//  }
+
   def dbCallWithStatus[R](
      dbFuncCall: Task[Either[StatusException, R]],
      operationName: String
@@ -46,6 +77,14 @@ trait BaseRepository {
           )
         case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
       }
+      .flatMap {
+        case Left(statusException) =>
+          ZIO.fail(DatabaseError(
+            s"Failed to execute operation in database: " +
+              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+          ))
+        case Right(value) => ZIO.succeed(value)
+      }
       .mapError {
         case statusException: StatusException =>
           DatabaseError(
@@ -56,13 +95,6 @@ trait BaseRepository {
           DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
       }
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
-      .flatMap {
-        case Left(statusException) => fail(DatabaseError(
-            s"Failed to execute operation in database: " +
-              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
-          ))
-        case Right(value) => succeed(value)
-      }
   }
 
 }
