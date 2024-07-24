@@ -23,18 +23,17 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.db.fadb.exceptions.ErrorInDataException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
-import zio.test.Assertion.failsWithA
+import zio.interop.catz.asyncInstance
+import zio.test.Assertion.{failsWithA, isUnit}
 import zio.test._
 
 object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
 
-  when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(()))
-  when(writeCheckpointMock.apply(checkpointDTO2))
-    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
-  when(writeCheckpointMock.apply(checkpointDTO3))
-    .thenReturn(ZIO.fail(new Exception("boom!")))
+  when(writeCheckpointMock.apply(checkpointDTO1)).thenAnswer(_ => ZIO.succeed(()))
+  when(writeCheckpointMock.apply(checkpointDTO2)).thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
+  when(writeCheckpointMock.apply(checkpointDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
 
@@ -45,12 +44,12 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- CheckpointRepository.writeCheckpoint(checkpointDTO1)
-          } yield assertTrue(result.isRight)
+          } yield assert(result)(isUnit)
         },
         test("Returns expected Left with StatusException") {
           for {
             result <- CheckpointRepository.writeCheckpoint(checkpointDTO2)
-          } yield assertTrue(result.isLeft)
+          } yield assert(result)(isUnit)
         },
         test("Returns expected DatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])

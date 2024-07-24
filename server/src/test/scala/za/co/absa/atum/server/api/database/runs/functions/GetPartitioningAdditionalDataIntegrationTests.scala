@@ -21,6 +21,7 @@ import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import zio._
+import zio.interop.catz.asyncInstance
 import zio.test._
 import zio.test.Assertion._
 

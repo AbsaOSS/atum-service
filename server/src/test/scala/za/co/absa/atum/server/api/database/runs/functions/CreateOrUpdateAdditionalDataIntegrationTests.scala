@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import doobie.WeakAsync.doobieWeakAsyncForAsync
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitionDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
@@ -24,6 +23,7 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
+import zio.interop.catz.asyncInstance
 import zio.test._
 
 object CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest {

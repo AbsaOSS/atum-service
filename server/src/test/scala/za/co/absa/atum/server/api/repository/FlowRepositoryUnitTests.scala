@@ -17,10 +17,13 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
+import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
 
@@ -29,7 +32,7 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getFlowCheckpointsMock = mock(classOf[GetFlowCheckpoints])
 
   when(getFlowCheckpointsMock.apply(checkpointQueryDTO1)).thenReturn(ZIO.fail(new Exception("boom!")))
-  when(getFlowCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.succeed(Seq(checkpointFromDB1, checkpointFromDB2)))
+  when(getFlowCheckpointsMock.apply(checkpointQueryDTO2)).thenAnswer(_ => ZIO.succeed(Seq(checkpointFromDB1, checkpointFromDB2)))
 
   private val getFlowCheckpointsMockLayer = ZLayer.succeed(getFlowCheckpointsMock)
 
