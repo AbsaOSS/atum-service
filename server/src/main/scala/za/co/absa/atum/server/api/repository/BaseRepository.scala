@@ -27,12 +27,42 @@ import zio._
 // Seq[FailedOrRow[R]] ~ Seq[Either[StatusException, Row[R]]] - dbMultipleResultCallWithStatus => IO[DatabaseError, Seq[R]]
 // FailedOrRows[R] ~ Either[StatusException, Seq[Row[R]]] - dbMultipleResultCallWithAggregatedStatus => IO[DatabaseError, Seq[R]]
 
-
 sealed trait PaginatedResult[R]
 case class ResultHasMore[R](data: Seq[R]) extends PaginatedResult[R]
 case class ResultNoMore[R](data: Seq[R]) extends PaginatedResult[R]
 
 trait BaseRepository {
+
+  private def dbCall[R, T](
+      dbFuncCall: Task[T],
+      operationName: String,
+      successHandler: T => IO[DatabaseError, R],
+      errorHandler: PartialFunction[Throwable, DatabaseError]
+    ): IO[DatabaseError, R] = {
+    dbFuncCall
+      .tap {
+        case Left(statusException: StatusException) =>
+          ZIO.logError(
+            s"Exception caused by operation: '$operationName': " +
+              s"(${statusException.status.statusCode}), ${statusException.status.statusText}"
+          )
+        case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
+        case _ => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
+      }
+      .flatMap(successHandler)
+      .mapError(errorHandler)
+      .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
+  }
+
+  private def defaultErrorHandler[R](operationName: String): PartialFunction[Throwable, DatabaseError] = {
+    case statusException: StatusException =>
+      DatabaseError(
+        s"Exception caused by operation: '$operationName': " +
+          s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+      )
+    case error =>
+      DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
+  }
 
   private def dbCall[R](
     dbFuncCall: Task[R],
@@ -45,16 +75,16 @@ trait BaseRepository {
   }
 
   def dbSingleResultCall[R](
-                 dbFuncCall: Task[R],
-                 operationName: String
-               ): IO[DatabaseError, R] = {
+     dbFuncCall: Task[R],
+     operationName: String
+   ): IO[DatabaseError, R] = {
     dbCall(dbFuncCall, operationName)
   }
 
   def dbMultipleResultCall[R](
-                 dbFuncCall: Task[Seq[R]],
-                 operationName: String
-               ): IO[DatabaseError, Seq[R]] = {
+     dbFuncCall: Task[Seq[R]],
+     operationName: String
+   ): IO[DatabaseError, Seq[R]] = {
     dbCall(dbFuncCall, operationName)
   }
 
@@ -76,21 +106,15 @@ trait BaseRepository {
         case Right(value) => ZIO.succeed(value.data)
       }
       .mapError {
-        case statusException: StatusException =>
-          DatabaseError(
-            s"Exception caused by operation: '$operationName': " +
-              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
-          )
-        case error =>
-          DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
+        defaultErrorHandler(operationName)
       }
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
 
   def dbMultipleResultCallWithAggregatedStatus[R](
-                                       dbFuncCall: Task[FailedOrRows[R]],
-                                       operationName: String
-                                     ): IO[DatabaseError, Seq[R]] = {
+     dbFuncCall: Task[FailedOrRows[R]],
+     operationName: String
+   ): IO[DatabaseError, Seq[R]] = {
     dbFuncCall
       .tap {
         case Left(statusException) =>
@@ -105,21 +129,15 @@ trait BaseRepository {
         case Right(value) => ZIO.succeed(value.map(_.data))
       }
       .mapError {
-        case statusException: StatusException =>
-          DatabaseError(
-            s"Exception caused by operation: '$operationName': " +
-              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
-          )
-        case error =>
-          DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
+        defaultErrorHandler(operationName)
       }
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
 
   def dbPaginatedCall[R](
-                                         dbFuncCall: Task[FailedOrRows[R]],
-                                         operationName: String
-                                       ): IO[DatabaseError, PaginatedResult[R]] = {
+     dbFuncCall: Task[FailedOrRows[R]],
+     operationName: String
+   ): IO[DatabaseError, PaginatedResult[R]] = {
     dbFuncCall
       .tap {
         case Left(statusException) =>
@@ -140,13 +158,7 @@ trait BaseRepository {
         )
       }
       .mapError {
-        case statusException: StatusException =>
-          DatabaseError(
-            s"Exception caused by operation: '$operationName': " +
-              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
-          )
-        case error =>
-          DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
+        defaultErrorHandler(operationName)
       }
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
