@@ -20,7 +20,6 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
-//import za.co.absa.atum.server.model.CheckpointFromDB
 import za.co.absa.db.fadb.exceptions.ErrorInDataException
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
@@ -98,11 +97,11 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO2).exit
-          } yield assertTrue(result == Exit.fail(DatabaseError("error in Partitioning data")))
+          } yield assertTrue(result == Exit.fail(DatabaseError("Exception caused by operation: 'createPartitioningIfNotExists': (50) error in Partitioning data")))
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
-            failsWithA[Exception]
+            failsWithA[DatabaseError]
           )
         }
       ),
@@ -116,11 +115,11 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
-          } yield assertTrue(result == Exit.fail(DatabaseError("error in AD data")))
+          } yield assertTrue(result == Exit.fail(DatabaseError("Exception caused by operation: 'createOrUpdateAdditionalData': (50) error in AD data")))
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
-            failsWithA[Exception]
+            failsWithA[DatabaseError]
           )
         }
       ),
