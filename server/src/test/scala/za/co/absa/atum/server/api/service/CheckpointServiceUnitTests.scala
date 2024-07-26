@@ -20,9 +20,7 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.CheckpointRepository
-import za.co.absa.db.fadb.exceptions.ErrorInDataException
-import za.co.absa.db.fadb.status.FunctionStatus
-import zio.test.Assertion.{failsWithA, isLeft, isRight, isUnit}
+import zio.test.Assertion.failsWithA
 import zio.test._
 import zio._
 
