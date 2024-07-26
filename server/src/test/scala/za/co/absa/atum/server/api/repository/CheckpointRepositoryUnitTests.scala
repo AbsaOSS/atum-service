@@ -35,7 +35,7 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(writeCheckpointMock.apply(checkpointDTO2))
-    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
+    .thenReturn(ZIO.fail(DatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null")))
   when(writeCheckpointMock.apply(checkpointDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
@@ -47,12 +47,12 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- CheckpointRepository.writeCheckpoint(checkpointDTO1)
-          } yield assert(result)(isUnit)
+          } yield assertTrue(result == ())
         },
         test("Returns expected Left with StatusException") {
           for {
-            result <- CheckpointRepository.writeCheckpoint(checkpointDTO2)
-          } yield assert(result)(isUnit)
+            result <- CheckpointRepository.writeCheckpoint(checkpointDTO2).exit
+          } yield assertTrue(result == Exit.fail(DatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null")))
         },
         test("Returns expected DatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])
