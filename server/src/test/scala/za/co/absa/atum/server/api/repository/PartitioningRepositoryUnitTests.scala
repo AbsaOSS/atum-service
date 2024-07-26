@@ -129,10 +129,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Seq") {
           for {
             result <- PartitioningRepository.getPartitioningMeasures(partitioningDTO1)
-          } yield assertTrue(result == Seq(
-            Row(FunctionStatus(0, "success"), measureDTO1),
-            Row(FunctionStatus(0, "success"), measureDTO2)
-          ))
+          } yield assertTrue(result == Seq(measureDTO1, measureDTO2))
         },
         test("Returns expected Exception") {
           assertZIO(PartitioningRepository.getPartitioningMeasures(partitioningDTO2).exit)(
@@ -145,7 +142,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with empty Map") {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue(result.toSeq == Seq(Row(FunctionStatus(0, "success"), ("key", Option("value")))))
+          } yield assertTrue(result.toSeq == Seq(("key", Option("value"))))
         },
         test("Returns expected Left with DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningDTO2).exit)(
@@ -158,7 +155,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Seq") {
           for {
             result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue(result == Seq(Row(FunctionStatus(0, "success"), checkpointFromDB1)))
+          } yield assertTrue(result == Seq(checkpointFromDB1))
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(
@@ -168,7 +165,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Seq.empty") {
           for {
             result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO3)
-          } yield assertTrue(result.isInstanceOf[Seq[Row[FunctionStatus]]] && result.isEmpty)
+          } yield assertTrue(result.isEmpty)
         }
       )
     ).provide(
