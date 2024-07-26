@@ -25,7 +25,7 @@ import zio.interop.catz.asyncInstance
 class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint) extends CheckpointRepository with BaseRepository {
 
   override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Unit] = {
-    dbCallWithStatus(writeCheckpointFn(checkpointDTO).map(_.map(x => x.data)), "writeCheckpoint")
+    dbSingleResultCallWithStatus(writeCheckpointFn(checkpointDTO), "writeCheckpoint")
   }
 
 }

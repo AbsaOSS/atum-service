@@ -38,20 +38,6 @@ class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: Doobie
   extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, (String, Option[String]), Task](
     values => Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}"))
     with StandardStatusHandling with ByFirstErrorStatusAggregator
-//  {
-//
-//    override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "ad_name", "ad_value")
-//
-//    override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
-//    val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)
-//    val partitioningJson = partitioning.asJson
-//
-//    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-//                  $partitioningJson
-//                ) ${Fragment.const(alias)};"""
-//  }
-//
-//}
 
 object GetPartitioningAdditionalData {
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAdditionalData] = ZLayer {

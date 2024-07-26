@@ -27,12 +27,15 @@ import zio.interop.catz.asyncInstance
 import zio.test.Assertion.{failsWithA, isUnit}
 import zio.test._
 
+import za.co.absa.db.fadb.status.Row
+
 object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
 
-  when(writeCheckpointMock.apply(checkpointDTO1)).thenAnswer(_ => ZIO.succeed(()))
-  when(writeCheckpointMock.apply(checkpointDTO2)).thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
+  when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
+  when(writeCheckpointMock.apply(checkpointDTO2))
+    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
   when(writeCheckpointMock.apply(checkpointDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)

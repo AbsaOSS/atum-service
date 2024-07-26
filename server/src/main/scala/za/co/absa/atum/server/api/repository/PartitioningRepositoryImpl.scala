@@ -35,43 +35,33 @@ class PartitioningRepositoryImpl(
   override def createPartitioningIfNotExists(
     partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[DatabaseError, Unit] = {
-    dbCallWithStatus(createPartitioningIfNotExistsFn(partitioningSubmitDTO).map(_.map(x => x.data)), "createPartitioningIfNotExists")
+    dbSingleResultCallWithStatus(createPartitioningIfNotExistsFn(partitioningSubmitDTO), "createPartitioningIfNotExists")
   }
 
   override def createOrUpdateAdditionalData(
     additionalData: AdditionalDataSubmitDTO
   ): IO[DatabaseError, Unit] = {
-    dbCallWithStatus(createOrUpdateAdditionalDataFn(additionalData).map(_.map(x => x.data)), "createOrUpdateAdditionalData")
+    dbSingleResultCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
   }
 
   override def getPartitioningMeasures(
     partitioning: PartitioningDTO
   ): IO[DatabaseError, Seq[MeasureDTO]] = {
-    dbCallWithStatus(getPartitioningMeasuresFn(partitioning), "getPartitioningMeasures")
-      .map(_.map(x => x.data))
+    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresFn(partitioning), "getPartitioningMeasures")
   }
 
-//  override def getPartitioningAdditionalData(partitioning: PartitioningDTO):
-//  IO[DatabaseError, AdditionalDataDTO] = {
-//    getPartitioningAdditionalDataFn(partitioning)
-//      .flatMap {
-//        case Left(value) => ZIO.fail(DatabaseError(s"Failed to retrieve data with status code ${value.status}"))
-//        case Right(value) => ZIO.succeed(value.map(_.data).toMap)
-//      }.mapError(error => DatabaseError(error.getMessage))
-//  }
-
   override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, AdditionalDataDTO] = {
-    dbCallWithStatus(
+    dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAdditionalDataFn(partitioning)
-        .map(_.map(_.map(_.data).toMap)), "getPartitioningAdditionalData"
-    )
+        , "getPartitioningAdditionalData"
+    ).map(_.toMap)
   }
 
 
   override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
   IO[DatabaseError, Seq[CheckpointFromDB]] = {
-    dbCallWithStatus(getPartitioningCheckpointsFn(checkpointQueryDTO), "getPartitioningCheckpoints")
-      .map(_.map(x => x.data))
+    dbMultipleResultCallWithAggregatedStatus(getPartitioningCheckpointsFn(checkpointQueryDTO),
+      "getPartitioningCheckpoints")
   }
 
 

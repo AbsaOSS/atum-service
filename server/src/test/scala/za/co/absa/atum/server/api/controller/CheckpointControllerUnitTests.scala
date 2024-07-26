@@ -20,6 +20,7 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.CheckpointService
+import za.co.absa.atum.server.model.InternalServerErrorResponse
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._
@@ -46,10 +47,10 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == checkpointDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(failsWithA[ServiceError])
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(failsWithA[InternalServerErrorResponse])
         },
         test("Returns expected GeneralErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(failsWithA[ServiceError])
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(failsWithA[InternalServerErrorResponse])
         }
       )
     ).provide(

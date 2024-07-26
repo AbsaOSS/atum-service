@@ -27,8 +27,7 @@ class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints) extends FlowR
 
   override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
   IO[DatabaseError, Seq[CheckpointFromDB]] = {
-    dbCallWithStatus(getFlowCheckpointsFn(checkpointQueryDTO), "getFlowCheckpoints")
-      .map(_.map(x => x.data))
+    dbMultipleResultCallWithAggregatedStatus(getFlowCheckpointsFn(checkpointQueryDTO), "getFlowCheckpoints")
   }
 
 }

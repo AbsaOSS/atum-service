@@ -18,11 +18,10 @@ package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
-import doobie.util.Read
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
-import za.co.absa.db.fadb.doobie.{DoobieEngine, StatusWithData}
+import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
