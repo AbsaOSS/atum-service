@@ -20,7 +20,7 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
 import za.co.absa.atum.server.api.repository.PartitioningRepository
-import zio.test.Assertion.{equalTo, failsWithA, isLeft, isRight, isUnit}
+import zio.test.Assertion.failsWithA
 import zio.test._
 import zio._
 
@@ -64,7 +64,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO1)
-          } yield assert(result)(isUnit)
+          } yield assertTrue(result == ())
         },
         test("Returns expected Left with StatusException") {
           for {
