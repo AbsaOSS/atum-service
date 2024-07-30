@@ -37,7 +37,11 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, MeasureDTO, Task](
     values => Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}"))
-    with StandardStatusHandling with ByFirstErrorStatusAggregator
+    with StandardStatusHandling with ByFirstErrorStatusAggregator {
+
+  override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "measure_name", "measured_columns")
+
+}
 
 object GetPartitioningMeasures {
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningMeasures] = ZLayer {

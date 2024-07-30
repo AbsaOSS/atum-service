@@ -41,7 +41,21 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
         fr"${values.limit}",
         fr"${values.checkpointName}"
       )
-    ) with StandardStatusHandling with ByFirstErrorStatusAggregator
+    ) with StandardStatusHandling with ByFirstErrorStatusAggregator {
+  override val fieldsToSelect: Seq[String] = Seq(
+    "status",
+    "status_text",
+    "id_checkpoint",
+    "checkpoint_name",
+    "author",
+    "measured_by_atum_agent",
+    "measure_name",
+    "measured_columns",
+    "measurement_value",
+    "checkpoint_start_time",
+    "checkpoint_end_time"
+  )
+}
 
 object GetFlowCheckpoints {
   val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpoints] = ZLayer {

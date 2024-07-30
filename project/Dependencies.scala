@@ -42,7 +42,7 @@ object Dependencies {
 
     val postgresql = "42.6.0"
 
-    val fadb = "0.4.1"
+    val fadb = "0.5.0"
 
     val logback = "1.2.3"
 

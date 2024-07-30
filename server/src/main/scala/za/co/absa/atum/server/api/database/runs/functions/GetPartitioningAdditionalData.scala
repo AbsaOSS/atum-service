@@ -22,7 +22,7 @@ import doobie.util.Read
 import za.co.absa.atum.model.dto.PartitioningDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.PartitioningForDB
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, PartitioningForDB}
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.doobie.DoobieEngine
@@ -35,9 +35,11 @@ import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusA
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
 class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, (String, Option[String]), Task](
+  extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, AdditionalDataFromDB, Task](
     values => Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}"))
-    with StandardStatusHandling with ByFirstErrorStatusAggregator
+    with StandardStatusHandling with ByFirstErrorStatusAggregator {
+      override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "ad_name", "ad_value")
+}
 
 object GetPartitioningAdditionalData {
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAdditionalData] = ZLayer {

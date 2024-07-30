@@ -26,6 +26,7 @@ import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
+import za.co.absa.atum.server.model.AdditionalDataFromDB
 
 
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
@@ -70,7 +71,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
 
   when(getPartitioningAdditionalDataMock.apply(partitioningDTO1))
-    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), ("key", Option("value"))))))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), AdditionalDataFromDB(Some("key"), Some("value"))))))
   when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
@@ -138,10 +139,10 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       ),
 
       suite("GetPartitioningAdditionalDataSuite")(
-        test("Returns expected Right with empty Map") {
+        test("Returns expected Right with Map") {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue(result.toSeq == Seq(("key", Option("value"))))
+          } yield assertTrue(result.get("key").contains(Some("value")) && result.size == 1)
         },
         test("Returns expected Left with DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningDTO2).exit)(

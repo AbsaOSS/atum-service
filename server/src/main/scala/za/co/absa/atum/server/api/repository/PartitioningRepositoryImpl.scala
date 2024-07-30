@@ -31,6 +31,7 @@ import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 import zio.interop.catz.asyncInstance
+import za.co.absa.atum.server.model.AdditionalDataFromDB
 
 
 class PartitioningRepositoryImpl(
@@ -63,16 +64,14 @@ class PartitioningRepositoryImpl(
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAdditionalDataFn(partitioning)
         , "getPartitioningAdditionalData"
-    ).map(_.toMap)
+    ).map( _.map { case AdditionalDataFromDB(adName, adValue) => adName.get -> adValue }.toMap)
   }
-
 
   override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
   IO[DatabaseError, Seq[CheckpointFromDB]] = {
     dbMultipleResultCallWithAggregatedStatus(getPartitioningCheckpointsFn(checkpointQueryDTO),
       "getPartitioningCheckpoints")
   }
-
 
 }
 
