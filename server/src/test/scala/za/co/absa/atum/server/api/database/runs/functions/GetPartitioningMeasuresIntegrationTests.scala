@@ -31,7 +31,7 @@ object GetPartitioningMeasuresIntegrationTests extends ConfigProviderTest {
 
     suite("GetPartitioningMeasuresSuite")(
       test("Returns expected sequence of Measures with existing partitioning") {
-      val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
+      val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string11", "string11"), PartitionDTO("string12", "string12"))
         for {
           getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
           result <- getPartitioningMeasures(partitioningDTO).exit

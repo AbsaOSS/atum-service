@@ -16,9 +16,7 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
-import doobie.util.Read
 import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs

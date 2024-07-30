@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.model.PartitioningForDB
