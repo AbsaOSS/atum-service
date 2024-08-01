@@ -17,9 +17,8 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
-import za.co.absa.db.fadb.exceptions.StatusException
 import zio._
 
 trait BaseController {
@@ -35,24 +34,6 @@ trait BaseController {
       }
       .flatMap {
         result => ZIO.succeed(onSuccessFnc(result))
-      }
-
-  }
-
-  def serviceCallWithStatus[A, B](
-    serviceCall: IO[ServiceError, Either[StatusException, A]],
-    onSuccessFnc: A => B
-  ): IO[ErrorResponse, B] = {
-
-    serviceCall
-      .mapError { serviceError: ServiceError =>
-        InternalServerErrorResponse(serviceError.message)
-      }
-      .flatMap {
-        case Left(statusException) =>
-          ZIO.fail(GeneralErrorResponse(s"(${statusException.status.statusCode}) ${statusException.status.statusText}"))
-        case Right(result) =>
-          ZIO.succeed(onSuccessFnc(result))
       }
 
   }

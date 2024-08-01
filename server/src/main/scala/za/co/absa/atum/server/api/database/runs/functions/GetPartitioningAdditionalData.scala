@@ -24,11 +24,10 @@ import za.co.absa.atum.server.model.{AdditionalDataFromDB, PartitioningForDB}
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.doobie.DoobieEngine
-import zio.interop.catz.asyncInstance
 import zio.{Task, URLayer, ZIO, ZLayer}
 import io.circe.syntax._
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
-import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 

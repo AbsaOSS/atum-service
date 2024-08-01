@@ -24,6 +24,5 @@ import zio.macros.accessible
 
 @accessible
 trait FlowRepository {
-  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
-  IO[DatabaseError, Seq[CheckpointFromDB]]
+  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
 }

@@ -26,11 +26,10 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithSt
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
-import zio.interop.catz._
 import io.circe.syntax._
 
 import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task](

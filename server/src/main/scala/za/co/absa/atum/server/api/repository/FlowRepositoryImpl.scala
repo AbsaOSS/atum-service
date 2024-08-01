@@ -25,8 +25,7 @@ import zio.interop.catz.asyncInstance
 
 class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints) extends FlowRepository with BaseRepository {
 
-  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
-  IO[DatabaseError, Seq[CheckpointFromDB]] = {
+  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]] = {
     dbMultipleResultCallWithAggregatedStatus(getFlowCheckpointsFn(checkpointQueryDTO), "getFlowCheckpoints")
   }
 

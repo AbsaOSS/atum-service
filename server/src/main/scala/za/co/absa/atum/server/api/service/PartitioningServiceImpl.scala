@@ -32,31 +32,25 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
-  override def createOrUpdateAdditionalData(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[ServiceError, Unit] = {
+  override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ServiceError, Unit] = {
     repositoryCall(
       partitioningRepository.createOrUpdateAdditionalData(additionalData), "createOrUpdateAdditionalData"
     )
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningDTO):
-  IO[ServiceError, Seq[MeasureDTO]] = {
+  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]] = {
     repositoryCall(
       partitioningRepository.getPartitioningMeasures(partitioning), "getPartitioningMeasures"
     )
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningDTO):
-  IO[ServiceError, AdditionalDataDTO] = {
+  override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[ServiceError, AdditionalDataDTO] = {
     repositoryCall(
       partitioningRepository.getPartitioningAdditionalData(partitioning), "getPartitioningAdditionalData"
     )
   }
 
-  override def getPartitioningCheckpoints(
-      checkpointQueryDTO: CheckpointQueryDTO
-   ): IO[ServiceError, Seq[CheckpointDTO]] = {
+  override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]] = {
     for {
       checkpointsFromDB <- repositoryCall(
         partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoints"

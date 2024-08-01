@@ -26,13 +26,11 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
-import zio.interop.catz._
 import io.circe.syntax._
 import za.co.absa.atum.model.dto.MeasureResultDTO._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
-import za.co.absa.atum.server.api.database.DoobieImplicits.Jsonb.jsonbArrayPut
-import doobie.postgres.circe.jsonb.implicits.jsonbGet
-import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbArrayPut
 import doobie.postgres.implicits._
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])

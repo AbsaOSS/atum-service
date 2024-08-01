@@ -20,16 +20,15 @@ import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
-import za.co.absa.db.fadb.doobie.{DoobieEngine, StatusWithData}
+import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
-import zio.interop.catz._
 import io.circe.syntax._
 
-import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](

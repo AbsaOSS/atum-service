@@ -24,23 +24,13 @@ import zio.macros.accessible
 
 @accessible
 trait PartitioningRepository {
-  def createPartitioningIfNotExists(
-    partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[DatabaseError, Unit]
+  def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[DatabaseError, Unit]
 
-  def getPartitioningMeasures(
-    partitioning: PartitioningDTO
-  ): IO[DatabaseError, Seq[MeasureDTO]]
+  def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]]
 
-  def getPartitioningAdditionalData(
-    partitioning: PartitioningDTO
-  ): IO[DatabaseError, AdditionalDataDTO]
+  def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, AdditionalDataDTO]
 
-  def createOrUpdateAdditionalData(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[DatabaseError, Unit]
+  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit]
 
-  def getPartitioningCheckpoints(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[DatabaseError, Seq[CheckpointFromDB]]
+  def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
 }

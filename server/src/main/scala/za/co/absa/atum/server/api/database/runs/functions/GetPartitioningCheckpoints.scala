@@ -25,12 +25,10 @@ import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import zio._
-import zio.interop.catz._
-import io.circe.syntax._
+import io.circe.syntax.EncoderOps
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits.jsonbPut
-import doobie.postgres.circe.json.implicits.jsonGet
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.{jsonbGet, jsonbPut}
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 

@@ -42,21 +42,15 @@ class PartitioningRepositoryImpl(
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints
 ) extends PartitioningRepository with BaseRepository {
 
-  override def createPartitioningIfNotExists(
-    partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[DatabaseError, Unit] = {
+  override def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[DatabaseError, Unit] = {
     dbSingleResultCallWithStatus(createPartitioningIfNotExistsFn(partitioningSubmitDTO), "createPartitioningIfNotExists")
   }
 
-  override def createOrUpdateAdditionalData(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[DatabaseError, Unit] = {
+  override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit] = {
     dbSingleResultCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
   }
 
-  override def getPartitioningMeasures(
-    partitioning: PartitioningDTO
-  ): IO[DatabaseError, Seq[MeasureDTO]] = {
+  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresFn(partitioning), "getPartitioningMeasures")
   }
 
@@ -67,8 +61,7 @@ class PartitioningRepositoryImpl(
     ).map( _.map { case AdditionalDataFromDB(adName, adValue) => adName.get -> adValue }.toMap)
   }
 
-  override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
-  IO[DatabaseError, Seq[CheckpointFromDB]] = {
+  override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]] = {
     dbMultipleResultCallWithAggregatedStatus(getPartitioningCheckpointsFn(checkpointQueryDTO),
       "getPartitioningCheckpoints")
   }
