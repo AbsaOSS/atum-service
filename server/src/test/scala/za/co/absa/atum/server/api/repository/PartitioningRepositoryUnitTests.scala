@@ -60,8 +60,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   when(getPartitioningMeasuresMock.apply(partitioningDTO1))
     .thenReturn(ZIO.right(Seq(
-      Row(FunctionStatus(0, "success"), measureDTO1),
-      Row(FunctionStatus(0, "success"), measureDTO2)))
+      Row(FunctionStatus(0, "success"), measureFromDB1),
+      Row(FunctionStatus(0, "success"), measureFromDB2)))
     )
   when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 

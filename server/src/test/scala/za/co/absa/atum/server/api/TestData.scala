@@ -24,6 +24,7 @@ import java.time.ZonedDateTime
 import java.util.UUID
 import MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.ResultValueType
+import za.co.absa.atum.server.model.MeasureFromDB
 
 trait TestData {
 
@@ -57,6 +58,10 @@ trait TestData {
   // Measure
   protected val measureDTO1: MeasureDTO = MeasureDTO("count1", Seq("col_A1", "col_B1"))
   protected val measureDTO2: MeasureDTO = MeasureDTO("count2", Seq("col_A2", "col_B2"))
+
+  // Measure from DB
+  protected val measureFromDB1: MeasureFromDB = MeasureFromDB(Some("count1"), Some(Seq("col_A1", "col_B1")))
+  protected val measureFromDB2: MeasureFromDB = MeasureFromDB(Some("count2"), Some(Seq("col_A2", "col_B2")))
 
   // Additional Data
   protected val additionalDataDTO1: AdditionalDataDTO = Map(
@@ -189,13 +194,13 @@ trait TestData {
 
   // Checkpoint From DB
   protected val checkpointFromDB1: CheckpointFromDB = CheckpointFromDB(
-    idCheckpoint = checkpointDTO1.id,
-    checkpointName = checkpointQueryDTO1.checkpointName.get,
-    author = "author",
-    measuredByAtumAgent = true,
-    measureName = measureDTO1.measureName,
-    measuredColumns = measureDTO1.measuredColumns.toIndexedSeq,
-    measurementValue = parser
+    idCheckpoint = Some(checkpointDTO1.id),
+    checkpointName = checkpointQueryDTO1.checkpointName,
+    author = Some("author"),
+    measuredByAtumAgent = Some(true),
+    measureName = Some(measureDTO1.measureName),
+    measuredColumns = Some(measureDTO1.measuredColumns.toIndexedSeq),
+    measurementValue = Some(parser
       .parse(
         """
         |{
@@ -218,25 +223,28 @@ trait TestData {
       )
       .getOrElse {
         throw new Exception("Failed to parse JSON")
-      },
-    checkpointStartTime = checkpointDTO1.processStartTime,
+      }),
+    checkpointStartTime = Some(checkpointDTO1.processStartTime),
     checkpointEndTime = checkpointDTO1.processEndTime
   )
   protected val checkpointFromDB2: CheckpointFromDB = checkpointFromDB1
     .copy(
-      idCheckpoint = checkpointDTO2.id,
-      checkpointName = checkpointQueryDTO2.checkpointName.get,
-      author = "author2",
-      measuredByAtumAgent = true,
-      measureName = measureDTO2.measureName,
-      measuredColumns = measureDTO2.measuredColumns.toIndexedSeq,
-      checkpointStartTime = checkpointDTO2.processStartTime,
+      idCheckpoint = Some(checkpointDTO2.id),
+      checkpointName = checkpointQueryDTO2.checkpointName,
+      author = Some("author2"),
+      measuredByAtumAgent = Some(true),
+      measureName = Some(measureDTO2.measureName),
+      measuredColumns = Some(measureDTO2.measuredColumns.toIndexedSeq),
+      checkpointStartTime = Some(checkpointDTO2.processStartTime),
       checkpointEndTime = checkpointDTO2.processEndTime
 
     )
 
   protected val checkpointFromDB3: CheckpointFromDB = checkpointFromDB1
-    .copy(idCheckpoint = checkpointDTO3.id, checkpointStartTime = checkpointDTO3.processStartTime)
+    .copy(
+      idCheckpoint = Some(checkpointDTO3.id),
+      checkpointStartTime = Some(checkpointDTO3.processStartTime)
+    )
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))

@@ -14,18 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.server.model
 
-import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
-import zio._
-
-trait BaseService {
-
-  def repositoryCall[R](repositoryCall: IO[DatabaseError, R], operationName: String): IO[ServiceError, R] = {
-    repositoryCall
-      .mapError { case DatabaseError(message) =>
-        ServiceError(s"Failed to perform '$operationName': $message")
-      }
-  }
-
-}
+case class MeasureFromDB (
+  measureName: Option[String],
+  measuredColumns: Option[Seq[String]]
+)

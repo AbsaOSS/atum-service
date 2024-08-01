@@ -23,7 +23,10 @@ import zio._
 
 trait BaseRepository {
 
-  private def logOperationResult[R](operationName: String, dbFuncCall: Task[R]): ZIO[Any, Throwable, R] = {
+  private def logAndReturn[R](
+    operationName: String,
+    dbFuncCall: Task[Either[StatusException, R]]
+  ): ZIO[Any, Throwable, Either[StatusException, R]] = {
     dbFuncCall
       .tap {
         case Left(statusException: StatusException) =>
@@ -32,7 +35,6 @@ trait BaseRepository {
               s"(${statusException.status.statusCode}), ${statusException.status.statusText}"
           )
         case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
-        case _ => ZIO.logError(s"Operation '$operationName' did not return an Either")
       }
   }
 
@@ -47,7 +49,7 @@ trait BaseRepository {
   }
 
   def dbSingleResultCallWithStatus[R](dbFuncCall: Task[FailedOrRow[R]], operationName: String): IO[DatabaseError, R] = {
-    logOperationResult(operationName, dbFuncCall)
+    logAndReturn(operationName, dbFuncCall)
       .flatMap {
         case Left(statusException) => ZIO.fail(statusException)
         case Right(value) => ZIO.succeed(value.data)
@@ -58,8 +60,11 @@ trait BaseRepository {
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
 
-  def dbMultipleResultCallWithAggregatedStatus[R](dbFuncCall: Task[FailedOrRows[R]], operationName: String): IO[DatabaseError, Seq[R]] = {
-    logOperationResult(operationName, dbFuncCall)
+  def dbMultipleResultCallWithAggregatedStatus[R](
+    dbFuncCall: Task[FailedOrRows[R]],
+    operationName: String
+  ): IO[DatabaseError, Seq[R]] = {
+    logAndReturn(operationName, dbFuncCall)
       .flatMap {
         case Left(statusException) => ZIO.fail(statusException)
         case Right(value) => ZIO.succeed(value.map(_.data))
