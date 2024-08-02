@@ -31,8 +31,7 @@ import zio.test._
 import java.time.ZonedDateTime
 import java.util.UUID
 
-object
-WriteCheckpointIntegrationTests extends ConfigProviderTest {
+object WriteCheckpointIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
