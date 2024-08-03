@@ -37,7 +37,13 @@ class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine
     values => Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}"))
     with StandardStatusHandling with ByFirstErrorStatusAggregator {
 
-  override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "measure_name", "measured_columns")
+  override val fieldsToSelect: Seq[String] = {
+    super.fieldsToSelect ++
+      Seq(
+        "measure_name",
+        "measured_columns"
+      )
+  }
 
 }
 
