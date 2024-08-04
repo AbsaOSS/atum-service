@@ -25,16 +25,14 @@ object SuccessResponse {
 
   sealed trait SuccessResponse extends ResponseEnvelope
 
-  case class SingleSuccessResponse[T](data: T, requestId: UUID = UUID.randomUUID())
-    extends SuccessResponse
+  case class SingleSuccessResponse[T](data: T, requestId: UUID = UUID.randomUUID()) extends SuccessResponse
 
   object SingleSuccessResponse {
     implicit def encoder[T: Encoder]: Encoder[SingleSuccessResponse[T]] = deriveEncoder
     implicit def decoder[T: Decoder]: Decoder[SingleSuccessResponse[T]] = deriveDecoder
   }
 
-  case class MultiSuccessResponse[T](data: Seq[T], requestId: UUID = UUID.randomUUID())
-    extends SuccessResponse
+  case class MultiSuccessResponse[T](data: Seq[T], requestId: UUID = UUID.randomUUID()) extends SuccessResponse
 
   object MultiSuccessResponse {
     implicit def encoder[T: Encoder]: Encoder[MultiSuccessResponse[T]] = deriveEncoder

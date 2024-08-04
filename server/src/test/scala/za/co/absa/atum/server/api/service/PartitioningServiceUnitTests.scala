@@ -69,7 +69,9 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO2).exit
-          } yield assertTrue(result == Exit.fail(ServiceError("Failed to perform 'createPartitioningIfNotExists': error in data")))
+          } yield assertTrue(
+            result == Exit.fail(ServiceError("Failed to perform 'createPartitioningIfNotExists': error in data"))
+          )
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
@@ -86,7 +88,9 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
-          } yield assertTrue(result == Exit.fail(ServiceError("Failed to perform 'createOrUpdateAdditionalData': error in AD data")))
+          } yield assertTrue(
+            result == Exit.fail(ServiceError("Failed to perform 'createOrUpdateAdditionalData': error in AD data"))
+          )
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
@@ -98,7 +102,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Seq[MeasureDTO]") {
           for {
             result <- PartitioningService.getPartitioningMeasures(partitioningDTO1)
-          } yield assertTrue{
+          } yield assertTrue {
             result == Seq(measureDTO1, measureDTO2)
           }
         },
@@ -112,7 +116,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Seq[AdditionalDataDTO]") {
           for {
             result <- PartitioningService.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue{result == additionalDataDTO1}
+          } yield assertTrue { result == additionalDataDTO1 }
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningDTO2).exit)(
@@ -124,7 +128,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Seq[CheckpointDTO]") {
           for {
             result <- PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue{
+          } yield assertTrue {
             result == Seq(checkpointDTO1, checkpointDTO2.copy(partitioning = checkpointDTO1.partitioning))
           }
         },

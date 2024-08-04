@@ -31,13 +31,14 @@ import io.circe.syntax._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](
-    values => Seq(
-      fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
-      fr"${values.authorIfNew}",
-      fr"${values.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
+    extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](values =>
+      Seq(
+        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
+        fr"${values.authorIfNew}",
+        fr"${values.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
+      )
     )
-  ) with StandardStatusHandling
+    with StandardStatusHandling
 
 object CreatePartitioningIfNotExists {
   val layer: URLayer[PostgresDatabaseProvider, CreatePartitioningIfNotExists] = ZLayer {

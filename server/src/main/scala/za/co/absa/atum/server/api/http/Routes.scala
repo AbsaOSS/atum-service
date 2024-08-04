@@ -42,10 +42,13 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint(createCheckpointEndpointV2, CheckpointController.createCheckpointV2),
       createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),
       createServerEndpoint(createPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
-      createServerEndpoint(createOrUpdateAdditionalDataEndpointV2, PartitioningController.createOrUpdateAdditionalDataV2),
+      createServerEndpoint(
+        createOrUpdateAdditionalDataEndpointV2,
+        PartitioningController.createOrUpdateAdditionalDataV2
+      ),
       createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
       createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
-      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit),
+      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
   }
@@ -61,7 +64,7 @@ trait Routes extends Endpoints with ServerOptions {
       createPartitioningEndpointV2,
       createOrUpdateAdditionalDataEndpointV2,
       getPartitioningCheckpointsEndpointV2,
-      getFlowCheckpointsEndpointV2,
+      getFlowCheckpointsEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, SwaggerApiName, SwaggerApiVersion))

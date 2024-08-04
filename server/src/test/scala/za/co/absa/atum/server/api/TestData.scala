@@ -152,13 +152,13 @@ trait TestData {
   protected val checkpointQueryDTO1: CheckpointQueryDTO = CheckpointQueryDTO(
     partitioning = partitioningDTO1,
     limit = Option(2),
-    checkpointName = Option("checkpointName"),
+    checkpointName = Option("checkpointName")
   )
 
   protected val checkpointQueryDTO2: CheckpointQueryDTO = CheckpointQueryDTO(
     partitioning = partitioningDTO2,
     limit = Option(5),
-    checkpointName = Option("noCheckpoints"),
+    checkpointName = Option("noCheckpoints")
   )
 
   protected val checkpointQueryDTO3: CheckpointQueryDTO = CheckpointQueryDTO(
@@ -200,9 +200,10 @@ trait TestData {
     measuredByAtumAgent = Some(true),
     measureName = Some(measureDTO1.measureName),
     measuredColumns = Some(measureDTO1.measuredColumns.toIndexedSeq),
-    measurementValue = Some(parser
-      .parse(
-        """
+    measurementValue = Some(
+      parser
+        .parse(
+          """
         |{
         |  "mainValue": {
         |    "value": "123",
@@ -220,10 +221,11 @@ trait TestData {
         |  }
         |}
         |""".stripMargin
-      )
-      .getOrElse {
-        throw new Exception("Failed to parse JSON")
-      }),
+        )
+        .getOrElse {
+          throw new Exception("Failed to parse JSON")
+        }
+    ),
     checkpointStartTime = Some(checkpointDTO1.processStartTime),
     checkpointEndTime = checkpointDTO1.processEndTime
   )
@@ -237,7 +239,6 @@ trait TestData {
       measuredColumns = Some(measureDTO2.measuredColumns.toIndexedSeq),
       checkpointStartTime = Some(checkpointDTO2.processStartTime),
       checkpointEndTime = checkpointDTO2.processEndTime
-
     )
 
   protected val checkpointFromDB3: CheckpointFromDB = checkpointFromDB1

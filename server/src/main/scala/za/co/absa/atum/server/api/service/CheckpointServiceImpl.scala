@@ -21,12 +21,12 @@ import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.CheckpointRepository
 import zio._
 
-class CheckpointServiceImpl(checkpointRepository: CheckpointRepository)
-  extends CheckpointService with BaseService {
+class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends CheckpointService with BaseService {
 
   override def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit] = {
     repositoryCall(
-      checkpointRepository.writeCheckpoint(checkpointDTO), "saveCheckpoint"
+      checkpointRepository.writeCheckpoint(checkpointDTO),
+      "saveCheckpoint"
     )
   }
 

@@ -83,7 +83,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("GetPartitioningCheckpointsSuite")(
         test("Returns expected Seq[MeasureDTO]") {
           for {

@@ -32,13 +32,14 @@ import za.co.absa.atum.server.model.MeasureFromDB
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
-class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, MeasureFromDB, Task](
-    values => Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}"))
-    with StandardStatusHandling with ByFirstErrorStatusAggregator {
+class GetPartitioningMeasures(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+    extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, MeasureFromDB, Task](values =>
+      Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}")
+    )
+    with StandardStatusHandling
+    with ByFirstErrorStatusAggregator {
 
-  override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "measure_name", "measured_columns")
-
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("measure_name", "measured_columns")
 }
 
 object GetPartitioningMeasures {
@@ -48,4 +49,3 @@ object GetPartitioningMeasures {
     } yield new GetPartitioningMeasures()(Runs, dbProvider.dbEngine)
   }
 }
-

@@ -29,8 +29,7 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
   private val checkpointRepositoryMock = mock(classOf[CheckpointRepository])
 
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO1)).thenReturn(ZIO.succeed(()))
-  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2)).
-    thenReturn(ZIO.fail(DatabaseError("error in data")))
+  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2)).thenReturn(ZIO.fail(DatabaseError("error in data")))
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO3)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   private val checkpointRepositoryMockLayer = ZLayer.succeed(checkpointRepositoryMock)

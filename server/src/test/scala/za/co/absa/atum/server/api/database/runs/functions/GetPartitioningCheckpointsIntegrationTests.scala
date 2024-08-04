@@ -56,4 +56,3 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
   }
 
 }
-

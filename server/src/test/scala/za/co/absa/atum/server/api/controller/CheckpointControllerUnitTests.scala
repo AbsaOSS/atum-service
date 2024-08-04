@@ -47,10 +47,14 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == checkpointDTO1)
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(failsWithA[InternalServerErrorResponse])
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
         },
         test("Returns expected GeneralErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(failsWithA[InternalServerErrorResponse])
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
         }
       )
     ).provide(

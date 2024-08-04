@@ -28,7 +28,6 @@ import zio.test.Assertion.failsWithA
 import zio.test._
 import za.co.absa.atum.server.model.AdditionalDataFromDB
 
-
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   // Create Partitioning Mocks
@@ -59,9 +58,10 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningMeasuresMock = mock(classOf[GetPartitioningMeasures])
 
   when(getPartitioningMeasuresMock.apply(partitioningDTO1))
-    .thenReturn(ZIO.right(Seq(
-      Row(FunctionStatus(0, "success"), measureFromDB1),
-      Row(FunctionStatus(0, "success"), measureFromDB2)))
+    .thenReturn(
+      ZIO.right(
+        Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2))
+      )
     )
   when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 
@@ -98,7 +98,13 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO2).exit
-          } yield assertTrue(result == Exit.fail(DatabaseError("Exception caused by operation: 'createPartitioningIfNotExists': (50) error in Partitioning data")))
+          } yield assertTrue(
+            result == Exit.fail(
+              DatabaseError(
+                "Exception caused by operation: 'createPartitioningIfNotExists': (50) error in Partitioning data"
+              )
+            )
+          )
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
@@ -106,7 +112,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("CreateOrUpdateAdditionalDataSuite")(
         test("Returns expected Right with Unit") {
           for {
@@ -116,7 +121,11 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
-          } yield assertTrue(result == Exit.fail(DatabaseError("Exception caused by operation: 'createOrUpdateAdditionalData': (50) error in AD data")))
+          } yield assertTrue(
+            result == Exit.fail(
+              DatabaseError("Exception caused by operation: 'createOrUpdateAdditionalData': (50) error in AD data")
+            )
+          )
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
@@ -124,7 +133,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("GetPartitioningMeasuresSuite")(
         test("Returns expected Seq") {
           for {
@@ -137,7 +145,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("GetPartitioningAdditionalDataSuite")(
         test("Returns expected Right with Map") {
           for {
@@ -150,7 +157,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("GetPartitioningCheckpointsSuite")(
         test("Returns expected Seq") {
           for {

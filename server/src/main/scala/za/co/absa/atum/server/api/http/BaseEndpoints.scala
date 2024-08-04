@@ -19,7 +19,12 @@ package za.co.absa.atum.server.api.http
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
-import za.co.absa.atum.server.model.{BadRequestResponse, ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{
+  BadRequestResponse,
+  ErrorResponse,
+  GeneralErrorResponse,
+  InternalServerErrorResponse
+}
 import sttp.tapir.typelevel.MatchType
 import sttp.tapir.ztapir._
 import sttp.tapir.{EndpointOutput, PublicEndpoint}

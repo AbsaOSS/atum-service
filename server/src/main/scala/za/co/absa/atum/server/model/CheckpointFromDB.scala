@@ -23,15 +23,17 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 case class CheckpointFromDB(
-   idCheckpoint: Option[UUID],
-   checkpointName: Option[String],
-   author: Option[String],
-   measuredByAtumAgent: Option[Boolean],
-   measureName: Option[String],
-   measuredColumns: Option[Seq[String]],
-   measurementValue: Option[Json],  // it's easier to convert this attribute to our `MeasurementDTO` after we received this as JSON from DB
-   checkpointStartTime: Option[ZonedDateTime],
-   checkpointEndTime:  Option[ZonedDateTime]
+  idCheckpoint: Option[UUID],
+  checkpointName: Option[String],
+  author: Option[String],
+  measuredByAtumAgent: Option[Boolean],
+  measureName: Option[String],
+  measuredColumns: Option[Seq[String]],
+  measurementValue: Option[
+    Json
+  ], // it's easier to convert this attribute to our `MeasurementDTO` after we received this as JSON from DB
+  checkpointStartTime: Option[ZonedDateTime],
+  checkpointEndTime: Option[ZonedDateTime]
 )
 
 object CheckpointFromDB {

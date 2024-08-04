@@ -32,9 +32,10 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   when(getFlowCheckpointsMock.apply(checkpointQueryDTO1)).thenReturn(ZIO.fail(new Exception("boom!")))
   when(getFlowCheckpointsMock.apply(checkpointQueryDTO2))
-    .thenReturn(ZIO.right(Seq(
-      Row(FunctionStatus(0, "success"),checkpointFromDB1),
-      Row(FunctionStatus(0, "success"), checkpointFromDB2)))
+    .thenReturn(
+      ZIO.right(
+        Seq(Row(FunctionStatus(0, "success"), checkpointFromDB1), Row(FunctionStatus(0, "success"), checkpointFromDB2))
+      )
     )
 
   private val getFlowCheckpointsMockLayer = ZLayer.succeed(getFlowCheckpointsMock)
@@ -52,11 +53,11 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- FlowRepository.getFlowCheckpoints(checkpointQueryDTO2)
           } yield assertTrue(result == Seq(checkpointFromDB1, checkpointFromDB2))
-        },
-      ),
+        }
+      )
     ).provide(
       FlowRepositoryImpl.layer,
-      getFlowCheckpointsMockLayer,
+      getFlowCheckpointsMockLayer
     )
 
   }

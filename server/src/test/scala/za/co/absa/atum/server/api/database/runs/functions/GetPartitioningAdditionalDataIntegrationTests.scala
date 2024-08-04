@@ -30,7 +30,8 @@ object GetPartitioningAdditionalDataIntegrationTests extends ConfigProviderTest 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     suite("GetPartitioningAdditionalDataSuite")(
       test("Returns expected sequence of Additional data with provided partitioning") {
-        val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("stringA", "stringB"), PartitionDTO("string2", "string2"))
+        val partitioningDTO: PartitioningDTO =
+          Seq(PartitionDTO("stringA", "stringB"), PartitionDTO("string2", "string2"))
         for {
           getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
           result <- getPartitioningAdditionalData(partitioningDTO)
@@ -39,7 +40,7 @@ object GetPartitioningAdditionalDataIntegrationTests extends ConfigProviderTest 
     ).provide(
       GetPartitioningAdditionalData.layer,
       PostgresDatabaseProvider.layer,
-      TestTransactorProvider.layerWithRollback,
+      TestTransactorProvider.layerWithRollback
     )
   }
 }

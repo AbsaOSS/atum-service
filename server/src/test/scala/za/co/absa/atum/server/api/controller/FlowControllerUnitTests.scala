@@ -43,13 +43,11 @@ object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[InternalServerErrorResponse]
           )
         },
-
         test("Returns expected CheckpointDTO") {
           for {
             result <- FlowController.getFlowCheckpointsV2(checkpointQueryDTO2)
-          } yield assertTrue (result.data == Seq(checkpointDTO2))
+          } yield assertTrue(result.data == Seq(checkpointDTO2))
         }
-
       )
     ).provide(
       FlowControllerImpl.layer,

@@ -16,7 +16,15 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointDTO, CheckpointQueryDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO,
+  AdditionalDataSubmitDTO,
+  CheckpointDTO,
+  CheckpointQueryDTO,
+  MeasureDTO,
+  PartitioningDTO,
+  PartitioningSubmitDTO
+}
 import za.co.absa.atum.server.api.exception.ServiceError
 import zio.IO
 import zio.macros.accessible

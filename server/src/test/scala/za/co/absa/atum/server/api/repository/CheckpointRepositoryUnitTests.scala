@@ -52,7 +52,9 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- CheckpointRepository.writeCheckpoint(checkpointDTO2).exit
-          } yield assertTrue(result == Exit.fail(DatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null")))
+          } yield assertTrue(
+            result == Exit.fail(DatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null"))
+          )
         },
         test("Returns expected DatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])

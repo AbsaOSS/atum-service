@@ -34,7 +34,7 @@ object CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest {
       test("Returns expected Right with Unit") {
         val additionalDataSubmitDTO = AdditionalDataSubmitDTO(
           partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
-          additionalData =  Map[String, Option[String]](
+          additionalData = Map[String, Option[String]](
             "ownership" -> Some("total"),
             "role" -> Some("primary")
           ),

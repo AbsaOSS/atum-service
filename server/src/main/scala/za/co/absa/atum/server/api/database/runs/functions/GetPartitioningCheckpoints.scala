@@ -32,17 +32,18 @@ import za.co.absa.db.fadb.doobie.postgres.circe.implicits.{jsonbGet, jsonbPut}
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
-class GetPartitioningCheckpoints (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task] (
-      values => Seq(
+class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+    extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task](values =>
+      Seq(
         fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
         fr"${values.limit}",
         fr"${values.checkpointName}"
       )
-    ) with StandardStatusHandling with ByFirstErrorStatusAggregator {
-  override val fieldsToSelect: Seq[String] = Seq(
-    "status",
-    "status_text",
+    )
+    with StandardStatusHandling
+    with ByFirstErrorStatusAggregator {
+
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq(
     "id_checkpoint",
     "checkpoint_name",
     "author",

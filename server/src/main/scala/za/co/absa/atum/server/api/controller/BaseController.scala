@@ -32,8 +32,8 @@ trait BaseController {
       .mapError { serviceError: ServiceError =>
         InternalServerErrorResponse(serviceError.message)
       }
-      .flatMap {
-        result => ZIO.succeed(onSuccessFnc(result))
+      .flatMap { result =>
+        ZIO.succeed(onSuccessFnc(result))
       }
 
   }

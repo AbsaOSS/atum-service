@@ -22,19 +22,18 @@ import za.co.absa.atum.server.api.repository.FlowRepository
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 
-
-class FlowServiceImpl(flowRepository: FlowRepository)
-  extends FlowService with BaseService {
+class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with BaseService {
 
   override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]] = {
     for {
       checkpointsFromDB <- repositoryCall(
-        flowRepository.getFlowCheckpoints(checkpointQueryDTO), "getFlowCheckpoints"
+        flowRepository.getFlowCheckpoints(checkpointQueryDTO),
+        "getFlowCheckpoints"
       )
-      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {
-        checkpointFromDB =>
-          ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
-            .mapError(error => ServiceError(error.getMessage))
+      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) { checkpointFromDB =>
+        ZIO
+          .fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
+          .mapError(error => ServiceError(error.getMessage))
       }
     } yield checkpointDTOs
   }

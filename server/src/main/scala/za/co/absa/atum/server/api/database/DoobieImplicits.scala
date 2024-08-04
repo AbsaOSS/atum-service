@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.database
 
-
 import doobie.postgres.implicits._
 import doobie.{Get, Put}
 

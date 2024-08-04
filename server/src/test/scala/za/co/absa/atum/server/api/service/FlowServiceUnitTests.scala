@@ -45,12 +45,11 @@ object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Seq[CheckpointDTO]") {
           for {
             result <- FlowService.getFlowCheckpoints(checkpointQueryDTO2)
-          } yield assertTrue{
+          } yield assertTrue {
             result == Seq(checkpointDTO2)
           }
-        },
-
-      ),
+        }
+      )
     ).provide(
       FlowServiceImpl.layer,
       flowRepositoryMockLayer

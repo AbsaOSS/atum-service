@@ -23,42 +23,49 @@ import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
-  extends PartitioningService with BaseService {
+    extends PartitioningService
+    with BaseService {
 
-  override def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO):
-  IO[ServiceError, Unit] = {
+  override def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[ServiceError, Unit] = {
     repositoryCall(
-      partitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO), "createPartitioningIfNotExists"
+      partitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO),
+      "createPartitioningIfNotExists"
     )
   }
 
   override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ServiceError, Unit] = {
     repositoryCall(
-      partitioningRepository.createOrUpdateAdditionalData(additionalData), "createOrUpdateAdditionalData"
+      partitioningRepository.createOrUpdateAdditionalData(additionalData),
+      "createOrUpdateAdditionalData"
     )
   }
 
   override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]] = {
     repositoryCall(
-      partitioningRepository.getPartitioningMeasures(partitioning), "getPartitioningMeasures"
+      partitioningRepository.getPartitioningMeasures(partitioning),
+      "getPartitioningMeasures"
     )
   }
 
   override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[ServiceError, AdditionalDataDTO] = {
     repositoryCall(
-      partitioningRepository.getPartitioningAdditionalData(partitioning), "getPartitioningAdditionalData"
+      partitioningRepository.getPartitioningAdditionalData(partitioning),
+      "getPartitioningAdditionalData"
     )
   }
 
-  override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]] = {
+  override def getPartitioningCheckpoints(
+    checkpointQueryDTO: CheckpointQueryDTO
+  ): IO[ServiceError, Seq[CheckpointDTO]] = {
     for {
       checkpointsFromDB <- repositoryCall(
-        partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO), "getPartitioningCheckpoints"
+        partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO),
+        "getPartitioningCheckpoints"
       )
-      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) {
-        checkpointFromDB =>
-          ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
-        .mapError(error => ServiceError(error.getMessage))
+      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) { checkpointFromDB =>
+        ZIO
+          .fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
+          .mapError(error => ServiceError(error.getMessage))
       }
     } yield checkpointDTOs
 

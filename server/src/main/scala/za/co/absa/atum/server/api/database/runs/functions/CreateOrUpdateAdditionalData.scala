@@ -32,13 +32,14 @@ import doobie.postgres.implicits._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task](
-    values => Seq(
-      fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
-      fr"${values.additionalData.map{ case (k, v) => (k, v.orNull)}}",
-      fr"${values.author}"
+    extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task](values =>
+      Seq(
+        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
+        fr"${values.additionalData.map { case (k, v) => (k, v.orNull) }}",
+        fr"${values.author}"
+      )
     )
-  ) with StandardStatusHandling
+    with StandardStatusHandling
 
 object CreateOrUpdateAdditionalData {
   val layer: URLayer[PostgresDatabaseProvider, CreateOrUpdateAdditionalData] = ZLayer {

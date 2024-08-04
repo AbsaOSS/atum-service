@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.model
 
-case class MeasureFromDB (
+case class MeasureFromDB(
   measureName: Option[String],
   measuredColumns: Option[Seq[String]]
 )

@@ -32,11 +32,12 @@ object GetPartitioningMeasuresIntegrationTests extends ConfigProviderTest {
 
     suite("GetPartitioningMeasuresSuite")(
       test("Returns expected sequence of Measures with existing partitioning") {
-      val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string11", "string11"), PartitionDTO("string12", "string12"))
+        val partitioningDTO: PartitioningDTO =
+          Seq(PartitionDTO("string11", "string11"), PartitionDTO("string12", "string12"))
         for {
           getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
           result <- getPartitioningMeasures(partitioningDTO)
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+        } yield assertTrue (result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       GetPartitioningMeasures.layer,

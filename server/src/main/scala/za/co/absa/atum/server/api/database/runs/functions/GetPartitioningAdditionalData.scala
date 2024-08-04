@@ -31,11 +31,14 @@ import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
-class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, AdditionalDataFromDB, Task](
-    values => Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}"))
-    with StandardStatusHandling with ByFirstErrorStatusAggregator {
-      override val fieldsToSelect: Seq[String] = Seq("status", "status_text", "ad_name", "ad_value")
+class GetPartitioningAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+    extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, AdditionalDataFromDB, Task](values =>
+      Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}")
+    )
+    with StandardStatusHandling
+    with ByFirstErrorStatusAggregator {
+
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("ad_name", "ad_value")
 }
 
 object GetPartitioningAdditionalData {

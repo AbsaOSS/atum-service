@@ -34,8 +34,8 @@ import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbArrayPut
 import doobie.postgres.implicits._
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task](
-      values => Seq(
+    extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task](values =>
+      Seq(
         fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
         fr"${values.id}",
         fr"${values.name}",
@@ -44,7 +44,8 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
         fr"${values.measurements.toList.map(_.asJson)}",
         fr"${values.measuredByAtumAgent}",
         fr"${values.author}"
-      ))
+      )
+    )
     with StandardStatusHandling
 
 object WriteCheckpoint {
