@@ -14,18 +14,33 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.api.http
 
-import io.circe.generic.semiauto._
-import io.circe._
+object ApiPaths {
 
-case class AdditionalDataSubmitDTO(
-  partitioning: PartitioningDTO,
-  additionalData: InitialAdditionalDataDTO,
-  author: String
-)
+  final val Api = "api"
+  final val V1 = "v1"
+  final val V2 = "v2"
 
-object AdditionalDataSubmitDTO {
-  implicit val decodeAdditionalDataSubmitDTO: Decoder[AdditionalDataSubmitDTO] = deriveDecoder[AdditionalDataSubmitDTO]
-  implicit val encodeAdditionalDataSubmitDTO: Encoder[AdditionalDataSubmitDTO] = deriveEncoder[AdditionalDataSubmitDTO]
+  final val Health = "health"
+  final val ZioMetrics = "zio-metrics"
+
+  object V1Paths {
+
+    final val CreateCheckpoint = "createCheckpoint"
+    final val CreatePartitioning = "createPartitioning"
+
+  }
+
+  object V2Paths {
+
+    final val Partitionings = "partitionings"
+    final val Checkpoints = "checkpoints"
+    final val AdditionalData = "additional-data"
+    final val Flows = "flows"
+    final val Measures = "measures"
+    final val MainFlow = "main-flow"
+
+  }
+
 }

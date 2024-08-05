@@ -21,12 +21,12 @@ import io.circe._
 
 package object dto {
   type PartitioningDTO = Seq[PartitionDTO]
-  type AdditionalDataDTO = Map[String, Option[String]]
+  type InitialAdditionalDataDTO = Map[String, Option[String]]
 
   // Todo. This implicit definition should not be defined here, so it is to be addressed in Ticket #221
   // Implicit encoders and decoders for AdditionalDataDTO
-  implicit val decodeAdditionalDataDTO: Decoder[AdditionalDataDTO] = Decoder.decodeMap[String, Option[String]]
-  implicit val encodeAdditionalDataDTO: Encoder[AdditionalDataDTO] = Encoder.encodeMap[String, Option[String]]
+  implicit val decodeAdditionalDataDTO: Decoder[InitialAdditionalDataDTO] = Decoder.decodeMap[String, Option[String]]
+  implicit val encodeAdditionalDataDTO: Encoder[InitialAdditionalDataDTO] = Encoder.encodeMap[String, Option[String]]
 
   // Implicit encoders and decoders for PartitioningDTO
   implicit val decodePartitioningDTO: Decoder[PartitioningDTO] = Decoder.decodeSeq[PartitionDTO]

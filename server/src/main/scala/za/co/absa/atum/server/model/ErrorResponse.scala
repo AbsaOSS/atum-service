@@ -37,6 +37,22 @@ object BadRequestResponse {
   implicit val encodeBadRequestResponse: Encoder[BadRequestResponse] = deriveEncoder
 }
 
+final case class ConflictErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
+  extends ErrorResponse
+
+object ConflictErrorResponse {
+  implicit val decoderConflictErrorResponse: Decoder[ConflictErrorResponse] = deriveDecoder
+  implicit val encoderConflictErrorResponse: Encoder[ConflictErrorResponse] = deriveEncoder
+}
+
+final case class NotFoundErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
+  extends ErrorResponse
+
+object NotFoundErrorResponse {
+  implicit val decoderNotFoundErrorResponse: Decoder[NotFoundErrorResponse] = deriveDecoder
+  implicit val encoderNotFoundErrorResponse: Encoder[NotFoundErrorResponse] = deriveEncoder
+}
+
 final case class GeneralErrorResponse(message: String, requestId: UUID = UUID.randomUUID()) extends ErrorResponse
 
 object GeneralErrorResponse {
@@ -47,6 +63,6 @@ object GeneralErrorResponse {
 final case class InternalServerErrorResponse(message: String, requestId: UUID = UUID.randomUUID()) extends ErrorResponse
 
 object InternalServerErrorResponse {
-  implicit val decodeInternalServerErrorResponse: Decoder[InternalServerErrorResponse] = deriveDecoder
-  implicit val encodeInternalServerErrorResponse: Encoder[InternalServerErrorResponse] = deriveEncoder
+  implicit val decoderInternalServerErrorResponse: Decoder[InternalServerErrorResponse] = deriveDecoder
+  implicit val encoderInternalServerErrorResponse: Encoder[InternalServerErrorResponse] = deriveEncoder
 }

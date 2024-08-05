@@ -23,7 +23,7 @@ import io.circe._
 case class AtumContextDTO(
   partitioning: PartitioningDTO,
   measures: Set[MeasureDTO] = Set.empty,
-  additionalData: AdditionalDataDTO = Map.empty
+  additionalData: InitialAdditionalDataDTO = Map.empty
 )
 
 object AtumContextDTO {
