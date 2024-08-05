@@ -16,16 +16,14 @@
 
 package za.co.absa.atum.model.dto
 
-import io.circe.generic.semiauto._
-import io.circe._
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder}
 
-case class AdditionalDataSubmitDTO(
-  partitioning: PartitioningDTO,
-  additionalData: InitialAdditionalDataDTO,
-  author: String
+case class AdditionalDataPatchDTO(
+  data: Map[String, AdditionalDataItemDTO]
 )
 
-object AdditionalDataSubmitDTO {
-  implicit val decodeAdditionalDataSubmitDTO: Decoder[AdditionalDataSubmitDTO] = deriveDecoder[AdditionalDataSubmitDTO]
-  implicit val encodeAdditionalDataSubmitDTO: Encoder[AdditionalDataSubmitDTO] = deriveEncoder[AdditionalDataSubmitDTO]
+object AdditionalDataPatchDTO {
+  implicit val encoderAdditionalDataPatchDTO: Encoder[AdditionalDataPatchDTO] = deriveEncoder
+  implicit val decoderAdditionalDataPatchDTO: Decoder[AdditionalDataPatchDTO] = deriveDecoder
 }

@@ -64,17 +64,17 @@ trait TestData {
   protected val measureFromDB2: MeasureFromDB = MeasureFromDB(Some("count2"), Some(Seq("col_A2", "col_B2")))
 
   // Additional Data
-  protected val additionalDataDTO1: AdditionalDataDTO = Map(
+  protected val additionalDataDTO1: InitialAdditionalDataDTO = Map(
     "key1" -> Some("value1"),
     "key2" -> None,
     "key3" -> Some("value3")
   )
-  protected val additionalDataDTO2: AdditionalDataDTO = Map(
+  protected val additionalDataDTO2: InitialAdditionalDataDTO = Map(
     "key1" -> Some("value1"),
     "key2" -> Some("value2"),
     "key3" -> Some("value3")
   )
-  protected val additionalDataDTO3: AdditionalDataDTO = Map.empty
+  protected val additionalDataDTO3: InitialAdditionalDataDTO = Map.empty
 
   val mainValue: TypedValue = TypedValue(
     value = "123",
@@ -249,7 +249,7 @@ trait TestData {
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
-    val additionalData: AdditionalDataDTO = Map.empty
+    val additionalData: InitialAdditionalDataDTO = Map.empty
     AtumContextDTO(partitioningSubmitDTO.partitioning, measures, additionalData)
   }
 

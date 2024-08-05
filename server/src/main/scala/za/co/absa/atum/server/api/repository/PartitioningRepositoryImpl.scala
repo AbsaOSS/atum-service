@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO,
+  InitialAdditionalDataDTO,
   AdditionalDataSubmitDTO,
   CheckpointQueryDTO,
   MeasureDTO,
@@ -65,7 +65,7 @@ class PartitioningRepositoryImpl(
       })
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, AdditionalDataDTO] = {
+  override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, InitialAdditionalDataDTO] = {
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAdditionalDataFn(partitioning),
       "getPartitioningAdditionalData"
