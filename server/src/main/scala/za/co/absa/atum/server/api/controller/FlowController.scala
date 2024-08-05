@@ -24,5 +24,7 @@ import zio.macros.accessible
 
 @accessible
 trait FlowController {
-  def getFlowCheckpointsV2(checkpointQueryDTO: CheckpointQueryDTO): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]]
+  def getFlowCheckpointsV2(
+    checkpointQueryDTO: CheckpointQueryDTO
+  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]]
 }

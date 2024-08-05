@@ -17,20 +17,26 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO, AdditionalDataSubmitDTO,
-  CheckpointQueryDTO, MeasureDTO, PartitioningDTO,
-  PartitioningSubmitDTO}
+  AdditionalDataDTO,
+  AdditionalDataSubmitDTO,
+  CheckpointQueryDTO,
+  MeasureDTO,
+  PartitioningDTO,
+  PartitioningSubmitDTO
+}
+import za.co.absa.atum.server.model.MeasureFromDB
 import za.co.absa.atum.server.api.database.runs.functions.{
   CreateOrUpdateAdditionalData,
   CreatePartitioningIfNotExists,
   GetPartitioningAdditionalData,
   GetPartitioningCheckpoints,
-  GetPartitioningMeasures }
+  GetPartitioningMeasures
+}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
-import za.co.absa.fadb.exceptions.StatusException
 import zio._
-import zio.prelude.ZivariantOps
+import zio.interop.catz.asyncInstance
+import za.co.absa.atum.server.model.AdditionalDataFromDB
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
@@ -38,36 +44,43 @@ class PartitioningRepositoryImpl(
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints
-) extends PartitioningRepository with BaseRepository {
+) extends PartitioningRepository
+    with BaseRepository {
 
-  override def createPartitioningIfNotExists(
-    partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    dbCallWithStatus(createPartitioningIfNotExistsFn(partitioningSubmitDTO), "createPartitioningIfNotExists")
+  override def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[DatabaseError, Unit] = {
+    dbSingleResultCallWithStatus(
+      createPartitioningIfNotExistsFn(partitioningSubmitDTO),
+      "createPartitioningIfNotExists"
+    )
   }
 
-  override def createOrUpdateAdditionalData(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[DatabaseError, Either[StatusException, Unit]] = {
-    dbCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
+  override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit] = {
+    dbSingleResultCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
   }
 
-  override def getPartitioningMeasures(
-    partitioning: PartitioningDTO
-  ): IO[DatabaseError, Seq[MeasureDTO]] = {
-    val m = getPartitioningMeasuresFn(partitioning)
-    m.mapLeft(err => DatabaseError(err.getMessage))
+  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresFn(partitioning), "getPartitioningMeasures")
+      .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
+        MeasureDTO(measureName.get, measuredColumns.get)
+      })
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningDTO):
-    IO[DatabaseError, AdditionalDataDTO] = {
-    getPartitioningAdditionalDataFn(partitioning).mapBoth(err => DatabaseError(err.getMessage), _.toMap)
+  override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, AdditionalDataDTO] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getPartitioningAdditionalDataFn(partitioning),
+      "getPartitioningAdditionalData"
+    ).map(_.map { case AdditionalDataFromDB(adName, adValue) => adName.get -> adValue }.toMap)
   }
 
-  override def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
-  IO[DatabaseError, Seq[CheckpointFromDB]] = {
-    dbCall(getPartitioningCheckpointsFn(checkpointQueryDTO), "getPartitioningCheckpoints")
+  override def getPartitioningCheckpoints(
+    checkpointQueryDTO: CheckpointQueryDTO
+  ): IO[DatabaseError, Seq[CheckpointFromDB]] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getPartitioningCheckpointsFn(checkpointQueryDTO),
+      "getPartitioningCheckpoints"
+    )
   }
+
 }
 
 object PartitioningRepositoryImpl {
@@ -90,6 +103,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures,
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
-      getPartitioningCheckpoints)
+      getPartitioningCheckpoints
+    )
   }
 }

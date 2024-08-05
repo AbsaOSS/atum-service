@@ -42,7 +42,7 @@ object Dependencies {
 
     val postgresql = "42.6.0"
 
-    val fadb = "0.3.0"
+    val fadb = "0.5.0"
 
     val logback = "1.2.3"
 
@@ -105,7 +105,7 @@ object Dependencies {
     val zioOrg = "dev.zio"
     val tapirOrg = "com.softwaremill.sttp.tapir"
     val http4sOrg = "org.http4s"
-    val faDbOrg = "za.co.absa.fa-db"
+    val faDbOrg = "za.co.absa.db.fa-db"
     val sbtOrg = "com.github.sbt"
     val logbackOrg = "ch.qos.logback"
     val awsSdkOrg = "software.amazon.awssdk"
@@ -147,7 +147,6 @@ object Dependencies {
 
     // Fa-db
     lazy val faDbDoobie = faDbOrg %% "doobie" % Versions.fadb
-    lazy val pgCirceDoobie = "org.tpolecat" %% "doobie-postgres-circe" % "1.0.0-RC2"
 
     // aws
     lazy val awsSecretsManagerSdk = awsSdkOrg % "secretsmanager" % Versions.awssdk
@@ -160,7 +159,6 @@ object Dependencies {
 
     Seq(
       faDbDoobie,
-      pgCirceDoobie,
       zioCore,
       zioMacros,
       zioLogging,

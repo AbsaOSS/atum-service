@@ -59,7 +59,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     additionalData: AdditionalDataSubmitDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]] = {
     mapToSingleSuccessResponse(
-      serviceCallWithStatus[Unit, AdditionalDataSubmitDTO](
+      serviceCall[Unit, AdditionalDataSubmitDTO](
         partitioningService.createOrUpdateAdditionalData(additionalData),
         _ => additionalData
       )

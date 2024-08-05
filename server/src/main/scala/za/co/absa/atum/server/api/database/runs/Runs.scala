@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.database.runs
 
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
+import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 
 object Runs extends DBSchema

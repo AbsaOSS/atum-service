@@ -20,8 +20,10 @@ import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import zio.test.Assertion.failsWithA
-import zio.test.{Spec, TestEnvironment, assert}
+import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import zio.interop.catz.asyncInstance
+import za.co.absa.db.fadb.status.FunctionStatus
+import zio.test.{Spec, TestEnvironment, assertTrue}
 import zio.{Scope, ZIO}
 
 object GetPartitioningMeasuresIntegrationTests extends ConfigProviderTest {
@@ -30,11 +32,12 @@ object GetPartitioningMeasuresIntegrationTests extends ConfigProviderTest {
 
     suite("GetPartitioningMeasuresSuite")(
       test("Returns expected sequence of Measures with existing partitioning") {
-      val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("string1", "string1"), PartitionDTO("string2", "string2"))
+        val partitioningDTO: PartitioningDTO =
+          Seq(PartitionDTO("string11", "string11"), PartitionDTO("string12", "string12"))
         for {
           getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
-          result <- getPartitioningMeasures(partitioningDTO).exit
-        } yield assert(result)(failsWithA[doobie.util.invariant.NonNullableColumnRead])
+          result <- getPartitioningMeasures(partitioningDTO)
+        } yield assertTrue (result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       GetPartitioningMeasures.layer,

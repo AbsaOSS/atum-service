@@ -20,19 +20,21 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointFromDB
-import za.co.absa.fadb.exceptions.ErrorInDataException
-import za.co.absa.fadb.status.FunctionStatus
+import za.co.absa.db.fadb.exceptions.ErrorInDataException
+import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
+import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
+import za.co.absa.atum.server.model.AdditionalDataFromDB
 
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   // Create Partitioning Mocks
   private val createPartitioningIfNotExistsMock = mock(classOf[CreatePartitioningIfNotExists])
 
-  when(createPartitioningIfNotExistsMock.apply(partitioningSubmitDTO1)).thenReturn(ZIO.right(()))
+  when(createPartitioningIfNotExistsMock.apply(partitioningSubmitDTO1))
+    .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(createPartitioningIfNotExistsMock.apply(partitioningSubmitDTO2))
     .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in Partitioning data"))))
   when(createPartitioningIfNotExistsMock.apply(partitioningSubmitDTO3))
@@ -43,7 +45,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   // Create Additional Data Mocks
   private val createOrUpdateAdditionalDataMock = mock(classOf[CreateOrUpdateAdditionalData])
 
-  when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO1)).thenReturn(ZIO.right(()))
+  when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO1))
+    .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO2))
     .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in AD data"))))
   when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO3))
@@ -54,7 +57,12 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   // Get Partitioning Measures Mocks
   private val getPartitioningMeasuresMock = mock(classOf[GetPartitioningMeasures])
 
-  when(getPartitioningMeasuresMock.apply(partitioningDTO1)).thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
+  when(getPartitioningMeasuresMock.apply(partitioningDTO1))
+    .thenReturn(
+      ZIO.right(
+        Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2))
+      )
+    )
   when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   private val getPartitioningMeasuresMockLayer = ZLayer.succeed(getPartitioningMeasuresMock)
@@ -63,7 +71,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
 
   when(getPartitioningAdditionalDataMock.apply(partitioningDTO1))
-    .thenReturn(ZIO.succeed(additionalDataDTOSeq1))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), AdditionalDataFromDB(Some("key"), Some("value"))))))
   when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
@@ -71,9 +79,10 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   // Get Partitioning Checkpoints Mocks
   private val getPartitioningCheckpointsMock = mock(classOf[GetPartitioningCheckpoints])
 
-  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO1)).thenReturn(ZIO.succeed(Seq(checkpointFromDB1)))
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO1))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), checkpointFromDB1))))
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO3)).thenReturn(ZIO.right(Seq.empty))
   when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
-  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO3)).thenReturn(ZIO.succeed(Seq.empty))
 
   private val getPartitioningCheckpointsMockLayer = ZLayer.succeed(getPartitioningCheckpointsMock)
 
@@ -84,12 +93,18 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO1)
-          } yield assertTrue(result.isRight)
+          } yield assertTrue(result == ())
         },
         test("Returns expected Left with StatusException") {
           for {
-            result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO2)
-          } yield assertTrue(result.isLeft)
+            result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO2).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              DatabaseError(
+                "Exception caused by operation: 'createPartitioningIfNotExists': (50) error in Partitioning data"
+              )
+            )
+          )
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
@@ -97,17 +112,20 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("CreateOrUpdateAdditionalDataSuite")(
         test("Returns expected Right with Unit") {
           for {
             result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
-          } yield assertTrue(result.isRight)
+          } yield assertTrue(result == ())
         },
         test("Returns expected Left with StatusException") {
           for {
-            result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO2)
-          } yield assertTrue(result.isLeft)
+            result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              DatabaseError("Exception caused by operation: 'createOrUpdateAdditionalData': (50) error in AD data")
+            )
+          )
         },
         test("Returns expected DatabaseError") {
           assertZIO(PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
@@ -115,7 +133,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("GetPartitioningMeasuresSuite")(
         test("Returns expected Seq") {
           for {
@@ -128,12 +145,11 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("GetPartitioningAdditionalDataSuite")(
-        test("Returns expected Right with empty Map") {
+        test("Returns expected Right with Map") {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue(result == additionalDataDTO1)
+          } yield assertTrue(result.get("key").contains(Some("value")) && result.size == 1)
         },
         test("Returns expected Left with DatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAdditionalData(partitioningDTO2).exit)(
@@ -141,7 +157,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("GetPartitioningCheckpointsSuite")(
         test("Returns expected Seq") {
           for {
@@ -156,7 +171,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Seq.empty") {
           for {
             result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO3)
-          } yield assertTrue(result.isInstanceOf[Seq[CheckpointFromDB]] && result.isEmpty)
+          } yield assertTrue(result.isEmpty)
         }
       )
     ).provide(

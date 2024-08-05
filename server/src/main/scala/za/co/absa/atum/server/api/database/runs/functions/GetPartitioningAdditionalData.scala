@@ -16,38 +16,29 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
-import doobie.util.Read
 import za.co.absa.atum.model.dto.PartitioningDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.PartitioningForDB
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
-import za.co.absa.fadb.doobie.DoobieEngine
-import zio.interop.catz.asyncInstance
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, PartitioningForDB}
+import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
+import za.co.absa.db.fadb.doobie.DoobieEngine
 import zio.{Task, URLayer, ZIO, ZLayer}
 import io.circe.syntax._
-
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
-import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
+import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
-class GetPartitioningAdditionalData (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningDTO, (String, Option[String]), Task]
-  {
+class GetPartitioningAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+    extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, AdditionalDataFromDB, Task](values =>
+      Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}")
+    )
+    with StandardStatusHandling
+    with ByFirstErrorStatusAggregator {
 
-    override val fieldsToSelect: Seq[String] = Seq("ad_name", "ad_value")
-
-    override def sql(values: PartitioningDTO)(implicit read: Read[(String, Option[String])]): Fragment = {
-    val partitioning: PartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(values)
-    val partitioningJson = partitioning.asJson
-
-    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  $partitioningJson
-                ) ${Fragment.const(alias)};"""
-  }
-
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("ad_name", "ad_value")
 }
 
 object GetPartitioningAdditionalData {

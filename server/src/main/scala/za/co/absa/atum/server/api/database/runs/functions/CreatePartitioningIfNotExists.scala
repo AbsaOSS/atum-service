@@ -16,44 +16,29 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-
-import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
-import doobie.util.Read
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.server.model.PartitioningForDB
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.doobie.{DoobieEngine, StatusWithData}
-import za.co.absa.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
-import za.co.absa.fadb.status.handling.implementations.StandardStatusHandling
+import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.doobie.DoobieEngine
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
+import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
-import zio.interop.catz._
 import io.circe.syntax._
 
-import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task]
-    with StandardStatusHandling {
-
-  override def sql(values: PartitioningSubmitDTO)(implicit read: Read[StatusWithData[Unit]]): Fragment = {
-    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values.partitioning)
-    val partitioningJson = partitioning.asJson
-
-    val parentPartitioningJson = values.parentPartitioning.map { parentPartitioning =>
-      val parentPartitioningForDB = PartitioningForDB.fromSeqPartitionDTO(parentPartitioning)
-      parentPartitioningForDB.asJson
-    }
-
-    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  $partitioningJson,
-                  ${values.authorIfNew},
-                  $parentPartitioningJson
-                ) ${Fragment.const(alias)};"""
-  }
-}
+    extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](values =>
+      Seq(
+        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
+        fr"${values.authorIfNew}",
+        fr"${values.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
+      )
+    )
+    with StandardStatusHandling
 
 object CreatePartitioningIfNotExists {
   val layer: URLayer[PostgresDatabaseProvider, CreatePartitioningIfNotExists] = ZLayer {

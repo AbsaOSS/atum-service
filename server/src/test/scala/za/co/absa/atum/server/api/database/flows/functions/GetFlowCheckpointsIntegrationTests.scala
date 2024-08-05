@@ -14,48 +14,42 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database.runs.functions
+package za.co.absa.atum.server.api.database.flows.functions
 
-import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitionDTO}
-import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.server.ConfigProviderTest
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
-import zio._
 import zio.interop.catz.asyncInstance
+import zio.{Scope, ZIO}
 import zio.test._
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
-object WriteCheckpointIntegrationTests extends ConfigProviderTest {
+object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("WriteCheckpointSuite")(
-      test("Returns expected Left with DataNotFoundException as related partitioning is not in the database") {
+    val partitioningDTO1: PartitioningDTO = Seq(
+      PartitionDTO("stringA", "stringA"),
+      PartitionDTO("stringB", "stringB")
+    )
 
-        val checkpointDTO = CheckpointDTO(
-          id = UUID.randomUUID(),
-          name = "name",
-          author = "author",
-          partitioning = Seq(PartitionDTO("key4", "value4")),
-          processStartTime = ZonedDateTime.now(),
-          processEndTime = Option(ZonedDateTime.now()),
-          measurements = Set(
-            MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.LongValue)))
-          )
+    suite("GetFlowCheckpointsIntegrationTests")(
+      test("Returns expected sequence of flow of Checkpoints with existing partitioning") {
+        val partitioningQueryDTO: CheckpointQueryDTO = CheckpointQueryDTO(
+          partitioning = partitioningDTO1,
+          limit = Some(10),
+          checkpointName = Some("checkpointName")
         )
+
         for {
-          writeCheckpoint <- ZIO.service[WriteCheckpoint]
-          result <- writeCheckpoint(checkpointDTO)
+          getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
+          result <- getFlowCheckpoints(partitioningQueryDTO)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
-      WriteCheckpoint.layer,
+      GetFlowCheckpoints.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )

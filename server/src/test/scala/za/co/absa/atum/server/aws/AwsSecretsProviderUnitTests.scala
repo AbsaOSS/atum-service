@@ -39,7 +39,7 @@ object AwsSecretsProviderUnitTests extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("AwsSecretsProviderSuite")(
-      test("GetSecretValue returns expected secret's value"){
+      test("GetSecretValue returns expected secret's value") {
         for {
           awsConfig <- ZIO.config[AwsConfig](AwsConfig.config)
           awsSecretValue <- AwsSecretsProvider.getSecretValue(awsConfig.dbPasswordSecretName)

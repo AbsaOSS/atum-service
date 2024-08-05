@@ -16,38 +16,30 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import doobie.Fragment
 import doobie.implicits.toSqlInterpolator
-import doobie.util.Read
-import za.co.absa.atum.model.dto.{MeasureDTO, PartitioningDTO}
+import za.co.absa.atum.model.dto.PartitioningDTO
 import za.co.absa.atum.server.model.PartitioningForDB
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.doobie.DoobieEngine
-import za.co.absa.fadb.doobie.DoobieFunction.DoobieMultipleResultFunction
+import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.doobie.DoobieEngine
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
-import zio.interop.catz._
 import io.circe.syntax._
-
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
+import za.co.absa.atum.server.model.MeasureFromDB
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
+import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
-class GetPartitioningMeasures (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunction[PartitioningDTO, MeasureDTO, Task]
-  {
+class GetPartitioningMeasures(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+    extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, MeasureFromDB, Task](values =>
+      Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}")
+    )
+    with StandardStatusHandling
+    with ByFirstErrorStatusAggregator {
 
-    override val fieldsToSelect: Seq[String] = Seq("measure_name", "measured_columns")
-
-    override def sql(values: PartitioningDTO)(implicit read: Read[MeasureDTO]): Fragment = {
-    val partitioning = PartitioningForDB.fromSeqPartitionDTO(values)
-    val partitioningJson = partitioning.asJson
-
-    sql"""SELECT ${Fragment.const(selectEntry)} FROM ${Fragment.const(functionName)}(
-                  $partitioningJson
-                ) ${Fragment.const(alias)};"""
-  }
-
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("measure_name", "measured_columns")
 }
 
 object GetPartitioningMeasures {
@@ -57,4 +49,3 @@ object GetPartitioningMeasures {
     } yield new GetPartitioningMeasures()(Runs, dbProvider.dbEngine)
   }
 }
-

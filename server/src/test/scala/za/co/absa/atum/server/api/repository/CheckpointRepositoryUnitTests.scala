@@ -20,21 +20,23 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.fadb.exceptions.ErrorInDataException
-import za.co.absa.fadb.status.FunctionStatus
+import za.co.absa.db.fadb.exceptions.ErrorInDataException
+import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
-import zio.test.Assertion.failsWithA
+import zio.interop.catz.asyncInstance
+import zio.test.Assertion.{failsWithA, isUnit}
 import zio.test._
+
+import za.co.absa.db.fadb.status.Row
 
 object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
 
-  when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(()))
+  when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(writeCheckpointMock.apply(checkpointDTO2))
-    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in data"))))
-  when(writeCheckpointMock.apply(checkpointDTO3))
-    .thenReturn(ZIO.fail(new Exception("boom!")))
+    .thenReturn(ZIO.fail(DatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null")))
+  when(writeCheckpointMock.apply(checkpointDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
 
@@ -45,12 +47,14 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- CheckpointRepository.writeCheckpoint(checkpointDTO1)
-          } yield assertTrue(result.isRight)
+          } yield assertTrue(result == ())
         },
         test("Returns expected Left with StatusException") {
           for {
-            result <- CheckpointRepository.writeCheckpoint(checkpointDTO2)
-          } yield assertTrue(result.isLeft)
+            result <- CheckpointRepository.writeCheckpoint(checkpointDTO2).exit
+          } yield assertTrue(
+            result == Exit.fail(DatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null"))
+          )
         },
         test("Returns expected DatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])

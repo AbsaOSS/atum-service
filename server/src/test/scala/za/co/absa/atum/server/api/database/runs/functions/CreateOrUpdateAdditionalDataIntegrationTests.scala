@@ -20,9 +20,10 @@ import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitionDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.fadb.exceptions.DataNotFoundException
-import za.co.absa.fadb.status.FunctionStatus
+import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
+import zio.interop.catz.asyncInstance
 import zio.test._
 
 object CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest {
@@ -33,7 +34,7 @@ object CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest {
       test("Returns expected Right with Unit") {
         val additionalDataSubmitDTO = AdditionalDataSubmitDTO(
           partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
-          additionalData =  Map[String, Option[String]](
+          additionalData = Map[String, Option[String]](
             "ownership" -> Some("total"),
             "role" -> Some("primary")
           ),

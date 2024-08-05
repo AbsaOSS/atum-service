@@ -20,24 +20,27 @@ import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
+import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
+import zio.interop.catz.asyncInstance
 import zio.test._
-import zio.test.Assertion._
 
 object GetPartitioningAdditionalDataIntegrationTests extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     suite("GetPartitioningAdditionalDataSuite")(
       test("Returns expected sequence of Additional data with provided partitioning") {
-        val partitioningDTO: PartitioningDTO = Seq(PartitionDTO("stringA", "stringB"), PartitionDTO("string2", "string2"))
+        val partitioningDTO: PartitioningDTO =
+          Seq(PartitionDTO("stringA", "stringB"), PartitionDTO("string2", "string2"))
         for {
           getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
-          exit <- getPartitioningAdditionalData(partitioningDTO).exit
-        } yield assert(exit)(failsWithA[doobie.util.invariant.NonNullableColumnRead])
+          result <- getPartitioningAdditionalData(partitioningDTO)
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       GetPartitioningAdditionalData.layer,
       PostgresDatabaseProvider.layer,
-      TestTransactorProvider.layerWithRollback,
+      TestTransactorProvider.layerWithRollback
     )
   }
 }

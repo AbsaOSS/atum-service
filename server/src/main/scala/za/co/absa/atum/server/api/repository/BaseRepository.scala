@@ -17,35 +17,62 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.fadb.exceptions.StatusException
+import za.co.absa.db.fadb.exceptions.StatusException
+import za.co.absa.db.fadb.status.{FailedOrRow, FailedOrRows}
 import zio._
 
 trait BaseRepository {
 
-  def dbCall[R](
-    dbFuncCall: Task[R],
-    operationName: String
-  ): IO[DatabaseError, R] = {
-    dbFuncCall
-      .zipLeft(ZIO.logDebug(s"Operation '$operationName' succeeded in database"))
-      .mapError(error => DatabaseError(error.getMessage))
-      .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
-  }
-
-  def dbCallWithStatus[R](
-    dbFuncCall: Task[Either[StatusException, R]],
-    operationName: String
-  ): IO[DatabaseError, Either[StatusException, R]] = {
+  private def logAndReturn[R](
+    operationName: String,
+    dbFuncCall: Task[Either[StatusException, R]]
+  ): ZIO[Any, Throwable, Either[StatusException, R]] = {
     dbFuncCall
       .tap {
-        case Left(statusException) =>
+        case Left(statusException: StatusException) =>
           ZIO.logError(
             s"Exception caused by operation: '$operationName': " +
-              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+              s"(${statusException.status.statusCode}), ${statusException.status.statusText}"
           )
         case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
       }
-      .mapError(error => DatabaseError(error.getMessage))
+  }
+
+  private def defaultErrorHandler(operationName: String): PartialFunction[Throwable, DatabaseError] = {
+    case statusException: StatusException =>
+      DatabaseError(
+        s"Exception caused by operation: '$operationName': " +
+          s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+      )
+    case error =>
+      DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
+  }
+
+  def dbSingleResultCallWithStatus[R](dbFuncCall: Task[FailedOrRow[R]], operationName: String): IO[DatabaseError, R] = {
+    logAndReturn(operationName, dbFuncCall)
+      .flatMap {
+        case Left(statusException) => ZIO.fail(statusException)
+        case Right(value) => ZIO.succeed(value.data)
+      }
+      .mapError {
+        defaultErrorHandler(operationName)
+      }
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
+
+  def dbMultipleResultCallWithAggregatedStatus[R](
+    dbFuncCall: Task[FailedOrRows[R]],
+    operationName: String
+  ): IO[DatabaseError, Seq[R]] = {
+    logAndReturn(operationName, dbFuncCall)
+      .flatMap {
+        case Left(statusException) => ZIO.fail(statusException)
+        case Right(value) => ZIO.succeed(value.map(_.data))
+      }
+      .mapError {
+        defaultErrorHandler(operationName)
+      }
+      .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
+  }
+
 }

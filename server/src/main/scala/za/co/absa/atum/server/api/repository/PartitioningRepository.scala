@@ -16,30 +16,28 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataSubmitDTO, CheckpointQueryDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO,
+  AdditionalDataSubmitDTO,
+  CheckpointQueryDTO,
+  MeasureDTO,
+  PartitioningDTO,
+  PartitioningSubmitDTO
+}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
-import za.co.absa.fadb.exceptions.StatusException
 import zio.IO
 import zio.macros.accessible
 
 @accessible
 trait PartitioningRepository {
-  def createPartitioningIfNotExists(
-    partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[DatabaseError, Either[StatusException, Unit]]
+  def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[DatabaseError, Unit]
 
-  def getPartitioningMeasures(
-    partitioning: PartitioningDTO
-  ): IO[DatabaseError, Seq[MeasureDTO]]
+  def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]]
 
-  def getPartitioningAdditionalData(
-    partitioning: PartitioningDTO
-  ): IO[DatabaseError, AdditionalDataDTO]
+  def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, AdditionalDataDTO]
 
-  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO):
-    IO[DatabaseError, Either[StatusException, Unit]]
+  def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit]
 
-  def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO):
-  IO[DatabaseError, Seq[CheckpointFromDB]]
+  def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
 }

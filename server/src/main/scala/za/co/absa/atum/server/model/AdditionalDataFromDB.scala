@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database
+package za.co.absa.atum.server.model
 
-import doobie.Transactor
-import za.co.absa.db.fadb.doobie.DoobieEngine
-import zio._
-import zio.interop.catz._
-
-class PostgresDatabaseProvider(val dbEngine: DoobieEngine[Task])
-
-object PostgresDatabaseProvider {
-  val layer: URLayer[Transactor[Task], PostgresDatabaseProvider] = ZLayer {
-    for {
-      transactor <- ZIO.service[Transactor[Task]]
-      doobieEngine <- ZIO.succeed(new DoobieEngine[Task](transactor))
-    } yield new PostgresDatabaseProvider(doobieEngine)
-  }
-}
+case class AdditionalDataFromDB(
+  adName: Option[String],
+  adValue: Option[String]
+)

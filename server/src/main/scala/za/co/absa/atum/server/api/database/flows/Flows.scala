@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.database.flows
 
-import za.co.absa.fadb.DBSchema
-import za.co.absa.fadb.naming.implementations.SnakeCaseNaming.Implicits._
+import za.co.absa.db.fadb.DBSchema
+import za.co.absa.db.fadb.naming.implementations.SnakeCaseNaming.Implicits._
 
 object Flows extends DBSchema

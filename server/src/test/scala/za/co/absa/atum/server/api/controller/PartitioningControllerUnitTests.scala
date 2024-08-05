@@ -31,7 +31,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   private val partitioningServiceMock = mock(classOf[PartitioningService])
 
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
-    .thenReturn(ZIO.right(()))
+    .thenReturn(ZIO.succeed(()))
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(ServiceError("boom!")))
 
@@ -42,7 +42,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(Map.empty))
 
   when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1))
-    .thenReturn(ZIO.right(()))
+    .thenReturn(ZIO.succeed(()))
   when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
     .thenReturn(ZIO.fail(ServiceError("boom!")))
 
@@ -83,7 +83,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-
       suite("GetPartitioningCheckpointsSuite")(
         test("Returns expected Seq[MeasureDTO]") {
           for {

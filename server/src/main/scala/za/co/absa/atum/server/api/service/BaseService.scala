@@ -17,25 +17,11 @@
 package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
-import za.co.absa.fadb.exceptions.StatusException
 import zio._
 
 trait BaseService {
 
-  def repositoryCall[R](
-    repositoryCall: IO[DatabaseError, R],
-    operationName: String
-  ): IO[ServiceError, R] = {
-    repositoryCall
-      .mapError { case DatabaseError(message) =>
-        ServiceError(s"Failed to perform '$operationName': $message")
-      }
-  }
-
-  def repositoryCallWithStatus[R](
-    repositoryCall: IO[DatabaseError, Either[StatusException, R]],
-    operationName: String
-  ): IO[ServiceError, Either[StatusException, R]] = {
+  def repositoryCall[R](repositoryCall: IO[DatabaseError, R], operationName: String): IO[ServiceError, R] = {
     repositoryCall
       .mapError { case DatabaseError(message) =>
         ServiceError(s"Failed to perform '$operationName': $message")

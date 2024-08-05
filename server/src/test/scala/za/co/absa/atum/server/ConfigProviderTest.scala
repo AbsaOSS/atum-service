@@ -26,4 +26,3 @@ abstract class ConfigProviderTest extends ZIOSpec[Unit] {
     Runtime.setConfigProvider(TypesafeConfigProvider.fromResourcePath())
 
 }
-

@@ -32,54 +32,54 @@ class BaseEndpointsUnitTests extends AnyFlatSpec {
   "pathToAPIv1CompatibleFormat" should
     "successfully convert our standard API path format to format compatible with API V1 (kebab)" in {
 
-    val input = "create-checkpoint"
-    val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
-    val expected = "createCheckpoint"
-    assert(actual == expected)
-  }
+      val input = "create-checkpoint"
+      val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
+      val expected = "createCheckpoint"
+      assert(actual == expected)
+    }
 
   "pathToAPIv1CompatibleFormat" should
     "successfully convert our standard API path format to format compatible with API V1 (kebab2)" in {
 
-    val input = "create-check-point2"
-    val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
-    val expected = "createCheckPoint2"
-    assert(actual == expected)
-  }
+      val input = "create-check-point2"
+      val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
+      val expected = "createCheckPoint2"
+      assert(actual == expected)
+    }
 
   "pathToAPIv1CompatibleFormat" should
     "successfully convert our standard API path format to format compatible with API V1 (kebab3)" in {
 
-    val input = "Create-check-"
-    val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
-    val expected = "createCheck"
-    assert(actual == expected)
-  }
+      val input = "Create-check-"
+      val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
+      val expected = "createCheck"
+      assert(actual == expected)
+    }
 
   "pathToAPIv1CompatibleFormat" should
     "successfully convert our standard API path format to format compatible with API V1 (snake)" in {
 
-    val input = "_create_check_point"
-    val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
-    val expected = "CreateCheckPoint"
-    assert(actual == expected)
-  }
+      val input = "_create_check_point"
+      val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
+      val expected = "CreateCheckPoint"
+      assert(actual == expected)
+    }
 
   "pathToAPIv1CompatibleFormat" should
     "successfully convert our standard API path format to format compatible with API V1 (kebab and snake)" in {
 
-    val input = "Create-check_Point"
-    val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
-    val expected = "createCheckPoint"
-    assert(actual == expected)
-  }
+      val input = "Create-check_Point"
+      val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
+      val expected = "createCheckPoint"
+      assert(actual == expected)
+    }
 
   "pathToAPIv1CompatibleFormat" should
     "successfully convert our standard API path format to format compatible with API V1 (one word)" in {
 
-    val input = "createcheckpoint"
-    val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
-    val expected = "createcheckpoint"
-    assert(actual == expected)
-  }
+      val input = "createcheckpoint"
+      val actual = BaseEndpointsForTests.pathToAPIv1CompatibleFormat(input)
+      val expected = "createcheckpoint"
+      assert(actual == expected)
+    }
 }

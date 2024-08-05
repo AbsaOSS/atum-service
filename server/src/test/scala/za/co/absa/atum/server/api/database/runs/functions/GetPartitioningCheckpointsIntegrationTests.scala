@@ -20,7 +20,9 @@ import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.model.dto.{CheckpointQueryDTO, PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import zio.test.Assertion.failsWithA
+import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import za.co.absa.db.fadb.status.FunctionStatus
+import zio.interop.catz.asyncInstance
 import zio.{Scope, ZIO}
 import zio.test._
 
@@ -43,8 +45,8 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
 
         for {
           getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
-          exit <- getPartitioningCheckpoints(partitioningQueryDTO).exit
-        } yield assert(exit)(failsWithA[doobie.util.invariant.NonNullableColumnRead])
+          result <- getPartitioningCheckpoints(partitioningQueryDTO)
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       GetPartitioningCheckpoints.layer,
@@ -54,4 +56,3 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
   }
 
 }
-

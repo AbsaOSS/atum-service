@@ -23,15 +23,17 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 case class CheckpointFromDB(
-   idCheckpoint: UUID,
-   checkpointName: String,
-   author: String,
-   measuredByAtumAgent: Boolean = false,
-   measureName: String,
-   measuredColumns: Seq[String],
-   measurementValue: Json,  // it's easier to convert this attribute to our `MeasurementDTO` after we received this as JSON from DB
-   checkpointStartTime: ZonedDateTime,
-   checkpointEndTime:  Option[ZonedDateTime]
+  idCheckpoint: Option[UUID],
+  checkpointName: Option[String],
+  author: Option[String],
+  measuredByAtumAgent: Option[Boolean],
+  measureName: Option[String],
+  measuredColumns: Option[Seq[String]],
+  measurementValue: Option[
+    Json
+  ], // it's easier to convert this attribute to our `MeasurementDTO` after we received this as JSON from DB
+  checkpointStartTime: Option[ZonedDateTime],
+  checkpointEndTime: Option[ZonedDateTime]
 )
 
 object CheckpointFromDB {
@@ -40,25 +42,25 @@ object CheckpointFromDB {
     partitioning: PartitioningDTO,
     checkpointQueryResult: CheckpointFromDB
   ): Either[DecodingFailure, CheckpointDTO] = {
-    val measureResultOrErr = checkpointQueryResult.measurementValue.as[MeasureResultDTO]
+    val measureResultOrErr = checkpointQueryResult.measurementValue.get.as[MeasureResultDTO]
 
     measureResultOrErr match {
       case Left(err) => Left(err)
       case Right(measureResult) =>
         Right(
           CheckpointDTO(
-            id = checkpointQueryResult.idCheckpoint,
-            name = checkpointQueryResult.checkpointName,
-            author = checkpointQueryResult.author,
-            measuredByAtumAgent = checkpointQueryResult.measuredByAtumAgent,
+            id = checkpointQueryResult.idCheckpoint.get,
+            name = checkpointQueryResult.checkpointName.get,
+            author = checkpointQueryResult.author.get,
+            measuredByAtumAgent = checkpointQueryResult.measuredByAtumAgent.get,
             partitioning = partitioning,
-            processStartTime = checkpointQueryResult.checkpointStartTime,
+            processStartTime = checkpointQueryResult.checkpointStartTime.get,
             processEndTime = checkpointQueryResult.checkpointEndTime,
             measurements = Set(
               MeasurementDTO(
                 measure = MeasureDTO(
-                  measureName = checkpointQueryResult.measureName,
-                  measuredColumns = checkpointQueryResult.measuredColumns
+                  measureName = checkpointQueryResult.measureName.get,
+                  measuredColumns = checkpointQueryResult.measuredColumns.get
                 ),
                 result = measureResult
               )
