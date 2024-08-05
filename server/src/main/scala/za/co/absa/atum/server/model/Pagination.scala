@@ -16,8 +16,16 @@
 
 package za.co.absa.atum.server.model
 
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+
 case class Pagination(
   limit: Int,
   offset: Long,
   hasMore: Boolean
 )
+
+object Pagination {
+  implicit val encoder: Encoder[Pagination] = deriveEncoder
+  implicit val decoder: Decoder[Pagination] = deriveDecoder
+}
