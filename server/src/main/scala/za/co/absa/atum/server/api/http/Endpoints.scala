@@ -25,6 +25,7 @@ import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import sttp.tapir.{PublicEndpoint, endpoint}
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 
 trait Endpoints extends BaseEndpoints {
 
@@ -88,6 +89,15 @@ trait Endpoints extends BaseEndpoints {
       .in(jsonBody[CheckpointQueryDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
+  }
+
+  protected val getPartitioningEndpointV2
+  : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId"))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {

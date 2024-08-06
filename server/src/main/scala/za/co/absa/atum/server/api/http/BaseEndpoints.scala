@@ -19,12 +19,7 @@ package za.co.absa.atum.server.api.http
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
-import za.co.absa.atum.server.model.{
-  BadRequestResponse,
-  ErrorResponse,
-  GeneralErrorResponse,
-  InternalServerErrorResponse
-}
+import za.co.absa.atum.server.model.{BadRequestResponse, ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import sttp.tapir.typelevel.MatchType
 import sttp.tapir.ztapir._
 import sttp.tapir.{EndpointOutput, PublicEndpoint}
@@ -81,6 +76,13 @@ trait BaseEndpoints {
 
     // Capitalize the first letter of each part except the first one (lowercase always)
     inputParts.head.toLowerCase + inputParts.tail.map(_.capitalize).mkString("")
+  }
+
+  protected val notFoundErrorOneOfVariant: EndpointOutput.OneOfVariant[NotFoundErrorResponse] = {
+    oneOfVariantFromMatchType(
+      StatusCode.NotFound,
+      jsonBody[NotFoundErrorResponse]
+    )
   }
 
 }
