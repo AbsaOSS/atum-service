@@ -18,9 +18,9 @@ package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.{ConflictServiceError, GeneralServiceError, ServiceError}
+import za.co.absa.atum.server.api.exception.{ConflictServiceError, GeneralServiceError}
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._
@@ -31,7 +31,7 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
 
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO1)).thenReturn(ZIO.unit)
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO2))
-    .thenReturn(ZIO.fail(ConflictServiceError("error in data")))
+    .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO3))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
@@ -47,13 +47,13 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == checkpointDTO1)
         },
         test("Returns expected ConflictServiceError") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
-            failsWithA[ConflictServiceError]
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(
+            failsWithA[InternalServerErrorResponse]
           )
         },
-        test("Returns expected GeneralErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(
-            failsWithA[GeneralServiceError]
+        test("Returns expected ConflictServiceError") {
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
+            failsWithA[InternalServerErrorResponse]
           )
         }
       )
