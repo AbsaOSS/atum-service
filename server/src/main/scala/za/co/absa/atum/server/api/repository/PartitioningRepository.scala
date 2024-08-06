@@ -16,16 +16,10 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{
-  InitialAdditionalDataDTO,
-  AdditionalDataSubmitDTO,
-  CheckpointQueryDTO,
-  MeasureDTO,
-  PartitioningDTO,
-  PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointQueryDTO, InitialAdditionalDataDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.db.fadb.exceptions.StatusException
 import zio.IO
 import zio.macros.accessible
 
@@ -40,4 +34,7 @@ trait PartitioningRepository {
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit]
 
   def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
+
+  def getPartitioning(partitioningId: Long): IO[DatabaseError, Either[StatusException, PartitioningWithIdDTO]]
+
 }
