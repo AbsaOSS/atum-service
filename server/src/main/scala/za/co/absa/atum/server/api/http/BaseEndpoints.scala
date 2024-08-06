@@ -19,12 +19,7 @@ package za.co.absa.atum.server.api.http
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
-import za.co.absa.atum.server.model.{
-  BadRequestResponse,
-  ErrorResponse,
-  GeneralErrorResponse,
-  InternalServerErrorResponse
-}
+import za.co.absa.atum.server.model.{BadRequestResponse, ConflictErrorResponse, ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
 import sttp.tapir.typelevel.MatchType
 import sttp.tapir.ztapir._
 import sttp.tapir.{EndpointOutput, PublicEndpoint}
@@ -35,6 +30,13 @@ import java.util.UUID
 trait BaseEndpoints {
 
   implicit val uuidMatchType: MatchType[UUID] = (a: Any) => a.isInstanceOf[UUID]
+
+  protected val conflictErrorOneOfVariant: EndpointOutput.OneOfVariant[ConflictErrorResponse] = {
+    oneOfVariantFromMatchType(
+      StatusCode.Conflict,
+      jsonBody[ConflictErrorResponse]
+    )
+  }
 
   private val badRequestOneOfVariant: EndpointOutput.OneOfVariant[BadRequestResponse] = {
     oneOfVariantFromMatchType(

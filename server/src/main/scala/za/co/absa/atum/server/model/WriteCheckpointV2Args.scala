@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.exception
+package za.co.absa.atum.server.model
 
-sealed trait AppError extends Throwable {
-  def message: String
-}
+import za.co.absa.atum.model.dto.CheckpointDTO
 
-sealed trait DatabaseError extends AppError
-case class GeneralDatabaseError(message: String) extends DatabaseError
-case class ConflictDatabaseError(message: String) extends DatabaseError
-
-sealed trait ServiceError extends AppError
-
-case class GeneralServiceError(message: String) extends ServiceError
-case class ConflictServiceError(message: String) extends ServiceError
+case class WriteCheckpointV2Args(partitioningId: Long, checkpointDTO: CheckpointDTO)

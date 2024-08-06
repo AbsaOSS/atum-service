@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.exception.{GeneralServiceError, ServiceError}
 import za.co.absa.atum.server.api.repository.FlowRepository
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
@@ -33,7 +33,7 @@ class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with B
       checkpointDTOs <- ZIO.foreach(checkpointsFromDB) { checkpointFromDB =>
         ZIO
           .fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
-          .mapError(error => ServiceError(error.getMessage))
+          .mapError(error => GeneralServiceError(error.getMessage))
       }
     } yield checkpointDTOs
   }

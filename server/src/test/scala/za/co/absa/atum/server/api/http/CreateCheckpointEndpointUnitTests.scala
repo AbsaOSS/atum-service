@@ -36,17 +36,17 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO1))
+  when(checkpointControllerMock.postCheckpointV2(checkpointDTO1))
     .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1, uuid)))
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO2))
+  when(checkpointControllerMock.postCheckpointV2(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO3))
+  when(checkpointControllerMock.postCheckpointV2(checkpointDTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
   private val createCheckpointServerEndpoint = createCheckpointEndpointV2
-    .zServerLogic(CheckpointController.createCheckpointV2)
+    .zServerLogic(CheckpointController.postCheckpointV2)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
