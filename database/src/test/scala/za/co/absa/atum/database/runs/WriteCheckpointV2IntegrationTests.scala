@@ -151,7 +151,7 @@ class WriteCheckpointV2IntegrationTests extends DBTestSuite {
     assert(table("runs.checkpoints").count(add("fk_partitioning", fkPartitioning)) == 0)
 
     function("runs.write_checkpoint_v2")
-      .setParam("i_partitioning", fkPartitioning)
+      .setParam("i_partitioning_id", fkPartitioning)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Happy path")
       .setParam("i_process_start_time", startTime)
@@ -238,7 +238,7 @@ class WriteCheckpointV2IntegrationTests extends DBTestSuite {
     )
 
     function("runs.write_checkpoint_v2")
-      .setParam("i_partitioning", fkPartitioning)
+      .setParam("i_partitioning_id", fkPartitioning)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Won't go in")
       .setParam("i_process_start_time", now())
