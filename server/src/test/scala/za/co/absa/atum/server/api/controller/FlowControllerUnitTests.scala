@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.exception.{GeneralServiceError, ServiceError}
 import za.co.absa.atum.server.api.service.FlowService
 import za.co.absa.atum.server.model.InternalServerErrorResponse
 import zio._
@@ -28,7 +28,7 @@ import zio.test._
 object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
   private val flowServiceMock = mock(classOf[FlowService])
   when(flowServiceMock.getFlowCheckpoints(checkpointQueryDTO1))
-    .thenReturn(ZIO.fail(ServiceError("boom!")))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(flowServiceMock.getFlowCheckpoints(checkpointQueryDTO2))
     .thenReturn(ZIO.succeed(Seq(checkpointDTO2)))

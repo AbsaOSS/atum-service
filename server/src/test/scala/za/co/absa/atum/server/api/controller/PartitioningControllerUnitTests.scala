@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.controller
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.exception.{GeneralServiceError, ServiceError}
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.InternalServerErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
@@ -33,7 +33,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
     .thenReturn(ZIO.succeed(()))
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
-    .thenReturn(ZIO.fail(ServiceError("boom!")))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMock.getPartitioningMeasures(partitioningDTO1))
     .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
@@ -44,14 +44,14 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1))
     .thenReturn(ZIO.succeed(()))
   when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
-    .thenReturn(ZIO.fail(ServiceError("boom!")))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO1))
     .thenReturn(ZIO.succeed(Seq(checkpointDTO1, checkpointDTO2)))
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO2))
     .thenReturn(ZIO.succeed(Seq.empty))
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
-    .thenReturn(ZIO.fail(ServiceError("boom!")))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 

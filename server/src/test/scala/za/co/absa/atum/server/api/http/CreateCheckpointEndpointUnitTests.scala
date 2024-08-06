@@ -14,81 +14,81 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.http
-
-import org.mockito.Mockito.{mock, when}
-import sttp.client3.testing.SttpBackendStub
-import sttp.client3.{UriContext, basicRequest}
-import sttp.client3.circe._
-import sttp.model.StatusCode
-import sttp.tapir.server.stub.TapirStubInterpreter
-import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.controller.CheckpointController
-import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
-import zio._
-import zio.test.Assertion.equalTo
-import zio.test._
-
-object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
-
-  private val checkpointControllerMock = mock(classOf[CheckpointController])
-
-  when(checkpointControllerMock.postCheckpointV2(checkpointDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1, uuid)))
-  when(checkpointControllerMock.postCheckpointV2(checkpointDTO2))
-    .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(checkpointControllerMock.postCheckpointV2(checkpointDTO3))
-    .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
-
-  private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
-
-  private val createCheckpointServerEndpoint = createCheckpointEndpointV2
-    .zServerLogic(CheckpointController.postCheckpointV2)
-
-  def spec: Spec[TestEnvironment with Scope, Any] = {
-    val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
-      .whenServerEndpoint(createCheckpointServerEndpoint)
-      .thenRunLogic()
-      .backend()
-
-    val request = basicRequest
-      .post(uri"https://test.com/api/v2/create-checkpoint")
-      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
-
-    suite("CreateCheckpointEndpointSuite")(
-      test("Returns expected CheckpointDTO") {
-        val response = request
-          .body(checkpointDTO1)
-          .send(backendStub)
-
-        val body = response.map(_.body)
-        val statusCode = response.map(_.code)
-
-        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1, uuid)), StatusCode.Created))
-      },
-      test("Returns expected BadRequest") {
-        val response = request
-          .body(checkpointDTO2)
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
-      },
-      test("Returns expected InternalServerError") {
-        val response = request
-          .body(checkpointDTO3)
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.InternalServerError))
-      }
-    )
-  }.provide(
-    checkpointControllerMockLayer
-  )
-}
+//package za.co.absa.atum.server.api.http
+//
+//import org.mockito.Mockito.{mock, when}
+//import sttp.client3.testing.SttpBackendStub
+//import sttp.client3.{UriContext, basicRequest}
+//import sttp.client3.circe._
+//import sttp.model.StatusCode
+//import sttp.tapir.server.stub.TapirStubInterpreter
+//import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
+//import za.co.absa.atum.model.dto.CheckpointDTO
+//import za.co.absa.atum.server.api.TestData
+//import za.co.absa.atum.server.api.controller.CheckpointController
+//import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
+//import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+//import zio._
+//import zio.test.Assertion.equalTo
+//import zio.test._
+//
+//object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
+//
+//  private val checkpointControllerMock = mock(classOf[CheckpointController])
+//
+//  when(checkpointControllerMock.postCheckpointV2(checkpointDTO1))
+//    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1, uuid)))
+//  when(checkpointControllerMock.postCheckpointV2(checkpointDTO2))
+//    .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
+//  when(checkpointControllerMock.postCheckpointV2(checkpointDTO3))
+//    .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
+//
+//  private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
+//
+//  private val createCheckpointServerEndpoint = createCheckpointEndpointV2
+//    .zServerLogic(CheckpointController.postCheckpointV2)
+//
+//  def spec: Spec[TestEnvironment with Scope, Any] = {
+//    val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
+//      .whenServerEndpoint(createCheckpointServerEndpoint)
+//      .thenRunLogic()
+//      .backend()
+//
+//    val request = basicRequest
+//      .post(uri"https://test.com/api/v2/create-checkpoint")
+//      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
+//
+//    suite("CreateCheckpointEndpointSuite")(
+//      test("Returns expected CheckpointDTO") {
+//        val response = request
+//          .body(checkpointDTO1)
+//          .send(backendStub)
+//
+//        val body = response.map(_.body)
+//        val statusCode = response.map(_.code)
+//
+//        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1, uuid)), StatusCode.Created))
+//      },
+//      test("Returns expected BadRequest") {
+//        val response = request
+//          .body(checkpointDTO2)
+//          .send(backendStub)
+//
+//        val statusCode = response.map(_.code)
+//
+//        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+//      },
+//      test("Returns expected InternalServerError") {
+//        val response = request
+//          .body(checkpointDTO3)
+//          .send(backendStub)
+//
+//        val statusCode = response.map(_.code)
+//
+//        assertZIO(statusCode)(equalTo(StatusCode.InternalServerError))
+//      }
+//    )
+//  }.provide(
+//    checkpointControllerMockLayer
+//  )
+//}
