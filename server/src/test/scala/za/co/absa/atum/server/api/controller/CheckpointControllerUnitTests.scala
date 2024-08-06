@@ -18,9 +18,9 @@ package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.{ConflictServiceError, GeneralServiceError}
+import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.InternalServerErrorResponse
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._

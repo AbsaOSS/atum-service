@@ -18,7 +18,8 @@ package za.co.absa.atum.server.api.service
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.{DatabaseError, GeneralDatabaseError, ServiceError}
+import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
+import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.FlowRepository
 import zio._
 import zio.test.Assertion.failsWithA

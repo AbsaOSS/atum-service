@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.controller
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.{GeneralServiceError, ServiceError}
+import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.InternalServerErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
@@ -31,7 +31,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   private val partitioningServiceMock = mock(classOf[PartitioningService])
 
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
-    .thenReturn(ZIO.succeed(()))
+    .thenReturn(ZIO.unit)
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
@@ -42,7 +42,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(Map.empty))
 
   when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1))
-    .thenReturn(ZIO.succeed(()))
+    .thenReturn(ZIO.unit)
   when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
