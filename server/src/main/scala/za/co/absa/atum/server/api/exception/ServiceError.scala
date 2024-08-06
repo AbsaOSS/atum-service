@@ -16,6 +16,11 @@
 
 package za.co.absa.atum.server.api.exception
 
-abstract class AppError extends Throwable {
-  def message: String
+sealed trait ServiceError extends AppError
+
+object ServiceError {
+
+  case class GeneralServiceError(message: String) extends ServiceError
+  case class ConflictServiceError(message: String) extends ServiceError
+
 }

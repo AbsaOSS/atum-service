@@ -16,7 +16,8 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.server.api.exception.{ConflictServiceError, GeneralServiceError, ServiceError}
+import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.config.SslConfig
 import za.co.absa.atum.server.model.{ConflictErrorResponse, ErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}

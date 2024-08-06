@@ -16,6 +16,8 @@
 
 package za.co.absa.atum.server.api.service
 
+import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.exception._
 import zio._
 
