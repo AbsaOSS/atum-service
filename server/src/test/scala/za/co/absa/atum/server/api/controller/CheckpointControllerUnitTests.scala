@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.InternalServerErrorResponse
 import zio.test.Assertion.failsWithA
@@ -29,11 +29,11 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
 
   private val checkpointServiceMock = mock(classOf[CheckpointService])
 
-  when(checkpointServiceMock.saveCheckpoint(checkpointDTO1)).thenReturn(ZIO.succeed(()))
+  when(checkpointServiceMock.saveCheckpoint(checkpointDTO1)).thenReturn(ZIO.unit)
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO2))
-    .thenReturn(ZIO.fail(ServiceError("error in data")))
+    .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO3))
-    .thenReturn(ZIO.fail(ServiceError("boom!")))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   private val checkpointServiceMockLayer = ZLayer.succeed(checkpointServiceMock)
 
@@ -46,13 +46,13 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
             result <- CheckpointController.createCheckpointV1(checkpointDTO1)
           } yield assertTrue(result == checkpointDTO1)
         },
-        test("Returns expected InternalServerErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
+        test("Returns expected ConflictServiceError") {
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         },
-        test("Returns expected GeneralErrorResponse") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(
+        test("Returns expected ConflictServiceError") {
+          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }

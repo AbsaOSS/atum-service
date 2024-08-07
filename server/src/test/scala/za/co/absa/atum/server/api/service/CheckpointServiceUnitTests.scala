@@ -18,7 +18,9 @@ package za.co.absa.atum.server.api.service
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
+import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.CheckpointRepository
 import zio.test.Assertion.failsWithA
 import zio.test._
@@ -28,9 +30,9 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
 
   private val checkpointRepositoryMock = mock(classOf[CheckpointRepository])
 
-  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO1)).thenReturn(ZIO.succeed(()))
-  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2)).thenReturn(ZIO.fail(DatabaseError("error in data")))
-  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO3)).thenReturn(ZIO.fail(DatabaseError("boom!")))
+  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO1)).thenReturn(ZIO.unit)
+  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("error in data")))
+  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO3)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val checkpointRepositoryMockLayer = ZLayer.succeed(checkpointRepositoryMock)
 
@@ -46,7 +48,7 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- CheckpointService.saveCheckpoint(checkpointDTO2).exit
-          } yield assertTrue(result == Exit.fail(ServiceError("Failed to perform 'saveCheckpoint': error in data")))
+          } yield assertTrue(result == Exit.fail(GeneralServiceError("Failed to perform 'saveCheckpoint': error in data")))
         },
         test("Returns expected ServiceError") {
           assertZIO(CheckpointService.saveCheckpoint(checkpointDTO3).exit)(failsWithA[ServiceError])

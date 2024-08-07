@@ -25,31 +25,33 @@ import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import sttp.tapir.{PublicEndpoint, endpoint}
-import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
+import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
 
 trait Endpoints extends BaseEndpoints {
 
   protected val createCheckpointEndpointV1: PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
     apiV1.post
-      .in(pathToAPIv1CompatibleFormat(CreateCheckpoint))
+      .in(V1Paths.CreateCheckpoint)
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[CheckpointDTO])
   }
 
-  protected val createCheckpointEndpointV2
-    : PublicEndpoint[CheckpointDTO, ErrorResponse, SingleSuccessResponse[CheckpointDTO], Any] = {
+  protected val postCheckpointEndpointV2
+  : PublicEndpoint[(Long, CheckpointDTO), ErrorResponse, (SingleSuccessResponse[CheckpointDTO], String), Any] = {
     apiV2.post
-      .in(CreateCheckpoint)
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
+      .out(header[String]("Location"))
+      .errorOutVariantPrepend(conflictErrorOneOfVariant)
   }
 
   protected val createPartitioningEndpointV1
     : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, AtumContextDTO, Any] = {
     apiV1.post
-      .in(pathToAPIv1CompatibleFormat(CreatePartitioning))
+      .in(V1Paths.CreatePartitioning)
       .in(jsonBody[PartitioningSubmitDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[AtumContextDTO])

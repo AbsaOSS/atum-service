@@ -19,14 +19,19 @@ package za.co.absa.atum.server.api.http
 import cats.syntax.semigroupk._
 import org.http4s.HttpRoutes
 import sttp.tapir.PublicEndpoint
+import sttp.tapir.model.ServerRequest
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
+import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
-import za.co.absa.atum.server.api.controller.{CheckpointController, PartitioningController, FlowController}
+import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
+import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
@@ -39,7 +44,16 @@ trait Routes extends Endpoints with ServerOptions {
     }
     val endpoints = List(
       createServerEndpoint(createCheckpointEndpointV1, CheckpointController.createCheckpointV1),
-      createServerEndpoint(createCheckpointEndpointV2, CheckpointController.createCheckpointV2),
+      createServerEndpoint[
+        (Long, CheckpointDTO),
+        ErrorResponse,
+        (SingleSuccessResponse[CheckpointDTO], String)
+      ](
+        postCheckpointEndpointV2,
+        { case (partitioningId: Long, checkpointDTO: CheckpointDTO) =>
+          CheckpointController.postCheckpointV2(partitioningId, checkpointDTO)
+        }
+      ),
       createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),
       createServerEndpoint(createPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
       createServerEndpoint(
@@ -60,7 +74,7 @@ trait Routes extends Endpoints with ServerOptions {
   private def createSwaggerRoutes: HttpRoutes[HttpEnv.F] = {
     val endpoints = List(
       createCheckpointEndpointV1,
-      createCheckpointEndpointV2,
+      postCheckpointEndpointV2,
       createPartitioningEndpointV1,
       createPartitioningEndpointV2,
       createOrUpdateAdditionalDataEndpointV2,

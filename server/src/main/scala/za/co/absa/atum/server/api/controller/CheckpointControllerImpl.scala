@@ -17,6 +17,7 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
@@ -33,12 +34,22 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
     )
   }
 
-  override def createCheckpointV2(
+  override def postCheckpointV2(
+    partitioningId: Long,
     checkpointDTO: CheckpointDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]] = {
-    mapToSingleSuccessResponse(createCheckpointV1(checkpointDTO))
+  ): IO[ErrorResponse, (SingleSuccessResponse[CheckpointDTO], String)] = {
+    for {
+      response <- mapToSingleSuccessResponse(
+        serviceCall[Unit, CheckpointDTO](
+          checkpointService.saveCheckpointV2(partitioningId, checkpointDTO),
+          _ => checkpointDTO
+        )
+      )
+      uri <- createResourceUri(
+        Seq(V2Paths.Partitionings, partitioningId.toString, V2Paths.Checkpoints, checkpointDTO.id.toString)
+      )
+    } yield (response, uri)
   }
-
 }
 
 object CheckpointControllerImpl {

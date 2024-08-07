@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.repository
+package za.co.absa.atum.server.api.exception
 
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.api.exception.DatabaseError
-import zio._
-import zio.macros.accessible
+sealed trait ServiceError extends AppError
 
-@accessible
-trait CheckpointRepository {
-  def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Unit]
-  def writeCheckpointV2(partitioningId: Long, checkpointDTO: CheckpointDTO): IO[DatabaseError, Unit]
+object ServiceError {
+
+  case class GeneralServiceError(message: String) extends ServiceError
+  case class ConflictServiceError(message: String) extends ServiceError
+
 }

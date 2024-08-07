@@ -24,5 +24,5 @@ import zio.macros.accessible
 @accessible
 trait CheckpointService {
   def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
-
+  def saveCheckpointV2(partitioningId: Long, checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
 }

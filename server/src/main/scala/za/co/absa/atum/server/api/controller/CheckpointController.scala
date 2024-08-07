@@ -27,8 +27,9 @@ trait CheckpointController {
 
   def createCheckpointV1(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
 
-  def createCheckpointV2(
+  def postCheckpointV2(
+    partitioningId: Long,
     checkpointDTO: CheckpointDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]]
+  ): IO[ErrorResponse, (SingleSuccessResponse[CheckpointDTO], String)]
 
 }

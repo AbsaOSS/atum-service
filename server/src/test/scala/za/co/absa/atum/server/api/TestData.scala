@@ -191,6 +191,7 @@ trait TestData {
   )
 
   protected val checkpointDTO3: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
+  protected val checkpointDTO4: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
   // Checkpoint From DB
   protected val checkpointFromDB1: CheckpointFromDB = CheckpointFromDB(
