@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.http
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
-import za.co.absa.atum.server.model.{BadRequestResponse, ConflictErrorResponse, ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model._
 import sttp.tapir.typelevel.MatchType
 import sttp.tapir.ztapir._
 import sttp.tapir.{EndpointOutput, PublicEndpoint}
@@ -75,14 +75,6 @@ trait BaseEndpoints {
 
   protected val apiV2: PublicEndpoint[Unit, ErrorResponse, Unit, Any] = {
     baseEndpoint.in(Api / V2)
-  }
-
-  def pathToAPIv1CompatibleFormat(apiURLPath: String): String = {
-    // this is basically kebab-case/snake_case to camelCase
-    val inputParts = apiURLPath.split("[_-]")
-
-    // Capitalize the first letter of each part except the first one (lowercase always)
-    inputParts.head.toLowerCase + inputParts.tail.map(_.capitalize).mkString("")
   }
 
 }
