@@ -15,7 +15,7 @@
 
 -- Function: runs.get_partitioning_by_id(Long)
 CREATE OR REPLACE FUNCTION runs.get_partitioning_by_id(
-    IN i_partitioning       BIGINT,
+    IN i_id                 BIGINT,
     OUT status              INTEGER,
     OUT status_text         TEXT,
     OUT id                  BIGINT,
@@ -30,7 +30,7 @@ $$
 --      Returns partitioning for the given id
 --
 -- Parameters:
---      i_partitioning      - id that we asking the partitioning for
+--      i_id                - id that we asking the partitioning for
 --
 -- Returns:
 --      status              - Status code
@@ -44,21 +44,28 @@ $$
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
+DECLARE
+    _fk_parent_partitioning BIGINT;
 BEGIN
     status := 11;
     status_text := 'OK';
 
     SELECT P.partitioning,
            P.id_partitioning,
-           P.created_by,
-           P.parent_partitioning
-    INTO get_partitioning_by_id.partitioning, id, author, parent_partitioning
+           P.created_by
+    INTO get_partitioning_by_id.partitioning, id, author
     FROM runs.partitionings AS P
-    WHERE id_partitioning = i_partitioning;
+    WHERE P.id_partitioning = i_id;
 
     IF partitioning IS NULL THEN
         status := 41;
         status_text := 'Partitioning not found';
+    ELSE
+        -- Retrieving parent partitioning
+        SELECT CPINE.partitioning
+        FROM runs.create_partitioning_if_not_exists(partitioning, author, NULL) AS
+            CPINE
+        INTO parent_partitioning;
     END IF;
 
     RETURN (status, status_text, id, partitioning, parent_partitioning, author);
