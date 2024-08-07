@@ -16,34 +16,24 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{
-  InitialAdditionalDataDTO,
-  AdditionalDataSubmitDTO,
-  CheckpointQueryDTO,
-  MeasureDTO,
-  PartitioningDTO,
-  PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointQueryDTO, InitialAdditionalDataDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.model.MeasureFromDB
-import za.co.absa.atum.server.api.database.runs.functions.{
-  CreateOrUpdateAdditionalData,
-  CreatePartitioningIfNotExists,
-  GetPartitioningAdditionalData,
-  GetPartitioningCheckpoints,
-  GetPartitioningMeasures
-}
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningById, GetPartitioningCheckpoints, GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.model.AdditionalDataFromDB
+import za.co.absa.db.fadb.exceptions.StatusException
+import za.co.absa.atum.server.model.PartitioningFromDB
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
-  getPartitioningCheckpointsFn: GetPartitioningCheckpoints
+  getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
+  getPartitioningByIdFn: GetPartitioningById
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -81,6 +71,12 @@ class PartitioningRepositoryImpl(
     )
   }
 
+  override def getPartitioning(partitioningId: Long): IO[DatabaseError, Either[StatusException, PartitioningWithIdDTO]] = {
+    dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
+      .flatMap(result =>
+        PartitioningWithIdDTO(result.id.get, result.partitioning.get, result.parentPartitioning, result.author.get)
+      )
+  }
 }
 
 object PartitioningRepositoryImpl {
@@ -89,7 +85,8 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMeasures
       with GetPartitioningAdditionalData
       with CreateOrUpdateAdditionalData
-      with GetPartitioningCheckpoints,
+      with GetPartitioningCheckpoints
+      with GetPartitioningById,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -98,12 +95,14 @@ object PartitioningRepositoryImpl {
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
       getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
+      getPartitioningById <- ZIO.service[GetPartitioningById]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       getPartitioningMeasures,
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
-      getPartitioningCheckpoints
+      getPartitioningCheckpoints,
+      getPartitioningById
     )
   }
 }

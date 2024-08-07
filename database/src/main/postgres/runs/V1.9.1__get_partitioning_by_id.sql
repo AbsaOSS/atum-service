@@ -15,10 +15,13 @@
 
 -- Function: runs.get_partitioning_by_id(Long)
 CREATE OR REPLACE FUNCTION runs.get_partitioning_by_id(
-    IN i_partitioning   BIGINT,
-    OUT status          INTEGER,
-    OUT status_text     TEXT,
-    OUT partitioning    JSONB
+    IN i_partitioning       BIGINT,
+    OUT status              INTEGER,
+    OUT status_text         TEXT,
+    OUT id                  BIGINT,
+    OUT partitioning        JSONB,
+    OUT parent_partitioning JSONB,
+    OUT author              TEXT
 ) RETURNS RECORD AS
 $$
     -------------------------------------------------------------------------------
@@ -33,6 +36,8 @@ $$
 --      status              - Status code
 --      status_text         - Status message
 --      partitioning        - Partitioning value to be returned
+--      parent_partitioning - Parent partitioning value to be returned
+--      author              - Author of the partitioning
 
 -- Status codes:
 --      11 - OK
@@ -42,9 +47,12 @@ $$
 BEGIN
     status := 11;
     status_text := 'OK';
-    partitioning := NULL;
 
-    SELECT P.partitioning INTO get_partitioning_by_id.partitioning, status, status_text
+    SELECT P.partitioning,
+           P.id_partitioning,
+           P.created_by,
+           P.parent_partitioning
+    INTO get_partitioning_by_id.partitioning, id, author, parent_partitioning
     FROM runs.partitionings AS P
     WHERE id_partitioning = i_partitioning;
 
@@ -53,7 +61,7 @@ BEGIN
         status_text := 'Partitioning not found';
     END IF;
 
-    RETURN;
+    RETURN (status, status_text, id, partitioning, parent_partitioning, author);
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
