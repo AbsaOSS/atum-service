@@ -14,7 +14,7 @@ import doobie.postgres.implicits._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
 class GetPartitioningById(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[Long, PartitioningFromDB, Task](values => Seq(fr"$values"))
+    extends DoobieSingleResultFunctionWithStatus[Long, PartitioningFromDB, Task](values => Seq(fr"${values}"))
     with StandardStatusHandling {
 
   override def fieldsToSelect: Seq[String] =
