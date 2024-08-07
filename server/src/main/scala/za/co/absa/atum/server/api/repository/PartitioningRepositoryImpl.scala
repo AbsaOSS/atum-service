@@ -24,7 +24,6 @@ import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.model.AdditionalDataFromDB
-import za.co.absa.db.fadb.exceptions.StatusException
 import za.co.absa.atum.server.model.PartitioningFromDB
 
 class PartitioningRepositoryImpl(
@@ -71,11 +70,11 @@ class PartitioningRepositoryImpl(
     )
   }
 
-  override def getPartitioning(partitioningId: Long): IO[DatabaseError, Either[StatusException, PartitioningWithIdDTO]] = {
+  override def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
     dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
-      .flatMap(result =>
-        PartitioningWithIdDTO(result.id.get, result.partitioning.get, result.parentPartitioning, result.author.get)
-      )
+      .map {case PartitioningFromDB(id, partitioning, parentPartitioning, author) =>
+        PartitioningWithIdDTO(id.get, partitioning.get, parentPartitioning, author.get)
+      }
   }
 }
 
