@@ -20,7 +20,7 @@ object WriteCheckpointV2IntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("WriteCheckpointSuite")(
+    suite("WriteCheckpointV2Suite")(
       test("Returns expected Left with DataNotFoundException as related partitioning is not in the database") {
         val checkpointDTO = CheckpointDTO(
           id = UUID.randomUUID(),
