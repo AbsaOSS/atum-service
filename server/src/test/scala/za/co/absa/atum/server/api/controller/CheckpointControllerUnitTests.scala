@@ -17,15 +17,20 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
+import za.co.absa.atum.server.config.SslConfig
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._
 
-object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
+object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
 
   private val checkpointServiceMock = mock(classOf[CheckpointService])
 
@@ -34,6 +39,14 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO3))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
+  private val partitioningId = 1L
+
+  when(checkpointServiceMock.saveCheckpointV2(partitioningId, checkpointDTO1)).thenReturn(ZIO.unit)
+  when(checkpointServiceMock.saveCheckpointV2(partitioningId, checkpointDTO2))
+    .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
+  when(checkpointServiceMock.saveCheckpointV2(partitioningId, checkpointDTO3))
+    .thenReturn(ZIO.fail(ConflictServiceError("boom!")))
 
   private val checkpointServiceMockLayer = ZLayer.succeed(checkpointServiceMock)
 
@@ -54,6 +67,34 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected ConflictServiceError") {
           assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
             failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+      suite("PostCheckpointV2Suite")(
+        test("Returns expected CheckpointDTO") {
+          val host = "testHost"
+          for {
+            _ <- TestSystem.putEnv("HOSTNAME", host)
+            sslConfig <- ZIO.config[SslConfig](SslConfig.config)
+            result <- CheckpointController.postCheckpointV2(partitioningId, checkpointDTO1)
+            protocol = if (sslConfig.enabled) "https" else "http"
+            port = if (sslConfig.enabled) 8443 else 8080
+            path = s"${V2Paths.Partitionings}/$partitioningId/${V2Paths.Checkpoints}/${checkpointDTO1.id}"
+            expectedUri = s"$protocol://$host:$port/$path"
+          } yield assertTrue(
+            result._1.isInstanceOf[SingleSuccessResponse[CheckpointDTO]]
+              && result._1.data == checkpointDTO1
+              && result._2 == expectedUri
+          )
+        },
+        test("Returns expected ConflictServiceError") {
+          assertZIO(CheckpointController.postCheckpointV2(1L, checkpointDTO2).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected ConflictServiceError") {
+          assertZIO(CheckpointController.postCheckpointV2(1L, checkpointDTO3).exit)(
+            failsWithA[ConflictErrorResponse]
           )
         }
       )
