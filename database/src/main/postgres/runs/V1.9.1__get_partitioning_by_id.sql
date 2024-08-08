@@ -68,7 +68,7 @@ BEGIN
         INTO parent_partitioning;
     END IF;
 
-    RETURN (status, status_text, id, partitioning, parent_partitioning, author);
+    RETURN;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
