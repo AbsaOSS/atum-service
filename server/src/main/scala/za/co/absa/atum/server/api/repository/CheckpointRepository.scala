@@ -25,6 +25,6 @@ import zio.macros.accessible
 @accessible
 trait CheckpointRepository {
   def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Unit]
-  def writeCheckpointV2(partitioningId: Long, checkpointDTO: CheckpointDTO): IO[DatabaseError, Unit]
   def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[DatabaseError, CheckpointFromDB]
+  def writeCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[DatabaseError, Unit]
 }

@@ -23,15 +23,14 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 case class CheckpointV2DTO(
-  id: UUID,
-  name: String,
-  author: String,
-  measuredByAtumAgent: Boolean = false,
-  partitioningId: Long,
-  processStartTime: ZonedDateTime,
-  processEndTime: Option[ZonedDateTime],
-  measurements: Set[MeasurementDTO]
-)
+                            id: UUID,
+                            name: String,
+                            author: String,
+                            measuredByAtumAgent: Boolean = false,
+                            processStartTime: ZonedDateTime,
+                            processEndTime: Option[ZonedDateTime],
+                            measurements: Set[MeasurementDTO]
+                          )
 
 object CheckpointV2DTO {
   implicit val decodeCheckpointDTO: Decoder[CheckpointV2DTO] = deriveDecoder

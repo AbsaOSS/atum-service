@@ -32,9 +32,9 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
     )
   }
 
-  override def saveCheckpointV2(partitioningId: Long, checkpointDTO: CheckpointDTO): IO[ServiceError, Unit] = {
+  override def saveCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[ServiceError, Unit] = {
     repositoryCall(
-      checkpointRepository.writeCheckpointV2(partitioningId, checkpointDTO),
+      checkpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO),
       "saveCheckpoint"
     )
   }

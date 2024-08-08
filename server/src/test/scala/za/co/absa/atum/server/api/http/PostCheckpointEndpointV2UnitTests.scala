@@ -23,7 +23,7 @@ import sttp.client3.circe._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.{ConflictErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
@@ -36,20 +36,20 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
-  when(checkpointControllerMock.postCheckpointV2(1L, checkpointDTO1))
-    .thenReturn(ZIO.succeed((SingleSuccessResponse(checkpointDTO1, uuid), "some location")))
-  when(checkpointControllerMock.postCheckpointV2(1L, checkpointDTO2))
+  when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO1))
+    .thenReturn(ZIO.succeed((SingleSuccessResponse(checkpointV2DTO1, uuid), "some location")))
+  when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(checkpointControllerMock.postCheckpointV2(1L, checkpointDTO3))
+  when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
-  when(checkpointControllerMock.postCheckpointV2(1L, checkpointDTO4))
+  when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO4))
     .thenReturn(ZIO.fail(ConflictErrorResponse("error")))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
   private val postCheckpointServerEndpointV2 = postCheckpointEndpointV2
-    .zServerLogic({ case (partitioningId: Long, checkpointDTO: CheckpointDTO) =>
-      CheckpointController.postCheckpointV2(partitioningId, checkpointDTO)
+    .zServerLogic({ case (partitioningId: Long, checkpointV2DTO: CheckpointV2DTO) =>
+      CheckpointController.postCheckpointV2(partitioningId, checkpointV2DTO)
     })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -60,12 +60,12 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
 
     val request = basicRequest
       .post(uri"https://test.com/api/v2/partitionings/1/checkpoints")
-      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
+      .response(asJson[SingleSuccessResponse[CheckpointV2DTO]])
 
     suite("CreateCheckpointEndpointSuite")(
       test("Returns expected CheckpointDTO") {
         val response = request
-          .body(checkpointDTO1)
+          .body(checkpointV2DTO1)
           .send(backendStub)
 
         val body = response.map(_.body)
@@ -73,12 +73,12 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
         val header = response.map(_.header("Location"))
 
         assertZIO(body <&> statusCode <&> header)(
-          equalTo(Right(SingleSuccessResponse(checkpointDTO1, uuid)), StatusCode.Created, Some("some location"))
+          equalTo(Right(SingleSuccessResponse(checkpointV2DTO1, uuid)), StatusCode.Created, Some("some location"))
         )
       },
       test("Returns expected BadRequest") {
         val response = request
-          .body(checkpointDTO2)
+          .body(checkpointV2DTO2)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -87,7 +87,7 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected InternalServerError") {
         val response = request
-          .body(checkpointDTO3)
+          .body(checkpointV2DTO3)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -96,7 +96,7 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected ConflictError") {
         val response = request
-          .body(checkpointDTO4)
+          .body(checkpointV2DTO4)
           .send(backendStub)
 
         val statusCode = response.map(_.code)

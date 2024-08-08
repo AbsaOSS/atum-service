@@ -38,12 +38,12 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val postCheckpointEndpointV2
-  : PublicEndpoint[(Long, CheckpointDTO), ErrorResponse, (SingleSuccessResponse[CheckpointDTO], String), Any] = {
+  : PublicEndpoint[(Long, CheckpointV2DTO), ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String), Any] = {
     apiV2.post
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
-      .in(jsonBody[CheckpointDTO])
+      .in(jsonBody[CheckpointV2DTO])
       .out(statusCode(StatusCode.Created))
-      .out(jsonBody[SingleSuccessResponse[CheckpointDTO]])
+      .out(jsonBody[SingleSuccessResponse[CheckpointV2DTO]])
       .out(header[String]("Location"))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
   }

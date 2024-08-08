@@ -16,6 +16,6 @@
 
 package za.co.absa.atum.server.model
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 
-case class WriteCheckpointV2Args(partitioningId: Long, checkpointDTO: CheckpointDTO)
+case class WriteCheckpointV2Args(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO)

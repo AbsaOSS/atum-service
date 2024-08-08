@@ -34,13 +34,13 @@ class WriteCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieSingleResultFunctionWithStatus[WriteCheckpointV2Args, Unit, Task](args =>
     Seq(
       fr"${args.partitioningId}",
-      fr"${args.checkpointDTO.id}",
-      fr"${args.checkpointDTO.name}",
-      fr"${args.checkpointDTO.processStartTime}",
-      fr"${args.checkpointDTO.processEndTime}",
-      fr"${args.checkpointDTO.measurements.toList.map(_.asJson)}",
-      fr"${args.checkpointDTO.measuredByAtumAgent}",
-      fr"${args.checkpointDTO.author}"
+      fr"${args.checkpointV2DTO.id}",
+      fr"${args.checkpointV2DTO.name}",
+      fr"${args.checkpointV2DTO.processStartTime}",
+      fr"${args.checkpointV2DTO.processEndTime}",
+      fr"${args.checkpointV2DTO.measurements.toList.map(_.asJson)}",
+      fr"${args.checkpointV2DTO.measuredByAtumAgent}",
+      fr"${args.checkpointV2DTO.author}"
     )
   )
     with StandardStatusHandling
