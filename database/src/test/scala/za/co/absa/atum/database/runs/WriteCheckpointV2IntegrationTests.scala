@@ -265,7 +265,7 @@ class WriteCheckpointV2IntegrationTests extends DBTestSuite {
     val uuid = UUID.randomUUID
     val count = table("runs.checkpoints").count()
     function("runs.write_checkpoint_v2")
-      .setParam("i_partitioning", 123456789L)
+      .setParam("i_partitioning", 0L)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Won't go in")
       .setParam("i_process_start_time", now())
