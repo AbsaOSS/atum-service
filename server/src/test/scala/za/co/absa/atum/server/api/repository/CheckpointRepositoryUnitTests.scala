@@ -42,11 +42,11 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val partitioningId = 1L
 
-  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointDTO1)))
+  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO1)))
     .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
-  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointDTO2)))
+  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO2)))
     .thenReturn(ZIO.left(DataConflictException(FunctionStatus(31, "conflict in data"))))
-  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointDTO3)))
+  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO3)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
@@ -75,16 +75,16 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("WriteCheckpointV2Suite")(
         test("Returns an expected Unit") {
           for {
-            result <- CheckpointRepository.writeCheckpointV2(partitioningId, checkpointDTO1)
+            result <- CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO1)
           } yield assertTrue(result == ())
         },
         test("Fails with an expected ConflictDatabaseError") {
-          assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointDTO2).exit)(
+          assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO2).exit)(
             failsWithA[ConflictDatabaseError]
           )
         },
         test("Fails with an expected GeneralDatabaseError") {
-          assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointDTO3).exit)(
+          assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO3).exit)(
             failsWithA[GeneralDatabaseError]
           )
         }

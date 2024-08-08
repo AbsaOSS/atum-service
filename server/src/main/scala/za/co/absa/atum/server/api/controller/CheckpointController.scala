@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.IO
@@ -29,7 +29,7 @@ trait CheckpointController {
 
   def postCheckpointV2(
     partitioningId: Long,
-    checkpointDTO: CheckpointDTO
-  ): IO[ErrorResponse, (SingleSuccessResponse[CheckpointDTO], String)]
+    checkpointV2DTO: CheckpointV2DTO
+  ): IO[ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String)]
 
 }

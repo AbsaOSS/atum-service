@@ -1,7 +1,7 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitionDTO}
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
@@ -21,11 +21,10 @@ object WriteCheckpointV2IntegrationTests extends ConfigProviderTest {
 
     suite("WriteCheckpointV2Suite")(
       test("Returns expected Left with DataNotFoundException as related partitioning is not in the database") {
-        val checkpointDTO = CheckpointDTO(
+        val checkpointV2DTO = CheckpointV2DTO(
           id = UUID.randomUUID(),
           name = "name",
           author = "author",
-          partitioning = Seq(PartitionDTO("key4", "value4")),
           processStartTime = ZonedDateTime.now(),
           processEndTime = Option(ZonedDateTime.now()),
           measurements = Set(
@@ -34,7 +33,7 @@ object WriteCheckpointV2IntegrationTests extends ConfigProviderTest {
         )
         for {
           writeCheckpointV2 <- ZIO.service[WriteCheckpointV2]
-          result <- writeCheckpointV2(WriteCheckpointV2Args(1L, checkpointDTO))
+          result <- writeCheckpointV2(WriteCheckpointV2Args(1L, checkpointV2DTO))
         } yield assertTrue(result == Right(Row(FunctionStatus(11, "Checkpoint created"),())))
       }
     ).provide(
