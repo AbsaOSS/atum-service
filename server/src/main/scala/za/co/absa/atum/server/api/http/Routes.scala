@@ -60,6 +60,13 @@ trait Routes extends Endpoints with ServerOptions {
         createOrUpdateAdditionalDataEndpointV2,
         PartitioningController.createOrUpdateAdditionalDataV2
       ),
+      createServerEndpoint(
+        getPartitioningCheckpointEndpointV2,
+        {
+          case(partitioningId: Long, checkpointId: String) =>
+            CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointId)
+        }
+      ),
       createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
       createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)

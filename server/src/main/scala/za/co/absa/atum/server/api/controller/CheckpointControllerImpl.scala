@@ -50,6 +50,18 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
       )
     } yield (response, uri)
   }
+
+  override def getPartitioningCheckpointV2(
+    partitioningId: Long,
+    checkpointId: String
+  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[CheckpointDTO, CheckpointDTO](
+        checkpointService.getCheckpointV2(partitioningId, checkpointId),
+        identity
+      )
+    )
+  }
 }
 
 object CheckpointControllerImpl {

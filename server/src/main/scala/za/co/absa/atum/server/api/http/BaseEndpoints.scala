@@ -38,6 +38,13 @@ trait BaseEndpoints {
     )
   }
 
+  protected val notFoundErrorOneOfVariant: EndpointOutput.OneOfVariant[NotFoundErrorResponse] = {
+    oneOfVariantFromMatchType(
+      StatusCode.NotFound,
+      jsonBody[NotFoundErrorResponse]
+    )
+  }
+
   private val badRequestOneOfVariant: EndpointOutput.OneOfVariant[BadRequestResponse] = {
     oneOfVariantFromMatchType(
       StatusCode.BadRequest,

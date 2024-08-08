@@ -32,4 +32,9 @@ trait CheckpointController {
     checkpointDTO: CheckpointDTO
   ): IO[ErrorResponse, (SingleSuccessResponse[CheckpointDTO], String)]
 
+  def getPartitioningCheckpointV2(
+    partitioningId: Long,
+    checkpointId: String
+  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]]
+
 }
