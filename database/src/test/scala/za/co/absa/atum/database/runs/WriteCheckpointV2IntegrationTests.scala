@@ -40,6 +40,42 @@ class WriteCheckpointV2IntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
+  private val measurements =
+    """
+      |{
+      |  "{
+      |    \"measure\": {
+      |      \"measureName\": \"count\",
+      |      \"measuredColumns\": []
+      |    },
+      |    \"result\":{
+      |      \"value\":\"3\",
+      |      \"type\":\"int\"
+      |    }
+      |  }",
+      |  "{
+      |    \"measure\": {
+      |      \"measureName\": \"avg\",
+      |      \"measuredColumns\": [\"col1\"]
+      |    },
+      |    \"result\":{
+      |      \"value\":\"3.14\",
+      |      \"type\":\"double\"
+      |    }
+      |  }",
+      |  "{
+      |    \"measure\": {
+      |      \"measureName\": \"avg\",
+      |      \"measuredColumns\": [\"a\",\"b\"]
+      |    },
+      |    \"result\":{
+      |      \"value\":\"2.71\",
+      |      \"type\":\"double\"
+      |    }
+      |  }"
+      |}
+      |""".stripMargin
+
   test("Write new checkpoint without data") {
     val uuid = UUID.randomUUID
     val startTime = OffsetDateTime.parse("1992-08-03T10:00:00Z")
@@ -98,41 +134,7 @@ class WriteCheckpointV2IntegrationTests extends DBTestSuite {
     val user = "Franz Kafka"
     val startTime = OffsetDateTime.parse("1992-08-03T10:00:00Z")
     val endTime = OffsetDateTime.parse("2022-11-05T08:00:00Z")
-    val measurements =
-      """
-        |{
-        |  "{
-        |    \"measure\": {
-        |      \"measureName\": \"count\",
-        |      \"measuredColumns\": []
-        |    },
-        |    \"result\":{
-        |      \"value\":\"3\",
-        |      \"type\":\"int\"
-        |    }
-        |  }",
-        |  "{
-        |    \"measure\": {
-        |      \"measureName\": \"avg\",
-        |      \"measuredColumns\": [\"col1\"]
-        |    },
-        |    \"result\":{
-        |      \"value\":\"3.14\",
-        |      \"type\":\"double\"
-        |    }
-        |  }",
-        |  "{
-        |    \"measure\": {
-        |      \"measureName\": \"avg\",
-        |      \"measuredColumns\": [\"a\",\"b\"]
-        |    },
-        |    \"result\":{
-        |      \"value\":\"2.71\",
-        |      \"type\":\"double\"
-        |    }
-        |  }"
-        |}
-        |""".stripMargin
+
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -265,7 +267,7 @@ class WriteCheckpointV2IntegrationTests extends DBTestSuite {
     val uuid = UUID.randomUUID
     val count = table("runs.checkpoints").count()
     function("runs.write_checkpoint_v2")
-      .setParam("i_partitioning", 0L)
+      .setParam("i_partitioning_id", 0L)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Won't go in")
       .setParam("i_process_start_time", now())
