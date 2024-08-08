@@ -53,7 +53,10 @@ trait BaseRepository {
       GeneralDatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
   }
 
-  protected def dbSingleResultCallWithStatus[R](dbFuncCall: Task[FailedOrRow[R]], operationName: String): IO[DatabaseError, R] = {
+  protected def dbSingleResultCallWithStatus[R](
+    dbFuncCall: Task[FailedOrRow[R]],
+    operationName: String
+  ): IO[DatabaseError, R] = {
     logAndReturn(operationName, dbFuncCall)
       .flatMap {
         case Left(statusException) => ZIO.fail(statusException)

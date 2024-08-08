@@ -24,7 +24,14 @@ import za.co.absa.atum.model.dto.{
   MeasurementDTO,
   PartitioningDTO
 }
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitioningDTO}
+import za.co.absa.atum.model.dto.{
+  CheckpointDTO,
+  CheckpointV2DTO,
+  MeasureDTO,
+  MeasureResultDTO,
+  MeasurementDTO,
+  PartitioningDTO
+}
 import io.circe.{DecodingFailure, Json}
 
 import java.time.ZonedDateTime
@@ -80,8 +87,8 @@ object CheckpointFromDB {
 
   def toCheckpointV2DTO(
 //                         partitioningId: Long,
-                         checkpointQueryResult: CheckpointFromDB
-                       ): Either[DecodingFailure, CheckpointV2DTO] = {
+    checkpointQueryResult: CheckpointFromDB
+  ): Either[DecodingFailure, CheckpointV2DTO] = {
     val measureResultOrErr = checkpointQueryResult.measurementValue.get.as[MeasureResultDTO]
 
     measureResultOrErr match {

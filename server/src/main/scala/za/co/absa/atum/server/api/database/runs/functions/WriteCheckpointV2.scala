@@ -31,18 +31,18 @@ import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbArrayPut
 import doobie.postgres.implicits._
 
 class WriteCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[WriteCheckpointV2Args, Unit, Task](args =>
-    Seq(
-      fr"${args.partitioningId}",
-      fr"${args.checkpointV2DTO.id}",
-      fr"${args.checkpointV2DTO.name}",
-      fr"${args.checkpointV2DTO.processStartTime}",
-      fr"${args.checkpointV2DTO.processEndTime}",
-      fr"${args.checkpointV2DTO.measurements.toList.map(_.asJson)}",
-      fr"${args.checkpointV2DTO.measuredByAtumAgent}",
-      fr"${args.checkpointV2DTO.author}"
+    extends DoobieSingleResultFunctionWithStatus[WriteCheckpointV2Args, Unit, Task](args =>
+      Seq(
+        fr"${args.partitioningId}",
+        fr"${args.checkpointV2DTO.id}",
+        fr"${args.checkpointV2DTO.name}",
+        fr"${args.checkpointV2DTO.processStartTime}",
+        fr"${args.checkpointV2DTO.processEndTime}",
+        fr"${args.checkpointV2DTO.measurements.toList.map(_.asJson)}",
+        fr"${args.checkpointV2DTO.measuredByAtumAgent}",
+        fr"${args.checkpointV2DTO.author}"
+      )
     )
-  )
     with StandardStatusHandling
 
 object WriteCheckpointV2 {
@@ -52,4 +52,3 @@ object WriteCheckpointV2 {
     } yield new WriteCheckpointV2()(Runs, dbProvider.dbEngine)
   }
 }
-

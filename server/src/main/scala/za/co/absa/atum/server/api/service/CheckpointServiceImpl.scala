@@ -45,7 +45,8 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
         checkpointRepository.getCheckpointV2(partitioningId, checkpointId),
         "getCheckpoint"
       )
-      checkpointDTO <- ZIO.fromEither(CheckpointFromDB.toCheckpointV2DTO(partitioningId, checkpointFromDB))
+      checkpointDTO <- ZIO
+        .fromEither(CheckpointFromDB.toCheckpointV2DTO(checkpointFromDB))
         .mapError(error => GeneralServiceError(error.getMessage))
     } yield checkpointDTO
 

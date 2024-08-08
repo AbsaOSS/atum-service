@@ -66,9 +66,8 @@ trait Routes extends Endpoints with ServerOptions {
         SingleSuccessResponse[CheckpointV2DTO]
       ](
         getPartitioningCheckpointEndpointV2,
-        {
-          case(partitioningId: Long, checkpointId: String) =>
-            CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointId)
+        { case (partitioningId: Long, checkpointId: String) =>
+          CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointId)
         }
       ),
       createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
