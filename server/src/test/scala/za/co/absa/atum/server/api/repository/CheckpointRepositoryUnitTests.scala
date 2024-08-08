@@ -45,7 +45,7 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO1)))
     .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO2)))
-    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(31, "conflict in data"))))
+    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Partitioning not found"))))
   when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO3)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
