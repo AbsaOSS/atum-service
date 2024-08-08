@@ -30,8 +30,8 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
       |   "keys": ["keyX", "keyY", "keyZ"],
       |   "keysToValues": {
       |     "keyX": "value1",
-      |     "keyZ": "value3",
-      |     "keyY": "value2"
+      |     "keyY": "value2",
+      |     "keyZ": "value3"
       |   }
       |}
       |""".stripMargin
@@ -48,6 +48,20 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
       |    "key3": "valueZ",
       |    "key4": "valueA"
       |  }
+      |}
+      |""".stripMargin
+  )
+
+  private val expectedPartitioning1 = JsonBString(
+    """
+      |{
+      |   "version": 1,
+      |   "keys": ["keyX", "keyY", "keyZ"],
+      |   "keysToValues": {
+      |     "keyX": "value1",
+      |     "keyZ": "value3",
+      |     "keyY": "value2"
+      |   }
       |}
       |""".stripMargin
   )
@@ -81,7 +95,7 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
 
     table("runs.partitionings").where(add("id_partitioning", fkPartitioning1)) { partitioningResult =>
       val row = partitioningResult.next()
-      assert(row.getJsonB("partitioning").contains(partitioning1))
+      assert(row.getJsonB("partitioning").contains(expectedPartitioning1))
       assert(row.getString("created_by").contains("Joseph"))
     }
   }

@@ -62,7 +62,7 @@ BEGIN
         status_text := 'Partitioning not found';
     ELSE
         -- Retrieving parent partitioning
-        SELECT CPINE.partitioning
+        SELECT CPINE.id_partitioning
         FROM runs.create_partitioning_if_not_exists(partitioning, author, NULL) AS
             CPINE
         INTO parent_partitioning;
