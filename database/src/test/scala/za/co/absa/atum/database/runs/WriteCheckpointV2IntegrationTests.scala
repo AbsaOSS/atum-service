@@ -264,7 +264,7 @@ class WriteCheckpointV2IntegrationTests extends DBTestSuite {
   test("Partitioning of the checkpoint does not exist") {
     val uuid = UUID.randomUUID
     val count = table("runs.checkpoints").count()
-    function("runs.write_checkpoint")
+    function("runs.write_checkpoint_v2")
       .setParam("i_partitioning", 123456789L)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Won't go in")
