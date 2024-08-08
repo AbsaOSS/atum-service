@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.model.{CheckpointFromDB, GetCheckpointV2Args}
@@ -26,6 +25,9 @@ import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
+import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import doobie.postgres.implicits._
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
 class GetCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[GetCheckpointV2Args, CheckpointFromDB, Task](input =>

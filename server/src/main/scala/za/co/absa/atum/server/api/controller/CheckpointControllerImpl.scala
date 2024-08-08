@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.ErrorResponse
@@ -54,9 +54,9 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
   override def getPartitioningCheckpointV2(
     partitioningId: Long,
     checkpointId: String
-  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]] = {
+  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointV2DTO]] = {
     mapToSingleSuccessResponse(
-      serviceCall[CheckpointDTO, CheckpointDTO](
+      serviceCall[CheckpointV2DTO, CheckpointV2DTO](
         checkpointService.getCheckpointV2(partitioningId, checkpointId),
         identity
       )

@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import zio.IO
 import zio.macros.accessible
@@ -25,5 +25,5 @@ import zio.macros.accessible
 trait CheckpointService {
   def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
   def saveCheckpointV2(partitioningId: Long, checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
-  def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[ServiceError, CheckpointDTO]
+  def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[ServiceError, CheckpointV2DTO]
 }

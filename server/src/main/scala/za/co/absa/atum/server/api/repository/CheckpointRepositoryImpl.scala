@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.repository
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.database.runs.functions.{GetCheckpointV2, WriteCheckpoint, WriteCheckpointV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.WriteCheckpointV2Args
+import za.co.absa.atum.server.model.{CheckpointFromDB, GetCheckpointV2Args, WriteCheckpointV2Args}
 import zio._
 import zio.interop.catz.asyncInstance
 
@@ -41,8 +41,8 @@ class CheckpointRepositoryImpl(
     )
   }
 
-  override def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[DatabaseError, CheckpointDTO] = {
-    dbSingleResultCallWithStatus(getCheckpointV2Fn(partitioningId, checkpointId), "getCheckpoint")
+  override def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[DatabaseError, CheckpointFromDB] = {
+    dbSingleResultCallWithStatus(getCheckpointV2Fn(GetCheckpointV2Args(partitioningId, checkpointId)), "getCheckpoint")
   }
 }
 

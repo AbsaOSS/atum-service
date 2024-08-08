@@ -16,7 +16,14 @@
 
 package za.co.absa.atum.server.model
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitioningDTO}
+import za.co.absa.atum.model.dto.{
+  CheckpointDTO,
+  CheckpointV2DTO,
+  MeasureDTO,
+  MeasureResultDTO,
+  MeasurementDTO,
+  PartitioningDTO
+}
 import io.circe.{DecodingFailure, Json}
 
 import java.time.ZonedDateTime
@@ -54,6 +61,38 @@ object CheckpointFromDB {
             author = checkpointQueryResult.author.get,
             measuredByAtumAgent = checkpointQueryResult.measuredByAtumAgent.get,
             partitioning = partitioning,
+            processStartTime = checkpointQueryResult.checkpointStartTime.get,
+            processEndTime = checkpointQueryResult.checkpointEndTime,
+            measurements = Set(
+              MeasurementDTO(
+                measure = MeasureDTO(
+                  measureName = checkpointQueryResult.measureName.get,
+                  measuredColumns = checkpointQueryResult.measuredColumns.get
+                ),
+                result = measureResult
+              )
+            )
+          )
+        )
+    }
+  }
+
+  def toCheckpointV2DTO(
+    partitioningId: Long,
+    checkpointQueryResult: CheckpointFromDB
+  ): Either[DecodingFailure, CheckpointV2DTO] = {
+    val measureResultOrErr = checkpointQueryResult.measurementValue.get.as[MeasureResultDTO]
+
+    measureResultOrErr match {
+      case Left(err) => Left(err)
+      case Right(measureResult) =>
+        Right(
+          CheckpointV2DTO(
+            id = checkpointQueryResult.idCheckpoint.get,
+            name = checkpointQueryResult.checkpointName.get,
+            author = checkpointQueryResult.author.get,
+            measuredByAtumAgent = checkpointQueryResult.measuredByAtumAgent.get,
+            partitioningId = partitioningId,
             processStartTime = checkpointQueryResult.checkpointStartTime.get,
             processEndTime = checkpointQueryResult.checkpointEndTime,
             measurements = Set(

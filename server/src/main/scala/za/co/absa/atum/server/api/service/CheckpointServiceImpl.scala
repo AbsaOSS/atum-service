@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
 import za.co.absa.atum.server.api.repository.CheckpointRepository
@@ -39,14 +39,13 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
     )
   }
 
-  override def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[ServiceError, CheckpointDTO] = {
+  override def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[ServiceError, CheckpointV2DTO] = {
     for {
       checkpointFromDB <- repositoryCall(
         checkpointRepository.getCheckpointV2(partitioningId, checkpointId),
         "getCheckpoint"
       )
-      // why CheckpointDTO contains partitioningDTO???
-      checkpointDTO <- ZIO.fromEither(CheckpointFromDB.toCheckpointDTO(checkpointFromDB))
+      checkpointDTO <- ZIO.fromEither(CheckpointFromDB.toCheckpointV2DTO(partitioningId, checkpointFromDB))
         .mapError(error => GeneralServiceError(error.getMessage))
     } yield checkpointDTO
 
