@@ -261,4 +261,25 @@ class WriteCheckpointV2IntegrationTests extends DBTestSuite {
     }
   }
 
+  test("Partitioning of the checkpoint does not exist") {
+    val uuid = UUID.randomUUID
+    val count = table("runs.checkpoints").count()
+    function("runs.write_checkpoint")
+      .setParam("i_partitioning", 123456789L)
+      .setParam("i_id_checkpoint", uuid)
+      .setParam("i_checkpoint_name", "Won't go in")
+      .setParam("i_process_start_time", now())
+      .setParamNull("i_process_end_time")
+      .setParamNull("i_measurements")
+      .setParam("i_measured_by_atum_agent", true)
+      .setParam("i_by_user", "J. Robert Oppenheimer")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(32))
+        assert(row.getString("status_text").contains("Partitioning not found"))
+      }
+    assert(table("runs.checkpoints").count() == count)
+  }
+
 }

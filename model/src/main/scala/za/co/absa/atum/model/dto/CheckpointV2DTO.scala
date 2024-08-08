@@ -27,7 +27,6 @@ case class CheckpointV2DTO(
                             name: String,
                             author: String,
                             measuredByAtumAgent: Boolean = false,
-//                            partitioningId: Long,
                             processStartTime: ZonedDateTime,
                             processEndTime: Option[ZonedDateTime],
                             measurements: Set[MeasurementDTO]
