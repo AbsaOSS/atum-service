@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.server.api.exception
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
-import za.co.absa.atum.server.api.exception.ServiceError
-import zio.IO
-import zio.macros.accessible
+sealed trait ServiceError extends AppError
 
-@accessible
-trait CheckpointService {
-  def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
-  def saveCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[ServiceError, Unit]
+object ServiceError {
+
+  case class GeneralServiceError(message: String) extends ServiceError
+  case class ConflictServiceError(message: String) extends ServiceError
+
 }

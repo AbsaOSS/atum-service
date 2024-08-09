@@ -37,7 +37,6 @@ object WriteCheckpointIntegrationTests extends ConfigProviderTest {
 
     suite("WriteCheckpointSuite")(
       test("Returns expected Left with DataNotFoundException as related partitioning is not in the database") {
-
         val checkpointDTO = CheckpointDTO(
           id = UUID.randomUUID(),
           name = "name",

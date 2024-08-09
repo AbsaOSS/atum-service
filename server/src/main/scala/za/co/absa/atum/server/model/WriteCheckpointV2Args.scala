@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.server.model
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
-import za.co.absa.atum.server.api.exception.ServiceError
-import zio.IO
-import zio.macros.accessible
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 
-@accessible
-trait CheckpointService {
-  def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
-  def saveCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[ServiceError, Unit]
-}
+case class WriteCheckpointV2Args(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO)

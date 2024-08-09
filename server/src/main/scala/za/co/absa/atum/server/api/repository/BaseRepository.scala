@@ -17,7 +17,8 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.db.fadb.exceptions.StatusException
+import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.db.fadb.exceptions.{DataConflictException, StatusException}
 import za.co.absa.db.fadb.status.{FailedOrRow, FailedOrRows}
 import zio._
 
@@ -32,7 +33,7 @@ trait BaseRepository {
         case Left(statusException: StatusException) =>
           ZIO.logError(
             s"Exception caused by operation: '$operationName': " +
-              s"(${statusException.status.statusCode}), ${statusException.status.statusText}"
+              s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
           )
         case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
       }
@@ -40,12 +41,15 @@ trait BaseRepository {
 
   private def defaultErrorHandler(operationName: String): PartialFunction[Throwable, DatabaseError] = {
     case statusException: StatusException =>
-      DatabaseError(
-        s"Exception caused by operation: '$operationName': " +
-          s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
-      )
+      val message = s"Exception caused by operation: '$operationName': " +
+        s"(${statusException.status.statusCode}) ${statusException.status.statusText}"
+
+      statusException match {
+        case DataConflictException(_) => ConflictDatabaseError(message)
+        case _ => GeneralDatabaseError(message)
+      }
     case error =>
-      DatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
+      GeneralDatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
   }
 
   def dbSingleResultCallWithStatus[R](dbFuncCall: Task[FailedOrRow[R]], operationName: String): IO[DatabaseError, R] = {

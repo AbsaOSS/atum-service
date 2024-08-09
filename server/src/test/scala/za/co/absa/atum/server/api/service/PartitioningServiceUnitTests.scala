@@ -18,7 +18,9 @@ package za.co.absa.atum.server.api.service
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
+import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.PartitioningRepository
 import zio.test.Assertion.failsWithA
 import zio.test._
@@ -28,32 +30,32 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
 
   private val partitioningRepositoryMock = mock(classOf[PartitioningRepository])
 
-  when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO1)).thenReturn(ZIO.succeed(()))
+  when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO1)).thenReturn(ZIO.unit)
   when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
-    .thenReturn(ZIO.fail(DatabaseError("error in data")))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("error in data")))
   when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO3))
-    .thenReturn(ZIO.fail(DatabaseError("boom!")))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1)).thenReturn(ZIO.succeed(()))
+  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1)).thenReturn(ZIO.unit)
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
-    .thenReturn(ZIO.fail(DatabaseError("error in AD data")))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("error in AD data")))
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO3))
-    .thenReturn(ZIO.fail(DatabaseError("boom!")))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningMeasures(partitioningDTO1))
     .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
   when(partitioningRepositoryMock.getPartitioningMeasures(partitioningDTO2))
-    .thenReturn(ZIO.fail(DatabaseError("boom!")))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO1))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO2))
-    .thenReturn(ZIO.fail(DatabaseError("boom!")))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO1))
     .thenReturn(ZIO.succeed(Seq(checkpointFromDB1, checkpointFromDB2)))
   when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO2))
-    .thenReturn(ZIO.fail(DatabaseError("boom!")))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
@@ -70,7 +72,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO2).exit
           } yield assertTrue(
-            result == Exit.fail(ServiceError("Failed to perform 'createPartitioningIfNotExists': error in data"))
+            result == Exit.fail(GeneralServiceError("Failed to perform 'createPartitioningIfNotExists': error in data"))
           )
         },
         test("Returns expected ServiceError") {
@@ -89,7 +91,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
           } yield assertTrue(
-            result == Exit.fail(ServiceError("Failed to perform 'createOrUpdateAdditionalData': error in AD data"))
+            result == Exit.fail(GeneralServiceError("Failed to perform 'createOrUpdateAdditionalData': error in AD data"))
           )
         },
         test("Returns expected ServiceError") {

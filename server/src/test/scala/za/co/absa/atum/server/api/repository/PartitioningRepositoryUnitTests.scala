@@ -20,6 +20,7 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.db.fadb.exceptions.ErrorInDataException
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
@@ -63,7 +64,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2))
       )
     )
-  when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
+  when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val getPartitioningMeasuresMockLayer = ZLayer.succeed(getPartitioningMeasuresMock)
 
@@ -72,7 +73,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   when(getPartitioningAdditionalDataMock.apply(partitioningDTO1))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), AdditionalDataFromDB(Some("key"), Some("value"))))))
-  when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
+  when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
 
@@ -82,7 +83,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO1))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), checkpointFromDB1))))
   when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO3)).thenReturn(ZIO.right(Seq.empty))
-  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.fail(DatabaseError("boom!")))
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val getPartitioningCheckpointsMockLayer = ZLayer.succeed(getPartitioningCheckpointsMock)
 
@@ -100,7 +101,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO2).exit
           } yield assertTrue(
             result == Exit.fail(
-              DatabaseError(
+              GeneralDatabaseError(
                 "Exception caused by operation: 'createPartitioningIfNotExists': (50) error in Partitioning data"
               )
             )
@@ -123,7 +124,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
           } yield assertTrue(
             result == Exit.fail(
-              DatabaseError("Exception caused by operation: 'createOrUpdateAdditionalData': (50) error in AD data")
+              GeneralDatabaseError("Exception caused by operation: 'createOrUpdateAdditionalData': (50) error in AD data")
             )
           )
         },
