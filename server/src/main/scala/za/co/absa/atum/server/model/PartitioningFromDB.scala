@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.exception
+package za.co.absa.atum.server.model
 
-sealed trait ServiceError extends AppError
+import za.co.absa.atum.model.dto.PartitioningDTO
 
-object ServiceError {
-
-  case class GeneralServiceError(message: String) extends ServiceError
-  case class ConflictServiceError(message: String) extends ServiceError
-  case class NotFoundException(message: String) extends ServiceError
-
-}
+case class PartitioningFromDB (
+  id: Option[Long],
+  partitioning: Option[PartitioningDTO],
+  parentPartitioning: Option[PartitioningDTO],
+  author: Option[String]
+)

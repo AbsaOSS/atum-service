@@ -28,6 +28,7 @@ trait BaseService {
       .mapError {
         case ConflictDatabaseError(message) => ConflictServiceError(createMessage(operationName, message))
         case GeneralDatabaseError(message) => GeneralServiceError(createMessage(operationName, message))
+        case NotFoundDatabaseError(message) => NotFoundException(createMessage(operationName, message))
       }
   }
 
