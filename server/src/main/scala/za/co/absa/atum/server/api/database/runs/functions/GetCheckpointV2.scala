@@ -36,7 +36,20 @@ class GetCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
         fr"${input.checkpointId}"
       )
     )
-    with StandardStatusHandling
+    with StandardStatusHandling {
+
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq(
+    "o_id_checkpoint",
+    "o_checkpoint_name",
+    "o_author",
+    "o_measured_by_atum_agent",
+    "o_measure_name",
+    "o_measured_columns",
+    "o_measurement_value",
+    "o_checkpoint_start_time",
+    "o_checkpoint_end_time"
+  )
+}
 
 object GetCheckpointV2 {
   val layer: URLayer[PostgresDatabaseProvider, GetCheckpointV2] = ZLayer {
