@@ -36,6 +36,8 @@ import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
 
+import java.util.UUID
+
 trait Routes extends Endpoints with ServerOptions {
 
   private def createAllServerRoutes(httpMonitoringConfig: HttpMonitoringConfig): HttpRoutes[HttpEnv.F] = {
@@ -61,12 +63,12 @@ trait Routes extends Endpoints with ServerOptions {
         PartitioningController.createOrUpdateAdditionalDataV2
       ),
       createServerEndpoint[
-        (Long, String),
+        (Long, UUID),
         ErrorResponse,
         SingleSuccessResponse[CheckpointV2DTO]
       ](
         getPartitioningCheckpointEndpointV2,
-        { case (partitioningId: Long, checkpointId: String) =>
+        { case (partitioningId: Long, checkpointId: UUID) =>
           CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointId)
         }
       ),

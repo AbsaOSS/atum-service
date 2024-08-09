@@ -25,6 +25,8 @@ import za.co.absa.atum.server.model.{CheckpointItemFromDB, GetCheckpointV2Args, 
 import zio._
 import zio.interop.catz.asyncInstance
 
+import java.util.UUID
+
 class CheckpointRepositoryImpl(
   writeCheckpointFn: WriteCheckpoint,
   writeCheckpointV2Fn: WriteCheckpointV2,
@@ -43,7 +45,7 @@ class CheckpointRepositoryImpl(
     )
   }
 
-  override def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[DatabaseError, CheckpointV2DTO] = {
+  override def getCheckpointV2(partitioningId: Long, checkpointId: UUID): IO[DatabaseError, CheckpointV2DTO] = {
     dbMultipleResultCallWithAggregatedStatus(
       getCheckpointV2Fn(GetCheckpointV2Args(partitioningId, checkpointId)),
       "getCheckpoint"

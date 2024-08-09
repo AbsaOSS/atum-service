@@ -27,6 +27,8 @@ import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, Singl
 import sttp.tapir.{PublicEndpoint, endpoint}
 import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
 
+import java.util.UUID
+
 trait Endpoints extends BaseEndpoints {
 
   protected val createCheckpointEndpointV1: PublicEndpoint[CheckpointDTO, ErrorResponse, CheckpointDTO, Any] = {
@@ -76,9 +78,9 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val getPartitioningCheckpointEndpointV2
-    : PublicEndpoint[(Long, String), ErrorResponse, SingleSuccessResponse[CheckpointV2DTO], Any] = {
+    : PublicEndpoint[(Long, UUID), ErrorResponse, SingleSuccessResponse[CheckpointV2DTO], Any] = {
     apiV2.get
-      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints / path[String]("checkpointId"))
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints / path[UUID]("checkpointId"))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[CheckpointV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)

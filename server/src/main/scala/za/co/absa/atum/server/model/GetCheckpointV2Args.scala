@@ -16,7 +16,9 @@
 
 package za.co.absa.atum.server.model
 
+import java.util.UUID
+
 case class GetCheckpointV2Args(
   partitioningId: Long,
-  checkpointId: String
+  checkpointId: UUID
 )

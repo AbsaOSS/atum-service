@@ -23,6 +23,8 @@ import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 
+import java.util.UUID
+
 class CheckpointControllerImpl(checkpointService: CheckpointService) extends CheckpointController with BaseController {
 
   override def createCheckpointV1(
@@ -53,7 +55,7 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
 
   override def getPartitioningCheckpointV2(
     partitioningId: Long,
-    checkpointId: String
+    checkpointId: UUID
   ): IO[ErrorResponse, SingleSuccessResponse[CheckpointV2DTO]] = {
     mapToSingleSuccessResponse(
       serviceCall[CheckpointV2DTO, CheckpointV2DTO](

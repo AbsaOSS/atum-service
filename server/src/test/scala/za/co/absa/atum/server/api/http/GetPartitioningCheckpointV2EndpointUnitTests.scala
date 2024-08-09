@@ -16,19 +16,21 @@ import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO, ZLayer}
 
+import java.util.UUID
+
 object GetPartitioningCheckpointV2EndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
-  when(checkpointControllerMock.getPartitioningCheckpointV2(1L, "abc"))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointV2DTO1, uuid)))
-  when(checkpointControllerMock.getPartitioningCheckpointV2(1L, "def"))
+  when(checkpointControllerMock.getPartitioningCheckpointV2(1L, uuid1))
+    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointV2DTO1, uuid1)))
+  when(checkpointControllerMock.getPartitioningCheckpointV2(1L, uuid2))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("not found checkpoint for a given ID")))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
   private val getPartitioningCheckpointServerEndpointV2 = getPartitioningCheckpointEndpointV2
-    .zServerLogic({ case (partitioningId: Long, checkpointId: String) =>
+    .zServerLogic({ case (partitioningId: Long, checkpointId: UUID) =>
       CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointId)
     })
 
@@ -42,7 +44,7 @@ object GetPartitioningCheckpointV2EndpointUnitTests extends ZIOSpecDefault with 
     suite("GetPartitioningCheckpointV2EndpointSuite")(
       test("Returns an expected CheckpointV2DTO"){
         val request = basicRequest
-          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints/abc")
+          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints/$uuid1")
           .response(asJson[SingleSuccessResponse[CheckpointV2DTO]])
 
         val response = request
@@ -52,12 +54,12 @@ object GetPartitioningCheckpointV2EndpointUnitTests extends ZIOSpecDefault with 
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(
-          equalTo(Right(SingleSuccessResponse(checkpointV2DTO1, uuid)), StatusCode.Ok)
+          equalTo(Right(SingleSuccessResponse(checkpointV2DTO1, uuid1)), StatusCode.Ok)
         )
       },
       test("Returns expected 404 when checkpoint for a given ID doesn't exist"){
         val request = basicRequest
-          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints/def")
+          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints/$uuid2")
           .response(asJson[SingleSuccessResponse[CheckpointV2DTO]])
 
         val response = request

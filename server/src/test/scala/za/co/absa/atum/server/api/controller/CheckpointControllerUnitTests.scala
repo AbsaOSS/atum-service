@@ -24,7 +24,7 @@ import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.config.SslConfig
-import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.test.Assertion.failsWithA
 import zio._
@@ -47,6 +47,13 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
     .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpointV2(partitioningId, checkpointV2DTO3))
     .thenReturn(ZIO.fail(ConflictServiceError("boom!")))
+
+  when(checkpointServiceMock.getCheckpointV2(partitioningId, checkpointV2DTO1.id))
+    .thenReturn(ZIO.succeed(checkpointV2DTO1))
+  when(checkpointServiceMock.getCheckpointV2(partitioningId, checkpointV2DTO2.id))
+    .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
+  when(checkpointServiceMock.getCheckpointV2(partitioningId, checkpointV2DTO3.id))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   private val checkpointServiceMockLayer = ZLayer.succeed(checkpointServiceMock)
 
@@ -95,6 +102,23 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
         test("Returns expected ConflictServiceError") {
           assertZIO(CheckpointController.postCheckpointV2(1L, checkpointV2DTO3).exit)(
             failsWithA[ConflictErrorResponse]
+          )
+        }
+      ),
+      suite("GetPartitioningCheckpointV2Suite")(
+        test("Returns expected CheckpointDTO") {
+          for {
+            result <- CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointV2DTO1.id)
+          } yield assertTrue(result.data == checkpointV2DTO1)
+        },
+        test("Returns expected NotFoundErrorResponse"){
+          assertZIO(CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointV2DTO2.id).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        },
+        test("Returns expected InternalServerErrorResponse"){
+          assertZIO(CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointV2DTO3.id).exit)(
+            failsWithA[InternalServerErrorResponse]
           )
         }
       )

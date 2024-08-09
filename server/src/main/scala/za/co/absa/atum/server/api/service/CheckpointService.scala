@@ -21,9 +21,11 @@ import za.co.absa.atum.server.api.exception.ServiceError
 import zio.IO
 import zio.macros.accessible
 
+import java.util.UUID
+
 @accessible
 trait CheckpointService {
   def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
-  def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[ServiceError, CheckpointV2DTO]
+  def getCheckpointV2(partitioningId: Long, checkpointId: UUID): IO[ServiceError, CheckpointV2DTO]
   def saveCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[ServiceError, Unit]
 }
