@@ -70,36 +70,4 @@ object CheckpointFromDB {
     }
   }
 
-  def toCheckpointV2DTO(
-//                         partitioningId: Long,
-                         checkpointQueryResult: CheckpointFromDB
-                       ): Either[DecodingFailure, CheckpointV2DTO] = {
-    val measureResultOrErr = checkpointQueryResult.measurementValue.get.as[MeasureResultDTO]
-
-    measureResultOrErr match {
-      case Left(err) => Left(err)
-      case Right(measureResult) =>
-        Right(
-          CheckpointV2DTO(
-            id = checkpointQueryResult.idCheckpoint.get,
-            name = checkpointQueryResult.checkpointName.get,
-            author = checkpointQueryResult.author.get,
-            measuredByAtumAgent = checkpointQueryResult.measuredByAtumAgent.get,
-//            partitioningId = partitioningId,
-            processStartTime = checkpointQueryResult.checkpointStartTime.get,
-            processEndTime = checkpointQueryResult.checkpointEndTime,
-            measurements = Set(
-              MeasurementDTO(
-                measure = MeasureDTO(
-                  measureName = checkpointQueryResult.measureName.get,
-                  measuredColumns = checkpointQueryResult.measuredColumns.get
-                ),
-                result = measureResult
-              )
-            )
-          )
-        )
-    }
-  }
-
 }
