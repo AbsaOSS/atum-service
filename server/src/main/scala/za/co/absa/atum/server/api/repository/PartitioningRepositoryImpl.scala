@@ -65,7 +65,9 @@ class PartitioningRepositoryImpl(
       })
   }
 
-  override def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, InitialAdditionalDataDTO] = {
+  override def getPartitioningAdditionalData(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, InitialAdditionalDataDTO] = {
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAdditionalDataFn(partitioning),
       "getPartitioningAdditionalData"

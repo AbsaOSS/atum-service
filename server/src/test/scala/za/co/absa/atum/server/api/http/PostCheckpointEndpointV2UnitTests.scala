@@ -23,7 +23,7 @@ import sttp.client3.circe._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
 import za.co.absa.atum.server.model.{ConflictErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
@@ -37,7 +37,7 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
   when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO1))
-    .thenReturn(ZIO.succeed((SingleSuccessResponse(checkpointV2DTO1, uuid), "some location")))
+    .thenReturn(ZIO.succeed((SingleSuccessResponse(checkpointV2DTO1, uuid1), "some location")))
   when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
   when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO3))
@@ -73,7 +73,7 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
         val header = response.map(_.header("Location"))
 
         assertZIO(body <&> statusCode <&> header)(
-          equalTo(Right(SingleSuccessResponse(checkpointV2DTO1, uuid)), StatusCode.Created, Some("some location"))
+          equalTo(Right(SingleSuccessResponse(checkpointV2DTO1, uuid1)), StatusCode.Created, Some("some location"))
         )
       },
       test("Returns expected BadRequest") {

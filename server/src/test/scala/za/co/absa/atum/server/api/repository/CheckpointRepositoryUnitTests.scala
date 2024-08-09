@@ -17,12 +17,12 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV2}
+import za.co.absa.atum.server.api.database.runs.functions.{GetCheckpointV2, WriteCheckpoint, WriteCheckpointV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError._
-import za.co.absa.atum.server.model.WriteCheckpointV2Args
-import za.co.absa.db.fadb.exceptions.DataConflictException
+import za.co.absa.atum.server.model.{GetCheckpointV2Args, WriteCheckpointV2Args}
+import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
@@ -34,6 +34,7 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
   private val writeCheckpointMockV2: WriteCheckpointV2 = mock(classOf[WriteCheckpointV2])
+  private val getCheckpointMockV2: GetCheckpointV2 = mock(classOf[GetCheckpointV2])
 
   when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(writeCheckpointMock.apply(checkpointDTO2))
@@ -49,8 +50,16 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO3)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
+  when(getCheckpointMockV2.apply(GetCheckpointV2Args(partitioningId, checkpointV2DTO1.id)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(checkpointItemFromDB1)))))
+  when(getCheckpointMockV2.apply(GetCheckpointV2Args(partitioningId, checkpointV2DTO2.id)))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getCheckpointMockV2.apply(GetCheckpointV2Args(partitioningId, checkpointV2DTO3.id)))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
+
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
   private val writeCheckpointV2MockLayer = ZLayer.succeed(writeCheckpointMockV2)
+  private val getCheckpointV2MockLayer = ZLayer.succeed(getCheckpointMockV2)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -88,8 +97,30 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[GeneralDatabaseError]
           )
         }
+      ),
+      suite("GetCheckpointV2Suite")(
+        test("Returns an expected Right with CheckpointV2DTO") {
+          for {
+            result <- CheckpointRepository.getCheckpointV2(partitioningId, checkpointV2DTO1.id)
+          } yield assertTrue(result == checkpointV2DTO1)
+        },
+        test("Fails with an expected NotFoundDatabaseError") {
+          assertZIO(CheckpointRepository.getCheckpointV2(partitioningId, checkpointV2DTO2.id).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns an expected DatabaseError") {
+          assertZIO(CheckpointRepository.getCheckpointV2(partitioningId, checkpointV2DTO3.id).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
       )
-    ).provide(CheckpointRepositoryImpl.layer, writeCheckpointMockLayer, writeCheckpointV2MockLayer)
+    ).provide(
+      CheckpointRepositoryImpl.layer,
+      writeCheckpointMockLayer,
+      writeCheckpointV2MockLayer,
+      getCheckpointV2MockLayer
+    )
 
   }
 

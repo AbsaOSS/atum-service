@@ -22,6 +22,8 @@ import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.IO
 import zio.macros.accessible
 
+import java.util.UUID
+
 @accessible
 trait CheckpointController {
 
@@ -31,5 +33,10 @@ trait CheckpointController {
     partitioningId: Long,
     checkpointV2DTO: CheckpointV2DTO
   ): IO[ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String)]
+
+  def getPartitioningCheckpointV2(
+    partitioningId: Long,
+    checkpointId: UUID
+  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointV2DTO]]
 
 }

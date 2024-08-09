@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.exception
+package za.co.absa.atum.server.model
 
-sealed trait ServiceError extends AppError
+import io.circe.Json
 
-object ServiceError {
+import java.time.ZonedDateTime
+import java.util.UUID
 
-  case class GeneralServiceError(message: String) extends ServiceError
-  case class ConflictServiceError(message: String) extends ServiceError
-  case class NotFoundServiceError(message: String) extends ServiceError
-
-}
+case class CheckpointItemFromDB(
+  idCheckpoint: UUID,
+  checkpointName: String,
+  author: String,
+  measuredByAtumAgent: Boolean,
+  measureName: String,
+  measuredColumns: Seq[String],
+  measurementValue: Json, // JSON representation of `MeasurementDTO`
+  checkpointStartTime: ZonedDateTime,
+  checkpointEndTime: Option[ZonedDateTime]
+)

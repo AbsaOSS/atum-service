@@ -18,17 +18,18 @@ package za.co.absa.atum.server.api
 
 import io.circe.parser
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, MeasureFromDB}
 
 import java.time.ZonedDateTime
 import java.util.UUID
 import MeasureResultDTO.TypedValue
+import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.server.model.MeasureFromDB
 
 trait TestData {
 
-  protected val uuid: UUID = UUID.randomUUID()
+  protected val uuid1: UUID = UUID.randomUUID()
+  protected val uuid2: UUID = UUID.randomUUID()
 
   // Partitioning DTO
   protected val partitioningDTO1: PartitioningDTO = Seq(
@@ -271,6 +272,18 @@ trait TestData {
       idCheckpoint = Some(checkpointDTO3.id),
       checkpointStartTime = Some(checkpointDTO3.processStartTime)
     )
+
+  protected val checkpointItemFromDB1: CheckpointItemFromDB = CheckpointItemFromDB(
+    idCheckpoint = checkpointV2DTO1.id,
+    checkpointName = checkpointV2DTO1.name,
+    author = checkpointV2DTO1.author,
+    measuredByAtumAgent = checkpointV2DTO1.measuredByAtumAgent,
+    measureName = checkpointV2DTO1.measurements.head.measure.measureName,
+    measuredColumns = checkpointV2DTO1.measurements.head.measure.measuredColumns,
+    measurementValue = checkpointV2DTO1.measurements.head.result.asJson,
+    checkpointStartTime = checkpointV2DTO1.processStartTime,
+    checkpointEndTime = checkpointV2DTO1.processEndTime
+  )
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))

@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.exception
+package za.co.absa.atum.server.model
 
-sealed trait ServiceError extends AppError
+import java.util.UUID
 
-object ServiceError {
-
-  case class GeneralServiceError(message: String) extends ServiceError
-  case class ConflictServiceError(message: String) extends ServiceError
-  case class NotFoundServiceError(message: String) extends ServiceError
-
-}
+case class GetCheckpointV2Args(
+  partitioningId: Long,
+  checkpointId: UUID
+)

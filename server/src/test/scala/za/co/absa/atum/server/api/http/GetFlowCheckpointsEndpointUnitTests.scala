@@ -37,7 +37,7 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with Endpoints
   private val flowControllerMock = mock(classOf[FlowController])
 
   when(flowControllerMock.getFlowCheckpointsV2(checkpointQueryDTO1))
-    .thenReturn(ZIO.succeed(MultiSuccessResponse(Seq(checkpointDTO1, checkpointDTO2), uuid)))
+    .thenReturn(ZIO.succeed(MultiSuccessResponse(Seq(checkpointDTO1, checkpointDTO2), uuid1)))
   when(flowControllerMock.getFlowCheckpointsV2(checkpointQueryDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
   when(flowControllerMock.getFlowCheckpointsV2(checkpointQueryDTO3))
@@ -67,7 +67,7 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with Endpoints
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
 
-        val expectedResult = MultiSuccessResponse(Seq(checkpointDTO1, checkpointDTO2), uuid)
+        val expectedResult = MultiSuccessResponse(Seq(checkpointDTO1, checkpointDTO2), uuid1)
 
         assertZIO(body <&> statusCode)(equalTo(Right(expectedResult), StatusCode.Ok))
       },

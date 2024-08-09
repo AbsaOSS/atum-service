@@ -42,6 +42,11 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
   when(checkpointRepositoryMock.writeCheckpointV2(partitioningId, checkpointV2DTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(checkpointRepositoryMock.getCheckpointV2(partitioningId, checkpointV2DTO1.id))
+    .thenReturn(ZIO.succeed(checkpointV2DTO1))
+  when(checkpointRepositoryMock.getCheckpointV2(partitioningId, checkpointV2DTO2.id))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("not found")))
+
   private val checkpointRepositoryMockLayer = ZLayer.succeed(checkpointRepositoryMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -78,6 +83,18 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Fails with an expected GeneralServiceError") {
           assertZIO(CheckpointService.saveCheckpointV2(partitioningId, checkpointV2DTO3).exit)(
             failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("GetCheckpointV2Suite")(
+        test("Returns an expected CheckpointV2DTO") {
+          for {
+            result <- CheckpointService.getCheckpointV2(partitioningId, checkpointV2DTO1.id)
+          } yield assertTrue(result == checkpointV2DTO1)
+        },
+        test("Fails with an expected NotFoundServiceError") {
+          assertZIO(CheckpointService.getCheckpointV2(partitioningId, checkpointV2DTO2.id).exit)(
+            failsWithA[NotFoundServiceError]
           )
         }
       )
