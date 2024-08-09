@@ -18,17 +18,17 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoint_v2(
     IN i_checkpoint_id             UUID,
     OUT status                     INTEGER,
     OUT status_text                TEXT,
-    OUT o_id_checkpoint              UUID,
-    OUT o_checkpoint_name            TEXT,
-    OUT o_author                     TEXT,
-    OUT o_measured_by_atum_agent     BOOLEAN,
-    OUT o_measure_name               TEXT,
-    OUT o_measured_columns           TEXT[],
-    OUT o_measurement_value          JSONB,
-    OUT o_checkpoint_start_time      TIMESTAMP WITH TIME ZONE,
-    OUT o_checkpoint_end_time        TIMESTAMP WITH TIME ZONE
+    OUT id_checkpoint              UUID,
+    OUT checkpoint_name            TEXT,
+    OUT author                     TEXT,
+    OUT measured_by_atum_agent     BOOLEAN,
+    OUT measure_name               TEXT,
+    OUT measured_columns           TEXT[],
+    OUT measurement_value          JSONB,
+    OUT checkpoint_start_time      TIMESTAMP WITH TIME ZONE,
+    OUT checkpoint_end_time        TIMESTAMP WITH TIME ZONE
 )
-    RETURNS record AS
+    RETURNS SETOF record AS
 $$
     -------------------------------------------------------------------------------
 --
@@ -65,41 +65,30 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT
-        11 AS status,
-        'Ok' AS status_text,
-        C.id_checkpoint,
-        C.checkpoint_name,
-        C.created_by AS author,
-        C.measured_by_atum_agent,
-        md.measure_name,
-        md.measured_columns,
-        M.measurement_value,
-        C.process_start_time AS checkpoint_start_time,
-        C.process_end_time AS checkpoint_end_time
-    INTO
-        status,
-        status_text,
-        o_id_checkpoint,
-        o_checkpoint_name,
-        o_author,
-        o_measured_by_atum_agent,
-        o_measure_name,
-        o_measured_columns,
-        o_measurement_value,
-        o_checkpoint_start_time,
-        o_checkpoint_end_time
-    FROM
-        runs.checkpoints C
-            JOIN
-        runs.measurements M ON C.id_checkpoint = M.fk_checkpoint
-            JOIN
-        runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
-    WHERE
-        C.fk_partitioning = i_partitioning_id
-      AND
-        C.id_checkpoint = i_checkpoint_id
-    LIMIT 1;
+    RETURN QUERY
+        SELECT
+            11 AS status,
+            'Ok' AS status_text,
+            C.id_checkpoint,
+            C.checkpoint_name,
+            C.created_by AS author,
+            C.measured_by_atum_agent,
+            md.measure_name,
+            md.measured_columns,
+            M.measurement_value,
+            C.process_start_time AS checkpoint_start_time,
+            C.process_end_time AS checkpoint_end_time
+        FROM
+            runs.checkpoints C
+                JOIN
+            runs.measurements M ON C.id_checkpoint = M.fk_checkpoint
+                JOIN
+            runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
+        WHERE
+            C.fk_partitioning = i_partitioning_id
+          AND
+            C.id_checkpoint = i_checkpoint_id
+        ;
 
     IF NOT FOUND THEN
         status := 41;

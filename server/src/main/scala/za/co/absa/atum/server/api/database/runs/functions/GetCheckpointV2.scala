@@ -19,35 +19,36 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.{CheckpointFromDB, GetCheckpointV2Args}
+import za.co.absa.atum.server.model.{CheckpointItemFromDB, GetCheckpointV2Args}
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
-import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 
 class GetCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[GetCheckpointV2Args, CheckpointFromDB, Task](input =>
+    extends DoobieMultipleResultFunctionWithAggStatus[GetCheckpointV2Args, Option[CheckpointItemFromDB], Task](input =>
       Seq(
         fr"${input.partitioningId}",
         fr"${input.checkpointId}"
       )
     )
-    with StandardStatusHandling {
+    with StandardStatusHandling with ByFirstRowStatusAggregator {
 
   override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq(
-    "o_id_checkpoint",
-    "o_checkpoint_name",
-    "o_author",
-    "o_measured_by_atum_agent",
-    "o_measure_name",
-    "o_measured_columns",
-    "o_measurement_value",
-    "o_checkpoint_start_time",
-    "o_checkpoint_end_time"
+    "id_checkpoint",
+    "checkpoint_name",
+    "author",
+    "measured_by_atum_agent",
+    "measure_name",
+    "measured_columns",
+    "measurement_value",
+    "checkpoint_start_time",
+    "checkpoint_end_time"
   )
 }
 

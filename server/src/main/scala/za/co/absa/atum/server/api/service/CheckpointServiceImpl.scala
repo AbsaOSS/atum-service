@@ -18,9 +18,7 @@ package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
 import za.co.absa.atum.server.api.repository.CheckpointRepository
-import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 
 class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends CheckpointService with BaseService {
@@ -40,17 +38,12 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
   }
 
   override def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[ServiceError, CheckpointV2DTO] = {
-    for {
-      checkpointFromDB <- repositoryCall(
-        checkpointRepository.getCheckpointV2(partitioningId, checkpointId),
-        "getCheckpoint"
-      )
-      checkpointDTO <- ZIO
-        .fromEither(CheckpointFromDB.toCheckpointV2DTO(checkpointFromDB))
-        .mapError(error => GeneralServiceError(error.getMessage))
-    } yield checkpointDTO
-
+    repositoryCall(
+      checkpointRepository.getCheckpointV2(partitioningId, checkpointId),
+      "getCheckpoint"
+    )
   }
+
 }
 
 object CheckpointServiceImpl {

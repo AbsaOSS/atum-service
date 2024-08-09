@@ -16,12 +16,13 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import io.circe.DecodingFailure
 import za.co.absa.atum.server.api.database.runs.functions.{GetCheckpointV2, WriteCheckpoint, WriteCheckpointV2}
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
-import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV2}
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO, MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.{CheckpointFromDB, GetCheckpointV2Args, WriteCheckpointV2Args}
+import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
+import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
+import za.co.absa.atum.server.model.{CheckpointItemFromDB, GetCheckpointV2Args, WriteCheckpointV2Args}
 import zio._
 import zio.interop.catz.asyncInstance
 
@@ -43,9 +44,60 @@ class CheckpointRepositoryImpl(
     )
   }
 
-  override def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[DatabaseError, CheckpointFromDB] = {
-    dbSingleResultCallWithStatus(getCheckpointV2Fn(GetCheckpointV2Args(partitioningId, checkpointId)), "getCheckpoint")
+  override def getCheckpointV2(partitioningId: Long, checkpointId: String): IO[DatabaseError, CheckpointV2DTO] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getCheckpointV2Fn(GetCheckpointV2Args(partitioningId, checkpointId)),
+      "getCheckpoint"
+    )
+      .map(_.flatten)
+      .flatMap { checkpointItems =>
+        ZIO
+          .fromEither(checkpointItemsToCheckpointV2DTO(checkpointItems))
+          .mapError(error => GeneralDatabaseError(error.getMessage))
+      }
   }
+
+  private def checkpointItemsToCheckpointV2DTO(
+    checkpointItems: Seq[CheckpointItemFromDB]
+  ): Either[DecodingFailure, CheckpointV2DTO] = {
+    val measurementsOrErr = checkpointItems.map { checkpointItem =>
+      val measureResultOrErr = checkpointItem.measurementValue.as[MeasureResultDTO]
+
+      measureResultOrErr match {
+        case Left(err) => Left(err)
+        case Right(measureResult) =>
+          Right(
+            MeasurementDTO(
+              measure = MeasureDTO(
+                measureName = checkpointItem.measureName,
+                measuredColumns = checkpointItem.measuredColumns
+              ),
+              result = measureResult
+            )
+          )
+      }
+    }
+
+    val errors = measurementsOrErr.collect { case Left(err) => err }
+
+    if (errors.nonEmpty) {
+      Left(errors.head)
+    } else {
+      val measurements = measurementsOrErr.flatMap(_.toOption).toSet
+      Right(
+        CheckpointV2DTO(
+          id = checkpointItems.head.idCheckpoint,
+          name = checkpointItems.head.checkpointName,
+          author = checkpointItems.head.author,
+          measuredByAtumAgent = checkpointItems.head.measuredByAtumAgent,
+          processStartTime = checkpointItems.head.checkpointStartTime,
+          processEndTime = checkpointItems.head.checkpointEndTime,
+          measurements = measurements
+        )
+      )
+    }
+  }
+
 }
 
 object CheckpointRepositoryImpl {
