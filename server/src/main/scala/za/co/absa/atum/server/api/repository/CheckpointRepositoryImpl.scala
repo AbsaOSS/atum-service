@@ -21,7 +21,6 @@ import za.co.absa.atum.server.api.database.runs.functions.{GetCheckpointV2, Writ
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO, MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
-import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
 import za.co.absa.atum.server.model.{CheckpointItemFromDB, GetCheckpointV2Args, WriteCheckpointV2Args}
 import zio._
 import zio.interop.catz.asyncInstance
@@ -61,20 +60,14 @@ class CheckpointRepositoryImpl(
     checkpointItems: Seq[CheckpointItemFromDB]
   ): Either[DecodingFailure, CheckpointV2DTO] = {
     val measurementsOrErr = checkpointItems.map { checkpointItem =>
-      val measureResultOrErr = checkpointItem.measurementValue.as[MeasureResultDTO]
-
-      measureResultOrErr match {
-        case Left(err) => Left(err)
-        case Right(measureResult) =>
-          Right(
-            MeasurementDTO(
-              measure = MeasureDTO(
-                measureName = checkpointItem.measureName,
-                measuredColumns = checkpointItem.measuredColumns
-              ),
-              result = measureResult
-            )
-          )
+      checkpointItem.measurementValue.as[MeasureResultDTO].map { measureResult =>
+        MeasurementDTO(
+          measure = MeasureDTO(
+            measureName = checkpointItem.measureName,
+            measuredColumns = checkpointItem.measuredColumns
+          ),
+          result = measureResult
+        )
       }
     }
 
@@ -83,7 +76,7 @@ class CheckpointRepositoryImpl(
     if (errors.nonEmpty) {
       Left(errors.head)
     } else {
-      val measurements = measurementsOrErr.flatMap(_.toOption).toSet
+      val measurements = measurementsOrErr.collect { case Right(measurement) => measurement }.toSet
       Right(
         CheckpointV2DTO(
           id = checkpointItems.head.idCheckpoint,
