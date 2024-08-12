@@ -23,21 +23,7 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
 
   private val fncGetPartitioningById = "runs.get_partitioning_by_id"
 
-  private val partitioning1 = JsonBString(
-    """
-      |{
-      |   "version": 1,
-      |   "keys": ["keyX", "keyY", "keyZ"],
-      |   "keysToValues": {
-      |     "keyX": "value1",
-      |     "keyY": "value2",
-      |     "keyZ": "value3"
-      |   }
-      |}
-      |""".stripMargin
-  )
-
-  private val partitioning2 = JsonBString(
+  private val partitioning = JsonBString(
     """
       |{
       |  "version": 1,
@@ -52,7 +38,7 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
-  private val expectedPartitioning1 = JsonBString(
+  private val expectedPartitioning = JsonBString(
     """
       |{
       |   "version": 1,
@@ -68,17 +54,16 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
 
   test("Partitioning retrieved successfully") {
     table("runs.partitionings").insert(
-      add("partitioning", partitioning1)
+      add("partitioning", partitioning)
         .add("created_by", "Joseph")
     )
 
-    table("runs.partitionings").insert(
-      add("partitioning", partitioning2)
-        .add("created_by", "Daniel")
-    )
+//    table("runs.partitionings").insert(
+//      add("partitioning", partitioning)
+//        .add("created_by", "Daniel")
+//    )
 
-    val fkPartitioning1: Long = table("runs.partitionings").fieldValue("partitioning", partitioning1, "id_partitioning").get.get
-    val fkPartitioning2: Long = table("runs.partitionings").fieldValue("partitioning", partitioning2, "id_partitioning").get.get
+    val fkPartitioning1: Long = table("runs.partitionings").fieldValue("partitioning", partitioning, "id_partitioning").get.get
 
     val result = function(fncGetPartitioningById)
       .setParam("i_id", fkPartitioning1)
@@ -88,14 +73,13 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
         assert(row.getInt("status").contains(11))
         assert(row.getString("status_text").contains("OK"))
         assert(row.getLong("id").contains(fkPartitioning1))
-        assert(row.getJsonB("partitioning").contains(partitioning1))
-        assert(row.getJsonB("parent_partitioning").isDefined)
+        assert(row.getJsonB("partitioning").contains(expectedPartitioning))
         assert(row.getString("author").contains("Joseph"))
       }
 
     table("runs.partitionings").where(add("id_partitioning", fkPartitioning1)) { partitioningResult =>
       val row = partitioningResult.next()
-      assert(row.getJsonB("partitioning").contains(expectedPartitioning1))
+      assert(row.getJsonB("partitioning").contains(expectedPartitioning))
       assert(row.getString("created_by").contains("Joseph"))
     }
   }
@@ -111,7 +95,6 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
         assert(row.getInt("status").contains(41))
         assert(row.getString("status_text").contains("Partitioning not found"))
         assert(row.getJsonB("partitioning").isEmpty)
-        assert(row.getJsonB("parent_partitioning").isEmpty)
         assert(row.getString("author").isEmpty)
       }
   }

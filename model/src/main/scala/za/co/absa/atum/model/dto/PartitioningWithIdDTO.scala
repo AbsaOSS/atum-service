@@ -22,7 +22,6 @@ import io.circe.{Decoder, Encoder}
 case class PartitioningWithIdDTO(
   id: Long,
   partitioning: PartitioningDTO,
-  parentPartitioning: Option[PartitioningDTO],
   author: String
 )
 

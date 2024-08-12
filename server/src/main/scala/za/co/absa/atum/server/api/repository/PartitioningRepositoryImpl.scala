@@ -72,8 +72,8 @@ class PartitioningRepositoryImpl(
 
   override def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
     dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
-      .map {case PartitioningFromDB(id, partitioning, parentPartitioning, author) =>
-        PartitioningWithIdDTO(id.get, partitioning.get, parentPartitioning, author.get)
+      .map {case PartitioningFromDB(id, partitioning, author) =>
+        PartitioningWithIdDTO(id.get, partitioning.get, author.get)
       }
   }
 }

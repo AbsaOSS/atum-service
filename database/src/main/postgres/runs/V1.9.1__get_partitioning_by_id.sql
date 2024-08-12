@@ -20,7 +20,6 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_by_id(
     OUT status_text         TEXT,
     OUT id                  BIGINT,
     OUT partitioning        JSONB,
-    OUT parent_partitioning JSONB,
     OUT author              TEXT
 ) RETURNS RECORD AS
 $$
@@ -36,7 +35,6 @@ $$
 --      status              - Status code
 --      status_text         - Status message
 --      partitioning        - Partitioning value to be returned
---      parent_partitioning - Parent partitioning value to be returned
 --      author              - Author of the partitioning
 
 -- Status codes:
@@ -45,27 +43,21 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _fk_parent_partitioning BIGINT;
 BEGIN
-    status := 11;
-    status_text := 'OK';
 
     SELECT P.partitioning,
            P.id_partitioning,
            P.created_by
-    INTO get_partitioning_by_id.partitioning, id, author
     FROM runs.partitionings AS P
-    WHERE P.id_partitioning = i_id;
+    WHERE P.id_partitioning = i_id
+    INTO get_partitioning_by_id.partitioning, id, author;
 
-    IF partitioning IS NULL THEN
+    IF FOUND THEN
+        status := 11;
+        status_text := 'OK';
+    ELSE
         status := 41;
         status_text := 'Partitioning not found';
-    ELSE
-        -- Retrieving parent partitioning
-        SELECT CPINE.id_partitioning
-        FROM runs.create_partitioning_if_not_exists(partitioning, author, NULL) AS
-            CPINE
-        INTO parent_partitioning;
     END IF;
 
     RETURN;
