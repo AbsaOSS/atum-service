@@ -43,25 +43,28 @@ $$
 -- Returns:
 --      status                  - Status code
 --      status_text             - Status message
---      o_id_checkpoint           - ID of the checkpoint
---      o_checkpoint_name         - Name of the checkpoint
---      o_author                  - Author of the checkpoint
---      o_measuredByAtumAgent     - Flag indicating whether the checkpoint was measured by ATUM agent
---      o_measure_name            - Name of the measure
---      o_measure_columns         - Columns of the measure
---      o_measurement_value       - Value of the measurement
---      o_checkpoint_start_time   - Time of the checkpoint
---      o_checkpoint_end_time     - End time of the checkpoint computation
+--      id_checkpoint           - ID of the checkpoint
+--      checkpoint_name         - Name of the checkpoint
+--      author                  - Author of the checkpoint
+--      measuredByAtumAgent     - Flag indicating whether the checkpoint was measured by ATUM agent
+--      measure_name            - Name of the measure
+--      measure_columns         - Columns of the measure
+--      measurement_value       - Value of the measurement
+--      checkpoint_start_time   - Time of the checkpoint
+--      checkpoint_end_time     - End time of the checkpoint computation
 --
 -- Status codes:
 --      11 - OK
---      41 - Partitioning or Checkpoint not found
+--      41 - Partitioning not found
+--      42 - Checkpoint not found
 --
 -------------------------------------------------------------------------------
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id) THEN
+    PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id;
+    IF NOT FOUND THEN
         status := 41;
         status_text := 'Partitioning not found';
+        RETURN NEXT;
         RETURN;
     END IF;
 
@@ -91,8 +94,10 @@ BEGIN
         ;
 
     IF NOT FOUND THEN
-        status := 41;
+        status := 42;
         status_text := 'Checkpoint not found';
+        RETURN NEXT;
+        RETURN;
     END IF;
 END;
 $$

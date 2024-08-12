@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.repository
 
 import io.circe.DecodingFailure
-import za.co.absa.atum.server.api.database.runs.functions.{GetCheckpointV2, WriteCheckpoint, WriteCheckpointV2}
+import za.co.absa.atum.server.api.database.runs.functions.{GetPartitioningCheckpointV2, WriteCheckpoint, WriteCheckpointV2}
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO, MeasureDTO, MeasureResultDTO, MeasurementDTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
@@ -30,7 +30,7 @@ import java.util.UUID
 class CheckpointRepositoryImpl(
   writeCheckpointFn: WriteCheckpoint,
   writeCheckpointV2Fn: WriteCheckpointV2,
-  getCheckpointV2Fn: GetCheckpointV2
+  getCheckpointV2Fn: GetPartitioningCheckpointV2
 ) extends CheckpointRepository
     with BaseRepository {
 
@@ -96,11 +96,11 @@ class CheckpointRepositoryImpl(
 }
 
 object CheckpointRepositoryImpl {
-  val layer: URLayer[WriteCheckpoint with WriteCheckpointV2 with GetCheckpointV2, CheckpointRepository] = ZLayer {
+  val layer: URLayer[WriteCheckpoint with WriteCheckpointV2 with GetPartitioningCheckpointV2, CheckpointRepository] = ZLayer {
     for {
       writeCheckpoint <- ZIO.service[WriteCheckpoint]
       writeCheckpointV2 <- ZIO.service[WriteCheckpointV2]
-      getCheckpointV2 <- ZIO.service[GetCheckpointV2]
+      getCheckpointV2 <- ZIO.service[GetPartitioningCheckpointV2]
     } yield new CheckpointRepositoryImpl(writeCheckpoint, writeCheckpointV2, getCheckpointV2)
   }
 }

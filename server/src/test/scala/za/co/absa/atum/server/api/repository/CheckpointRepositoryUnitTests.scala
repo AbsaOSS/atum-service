@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.server.api.database.runs.functions.{GetCheckpointV2, WriteCheckpoint, WriteCheckpointV2}
+import za.co.absa.atum.server.api.database.runs.functions.{GetPartitioningCheckpointV2, WriteCheckpoint, WriteCheckpointV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError._
@@ -34,7 +34,7 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
   private val writeCheckpointMockV2: WriteCheckpointV2 = mock(classOf[WriteCheckpointV2])
-  private val getCheckpointMockV2: GetCheckpointV2 = mock(classOf[GetCheckpointV2])
+  private val getCheckpointMockV2: GetPartitioningCheckpointV2 = mock(classOf[GetPartitioningCheckpointV2])
 
   when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(writeCheckpointMock.apply(checkpointDTO2))

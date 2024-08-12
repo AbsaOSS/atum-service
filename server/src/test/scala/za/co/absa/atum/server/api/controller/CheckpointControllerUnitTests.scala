@@ -17,17 +17,15 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
-import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.config.SslConfig
-import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
-import zio.test.Assertion.failsWithA
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import zio._
+import zio.test.Assertion.failsWithA
 import zio.test._
 
 object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
@@ -79,19 +77,13 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
       ),
       suite("PostCheckpointV2Suite")(
         test("Returns expected CheckpointDTO") {
-          val host = "testHost"
           for {
-            _ <- TestSystem.putEnv("HOSTNAME", host)
-            sslConfig <- ZIO.config[SslConfig](SslConfig.config)
             result <- CheckpointController.postCheckpointV2(partitioningId, checkpointV2DTO1)
-            protocol = if (sslConfig.enabled) "https" else "http"
-            port = if (sslConfig.enabled) 8443 else 8080
-            path = s"${V2Paths.Partitionings}/$partitioningId/${V2Paths.Checkpoints}/${checkpointV2DTO1.id}"
-            expectedUri = s"$protocol://$host:$port/$path"
+            path = s"/api/v2/partitionings/$partitioningId/checkpoints/${checkpointV2DTO1.id}"
           } yield assertTrue(
             result._1.isInstanceOf[SingleSuccessResponse[CheckpointV2DTO]]
               && result._1.data == checkpointV2DTO1
-              && result._2 == expectedUri
+              && result._2 == path
           )
         },
         test("Returns expected ConflictServiceError") {
@@ -111,12 +103,12 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
             result <- CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointV2DTO1.id)
           } yield assertTrue(result.data == checkpointV2DTO1)
         },
-        test("Returns expected NotFoundErrorResponse"){
+        test("Returns expected NotFoundErrorResponse") {
           assertZIO(CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointV2DTO2.id).exit)(
             failsWithA[NotFoundErrorResponse]
           )
         },
-        test("Returns expected InternalServerErrorResponse"){
+        test("Returns expected InternalServerErrorResponse") {
           assertZIO(CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointV2DTO3.id).exit)(
             failsWithA[InternalServerErrorResponse]
           )

@@ -47,7 +47,7 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
           _ => checkpointV2DTO
         )
       )
-      uri <- createResourceUri(
+      uri <- createV2RootAnchoredResourcePath(
         Seq(V2Paths.Partitionings, partitioningId.toString, V2Paths.Checkpoints, checkpointV2DTO.id.toString)
       )
     } yield (response, uri)

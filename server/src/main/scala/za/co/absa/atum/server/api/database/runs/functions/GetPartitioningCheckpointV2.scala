@@ -30,7 +30,7 @@ import doobie.postgres.implicits._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 
-class GetCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+class GetPartitioningCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetCheckpointV2Args, Option[CheckpointItemFromDB], Task](input =>
       Seq(
         fr"${input.partitioningId}",
@@ -52,10 +52,10 @@ class GetCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   )
 }
 
-object GetCheckpointV2 {
-  val layer: URLayer[PostgresDatabaseProvider, GetCheckpointV2] = ZLayer {
+object GetPartitioningCheckpointV2 {
+  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpointV2] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new GetCheckpointV2()(Runs, dbProvider.dbEngine)
+    } yield new GetPartitioningCheckpointV2()(Runs, dbProvider.dbEngine)
   }
 }
