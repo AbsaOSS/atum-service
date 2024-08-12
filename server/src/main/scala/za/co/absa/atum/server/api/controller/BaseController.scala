@@ -19,8 +19,8 @@ package za.co.absa.atum.server.api.controller
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.http.ApiPaths
-import za.co.absa.atum.server.model.{ConflictErrorResponse, ErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model._
+import za.co.absa.atum.server.model.SuccessResponse._
 import zio._
 
 trait BaseController {
