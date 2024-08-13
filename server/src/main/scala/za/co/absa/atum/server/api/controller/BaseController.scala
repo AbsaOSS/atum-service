@@ -55,14 +55,16 @@ trait BaseController {
 
   protected def createResourceUri(parts: Seq[String]): IO[ErrorResponse, String] = {
     for {
-      hostname <- System.env("HOSTNAME")
+      hostname <- System
+        .env("HOSTNAME")
         // fails the request if the hostname is not found, we need to make sure that the hostname is always available
         .orElseFail(InternalServerErrorResponse("Failed to get hostname"))
         .flatMap {
           case Some(value) => ZIO.succeed(value)
           case None => ZIO.fail(InternalServerErrorResponse("Failed to get hostname"))
         }
-      sslConfig <- ZIO.config[SslConfig](SslConfig.config)
+      sslConfig <- ZIO
+        .config[SslConfig](SslConfig.config)
         .orElseFail(InternalServerErrorResponse("Failed to get SSL config"))
     } yield {
       val protocol = if (sslConfig.enabled) "https" else "http"

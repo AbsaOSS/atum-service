@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.model.dto
 
-
 import io.circe.generic.semiauto._
 import io.circe._
 

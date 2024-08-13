@@ -26,4 +26,3 @@ object PaginatedResult {
   case class ResultNoMore[R](data: Seq[R]) extends PaginatedResult[R]
 
 }
-
