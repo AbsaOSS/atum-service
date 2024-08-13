@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.database.runs.functions
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.model.GetCheckpointV2Args
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpointV2.GetPartitioningCheckpointV2Args
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio.interop.catz.asyncInstance
@@ -35,7 +35,7 @@ object GetPartitioningCheckpointV2IntegrationTests extends ConfigProviderTest {
       test("Returns expected sequence of Checkpoints with existing partitioning") {
         for {
           getPartitioningCheckpointV2Fn <- ZIO.service[GetPartitioningCheckpointV2]
-          result <- getPartitioningCheckpointV2Fn(GetCheckpointV2Args(1L, UUID.randomUUID()))
+          result <- getPartitioningCheckpointV2Fn(GetPartitioningCheckpointV2Args(1L, UUID.randomUUID()))
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(

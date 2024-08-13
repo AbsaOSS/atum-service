@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.{CheckpointItemFromDB, GetCheckpointV2Args}
+import za.co.absa.atum.server.model.CheckpointItemFromDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
@@ -27,11 +27,14 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpointV2.GetPartitioningCheckpointV2Args
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 
+import java.util.UUID
+
 class GetPartitioningCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[GetCheckpointV2Args, Option[CheckpointItemFromDB], Task](input =>
+    extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointV2Args, Option[CheckpointItemFromDB], Task](input =>
       Seq(
         fr"${input.partitioningId}",
         fr"${input.checkpointId}"
@@ -53,6 +56,8 @@ class GetPartitioningCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEng
 }
 
 object GetPartitioningCheckpointV2 {
+  case class GetPartitioningCheckpointV2Args(partitioningId: Long, checkpointId: UUID)
+
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpointV2] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
