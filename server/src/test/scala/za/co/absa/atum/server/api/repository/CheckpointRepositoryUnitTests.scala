@@ -20,8 +20,8 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointV2Args
 import za.co.absa.atum.server.api.exception.DatabaseError._
-import za.co.absa.atum.server.model.WriteCheckpointV2Args
 import za.co.absa.db.fadb.exceptions.DataConflictException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
