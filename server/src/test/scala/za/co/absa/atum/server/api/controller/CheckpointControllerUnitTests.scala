@@ -72,19 +72,12 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
       ),
       suite("PostCheckpointV2Suite")(
         test("Returns expected CheckpointDTO") {
-          val host = "testHost"
           for {
-            _ <- TestSystem.putEnv("HOSTNAME", host)
-            sslConfig <- ZIO.config[SslConfig](SslConfig.config)
             result <- CheckpointController.postCheckpointV2(partitioningId, checkpointV2DTO1)
-            protocol = if (sslConfig.enabled) "https" else "http"
-            port = if (sslConfig.enabled) 8443 else 8080
-            path = s"${V2Paths.Partitionings}/$partitioningId/${V2Paths.Checkpoints}/${checkpointV2DTO1.id}"
-            expectedUri = s"$protocol://$host:$port/$path"
           } yield assertTrue(
             result._1.isInstanceOf[SingleSuccessResponse[CheckpointV2DTO]]
               && result._1.data == checkpointV2DTO1
-              && result._2 == expectedUri
+              && result._2 == s"/api/v2/partitionings/$partitioningId/checkpoints/${checkpointV2DTO1.id}"
           )
         },
         test("Returns expected ConflictServiceError") {
