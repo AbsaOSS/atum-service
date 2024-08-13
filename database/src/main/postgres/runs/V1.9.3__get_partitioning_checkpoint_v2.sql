@@ -90,8 +90,7 @@ BEGIN
         WHERE
             C.fk_partitioning = i_partitioning_id
           AND
-            C.id_checkpoint = i_checkpoint_id
-        ;
+            C.id_checkpoint = i_checkpoint_id;
 
     IF NOT FOUND THEN
         status := 42;
@@ -102,7 +101,7 @@ BEGIN
 END;
 $$
 
-    LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 ALTER FUNCTION runs.get_partitioning_checkpoint_v2(BIGINT, UUID) OWNER TO atum_owner;
 
