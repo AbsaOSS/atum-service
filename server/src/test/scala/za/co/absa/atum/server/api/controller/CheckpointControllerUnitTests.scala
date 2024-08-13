@@ -79,11 +79,10 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
         test("Returns expected CheckpointDTO") {
           for {
             result <- CheckpointController.postCheckpointV2(partitioningId, checkpointV2DTO1)
-            path = s"/api/v2/partitionings/$partitioningId/checkpoints/${checkpointV2DTO1.id}"
           } yield assertTrue(
             result._1.isInstanceOf[SingleSuccessResponse[CheckpointV2DTO]]
               && result._1.data == checkpointV2DTO1
-              && result._2 == path
+              && result._2 == s"/api/v2/partitionings/$partitioningId/checkpoints/${checkpointV2DTO1.id}"
           )
         },
         test("Returns expected ConflictServiceError") {
