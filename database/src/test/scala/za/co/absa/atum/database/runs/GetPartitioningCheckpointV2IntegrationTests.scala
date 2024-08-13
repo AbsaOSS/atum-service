@@ -23,15 +23,15 @@ import za.co.absa.balta.classes.setter.CustomDBType
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class GetPartitioningCheckpointV2IntegrationTests extends DBTestSuite{
+class GetPartitioningCheckpointV2IntegrationTests extends DBTestSuite {
 
   private val fncGetPartitioningCheckpointV2 = "runs.get_partitioning_checkpoint_v2"
 
   case class MeasuredDetails(
-                              measureName: String,
-                              measureColumns: Seq[String],
-                              measurementValue: JsonBString
-                            )
+    measureName: String,
+    measureColumns: Seq[String],
+    measurementValue: JsonBString
+  )
 
   private val partitioning1 = JsonBString(
     """
@@ -80,7 +80,9 @@ class GetPartitioningCheckpointV2IntegrationTests extends DBTestSuite{
     )
 
     val fkPartitioning1: Long = table("runs.partitionings")
-      .fieldValue("partitioning", partitioning1, "id_partitioning").get.get
+      .fieldValue("partitioning", partitioning1, "id_partitioning")
+      .get
+      .get
 
     table("runs.checkpoints").insert(
       add("id_checkpoint", uuid)
@@ -132,7 +134,9 @@ class GetPartitioningCheckpointV2IntegrationTests extends DBTestSuite{
     )
 
     val fkPartitioning2: Long = table("runs.partitionings")
-      .fieldValue("partitioning", partitioning2, "id_partitioning").get.get
+      .fieldValue("partitioning", partitioning2, "id_partitioning")
+      .get
+      .get
 
     function(fncGetPartitioningCheckpointV2)
       .setParam("i_partitioning_id", fkPartitioning2)
