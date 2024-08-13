@@ -90,6 +90,7 @@ trait Routes extends Endpoints with ServerOptions {
       createPartitioningEndpointV2,
       createOrUpdateAdditionalDataEndpointV2,
       getPartitioningCheckpointsEndpointV2,
+      getPartitioningCheckpointEndpointV2,
       getFlowCheckpointsEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
