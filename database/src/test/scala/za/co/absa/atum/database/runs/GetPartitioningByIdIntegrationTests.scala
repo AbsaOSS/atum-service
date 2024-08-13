@@ -41,13 +41,14 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
   private val expectedPartitioning = JsonBString(
     """
       |{
-      |   "version": 1,
-      |   "keys": ["keyX", "keyY", "keyZ"],
-      |   "keysToValues": {
-      |     "keyX": "value1",
-      |     "keyZ": "value3",
-      |     "keyY": "value2"
-      |   }
+      |  "version": 1,
+      |  "keys": ["key1", "key3", "key2", "key4"],
+      |  "keysToValues": {
+      |    "key1": "valueX",
+      |    "key2": "valueY",
+      |    "key3": "valueZ",
+      |    "key4": "valueA"
+      |  }
       |}
       |""".stripMargin
   )
@@ -57,11 +58,6 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
       add("partitioning", partitioning)
         .add("created_by", "Joseph")
     )
-
-//    table("runs.partitionings").insert(
-//      add("partitioning", partitioning)
-//        .add("created_by", "Daniel")
-//    )
 
     val fkPartitioning1: Long = table("runs.partitionings").fieldValue("partitioning", partitioning, "id_partitioning").get.get
 
