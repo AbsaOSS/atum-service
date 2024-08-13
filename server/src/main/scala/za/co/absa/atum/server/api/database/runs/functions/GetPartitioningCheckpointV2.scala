@@ -34,13 +34,16 @@ import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAgg
 import java.util.UUID
 
 class GetPartitioningCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointV2Args, Option[CheckpointItemFromDB], Task](input =>
+    extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointV2Args, Option[
+      CheckpointItemFromDB
+    ], Task](input =>
       Seq(
         fr"${input.partitioningId}",
         fr"${input.checkpointId}"
       )
     )
-    with StandardStatusHandling with ByFirstRowStatusAggregator {
+    with StandardStatusHandling
+    with ByFirstRowStatusAggregator {
 
   override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq(
     "id_checkpoint",
