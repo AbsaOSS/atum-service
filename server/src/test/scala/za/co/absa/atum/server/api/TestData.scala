@@ -16,15 +16,15 @@
 
 package za.co.absa.atum.server.api
 
-import io.circe.parser
+import io.circe.{Json, parser}
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.{CheckpointFromDB, MeasureFromDB, PartitioningFromDB}
 
 import java.time.ZonedDateTime
 import java.util.UUID
 import MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.server.model.MeasureFromDB
+import za.co.absa.atum.server.api.repository.PartitioningRepositoryUnitTests.partitioningDTO1
 
 trait TestData {
 
@@ -46,6 +46,39 @@ trait TestData {
     partitioning = partitioningDTO1,
     parentPartitioning = None,
     authorIfNew = ""
+  )
+
+  private val partitioningAsJson: Json = parser
+    .parse(
+      """
+        |[
+        |  {
+        |    "key": "key1",
+        |    "value": "val1"
+        |  },
+        |  {
+        |    "key": "key2",
+        |    "value": "val2"
+        |  }
+        |]
+        |""".stripMargin
+    )
+    .getOrElse {
+      throw new Exception("Failed to parse JSON")
+    }
+
+  // Partitioning from the DB
+  protected val partitioningFromDB1: PartitioningFromDB = PartitioningFromDB(
+    id = 1111L,
+    partitioning = partitioningAsJson,
+    author = "author"
+  )
+
+  // Partitioning with ID DTO
+  protected val partitioningWithIdDTO1: PartitioningWithIdDTO = PartitioningWithIdDTO(
+    id = partitioningFromDB1.id,
+    partitioning = partitioningDTO1,
+    author = partitioningFromDB1.author
   )
 
   // PartitioningSubmitDTO with different author

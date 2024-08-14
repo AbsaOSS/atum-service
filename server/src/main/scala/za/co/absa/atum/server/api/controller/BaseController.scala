@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.controller
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.config.SslConfig
-import za.co.absa.atum.server.model.{ConflictErrorResponse, ErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{ConflictErrorResponse, ErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio._
 
@@ -34,6 +34,7 @@ trait BaseController {
       .mapError {
         case ConflictServiceError(message) => ConflictErrorResponse(message)
         case GeneralServiceError(message) => InternalServerErrorResponse(message)
+        case NotFoundException(message) => NotFoundErrorResponse(message)
       }
       .flatMap { result =>
         ZIO.succeed(onSuccessFnc(result))

@@ -22,6 +22,7 @@ import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.db.fadb.exceptions.ErrorInDataException
+import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
@@ -86,6 +87,16 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val getPartitioningCheckpointsMockLayer = ZLayer.succeed(getPartitioningCheckpointsMock)
+
+  // Get Partitioning By Id Mocks
+  private val getPartitioningByIdMock = mock(classOf[GetPartitioningById])
+
+  when(getPartitioningByIdMock.apply(1111L))
+    .thenReturn(ZIO.right(Row(FunctionStatus(0, "success") ,Some(partitioningFromDB1))))
+  when(getPartitioningByIdMock.apply(9999L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+
+  private val getPartitioningByIdMockLayer = ZLayer.succeed(getPartitioningByIdMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -174,16 +185,25 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO3)
           } yield assertTrue(result.isEmpty)
         }
-      )
+      ),
+      suite("GetPartitioningByIdSuite")(
+        test("Returns expected PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningRepository.getPartitioning(1111L)
+          } yield assertTrue(result == partitioningWithIdDTO1)
+        },
+        test("Returns expected DataNotFoundException") {
+          assertZIO(PartitioningRepository.getPartitioning(9999L).exit)(failsWithA[DataNotFoundException])
+        }
     ).provide(
       PartitioningRepositoryImpl.layer,
       createPartitioningIfNotExistsMockLayer,
       getPartitioningMeasuresMockLayer,
       getPartitioningAdditionalDataMockLayer,
       createOrUpdateAdditionalDataMockLayer,
-      getPartitioningCheckpointsMockLayer
+      getPartitioningCheckpointsMockLayer,
+      getPartitioningByIdMockLayer
     )
-
-  }
+  )}
 
 }

@@ -16,10 +16,10 @@
 
 package za.co.absa.atum.server.model
 
-import za.co.absa.atum.model.dto.PartitioningDTO
+import io.circe.Json
 
 case class PartitioningFromDB (
-  id: Option[Long],
-  partitioning: Option[PartitioningDTO],
-  author: Option[String]
+  id: Long,
+  partitioning: Json,
+  author: String
 )
