@@ -24,7 +24,6 @@ import java.time.ZonedDateTime
 import java.util.UUID
 import MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.server.api.repository.PartitioningRepositoryUnitTests.partitioningDTO1
 
 trait TestData {
 

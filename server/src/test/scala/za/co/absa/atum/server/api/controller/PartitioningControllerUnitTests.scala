@@ -24,7 +24,7 @@ import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.InternalServerErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
-import zio.test.Assertion.{equalTo, failsWithA}
+import zio.test.Assertion.failsWithA
 import zio.test._
 
 object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
@@ -80,7 +80,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO1)
             expected = SingleSuccessResponse(additionalDataSubmitDTO1, uuid)
             actual = result.copy(requestId = uuid)
-          } yield assert(actual)(equalTo(expected))
+          } yield assertTrue(actual == expected)
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO2).exit)(
