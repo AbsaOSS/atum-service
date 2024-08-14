@@ -28,7 +28,7 @@ CREATE OR REPLACE FUNCTION runs.write_checkpoint_v2(
 $$
     -------------------------------------------------------------------------------
 --
--- Function: runs.write_checkpoint_v2(10)
+-- Function: runs.write_checkpoint_v2(8)
 --      Creates a checkpoint and adds all the measurements that it consists of
 --
 -- Parameters:
