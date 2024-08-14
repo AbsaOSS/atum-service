@@ -17,15 +17,20 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
+import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
+import za.co.absa.atum.server.config.SslConfig
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.test.Assertion.failsWithA
 import zio._
 import zio.test._
 
-object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
+object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
 
   private val checkpointServiceMock = mock(classOf[CheckpointService])
 
@@ -34,6 +39,14 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO3))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
+  private val partitioningId = 1L
+
+  when(checkpointServiceMock.saveCheckpointV2(partitioningId, checkpointV2DTO1)).thenReturn(ZIO.unit)
+  when(checkpointServiceMock.saveCheckpointV2(partitioningId, checkpointV2DTO2))
+    .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
+  when(checkpointServiceMock.saveCheckpointV2(partitioningId, checkpointV2DTO3))
+    .thenReturn(ZIO.fail(ConflictServiceError("boom!")))
 
   private val checkpointServiceMockLayer = ZLayer.succeed(checkpointServiceMock)
 
@@ -54,6 +67,27 @@ object CheckpointControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected ConflictServiceError") {
           assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
             failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+      suite("PostCheckpointV2Suite")(
+        test("Returns expected CheckpointDTO") {
+          for {
+            result <- CheckpointController.postCheckpointV2(partitioningId, checkpointV2DTO1)
+          } yield assertTrue(
+            result._1.isInstanceOf[SingleSuccessResponse[CheckpointV2DTO]]
+              && result._1.data == checkpointV2DTO1
+              && result._2 == s"/api/v2/partitionings/$partitioningId/checkpoints/${checkpointV2DTO1.id}"
+          )
+        },
+        test("Returns expected ConflictServiceError") {
+          assertZIO(CheckpointController.postCheckpointV2(1L, checkpointV2DTO2).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected ConflictServiceError") {
+          assertZIO(CheckpointController.postCheckpointV2(1L, checkpointV2DTO3).exit)(
+            failsWithA[ConflictErrorResponse]
           )
         }
       )

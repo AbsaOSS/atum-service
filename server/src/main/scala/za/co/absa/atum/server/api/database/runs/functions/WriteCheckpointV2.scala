@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import za.co.absa.atum.server.model.WriteCheckpointV2Args
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
@@ -26,26 +25,29 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import io.circe.syntax._
-
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbArrayPut
 import doobie.postgres.implicits._
+import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointV2Args
 
 class WriteCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[WriteCheckpointV2Args, Unit, Task](args =>
       Seq(
         fr"${args.partitioningId}",
-        fr"${args.checkpointDTO.id}",
-        fr"${args.checkpointDTO.name}",
-        fr"${args.checkpointDTO.processStartTime}",
-        fr"${args.checkpointDTO.processEndTime}",
-        fr"${args.checkpointDTO.measurements.toList.map(_.asJson)}",
-        fr"${args.checkpointDTO.measuredByAtumAgent}",
-        fr"${args.checkpointDTO.author}"
+        fr"${args.checkpointV2DTO.id}",
+        fr"${args.checkpointV2DTO.name}",
+        fr"${args.checkpointV2DTO.processStartTime}",
+        fr"${args.checkpointV2DTO.processEndTime}",
+        fr"${args.checkpointV2DTO.measurements.toList.map(_.asJson)}",
+        fr"${args.checkpointV2DTO.measuredByAtumAgent}",
+        fr"${args.checkpointV2DTO.author}"
       )
     )
     with StandardStatusHandling
 
 object WriteCheckpointV2 {
+  case class WriteCheckpointV2Args(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO)
+
   val layer: URLayer[PostgresDatabaseProvider, WriteCheckpointV2] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]

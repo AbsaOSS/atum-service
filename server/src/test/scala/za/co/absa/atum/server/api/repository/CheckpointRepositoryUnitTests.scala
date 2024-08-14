@@ -20,11 +20,13 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointV2Args
 import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.db.fadb.exceptions.DataConflictException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
-import zio.test.Assertion.{failsWithA, isUnit}
+import zio.test.Assertion.failsWithA
 import zio.test._
 import za.co.absa.db.fadb.status.Row
 
@@ -37,6 +39,15 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(writeCheckpointMock.apply(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralDatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null")))
   when(writeCheckpointMock.apply(checkpointDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
+
+  private val partitioningId = 1L
+
+  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO1)))
+    .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
+  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO2)))
+    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Partitioning not found"))))
+  when(writeCheckpointMockV2.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO3)))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
   private val writeCheckpointV2MockLayer = ZLayer.succeed(writeCheckpointMockV2)
@@ -59,6 +70,23 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected DatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])
+        }
+      ),
+      suite("WriteCheckpointV2Suite")(
+        test("Returns an expected Unit") {
+          for {
+            result <- CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO1)
+          } yield assertTrue(result == ())
+        },
+        test("Fails with an expected ConflictDatabaseError") {
+          assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO2).exit)(
+            failsWithA[ConflictDatabaseError]
+          )
+        },
+        test("Fails with an expected GeneralDatabaseError") {
+          assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO3).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
         }
       )
     ).provide(CheckpointRepositoryImpl.layer, writeCheckpointMockLayer, writeCheckpointV2MockLayer)

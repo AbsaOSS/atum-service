@@ -18,13 +18,8 @@ package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
-import za.co.absa.atum.server.config.SslConfig
-import za.co.absa.atum.server.model.{
-  ConflictErrorResponse,
-  ErrorResponse,
-  InternalServerErrorResponse,
-  NotFoundErrorResponse
-}
+import za.co.absa.atum.server.api.http.ApiPaths
+import za.co.absa.atum.server.model.{ConflictErrorResponse, ErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio._
 
@@ -59,23 +54,9 @@ trait BaseController {
     effect.map(MultiSuccessResponse(_))
   }
 
-  protected def createResourceUri(parts: Seq[String]): IO[ErrorResponse, String] = {
-    for {
-      hostname <- System
-        .env("HOSTNAME")
-        .orElseFail(InternalServerErrorResponse("Failed to get hostname"))
-        .flatMap {
-          case Some(value) => ZIO.succeed(value)
-          case None => ZIO.fail(InternalServerErrorResponse("Failed to get hostname"))
-        }
-      sslConfig <- ZIO
-        .config[SslConfig](SslConfig.config)
-        .orElseFail(InternalServerErrorResponse("Failed to get SSL config"))
-    } yield {
-      val protocol = if (sslConfig.enabled) "https" else "http"
-      val port = if (sslConfig.enabled) 8443 else 8080
-      val path = parts.mkString("/")
-      s"$protocol://$hostname:$port/$path"
-    }
+  // Root-anchored URL path
+  // https://stackoverflow.com/questions/2005079/absolute-vs-relative-urls/78439286#78439286
+  protected def createV2RootAnchoredResourcePath(parts: Seq[String]): IO[ErrorResponse, String] = {
+    ZIO.succeed(s"/${ApiPaths.Api}/${ApiPaths.V2}/${parts.mkString("/")}")
   }
 }

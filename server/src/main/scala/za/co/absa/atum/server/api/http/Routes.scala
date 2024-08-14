@@ -25,7 +25,7 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
@@ -45,13 +45,13 @@ trait Routes extends Endpoints with ServerOptions {
     val endpoints = List(
       createServerEndpoint(createCheckpointEndpointV1, CheckpointController.createCheckpointV1),
       createServerEndpoint[
-        (Long, CheckpointDTO),
+        (Long, CheckpointV2DTO),
         ErrorResponse,
-        (SingleSuccessResponse[CheckpointDTO], String)
+        (SingleSuccessResponse[CheckpointV2DTO], String)
       ](
         postCheckpointEndpointV2,
-        { case (partitioningId: Long, checkpointDTO: CheckpointDTO) =>
-          CheckpointController.postCheckpointV2(partitioningId, checkpointDTO)
+        { case (partitioningId: Long, checkpointV2DTO: CheckpointV2DTO) =>
+          CheckpointController.postCheckpointV2(partitioningId, checkpointV2DTO)
         }
       ),
       createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),

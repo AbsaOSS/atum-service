@@ -19,7 +19,6 @@ package za.co.absa.atum.server.api.service
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError._
-import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.CheckpointRepository
 import zio.test.Assertion.failsWithA
@@ -31,8 +30,17 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
   private val checkpointRepositoryMock = mock(classOf[CheckpointRepository])
 
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO1)).thenReturn(ZIO.unit)
-  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("error in data")))
+  when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("error in data")))
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO3)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  private val partitioningId = 1L
+
+  when(checkpointRepositoryMock.writeCheckpointV2(partitioningId, checkpointV2DTO1)).thenReturn(ZIO.unit)
+  when(checkpointRepositoryMock.writeCheckpointV2(partitioningId, checkpointV2DTO2))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("conflict in data")))
+  when(checkpointRepositoryMock.writeCheckpointV2(partitioningId, checkpointV2DTO3))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val checkpointRepositoryMockLayer = ZLayer.succeed(checkpointRepositoryMock)
 
@@ -48,10 +56,29 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Left with StatusException") {
           for {
             result <- CheckpointService.saveCheckpoint(checkpointDTO2).exit
-          } yield assertTrue(result == Exit.fail(GeneralServiceError("Failed to perform 'saveCheckpoint': error in data")))
+          } yield assertTrue(
+            result == Exit.fail(GeneralServiceError("Failed to perform 'saveCheckpoint': error in data"))
+          )
         },
         test("Returns expected ServiceError") {
-          assertZIO(CheckpointService.saveCheckpoint(checkpointDTO3).exit)(failsWithA[ServiceError])
+          assertZIO(CheckpointService.saveCheckpoint(checkpointDTO3).exit)(failsWithA[GeneralServiceError])
+        }
+      ),
+      suite("SaveCheckpointV2Suite")(
+        test("Returns an expected Unit") {
+          for {
+            result <- CheckpointService.saveCheckpointV2(partitioningId, checkpointV2DTO1)
+          } yield assertTrue(result == ())
+        },
+        test("Fails with an expected ConflictServiceError") {
+          assertZIO(CheckpointService.saveCheckpointV2(partitioningId, checkpointV2DTO2).exit)(
+            failsWithA[ConflictServiceError]
+          )
+        },
+        test("Fails with an expected GeneralServiceError") {
+          assertZIO(CheckpointService.saveCheckpointV2(partitioningId, checkpointV2DTO3).exit)(
+            failsWithA[GeneralServiceError]
+          )
         }
       )
     ).provide(

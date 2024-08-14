@@ -14,8 +14,25 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.dto
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
-case class WriteCheckpointV2Args(partitioningId: Long, checkpointDTO: CheckpointDTO)
+import java.time.ZonedDateTime
+import java.util.UUID
+
+case class CheckpointV2DTO(
+  id: UUID,
+  name: String,
+  author: String,
+  measuredByAtumAgent: Boolean = false,
+  processStartTime: ZonedDateTime,
+  processEndTime: Option[ZonedDateTime],
+  measurements: Set[MeasurementDTO]
+)
+
+object CheckpointV2DTO {
+  implicit val decodeCheckpointDTO: Decoder[CheckpointV2DTO] = deriveDecoder
+  implicit val encodeCheckpointDTO: Encoder[CheckpointV2DTO] = deriveEncoder
+}

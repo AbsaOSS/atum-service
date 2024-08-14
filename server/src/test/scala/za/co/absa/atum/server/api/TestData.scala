@@ -226,6 +226,30 @@ trait TestData {
   protected val checkpointDTO3: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
   protected val checkpointDTO4: CheckpointDTO = checkpointDTO1.copy(id = UUID.randomUUID())
 
+  // Checkpoint V2 DTO
+  protected val checkpointV2DTO1: CheckpointV2DTO = CheckpointV2DTO(
+    id = UUID.randomUUID(),
+    name = checkpointQueryDTO1.checkpointName.get,
+    author = "author",
+    measuredByAtumAgent = true,
+    processStartTime = ZonedDateTime.now(),
+    processEndTime = Some(ZonedDateTime.now()),
+    measurements = measurementsDTO1.toSet
+  )
+
+  protected val checkpointV2DTO2: CheckpointV2DTO = CheckpointV2DTO(
+    id = UUID.randomUUID(),
+    name = checkpointQueryDTO2.checkpointName.get,
+    author = "author2",
+    measuredByAtumAgent = true,
+    processStartTime = ZonedDateTime.now(),
+    processEndTime = Some(ZonedDateTime.now()),
+    measurements = measurementsDTO2.toSet
+  )
+
+  protected val checkpointV2DTO3: CheckpointV2DTO = checkpointV2DTO1.copy(id = UUID.randomUUID())
+  protected val checkpointV2DTO4: CheckpointV2DTO = checkpointV2DTO1.copy(id = UUID.randomUUID())
+
   // Checkpoint From DB
   protected val checkpointFromDB1: CheckpointFromDB = CheckpointFromDB(
     idCheckpoint = Some(checkpointDTO1.id),
