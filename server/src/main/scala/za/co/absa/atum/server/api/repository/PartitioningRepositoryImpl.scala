@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointQueryDTO, InitialAdditionalDataDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.model.MeasureFromDB
-import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningById, GetPartitioningCheckpoints, GetPartitioningMeasures}
+import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
@@ -83,6 +83,7 @@ class PartitioningRepositoryImpl(
         case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
       }
   }
+
 }
 
 object PartitioningRepositoryImpl {

@@ -27,7 +27,7 @@ import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
-import zio.test._
+import zio.test.{assertZIO, _}
 import za.co.absa.atum.server.model.AdditionalDataFromDB
 
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
@@ -92,9 +92,9 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningByIdMock = mock(classOf[GetPartitioningById])
 
   when(getPartitioningByIdMock.apply(1111L))
-    .thenReturn(ZIO.right(Row(FunctionStatus(0, "success") ,Some(partitioningFromDB1))))
+    .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK") ,Some(partitioningFromDB1))))
   when(getPartitioningByIdMock.apply(9999L))
-    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+    .thenReturn(ZIO.fail(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
 
   private val getPartitioningByIdMockLayer = ZLayer.succeed(getPartitioningByIdMock)
 
@@ -193,8 +193,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == partitioningWithIdDTO1)
         },
         test("Returns expected DataNotFoundException") {
-          assertZIO(PartitioningRepository.getPartitioning(9999L).exit)(failsWithA[DataNotFoundException])
-        }
+          assertZIO(PartitioningRepository.getPartitioning(9999L).exit)(failsWithA[DatabaseError])
+        })
     ).provide(
       PartitioningRepositoryImpl.layer,
       createPartitioningIfNotExistsMockLayer,
@@ -204,6 +204,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       getPartitioningCheckpointsMockLayer,
       getPartitioningByIdMockLayer
     )
-  )}
+  }
 
 }
