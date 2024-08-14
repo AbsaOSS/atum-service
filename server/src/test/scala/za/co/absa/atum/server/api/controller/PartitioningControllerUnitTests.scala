@@ -53,6 +53,11 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
+  when(partitioningServiceMock.getPartitioning(11L))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningServiceMock.getPartitioning(99L))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -96,6 +101,20 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO3).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+      suite("GetPartitioningSuite")(
+        test("Returns expected PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningController.getPartitioningV2(11L)
+            expected = SingleSuccessResponse(partitioningWithIdDTO1, uuid)
+            actual = result.copy(requestId = uuid)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.getPartitioningV2(99L).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }

@@ -18,7 +18,7 @@ package za.co.absa.atum.server.model
 
 import io.circe.Json
 
-case class PartitioningFromDB (
+case class PartitioningFromDB(
   id: Long,
   partitioning: Json,
   author: String

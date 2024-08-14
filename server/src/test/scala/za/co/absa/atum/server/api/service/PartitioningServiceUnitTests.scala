@@ -57,6 +57,10 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO2))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.getPartitioning(1111L)).thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningRepositoryMock.getPartitioning(9999L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -136,6 +140,18 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(
+            failsWithA[ServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningByIDSuite")(
+        test("Returns expected Right with PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningService.getPartitioning(1111L)
+          } yield assertTrue(result == partitioningWithIdDTO1)
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioning(9999L).exit)(
             failsWithA[ServiceError]
           )
         }

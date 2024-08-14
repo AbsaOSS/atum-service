@@ -16,7 +16,15 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointQueryDTO, InitialAdditionalDataDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataSubmitDTO,
+  CheckpointQueryDTO,
+  InitialAdditionalDataDTO,
+  MeasureDTO,
+  PartitioningDTO,
+  PartitioningSubmitDTO,
+  PartitioningWithIdDTO
+}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio.IO

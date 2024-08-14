@@ -19,7 +19,12 @@ package za.co.absa.atum.server.api.controller
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.config.SslConfig
-import za.co.absa.atum.server.model.{ConflictErrorResponse, ErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
+import za.co.absa.atum.server.model.{
+  ConflictErrorResponse,
+  ErrorResponse,
+  InternalServerErrorResponse,
+  NotFoundErrorResponse
+}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio._
 
@@ -56,13 +61,15 @@ trait BaseController {
 
   protected def createResourceUri(parts: Seq[String]): IO[ErrorResponse, String] = {
     for {
-      hostname <- System.env("HOSTNAME")
+      hostname <- System
+        .env("HOSTNAME")
         .orElseFail(InternalServerErrorResponse("Failed to get hostname"))
         .flatMap {
           case Some(value) => ZIO.succeed(value)
           case None => ZIO.fail(InternalServerErrorResponse("Failed to get hostname"))
         }
-      sslConfig <- ZIO.config[SslConfig](SslConfig.config)
+      sslConfig <- ZIO
+        .config[SslConfig](SslConfig.config)
         .orElseFail(InternalServerErrorResponse("Failed to get SSL config"))
     } yield {
       val protocol = if (sslConfig.enabled) "https" else "http"
