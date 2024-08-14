@@ -193,7 +193,9 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == partitioningWithIdDTO1)
         },
         test("Returns expected DataNotFoundException") {
-          assertZIO(PartitioningRepository.getPartitioning(9999L).exit)(failsWithA[DatabaseError])
+          for {
+            result <- PartitioningRepository.getPartitioning(9999L).exit
+          } yield assertTrue(result == Exit.fail(NotFoundDatabaseError("Exception caused by operation: 'getPartitioningById': (41) Partitioning not found")))
         })
     ).provide(
       PartitioningRepositoryImpl.layer,

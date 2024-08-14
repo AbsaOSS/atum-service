@@ -22,6 +22,6 @@ object ServiceError {
 
   case class GeneralServiceError(message: String) extends ServiceError
   case class ConflictServiceError(message: String) extends ServiceError
-  case class NotFoundException(message: String) extends ServiceError
+  case class NotFoundServiceError(message: String) extends ServiceError
 
 }
