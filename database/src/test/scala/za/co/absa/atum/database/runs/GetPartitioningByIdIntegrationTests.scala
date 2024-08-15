@@ -18,6 +18,8 @@ package za.co.absa.atum.database.runs
 
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
+import io.circe.Json
+import io.circe.parser._
 
 class GetPartitioningByIdIntegrationTests extends DBTestSuite {
 
@@ -38,6 +40,11 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
+  private val expectedPartitioning: Json = parse(partitioning.value) match {
+    case Right(json) => json
+    case Left(error) => throw new Exception(s"Failed to parse JSON: ${error.getMessage}")
+  }
+
   test("Partitioning retrieved successfully") {
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -51,16 +58,20 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
+        val returnedPartitioning = row.getJsonB("partitioning").get
+        val returnedPartitioningParsed = parse(returnedPartitioning.value).getOrElse(Json.Null)
         assert(row.getInt("status").contains(11))
         assert(row.getString("status_text").contains("OK"))
         assert(row.getLong("id").contains(fkPartitioning1))
-        assert(row.getJsonB("partitioning").isDefined) // Todo: Check the actual value
+        assert(returnedPartitioningParsed == expectedPartitioning)
         assert(row.getString("author").contains("Joseph"))
       }
 
     table("runs.partitionings").where(add("id_partitioning", fkPartitioning1)) { partitioningResult =>
       val row = partitioningResult.next()
-      assert(row.getJsonB("partitioning").isDefined) // Todo: check the actual value
+      val returnedPartitioning = row.getJsonB("partitioning").get
+      val returnedPartitioningParsed = parse(returnedPartitioning.value).getOrElse(Json.Null)
+      assert(returnedPartitioningParsed == expectedPartitioning)
       assert(row.getString("created_by").contains("Joseph"))
     }
   }
