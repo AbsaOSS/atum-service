@@ -79,7 +79,7 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
   test("Partitioning not found") {
     val nonExistentID = 9999L
 
-    val result = function(fncGetPartitioningById)
+    function(fncGetPartitioningById)
       .setParam("i_id", nonExistentID)
       .execute { queryResult =>
         assert(queryResult.hasNext)
