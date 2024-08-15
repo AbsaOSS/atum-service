@@ -23,7 +23,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_by_id(
     OUT author              TEXT
 ) RETURNS RECORD AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_by_id(1)
 --      Returns partitioning for the given id
@@ -42,7 +42,6 @@ $$
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
-DECLARE
 BEGIN
 
     SELECT P.partitioning,
