@@ -60,6 +60,8 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioning(1111L)).thenReturn(ZIO.succeed(partitioningWithIdDTO1))
   when(partitioningRepositoryMock.getPartitioning(9999L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getPartitioning(8888L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
@@ -95,12 +97,14 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
           } yield assertTrue(
-            result == Exit.fail(GeneralServiceError("Failed to perform 'createOrUpdateAdditionalData': error in AD data"))
+            result == Exit.fail(
+              GeneralServiceError("Failed to perform 'createOrUpdateAdditionalData': error in AD data")
+            )
           )
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
-            failsWithA[ServiceError]
+            failsWithA[GeneralServiceError]
           )
         }
       ),
@@ -150,10 +154,17 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningService.getPartitioning(1111L)
           } yield assertTrue(result == partitioningWithIdDTO1)
         },
-        test("Returns expected ServiceError") {
+        test("Returns expected GeneralDatabaseError") {
           for {
-          result <- PartitioningService.getPartitioning(9999L).exit
+            result <- PartitioningService.getPartitioning(9999L).exit
           } yield assertTrue(result == Exit.fail(GeneralServiceError("Failed to perform 'getPartitioning': boom!")))
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          for {
+            result <- PartitioningService.getPartitioning(8888L).exit
+          } yield assertTrue(
+            result == Exit.fail(NotFoundServiceError("Failed to perform 'getPartitioning': Partitioning not found"))
+          )
         }
       )
     ).provide(

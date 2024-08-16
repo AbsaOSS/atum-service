@@ -19,9 +19,9 @@ package za.co.absa.atum.server.api.controller
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
+import za.co.absa.atum.server.api.exception.ServiceError.{GeneralServiceError, NotFoundServiceError}
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
+import za.co.absa.atum.server.model.{InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.failsWithA
@@ -55,6 +55,8 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
 
   when(partitioningServiceMock.getPartitioning(11L))
     .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningServiceMock.getPartitioning(22L))
+    .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
   when(partitioningServiceMock.getPartitioning(99L))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
@@ -112,6 +114,11 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
             expected = SingleSuccessResponse(partitioningWithIdDTO1, uuid)
             actual = result.copy(requestId = uuid)
           } yield assertTrue(actual == expected)
+        },
+        test("Returns expected NotFoundErrorResponse") {
+          assertZIO(PartitioningController.getPartitioningV2(22L).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.getPartitioningV2(99L).exit)(

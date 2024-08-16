@@ -40,10 +40,7 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
-  private val expectedPartitioning: Json = parse(partitioning.value) match {
-    case Right(json) => json
-    case Left(error) => throw new Exception(s"Failed to parse JSON: ${error.getMessage}")
-  }
+  private val expectedPartitioning = parse(partitioning.value).getOrElse(throw new Exception("Failed to parse JSON"))
 
   test("Partitioning retrieved successfully") {
     table("runs.partitionings").insert(
@@ -59,7 +56,8 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val row = queryResult.next()
         val returnedPartitioning = row.getJsonB("partitioning").get
-        val returnedPartitioningParsed = parse(returnedPartitioning.value).getOrElse(Json.Null)
+        val returnedPartitioningParsed = parse(returnedPartitioning.value)
+          .getOrElse(fail("Failed to parse returned partitioning"))
         assert(row.getInt("status").contains(11))
         assert(row.getString("status_text").contains("OK"))
         assert(row.getLong("id").contains(fkPartitioning1))
@@ -70,7 +68,8 @@ class GetPartitioningByIdIntegrationTests extends DBTestSuite {
     table("runs.partitionings").where(add("id_partitioning", fkPartitioning1)) { partitioningResult =>
       val row = partitioningResult.next()
       val returnedPartitioning = row.getJsonB("partitioning").get
-      val returnedPartitioningParsed = parse(returnedPartitioning.value).getOrElse(Json.Null)
+      val returnedPartitioningParsed = parse(returnedPartitioning.value)
+        .getOrElse(fail("Failed to parse returned partitioning"))
       assert(returnedPartitioningParsed == expectedPartitioning)
       assert(row.getString("created_by").contains("Joseph"))
     }
