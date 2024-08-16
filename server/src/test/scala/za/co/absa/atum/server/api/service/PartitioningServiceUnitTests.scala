@@ -151,9 +151,9 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == partitioningWithIdDTO1)
         },
         test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.getPartitioning(9999L).exit)(
-            failsWithA[ServiceError]
-          )
+          for {
+          result <- PartitioningService.getPartitioning(9999L).exit
+          } yield assertTrue(result == Exit.fail(GeneralServiceError("Failed to perform 'getPartitioning': boom!")))
         }
       )
     ).provide(
