@@ -92,9 +92,11 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningByIdMock = mock(classOf[GetPartitioningById])
 
   when(getPartitioningByIdMock.apply(1111L))
-    .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK") ,Some(partitioningFromDB1))))
+    .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK"), Some(partitioningFromDB1))))
   when(getPartitioningByIdMock.apply(9999L))
     .thenReturn(ZIO.fail(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getPartitioningByIdMock.apply(8888L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val getPartitioningByIdMockLayer = ZLayer.succeed(getPartitioningByIdMock)
 
@@ -195,8 +197,16 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected DataNotFoundException") {
           for {
             result <- PartitioningRepository.getPartitioning(9999L).exit
-          } yield assertTrue(result == Exit.fail(NotFoundDatabaseError("Exception caused by operation: 'getPartitioningById': (41) Partitioning not found")))
-        })
+          } yield assertTrue(result == Exit.fail(NotFoundDatabaseError(
+              "Exception caused by operation: 'getPartitioningById': (41) Partitioning not found"))
+            )
+        },
+        test("Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioning(8888L).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
+      )
     ).provide(
       PartitioningRepositoryImpl.layer,
       createPartitioningIfNotExistsMockLayer,
