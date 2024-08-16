@@ -25,7 +25,7 @@ import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.model.AdditionalDataFromDB
 import za.co.absa.atum.server.model.PartitioningFromDB
-import za.co.absa.atum.server.api.exception.DatabaseError.{GeneralDatabaseError, NotFoundDatabaseError}
+import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
@@ -82,7 +82,7 @@ class PartitioningRepositoryImpl(
             error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
             partitioningDTO => ZIO.succeed(PartitioningWithIdDTO(id, partitioningDTO, author))
           )
-        case None => ZIO.fail(NotFoundDatabaseError("Unexpected error."))
+        case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
       }
   }
 
