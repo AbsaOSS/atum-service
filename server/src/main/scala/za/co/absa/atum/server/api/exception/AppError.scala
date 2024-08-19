@@ -16,6 +16,6 @@
 
 package za.co.absa.atum.server.api.exception
 
-abstract class AppError extends Throwable {
+abstract class AppError extends Exception {
   def message: String
 }

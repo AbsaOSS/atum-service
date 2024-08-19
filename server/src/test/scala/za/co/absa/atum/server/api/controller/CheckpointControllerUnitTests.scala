@@ -24,6 +24,7 @@ import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
@@ -36,7 +37,7 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO3))
-    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+    .thenReturn(ZIO.fail(ConflictServiceError("boom!")))
 
   private val partitioningId = 1L
 
@@ -71,7 +72,7 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
         },
         test("Returns expected ConflictServiceError") {
           assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
-            failsWithA[InternalServerErrorResponse]
+            failsWithA[ConflictErrorResponse]
           )
         }
       ),

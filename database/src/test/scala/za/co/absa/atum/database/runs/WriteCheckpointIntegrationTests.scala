@@ -25,6 +25,8 @@ import java.util.UUID
 
 class WriteCheckpointIntegrationTests extends DBTestSuite {
 
+  private val fnWriteCheckpoint = "runs.write_checkpoint"
+
   private val partitioning = JsonBString(
     """
       |{
@@ -39,6 +41,42 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       |}
       |""".stripMargin
   )
+
+  private val measurements =
+    """
+      |{
+      |  "{
+      |    \"measure\": {
+      |      \"measureName\": \"count\",
+      |      \"measuredColumns\": []
+      |    },
+      |    \"result\":{
+      |      \"value\":\"3\",
+      |      \"type\":\"int\"
+      |    }
+      |  }",
+      |  "{
+      |    \"measure\": {
+      |      \"measureName\": \"avg\",
+      |      \"measuredColumns\": [\"col1\"]
+      |    },
+      |    \"result\":{
+      |      \"value\":\"3.14\",
+      |      \"type\":\"double\"
+      |    }
+      |  }",
+      |  "{
+      |    \"measure\": {
+      |      \"measureName\": \"avg\",
+      |      \"measuredColumns\": [\"a\",\"b\"]
+      |    },
+      |    \"result\":{
+      |      \"value\":\"2.71\",
+      |      \"type\":\"double\"
+      |    }
+      |  }"
+      |}
+      |""".stripMargin
 
   test("Write new checkpoint without data") {
     val uuid = UUID.randomUUID
@@ -62,8 +100,8 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
 
     assert(table("runs.checkpoints").count(add("fk_partitioning", fkPartitioning)) == 0)
 
-    function("runs.write_checkpoint")
-      .setParam("i_partitioning", partitioning)
+    function(fnWriteCheckpoint)
+      .setParam("i_partitioning_id", fkPartitioning)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Empty path")
       .setParam("i_process_start_time", startTime)
@@ -98,41 +136,7 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
     val user = "Franz Kafka"
     val startTime = OffsetDateTime.parse("1992-08-03T10:00:00Z")
     val endTime = OffsetDateTime.parse("2022-11-05T08:00:00Z")
-    val measurements =
-      """
-        |{
-        |  "{
-        |    \"measure\": {
-        |      \"measureName\": \"count\",
-        |      \"measuredColumns\": []
-        |    },
-        |    \"result\":{
-        |      \"value\":\"3\",
-        |      \"type\":\"int\"
-        |    }
-        |  }",
-        |  "{
-        |    \"measure\": {
-        |      \"measureName\": \"avg\",
-        |      \"measuredColumns\": [\"col1\"]
-        |    },
-        |    \"result\":{
-        |      \"value\":\"3.14\",
-        |      \"type\":\"double\"
-        |    }
-        |  }",
-        |  "{
-        |    \"measure\": {
-        |      \"measureName\": \"avg\",
-        |      \"measuredColumns\": [\"a\",\"b\"]
-        |    },
-        |    \"result\":{
-        |      \"value\":\"2.71\",
-        |      \"type\":\"double\"
-        |    }
-        |  }"
-        |}
-        |""".stripMargin
+
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -150,8 +154,8 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
 
     assert(table("runs.checkpoints").count(add("fk_partitioning", fkPartitioning)) == 0)
 
-    function("runs.write_checkpoint")
-      .setParam("i_partitioning", partitioning)
+    function(fnWriteCheckpoint)
+      .setParam("i_partitioning_id", fkPartitioning)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Happy path")
       .setParam("i_process_start_time", startTime)
@@ -237,8 +241,8 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
         .add("created_by", origAuthor)
     )
 
-    function("runs.write_checkpoint")
-      .setParam("i_partitioning", partitioning)
+    function(fnWriteCheckpoint)
+      .setParam("i_partitioning_id", fkPartitioning)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Won't go in")
       .setParam("i_process_start_time", now())
@@ -249,7 +253,7 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
-        assert(row.getInt("status").contains(14))
+        assert(row.getInt("status").contains(31))
         assert(row.getString("status_text").contains("Checkpoint already present"))
       }
 
@@ -264,8 +268,8 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
   test("Partitioning of the checkpoint does not exist") {
     val uuid = UUID.randomUUID
     val count = table("runs.checkpoints").count()
-    function("runs.write_checkpoint")
-      .setParam("i_partitioning", partitioning)
+    function(fnWriteCheckpoint)
+      .setParam("i_partitioning_id", 0L)
       .setParam("i_id_checkpoint", uuid)
       .setParam("i_checkpoint_name", "Won't go in")
       .setParam("i_process_start_time", now())
@@ -276,9 +280,10 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
-        assert(row.getInt("status").contains(41))
+        assert(row.getInt("status").contains(32))
         assert(row.getString("status_text").contains("Partitioning not found"))
       }
     assert(table("runs.checkpoints").count() == count)
   }
+
 }

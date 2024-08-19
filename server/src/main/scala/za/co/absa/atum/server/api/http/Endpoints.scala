@@ -37,6 +37,7 @@ trait Endpoints extends BaseEndpoints {
       .in(jsonBody[CheckpointDTO])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[CheckpointDTO])
+      .errorOutVariantPrepend(conflictErrorOneOfVariant)
   }
 
   protected val postCheckpointEndpointV2
