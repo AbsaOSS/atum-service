@@ -17,33 +17,33 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
-import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointV2Args
-import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV2}
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint.WriteCheckpointV2Args
+import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV1}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import zio._
 import zio.interop.catz.asyncInstance
 
-class CheckpointRepositoryImpl(writeCheckpointFn: WriteCheckpoint, writeCheckpointV2Fn: WriteCheckpointV2)
+class CheckpointRepositoryImpl(writeCheckpointV1Fn: WriteCheckpointV1, writeCheckpointFn: WriteCheckpoint)
     extends CheckpointRepository
     with BaseRepository {
 
   override def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Unit] = {
-    dbSingleResultCallWithStatus(writeCheckpointFn(checkpointDTO), "writeCheckpoint")
+    dbSingleResultCallWithStatus(writeCheckpointV1Fn(checkpointDTO), "writeCheckpoint")
   }
 
   override def writeCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[DatabaseError, Unit] = {
     dbSingleResultCallWithStatus(
-      writeCheckpointV2Fn(WriteCheckpointV2Args(partitioningId, checkpointV2DTO)),
+      writeCheckpointFn(WriteCheckpointV2Args(partitioningId, checkpointV2DTO)),
       "writeCheckpoint"
     )
   }
 }
 
 object CheckpointRepositoryImpl {
-  val layer: URLayer[WriteCheckpoint with WriteCheckpointV2, CheckpointRepository] = ZLayer {
+  val layer: URLayer[WriteCheckpointV1 with WriteCheckpoint, CheckpointRepository] = ZLayer {
     for {
+      writeCheckpointV1 <- ZIO.service[WriteCheckpointV1]
       writeCheckpoint <- ZIO.service[WriteCheckpoint]
-      writeCheckpointV2 <- ZIO.service[WriteCheckpointV2]
-    } yield new CheckpointRepositoryImpl(writeCheckpoint, writeCheckpointV2)
+    } yield new CheckpointRepositoryImpl(writeCheckpointV1, writeCheckpoint)
   }
 }

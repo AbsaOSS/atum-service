@@ -17,14 +17,13 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitionDTO}
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointV2Args
-import za.co.absa.db.fadb.exceptions.DataConflictException
-import za.co.absa.db.fadb.status.{FunctionStatus, Row}
+import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test._
@@ -32,16 +31,17 @@ import zio.test._
 import java.time.ZonedDateTime
 import java.util.UUID
 
-object WriteCheckpointV2IntegrationTests extends ConfigProviderTest {
+object WriteCheckpointV1IntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("WriteCheckpointV2Suite")(
+    suite("WriteCheckpointSuite")(
       test("Returns expected Left with DataNotFoundException as related partitioning is not in the database") {
-        val checkpointV2DTO = CheckpointV2DTO(
+        val checkpointDTO = CheckpointDTO(
           id = UUID.randomUUID(),
           name = "name",
           author = "author",
+          partitioning = Seq(PartitionDTO("key4", "value4")),
           processStartTime = ZonedDateTime.now(),
           processEndTime = Option(ZonedDateTime.now()),
           measurements = Set(
@@ -49,12 +49,12 @@ object WriteCheckpointV2IntegrationTests extends ConfigProviderTest {
           )
         )
         for {
-          writeCheckpointV2 <- ZIO.service[WriteCheckpointV2]
-          result <- writeCheckpointV2(WriteCheckpointV2Args(1L, checkpointV2DTO))
-        } yield assertTrue(result == Left(DataConflictException(FunctionStatus(32, "Partitioning not found"))))
+          writeCheckpoint <- ZIO.service[WriteCheckpointV1]
+          result <- writeCheckpoint(checkpointDTO)
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(32, "Partitioning not found"))))
       }
     ).provide(
-      WriteCheckpointV2.layer,
+      WriteCheckpointV1.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )
