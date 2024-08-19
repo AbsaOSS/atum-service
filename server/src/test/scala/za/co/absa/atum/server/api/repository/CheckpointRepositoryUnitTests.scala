@@ -17,31 +17,23 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.server.api.database.runs.functions.{
-  GetPartitioningCheckpointV2,
-  WriteCheckpoint,
-  WriteCheckpointV2
-}
-import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV1}
-import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpointV2.GetPartitioningCheckpointV2Args
-import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointV2Args
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint.WriteCheckpointArgs
+import za.co.absa.atum.server.api.database.runs.functions._
+import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
-import za.co.absa.db.fadb.status.FunctionStatus
+import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
-import za.co.absa.db.fadb.status.Row
 
 object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointV1Mock: WriteCheckpointV1 = mock(classOf[WriteCheckpointV1])
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
-  private val writeCheckpointMockV2: WriteCheckpointV2 = mock(classOf[WriteCheckpointV2])
   private val getCheckpointMockV2: GetPartitioningCheckpointV2 = mock(classOf[GetPartitioningCheckpointV2])
 
   when(writeCheckpointV1Mock.apply(checkpointDTO1)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
@@ -67,7 +59,6 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointV1MockLayer = ZLayer.succeed(writeCheckpointV1Mock)
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
-  private val writeCheckpointV2MockLayer = ZLayer.succeed(writeCheckpointMockV2)
   private val getCheckpointV2MockLayer = ZLayer.succeed(getCheckpointMockV2)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -124,11 +115,10 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
       )
     ).provide(
       CheckpointRepositoryImpl.layer,
+      writeCheckpointV1MockLayer,
       writeCheckpointMockLayer,
-      writeCheckpointV2MockLayer,
       getCheckpointV2MockLayer
     )
-    ).provide(CheckpointRepositoryImpl.layer, writeCheckpointV1MockLayer, writeCheckpointMockLayer)
 
   }
 
