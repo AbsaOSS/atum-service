@@ -14,7 +14,7 @@
  */
 
 
-CREATE OR REPLACE FUNCTION runs.write_checkpoint(
+CREATE OR REPLACE FUNCTION runs.write_checkpoint_v1(
     IN  i_partitioning              JSONB,
     IN  i_id_checkpoint             UUID,
     IN  i_checkpoint_name           TEXT,
@@ -29,7 +29,7 @@ CREATE OR REPLACE FUNCTION runs.write_checkpoint(
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.write_checkpoint(10)
+-- Function: runs.write_checkpoint_v1(10)
 --      Creates a checkpoint and adds all the measurements that it consists of
 --
 -- Parameters:
@@ -57,58 +57,34 @@ $$
 --
 -- Status codes:
 --      11                  - Checkpoint created
---      14                  - Checkpoint already present
---      41                  - Partitioning not found
+--      31                  - Checkpoint already present
+--      32                  - Partitioning not found
 --
 -------------------------------------------------------------------------------
 DECLARE
     _fk_partitioning                    BIGINT;
+    result                              RECORD;
 BEGIN
-
-    PERFORM 1
-    FROM runs.checkpoints CP
-    WHERE CP.id_checkpoint = i_id_checkpoint;
-
-    IF found THEN
-        status := 14;
-        status_text := 'Checkpoint already present';
-        RETURN;
-    END IF;
 
     _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
-    IF _fk_partitioning IS NULL THEN
-        status := 41;
-        status_text := 'Partitioning not found';
-        RETURN;
-    END IF;
-
-    INSERT INTO runs.checkpoints (id_checkpoint, fk_partitioning,
-                                  checkpoint_name, measured_by_atum_agent,
-                                  process_start_time, process_end_time, created_by)
-    VALUES (i_id_checkpoint, _fk_partitioning,
-            i_checkpoint_name, i_measured_by_atum_agent,
-            i_process_start_time, i_process_end_time, i_by_user);
-
-    -- maybe could use `jsonb_populate_record` function to be little bit more effective
-    PERFORM runs._write_measurement(
-        i_id_checkpoint,
+    result = runs.write_checkpoint(
         _fk_partitioning,
-        UN.measurement->'measure'->>'measureName',
-        jsonb_array_to_text_array(UN.measurement->'measure'->'measuredColumns'),
-        UN.measurement->'result',
+        i_id_checkpoint,
+        i_checkpoint_name,
+        i_process_start_time,
+        i_process_end_time,
+        i_measurements,
+        i_measured_by_atum_agent,
         i_by_user
-        )
-    FROM (
-        SELECT unnest(i_measurements) AS measurement
-        ) UN;
+    );
 
-    status := 11;
-    status_text := 'Checkpoint created';
+    status := result.status;
+    status_text := result.status_text;
     RETURN;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) TO atum_user;
+ALTER FUNCTION runs.write_checkpoint_v1(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.write_checkpoint_v1(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) TO atum_user;

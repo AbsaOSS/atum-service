@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs.write_checkpoint_v2(
+CREATE OR REPLACE FUNCTION runs.write_checkpoint(
     IN  i_partitioning_id           BIGINT,
     IN  i_id_checkpoint             UUID,
     IN  i_checkpoint_name           TEXT,
@@ -28,7 +28,7 @@ CREATE OR REPLACE FUNCTION runs.write_checkpoint_v2(
 $$
     -------------------------------------------------------------------------------
 --
--- Function: runs.write_checkpoint_v2(8)
+-- Function: runs.write_checkpoint(8)
 --      Creates a checkpoint and adds all the measurements that it consists of
 --
 -- Parameters:
@@ -105,5 +105,5 @@ END;
 $$
     LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.write_checkpoint_v2(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.write_checkpoint_v2(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) TO atum_user;
+ALTER FUNCTION runs.write_checkpoint(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.write_checkpoint(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) TO atum_user;
