@@ -229,6 +229,12 @@ object Dependencies {
       jsonSerdeDependencies
   }
 
+  def infoDependencies(scalaVersion: Version): Seq[ModuleID] = {
+    Seq(
+    ) ++
+      testDependencies
+  }
+
   def databaseDependencies: Seq[ModuleID] = {
     lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % Test
     lazy val balta =      "za.co.absa"      %% "balta"      % Versions.balta      % Test

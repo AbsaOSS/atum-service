@@ -23,8 +23,8 @@ on:
     types: [ opened, synchronize, reopened ]
 
 jobs:
-  test-agent-and-model:
-    name: Test Agent and Model
+  test-agent-info-and-model:
+    name: Test Agent, Info and Model
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -39,10 +39,10 @@ jobs:
           java-version: "adopt@1.8"
 
       - name: Build and run unit tests
-        run: sbt "project model" test doc "project agent_spark3" test doc
+        run: sbt "project model" test doc "project info" test doc "project agent_spark3" test doc
 
       - name: Build and run integration tests
-        run: sbt "project model" testIT "project agent_spark3" testIT
+        run: sbt "project model" testIT "project info" testIT "project agent_spark3" testIT
 
   test-database-and-server:
     name: Test Database and Server

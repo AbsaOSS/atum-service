@@ -104,3 +104,18 @@ lazy val database = (projectMatrix in file("database"))
     ): _*
   )
   .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.databaseDependencies)
+
+/**
+ * Module `info` is the library to be plugged into application which wants to easily read the measured data stored in the
+ * server
+ */
+lazy val info = (projectMatrix in file("info"))
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+  .settings(
+    Setup.commonSettings ++ Seq(
+      name := "atum-info",
+      javacOptions ++= Setup.clientJavacOptions
+    ): _*
+  )
+  .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.infoDependencies)
+  .dependsOn(model)
