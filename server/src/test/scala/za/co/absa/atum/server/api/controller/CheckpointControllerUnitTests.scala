@@ -17,17 +17,15 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
-import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.config.SslConfig
-import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
-import zio.test.Assertion.failsWithA
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
 import zio._
+import zio.test.Assertion.failsWithA
 import zio.test._
 
 object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
@@ -38,7 +36,7 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpoint(checkpointDTO3))
-    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+    .thenReturn(ZIO.fail(ConflictServiceError("boom!")))
 
   private val partitioningId = 1L
 
@@ -66,7 +64,7 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
         },
         test("Returns expected ConflictServiceError") {
           assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
-            failsWithA[InternalServerErrorResponse]
+            failsWithA[ConflictErrorResponse]
           )
         }
       ),

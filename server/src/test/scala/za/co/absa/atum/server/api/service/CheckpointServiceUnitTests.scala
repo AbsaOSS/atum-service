@@ -31,7 +31,7 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
 
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO1)).thenReturn(ZIO.unit)
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("error in data")))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("error in data")))
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO3)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val partitioningId = 1L
@@ -57,7 +57,7 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- CheckpointService.saveCheckpoint(checkpointDTO2).exit
           } yield assertTrue(
-            result == Exit.fail(GeneralServiceError("Failed to perform 'saveCheckpoint': error in data"))
+            result == Exit.fail(ConflictServiceError("Failed to perform 'saveCheckpoint': error in data"))
           )
         },
         test("Returns expected ServiceError") {

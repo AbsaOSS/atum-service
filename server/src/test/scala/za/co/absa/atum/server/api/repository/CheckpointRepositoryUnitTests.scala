@@ -37,7 +37,7 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(writeCheckpointMock.apply(checkpointDTO2))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null")))
+    .thenReturn(ZIO.fail(DataConflictException(FunctionStatus(31, "conflict"))))
   when(writeCheckpointMock.apply(checkpointDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val partitioningId = 1L
@@ -62,10 +62,8 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == ())
         },
         test("Returns expected Left with StatusException") {
-          for {
-            result <- CheckpointRepository.writeCheckpoint(checkpointDTO2).exit
-          } yield assertTrue(
-            result == Exit.fail(GeneralDatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null"))
+          assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO2).exit)(
+            failsWithA[ConflictDatabaseError]
           )
         },
         test("Returns expected DatabaseError") {
