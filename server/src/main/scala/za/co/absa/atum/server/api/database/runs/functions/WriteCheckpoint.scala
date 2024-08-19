@@ -28,10 +28,10 @@ import io.circe.syntax._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbArrayPut
 import doobie.postgres.implicits._
 import za.co.absa.atum.model.dto.CheckpointV2DTO
-import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint.WriteCheckpointV2Args
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint.WriteCheckpointArgs
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[WriteCheckpointV2Args, Unit, Task](args =>
+    extends DoobieSingleResultFunctionWithStatus[WriteCheckpointArgs, Unit, Task](args =>
       Seq(
         fr"${args.partitioningId}",
         fr"${args.checkpointV2DTO.id}",
@@ -46,7 +46,7 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     with StandardStatusHandling
 
 object WriteCheckpoint {
-  case class WriteCheckpointV2Args(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO)
+  case class WriteCheckpointArgs(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO)
 
   val layer: URLayer[PostgresDatabaseProvider, WriteCheckpoint] = ZLayer {
     for {

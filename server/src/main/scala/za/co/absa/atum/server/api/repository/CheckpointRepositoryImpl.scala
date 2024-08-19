@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
-import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint.WriteCheckpointV2Args
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint.WriteCheckpointArgs
 import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV1}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import zio._
@@ -33,7 +33,7 @@ class CheckpointRepositoryImpl(writeCheckpointV1Fn: WriteCheckpointV1, writeChec
 
   override def writeCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[DatabaseError, Unit] = {
     dbSingleResultCallWithStatus(
-      writeCheckpointFn(WriteCheckpointV2Args(partitioningId, checkpointV2DTO)),
+      writeCheckpointFn(WriteCheckpointArgs(partitioningId, checkpointV2DTO)),
       "writeCheckpoint"
     )
   }

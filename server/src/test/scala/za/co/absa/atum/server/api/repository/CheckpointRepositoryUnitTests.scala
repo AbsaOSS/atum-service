@@ -20,7 +20,7 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV1}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint.WriteCheckpointV2Args
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint.WriteCheckpointArgs
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.db.fadb.exceptions.DataConflictException
 import za.co.absa.db.fadb.status.FunctionStatus
@@ -42,11 +42,11 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val partitioningId = 1L
 
-  when(writeCheckpointMock.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO1)))
+  when(writeCheckpointMock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO1)))
     .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
-  when(writeCheckpointMock.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO2)))
+  when(writeCheckpointMock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO2)))
     .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Partitioning not found"))))
-  when(writeCheckpointMock.apply(WriteCheckpointV2Args(partitioningId, checkpointV2DTO3)))
+  when(writeCheckpointMock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO3)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val writeCheckpointV1MockLayer = ZLayer.succeed(writeCheckpointV1Mock)
