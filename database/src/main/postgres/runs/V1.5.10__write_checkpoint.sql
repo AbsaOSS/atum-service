@@ -14,7 +14,7 @@
  */
 
 
-CREATE OR REPLACE FUNCTION runs.write_checkpoint_v1(
+CREATE OR REPLACE FUNCTION runs.write_checkpoint(
     IN  i_partitioning              JSONB,
     IN  i_id_checkpoint             UUID,
     IN  i_checkpoint_name           TEXT,
@@ -29,7 +29,7 @@ CREATE OR REPLACE FUNCTION runs.write_checkpoint_v1(
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.write_checkpoint_v1(10)
+-- Function: runs.write_checkpoint(10)
 --      Creates a checkpoint and adds all the measurements that it consists of
 --
 -- Parameters:
@@ -63,28 +63,33 @@ $$
 -------------------------------------------------------------------------------
 DECLARE
     _fk_partitioning                    BIGINT;
-    result                              RECORD;
 BEGIN
 
     _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
-    result = runs.write_checkpoint(
-        _fk_partitioning,
-        i_id_checkpoint,
-        i_checkpoint_name,
-        i_process_start_time,
-        i_process_end_time,
-        i_measurements,
-        i_measured_by_atum_agent,
-        i_by_user
-    );
+    IF _fk_partitioning IS NULL THEN
+        status := 32;
+        status_text := 'Partitioning not found';
+        RETURN;
+    END IF;
 
-    status := result.status;
-    status_text := result.status_text;
+    SELECT WC.status, WC.status_text
+    FROM runs.write_checkpoint(
+                 _fk_partitioning,
+                 i_id_checkpoint,
+                 i_checkpoint_name,
+                 i_process_start_time,
+                 i_process_end_time,
+                 i_measurements,
+                 i_measured_by_atum_agent,
+                 i_by_user
+         ) WC
+    INTO status, status_text;
+
     RETURN;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.write_checkpoint_v1(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.write_checkpoint_v1(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) TO atum_user;
+ALTER FUNCTION runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) TO atum_user;

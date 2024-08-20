@@ -17,8 +17,6 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
@@ -27,31 +25,33 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import zio._
 import io.circe.syntax._
-import za.co.absa.atum.model.dto.MeasureResultDTO._
-import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
-import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbArrayPut
 import doobie.postgres.implicits._
+import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
 
-class WriteCheckpointV1(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task](values =>
+class WriteCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+    extends DoobieSingleResultFunctionWithStatus[WriteCheckpointArgs, Unit, Task](args =>
       Seq(
-        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
-        fr"${values.id}",
-        fr"${values.name}",
-        fr"${values.processStartTime}",
-        fr"${values.processEndTime}",
-        fr"${values.measurements.toList.map(_.asJson)}",
-        fr"${values.measuredByAtumAgent}",
-        fr"${values.author}"
-      )
+        fr"${args.partitioningId}",
+        fr"${args.checkpointV2DTO.id}",
+        fr"${args.checkpointV2DTO.name}",
+        fr"${args.checkpointV2DTO.processStartTime}",
+        fr"${args.checkpointV2DTO.processEndTime}",
+        fr"${args.checkpointV2DTO.measurements.toList.map(_.asJson)}",
+        fr"${args.checkpointV2DTO.measuredByAtumAgent}",
+        fr"${args.checkpointV2DTO.author}"
+      ),
+      Some("write_checkpoint")
     )
     with StandardStatusHandling
 
-object WriteCheckpointV1 {
-  val layer: URLayer[PostgresDatabaseProvider, WriteCheckpointV1] = ZLayer {
+object WriteCheckpointV2 {
+  case class WriteCheckpointArgs(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO)
+
+  val layer: URLayer[PostgresDatabaseProvider, WriteCheckpointV2] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new WriteCheckpointV1()(Runs, dbProvider.dbEngine)
+    } yield new WriteCheckpointV2()(Runs, dbProvider.dbEngine)
   }
 }
