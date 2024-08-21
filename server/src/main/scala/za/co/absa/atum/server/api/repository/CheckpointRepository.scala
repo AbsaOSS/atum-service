@@ -21,8 +21,11 @@ import za.co.absa.atum.server.api.exception.DatabaseError
 import zio._
 import zio.macros.accessible
 
+import java.util.UUID
+
 @accessible
 trait CheckpointRepository {
   def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Unit]
   def writeCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[DatabaseError, Unit]
+  def getCheckpointV2(partitioningId: Long, checkpointId: UUID): IO[DatabaseError, CheckpointV2DTO]
 }

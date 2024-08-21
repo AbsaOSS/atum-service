@@ -21,6 +21,7 @@ import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.http.ApiPaths
 import za.co.absa.atum.server.model.{ConflictErrorResponse, ErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model._
 import zio._
 
 trait BaseController {
@@ -33,6 +34,7 @@ trait BaseController {
     serviceCall
       .mapError {
         case ConflictServiceError(message) => ConflictErrorResponse(message)
+        case NotFoundServiceError(message) => NotFoundErrorResponse(message)
         case GeneralServiceError(message) => InternalServerErrorResponse(message)
       }
       .flatMap { result =>
