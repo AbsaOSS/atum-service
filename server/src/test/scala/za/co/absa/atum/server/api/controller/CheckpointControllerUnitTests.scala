@@ -24,7 +24,6 @@ import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
-import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._

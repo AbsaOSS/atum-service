@@ -29,6 +29,7 @@ import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
+
 import za.co.absa.db.fadb.status.Row
 
 object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {

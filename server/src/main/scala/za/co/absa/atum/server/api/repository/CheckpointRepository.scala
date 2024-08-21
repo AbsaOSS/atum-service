@@ -18,7 +18,6 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 import zio.macros.accessible
 

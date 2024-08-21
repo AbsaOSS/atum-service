@@ -16,8 +16,8 @@
 
 package za.co.absa.atum.server.model
 
-import io.circe.{DecodingFailure, Json}
 import za.co.absa.atum.model.dto._
+import io.circe.{DecodingFailure, Json}
 
 import java.time.ZonedDateTime
 import java.util.UUID
