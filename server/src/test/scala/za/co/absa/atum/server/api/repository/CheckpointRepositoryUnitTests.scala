@@ -17,28 +17,40 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpoint
+import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpointV2, WriteCheckpoint}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.db.fadb.exceptions.ErrorInDataException
+import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
+import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.db.fadb.exceptions.DataConflictException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
-import zio.test.Assertion.{failsWithA, isUnit}
+import zio.test.Assertion.failsWithA
 import zio.test._
-
 import za.co.absa.db.fadb.status.Row
 
 object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val writeCheckpointMock: WriteCheckpoint = mock(classOf[WriteCheckpoint])
+  private val writeCheckpointV2Mock: WriteCheckpointV2 = mock(classOf[WriteCheckpointV2])
 
   when(writeCheckpointMock.apply(checkpointDTO1)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(writeCheckpointMock.apply(checkpointDTO2))
-    .thenReturn(ZIO.fail(DatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null")))
+    .thenReturn(ZIO.fail(DataConflictException(FunctionStatus(31, "conflict"))))
   when(writeCheckpointMock.apply(checkpointDTO3)).thenReturn(ZIO.fail(new Exception("boom!")))
 
+  private val partitioningId = 1L
+
+  when(writeCheckpointV2Mock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO1)))
+    .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
+  when(writeCheckpointV2Mock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO2)))
+    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Partitioning not found"))))
+  when(writeCheckpointV2Mock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO3)))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
+
   private val writeCheckpointMockLayer = ZLayer.succeed(writeCheckpointMock)
+  private val writeCheckpointV2MockLayer = ZLayer.succeed(writeCheckpointV2Mock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -50,17 +62,32 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(result == ())
         },
         test("Returns expected Left with StatusException") {
-          for {
-            result <- CheckpointRepository.writeCheckpoint(checkpointDTO2).exit
-          } yield assertTrue(
-            result == Exit.fail(DatabaseError("Operation 'writeCheckpoint' failed with unexpected error: null"))
+          assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO2).exit)(
+            failsWithA[ConflictDatabaseError]
           )
         },
         test("Returns expected DatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpoint(checkpointDTO3).exit)(failsWithA[DatabaseError])
         }
+      ),
+      suite("WriteCheckpointV2Suite")(
+        test("Returns an expected Unit") {
+          for {
+            result <- CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO1)
+          } yield assertTrue(result == ())
+        },
+        test("Fails with an expected ConflictDatabaseError") {
+          assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO2).exit)(
+            failsWithA[ConflictDatabaseError]
+          )
+        },
+        test("Fails with an expected GeneralDatabaseError") {
+          assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO3).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
       )
-    ).provide(CheckpointRepositoryImpl.layer, writeCheckpointMockLayer)
+    ).provide(CheckpointRepositoryImpl.layer, writeCheckpointMockLayer, writeCheckpointV2MockLayer)
 
   }
 

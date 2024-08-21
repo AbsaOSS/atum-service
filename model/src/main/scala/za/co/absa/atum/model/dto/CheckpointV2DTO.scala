@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.service
+package za.co.absa.atum.model.dto
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
-import za.co.absa.atum.server.api.exception.ServiceError
-import zio.IO
-import zio.macros.accessible
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
-@accessible
-trait CheckpointService {
-  def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
-  def saveCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[ServiceError, Unit]
+import java.time.ZonedDateTime
+import java.util.UUID
+
+case class CheckpointV2DTO(
+  id: UUID,
+  name: String,
+  author: String,
+  measuredByAtumAgent: Boolean = false,
+  processStartTime: ZonedDateTime,
+  processEndTime: Option[ZonedDateTime],
+  measurements: Set[MeasurementDTO]
+)
+
+object CheckpointV2DTO {
+  implicit val decodeCheckpointDTO: Decoder[CheckpointV2DTO] = deriveDecoder
+  implicit val encodeCheckpointDTO: Encoder[CheckpointV2DTO] = deriveEncoder
 }
