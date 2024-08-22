@@ -30,7 +30,7 @@ import za.co.absa.atum.server.model.GeneralErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.test.Assertion.equalTo
 import zio.{Scope, ZIO, ZLayer}
-import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
+import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue, assertZIO}
 
 object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
@@ -57,16 +57,14 @@ object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints wi
       .response(asJson[SingleSuccessResponse[PartitioningWithIdDTO]])
 
     suite("GetPartitioningEndpointSuite")(
-      test("Returns expected PartitioningWithIdDTO") {
-        val response = request
-          .body(1111L)
-          .send(backendStub)
-
-        val body = response.map(_.body).as(SingleSuccessResponse(partitioningWithIdDTO1))
-        val statusCode = response.map(_.code)
-        assertZIO(body)(equalTo(SingleSuccessResponse(partitioningWithIdDTO1)))
-        assertZIO(statusCode)(equalTo(StatusCode.Ok))
-
+      test("Returns expected PartitioningWithIdDTO ...") {
+        for {
+          response <- request.body(1111L).send(backendStub)
+          body <- ZIO.fromEither(response.body)
+          statusCode = response.code
+        } yield {
+          assertTrue(body == SingleSuccessResponse(partitioningWithIdDTO1), statusCode == StatusCode.Ok)
+        }
       },
       test("Returns expected not found error") {
         val response = request
