@@ -62,10 +62,9 @@ object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints wi
           .body(1111L)
           .send(backendStub)
 
-        val body = response.map(_.body)
+        val body = response.map(_.body).as(SingleSuccessResponse(partitioningWithIdDTO1))
         val statusCode = response.map(_.code)
-
-//        assertZIO(body)(equalTo(SingleSuccessResponse(partitioningWithIdDTO1)))
+        assertZIO(body)(equalTo(SingleSuccessResponse(partitioningWithIdDTO1)))
         assertZIO(statusCode)(equalTo(StatusCode.Ok))
 
       },
