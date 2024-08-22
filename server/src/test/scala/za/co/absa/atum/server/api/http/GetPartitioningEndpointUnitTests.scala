@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.http
 
 import org.mockito.Mockito.{mock, when}
 import sttp.client3.testing.SttpBackendStub
-import sttp.client3.{UriContext, basicRequest}
+import sttp.client3._
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import sttp.client3.circe._
@@ -26,22 +26,23 @@ import sttp.model.StatusCode
 import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
-import za.co.absa.atum.server.model.GeneralErrorResponse
+import za.co.absa.atum.server.model.{InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
-import zio.test.Assertion.equalTo
 import zio.{Scope, ZIO, ZLayer}
-import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue, assertZIO}
+import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue}
 
 object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
-  private val getPartitioningEndpointMock = mock(classOf[PartitioningController])
+  private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(getPartitioningEndpointMock.getPartitioningV2(1111L))
+  when(partitioningControllerMock.getPartitioningV2(1L))
     .thenReturn(ZIO.succeed(SingleSuccessResponse(partitioningWithIdDTO1)))
-  when(getPartitioningEndpointMock.getPartitioningV2(2222L))
-    .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
+  when(partitioningControllerMock.getPartitioningV2(2L))
+    .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
+  when(partitioningControllerMock.getPartitioningV2(3L))
+    .thenReturn(ZIO.fail(NotFoundErrorResponse("boom!")))
 
-  private val getPartitioningEndpointMockLayer = ZLayer.succeed(getPartitioningEndpointMock)
+  private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getPartitioningServerEndpoint =
     getPartitioningEndpointV2.zServerLogic(PartitioningController.getPartitioningV2)
@@ -52,29 +53,38 @@ object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints wi
       .thenRunLogic()
       .backend()
 
-    val request = basicRequest
-      .post(uri"https://test.com/api/v2/get-partitioning")
-      .response(asJson[SingleSuccessResponse[PartitioningWithIdDTO]])
+    def createBasicRequest(id: Long): RequestT[Identity, Either[ResponseException[String, io.circe.Error], SingleSuccessResponse[PartitioningWithIdDTO]], Any] = {
+      basicRequest
+        .get(uri"https://test.com/api/v2/partitionings/$id")
+        .response(asJson[SingleSuccessResponse[PartitioningWithIdDTO]])
+    }
 
     suite("GetPartitioningEndpointSuite")(
-      test("Returns expected PartitioningWithIdDTO ...") {
+      test("Returns expected PartitioningWithIdDTO") {
         for {
-          response <- request.body(1111L).send(backendStub)
+          response <- createBasicRequest(1L).send(backendStub)
           body <- ZIO.fromEither(response.body)
           statusCode = response.code
         } yield {
-          assertTrue(body == SingleSuccessResponse(partitioningWithIdDTO1), statusCode == StatusCode.Ok)
+          assertTrue(body.data == SingleSuccessResponse(partitioningWithIdDTO1).data, statusCode == StatusCode.Ok)
+        }
+      },
+      test("Returns expected general error") {
+        for {
+          response <- createBasicRequest(2L).send(backendStub)
+          statusCode = response.code
+        } yield {
+          assertTrue(statusCode == StatusCode.InternalServerError)
         }
       },
       test("Returns expected not found error") {
-        val response = request
-          .body(2222L)
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.NotFound))
+        for {
+          response <- createBasicRequest(3L).send(backendStub)
+          statusCode = response.code
+        } yield {
+          assertTrue(statusCode == StatusCode.NotFound)
+        }
       }
     )
-  }.provide(getPartitioningEndpointMockLayer)
+  }.provide(partitioningControllerMockLayer)
 }
