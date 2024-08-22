@@ -19,9 +19,9 @@ package za.co.absa.atum.server.api.controller
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
+import za.co.absa.atum.server.api.exception.ServiceError.{GeneralServiceError, NotFoundServiceError}
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
+import za.co.absa.atum.server.model.{InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.{equalTo, failsWithA}
@@ -52,6 +52,13 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(Seq.empty))
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
+  when(partitioningServiceMock.getPartitioningAdditionalDataV2(1L))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningServiceMock.getPartitioningAdditionalDataV2(2L))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+  when(partitioningServiceMock.getPartitioningAdditionalDataV2(3L))
+    .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
 
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
@@ -97,6 +104,25 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO3).exit)(
             failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+      suite("GetPartitioningAdditionalDataV2Suite")(
+        test("Returns expected AdditionalDataDTO") {
+          for {
+            result <- PartitioningController.getPartitioningAdditionalDataV2(1L)
+            expected = SingleSuccessResponse(additionalDataDTO1, uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.getPartitioningAdditionalDataV2(2L).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundServiceError") {
+          assertZIO(PartitioningController.getPartitioningAdditionalDataV2(3L).exit)(
+            failsWithA[NotFoundErrorResponse]
           )
         }
       )

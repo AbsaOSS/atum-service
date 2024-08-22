@@ -77,6 +77,16 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def getPartitioningAdditionalDataV2(
+    partitioningId: Long
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[AdditionalDataDTO, AdditionalDataDTO](
+        partitioningService.getPartitioningAdditionalDataV2(partitioningId),
+        identity
+      )
+    )
+  }
 }
 
 object PartitioningControllerImpl {

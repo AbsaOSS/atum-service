@@ -69,6 +69,14 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
   }
 
+  protected val getPartitioningAdditionalDataEndpointV2
+  : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+  }
+
   protected val createOrUpdateAdditionalDataEndpointV2
     : PublicEndpoint[AdditionalDataSubmitDTO, ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO], Any] = {
     apiV2.post
