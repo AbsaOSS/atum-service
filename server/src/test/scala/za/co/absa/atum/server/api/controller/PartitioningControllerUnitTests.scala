@@ -80,8 +80,8 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected AdditionalDataSubmitDTO") {
           for {
             result <- PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO1)
-            expected = SingleSuccessResponse(additionalDataSubmitDTO1, uuid)
-            actual = result.copy(requestId = uuid)
+            expected = SingleSuccessResponse(additionalDataSubmitDTO1, uuid1)
+            actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
         test("Returns expected InternalServerErrorResponse") {
@@ -111,8 +111,8 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected PartitioningWithIdDTO") {
           for {
             result <- PartitioningController.getPartitioningV2(11L)
-            expected = SingleSuccessResponse(partitioningWithIdDTO1, uuid)
-            actual = result.copy(requestId = uuid)
+            expected = SingleSuccessResponse(partitioningWithIdDTO1, uuid1)
+            actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
         test("Returns expected NotFoundErrorResponse") {
