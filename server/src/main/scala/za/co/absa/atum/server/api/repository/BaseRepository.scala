@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
-import za.co.absa.db.fadb.exceptions.{DataConflictException, StatusException, DataNotFoundException}
+import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException, StatusException}
 import za.co.absa.db.fadb.status.{FailedOrRow, FailedOrRows}
 import zio._
 
@@ -53,7 +53,10 @@ trait BaseRepository {
       GeneralDatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
   }
 
-  def dbSingleResultCallWithStatus[R](dbFuncCall: Task[FailedOrRow[R]], operationName: String): IO[DatabaseError, R] = {
+  protected def dbSingleResultCallWithStatus[R](
+    dbFuncCall: Task[FailedOrRow[R]],
+    operationName: String
+  ): IO[DatabaseError, R] = {
     logAndReturn(operationName, dbFuncCall)
       .flatMap {
         case Left(statusException) => ZIO.fail(statusException)
@@ -65,7 +68,7 @@ trait BaseRepository {
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
   }
 
-  def dbMultipleResultCallWithAggregatedStatus[R](
+  protected def dbMultipleResultCallWithAggregatedStatus[R](
     dbFuncCall: Task[FailedOrRows[R]],
     operationName: String
   ): IO[DatabaseError, Seq[R]] = {

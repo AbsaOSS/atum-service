@@ -31,7 +31,7 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
 
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO1)).thenReturn(ZIO.unit)
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO2))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("error in data")))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("error in data")))
   when(checkpointRepositoryMock.writeCheckpoint(checkpointDTO3)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val partitioningId = 1L
@@ -41,6 +41,11 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(ConflictDatabaseError("conflict in data")))
   when(checkpointRepositoryMock.writeCheckpointV2(partitioningId, checkpointV2DTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  when(checkpointRepositoryMock.getCheckpointV2(partitioningId, checkpointV2DTO1.id))
+    .thenReturn(ZIO.succeed(checkpointV2DTO1))
+  when(checkpointRepositoryMock.getCheckpointV2(partitioningId, checkpointV2DTO2.id))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("not found")))
 
   private val checkpointRepositoryMockLayer = ZLayer.succeed(checkpointRepositoryMock)
 
@@ -57,7 +62,7 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- CheckpointService.saveCheckpoint(checkpointDTO2).exit
           } yield assertTrue(
-            result == Exit.fail(GeneralServiceError("Failed to perform 'saveCheckpoint': error in data"))
+            result == Exit.fail(ConflictServiceError("Failed to perform 'saveCheckpoint': error in data"))
           )
         },
         test("Returns expected ServiceError") {
@@ -78,6 +83,18 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Fails with an expected GeneralServiceError") {
           assertZIO(CheckpointService.saveCheckpointV2(partitioningId, checkpointV2DTO3).exit)(
             failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("GetCheckpointV2Suite")(
+        test("Returns an expected CheckpointV2DTO") {
+          for {
+            result <- CheckpointService.getCheckpointV2(partitioningId, checkpointV2DTO1.id)
+          } yield assertTrue(result == checkpointV2DTO1)
+        },
+        test("Fails with an expected NotFoundServiceError") {
+          assertZIO(CheckpointService.getCheckpointV2(partitioningId, checkpointV2DTO2.id).exit)(
+            failsWithA[NotFoundServiceError]
           )
         }
       )
