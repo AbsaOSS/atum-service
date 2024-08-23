@@ -75,6 +75,7 @@ trait Endpoints extends BaseEndpoints {
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   protected val createOrUpdateAdditionalDataEndpointV2
