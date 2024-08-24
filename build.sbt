@@ -106,15 +106,16 @@ lazy val database = (projectMatrix in file("database"))
   .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.databaseDependencies)
 
 /**
- * Module `info` is the library to be plugged into application which wants to easily read the measured data stored in the
- * server
+ * Module `reader` is the library to be plugged into application which wants to easily read the measured data stored on
+ * the server
  */
-lazy val info = (projectMatrix in file("info"))
+lazy val reader = (projectMatrix in file("reader"))
   .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings(
     Setup.commonSettings ++ Seq(
-      name := "atum-info",
-      javacOptions ++= Setup.clientJavacOptions
+      name := "atum-reader",
+      javacOptions ++= Setup.clientJavacOptions,
+      publish / skip := true // module is not yet finished, so we don't want to publish it
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.infoDependencies)

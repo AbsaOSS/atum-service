@@ -16,6 +16,6 @@
 
 package za.co.absa.atum.info
 
-class FLowInfo {
+class PartitioningRefactor {
 
 }

@@ -229,7 +229,7 @@ object Dependencies {
       jsonSerdeDependencies
   }
 
-  def infoDependencies(scalaVersion: Version): Seq[ModuleID] = {
+  def readerDependencies(scalaVersion: Version): Seq[ModuleID] = {
     Seq(
     ) ++
       testDependencies
