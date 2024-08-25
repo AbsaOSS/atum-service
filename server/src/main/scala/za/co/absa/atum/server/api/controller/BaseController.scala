@@ -17,8 +17,11 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.api.exception.ServiceError._
+import za.co.absa.atum.server.api.http.ApiPaths
+import za.co.absa.atum.server.model.{ConflictErrorResponse, ErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model._
 import zio._
 
 trait BaseController {
@@ -29,8 +32,10 @@ trait BaseController {
   ): IO[ErrorResponse, B] = {
 
     serviceCall
-      .mapError { serviceError: ServiceError =>
-        InternalServerErrorResponse(serviceError.message)
+      .mapError {
+        case ConflictServiceError(message) => ConflictErrorResponse(message)
+        case NotFoundServiceError(message) => NotFoundErrorResponse(message)
+        case GeneralServiceError(message) => InternalServerErrorResponse(message)
       }
       .flatMap { result =>
         ZIO.succeed(onSuccessFnc(result))
@@ -48,5 +53,11 @@ trait BaseController {
     effect: IO[ErrorResponse, Seq[A]]
   ): IO[ErrorResponse, MultiSuccessResponse[A]] = {
     effect.map(MultiSuccessResponse(_))
+  }
+
+  // Root-anchored URL path
+  // https://stackoverflow.com/questions/2005079/absolute-vs-relative-urls/78439286#78439286
+  protected def createV2RootAnchoredResourcePath(parts: Seq[String]): IO[ErrorResponse, String] = {
+    ZIO.succeed(s"/${ApiPaths.Api}/${ApiPaths.V2}/${parts.mkString("/")}")
   }
 }

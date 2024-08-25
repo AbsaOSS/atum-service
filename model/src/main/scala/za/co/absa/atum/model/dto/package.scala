@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.model
 
-
 import io.circe._
 
 package object dto {

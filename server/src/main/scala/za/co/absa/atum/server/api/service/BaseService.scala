@@ -16,16 +16,24 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.server.api.exception.{DatabaseError, ServiceError}
+import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.atum.server.api.exception.ServiceError._
+import za.co.absa.atum.server.api.exception._
 import zio._
 
 trait BaseService {
 
   def repositoryCall[R](repositoryCall: IO[DatabaseError, R], operationName: String): IO[ServiceError, R] = {
     repositoryCall
-      .mapError { case DatabaseError(message) =>
-        ServiceError(s"Failed to perform '$operationName': $message")
+      .mapError {
+        case ConflictDatabaseError(message) => ConflictServiceError(createMessage(operationName, message))
+        case NotFoundDatabaseError(message) => NotFoundServiceError(createMessage(operationName, message))
+        case GeneralDatabaseError(message) => GeneralServiceError(createMessage(operationName, message))
       }
+  }
+
+  private def createMessage(operationName: String, message: String): String = {
+    s"Failed to perform '$operationName': $message"
   }
 
 }

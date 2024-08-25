@@ -22,17 +22,17 @@ import io.circe.{Decoder, Encoder}
 
 object JsonSyntaxExtensions {
 
-    implicit class JsonSerializationSyntax[T: Encoder](obj: T) {
-      def asJsonString: String = obj.asJson.noSpaces
-    }
+  implicit class JsonSerializationSyntax[T: Encoder](obj: T) {
+    def asJsonString: String = obj.asJson.noSpaces
+  }
 
-    implicit class JsonDeserializationSyntax(jsonStr: String) {
-      def as[T: Decoder]: T = {
-        decode[T](jsonStr) match {
-          case Right(value) => value
-          case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")
-        }
+  implicit class JsonDeserializationSyntax(jsonStr: String) {
+    def as[T: Decoder]: T = {
+      decode[T](jsonStr) match {
+        case Right(value) => value
+        case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")
       }
     }
+  }
 
 }

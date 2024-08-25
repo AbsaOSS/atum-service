@@ -37,16 +37,14 @@ object BadRequestResponse {
   implicit val encodeBadRequestResponse: Encoder[BadRequestResponse] = deriveEncoder
 }
 
-final case class ConflictErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
-  extends ErrorResponse
+final case class ConflictErrorResponse(message: String, requestId: UUID = UUID.randomUUID()) extends ErrorResponse
 
 object ConflictErrorResponse {
   implicit val decoderConflictErrorResponse: Decoder[ConflictErrorResponse] = deriveDecoder
   implicit val encoderConflictErrorResponse: Encoder[ConflictErrorResponse] = deriveEncoder
 }
 
-final case class NotFoundErrorResponse(message: String, requestId: UUID = UUID.randomUUID())
-  extends ErrorResponse
+final case class NotFoundErrorResponse(message: String, requestId: UUID = UUID.randomUUID()) extends ErrorResponse
 
 object NotFoundErrorResponse {
   implicit val decoderNotFoundErrorResponse: Decoder[NotFoundErrorResponse] = deriveDecoder
