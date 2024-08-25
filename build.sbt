@@ -118,5 +118,5 @@ lazy val reader = (projectMatrix in file("reader"))
       publish / skip := true // module is not yet finished, so we don't want to publish it
     ): _*
   )
-  .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.infoDependencies)
+  .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
   .dependsOn(model)
