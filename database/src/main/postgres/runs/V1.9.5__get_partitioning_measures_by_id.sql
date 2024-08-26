@@ -18,7 +18,6 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_measures_by_id(
     IN i_partitioning_id          BIGINT,
     OUT status                    INTEGER,
     OUT status_text               TEXT,
-    OUT id_measure_definition     BIGINT,
     OUT measure_name              TEXT,
     OUT measured_columns          TEXT[]
 ) RETURNS SETOF record AS
@@ -34,7 +33,6 @@ $$
 -- Returns:
 --      status                  - Status code
 --      status_text             - Status message
---      id_measure_definition   - ID of the measure definition
 --      measure_name            - Name of the measure
 --      measured_columns        - Array of columns associated with the measure
 --
@@ -46,7 +44,7 @@ $$
 BEGIN
 
     RETURN QUERY
-        SELECT MD.id_measure_definition, MD.measure_name, MD.measured_columns
+        SELECT MD.measure_name, MD.measured_columns
         FROM runs.measure_definitions AS MD
         WHERE MD.fk_partitioning = i_partitioning_id;
 

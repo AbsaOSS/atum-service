@@ -4,7 +4,6 @@ import io.circe._
 import io.circe.generic.semiauto._
 
 case class MeasureWithIdDTO (
-  id: String,
   measureName: String,
   measuredColumns: Seq[String]
 )
