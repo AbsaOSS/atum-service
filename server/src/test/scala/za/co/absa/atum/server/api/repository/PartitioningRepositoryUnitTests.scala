@@ -27,7 +27,7 @@ import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
-import zio.test.{assertZIO, _}
+import zio.test._
 import za.co.absa.atum.server.model.AdditionalDataFromDB
 
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
