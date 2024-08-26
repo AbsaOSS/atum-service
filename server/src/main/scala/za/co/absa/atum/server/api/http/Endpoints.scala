@@ -78,6 +78,17 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[SingleSuccessResponse[AdditionalDataSubmitDTO]])
   }
 
+  protected val patchPartitioningAdditionalDataEndpointV2
+  : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
+    AdditionalDataDTO
+  ], Any] = {
+    apiV2.patch
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
+      .in(jsonBody[AdditionalDataPatchDTO])
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+  }
+
   protected val getPartitioningCheckpointEndpointV2
     : PublicEndpoint[(Long, UUID), ErrorResponse, SingleSuccessResponse[CheckpointV2DTO], Any] = {
     apiV2.get

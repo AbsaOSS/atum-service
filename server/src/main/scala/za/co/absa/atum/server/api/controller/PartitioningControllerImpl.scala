@@ -77,6 +77,12 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def patchPartitioningAdditionalDataV2(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
+    ???
+  }
 }
 
 object PartitioningControllerImpl {

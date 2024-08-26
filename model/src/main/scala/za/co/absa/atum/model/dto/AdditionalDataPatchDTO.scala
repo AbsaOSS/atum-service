@@ -20,7 +20,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 
 case class AdditionalDataPatchDTO(
-  data: Map[String, AdditionalDataItemDTO]
+  data: Map[String, AdditionalDataPatchItemDTO]
 )
 
 object AdditionalDataPatchDTO {

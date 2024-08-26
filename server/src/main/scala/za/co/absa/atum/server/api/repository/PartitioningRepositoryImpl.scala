@@ -16,22 +16,9 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{
-  InitialAdditionalDataDTO,
-  AdditionalDataSubmitDTO,
-  CheckpointQueryDTO,
-  MeasureDTO,
-  PartitioningDTO,
-  PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, AdditionalDataSubmitDTO, CheckpointQueryDTO, InitialAdditionalDataDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.model.MeasureFromDB
-import za.co.absa.atum.server.api.database.runs.functions.{
-  CreateOrUpdateAdditionalData,
-  CreatePartitioningIfNotExists,
-  GetPartitioningAdditionalData,
-  GetPartitioningCheckpoints,
-  GetPartitioningMeasures
-}
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningCheckpoints, GetPartitioningMeasures}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
@@ -83,6 +70,9 @@ class PartitioningRepositoryImpl(
     )
   }
 
+  override def patchAdditionalData(partitioningId: Long, additionalData: AdditionalDataPatchDTO): IO[DatabaseError, AdditionalDataDTO] = {
+    ???
+  }
 }
 
 object PartitioningRepositoryImpl {
