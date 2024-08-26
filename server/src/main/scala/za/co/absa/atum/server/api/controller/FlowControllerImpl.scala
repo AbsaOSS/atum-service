@@ -29,8 +29,7 @@ class FlowControllerImpl(flowService: FlowService) extends FlowController with B
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
     mapToMultiSuccessResponse(
       serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-        flowService.getFlowCheckpoints(checkpointQueryDTO),
-        identity
+        flowService.getFlowCheckpoints(checkpointQueryDTO)
       )
     )
   }
