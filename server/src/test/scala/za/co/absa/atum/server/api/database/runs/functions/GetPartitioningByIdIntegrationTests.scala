@@ -25,9 +25,9 @@ import zio._
 import zio.interop.catz.asyncInstance
 import zio.test._
 
-object GetPartitioningByIdIntegrationTest extends ConfigProviderTest {
+object GetPartitioningByIdIntegrationTests extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
-    suite("GetPartitioningByIdIntegrationTest")(
+    suite("GetPartitioningByIdIntegrationTests")(
       test("Retrieve partitioning for a given id") {
         val partitioningID: Long = 1111L
         for {
