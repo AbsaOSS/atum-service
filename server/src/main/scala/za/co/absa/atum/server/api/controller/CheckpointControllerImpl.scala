@@ -16,11 +16,14 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
+
+import java.util.UUID
 
 class CheckpointControllerImpl(checkpointService: CheckpointService) extends CheckpointController with BaseController {
 
@@ -33,12 +36,34 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
     )
   }
 
-  override def createCheckpointV2(
-    checkpointDTO: CheckpointDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]] = {
-    mapToSingleSuccessResponse(createCheckpointV1(checkpointDTO))
+  override def postCheckpointV2(
+    partitioningId: Long,
+    checkpointV2DTO: CheckpointV2DTO
+  ): IO[ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String)] = {
+    for {
+      response <- mapToSingleSuccessResponse(
+        serviceCall[Unit, CheckpointV2DTO](
+          checkpointService.saveCheckpointV2(partitioningId, checkpointV2DTO),
+          _ => checkpointV2DTO
+        )
+      )
+      uri <- createV2RootAnchoredResourcePath(
+        Seq(V2Paths.Partitionings, partitioningId.toString, V2Paths.Checkpoints, checkpointV2DTO.id.toString)
+      )
+    } yield (response, uri)
   }
 
+  override def getPartitioningCheckpointV2(
+    partitioningId: Long,
+    checkpointId: UUID
+  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointV2DTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[CheckpointV2DTO, CheckpointV2DTO](
+        checkpointService.getCheckpointV2(partitioningId, checkpointId),
+        identity
+      )
+    )
+  }
 }
 
 object CheckpointControllerImpl {

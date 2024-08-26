@@ -23,55 +23,62 @@ import sttp.client3.circe._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
-import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{ConflictErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
-object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
+object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val checkpointControllerMock = mock(classOf[CheckpointController])
 
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(checkpointDTO1, uuid)))
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO2))
+  when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO1))
+    .thenReturn(ZIO.succeed((SingleSuccessResponse(checkpointV2DTO1, uuid1), "some location")))
+  when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(checkpointControllerMock.createCheckpointV2(checkpointDTO3))
+  when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
+  when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO4))
+    .thenReturn(ZIO.fail(ConflictErrorResponse("error")))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
-  private val createCheckpointServerEndpoint = createCheckpointEndpointV2
-    .zServerLogic(CheckpointController.createCheckpointV2)
+  private val postCheckpointServerEndpointV2 = postCheckpointEndpointV2
+    .zServerLogic({ case (partitioningId: Long, checkpointV2DTO: CheckpointV2DTO) =>
+      CheckpointController.postCheckpointV2(partitioningId, checkpointV2DTO)
+    })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[CheckpointController]))
-      .whenServerEndpoint(createCheckpointServerEndpoint)
+      .whenServerEndpoint(postCheckpointServerEndpointV2)
       .thenRunLogic()
       .backend()
 
     val request = basicRequest
-      .post(uri"https://test.com/api/v2/create-checkpoint")
-      .response(asJson[SingleSuccessResponse[CheckpointDTO]])
+      .post(uri"https://test.com/api/v2/partitionings/1/checkpoints")
+      .response(asJson[SingleSuccessResponse[CheckpointV2DTO]])
 
     suite("CreateCheckpointEndpointSuite")(
       test("Returns expected CheckpointDTO") {
         val response = request
-          .body(checkpointDTO1)
+          .body(checkpointV2DTO1)
           .send(backendStub)
 
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
+        val header = response.map(_.header("Location"))
 
-        assertZIO(body <&> statusCode)(equalTo(Right(SingleSuccessResponse(checkpointDTO1, uuid)), StatusCode.Created))
+        assertZIO(body <&> statusCode <&> header)(
+          equalTo(Right(SingleSuccessResponse(checkpointV2DTO1, uuid1)), StatusCode.Created, Some("some location"))
+        )
       },
       test("Returns expected BadRequest") {
         val response = request
-          .body(checkpointDTO2)
+          .body(checkpointV2DTO2)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -80,12 +87,21 @@ object CreateCheckpointEndpointUnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected InternalServerError") {
         val response = request
-          .body(checkpointDTO3)
+          .body(checkpointV2DTO3)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.InternalServerError))
+      },
+      test("Returns expected ConflictError") {
+        val response = request
+          .body(checkpointV2DTO4)
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.Conflict))
       }
     )
   }.provide(
