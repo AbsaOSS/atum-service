@@ -71,8 +71,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
     mapToMultiSuccessResponse(
       serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO),
-        identity
+        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
       )
     )
   }
@@ -82,8 +81,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
     mapToSingleSuccessResponse(
       serviceCall[AdditionalDataDTO, AdditionalDataDTO](
-        partitioningService.getPartitioningAdditionalDataV2(partitioningId),
-        identity
+        partitioningService.getPartitioningAdditionalDataV2(partitioningId)
       )
     )
   }
