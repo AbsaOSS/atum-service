@@ -64,18 +64,36 @@ trait TestData {
   protected val measureFromDB1: MeasureFromDB = MeasureFromDB(Some("count1"), Some(Seq("col_A1", "col_B1")))
   protected val measureFromDB2: MeasureFromDB = MeasureFromDB(Some("count2"), Some(Seq("col_A2", "col_B2")))
 
-  // Additional Data
-  protected val additionalDataDTO1: InitialAdditionalDataDTO = Map(
+  // Initial Additional Data
+  protected val initialAdditionalDataDTO1: InitialAdditionalDataDTO = Map(
     "key1" -> Some("value1"),
     "key2" -> None,
     "key3" -> Some("value3")
   )
-  protected val additionalDataDTO2: InitialAdditionalDataDTO = Map(
+  protected val initialAdditionalDataDTO2: InitialAdditionalDataDTO = Map(
     "key1" -> Some("value1"),
     "key2" -> Some("value2"),
     "key3" -> Some("value3")
   )
-  protected val additionalDataDTO3: InitialAdditionalDataDTO = Map.empty
+  protected val initialAdditionalDataDTO3: InitialAdditionalDataDTO = Map.empty
+
+  protected val additionalDataDTO1: AdditionalDataDTO = AdditionalDataDTO(
+    Map(
+      "key1" -> Some(AdditionalDataItemDTO(Some("value1"), "author")),
+      "key2" -> None,
+      "key3" -> Some(AdditionalDataItemDTO(Some("value3"), "author"))
+    )
+  )
+
+  protected val additionalDataDTO2: AdditionalDataDTO = AdditionalDataDTO(
+    Map(
+      "key1" -> Some(AdditionalDataItemDTO(Some("value1"), "author")),
+      "key2" -> Some(AdditionalDataItemDTO(Some("value2"), "author")),
+      "key3" -> Some(AdditionalDataItemDTO(Some("value3"), "author"))
+    )
+  )
+
+  protected val additionalDataDTO3: AdditionalDataDTO = AdditionalDataDTO(Map.empty)
 
   val mainValue: TypedValue = TypedValue(
     value = "123",

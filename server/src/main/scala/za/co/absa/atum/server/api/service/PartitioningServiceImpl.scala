@@ -73,6 +73,13 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     } yield checkpointDTOs
 
   }
+
+  override def getPartitioningAdditionalDataV2(partitioningId: Long): IO[ServiceError, AdditionalDataDTO] = {
+    repositoryCall(
+      partitioningRepository.getPartitioningAdditionalDataV2(partitioningId),
+      "getPartitioningAdditionalDataV2"
+    )
+  }
 }
 
 object PartitioningServiceImpl {
