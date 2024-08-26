@@ -29,7 +29,7 @@ $$
 --      Returns additional data for the given partitioning
 --
 -- Parameters:
---      i_partitioning      - partitioning for requested additional data
+--      i_partitioning_id   - id of the partitioning for requested additional data
 --
 -- Returns:
 --      status              - Status code
