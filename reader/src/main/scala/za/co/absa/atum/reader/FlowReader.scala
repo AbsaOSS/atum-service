@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.info
+package za.co.absa.atum.reader
 
-class PartitioningRefactor {
-
+class FlowReader {
+  def foo(): String = {
+    // just to have some testable content
+    "bar"
+  }
 }

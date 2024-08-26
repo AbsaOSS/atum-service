@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.info
+package za.co.absa.atum.reader
 
-class FLowReader {
+import org.scalatest.funsuite.AnyFunSuiteLike
 
+class FlowReaderUnitTests extends AnyFunSuiteLike {
+  test("foo") {
+    val expected = new FlowReader().foo()
+    assert(expected == "bar")
+  }
 }
