@@ -16,10 +16,12 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.CheckpointRepository
 import zio._
+
+import java.util.UUID
 
 class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends CheckpointService with BaseService {
 
@@ -27,6 +29,20 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
     repositoryCall(
       checkpointRepository.writeCheckpoint(checkpointDTO),
       "saveCheckpoint"
+    )
+  }
+
+  override def saveCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[ServiceError, Unit] = {
+    repositoryCall(
+      checkpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO),
+      "saveCheckpoint"
+    )
+  }
+
+  override def getCheckpointV2(partitioningId: Long, checkpointId: UUID): IO[ServiceError, CheckpointV2DTO] = {
+    repositoryCall(
+      checkpointRepository.getCheckpointV2(partitioningId, checkpointId),
+      "getCheckpoint"
     )
   }
 

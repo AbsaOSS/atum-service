@@ -40,7 +40,7 @@ object SuccessResponse {
   }
 
   case class PaginatedResponse[T](data: Seq[T], pagination: Pagination, requestId: UUID = UUID.randomUUID())
-    extends SuccessResponse
+      extends SuccessResponse
 
   object PaginatedResponse {
     implicit def encoder[T: Encoder]: Encoder[PaginatedResponse[T]] = deriveEncoder

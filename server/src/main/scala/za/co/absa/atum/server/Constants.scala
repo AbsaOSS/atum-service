@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.server
 
+// TODO: to be removed when v2 endpoints are implemented, replaced by ApiPaths object
 object Constants {
 
   object Endpoints {

@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.model
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitioningDTO}
+import za.co.absa.atum.model.dto._
 import io.circe.{DecodingFailure, Json}
 
 import java.time.ZonedDateTime

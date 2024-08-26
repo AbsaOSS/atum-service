@@ -56,6 +56,8 @@ object Main extends ZIOAppDefault with Server {
           CreateOrUpdateAdditionalData.layer,
           GetPartitioningCheckpoints.layer,
           WriteCheckpoint.layer,
+          WriteCheckpointV2.layer,
+          GetPartitioningCheckpointV2.layer,
           GetFlowCheckpoints.layer,
           PostgresDatabaseProvider.layer,
           TransactorProvider.layer,

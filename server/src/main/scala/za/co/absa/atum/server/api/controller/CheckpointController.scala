@@ -16,19 +16,27 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.IO
 import zio.macros.accessible
+
+import java.util.UUID
 
 @accessible
 trait CheckpointController {
 
   def createCheckpointV1(checkpointDTO: CheckpointDTO): IO[ErrorResponse, CheckpointDTO]
 
-  def createCheckpointV2(
-    checkpointDTO: CheckpointDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointDTO]]
+  def postCheckpointV2(
+    partitioningId: Long,
+    checkpointV2DTO: CheckpointV2DTO
+  ): IO[ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String)]
+
+  def getPartitioningCheckpointV2(
+    partitioningId: Long,
+    checkpointId: UUID
+  ): IO[ErrorResponse, SingleSuccessResponse[CheckpointV2DTO]]
 
 }
