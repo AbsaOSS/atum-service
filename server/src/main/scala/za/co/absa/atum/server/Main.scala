@@ -53,6 +53,7 @@ object Main extends ZIOAppDefault with Server {
           CreatePartitioningIfNotExists.layer,
           GetPartitioningMeasures.layer,
           GetPartitioningAdditionalData.layer,
+          GetPartitioningAdditionalDataV2.layer,
           CreateOrUpdateAdditionalData.layer,
           GetPartitioningCheckpoints.layer,
           WriteCheckpoint.layer,

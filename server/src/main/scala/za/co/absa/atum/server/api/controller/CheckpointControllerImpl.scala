@@ -59,8 +59,7 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
   ): IO[ErrorResponse, SingleSuccessResponse[CheckpointV2DTO]] = {
     mapToSingleSuccessResponse(
       serviceCall[CheckpointV2DTO, CheckpointV2DTO](
-        checkpointService.getCheckpointV2(partitioningId, checkpointId),
-        identity
+        checkpointService.getCheckpointV2(partitioningId, checkpointId)
       )
     )
   }

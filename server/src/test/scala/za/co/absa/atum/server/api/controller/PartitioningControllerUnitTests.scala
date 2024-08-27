@@ -53,6 +53,13 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
+  when(partitioningServiceMock.getPartitioningAdditionalDataV2(1L))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningServiceMock.getPartitioningAdditionalDataV2(2L))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+  when(partitioningServiceMock.getPartitioningAdditionalDataV2(3L))
+    .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
+
   when(partitioningServiceMock.getPartitioning(11L))
     .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
   when(partitioningServiceMock.getPartitioning(22L))
@@ -123,6 +130,25 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.getPartitioningV2(99L).exit)(
             failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+      suite("GetPartitioningAdditionalDataV2Suite")(
+        test("Returns expected AdditionalDataDTO") {
+          for {
+            result <- PartitioningController.getPartitioningAdditionalDataV2(1L)
+            expected = SingleSuccessResponse(additionalDataDTO1, uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.getPartitioningAdditionalDataV2(2L).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundServiceError") {
+          assertZIO(PartitioningController.getPartitioningAdditionalDataV2(3L).exit)(
+            failsWithA[NotFoundErrorResponse]
           )
         }
       )

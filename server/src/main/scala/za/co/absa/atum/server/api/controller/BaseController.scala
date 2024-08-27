@@ -28,7 +28,7 @@ trait BaseController {
 
   def serviceCall[A, B](
     serviceCall: IO[ServiceError, A],
-    onSuccessFnc: A => B
+    onSuccessFnc: A => B = identity[A] _
   ): IO[ErrorResponse, B] = {
 
     serviceCall

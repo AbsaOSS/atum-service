@@ -16,14 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.{
-  AdditionalDataSubmitDTO,
-  AtumContextDTO,
-  CheckpointDTO,
-  CheckpointQueryDTO,
-  PartitioningSubmitDTO,
-  PartitioningWithIdDTO
-}
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio.IO
@@ -38,6 +31,10 @@ trait PartitioningController {
   def createPartitioningIfNotExistsV2(
     partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]]
+
+  def getPartitioningAdditionalDataV2(
+    partitioningId: Long
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
 
   def createOrUpdateAdditionalDataV2(
     additionalData: AdditionalDataSubmitDTO
