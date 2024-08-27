@@ -59,6 +59,10 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),
       createServerEndpoint(createPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
       createServerEndpoint(
+        getPartitioningAdditionalDataEndpointV2,
+        PartitioningController.getPartitioningAdditionalDataV2
+      ),
+      createServerEndpoint(
         createOrUpdateAdditionalDataEndpointV2,
         PartitioningController.createOrUpdateAdditionalDataV2
       ),

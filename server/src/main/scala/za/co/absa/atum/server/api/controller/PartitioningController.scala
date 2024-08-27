@@ -32,6 +32,10 @@ trait PartitioningController {
     partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]]
 
+  def getPartitioningAdditionalDataV2(
+    partitioningId: Long
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
+
   def createOrUpdateAdditionalDataV2(
     additionalData: AdditionalDataSubmitDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]]

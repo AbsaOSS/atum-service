@@ -71,12 +71,20 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
     mapToMultiSuccessResponse(
       serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO),
-        identity
+        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
       )
     )
   }
 
+  override def getPartitioningAdditionalDataV2(
+    partitioningId: Long
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[AdditionalDataDTO, AdditionalDataDTO](
+        partitioningService.getPartitioningAdditionalDataV2(partitioningId)
+      )
+    )
+  }
   override def patchPartitioningAdditionalDataV2(
     partitioningId: Long,
     additionalDataPatchDTO: AdditionalDataPatchDTO

@@ -30,6 +30,10 @@ trait PartitioningRepository {
 
   def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, InitialAdditionalDataDTO]
 
+  def getPartitioningAdditionalDataV2(
+    partitioningId: Long
+  ): IO[DatabaseError, AdditionalDataDTO]
+
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit]
 
   def patchAdditionalData(
