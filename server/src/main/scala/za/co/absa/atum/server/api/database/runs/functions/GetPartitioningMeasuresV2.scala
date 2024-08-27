@@ -17,16 +17,32 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
+import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
-import zio.Task
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
+import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
+import zio._
+import io.circe.syntax._
+import za.co.absa.atum.server.model.MeasureFromDB
 
 
 class GetPartitioningMeasuresV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[Long, CheckpointFromDB, Task](input =>
-    Seq(fr"${input}")
+  extends DoobieMultipleResultFunctionWithAggStatus[Long, MeasureFromDB, Task](values =>
+    Seq(fr"${values}")
   )
+    with StandardStatusHandling
+    with ByFirstErrorStatusAggregator {
 
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("measure_name", "measured_columns")
+}
+
+object GetPartitioningMeasuresV2 {
+  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningMeasuresV2] = ZLayer {
+      for {
+        dbProvider <- ZIO.service[PostgresDatabaseProvider]
+      } yield new GetPartitioningMeasuresV2()(Runs, dbProvider.dbEngine)
+  }
 }
