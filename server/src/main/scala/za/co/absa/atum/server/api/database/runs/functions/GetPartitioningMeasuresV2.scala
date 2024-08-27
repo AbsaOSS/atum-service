@@ -25,7 +25,6 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWith
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
-import io.circe.syntax._
 import za.co.absa.atum.server.model.MeasureFromDB
 
 
