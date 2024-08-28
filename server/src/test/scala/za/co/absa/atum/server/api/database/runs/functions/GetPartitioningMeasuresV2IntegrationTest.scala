@@ -20,7 +20,7 @@ object GetPartitioningMeasuresV2IntegrationTest extends ConfigProviderTest {
         for {
           getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresV2]
           result <- getPartitioningMeasuresV2(partitioningID)
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "No measures found"))))
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       GetPartitioningMeasuresV2.layer,

@@ -46,7 +46,7 @@ class GetPartitioningMeasuresByIdIntegrationTest extends DBTestSuite {
     )
 
     function(fncGetPartitioningMeasuresById)
-      .setParam("i_partitioning", fkPartitioning)
+      .setParam("i_partitioning", fkPartitioning: Long)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(11))
