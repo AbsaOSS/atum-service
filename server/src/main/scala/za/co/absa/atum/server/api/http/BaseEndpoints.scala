@@ -71,7 +71,8 @@ trait BaseEndpoints {
       oneOf[ErrorResponse](
         badRequestOneOfVariant,
         generalErrorOneOfVariant,
-        internalServerErrorOneOfVariant
+        internalServerErrorOneOfVariant,
+        notFoundErrorOneOfVariant
       )
     )
   }

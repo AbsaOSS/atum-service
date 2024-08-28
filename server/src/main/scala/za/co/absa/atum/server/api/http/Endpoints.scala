@@ -114,6 +114,14 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
   }
 
+  protected val getPartitioningMeasuresV2
+  : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Measures)
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[MultiSuccessResponse[MeasureDTO]])
+  }
+
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
     endpoint.get.in(ZioMetrics).out(stringBody)
   }
