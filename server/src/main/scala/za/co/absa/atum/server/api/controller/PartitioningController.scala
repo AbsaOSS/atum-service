@@ -45,4 +45,8 @@ trait PartitioningController {
   def getPartitioningCheckpointsV2(
     checkpointQueryDTO: CheckpointQueryDTO
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]]
+
+  def getPartitioningMeasuresV2(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]]
 }
