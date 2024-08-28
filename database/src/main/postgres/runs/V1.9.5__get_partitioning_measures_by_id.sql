@@ -60,7 +60,7 @@ BEGIN
 
     IF FOUND THEN
         status := 11;
-        status_text := 'Measures found';
+        status_text := 'OK';
     ELSE
         status := 42;
         status_text := 'Measures not found';

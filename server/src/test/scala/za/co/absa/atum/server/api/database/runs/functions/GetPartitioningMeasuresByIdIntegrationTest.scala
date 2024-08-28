@@ -9,7 +9,7 @@ import za.co.absa.db.fadb.status.FunctionStatus
 import zio.test.{Spec, TestEnvironment, assertTrue}
 import zio.{Scope, ZIO}
 
-object GetPartitioningMeasuresV2IntegrationTest extends ConfigProviderTest {
+object GetPartitioningMeasuresByIdIntegrationTest extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -18,12 +18,12 @@ object GetPartitioningMeasuresV2IntegrationTest extends ConfigProviderTest {
         val partitioningID: Long = 1L
 
         for {
-          getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresV2]
+          getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
           result <- getPartitioningMeasuresV2(partitioningID)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
-      GetPartitioningMeasuresV2.layer,
+      GetPartitioningMeasuresById.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )

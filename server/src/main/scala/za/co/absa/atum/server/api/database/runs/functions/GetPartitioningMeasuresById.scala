@@ -29,7 +29,7 @@ import za.co.absa.atum.server.model.MeasureFromDB
 
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 
-class GetPartitioningMeasuresV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+class GetPartitioningMeasuresById(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunctionWithAggStatus[Long, MeasureFromDB, Task](values =>
     Seq(fr"${values}")
   ) with StandardStatusHandling with ByFirstErrorStatusAggregator {
@@ -37,10 +37,10 @@ class GetPartitioningMeasuresV2(implicit schema: DBSchema, dbEngine: DoobieEngin
   override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("measure_name", "measured_columns")
 }
 
-object GetPartitioningMeasuresV2 {
-  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningMeasuresV2] = ZLayer {
+object GetPartitioningMeasuresById {
+  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningMeasuresById] = ZLayer {
       for {
         dbProvider <- ZIO.service[PostgresDatabaseProvider]
-      } yield new GetPartitioningMeasuresV2()(Runs, dbProvider.dbEngine)
+      } yield new GetPartitioningMeasuresById()(Runs, dbProvider.dbEngine)
   }
 }

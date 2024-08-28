@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointQueryDTO, InitialAdditionalDataDTO, MeasureDTO, PartitioningDTO, PartitioningSubmitDTO}
 import za.co.absa.atum.server.model.MeasureFromDB
-import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningCheckpoints, GetPartitioningMeasures, GetPartitioningMeasuresV2}
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningIfNotExists, GetPartitioningAdditionalData, GetPartitioningCheckpoints, GetPartitioningMeasures, GetPartitioningMeasuresById}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
@@ -31,7 +31,7 @@ class PartitioningRepositoryImpl(
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
-  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresV2
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -87,7 +87,7 @@ object PartitioningRepositoryImpl {
       with GetPartitioningAdditionalData
       with CreateOrUpdateAdditionalData
       with GetPartitioningCheckpoints
-      with GetPartitioningMeasuresV2,
+      with GetPartitioningMeasuresById,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -96,7 +96,7 @@ object PartitioningRepositoryImpl {
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
       getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
-      getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresV2]
+      getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       getPartitioningMeasures,

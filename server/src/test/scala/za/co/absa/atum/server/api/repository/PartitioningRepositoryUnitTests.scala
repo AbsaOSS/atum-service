@@ -87,7 +87,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getPartitioningCheckpointsMockLayer = ZLayer.succeed(getPartitioningCheckpointsMock)
 
-  private val getPartitioningMeasuresV2Mock = mock(classOf[GetPartitioningMeasuresV2])
+  private val getPartitioningMeasuresV2Mock = mock(classOf[GetPartitioningMeasuresById])
 
   //  when(getPartitioningMeasuresV2Mock.apply(2L))
   //    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))

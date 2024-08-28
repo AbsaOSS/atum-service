@@ -7,21 +7,22 @@ import za.co.absa.balta.classes.setter.CustomDBType
 class GetPartitioningMeasuresByIdIntegrationTest extends DBTestSuite {
   private val fncGetPartitioningMeasuresById = "runs.get_partitioning_measures_by_id"
 
+  private val partitioning: JsonBString = JsonBString(
+    """
+      |{
+      |  "version": 1,
+      |  "keys": ["key1", "key3", "key2", "key4"],
+      |  "keysToValues": {
+      |    "key1": "valueX",
+      |    "key2": "valueY",
+      |    "key3": "valueZ",
+      |    "key4": "valueA"
+      |  }
+      |}
+      |""".stripMargin
+  )
+
   test("Get partitioning measures by id should return partitioning measures for partitioning with measures") {
-    val partitioning = JsonBString(
-      """
-        |{
-        |  "version": 1,
-        |  "keys": ["key1", "key3", "key2", "key4"],
-        |  "keysToValues": {
-        |    "key1": "valueX",
-        |    "key2": "valueY",
-        |    "key3": "valueZ",
-        |    "key4": "valueA"
-        |  }
-        |}
-        |""".stripMargin
-    )
 
     table("runs.partitionings").insert(
       add("partitioning", partitioning)
@@ -46,7 +47,7 @@ class GetPartitioningMeasuresByIdIntegrationTest extends DBTestSuite {
     )
 
     function(fncGetPartitioningMeasuresById)
-      .setParam("i_partitioning", fkPartitioning: Long)
+      .setParam("i_partitioning", fkPartitioning)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(11))
@@ -61,4 +62,35 @@ class GetPartitioningMeasuresByIdIntegrationTest extends DBTestSuite {
         assert(results2.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col2")))
       }
   }
+
+  test("Get partitioning measures by id should return error for partitioning without measures") {
+
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning)
+        .add("created_by", "Thomas")
+    )
+
+    val fkPartitioning: Long = table("runs.partitionings")
+      .fieldValue("partitioning", partitioning, "id_partitioning").get.get
+
+    function(fncGetPartitioningMeasuresById)
+      .setParam("i_partitioning", fkPartitioning)
+      .execute { queryResult =>
+        val results = queryResult.next()
+        assert(results.getInt("status").contains(42))
+        assert(results.getString("status_text").contains("Measures not found"))
+      }
+  }
+
+  test("Get partitioning measures by id should return an error for non-existing partitioning") {
+
+    function(fncGetPartitioningMeasuresById)
+      .setParam("i_partitioning", 999)
+      .execute { queryResult =>
+        val results = queryResult.next()
+        assert(results.getInt("status").contains(41))
+        assert(results.getString("status_text").contains("Partitioning not found"))
+      }
+  }
+
 }
