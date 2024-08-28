@@ -62,6 +62,13 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(2L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.getPartitioningMeasuresById(1L))
+    .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
+  when(partitioningRepositoryMock.getPartitioningMeasuresById(2L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getPartitioningMeasuresById(3L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -154,6 +161,23 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalDataV2(2L).exit)(
             failsWithA[ServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningMeasuresByIdSuite")(
+        test("Returns expected Right with Seq[MeasureDTO]") {
+          for {
+            result <- PartitioningService.getPartitioningMeasuresById(1L)
+          } yield assertTrue(result == Seq(measureDTO1, measureDTO2))
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioningMeasuresById(2L).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioningMeasuresById(3L).exit)(
+            failsWithA[GeneralServiceError]
           )
         }
       )
