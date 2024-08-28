@@ -226,7 +226,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       createOrUpdateAdditionalDataMockLayer,
       getPartitioningCheckpointsMockLayer,
       getPartitioningAdditionalDataV2MockLayer,
-      getPartitioningCheckpointsMockLayer,
       getPartitioningMeasuresV2MockLayer
     )
 

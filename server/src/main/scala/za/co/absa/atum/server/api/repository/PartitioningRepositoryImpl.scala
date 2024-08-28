@@ -29,8 +29,7 @@ class PartitioningRepositoryImpl(
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
-  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2
-  getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
+  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
 ) extends PartitioningRepository
     with BaseRepository {
@@ -117,7 +116,6 @@ object PartitioningRepositoryImpl {
       createOrUpdateAdditionalData,
       getPartitioningCheckpoints,
       getPartitioningAdditionalDataV2,
-      getPartitioningCheckpoints,
       getPartitioningMeasuresV2
     )
   }
