@@ -48,13 +48,18 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO1))
-    .thenReturn(ZIO.succeed(additionalDataDTO1))
+    .thenReturn(ZIO.succeed(initialAdditionalDataDTO1))
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO2))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO1))
     .thenReturn(ZIO.succeed(Seq(checkpointFromDB1, checkpointFromDB2)))
   when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO2))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(1L))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(2L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
@@ -118,7 +123,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Seq[AdditionalDataDTO]") {
           for {
             result <- PartitioningService.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue { result == additionalDataDTO1 }
+          } yield assertTrue { result == initialAdditionalDataDTO1 }
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningDTO2).exit)(
@@ -136,6 +141,18 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(
+            failsWithA[ServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningAdditionalDataV2Suite")(
+        test("Returns expected Right with AdditionalDataDTO") {
+          for {
+            result <- PartitioningService.getPartitioningAdditionalDataV2(1L)
+          } yield assertTrue(result == additionalDataDTO1)
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioningAdditionalDataV2(2L).exit)(
             failsWithA[ServiceError]
           )
         }

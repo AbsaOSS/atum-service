@@ -3,6 +3,7 @@
 - [Atum Service](#atum-service)
     - [Modules](#modules)
         - [Agent `agent/`](#agent-agent)
+        - [Reader `reader/`](#agent-agent)
         - [Server `server/`](#server-server)
         - [Data Model `model/`](#data-model-model)
         - [Database `database/`](#database-database)
@@ -55,6 +56,14 @@ drop support for Spark 2.4. If you need the agent to work with Spark 2.4 follow 
 * Switch to Java 8
 * In `'build.sbt'` change the matrix rows, to be Spark 2.4 and Scala 2.11 for modules _agent_ and _model_
 * Build these two modules and use them in your project
+
+### Reader `reader/`
+**NB!**  
+_This module is not yet implemented to an operational abilities and therefore not yet released._
+
+This module is intended to be used whenever an application wants to read the metrics stored by the _Atum Service_. It
+offers classes and methods to read the metrics from the database shielding away the complexity of accessing the _Atum Server_
+directly.
 
 ### Server `server/`
 An API under construction that communicates with the Agent and with the persistent storage. It also provides measure 

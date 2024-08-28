@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.reader
 
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import io.circe.{Decoder, Encoder}
+import org.scalatest.funsuite.AnyFunSuiteLike
 
-case class AdditionalDataItemDTO(
-  value: Option[String],
-  author: String
-)
-
-object AdditionalDataItemDTO {
-  implicit val encoderAdditionalDataItem: Encoder[AdditionalDataItemDTO] = deriveEncoder
-  implicit val decoderAdditionalDataItem: Decoder[AdditionalDataItemDTO] = deriveDecoder
+class PartitioningReaderUnitTests extends AnyFunSuiteLike {
+  test("foo") {
+    val expected = new PartitioningReader().foo()
+    assert(expected == "bar")
+  }
 }
