@@ -90,8 +90,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
     mapToSingleSuccessResponse(
       serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
-        partitioningService.getPartitioning(partitioningId),
-        identity
+        partitioningService.getPartitioning(partitioningId)
       )
     )
   }
