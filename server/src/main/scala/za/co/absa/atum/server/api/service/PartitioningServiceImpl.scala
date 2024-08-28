@@ -73,6 +73,14 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     } yield checkpointDTOs
 
   }
+
+  override def getPartitioningMeasuresById(partitioningId: Long): IO[ServiceError, Seq[MeasureDTO]] = {
+    repositoryCall(
+      partitioningRepository.getPartitioningMeasuresById(partitioningId),
+      "getPartitioningMeasuresById"
+    )
+  }
+
 }
 
 object PartitioningServiceImpl {

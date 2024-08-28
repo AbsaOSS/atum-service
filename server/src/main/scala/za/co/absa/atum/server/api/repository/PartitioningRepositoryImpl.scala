@@ -71,7 +71,7 @@ class PartitioningRepositoryImpl(
     )
   }
 
-  override def getPartitioningMeasuresV2(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
+  override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresByIdFn(partitioningId), "getPartitioningMeasures")
       .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
         MeasureDTO(measureName.get, measuredColumns.get)
