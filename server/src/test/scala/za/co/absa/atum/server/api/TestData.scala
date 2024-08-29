@@ -95,6 +95,14 @@ trait TestData {
 
   protected val additionalDataDTO3: AdditionalDataDTO = AdditionalDataDTO(Map.empty)
 
+  protected val additionalDataPatchDTO1: AdditionalDataPatchDTO = AdditionalDataPatchDTO(
+    byUser = "author",
+    data = Map(
+      "key1" -> "value1",
+      "key3" -> "value3"
+    )
+  )
+
   val mainValue: TypedValue = TypedValue(
     value = "123",
     valueType = ResultValueType.LongValue

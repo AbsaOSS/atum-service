@@ -17,14 +17,14 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
 import za.co.absa.db.fadb.exceptions.DataConflictException
-import za.co.absa.db.fadb.status.{FunctionStatus, Row}
+import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test._

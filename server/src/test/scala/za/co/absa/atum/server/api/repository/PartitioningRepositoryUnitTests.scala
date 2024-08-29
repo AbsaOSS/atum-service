@@ -19,6 +19,7 @@ package za.co.absa.atum.server.api.repository
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO}
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
@@ -47,11 +48,11 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   // Create Additional Data Mocks
   private val createOrUpdateAdditionalDataMock = mock(classOf[CreateOrUpdateAdditionalData])
 
-  when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO1))
-    .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
-  when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO2))
-    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in AD data"))))
-  when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO3))
+  when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(1L, additionalDataPatchDTO1)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "Additional data have been updated, added or both"), Option.empty[AdditionalDataItemFromDB]))))
+  when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(0L, additionalDataPatchDTO1)))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(2L, additionalDataPatchDTO1)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val createOrUpdateAdditionalDataMockLayer = ZLayer.succeed(createOrUpdateAdditionalDataMock)
@@ -130,23 +131,23 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("CreateOrUpdateAdditionalDataSuite")(
         test("Returns expected Right with Unit") {
           for {
-            result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
-          } yield assertTrue(result == ())
+            result <- PartitioningRepository.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1)
+          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
         },
         test("Returns expected Left with StatusException") {
           for {
-            result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
+            result <- PartitioningRepository.createOrUpdateAdditionalData(0L, additionalDataPatchDTO1).exit
           } yield assertTrue(
             result == Exit.fail(
-              GeneralDatabaseError(
-                "Exception caused by operation: 'createOrUpdateAdditionalData': (50) error in AD data"
+              NotFoundDatabaseError(
+                "Partitioning not found"
               )
             )
           )
         },
         test("Returns expected DatabaseError") {
-          assertZIO(PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
-            failsWithA[DatabaseError]
+          assertZIO(PartitioningRepository.createOrUpdateAdditionalData(2L, additionalDataPatchDTO1).exit)(
+            failsWithA[GeneralDatabaseError]
           )
         }
       ),

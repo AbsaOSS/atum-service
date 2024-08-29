@@ -36,9 +36,9 @@ trait PartitioningController {
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
 
-  def createOrUpdateAdditionalDataV2(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]]
+//  def createOrUpdateAdditionalDataV2(
+//    additionalData: AdditionalDataSubmitDTO
+//  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]]
 
   def patchPartitioningAdditionalDataV2(
     partitioningId: Long,

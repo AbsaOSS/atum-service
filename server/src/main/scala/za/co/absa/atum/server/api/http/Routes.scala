@@ -62,10 +62,10 @@ trait Routes extends Endpoints with ServerOptions {
         getPartitioningAdditionalDataEndpointV2,
         PartitioningController.getPartitioningAdditionalDataV2
       ),
-      createServerEndpoint(
-        createOrUpdateAdditionalDataEndpointV2,
-        PartitioningController.createOrUpdateAdditionalDataV2
-      ),
+//      createServerEndpoint(
+//        createOrUpdateAdditionalDataEndpointV2,
+//        PartitioningController.createOrUpdateAdditionalDataV2
+//      ),
       createServerEndpoint[
         (Long, AdditionalDataPatchDTO),
         ErrorResponse,
@@ -102,7 +102,7 @@ trait Routes extends Endpoints with ServerOptions {
       postCheckpointEndpointV2,
       createPartitioningEndpointV1,
       createPartitioningEndpointV2,
-      createOrUpdateAdditionalDataEndpointV2,
+//      createOrUpdateAdditionalDataEndpointV2,
       patchPartitioningAdditionalDataEndpointV2,
       getPartitioningCheckpointsEndpointV2,
       getPartitioningCheckpointEndpointV2,

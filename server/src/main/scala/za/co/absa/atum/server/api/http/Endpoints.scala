@@ -78,14 +78,14 @@ trait Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  protected val createOrUpdateAdditionalDataEndpointV2
-    : PublicEndpoint[AdditionalDataSubmitDTO, ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO], Any] = {
-    apiV2.post
-      .in(CreateOrUpdateAdditionalData)
-      .in(jsonBody[AdditionalDataSubmitDTO])
-      .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AdditionalDataSubmitDTO]])
-  }
+//  protected val createOrUpdateAdditionalDataEndpointV2
+//    : PublicEndpoint[AdditionalDataSubmitDTO, ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO], Any] = {
+//    apiV2.post
+//      .in(CreateOrUpdateAdditionalData)
+//      .in(jsonBody[AdditionalDataSubmitDTO])
+//      .out(statusCode(StatusCode.Ok))
+//      .out(jsonBody[SingleSuccessResponse[AdditionalDataSubmitDTO]])
+//  }
 
   protected val patchPartitioningAdditionalDataEndpointV2
   : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
@@ -96,6 +96,7 @@ trait Endpoints extends BaseEndpoints {
       .in(jsonBody[AdditionalDataPatchDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   protected val getPartitioningCheckpointEndpointV2
