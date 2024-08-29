@@ -140,7 +140,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(
             result == Exit.fail(
               NotFoundDatabaseError(
-                "Partitioning not found"
+                "Exception caused by operation: 'createOrUpdateAdditionalData': (41) Partitioning not found"
               )
             )
           )
