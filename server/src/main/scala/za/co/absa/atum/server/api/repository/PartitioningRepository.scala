@@ -37,4 +37,7 @@ trait PartitioningRepository {
   def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit]
 
   def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
+
+  def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
+
 }

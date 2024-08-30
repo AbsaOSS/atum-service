@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.server.model
 
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import io.circe.{Decoder, Encoder}
+import io.circe.Json
 
-case class PartitioningWithIdDTO(
+case class PartitioningFromDB(
   id: Long,
-  partitioning: PartitioningDTO,
+  partitioning: Json,
   author: String
 )
-
-object PartitioningWithIdDTO {
-  implicit def encoder: Encoder[PartitioningWithIdDTO] = deriveEncoder
-  implicit def decoder: Decoder[PartitioningWithIdDTO] = deriveDecoder
-}

@@ -17,11 +17,12 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB}
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PartitioningFromDB}
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import zio._
 import zio.interop.catz.asyncInstance
+import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
@@ -29,6 +30,7 @@ class PartitioningRepositoryImpl(
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
+  getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2
 ) extends PartitioningRepository
     with BaseRepository {
@@ -78,6 +80,20 @@ class PartitioningRepositoryImpl(
     }.toMap)
       .map(AdditionalDataDTO(_))
   }
+
+  override def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
+    dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
+      .flatMap {
+        case Some(PartitioningFromDB(id, partitioning, author)) =>
+          val decodingResult = partitioning.as[PartitioningDTO]
+          decodingResult.fold(
+            error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
+            partitioningDTO => ZIO.succeed(PartitioningWithIdDTO(id, partitioningDTO, author))
+          )
+        case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
+      }
+  }
+
 }
 
 object PartitioningRepositoryImpl {
@@ -87,7 +103,9 @@ object PartitioningRepositoryImpl {
       with GetPartitioningAdditionalData
       with CreateOrUpdateAdditionalData
       with GetPartitioningCheckpoints
-      with GetPartitioningAdditionalDataV2,
+      with GetPartitioningAdditionalDataV2
+      with GetPartitioningCheckpoints
+      with GetPartitioningById,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -96,6 +114,7 @@ object PartitioningRepositoryImpl {
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
       getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
+      getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
@@ -103,6 +122,7 @@ object PartitioningRepositoryImpl {
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
       getPartitioningCheckpoints,
+      getPartitioningById,
       getPartitioningAdditionalDataV2
     )
   }
