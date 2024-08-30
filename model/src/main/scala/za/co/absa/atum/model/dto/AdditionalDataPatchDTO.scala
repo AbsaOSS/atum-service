@@ -19,10 +19,6 @@ package za.co.absa.atum.model.dto
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 
-//case class AdditionalDataPatchDTO(
-//  data: Map[String, AdditionalDataPatchItemDTO]
-//)
-
 case class AdditionalDataPatchDTO(
   byUser: String,
   data: Map[String, String]
