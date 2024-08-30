@@ -85,6 +85,15 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
     )
   }
+  override def getPartitioningV2(
+    partitioningId: Long
+  ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
+        partitioningService.getPartitioning(partitioningId)
+      )
+    )
+  }
   override def getPartitioningMeasuresV2(
     partitioningId: Long
   ): IO[ErrorResponse, MultiSuccessResponse[MeasureDTO]] = {

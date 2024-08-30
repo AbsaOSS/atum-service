@@ -114,6 +114,15 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
   }
 
+  protected val getPartitioningEndpointV2
+    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId"))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
   protected val getPartitioningMeasuresV2
   : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
     apiV2.get
