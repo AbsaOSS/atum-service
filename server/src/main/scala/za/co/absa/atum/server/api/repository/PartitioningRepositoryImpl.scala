@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB}
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PartitioningFromDB}
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import zio._
