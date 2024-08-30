@@ -37,4 +37,7 @@ trait PartitioningService {
   ): IO[ServiceError, AdditionalDataDTO]
 
   def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]]
+
+  def getPartitioning(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO]
+
 }

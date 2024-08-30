@@ -229,13 +229,23 @@ object Dependencies {
       jsonSerdeDependencies
   }
 
+  def readerDependencies(scalaVersion: Version): Seq[ModuleID] = {
+    Seq(
+    ) ++
+      testDependencies
+  }
+
   def databaseDependencies: Seq[ModuleID] = {
-    lazy val scalaTest  = "org.scalatest"   %% "scalatest"  % Versions.scalatest  % Test
-    lazy val balta =      "za.co.absa"      %% "balta"      % Versions.balta      % Test
+    lazy val scalaTest  = "org.scalatest"   %% "scalatest"    % Versions.scalatest  % Test
+    lazy val balta      = "za.co.absa"      %% "balta"        % Versions.balta      % Test
+    lazy val circe      = "io.circe"        %% "circe-core"   % Versions.circeJson  % Test
+    lazy val parser     = "io.circe"        %% "circe-parser" % Versions.circeJson  % Test
 
     Seq(
       scalaTest,
       balta,
+      circe,
+      parser,
     )
   }
 

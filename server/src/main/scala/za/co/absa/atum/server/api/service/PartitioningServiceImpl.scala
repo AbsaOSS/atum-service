@@ -83,6 +83,10 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
       "createOrUpdateAdditionalData"
     )
   }
+
+  override def getPartitioning(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO] = {
+    repositoryCall(partitioningRepository.getPartitioning(partitioningId), "getPartitioning")
+  }
 }
 
 object PartitioningServiceImpl {
