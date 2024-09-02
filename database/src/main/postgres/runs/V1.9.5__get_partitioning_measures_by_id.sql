@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+-- Function: runs.get_partitioning_measures_by_id(Long)
 CREATE OR REPLACE FUNCTION runs.get_partitioning_measures_by_id(
     IN i_partitioning_id          BIGINT,
     OUT status                    INTEGER,
@@ -39,7 +40,6 @@ $$
 -- Status codes:
 --      11 - OK
 --      41 - Partitioning not found
---      42 - Measures not found
 --
 -------------------------------------------------------------------------------
 BEGIN
@@ -54,19 +54,10 @@ BEGIN
     END IF;
 
     RETURN QUERY
-        SELECT MD.measure_name, MD.measured_columns
+        SELECT 11, 'OK', MD.measure_name, MD.measured_columns
         FROM runs.measure_definitions AS MD
         WHERE MD.fk_partitioning = i_partitioning_id;
 
-    IF FOUND THEN
-        status := 11;
-        status_text := 'OK';
-    ELSE
-        status := 42;
-        status_text := 'Measures not found';
-    END IF;
-
-    RETURN NEXT;
     RETURN;
 
 END;

@@ -47,7 +47,7 @@ class GetPartitioningMeasuresByIdV2IntegrationTests extends DBTestSuite {
     )
 
     function(fncGetPartitioningMeasuresById)
-      .setParam("i_partitioning", fkPartitioning)
+      .setParam("i_partitioning_id", fkPartitioning)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(11))
@@ -74,18 +74,17 @@ class GetPartitioningMeasuresByIdV2IntegrationTests extends DBTestSuite {
       .fieldValue("partitioning", partitioning, "id_partitioning").get.get
 
     function(fncGetPartitioningMeasuresById)
-      .setParam("i_partitioning", fkPartitioning)
+      .setParam(fkPartitioning)
       .execute { queryResult =>
-        val results = queryResult.next()
-        assert(results.getInt("status").contains(42))
-        assert(results.getString("status_text").contains("Measures not found"))
+        val results = queryResult.hasNext
+        assert(!results)
       }
   }
 
   test("Get partitioning measures by id should return an error for non-existing partitioning") {
 
     function(fncGetPartitioningMeasuresById)
-      .setParam("i_partitioning", 999)
+      .setParam(999)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(41))
