@@ -45,7 +45,9 @@ object GetPartitioningMeasuresV2EndpointUnitTests extends ZIOSpecDefault with En
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getPartitioningMeasuresServerEndpoint =
-    getPartitioningMeasuresEndpointV2.zServerLogic(PartitioningController.getPartitioningMeasuresV2)
+    getPartitioningMeasuresEndpointV2.zServerLogic({partitioningId: Long =>
+      PartitioningController.getPartitioningMeasuresV2(partitioningId)
+    })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
@@ -55,7 +57,7 @@ object GetPartitioningMeasuresV2EndpointUnitTests extends ZIOSpecDefault with En
 
     def createBasicRequest(id: Long): RequestT[Identity, Either[ResponseException[String, io.circe.Error], MultiSuccessResponse[MeasureDTO]], Any] = {
       basicRequest
-        .get(uri"https://test.com/api/v2/partitioningId/$id/measures")
+        .get(uri"https://test.com/api/v2/partitionings/$id/measures")
         .response(asJson[MultiSuccessResponse[MeasureDTO]])
     }
 
@@ -74,7 +76,7 @@ object GetPartitioningMeasuresV2EndpointUnitTests extends ZIOSpecDefault with En
           response <- createBasicRequest(2L).send(backendStub)
           statusCode = response.code
         } yield {
-          assertTrue(statusCode == StatusCode.InternalServerError)
+          assertTrue(statusCode == StatusCode.BadRequest)
         }
       },
       test("Returns expected not found error") {
