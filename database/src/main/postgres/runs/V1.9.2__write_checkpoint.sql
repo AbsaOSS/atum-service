@@ -57,13 +57,13 @@ $$
 -- Status codes:
 --      11                  - Checkpoint created
 --      31                  - Conflict, checkpoint already present
---      32                  - Partitioning not found
+--      41                  - Partitioning not found
 --
 -------------------------------------------------------------------------------
 BEGIN
     -- Check if partitioning exists
     IF NOT EXISTS (SELECT 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id) THEN
-        status := 32;
+        status := 41;
         status_text := 'Partitioning not found';
         RETURN;
     END IF;

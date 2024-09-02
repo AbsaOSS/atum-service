@@ -58,7 +58,7 @@ $$
 -- Status codes:
 --      11                  - Checkpoint created
 --      31                  - Checkpoint already present
---      32                  - Partitioning not found
+--      41                  - Partitioning not found
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -68,7 +68,7 @@ BEGIN
     _fk_partitioning = runs._get_id_partitioning(i_partitioning);
 
     IF _fk_partitioning IS NULL THEN
-        status := 32;
+        status := 41;
         status_text := 'Partitioning not found';
         RETURN;
     END IF;

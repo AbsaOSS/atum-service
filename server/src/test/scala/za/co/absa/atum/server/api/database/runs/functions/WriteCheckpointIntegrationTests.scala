@@ -51,7 +51,7 @@ object WriteCheckpointIntegrationTests extends ConfigProviderTest {
         for {
           writeCheckpoint <- ZIO.service[WriteCheckpoint]
           result <- writeCheckpoint(checkpointDTO)
-        } yield assertTrue(result == Left(DataConflictException(FunctionStatus(32, "Partitioning not found"))))
+        } yield assertTrue(result == Left(DataConflictException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       WriteCheckpoint.layer,
