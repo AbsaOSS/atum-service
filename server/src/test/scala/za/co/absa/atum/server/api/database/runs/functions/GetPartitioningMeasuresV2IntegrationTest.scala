@@ -9,7 +9,7 @@ import za.co.absa.db.fadb.status.FunctionStatus
 import zio.test.{Spec, TestEnvironment, assertTrue}
 import zio.{Scope, ZIO}
 
-object GetPartitioningMeasuresByIdIntegrationTest extends ConfigProviderTest {
+object GetPartitioningMeasuresV2IntegrationTest extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
