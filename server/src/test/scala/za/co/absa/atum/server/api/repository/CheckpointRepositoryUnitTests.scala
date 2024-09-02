@@ -48,9 +48,11 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(writeCheckpointV2Mock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO1)))
     .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
   when(writeCheckpointV2Mock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO2)))
-    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Partitioning not found"))))
+    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "conflict"))))
   when(writeCheckpointV2Mock.apply(WriteCheckpointArgs(partitioningId, checkpointV2DTO3)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
+  when(writeCheckpointV2Mock.apply(WriteCheckpointArgs(0L, checkpointV2DTO3)))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
 
   when(getCheckpointMockV2.apply(GetPartitioningCheckpointV2Args(partitioningId, checkpointV2DTO1.id)))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(checkpointItemFromDB1)))))
@@ -95,6 +97,11 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Fails with an expected GeneralDatabaseError") {
           assertZIO(CheckpointRepository.writeCheckpointV2(partitioningId, checkpointV2DTO3).exit)(
             failsWithA[GeneralDatabaseError]
+          )
+        },
+        test("Fails with an expected NotFoundDatabaseError") {
+          assertZIO(CheckpointRepository.writeCheckpointV2(0L, checkpointV2DTO3).exit)(
+            failsWithA[NotFoundDatabaseError]
           )
         }
       ),
