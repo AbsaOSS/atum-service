@@ -26,7 +26,7 @@ import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
-import za.co.absa.atum.server.model.{ConflictErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{ConflictErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.equalTo
@@ -44,6 +44,8 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
   when(checkpointControllerMock.postCheckpointV2(1L, checkpointV2DTO4))
     .thenReturn(ZIO.fail(ConflictErrorResponse("error")))
+  when(checkpointControllerMock.postCheckpointV2(0L, checkpointV2DTO4))
+    .thenReturn(ZIO.fail(NotFoundErrorResponse("Partitioning not found")))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
@@ -102,6 +104,16 @@ object PostCheckpointEndpointV2UnitTests extends ZIOSpecDefault with Endpoints w
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.Conflict))
+      },
+      test("Returns expected NotFound") {
+        val response = request
+          .post(uri"https://test.com/api/v2/partitionings/0/checkpoints")
+          .body(checkpointV2DTO4)
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.NotFound))
       }
     )
   }.provide(

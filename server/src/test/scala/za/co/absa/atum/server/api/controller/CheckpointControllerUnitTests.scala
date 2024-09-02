@@ -45,6 +45,8 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
     .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
   when(checkpointServiceMock.saveCheckpointV2(partitioningId, checkpointV2DTO3))
     .thenReturn(ZIO.fail(ConflictServiceError("boom!")))
+  when(checkpointServiceMock.saveCheckpointV2(0L, checkpointV2DTO3))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
 
   when(checkpointServiceMock.getCheckpointV2(partitioningId, checkpointV2DTO1.id))
     .thenReturn(ZIO.succeed(checkpointV2DTO1))
@@ -85,7 +87,7 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
               && result._2 == s"/api/v2/partitionings/$partitioningId/checkpoints/${checkpointV2DTO1.id}"
           )
         },
-        test("Returns expected ConflictServiceError") {
+        test("Returns expected InternalServerErrorResponse") {
           assertZIO(CheckpointController.postCheckpointV2(1L, checkpointV2DTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )
@@ -93,6 +95,11 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
         test("Returns expected ConflictServiceError") {
           assertZIO(CheckpointController.postCheckpointV2(1L, checkpointV2DTO3).exit)(
             failsWithA[ConflictErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundServiceError") {
+          assertZIO(CheckpointController.postCheckpointV2(0L, checkpointV2DTO3).exit)(
+            failsWithA[NotFoundErrorResponse]
           )
         }
       ),

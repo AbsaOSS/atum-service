@@ -41,6 +41,8 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(ConflictDatabaseError("conflict in data")))
   when(checkpointRepositoryMock.writeCheckpointV2(partitioningId, checkpointV2DTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(checkpointRepositoryMock.writeCheckpointV2(0L, checkpointV2DTO3))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   when(checkpointRepositoryMock.getCheckpointV2(partitioningId, checkpointV2DTO1.id))
     .thenReturn(ZIO.succeed(checkpointV2DTO1))
@@ -83,6 +85,11 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Fails with an expected GeneralServiceError") {
           assertZIO(CheckpointService.saveCheckpointV2(partitioningId, checkpointV2DTO3).exit)(
             failsWithA[GeneralServiceError]
+          )
+        },
+        test("Fails with an expected NotFoundServiceError") {
+          assertZIO(CheckpointService.saveCheckpointV2(0L, checkpointV2DTO3).exit)(
+            failsWithA[NotFoundServiceError]
           )
         }
       ),
