@@ -52,7 +52,7 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
     .thenReturn(ZIO.succeed(checkpointV2DTO1))
   when(checkpointServiceMock.getCheckpointV2(partitioningId, checkpointV2DTO2.id))
     .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
-  when(checkpointServiceMock.getCheckpointV2(0L, checkpointV2DTO3.id))
+  when(checkpointServiceMock.getCheckpointV2(partitioningId, checkpointV2DTO3.id))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   private val checkpointServiceMockLayer = ZLayer.succeed(checkpointServiceMock)
