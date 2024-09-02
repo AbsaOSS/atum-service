@@ -4,7 +4,7 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-class GetPartitioningMeasuresByIdV2IntegrationTest extends DBTestSuite {
+class GetPartitioningMeasuresByIdV2IntegrationTests extends DBTestSuite {
   private val fncGetPartitioningMeasuresById = "runs.get_partitioning_measures_by_id"
 
   private val partitioning: JsonBString = JsonBString(
