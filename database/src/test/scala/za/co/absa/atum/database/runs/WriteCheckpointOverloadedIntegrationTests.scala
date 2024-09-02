@@ -280,7 +280,7 @@ class WriteCheckpointOverloadedIntegrationTests extends DBTestSuite {
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
-        assert(row.getInt("status").contains(32))
+        assert(row.getInt("status").contains(41))
         assert(row.getString("status_text").contains("Partitioning not found"))
       }
     assert(table("runs.checkpoints").count() == count)

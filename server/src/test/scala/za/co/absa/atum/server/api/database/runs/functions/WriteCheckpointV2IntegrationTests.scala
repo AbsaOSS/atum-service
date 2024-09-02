@@ -23,7 +23,7 @@ import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
-import za.co.absa.db.fadb.exceptions.DataConflictException
+import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
@@ -51,7 +51,7 @@ object WriteCheckpointV2IntegrationTests extends ConfigProviderTest {
         for {
           writeCheckpointV2 <- ZIO.service[WriteCheckpointV2]
           result <- writeCheckpointV2(WriteCheckpointArgs(1L, checkpointV2DTO))
-        } yield assertTrue(result == Left(DataConflictException(FunctionStatus(32, "Partitioning not found"))))
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       WriteCheckpointV2.layer,

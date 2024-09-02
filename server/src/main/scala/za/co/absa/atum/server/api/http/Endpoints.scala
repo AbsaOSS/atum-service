@@ -38,6 +38,7 @@ trait Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[CheckpointDTO])
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   protected val postCheckpointEndpointV2
@@ -49,6 +50,7 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[SingleSuccessResponse[CheckpointV2DTO]])
       .out(header[String]("Location"))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   protected val createPartitioningEndpointV1
