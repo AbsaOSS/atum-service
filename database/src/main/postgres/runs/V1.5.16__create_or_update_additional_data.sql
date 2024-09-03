@@ -30,6 +30,7 @@ $$
 --      Adds the additional data for the input partitioning. If additional data of a given name already
 --      exists for such partitioning, the value is updated and the old value is moved to the
 --      additional data history table.
+--      The function returns all actual additional data of the partitioning.
 --
 -- Parameters:
 --      i_partitioning_id   - id of partitioning to add the additional data for
