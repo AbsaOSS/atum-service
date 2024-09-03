@@ -38,7 +38,7 @@ class CreatePartitioning(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
     )
   )
     with StandardStatusHandling {
-  override def fieldsToSelect: Seq[String] = Seq("o_status", "o_status_text", "o_id_partitioning")
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("id_partitioning")
 }
 
 object CreatePartitioning {
