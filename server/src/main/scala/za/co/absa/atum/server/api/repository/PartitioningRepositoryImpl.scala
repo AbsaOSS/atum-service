@@ -17,9 +17,10 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PartitioningFromDB}
+import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PartitioningFromDB}
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
@@ -42,8 +43,14 @@ class PartitioningRepositoryImpl(
     )
   }
 
-  override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit] = {
-    dbSingleResultCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
+  override def createOrUpdateAdditionalData(
+    partitioningId: Long,
+    additionalData: AdditionalDataPatchDTO
+  ): IO[DatabaseError, AdditionalDataDTO] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      createOrUpdateAdditionalDataFn(CreateOrUpdateAdditionalDataArgs(partitioningId, additionalData)),
+      "createOrUpdateAdditionalData"
+    ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
   }
 
   override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] = {
@@ -75,10 +82,7 @@ class PartitioningRepositoryImpl(
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAdditionalDataV2Fn(partitioningId),
       "getPartitioningAdditionalData"
-    ).map(_.collect { case Some(AdditionalDataItemFromDB(adName, adValue, author)) =>
-      adName -> Some(AdditionalDataItemDTO(adValue, author))
-    }.toMap)
-      .map(AdditionalDataDTO(_))
+    ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
   }
 
   override def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {

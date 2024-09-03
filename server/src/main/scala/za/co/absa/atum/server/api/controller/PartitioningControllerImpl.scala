@@ -55,17 +55,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToSingleSuccessResponse(createPartitioningIfNotExistsV1(partitioningSubmitDTO))
   }
 
-  override def createOrUpdateAdditionalDataV2(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]] = {
-    mapToSingleSuccessResponse(
-      serviceCall[Unit, AdditionalDataSubmitDTO](
-        partitioningService.createOrUpdateAdditionalData(additionalData),
-        _ => additionalData
-      )
-    )
-  }
-
   override def getPartitioningCheckpointsV2(
     checkpointQueryDTO: CheckpointQueryDTO
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
@@ -91,6 +80,17 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToSingleSuccessResponse(
       serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
         partitioningService.getPartitioning(partitioningId)
+      )
+    )
+  }
+
+  override def patchPartitioningAdditionalDataV2(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[AdditionalDataDTO, AdditionalDataDTO](
+        partitioningService.patchAdditionalData(partitioningId, additionalDataPatchDTO)
       )
     )
   }
