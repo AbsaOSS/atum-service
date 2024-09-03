@@ -34,6 +34,15 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def createPartitioningIfNotExistsV2(
+    partitioningSubmitDTO: PartitioningSubmitDTO
+  ): IO[ServiceError, PartitioningWithIdDTO] = {
+    repositoryCall(
+      partitioningRepository.createPartitioningIfNotExistsV2(partitioningSubmitDTO),
+      "createPartitioningIfNotExistsV2"
+    )
+  }
+
   override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[ServiceError, Unit] = {
     repositoryCall(
       partitioningRepository.createOrUpdateAdditionalData(additionalData),

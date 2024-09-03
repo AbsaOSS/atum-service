@@ -62,13 +62,28 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[AtumContextDTO])
   }
 
-  protected val createPartitioningEndpointV2
-    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
+//  protected val createPartitioningEndpointV2
+//    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
+//    apiV2.post
+//      .in(CreatePartitioning)
+//      .in(jsonBody[PartitioningSubmitDTO])
+//      .out(statusCode(StatusCode.Ok))
+//      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
+//  }
+
+  protected val postPartitioningEndpointV2: PublicEndpoint[
+    PartitioningSubmitDTO,
+    ErrorResponse,
+    (SingleSuccessResponse[PartitioningWithIdDTO], String),
+    Any
+  ] = {
     apiV2.post
-      .in(CreatePartitioning)
+      .in(V2Paths.Partitionings)
       .in(jsonBody[PartitioningSubmitDTO])
-      .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
+      .out(statusCode(StatusCode.Created))
+      .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
+      .out(header[String]("Location"))
+      .errorOutVariantPrepend(conflictErrorOneOfVariant)
   }
 
   protected val getPartitioningAdditionalDataEndpointV2

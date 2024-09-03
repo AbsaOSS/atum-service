@@ -26,6 +26,10 @@ import zio.macros.accessible
 trait PartitioningRepository {
   def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[DatabaseError, Unit]
 
+  def createPartitioningIfNotExistsV2(
+    partitioningSubmitDTO: PartitioningSubmitDTO
+  ): IO[DatabaseError, PartitioningWithIdDTO]
+
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]]
 
   def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, InitialAdditionalDataDTO]

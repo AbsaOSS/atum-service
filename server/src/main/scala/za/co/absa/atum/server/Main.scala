@@ -51,6 +51,7 @@ object Main extends ZIOAppDefault with Server {
           CheckpointRepositoryImpl.layer,
           FlowRepositoryImpl.layer,
           CreatePartitioningIfNotExists.layer,
+          CreatePartitioningIfNotExistsV2.layer,
           GetPartitioningMeasures.layer,
           GetPartitioningAdditionalData.layer,
           GetPartitioningAdditionalDataV2.layer,

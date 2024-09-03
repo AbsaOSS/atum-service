@@ -30,7 +30,7 @@ trait PartitioningController {
 
   def createPartitioningIfNotExistsV2(
     partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]]
+  ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)]
 
   def getPartitioningAdditionalDataV2(
     partitioningId: Long

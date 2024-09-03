@@ -44,6 +44,10 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val createPartitioningIfNotExistsMockLayer = ZLayer.succeed(createPartitioningIfNotExistsMock)
 
+  // Create Partitioning If Not Exists V2 Mocks
+  private val createPartitioningIfNotExistsV2Mock = mock(classOf[CreatePartitioningIfNotExistsV2])
+  private val createPartitioningIfNotExistsV2MockLayer = ZLayer.succeed(createPartitioningIfNotExistsV2Mock)
+
   // Create Additional Data Mocks
   private val createOrUpdateAdditionalDataMock = mock(classOf[CreateOrUpdateAdditionalData])
 
@@ -244,6 +248,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     ).provide(
       PartitioningRepositoryImpl.layer,
       createPartitioningIfNotExistsMockLayer,
+      createPartitioningIfNotExistsV2MockLayer,
       getPartitioningMeasuresMockLayer,
       getPartitioningAdditionalDataMockLayer,
       createOrUpdateAdditionalDataMockLayer,

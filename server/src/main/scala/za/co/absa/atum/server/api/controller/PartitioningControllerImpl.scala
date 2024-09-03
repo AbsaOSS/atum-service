@@ -18,6 +18,7 @@ package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
@@ -47,12 +48,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalData)
 
     atumContextDTOEffect
-  }
-
-  override def createPartitioningIfNotExistsV2(
-    partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]] = {
-    mapToSingleSuccessResponse(createPartitioningIfNotExistsV1(partitioningSubmitDTO))
   }
 
   override def createOrUpdateAdditionalDataV2(
@@ -93,6 +88,21 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
         partitioningService.getPartitioning(partitioningId)
       )
     )
+  }
+
+  override def createPartitioningIfNotExistsV2(
+    partitioningSubmitDTO: PartitioningSubmitDTO
+  ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
+    for {
+      response <- mapToSingleSuccessResponse(
+        serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
+          partitioningService.createPartitioningIfNotExistsV2(partitioningSubmitDTO)
+        )
+      )
+      uri <- createV2RootAnchoredResourcePath(
+        Seq(V2Paths.Partitionings, response.data.id.toString)
+      )
+    } yield (response, uri)
   }
 }
 
