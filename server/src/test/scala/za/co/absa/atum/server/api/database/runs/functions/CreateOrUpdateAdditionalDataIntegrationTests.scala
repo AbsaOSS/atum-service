@@ -16,33 +16,25 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, PartitionDTO}
 import za.co.absa.atum.server.ConfigProviderTest
-import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
+import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
+import za.co.absa.atum.server.api.{TestData, TestTransactorProvider}
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test._
 
-object CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest {
+object CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest with TestData {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("CreateOrUpdateAdditionalDataIntegrationSuite")(
-      test("Returns expected Right with Unit") {
-        val additionalDataSubmitDTO = AdditionalDataSubmitDTO(
-          partitioning = Seq(PartitionDTO("key1", "val1"), PartitionDTO("key2", "val2")),
-          additionalData = Map[String, Option[String]](
-            "ownership" -> Some("total"),
-            "role" -> Some("primary")
-          ),
-          author = "testAuthor"
-        )
+      test("Returns expected DataNotFoundException") {
         for {
           createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
-          result <- createOrUpdateAdditionalData(additionalDataSubmitDTO)
+          result <- createOrUpdateAdditionalData(CreateOrUpdateAdditionalDataArgs(1L, additionalDataPatchDTO1))
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(

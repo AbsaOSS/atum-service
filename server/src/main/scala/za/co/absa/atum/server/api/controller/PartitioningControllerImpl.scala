@@ -104,6 +104,17 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
     } yield (response, uri)
   }
+
+  override def patchPartitioningAdditionalDataV2(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[AdditionalDataDTO, AdditionalDataDTO](
+        partitioningService.patchAdditionalData(partitioningId, additionalDataPatchDTO)
+      )
+    )
+  }
 }
 
 object PartitioningControllerImpl {

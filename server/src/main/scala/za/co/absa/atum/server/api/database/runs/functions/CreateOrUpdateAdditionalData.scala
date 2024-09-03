@@ -17,31 +17,42 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import za.co.absa.atum.model.dto.AdditionalDataSubmitDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.PartitioningForDB
+import za.co.absa.atum.server.model.AdditionalDataItemFromDB
 import za.co.absa.db.fadb.DBSchema
-import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
+import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 import io.circe.syntax._
-
 import doobie.postgres.implicits._
-import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
+import za.co.absa.atum.model.dto.AdditionalDataPatchDTO
+import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[AdditionalDataSubmitDTO, Unit, Task](values =>
+    extends DoobieMultipleResultFunctionWithAggStatus[CreateOrUpdateAdditionalDataArgs, Option[
+      AdditionalDataItemFromDB
+    ], Task](args =>
       Seq(
-        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
-        fr"${values.additionalData.map { case (k, v) => (k, v.orNull) }}",
-        fr"${values.author}"
+        fr"${args.partitioningId}",
+        fr"${args.additionalData.data}",
+        fr"${args.additionalData.byUser}"
       )
     )
     with StandardStatusHandling
+    with ByFirstRowStatusAggregator {
+
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("o_ad_name", "o_ad_value", "o_ad_author")
+}
 
 object CreateOrUpdateAdditionalData {
+  case class CreateOrUpdateAdditionalDataArgs(
+    partitioningId: Long,
+    additionalData: AdditionalDataPatchDTO
+  )
+
   val layer: URLayer[PostgresDatabaseProvider, CreateOrUpdateAdditionalData] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]

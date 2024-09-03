@@ -36,10 +36,11 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1)).thenReturn(ZIO.unit)
-  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("error in AD data")))
-  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO3))
+  when(partitioningRepositoryMock.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningRepositoryMock.createOrUpdateAdditionalData(0L, additionalDataPatchDTO1))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+  when(partitioningRepositoryMock.createOrUpdateAdditionalData(2L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningMeasures(partitioningDTO1))
@@ -92,23 +93,23 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("CreateOrUpdateAdditionalDataSuite")(
+      suite("PatchAdditionalDataSuite")(
         test("Returns expected Right with Unit") {
           for {
-            result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
-          } yield assertTrue(result == ())
+            result <- PartitioningService.patchAdditionalData(1L, additionalDataPatchDTO1)
+          } yield assertTrue(result == additionalDataDTO1)
         },
-        test("Returns expected Left with StatusException") {
+        test("Returns expected NotFoundServiceError") {
           for {
-            result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
+            result <- PartitioningService.patchAdditionalData(0L, additionalDataPatchDTO1).exit
           } yield assertTrue(
             result == Exit.fail(
-              GeneralServiceError("Failed to perform 'createOrUpdateAdditionalData': error in AD data")
+              NotFoundServiceError("Failed to perform 'createOrUpdateAdditionalData': Partitioning not found")
             )
           )
         },
-        test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
+        test("Returns expected GeneralServiceError") {
+          assertZIO(PartitioningService.patchAdditionalData(2L, additionalDataPatchDTO1).exit)(
             failsWithA[GeneralServiceError]
           )
         }
