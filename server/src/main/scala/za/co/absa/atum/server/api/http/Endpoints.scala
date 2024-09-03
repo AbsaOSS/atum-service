@@ -62,15 +62,6 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[AtumContextDTO])
   }
 
-//  protected val createPartitioningEndpointV2
-//    : PublicEndpoint[PartitioningSubmitDTO, ErrorResponse, SingleSuccessResponse[AtumContextDTO], Any] = {
-//    apiV2.post
-//      .in(CreatePartitioning)
-//      .in(jsonBody[PartitioningSubmitDTO])
-//      .out(statusCode(StatusCode.Ok))
-//      .out(jsonBody[SingleSuccessResponse[AtumContextDTO]])
-//  }
-
   protected val postPartitioningEndpointV2: PublicEndpoint[
     PartitioningSubmitDTO,
     ErrorResponse,

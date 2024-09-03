@@ -17,36 +17,34 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
+import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
-import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
+import za.co.absa.atum.server.model.PartitioningForDB
 import zio._
-import io.circe.syntax._
-
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 
-class CreatePartitioningIfNotExistsV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Long, Task](values =>
+class CreatePartitioning(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Long, Task](partitioningSubmit =>
     Seq(
-      fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
-      fr"${values.authorIfNew}",
-      fr"${values.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
+      fr"${PartitioningForDB.fromSeqPartitionDTO(partitioningSubmit.partitioning).asJson}",
+      fr"${partitioningSubmit.authorIfNew}",
+      fr"${partitioningSubmit.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
     )
   )
     with StandardStatusHandling {
-
-  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("id_partitioning")
+  override def fieldsToSelect: Seq[String] = Seq("o_status", "o_status_text", "o_id_partitioning")
 }
 
-object CreatePartitioningIfNotExistsV2 {
-  val layer: URLayer[PostgresDatabaseProvider, CreatePartitioningIfNotExistsV2] = ZLayer {
+object CreatePartitioning {
+  val layer: URLayer[PostgresDatabaseProvider, CreatePartitioning] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new CreatePartitioningIfNotExistsV2()(Runs, dbProvider.dbEngine)
+    } yield new CreatePartitioning()(Runs, dbProvider.dbEngine)
   }
 }

@@ -50,17 +50,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     atumContextDTOEffect
   }
 
-  override def createOrUpdateAdditionalDataV2(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]] = {
-    mapToSingleSuccessResponse(
-      serviceCall[Unit, AdditionalDataSubmitDTO](
-        partitioningService.createOrUpdateAdditionalData(additionalData),
-        _ => additionalData
-      )
-    )
-  }
-
   override def getPartitioningCheckpointsV2(
     checkpointQueryDTO: CheckpointQueryDTO
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
@@ -90,13 +79,13 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
-  override def createPartitioningIfNotExistsV2(
+  override def postPartitioning(
     partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
     for {
       response <- mapToSingleSuccessResponse(
         serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
-          partitioningService.createPartitioningIfNotExistsV2(partitioningSubmitDTO)
+          partitioningService.createPartitioning(partitioningSubmitDTO)
         )
       )
       uri <- createV2RootAnchoredResourcePath(

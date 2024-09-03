@@ -19,16 +19,14 @@ package za.co.absa.atum.server.api.http
 import cats.syntax.semigroupk._
 import org.http4s.HttpRoutes
 import sttp.tapir.PublicEndpoint
-import sttp.tapir.model.ServerRequest
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
-import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
@@ -57,8 +55,7 @@ trait Routes extends Endpoints with ServerOptions {
         }
       ),
       createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),
-//      createServerEndpoint(createPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
-      createServerEndpoint(postPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
+      createServerEndpoint(postPartitioningEndpointV2, PartitioningController.postPartitioning),
       createServerEndpoint(
         getPartitioningAdditionalDataEndpointV2,
         PartitioningController.getPartitioningAdditionalDataV2
@@ -100,8 +97,6 @@ trait Routes extends Endpoints with ServerOptions {
       postCheckpointEndpointV2,
       createPartitioningEndpointV1,
       postPartitioningEndpointV2,
-      createOrUpdateAdditionalDataEndpointV2,
-      createPartitioningEndpointV2,
       patchPartitioningAdditionalDataEndpointV2,
       getPartitioningCheckpointsEndpointV2,
       getPartitioningCheckpointEndpointV2,

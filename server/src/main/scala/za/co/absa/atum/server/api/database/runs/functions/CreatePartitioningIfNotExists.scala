@@ -17,27 +17,25 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
+import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
-import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
+import za.co.absa.atum.server.model.PartitioningForDB
 import zio._
-import io.circe.syntax._
-
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 
 class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](values =>
+    extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Unit, Task](partitioningSubmit =>
       Seq(
-        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
-        fr"${values.authorIfNew}",
-        fr"${values.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
-      )
-    )
+        fr"${PartitioningForDB.fromSeqPartitionDTO(partitioningSubmit.partitioning).asJson}",
+        fr"${partitioningSubmit.authorIfNew}",
+        fr"${partitioningSubmit.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
+      ))
     with StandardStatusHandling
 
 object CreatePartitioningIfNotExists {

@@ -28,7 +28,7 @@ trait PartitioningController {
     partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[ErrorResponse, AtumContextDTO]
 
-  def createPartitioningIfNotExistsV2(
+  def postPartitioning(
     partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)]
 
