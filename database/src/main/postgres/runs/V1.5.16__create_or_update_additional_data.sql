@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION runs.create_or_update_additional_data(
     OUT o_ad_author TEXT
 ) RETURNS SETOF record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.create_or_update_additional_data(3)
 --      Adds the additional data for the input partitioning. If additional data of a given name already
