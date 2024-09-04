@@ -52,6 +52,7 @@ object Main extends ZIOAppDefault with Server {
           FlowRepositoryImpl.layer,
           CreatePartitioningIfNotExists.layer,
           GetPartitioningMeasures.layer,
+          GetPartitioningMeasuresById.layer,
           GetPartitioningAdditionalData.layer,
           GetPartitioningAdditionalDataV2.layer,
           CreateOrUpdateAdditionalData.layer,

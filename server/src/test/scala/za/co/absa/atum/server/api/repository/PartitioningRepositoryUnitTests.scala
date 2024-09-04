@@ -114,6 +114,19 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getPartitioningAdditionalDataV2MockLayer = ZLayer.succeed(getPartitioningAdditionalDataV2Mock)
 
+  private val getPartitioningMeasuresV2Mock = mock(classOf[GetPartitioningMeasuresById])
+
+  when(getPartitioningMeasuresV2Mock.apply(1L)).thenReturn(
+    ZIO.right(Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2))))
+  when(getPartitioningMeasuresV2Mock.apply(2L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getPartitioningMeasuresV2Mock.apply(3L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(42, "Measures not found"))))
+  when(getPartitioningMeasuresV2Mock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  private val getPartitioningMeasuresV2MockLayer = ZLayer.succeed(getPartitioningMeasuresV2Mock)
+
+
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("PartitioningRepositorySuite")(
@@ -241,6 +254,28 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[GeneralDatabaseError]
           )
         }
+      ),
+      suite("GetPartitioningMeasuresByIdSuite")(
+        test("Returns expected Seq") {
+          for {
+            result <- PartitioningRepository.getPartitioningMeasuresById(1L)
+          } yield assertTrue(result == Seq(measureDTO1, measureDTO2))
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMeasuresById(2L).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMeasuresById(3L).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMeasuresById(4L).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
       )
     ).provide(
       PartitioningRepositoryImpl.layer,
@@ -250,7 +285,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       createOrUpdateAdditionalDataMockLayer,
       getPartitioningCheckpointsMockLayer,
       getPartitioningByIdMockLayer,
-      getPartitioningAdditionalDataV2MockLayer
+      getPartitioningAdditionalDataV2MockLayer,
+      getPartitioningMeasuresV2MockLayer
     )
   }
 

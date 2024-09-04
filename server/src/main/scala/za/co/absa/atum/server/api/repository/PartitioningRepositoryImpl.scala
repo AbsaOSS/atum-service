@@ -32,7 +32,8 @@ class PartitioningRepositoryImpl(
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
   getPartitioningByIdFn: GetPartitioningById,
-  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2
+  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -98,6 +99,14 @@ class PartitioningRepositoryImpl(
       }
   }
 
+
+  override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresByIdFn(partitioningId), "getPartitioningMeasures")
+      .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
+        MeasureDTO(measureName.get, measuredColumns.get)
+      })
+  }
+
 }
 
 object PartitioningRepositoryImpl {
@@ -108,8 +117,8 @@ object PartitioningRepositoryImpl {
       with CreateOrUpdateAdditionalData
       with GetPartitioningCheckpoints
       with GetPartitioningAdditionalDataV2
-      with GetPartitioningCheckpoints
-      with GetPartitioningById,
+      with GetPartitioningById
+      with GetPartitioningMeasuresById,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -120,6 +129,7 @@ object PartitioningRepositoryImpl {
       getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
+      getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       getPartitioningMeasures,
@@ -127,7 +137,8 @@ object PartitioningRepositoryImpl {
       createOrUpdateAdditionalData,
       getPartitioningCheckpoints,
       getPartitioningById,
-      getPartitioningAdditionalDataV2
+      getPartitioningAdditionalDataV2,
+      getPartitioningMeasuresV2
     )
   }
 }
