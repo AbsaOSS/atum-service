@@ -41,9 +41,11 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.getPartitioningAdditionalData(partitioningDTO1))
     .thenReturn(ZIO.succeed(Map.empty))
 
-  when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1))
-    .thenReturn(ZIO.unit)
-  when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
+  when(partitioningServiceMock.patchAdditionalData(1L, additionalDataPatchDTO1))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningServiceMock.patchAdditionalData(0L, additionalDataPatchDTO1))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
+  when(partitioningServiceMock.patchAdditionalData(2L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO1))
@@ -83,16 +85,21 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("CreateOrUpdateAdditionalDataSuite")(
+      suite("PatchAdditionalDataSuite")(
         test("Returns expected AdditionalDataSubmitDTO") {
           for {
-            result <- PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO1)
-            expected = SingleSuccessResponse(additionalDataSubmitDTO1, uuid1)
+            result <- PartitioningController.patchPartitioningAdditionalDataV2(1L, additionalDataPatchDTO1)
+            expected = SingleSuccessResponse(additionalDataDTO1, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
+        test("Returns expected NotFoundErrorResponse") {
+          assertZIO(PartitioningController.patchPartitioningAdditionalDataV2(0L, additionalDataPatchDTO1).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO2).exit)(
+          assertZIO(PartitioningController.patchPartitioningAdditionalDataV2(2L, additionalDataPatchDTO1).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }

@@ -25,7 +25,7 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
@@ -62,9 +62,15 @@ trait Routes extends Endpoints with ServerOptions {
         getPartitioningAdditionalDataEndpointV2,
         PartitioningController.getPartitioningAdditionalDataV2
       ),
-      createServerEndpoint(
-        createOrUpdateAdditionalDataEndpointV2,
-        PartitioningController.createOrUpdateAdditionalDataV2
+      createServerEndpoint[
+        (Long, AdditionalDataPatchDTO),
+        ErrorResponse,
+        SingleSuccessResponse[AdditionalDataDTO]
+      ](
+        patchPartitioningAdditionalDataEndpointV2,
+        { case (partitioningId: Long, additionalDataPatchDTO: AdditionalDataPatchDTO) =>
+          PartitioningController.patchPartitioningAdditionalDataV2(partitioningId, additionalDataPatchDTO)
+        }
       ),
       createServerEndpoint[
         (Long, UUID),
@@ -94,7 +100,7 @@ trait Routes extends Endpoints with ServerOptions {
       postCheckpointEndpointV2,
       createPartitioningEndpointV1,
       createPartitioningEndpointV2,
-      createOrUpdateAdditionalDataEndpointV2,
+      patchPartitioningAdditionalDataEndpointV2,
       getPartitioningCheckpointsEndpointV2,
       getPartitioningCheckpointEndpointV2,
       getFlowCheckpointsEndpointV2,

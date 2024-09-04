@@ -20,7 +20,7 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
-class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
+class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite {
 
   private val fncCreateOrUpdateAdditionalData = "runs.create_or_update_additional_data"
 
@@ -70,15 +70,35 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
     )
 
     function(fncCreateOrUpdateAdditionalData)
-      .setParam("i_partitioning", partitioning)
+      .setParam("i_partitioning_id", fkPartitioning)
       .setParam("i_additional_data", inputADToUpsert)
       .setParam("i_by_user", "MikeRusty")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
 
-        assert(row.getInt("status").contains(12))
-        assert(row.getString("status_text").contains("Additional data have been upserted"))
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Additional data have been updated, added or both"))
+        assert(row.getString("o_ad_name").contains("PrimaryOwner"))
+        assert(row.getString("o_ad_value").contains("TechnicalManagerA"))
+        assert(row.getString("o_ad_author").contains("SuperTool"))
+
+        assert(queryResult.hasNext)
+        val row2 = queryResult.next()
+
+        assert(row2.getInt("status").contains(11))
+        assert(row2.getString("status_text").contains("Additional data have been updated, added or both"))
+        assert(row2.getString("o_ad_name").contains("SecondaryOwner"))
+        assert(row2.getString("o_ad_value").contains("AnalystNew"))
+        assert(row2.getString("o_ad_author").contains("MikeRusty"))
+
+        assert(queryResult.hasNext)
+        val row3 = queryResult.next()
+        assert(row3.getInt("status").contains(11))
+        assert(row3.getString("status_text").contains("Additional data have been updated, added or both"))
+        assert(row3.getString("o_ad_name").contains("IsDatasetInDatalake"))
+        assert(row3.getString("o_ad_value").contains("true"))
+        assert(row3.getString("o_ad_author").contains("MikeRusty"))
 
         assert(!queryResult.hasNext)
       }
@@ -134,7 +154,7 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
     )
 
     function(fncCreateOrUpdateAdditionalData)
-      .setParam("i_partitioning", partitioning)
+      .setParam("i_partitioning_id", fkPartitioning)
       .setParam("i_additional_data", inputADToUpsert)
       .setParam("i_by_user", "MikeRusty")
       .execute { queryResult =>
@@ -142,9 +162,7 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
         val row = queryResult.next()
 
         assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Additional data have been added"))
-
-        assert(!queryResult.hasNext)
+        assert(row.getString("status_text").contains("Additional data have been updated, added or both"))
       }
 
     assert(table("runs.additional_data").count() == 5)
@@ -199,7 +217,7 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
     )
 
     function(fncCreateOrUpdateAdditionalData)
-      .setParam("i_partitioning", partitioning)
+      .setParam("i_partitioning_id", fkPartitioning)
       .setParam("i_additional_data", inputADToUpsert)
       .setParam("i_by_user", "MikeRusty")
       .execute { queryResult =>
@@ -208,8 +226,6 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
 
         assert(row.getInt("status").contains(14))
         assert(row.getString("status_text").contains("No changes in additional data"))
-
-        assert(!queryResult.hasNext)
       }
 
     assert(table("runs.additional_data").count(add("fk_partitioning", fkPartitioning)) == 2)
@@ -228,7 +244,7 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite{
     )
 
     function(fncCreateOrUpdateAdditionalData)
-      .setParam("i_partitioning", partitioning)
+      .setParam("i_partitioning_id", 0L)
       .setParam("i_additional_data", inputADToInsert)
       .setParam("i_by_user", "MikeRusty")
       .execute { queryResult =>
