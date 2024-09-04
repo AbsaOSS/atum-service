@@ -271,7 +271,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[NotFoundDatabaseError]
           )
         },
-        test("Returns expected DatabaseError") {
+        test("Returns expected GeneralDatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningMeasuresById(4L).exit)(
             failsWithA[GeneralDatabaseError]
           )
