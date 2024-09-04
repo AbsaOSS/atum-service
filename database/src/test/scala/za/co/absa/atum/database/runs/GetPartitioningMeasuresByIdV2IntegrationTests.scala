@@ -76,8 +76,7 @@ class GetPartitioningMeasuresByIdV2IntegrationTests extends DBTestSuite {
     function(fncGetPartitioningMeasuresById)
       .setParam(fkPartitioning)
       .execute { queryResult =>
-        val results = queryResult.hasNext
-        assert(!results)
+        assert(!queryResult.hasNext)
       }
   }
 
