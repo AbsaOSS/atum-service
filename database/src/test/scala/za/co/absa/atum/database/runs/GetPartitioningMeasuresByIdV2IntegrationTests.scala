@@ -88,6 +88,7 @@ class GetPartitioningMeasuresByIdV2IntegrationTests extends DBTestSuite {
         val results = queryResult.next()
         assert(results.getInt("status").contains(41))
         assert(results.getString("status_text").contains("Partitioning not found"))
+        assert(!queryResult.hasNext) // checking no more records are returned.
       }
   }
 
