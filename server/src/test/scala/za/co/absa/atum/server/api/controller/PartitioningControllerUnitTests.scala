@@ -48,12 +48,12 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.patchAdditionalData(2L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
-  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO1))
-    .thenReturn(ZIO.succeed(Seq(checkpointDTO1, checkpointDTO2)))
-  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO2))
-    .thenReturn(ZIO.succeed(Seq.empty))
-  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
-    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+//  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO1))
+//    .thenReturn(ZIO.succeed(Seq(checkpointDTO1, checkpointDTO2)))
+//  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO2))
+//    .thenReturn(ZIO.succeed(Seq.empty))
+//  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
+//    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMock.getPartitioningAdditionalDataV2(1L))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
@@ -104,23 +104,23 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("GetPartitioningCheckpointsSuite")(
-        test("Returns expected Seq[MeasureDTO]") {
-          for {
-            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO1)
-          } yield assertTrue(result.data == Seq(checkpointDTO1, checkpointDTO2))
-        },
-        test("Returns expected empty sequence") {
-          for {
-            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO2)
-          } yield assertTrue(result.data == Seq.empty[CheckpointDTO])
-        },
-        test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO3).exit)(
-            failsWithA[InternalServerErrorResponse]
-          )
-        }
-      ),
+//      suite("GetPartitioningCheckpointsSuite")(
+//        test("Returns expected Seq[MeasureDTO]") {
+//          for {
+//            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO1)
+//          } yield assertTrue(result.data == Seq(checkpointDTO1, checkpointDTO2))
+//        },
+//        test("Returns expected empty sequence") {
+//          for {
+//            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO2)
+//          } yield assertTrue(result.data == Seq.empty[CheckpointDTO])
+//        },
+//        test("Returns expected InternalServerErrorResponse") {
+//          assertZIO(PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO3).exit)(
+//            failsWithA[InternalServerErrorResponse]
+//          )
+//        }
+//      ),
       suite("GetPartitioningSuite")(
         test("Returns expected PartitioningWithIdDTO") {
           for {

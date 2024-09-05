@@ -53,11 +53,6 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO2))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO1))
-    .thenReturn(ZIO.succeed(Seq(checkpointFromDB1, checkpointFromDB2)))
-  when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO2))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
-
   when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(1L))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(2L))
@@ -136,20 +131,6 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningDTO2).exit)(
-            failsWithA[ServiceError]
-          )
-        }
-      ),
-      suite("GetPartitioningCheckpointsSuite")(
-        test("Returns expected Right with Seq[CheckpointDTO]") {
-          for {
-            result <- PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue {
-            result == Seq(checkpointDTO1, checkpointDTO2.copy(partitioning = checkpointDTO1.partitioning))
-          }
-        },
-        test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(
             failsWithA[ServiceError]
           )
         }

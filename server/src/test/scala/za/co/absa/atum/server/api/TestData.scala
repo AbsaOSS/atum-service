@@ -341,7 +341,8 @@ trait TestData {
     measuredColumns = checkpointV2DTO1.measurements.head.measure.measuredColumns,
     measurementValue = checkpointV2DTO1.measurements.head.result.asJson,
     checkpointStartTime = checkpointV2DTO1.processStartTime,
-    checkpointEndTime = checkpointV2DTO1.processEndTime
+    checkpointEndTime = checkpointV2DTO1.processEndTime,
+    hasMore = true
   )
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {

@@ -17,31 +17,31 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.{CheckpointFromDB, PartitioningForDB}
+import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB}
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import zio._
-import io.circe.syntax.EncoderOps
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
-import za.co.absa.db.fadb.doobie.postgres.circe.implicits.{jsonbGet, jsonbPut}
-import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
 class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task](values =>
+    extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointsArgs, Option[CheckpointItemFromDB], Task](args =>
       Seq(
-        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
-        fr"${values.limit}",
-        fr"${values.checkpointName}"
+        fr"${args.partitioningId}",
+        fr"${args.limit}",
+        fr"${args.offset}",
+        fr"${args.checkpointName}"
       )
     )
     with StandardStatusHandling
-    with ByFirstErrorStatusAggregator {
+    with ByFirstRowStatusAggregator {
 
   override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq(
     "id_checkpoint",
@@ -52,11 +52,19 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
     "measured_columns",
     "measurement_value",
     "checkpoint_start_time",
-    "checkpoint_end_time"
+    "checkpoint_end_time",
+    "has_more"
   )
 }
 
 object GetPartitioningCheckpoints {
+  case class GetPartitioningCheckpointsArgs(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long],
+    checkpointName: Option[String]
+  )
+
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpoints] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]

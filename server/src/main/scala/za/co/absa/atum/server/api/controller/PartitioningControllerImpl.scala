@@ -55,15 +55,15 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToSingleSuccessResponse(createPartitioningIfNotExistsV1(partitioningSubmitDTO))
   }
 
-  override def getPartitioningCheckpointsV2(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
-    mapToMultiSuccessResponse(
-      serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
-      )
-    )
-  }
+//  override def getPartitioningCheckpointsV2(
+//    checkpointQueryDTO: CheckpointQueryDTO
+//  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
+//    mapToMultiSuccessResponse(
+//      serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
+//        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
+//      )
+//    )
+//  }
 
   override def getPartitioningAdditionalDataV2(
     partitioningId: Long

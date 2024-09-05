@@ -30,7 +30,7 @@ class PartitioningRepositoryImpl(
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
-  getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
+//  getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
   getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2
 ) extends PartitioningRepository
@@ -69,14 +69,14 @@ class PartitioningRepositoryImpl(
     ).map(_.map { case AdditionalDataFromDB(adName, adValue) => adName.get -> adValue }.toMap)
   }
 
-  override def getPartitioningCheckpoints(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[DatabaseError, Seq[CheckpointFromDB]] = {
-    dbMultipleResultCallWithAggregatedStatus(
-      getPartitioningCheckpointsFn(checkpointQueryDTO),
-      "getPartitioningCheckpoints"
-    )
-  }
+//  override def getPartitioningCheckpoints(
+//    checkpointQueryDTO: CheckpointQueryDTO
+//  ): IO[DatabaseError, Seq[CheckpointFromDB]] = {
+//    dbMultipleResultCallWithAggregatedStatus(
+//      getPartitioningCheckpointsFn(checkpointQueryDTO),
+//      "getPartitioningCheckpoints"
+//    )
+//  }
 
   override def getPartitioningAdditionalDataV2(partitioningId: Long): IO[DatabaseError, AdditionalDataDTO] = {
     dbMultipleResultCallWithAggregatedStatus(
@@ -106,9 +106,9 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMeasures
       with GetPartitioningAdditionalData
       with CreateOrUpdateAdditionalData
-      with GetPartitioningCheckpoints
+//      with GetPartitioningCheckpoints
       with GetPartitioningAdditionalDataV2
-      with GetPartitioningCheckpoints
+//      with GetPartitioningCheckpoints
       with GetPartitioningById,
     PartitioningRepository
   ] = ZLayer {
@@ -117,7 +117,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
-      getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
+//      getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
     } yield new PartitioningRepositoryImpl(
@@ -125,7 +125,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures,
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
-      getPartitioningCheckpoints,
+//      getPartitioningCheckpoints,
       getPartitioningById,
       getPartitioningAdditionalDataV2
     )

@@ -31,7 +31,8 @@ case class CheckpointItemFromDB(
   measuredColumns: Seq[String],
   measurementValue: Json, // JSON representation of `MeasurementDTO`
   checkpointStartTime: ZonedDateTime,
-  checkpointEndTime: Option[ZonedDateTime]
+  checkpointEndTime: Option[ZonedDateTime],
+  hasMore: Boolean
 )
 
 object CheckpointItemFromDB {
@@ -68,6 +69,24 @@ object CheckpointItemFromDB {
           measurements = measurements
         )
       )
+    }
+  }
+
+  def groupAndConvertItemsToCheckpointV2DTOs(
+                                        checkpointItems: Seq[CheckpointItemFromDB]
+                                      ): Either[DecodingFailure, Seq[CheckpointV2DTO]] = {
+    val groupedItems = checkpointItems.groupBy(_.idCheckpoint)
+    val orderedIds = checkpointItems.map(_.idCheckpoint).distinct
+
+    val result = orderedIds.map { id =>
+      CheckpointItemFromDB.fromItemsToCheckpointV2DTO(groupedItems(id))
+    }
+
+    val errors = result.collect { case Left(err) => err }
+    if (errors.nonEmpty) {
+      Left(errors.head)
+    } else {
+      Right(result.collect { case Right(dto) => dto })
     }
   }
 

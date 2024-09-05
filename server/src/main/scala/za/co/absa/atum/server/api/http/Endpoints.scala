@@ -23,7 +23,7 @@ import sttp.tapir.json.circe.jsonBody
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import sttp.tapir.{PublicEndpoint, endpoint}
 import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
 
@@ -101,13 +101,27 @@ trait Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+//  protected val getPartitioningCheckpointsEndpointV2
+//    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
+//    apiV2.get
+//      .in(GetPartitioningCheckpoints)
+//      .in(jsonBody[CheckpointQueryDTO])
+//      .out(statusCode(StatusCode.Ok))
+//      .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
+//  }
+
   protected val getPartitioningCheckpointsEndpointV2
-    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
+  : PublicEndpoint[(Long, Option[Int], Option[Long], Option[String]), ErrorResponse, PaginatedResponse[
+    CheckpointV2DTO
+  ], Any] = {
     apiV2.get
-      .in(GetPartitioningCheckpoints)
-      .in(jsonBody[CheckpointQueryDTO])
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
+      .in(query[Option[Int]]("limit"))
+      .in(query[Option[Long]]("offset"))
+      .in(query[Option[String]]("checkpoint-name"))
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
+      .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   protected val getFlowCheckpointsEndpointV2

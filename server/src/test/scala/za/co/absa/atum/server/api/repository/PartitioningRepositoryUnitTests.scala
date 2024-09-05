@@ -79,16 +79,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
 
-  // Get Partitioning Checkpoints Mocks
-  private val getPartitioningCheckpointsMock = mock(classOf[GetPartitioningCheckpoints])
-
-  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO1))
-    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), checkpointFromDB1))))
-  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO3)).thenReturn(ZIO.right(Seq.empty))
-  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
-
-  private val getPartitioningCheckpointsMockLayer = ZLayer.succeed(getPartitioningCheckpointsMock)
-
   // Get Partitioning By Id Mocks
   private val getPartitioningByIdMock = mock(classOf[GetPartitioningById])
 
@@ -187,23 +177,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("GetPartitioningCheckpointsSuite")(
-        test("Returns expected Seq") {
-          for {
-            result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue(result == Seq(checkpointFromDB1))
-        },
-        test("Returns expected DatabaseError") {
-          assertZIO(PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(
-            failsWithA[DatabaseError]
-          )
-        },
-        test("Returns expected Seq.empty") {
-          for {
-            result <- PartitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO3)
-          } yield assertTrue(result.isEmpty)
-        }
-      ),
       suite("GetPartitioningAdditionalDataV2Suite")(
         test("Returns expected AdditionalDataDTO instance") {
           for {
@@ -248,7 +221,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       getPartitioningMeasuresMockLayer,
       getPartitioningAdditionalDataMockLayer,
       createOrUpdateAdditionalDataMockLayer,
-      getPartitioningCheckpointsMockLayer,
+//      getPartitioningCheckpointsMockLayer,
       getPartitioningByIdMockLayer,
       getPartitioningAdditionalDataV2MockLayer
     )
