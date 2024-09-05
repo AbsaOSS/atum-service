@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.CheckpointQueryDTO
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryDTOV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
@@ -25,4 +25,6 @@ import zio.macros.accessible
 @accessible
 trait FlowRepository {
   def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
+
+  def getFlowCheckpointsV2(checkpointQueryDTO: CheckpointQueryDTOV2): IO[DatabaseError, Seq[CheckpointFromDB]]
 }

@@ -17,7 +17,7 @@
 package za.co.absa.atum.server
 
 import za.co.absa.atum.server.api.controller._
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
+import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowCheckpointsV2}
 import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.http.Server
@@ -60,6 +60,7 @@ object Main extends ZIOAppDefault with Server {
           WriteCheckpointV2.layer,
           GetPartitioningCheckpointV2.layer,
           GetFlowCheckpoints.layer,
+          GetFlowCheckpointsV2.layer,
           GetPartitioningById.layer,
           PostgresDatabaseProvider.layer,
           TransactorProvider.layer,

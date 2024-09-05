@@ -16,25 +16,31 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.CheckpointQueryDTO
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryDTOV2}
+import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowCheckpointsV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
 import zio.interop.catz.asyncInstance
 
-class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints) extends FlowRepository with BaseRepository {
+class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints, getFlowCheckpointsV2Fn: GetFlowCheckpointsV2)
+  extends FlowRepository with BaseRepository {
 
   override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]] = {
     dbMultipleResultCallWithAggregatedStatus(getFlowCheckpointsFn(checkpointQueryDTO), "getFlowCheckpoints")
   }
 
+  override def getFlowCheckpointsV2(checkpointQueryDTO: CheckpointQueryDTOV2): IO[DatabaseError, Seq[CheckpointFromDB]] = {
+    dbMultipleResultCallWithAggregatedStatus(getFlowCheckpointsV2Fn(checkpointQueryDTO), "getFlowCheckpointsV2")
+  }
+
 }
 
 object FlowRepositoryImpl {
-  val layer: URLayer[GetFlowCheckpoints, FlowRepository] = ZLayer {
+  val layer: URLayer[GetFlowCheckpoints with GetFlowCheckpointsV2, FlowRepository] = ZLayer {
     for {
       getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
-    } yield new FlowRepositoryImpl(getFlowCheckpoints)
+      getFlowCheckpointsV2 <- ZIO.service[GetFlowCheckpointsV2]
+    } yield new FlowRepositoryImpl(getFlowCheckpoints, getFlowCheckpointsV2)
   }
 }

@@ -16,24 +16,24 @@
 
 -- Function: flows.get_flow_checkpoints_v2(4)
 CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints_v2(
-    IN  i_partitioning_of_flow JSONB,
-    IN  i_limit                INT DEFAULT 5,
-    IN  i_checkpoint_name      TEXT DEFAULT NULL,
-    IN  i_offset               BIGINT DEFAULT 0,
-    OUT status                 INTEGER,
-    OUT status_text            TEXT,
-    OUT id_checkpoint          UUID,
-    OUT checkpoint_name        TEXT,
-    OUT author                 TEXT,
+    IN  i_flow_id            BIGINT,
+    IN  i_limit              INT DEFAULT 5,
+    IN  i_checkpoint_name    TEXT DEFAULT NULL,
+    IN  i_offset             BIGINT DEFAULT 0,
+    OUT status               INTEGER,
+    OUT status_text          TEXT,
+    OUT id_checkpoint        UUID,
+    OUT checkpoint_name      TEXT,
+    OUT author               TEXT,
     OUT measured_by_atum_agent BOOLEAN,
-    OUT measure_name           TEXT,
-    OUT measured_columns       TEXT[],
-    OUT measurement_value      JSONB,
-    OUT checkpoint_start_time  TIMESTAMP WITH TIME ZONE,
-    OUT checkpoint_end_time    TIMESTAMP WITH TIME ZONE
+    OUT measure_name         TEXT,
+    OUT measured_columns     TEXT[],
+    OUT measurement_value    JSONB,
+    OUT checkpoint_start_time TIMESTAMP WITH TIME ZONE,
+    OUT checkpoint_end_time  TIMESTAMP WITH TIME ZONE
 ) RETURNS SETOF record AS
 $$
-    -------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
 --
 -- Function: flows.get_flow_checkpoints_v2(4)
 --      Retrieves all checkpoints (measures and their measurement details) related to a primary flow
@@ -73,12 +73,16 @@ $$
 -- Status codes:
 --      11                     - OK
 --      41                     - Partitioning not found
+--      42                     - Flow not found
 ---------------------------------------------------------------------------------------------------
 DECLARE
     _fk_partitioning BIGINT;
-    _fk_flow BIGINT;
 BEGIN
-    _fk_partitioning = runs._get_id_partitioning(i_partitioning_of_flow);
+
+    SELECT fk_partitioning
+    FROM flows.partitioning_to_flow
+    WHERE fk_flow = i_flow_id
+    INTO _fk_partitioning;
 
     IF _fk_partitioning IS NULL THEN
         status := 41;
@@ -87,34 +91,41 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT id_flow
-    FROM flows.flows
-    WHERE fk_primary_partitioning = _fk_partitioning
-    INTO _fk_flow;
-
+    -- Execute the query to retrieve checkpoints and their associated measurements
     RETURN QUERY
-        SELECT 11 AS status, 'OK' AS status_text,
-               CP.id_checkpoint, CP.checkpoint_name,
-               CP.created_by AS author, CP.measured_by_atum_agent,
-               MD.measure_name, MD.measured_columns,
+        SELECT 11 AS status,
+               'OK' AS status_text,
+               CP.id_checkpoint,
+               CP.checkpoint_name,
+               CP.created_by AS author,
+               CP.measured_by_atum_agent,
+               MD.measure_name,
+               MD.measured_columns,
                M.measurement_value,
-               CP.process_start_time AS checkpoint_start_time, CP.process_end_time AS checkpoint_end_time
+               CP.process_start_time AS checkpoint_start_time,
+               CP.process_end_time AS checkpoint_end_time
         FROM flows.partitioning_to_flow AS PF
-                 JOIN runs.checkpoints AS CP
-                      ON PF.fk_partitioning = CP.fk_partitioning
-                 JOIN runs.measurements AS M
-                      ON CP.id_checkpoint = M.fk_checkpoint
-                 JOIN runs.measure_definitions AS MD
-                      ON M.fk_measure_definition = MD.id_measure_definition
-        WHERE PF.fk_flow = _fk_flow
-          AND (i_checkpoint_name IS NULL OR CP.checkpoint_name = i_checkpoint_name)
+        JOIN runs.checkpoints AS CP
+            ON PF.fk_partitioning = CP.fk_partitioning
+        JOIN runs.measurements AS M
+            ON CP.id_checkpoint = M.fk_checkpoint
+        JOIN runs.measure_definitions AS MD
+            ON M.fk_measure_definition = MD.id_measure_definition
+        WHERE PF.fk_flow = i_flow_id
+        AND (i_checkpoint_name IS NULL OR CP.checkpoint_name = i_checkpoint_name)
         ORDER BY CP.process_start_time,
                  CP.id_checkpoint
-        LIMIT nullif(i_limit, 0)
+        LIMIT NULLIF(i_limit, 0)
         OFFSET i_offset;
 
+    IF NOT FOUND THEN
+        status := 42;
+        status_text := 'Flow not found';
+        RETURN NEXT;
+        RETURN;
+    END IF;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints_v2(JSONB, INT, TEXT, BIGINT) TO atum_owner;
+GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints_v2(BIGINT, INT, TEXT, BIGINT) TO atum_owner;
