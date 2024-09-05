@@ -67,8 +67,6 @@ RETURNS SETOF record AS
 --
 -------------------------------------------------------------------------------
 $$
-DECLARE
-    v_found BOOLEAN := FALSE;
 BEGIN
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id;
     IF NOT FOUND THEN
