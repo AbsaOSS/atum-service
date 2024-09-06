@@ -31,7 +31,8 @@ class PartitioningRepositoryImpl(
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningByIdFn: GetPartitioningById,
-  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2
+  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -88,6 +89,14 @@ class PartitioningRepositoryImpl(
       }
   }
 
+
+  override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresByIdFn(partitioningId), "getPartitioningMeasures")
+      .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
+        MeasureDTO(measureName.get, measuredColumns.get)
+      })
+  }
+
 }
 
 object PartitioningRepositoryImpl {
@@ -98,6 +107,7 @@ object PartitioningRepositoryImpl {
       with CreateOrUpdateAdditionalData
       with GetPartitioningAdditionalDataV2
       with GetPartitioningById,
+      with GetPartitioningMeasuresById
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -107,13 +117,15 @@ object PartitioningRepositoryImpl {
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
+      getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       getPartitioningMeasures,
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
       getPartitioningById,
-      getPartitioningAdditionalDataV2
+      getPartitioningAdditionalDataV2,
+      getPartitioningMeasuresV2
     )
   }
 }
