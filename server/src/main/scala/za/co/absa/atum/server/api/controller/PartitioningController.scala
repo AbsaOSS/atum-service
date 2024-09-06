@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.IO
 import zio.macros.accessible
 
@@ -40,10 +40,6 @@ trait PartitioningController {
     partitioningId: Long,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
-
-//  def getPartitioningCheckpointsV2(
-//    checkpointQueryDTO: CheckpointQueryDTO
-//  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]]
 
   def getPartitioningV2(partitioningId: Long): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]]
 

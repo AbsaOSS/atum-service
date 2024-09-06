@@ -19,8 +19,8 @@ package za.co.absa.atum.server.api.controller
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.service.PartitioningService
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
@@ -54,16 +54,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]] = {
     mapToSingleSuccessResponse(createPartitioningIfNotExistsV1(partitioningSubmitDTO))
   }
-
-//  override def getPartitioningCheckpointsV2(
-//    checkpointQueryDTO: CheckpointQueryDTO
-//  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
-//    mapToMultiSuccessResponse(
-//      serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-//        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
-//      )
-//    )
-//  }
 
   override def getPartitioningAdditionalDataV2(
     partitioningId: Long
