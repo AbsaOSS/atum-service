@@ -40,8 +40,7 @@ RETURNS SETOF record AS
 --
 -- Parameters:
 --      i_partitioning          - partitioning of requested checkpoints
---      i_limit                 - (optional) maximum number of checkpoint's measurements to return
---                                if 0 specified, all data will be returned, i.e. no limit will be applied
+--      i_limit                 - (optional) maximum number of checkpoints to return
 --      i_offset                - (optional) offset of the first checkpoint to return
 --      i_checkpoint_name       - (optional) name of the checkpoint
 
@@ -115,16 +114,6 @@ BEGIN
     IF NOT FOUND THEN
         status := 42;
         status_text := 'No checkpoint data found';
-        id_checkpoint := NULL;
-        checkpoint_name := NULL;
-        author := NULL;
-        measured_by_atum_agent := NULL;
-        measure_name := NULL;
-        measured_columns := NULL;
-        measurement_value := NULL;
-        checkpoint_start_time := NULL;
-        checkpoint_end_time := NULL;
-        has_more := FALSE;
         RETURN NEXT;
     END IF;
 END;
