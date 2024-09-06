@@ -106,8 +106,8 @@ object PartitioningRepositoryImpl {
       with GetPartitioningAdditionalData
       with CreateOrUpdateAdditionalData
       with GetPartitioningAdditionalDataV2
-      with GetPartitioningById,
-      with GetPartitioningMeasuresById
+      with GetPartitioningById
+      with GetPartitioningMeasuresById,
     PartitioningRepository
   ] = ZLayer {
     for {
