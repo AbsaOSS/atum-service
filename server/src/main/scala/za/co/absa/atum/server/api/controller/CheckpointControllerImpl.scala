@@ -19,8 +19,8 @@ package za.co.absa.atum.server.api.controller
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.{ErrorResponse, PaginatedResult, SuccessResponse}
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.{ErrorResponse, PaginatedResult}
+import za.co.absa.atum.server.model.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
 import zio._
 
 import java.util.UUID
@@ -66,10 +66,10 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
 
   override def getPartitioningCheckpoints(
     partitioningId: Long,
-    limit: Option[Int] = Some(10),
-    offset: Option[Long] = Some(0),
+    limit: Option[Int],
+    offset: Option[Long],
     checkpointName: Option[String] = None
-  ): IO[ErrorResponse, SuccessResponse.PaginatedResponse[CheckpointV2DTO]] = {
+  ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
     mapToPaginatedResponse(
       limit.get,
       offset.get,

@@ -43,7 +43,7 @@ trait CheckpointController {
     partitioningId: Long,
     limit: Option[Int],
     offset: Option[Long],
-    checkpointName: Option[String],
+    checkpointName: Option[String] = None,
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]]
 
 }

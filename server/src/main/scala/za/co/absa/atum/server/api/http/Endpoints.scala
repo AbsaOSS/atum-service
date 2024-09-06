@@ -101,23 +101,14 @@ trait Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-//  protected val getPartitioningCheckpointsEndpointV2
-//    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
-//    apiV2.get
-//      .in(GetPartitioningCheckpoints)
-//      .in(jsonBody[CheckpointQueryDTO])
-//      .out(statusCode(StatusCode.Ok))
-//      .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
-//  }
-
   protected val getPartitioningCheckpointsEndpointV2
   : PublicEndpoint[(Long, Option[Int], Option[Long], Option[String]), ErrorResponse, PaginatedResponse[
     CheckpointV2DTO
   ], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
-      .in(query[Option[Int]]("limit"))
-      .in(query[Option[Long]]("offset"))
+      .in(query[Option[Int]]("limit").default(Some(10)))
+      .in(query[Option[Long]]("offset").default(Some(0L)))
       .in(query[Option[String]]("checkpoint-name"))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
