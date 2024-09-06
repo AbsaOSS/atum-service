@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio.IO
 import zio.macros.accessible
 
@@ -42,7 +42,6 @@ trait PartitioningController {
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
 
   def getPartitioningV2(partitioningId: Long): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]]
-
 
   def getPartitioningMeasuresV2(
     partitioningId: Long
