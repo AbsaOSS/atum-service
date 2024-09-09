@@ -53,14 +53,11 @@ class AtumContext private[agent] (
    * @return the sub-partition context
    */
   def subPartitionContext(subPartitions: AtumPartitions): AtumContext = {
-    val newPartitions = subPartitions.foldLeft(atumPartitions) { case (acc, (k, v)) =>
-      if (acc.contains(k)) {
-        throw PartitioningUpdateException(s"Partition key '$k' already exists. Updates are not allowed.")
-      } else {
-        acc + (k -> v)
-      }
+    val overlap = atumPartitions.keys.toSet.intersect(subPartitions.keys.toSet)
+    if (overlap.nonEmpty) {
+      throw PartitioningUpdateException(s"Partition keys '$overlap' already exist. Updates are not allowed.")
     }
-    agent.getOrCreateAtumSubContext(newPartitions)(this)
+    agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
   }
 
   private def takeMeasurements(df: DataFrame): Set[MeasurementDTO] = {
