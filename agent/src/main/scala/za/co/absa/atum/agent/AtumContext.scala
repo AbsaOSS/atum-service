@@ -18,6 +18,7 @@ package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.AtumContext.{AdditionalData, AtumPartitions}
+import za.co.absa.atum.agent.exception.AtumAgentException.PartitioningUpdateException
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
@@ -52,7 +53,14 @@ class AtumContext private[agent] (
    * @return the sub-partition context
    */
   def subPartitionContext(subPartitions: AtumPartitions): AtumContext = {
-    agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
+    val newPartitions = subPartitions.foldLeft(atumPartitions) { case (acc, (k, v)) =>
+      if (acc.contains(k)) {
+        throw PartitioningUpdateException(s"Partition key '$k' already exists. Updates are not allowed.")
+      } else {
+        acc + (k -> v)
+      }
+    }
+    agent.getOrCreateAtumSubContext(newPartitions)(this)
   }
 
   private def takeMeasurements(df: DataFrame): Set[MeasurementDTO] = {
