@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2024 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader
+package za.co.absa.atum.reader.exceptions
 
-import za.co.absa.atum.reader.basic.Reader
-import za.co.absa.atum.reader.provider.Provider
-
-// TODO
-class FlowReader[F[_]](override implicit val provider: Provider[F]) extends Reader[F]{
-  def foo(): String = {
-    // just to have some testable content
-    "bar"
-  }
-}
+abstract class ReaderException(message: String) extends Exception(message)

@@ -90,9 +90,9 @@ object Dependencies {
   private def jsonSerdeDependencies: Seq[ModuleID] = {
 
     // Circe dependencies
-    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
-    lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeJson
-    lazy val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeJson
+    val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
+    val circeParser = "io.circe" %% "circe-parser" % Versions.circeJson
+    val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeJson
 
     Seq(
       circeCore,
@@ -237,8 +237,16 @@ object Dependencies {
 
   def readerDependencies(scalaVersion: Version): Seq[ModuleID] = {
     Seq(
+      "com.softwaremill.sttp.client3" %% "core" % "3.9.7",
+      "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.9.6",
+      "com.softwaremill.sttp.client3" %% "armeria-backend-cats" % "3.9.8",
+      "com.softwaremill.sttp.client3" %% "zio" % "3.9.8",
+      "com.softwaremill.sttp.client3" %% "armeria-backend-zio" % "3.9.8",
+      "org.typelevel" %% "cats-effect" % "3.3.14",
+      "dev.zio" %% "zio" % "2.1.4",
     ) ++
-      testDependencies
+      testDependencies ++
+      jsonSerdeDependencies
   }
 
   def databaseDependencies: Seq[ModuleID] = {

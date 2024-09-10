@@ -16,7 +16,11 @@
 
 package za.co.absa.atum.reader
 
-class PartitioningReader {
+import cats.Monad
+import za.co.absa.atum.reader.basic.Reader
+import za.co.absa.atum.reader.provider.Provider
+
+class PartitioningReader[F[_]: Monad](partitioning: Partitioning)(override implicit val provider: Provider[F[_]]) extends Reader[F] {
   def foo(): String = {
     // just to have some testable content
     "bar"
