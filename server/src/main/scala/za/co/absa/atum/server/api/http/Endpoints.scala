@@ -23,7 +23,7 @@ import sttp.tapir.json.circe.jsonBody
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import sttp.tapir.{PublicEndpoint, endpoint}
 import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
 
@@ -134,6 +134,19 @@ trait Endpoints extends BaseEndpoints {
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Measures)
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[MultiSuccessResponse[MeasureDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
+  protected val getFlowPartitioningsEndpointV2
+  : PublicEndpoint[(Long, Option[Int], Option[Long]), ErrorResponse, PaginatedResponse[
+    PartitioningWithIdDTO
+  ], Any] = {
+    apiV2.get
+      .in(V2Paths.Flows / path[Long]("flowId") / V2Paths.Partitionings)
+      .in(query[Option[Int]]("limit").default(Some(10)))
+      .in(query[Option[Long]]("offset").default(Some(0)))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
