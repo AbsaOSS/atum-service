@@ -18,6 +18,7 @@ package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
 import za.co.absa.atum.agent.AtumContext.{AdditionalData, AtumPartitions}
+import za.co.absa.atum.agent.exception.AtumAgentException.PartitioningUpdateException
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
 
@@ -52,6 +53,10 @@ class AtumContext private[agent] (
    * @return the sub-partition context
    */
   def subPartitionContext(subPartitions: AtumPartitions): AtumContext = {
+    val overlap = atumPartitions.keys.toSet.intersect(subPartitions.keys.toSet)
+    if (overlap.nonEmpty) {
+      throw PartitioningUpdateException(s"Partition keys '$overlap' already exist. Updates are not allowed.")
+    }
     agent.getOrCreateAtumSubContext(atumPartitions ++ subPartitions)(this)
   }
 
