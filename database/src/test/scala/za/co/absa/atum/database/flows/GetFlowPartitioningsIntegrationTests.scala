@@ -118,8 +118,6 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
         val result1 = queryResult.next()
         assert(result1.getInt("status").get == 11)
         assert(result1.getString("status_text").get == "Partitioning added to flows")
-      // there is a bug in flows._add_to_parent_flows, it never sets id_flow therefore returning always NULL
-      // assert(result1.getLong("id_flow").get == flowIdOfPartitioning1)
       }
 
     function(getFlowPartitioningsFn)
