@@ -68,7 +68,7 @@ BEGIN
                    P.created_at,
                    ROW_NUMBER() OVER (ORDER BY P.created_at DESC, P.id_partitioning) AS rn
             FROM flows.partitioning_to_flow PF
-                     JOIN runs.partitionings P ON PF.fk_partitioning = P.id_partitioning
+            JOIN runs.partitionings P ON PF.fk_partitioning = P.id_partitioning
             WHERE PF.fk_flow = i_flow_id
             ORDER BY P.created_at DESC, P.id_partitioning
             LIMIT i_limit + 1 OFFSET i_offset
