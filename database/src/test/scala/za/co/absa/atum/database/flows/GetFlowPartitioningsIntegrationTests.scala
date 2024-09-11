@@ -70,20 +70,6 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
-  private val partitioning3 = JsonBString(
-    """
-      |{
-      |   "version": 1,
-      |   "keys": ["keyG", "keyH", "keyI"],
-      |   "keysToValues": {
-      |     "keyG": "valueG",
-      |     "keyH": "valueH",
-      |     "keyI": "valueI"
-      |   }
-      |}
-      |""".stripMargin
-  )
-
   var flowIdOfPartitioning1: Long = _
   var flowIdOfParentPartitioning1: Long = _
   var flowIdOfPartitioning2: Long = _
@@ -93,7 +79,6 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
     table(partitioningsTable).insert(add("partitioning", partitioning1).add("created_by", "Joseph"))
     table(partitioningsTable).insert(add("partitioning", partitioning1Parent).add("created_by", "Joseph"))
     table(partitioningsTable).insert(add("partitioning", partitioning2).add("created_by", "Joseph"))
-    table(partitioningsTable).insert(add("partitioning", partitioning3).add("created_by", "Joseph"))
 
     val partId1: Long = table(partitioningsTable)
       .fieldValue("partitioning", partitioning1, "id_partitioning").get.get
@@ -103,9 +88,6 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
 
     val partId2: Long = table(partitioningsTable)
       .fieldValue("partitioning", partitioning2, "id_partitioning").get.get
-
-    val partId3: Long = table(partitioningsTable)
-      .fieldValue("partitioning", partitioning3, "id_partitioning").get.get
 
     function(createFlowFn)
       .setParam("i_fk_partitioning", partId1)
@@ -126,13 +108,6 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
       .setParam("i_by_user", "Joseph")
       .execute { queryResult =>
         flowIdOfPartitioning2 = queryResult.next().getLong("id_flow").get
-      }
-
-    function(createFlowFn)
-      .setParam("i_fk_partitioning", partId3)
-      .setParam("i_by_user", "Joseph")
-      .execute { queryResult =>
-        flowIdOfPartitioning3 = queryResult.next().getLong("id_flow").get
       }
 
     function(addToParentFlowsFn)
