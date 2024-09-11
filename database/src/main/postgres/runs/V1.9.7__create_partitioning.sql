@@ -49,15 +49,6 @@ DECLARE
     _create_partitioning    BOOLEAN;
     _status                 BIGINT;
 BEGIN
---     SELECT
---         CASE
---             WHEN status = 14 THEN 31
---             ELSE status
---         END as o_status,
---         status_text as o_status_text,
---         id_partitioning as o_id_partitioning
---     FROM runs.create_partitioning_if_not_exists(i_partitioning, i_by_user, i_parent_partitioning);
---     RETURN;
 
 id_partitioning := runs._get_id_partitioning(i_partitioning, true);
 
