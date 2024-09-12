@@ -25,13 +25,13 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
@@ -86,6 +86,16 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
       createServerEndpoint(getPartitioningEndpointV2, PartitioningController.getPartitioningV2),
       createServerEndpoint(getPartitioningMeasuresEndpointV2, PartitioningController.getPartitioningMeasuresV2),
+      createServerEndpoint[
+        (Long, Option[Int], Option[Long]),
+        ErrorResponse,
+        PaginatedResponse[PartitioningWithIdDTO]
+      ](
+        getFlowPartitioningsEndpointV2,
+        { case (flowId: Long, limit: Option[Int], offset: Option[Long]) =>
+          PartitioningController.getFlowPartitionings(flowId, limit, offset)
+        }
+      ),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
@@ -104,7 +114,8 @@ trait Routes extends Endpoints with ServerOptions {
       getPartitioningCheckpointsEndpointV2,
       getPartitioningCheckpointEndpointV2,
       getFlowCheckpointsEndpointV2,
-      getPartitioningMeasuresEndpointV2
+      getPartitioningMeasuresEndpointV2,
+      getFlowPartitioningsEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, SwaggerApiName, SwaggerApiVersion))
