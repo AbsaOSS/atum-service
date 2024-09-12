@@ -73,8 +73,8 @@ object CheckpointItemFromDB {
   }
 
   def groupAndConvertItemsToCheckpointV2DTOs(
-                                        checkpointItems: Seq[CheckpointItemFromDB]
-                                      ): Either[DecodingFailure, Seq[CheckpointV2DTO]] = {
+    checkpointItems: Seq[CheckpointItemFromDB]
+  ): Either[DecodingFailure, Seq[CheckpointV2DTO]] = {
     val groupedItems = checkpointItems.groupBy(_.idCheckpoint)
     val orderedIds = checkpointItems.map(_.idCheckpoint).distinct
 

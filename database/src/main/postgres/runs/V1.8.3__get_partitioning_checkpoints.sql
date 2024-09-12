@@ -41,9 +41,14 @@ RETURNS SETOF record AS
 -- Parameters:
 --      i_partitioning          - partitioning of requested checkpoints
 --      i_limit                 - (optional) maximum number of checkpoints to return
+--                                i_limit relates to amount of checkpoints returned, not the amount of rows returned
+--                                as usually there is more than one row per checkpoint
 --      i_offset                - (optional) offset of the first checkpoint to return
 --      i_checkpoint_name       - (optional) name of the checkpoint
 
+-- Note: i_limit and i_offset are used for pagination purposes;
+--       checkpoints are ordered by process_start_time in descending order
+--       and then by id_checkpoint in ascending order
 --
 -- Returns:
 --      status                  - Status code
@@ -77,9 +82,9 @@ BEGIN
 
     RETURN QUERY
         WITH limited_checkpoints AS (
-            SELECT DISTINCT C.id_checkpoint,
-                            C.process_start_time,
-                            ROW_NUMBER() OVER (ORDER BY C.process_start_time DESC, C.id_checkpoint) AS rn
+            SELECT C.id_checkpoint,
+                   C.process_start_time,
+                   ROW_NUMBER() OVER (ORDER BY C.process_start_time DESC, C.id_checkpoint) AS rn
             FROM runs.checkpoints C
             WHERE C.fk_partitioning = i_partitioning_id
               AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
