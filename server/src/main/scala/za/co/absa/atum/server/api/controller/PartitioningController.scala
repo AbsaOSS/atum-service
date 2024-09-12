@@ -47,7 +47,6 @@ trait PartitioningController {
 
   def getPartitioningV2(partitioningId: Long): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]]
 
-
   def getPartitioningMeasuresV2(
     partitioningId: Long
   ): IO[ErrorResponse, MultiSuccessResponse[MeasureDTO]]

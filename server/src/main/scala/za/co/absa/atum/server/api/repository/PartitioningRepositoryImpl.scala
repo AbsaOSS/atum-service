@@ -17,13 +17,16 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PartitioningFromDB}
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PaginatedResult, PartitioningFromDB}
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
@@ -33,7 +36,8 @@ class PartitioningRepositoryImpl(
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
   getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
-  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
+  getFlowPartitioningsFn: GetFlowPartitionings
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -99,7 +103,6 @@ class PartitioningRepositoryImpl(
       }
   }
 
-
   override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresByIdFn(partitioningId), "getPartitioningMeasures")
       .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
@@ -107,6 +110,27 @@ class PartitioningRepositoryImpl(
       })
   }
 
+  override def getFlowPartitionings(
+    flowId: Long,
+    limit: Option[RuntimeFlags],
+    offset: Option[Long]
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getFlowPartitioningsFn(GetFlowPartitioningsArgs(flowId, limit, offset)),
+      "getFlowPartitionings"
+    )
+      .map(x => _.flatten)
+      .flatMap { checkpointItems =>
+//        ZIO
+//          .fromEither(CheckpointItemFromDB.groupAndConvertItemsToCheckpointV2DTOs(checkpointItems))
+//          .mapBoth(
+//            error => GeneralDatabaseError(error.getMessage),
+//            checkpoints =>
+//              if (checkpointItems.nonEmpty && checkpointItems.head.hasMore) ResultHasMore(checkpoints)
+//              else ResultNoMore(checkpoints)
+//          )
+//      }
+  }
 }
 
 object PartitioningRepositoryImpl {
@@ -118,7 +142,8 @@ object PartitioningRepositoryImpl {
       with GetPartitioningCheckpoints
       with GetPartitioningAdditionalDataV2
       with GetPartitioningById
-      with GetPartitioningMeasuresById,
+      with GetPartitioningMeasuresById
+      with GetFlowPartitionings,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -130,6 +155,7 @@ object PartitioningRepositoryImpl {
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
       getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
+      getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       getPartitioningMeasures,
@@ -138,7 +164,8 @@ object PartitioningRepositoryImpl {
       getPartitioningCheckpoints,
       getPartitioningById,
       getPartitioningAdditionalDataV2,
-      getPartitioningMeasuresV2
+      getPartitioningMeasuresV2,
+      getFlowPartitionings
     )
   }
 }
