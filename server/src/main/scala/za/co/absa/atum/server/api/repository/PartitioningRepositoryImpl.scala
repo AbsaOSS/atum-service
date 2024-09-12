@@ -18,11 +18,21 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.{
+  GetFlowPartitioningsArgs,
+  GetFlowPartitioningsResult
+}
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PaginatedResult, PartitioningFromDB}
+import za.co.absa.atum.server.model.{
+  AdditionalDataFromDB,
+  AdditionalDataItemFromDB,
+  CheckpointFromDB,
+  MeasureFromDB,
+  PaginatedResult,
+  PartitioningFromDB
+}
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
@@ -112,24 +122,24 @@ class PartitioningRepositoryImpl(
 
   override def getFlowPartitionings(
     flowId: Long,
-    limit: Option[RuntimeFlags],
+    limit: Option[Int],
     offset: Option[Long]
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getFlowPartitioningsFn(GetFlowPartitioningsArgs(flowId, limit, offset)),
       "getFlowPartitionings"
-    )
-      .map(x => _.flatten)
-      .flatMap { checkpointItems =>
-//        ZIO
-//          .fromEither(CheckpointItemFromDB.groupAndConvertItemsToCheckpointV2DTOs(checkpointItems))
-//          .mapBoth(
-//            error => GeneralDatabaseError(error.getMessage),
-//            checkpoints =>
-//              if (checkpointItems.nonEmpty && checkpointItems.head.hasMore) ResultHasMore(checkpoints)
-//              else ResultNoMore(checkpoints)
-//          )
-//      }
+    ).map(_.flatten)
+      .flatMap { partitioningResults =>
+        ZIO
+          .fromEither(GetFlowPartitioningsResult.resultsToPartitioningWithIdDTOs(partitioningResults, Seq.empty))
+          .mapBoth(
+            error => GeneralDatabaseError(error.getMessage),
+            partitionings => {
+              if (partitioningResults.nonEmpty && partitioningResults.head.hasMore) ResultHasMore(partitionings)
+              else ResultNoMore(partitionings)
+            }
+          )
+      }
   }
 }
 

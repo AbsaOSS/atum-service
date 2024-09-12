@@ -17,8 +17,8 @@
 package za.co.absa.atum.server.api.database.flows.functions
 
 import doobie.implicits.toSqlInterpolator
-import io.circe.Json
-import za.co.absa.atum.model.dto.PartitioningWithIdDTO
+import io.circe.{DecodingFailure, Json}
+import za.co.absa.atum.model.dto.{PartitioningDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
@@ -30,14 +30,17 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
+import scala.annotation.tailrec
+
 class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[GetFlowPartitioningsArgs, GetFlowPartitioningsResult, Task](
-      args =>
-        Seq(
-          fr"${args.flowId}",
-          fr"${args.limit}",
-          fr"${args.offset}"
-        )
+    extends DoobieMultipleResultFunctionWithAggStatus[GetFlowPartitioningsArgs, Option[
+      GetFlowPartitioningsResult
+    ], Task](args =>
+      Seq(
+        fr"${args.flowId}",
+        fr"${args.limit}",
+        fr"${args.offset}"
+      )
     )
     with StandardStatusHandling
     with ByFirstErrorStatusAggregator {
@@ -47,8 +50,27 @@ class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Tas
 
 object GetFlowPartitionings {
   case class GetFlowPartitioningsArgs(flowId: Long, limit: Option[Int], offset: Option[Long])
-  case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean) {
-    def toPartitioningWithIdDTO: PartitioningWithIdDTO = PartitioningWithIdDTO(id, PartitioningDTO.fromPartitioningJson(partitioningJson), author)
+  case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
+
+  object GetFlowPartitioningsResult {
+
+    @tailrec def resultsToPartitioningWithIdDTOs(
+      results: Seq[GetFlowPartitioningsResult],
+      acc: Seq[PartitioningWithIdDTO]
+    ): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
+      if (results.isEmpty) Right(acc)
+      else {
+        val head = results.head
+        val tail = results.tail
+        val decodingResult = head.partitioningJson.as[PartitioningDTO]
+        decodingResult match {
+          case Left(decodingFailure) => Left(decodingFailure)
+          case Right(partitioningDTO) =>
+            resultsToPartitioningWithIdDTOs(tail, acc :+ PartitioningWithIdDTO(head.id, partitioningDTO, head.author))
+        }
+      }
+    }
+
   }
 
   val layer: URLayer[PostgresDatabaseProvider, GetFlowPartitionings] = ZLayer {

@@ -19,6 +19,7 @@ package za.co.absa.atum.server.api.repository
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO}
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
@@ -125,6 +126,9 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningMeasuresV2Mock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val getPartitioningMeasuresV2MockLayer = ZLayer.succeed(getPartitioningMeasuresV2Mock)
+
+  private val getFlowPartitioningsMock = mock(classOf[GetFlowPartitionings])
+  private val getFlowPartitioningsMockLayer = ZLayer.succeed(getFlowPartitioningsMock)
 
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -286,7 +290,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       getPartitioningCheckpointsMockLayer,
       getPartitioningByIdMockLayer,
       getPartitioningAdditionalDataV2MockLayer,
-      getPartitioningMeasuresV2MockLayer
+      getPartitioningMeasuresV2MockLayer,
+      getFlowPartitioningsMockLayer
     )
   }
 
