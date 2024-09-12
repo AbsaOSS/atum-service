@@ -50,58 +50,58 @@ DECLARE
     _status                 BIGINT;
 BEGIN
 
-id_partitioning := runs._get_id_partitioning(i_partitioning, true);
+    id_partitioning := runs._get_id_partitioning(i_partitioning, true);
 
-_create_partitioning := id_partitioning IS NULL;
+    _create_partitioning := id_partitioning IS NULL;
 
-IF i_parent_partitioning IS NOT NULL THEN
-    SELECT CPINE.id_partitioning
-    FROM runs.create_partitioning_if_not_exists(i_parent_partitioning, i_by_user, NULL) AS CPINE
-    INTO _fk_parent_partitioning;
-END IF;
+    IF i_parent_partitioning IS NOT NULL THEN
+        SELECT CPINE.id_partitioning
+        FROM runs.create_partitioning_if_not_exists(i_parent_partitioning, i_by_user, NULL) AS CPINE
+        INTO _fk_parent_partitioning;
+    END IF;
 
-
-IF _create_partitioning THEN
-    INSERT INTO runs.partitionings (partitioning, created_by)
-    VALUES (i_partitioning, i_by_user)
-    RETURNING partitionings.id_partitioning
-        INTO create_partitioning.id_partitioning;
-
-    PERFORM 1
-    FROM flows._create_flow(id_partitioning, i_by_user);
-
-    status := 11;
-    status_text := 'Partitioning created';
-ELSE
-    status := 31;
-    status_text := 'Partitioning already present';
-    RETURN;
-END IF;
-
-IF i_parent_partitioning IS NOT NULL THEN
-
-    SELECT ATPF.status
-    FROM flows._add_to_parent_flows(_fk_parent_partitioning, id_partitioning, i_by_user) AS ATPF
-    INTO _status;
 
     IF _create_partitioning THEN
-        -- copying measure definitions to establish continuity
-        INSERT INTO runs.measure_definitions(fk_partitioning, measure_name, measured_columns, created_by, created_at)
-        SELECT id_partitioning, CMD.measure_name, CMD.measured_columns, CMD.created_by, CMD.created_at
-        FROM runs.measure_definitions CMD
-        WHERE CMD.fk_partitioning = _fk_parent_partitioning;
+        INSERT INTO runs.partitionings (partitioning, created_by)
+        VALUES (i_partitioning, i_by_user)
+        RETURNING partitionings.id_partitioning
+            INTO create_partitioning.id_partitioning;
 
-        -- additional data are not copied, they are specific for particular partitioning
-    ELSIF (_status = 11) THEN
-        status := 12;
-        status_text := 'Partitioning parent registered';
+        PERFORM 1
+        FROM flows._create_flow(id_partitioning, i_by_user);
+
+        status := 11;
+        status_text := 'Partitioning created';
+    ELSE
+        status := 31;
+        status_text := 'Partitioning already present';
+        RETURN;
     END IF;
-END IF;
 
-RETURN;
+    IF i_parent_partitioning IS NOT NULL THEN
+
+        SELECT ATPF.status
+        FROM flows._add_to_parent_flows(_fk_parent_partitioning, id_partitioning, i_by_user) AS ATPF
+        INTO _status;
+
+        IF _create_partitioning THEN
+            -- copying measure definitions to establish continuity
+            INSERT INTO runs.measure_definitions(fk_partitioning, measure_name, measured_columns, created_by, created_at)
+            SELECT id_partitioning, CMD.measure_name, CMD.measured_columns, CMD.created_by, CMD.created_at
+            FROM runs.measure_definitions CMD
+            WHERE CMD.fk_partitioning = _fk_parent_partitioning;
+
+            -- additional data are not copied, they are specific for particular partitioning
+        ELSIF (_status = 11) THEN
+            status := 12;
+            status_text := 'Partitioning parent registered';
+        END IF;
+    END IF;
+
+    RETURN;
 END;
 $$
-    LANGUAGE plpgsql VOLATILE  SECURITY DEFINER;
+LANGUAGE plpgsql VOLATILE  SECURITY DEFINER;
 
 ALTER FUNCTION runs.create_partitioning(JSONB, TEXT, JSONB) OWNER TO atum_owner;
 GRANT EXECUTE ON FUNCTION runs.create_partitioning(JSONB, TEXT, JSONB) TO atum_user;
