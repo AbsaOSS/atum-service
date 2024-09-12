@@ -51,7 +51,7 @@ RETURNS SETOF record AS
 --      id_checkpoint           - ID of the checkpoint
 --      checkpoint_name         - Name of the checkpoint
 --      author                  - Author of the checkpoint
---      measured_by_atum_agent     - Flag indicating whether the checkpoint was measured by ATUM agent
+--      measured_by_atum_agent  - Flag indicating whether the checkpoint was measured by ATUM agent
 --      measure_name            - Name of the measure
 --      measure_columns         - Columns of the measure
 --      measurement_value       - Value of the measurement
