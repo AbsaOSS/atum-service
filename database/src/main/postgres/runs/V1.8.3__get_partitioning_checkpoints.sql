@@ -15,7 +15,7 @@
 
 CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     IN i_partitioning_id           BIGINT,
-    IN i_limit                     INT DEFAULT 5,
+    IN i_checkpoints_limit         INT DEFAULT 5,
     IN i_offset                    BIGINT DEFAULT 0,
     IN i_checkpoint_name           TEXT DEFAULT NULL,
     OUT status                     INTEGER,
@@ -40,13 +40,11 @@ RETURNS SETOF record AS
 --
 -- Parameters:
 --      i_partitioning          - partitioning of requested checkpoints
---      i_limit                 - (optional) maximum number of checkpoints to return
---                                i_limit relates to amount of checkpoints returned, not the amount of rows returned
---                                as usually there is more than one row per checkpoint
+--      i_checkpoints_limit     - (optional) maximum number of checkpoints to return
 --      i_offset                - (optional) offset of the first checkpoint to return
 --      i_checkpoint_name       - (optional) name of the checkpoint
 
--- Note: i_limit and i_offset are used for pagination purposes;
+-- Note: i_checkpoints_limit and i_offset are used for pagination purposes;
 --       checkpoints are ordered by process_start_time in descending order
 --       and then by id_checkpoint in ascending order
 --
@@ -71,6 +69,8 @@ RETURNS SETOF record AS
 --
 -------------------------------------------------------------------------------
 $$
+DECLARE
+    _has_more BOOLEAN;
 BEGIN
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id;
     IF NOT FOUND THEN
@@ -80,17 +80,19 @@ BEGIN
         RETURN;
     END IF;
 
+    IF i_checkpoints_limit IS NOT NULL THEN
+        SELECT count(1) > i_checkpoints_limit
+        FROM runs.checkpoints C
+        WHERE C.fk_partitioning = i_partitioning_id
+          AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
+        ORDER BY C.process_start_time DESC, C.id_checkpoint
+        LIMIT i_checkpoints_limit + 1 OFFSET i_offset
+        INTO _has_more;
+    ELSE
+        _has_more := false;
+    END IF;
+
     RETURN QUERY
-        WITH limited_checkpoints AS (
-            SELECT C.id_checkpoint,
-                   C.process_start_time,
-                   ROW_NUMBER() OVER (ORDER BY C.process_start_time DESC, C.id_checkpoint) AS rn
-            FROM runs.checkpoints C
-            WHERE C.fk_partitioning = i_partitioning_id
-              AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
-            ORDER BY C.process_start_time DESC, C.id_checkpoint
-            LIMIT i_limit + 1 OFFSET i_offset
-        )
         SELECT
             11 AS status,
             'Ok' AS status_text,
@@ -103,7 +105,7 @@ BEGIN
             M.measurement_value,
             C.process_start_time AS checkpoint_start_time,
             C.process_end_time AS checkpoint_end_time,
-            (SELECT COUNT(*) > i_limit FROM limited_checkpoints) AS has_more
+            _has_more AS has_more
         FROM
             runs.checkpoints C
                 JOIN
@@ -111,10 +113,11 @@ BEGIN
                 JOIN
             runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
         WHERE
-            C.id_checkpoint IN (SELECT LC.id_checkpoint FROM limited_checkpoints as LC WHERE LC.rn <= i_limit)
+            C.fk_partitioning = i_partitioning_id
+          AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
         ORDER BY
-            C.process_start_time,
-            C.id_checkpoint;
+            C.process_start_time DESC, C.id_checkpoint
+        LIMIT i_checkpoints_limit OFFSET i_offset;
 
     IF NOT FOUND THEN
         status := 42;

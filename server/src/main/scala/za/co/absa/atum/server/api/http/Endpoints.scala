@@ -24,7 +24,7 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
-import sttp.tapir.{PublicEndpoint, endpoint}
+import sttp.tapir.{PublicEndpoint, Validator, endpoint}
 import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
 
 import java.util.UUID
@@ -107,8 +107,8 @@ trait Endpoints extends BaseEndpoints {
   ], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
-      .in(query[Option[Int]]("limit").default(Some(10)))
-      .in(query[Option[Long]]("offset").default(Some(0L)))
+      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
+      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
       .in(query[Option[String]]("checkpoint-name"))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
