@@ -25,18 +25,18 @@ import zio._
 import zio.interop.catz.asyncInstance
 import zio.test._
 
-object GetPartitioningAdditionalDataV2IntegrationTests extends ConfigProviderTest {
+object GetPartitioningMainFlowIntegrationTests extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
-    suite("GetPartitioningAdditionalDataSuite")(
-      test("Returns expected sequence of Additional data with provided partitioning") {
+    suite("GetPartitioningMainFlowSuite")(
+      test("Returns expected Flow DTO with provided partitioning") {
         val partitioningId: Long = 0L
         for {
-          getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
-          result <- getPartitioningAdditionalDataV2(partitioningId)
+          getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
+          result <- getPartitioningMainFlow(partitioningId)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
-      GetPartitioningAdditionalDataV2.layer,
+      GetPartitioningMainFlow.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )

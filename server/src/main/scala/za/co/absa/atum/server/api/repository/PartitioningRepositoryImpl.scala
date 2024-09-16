@@ -20,7 +20,13 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PartitioningFromDB}
+import za.co.absa.atum.server.model.{
+  AdditionalDataFromDB,
+  AdditionalDataItemFromDB,
+  CheckpointFromDB,
+  MeasureFromDB,
+  PartitioningFromDB
+}
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
@@ -33,7 +39,8 @@ class PartitioningRepositoryImpl(
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
   getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
-  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
+  getPartitioningMainFlowFn: GetPartitioningMainFlow
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -99,12 +106,21 @@ class PartitioningRepositoryImpl(
       }
   }
 
-
   override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresByIdFn(partitioningId), "getPartitioningMeasures")
       .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
         MeasureDTO(measureName.get, measuredColumns.get)
       })
+  }
+
+  override def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO] = {
+    dbSingleResultCallWithStatus(
+      getPartitioningMainFlowFn(partitioningId),
+      "getPartitioningMainFlow"
+    ).flatMap {
+      case Some(flowDTO) => ZIO.succeed(flowDTO)
+      case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
+    }
   }
 
 }
@@ -118,7 +134,8 @@ object PartitioningRepositoryImpl {
       with GetPartitioningCheckpoints
       with GetPartitioningAdditionalDataV2
       with GetPartitioningById
-      with GetPartitioningMeasuresById,
+      with GetPartitioningMeasuresById
+      with GetPartitioningMainFlow,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -130,6 +147,7 @@ object PartitioningRepositoryImpl {
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
       getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
+      getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       getPartitioningMeasures,
@@ -138,7 +156,8 @@ object PartitioningRepositoryImpl {
       getPartitioningCheckpoints,
       getPartitioningById,
       getPartitioningAdditionalDataV2,
-      getPartitioningMeasuresV2
+      getPartitioningMeasuresV2,
+      getPartitioningMainFlow
     )
   }
 }

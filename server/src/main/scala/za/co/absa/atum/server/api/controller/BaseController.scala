@@ -35,6 +35,7 @@ trait BaseController {
         case ConflictServiceError(message) => ConflictErrorResponse(message)
         case NotFoundServiceError(message) => NotFoundErrorResponse(message)
         case GeneralServiceError(message) => InternalServerErrorResponse(message)
+        case ErrorInDataServiceError(message) => ErrorInDataErrorResponse(message)
       }
       .flatMap { result =>
         ZIO.succeed(onSuccessFnc(result))

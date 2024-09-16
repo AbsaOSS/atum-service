@@ -89,6 +89,20 @@ trait TestData {
   protected val partitioningSubmitDTO3: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
 
+  // Flow
+  protected val flowDTO1: FlowDTO = FlowDTO(
+    id = 1L,
+    name = "FlowDTO1",
+    description = Some("Test FlowDTO1"),
+    fromPattern = false
+  )
+  protected val flowDTO2: FlowDTO = FlowDTO(
+    id = 2L,
+    name = "FlowDTO2",
+    description = Some("Test FlowDTO2"),
+    fromPattern = false
+  )
+
   // Measure
   protected val measureDTO1: MeasureDTO = MeasureDTO("count1", Seq("col_A1", "col_B1"))
   protected val measureDTO2: MeasureDTO = MeasureDTO("count2", Seq("col_A2", "col_B2"))

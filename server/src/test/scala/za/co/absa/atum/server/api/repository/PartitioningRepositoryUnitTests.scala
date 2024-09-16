@@ -114,6 +114,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getPartitioningAdditionalDataV2MockLayer = ZLayer.succeed(getPartitioningAdditionalDataV2Mock)
 
+  // GetPartitioningMeasuresById
   private val getPartitioningMeasuresV2Mock = mock(classOf[GetPartitioningMeasuresById])
 
   when(getPartitioningMeasuresV2Mock.apply(1L)).thenReturn(
@@ -126,6 +127,18 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getPartitioningMeasuresV2MockLayer = ZLayer.succeed(getPartitioningMeasuresV2Mock)
 
+  // Create Partitioning Mocks
+  private val getPartitioningMainFlowMock = mock(classOf[GetPartitioningMainFlow])
+
+  when(getPartitioningMainFlowMock.apply(1L)).thenReturn(
+    ZIO.right(Row(FunctionStatus(0, "success"), Some(flowDTO1))))
+  when(getPartitioningMainFlowMock.apply(2L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getPartitioningMainFlowMock.apply(3L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(50, "Main flow not found"))))
+  when(getPartitioningMainFlowMock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  private val getPartitioningMainFlowMockLayer = ZLayer.succeed(getPartitioningMainFlowMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -276,6 +289,28 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[GeneralDatabaseError]
           )
         }
+      ),
+      suite("GetPartitioningMainFlowSuite")(
+        test("Returns expected FlowDTO") {
+          for {
+            result <- PartitioningRepository.getPartitioningMainFlow(1L)
+          } yield assertTrue(result == flowDTO1)
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMainFlow(2L).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMainFlow(3L).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMainFlow(4L).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
       )
     ).provide(
       PartitioningRepositoryImpl.layer,
@@ -286,7 +321,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       getPartitioningCheckpointsMockLayer,
       getPartitioningByIdMockLayer,
       getPartitioningAdditionalDataV2MockLayer,
-      getPartitioningMeasuresV2MockLayer
+      getPartitioningMeasuresV2MockLayer,
+      getPartitioningMainFlowMockLayer
     )
   }
 

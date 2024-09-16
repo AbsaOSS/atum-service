@@ -41,4 +41,6 @@ trait PartitioningService {
   def getPartitioning(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO]
 
   def getPartitioningMeasuresById(partitioningId: Long): IO[ServiceError, Seq[MeasureDTO]]
+
+  def getPartitioningMainFlow(partitioningId: Long): IO[ServiceError, FlowDTO]
 }

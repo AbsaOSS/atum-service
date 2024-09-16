@@ -29,6 +29,7 @@ trait BaseService {
         case ConflictDatabaseError(message) => ConflictServiceError(createMessage(operationName, message))
         case NotFoundDatabaseError(message) => NotFoundServiceError(createMessage(operationName, message))
         case GeneralDatabaseError(message) => GeneralServiceError(createMessage(operationName, message))
+        case ErrorInDataDatabaseError(message) => ErrorInDataServiceError(createMessage(operationName, message))
       }
   }
 

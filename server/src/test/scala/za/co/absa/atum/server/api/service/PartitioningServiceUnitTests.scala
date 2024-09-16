@@ -76,6 +76,15 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningMeasuresById(3L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+
+  when(partitioningRepositoryMock.getPartitioningMainFlow(1L))
+    .thenReturn(ZIO.succeed(flowDTO1))
+  when(partitioningRepositoryMock.getPartitioningMainFlow(2L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getPartitioningMainFlow(3L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -205,6 +214,23 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningMeasuresById(3L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningMainFlow")(
+        test("Returns expected Right with FlowDTO") {
+          for {
+            result <- PartitioningService.getPartitioningMainFlow(1L)
+          } yield assertTrue(result == flowDTO1)
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioningMainFlow(2L).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioningMainFlow(3L).exit)(
             failsWithA[GeneralServiceError]
           )
         }

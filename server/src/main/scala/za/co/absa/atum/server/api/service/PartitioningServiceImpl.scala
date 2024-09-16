@@ -95,6 +95,13 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def getPartitioningMainFlow(partitioningId: Long): IO[ServiceError, FlowDTO] = {
+    repositoryCall(
+      partitioningRepository.getPartitioningMainFlow(partitioningId),
+      "getPartitioningMainFlow"
+    )
+  }
+
 }
 
 object PartitioningServiceImpl {
