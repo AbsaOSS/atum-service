@@ -25,7 +25,6 @@ CREATE OR REPLACE FUNCTION flows.get_flow_partitionings(
     OUT author                 TEXT,
     OUT has_more               BOOLEAN
 ) RETURNS SETOF record AS
-$$
 -------------------------------------------------------------------------------
 --
 -- Function: flows.get_flow_partitionings(3)
@@ -52,8 +51,10 @@ $$
 --      42 - Partitionings not found
 --
 -------------------------------------------------------------------------------
+$$
+DECLARE
+    _has_more BOOLEAN;
 BEGIN
-    -- Check if the flow exists in runs.flows table
     PERFORM 1 FROM flows.flows WHERE id_flow = i_flow_id;
     IF NOT FOUND THEN
         status := 41;
@@ -62,16 +63,25 @@ BEGIN
         RETURN;
     END IF;
 
+    IF i_limit IS NOT NULL THEN
+        SELECT count(*) > i_limit
+        FROM flows.partitioning_to_flow PTF
+        WHERE PTF.fk_flow = i_flow_id
+        LIMIT i_limit + 1 OFFSET i_offset
+        INTO _has_more;
+    ELSE
+        _has_more := false;
+    END IF;
+
+
     RETURN QUERY
         WITH limited_partitionings AS (
-            SELECT P.id_partitioning,
-                   P.created_at,
-                   ROW_NUMBER() OVER (ORDER BY P.created_at DESC, P.id_partitioning) AS rn
+            SELECT P.id_partitioning
             FROM flows.partitioning_to_flow PF
             JOIN runs.partitionings P ON PF.fk_partitioning = P.id_partitioning
             WHERE PF.fk_flow = i_flow_id
             ORDER BY P.created_at DESC, P.id_partitioning
-            LIMIT i_limit + 1 OFFSET i_offset
+            LIMIT i_limit OFFSET i_offset
         )
         SELECT
             11 AS status,
@@ -79,11 +89,11 @@ BEGIN
             P.id_partitioning AS id,
             P.partitioning,
             P.created_by AS author,
-            (SELECT COUNT(*) > i_limit FROM limited_partitionings) AS has_more
+            _has_more AS has_more
         FROM
             runs.partitionings P
         WHERE
-            P.id_partitioning IN (SELECT LP.id_partitioning FROM limited_partitionings LP WHERE LP.rn <= i_limit)
+            P.id_partitioning IN (SELECT LP.id_partitioning FROM limited_partitionings LP)
         ORDER BY
             P.created_at DESC,
             P.id_partitioning;
