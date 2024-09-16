@@ -154,7 +154,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningRepository.createPartitioningIfNotExists(partitioningSubmitDTO2).exit
           } yield assertTrue(
             result == Exit.fail(
-              GeneralDatabaseError(
+              ErrorInDataDatabaseError(
                 "Exception caused by operation: 'createPartitioningIfNotExists': (50) error in Partitioning data"
               )
             )
