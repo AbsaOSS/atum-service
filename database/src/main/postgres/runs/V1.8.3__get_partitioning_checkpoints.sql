@@ -85,6 +85,7 @@ BEGIN
         FROM runs.checkpoints C
         WHERE C.fk_partitioning = i_partitioning_id
           AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
+        LIMIT i_checkpoints_limit + 1 OFFSET i_offset
         INTO _has_more;
     ELSE
         _has_more := false;
