@@ -47,7 +47,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
-  private val i_limit = 1
+  private val i_checkpoints_limit = 1
   private val i_offset = 0
   private val i_checkpoint_name = "checkpoint_1"
 
@@ -115,7 +115,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
 
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning1)
-      .setParam("i_limit", i_limit)
+      .setParam("i_checkpoints_limit", i_checkpoints_limit)
       .setParam("i_offset", i_offset)
       .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>
@@ -213,7 +213,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
 
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning1)
-      .setParam("i_limit", 2)
+      .setParam("i_checkpoints_limit", 2)
       .setParam("i_offset", i_offset)
       .execute { queryResult =>
         assert(queryResult.hasNext)
@@ -250,7 +250,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
 
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning1)
-      .setParam("i_limit", 2)
+      .setParam("i_checkpoints_limit", 2)
       .setParam("i_offset", i_offset)
       .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>
@@ -274,7 +274,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
 
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning1)
-      .setParam("i_limit", 2)
+      .setParam("i_checkpoints_limit", 2)
       .setParam("i_offset", 1)
       .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>
@@ -287,7 +287,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
 
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", 0L)
-      .setParam("i_limit", 2)
+      .setParam("i_checkpoints_limit", 2)
       .setParam("i_offset", 1)
       .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>
@@ -300,7 +300,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
 
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning1)
-      .setParam("i_limit", 1)
+      .setParam("i_checkpoints_limit", 1)
       .setParam("i_offset", i_offset)
       .execute { queryResult =>
         assert(queryResult.hasNext)
@@ -324,7 +324,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
   test("Returns expected status when partitioning not found"){
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", 1)
-      .setParam("i_limit", i_limit)
+      .setParam("i_checkpoints_limit", i_checkpoints_limit)
       .setParam("i_offset", i_offset)
       .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>

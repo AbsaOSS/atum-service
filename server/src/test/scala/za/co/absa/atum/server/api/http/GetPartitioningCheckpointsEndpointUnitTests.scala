@@ -110,6 +110,30 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with E
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.NotFound))
+      },
+      test("Returns expected 400 when limit is out of range") {
+        val request = basicRequest
+          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=1001&offset=0")
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+
+        val response = request
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+      },
+      test("Returns expected 400 when offset is negative") {
+        val request = basicRequest
+          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=-1")
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+
+        val response = request
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       }
     )
   }.provide(
