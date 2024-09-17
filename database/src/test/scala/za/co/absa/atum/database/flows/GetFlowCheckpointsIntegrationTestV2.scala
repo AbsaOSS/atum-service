@@ -352,7 +352,7 @@ class GetFlowCheckpointsIntegrationTestV2 extends DBTestSuite {
     // Actual test execution and assertions with limit and offset applied
     val actualMeasures: Seq[MeasuredDetails] = function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", flowId)
-      .setParam("limit", 3)
+      .setParam("limit", 2)
       .setParam("offset", 1)
       .execute("checkpoint_name") { queryResult =>
         assert(queryResult.hasNext)
