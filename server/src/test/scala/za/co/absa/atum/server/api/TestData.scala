@@ -89,6 +89,18 @@ trait TestData {
   protected val partitioningSubmitDTO3: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
 
+  protected val partitioningSubmitV2DTO1: PartitioningSubmitV2DTO = PartitioningSubmitV2DTO(
+    partitioning = partitioningDTO1,
+    parentPartitioningId = None,
+    author = ""
+  )
+
+  protected val partitioningSubmitV2DTO2: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(author = "differentAuthor")
+
+  protected val partitioningSubmitV2DTO3: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(author = "yetAnotherAuthor")
+
   // Measure
   protected val measureDTO1: MeasureDTO = MeasureDTO("count1", Seq("col_A1", "col_B1"))
   protected val measureDTO2: MeasureDTO = MeasureDTO("count2", Seq("col_A2", "col_B2"))

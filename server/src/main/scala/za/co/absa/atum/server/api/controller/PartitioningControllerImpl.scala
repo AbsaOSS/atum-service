@@ -18,9 +18,10 @@ package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
@@ -49,10 +50,14 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     atumContextDTOEffect
   }
 
-  override def createPartitioningIfNotExistsV2(
-    partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]] = {
-    mapToSingleSuccessResponse(createPartitioningIfNotExistsV1(partitioningSubmitDTO))
+  override def getPartitioningCheckpointsV2(
+    checkpointQueryDTO: CheckpointQueryDTO
+  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
+        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
+      )
+    )
   }
 
   override def getPartitioningAdditionalDataV2(
@@ -72,6 +77,21 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
         partitioningService.getPartitioning(partitioningId)
       )
     )
+  }
+
+  override def postPartitioning(
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
+  ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
+    for {
+      response <- mapToSingleSuccessResponse(
+        serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
+          partitioningService.createPartitioning(partitioningSubmitDTO)
+        )
+      )
+      uri <- createV2RootAnchoredResourcePath(
+        Seq(V2Paths.Partitionings, response.data.id.toString)
+      )
+    } yield (response, uri)
   }
 
   override def patchPartitioningAdditionalDataV2(

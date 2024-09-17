@@ -17,36 +17,42 @@
 package za.co.absa.atum.server.api.http
 
 import org.mockito.Mockito.{mock, when}
+import sttp.client3.circe._
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{UriContext, basicRequest}
-import sttp.client3.circe._
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.AtumContextDTO
+import za.co.absa.atum.model.dto.{PartitioningSubmitDTO, PartitioningSubmitV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
-import za.co.absa.atum.server.model.{GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse}
 import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
-object CreatePartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
+object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
-  private val createPartitioningEndpointMock = mock(classOf[PartitioningController])
+  private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1), uuid1)))
-  when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO2))
-    .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(createPartitioningEndpointMock.createPartitioningIfNotExistsV2(partitioningSubmitDTO3))
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO1))
+    .thenReturn(ZIO.succeed((SingleSuccessResponse(partitioningWithIdDTO1, uuid1), "location")))
+
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO2))
+    .thenReturn(ZIO.fail(ConflictErrorResponse("Partitioning already exists")))
+
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
 
-  private val createPartitioningEndpointMockLayer = ZLayer.succeed(createPartitioningEndpointMock)
+  private val createPartitioningEndpointMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val createPartitioningServerEndpoint =
-    createPartitioningEndpointV2.zServerLogic(PartitioningController.createPartitioningIfNotExistsV2)
+    postPartitioningEndpointV2.zServerLogic({
+      partitioningSubmitDTO: PartitioningSubmitV2DTO =>
+        PartitioningController.postPartitioning(partitioningSubmitDTO)
+      }
+    )
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
@@ -55,34 +61,35 @@ object CreatePartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints
       .backend()
 
     val request = basicRequest
-      .post(uri"https://test.com/api/v2/create-partitioning")
-      .response(asJson[SingleSuccessResponse[AtumContextDTO]])
+      .post(uri"https://test.com/api/v2/partitionings")
+      .response(asJson[SingleSuccessResponse[PartitioningWithIdDTO]])
 
     suite("CreatePartitioningEndpointSuite")(
-      test("Returns expected AtumContextDTO") {
+      test("Returns expected PartitioningWithIdDTO and location header") {
         val response = request
-          .body(partitioningSubmitDTO1)
+          .body(partitioningSubmitV2DTO1)
           .send(backendStub)
 
         val body = response.map(_.body)
         val statusCode = response.map(_.code)
+        val header = response.map(_.header("Location"))
 
-        assertZIO(body <&> statusCode)(
-          equalTo(Right(SingleSuccessResponse(createAtumContextDTO(partitioningSubmitDTO1), uuid1)), StatusCode.Ok)
+        assertZIO(body <&> statusCode <&> header)(
+          equalTo(Right(SingleSuccessResponse(partitioningWithIdDTO1, uuid1)), StatusCode.Created, Some("location"))
         )
       },
       test("Returns expected BadRequest") {
         val response = request
-          .body(partitioningSubmitDTO2)
+          .body(partitioningSubmitV2DTO2)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
 
-        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+        assertZIO(statusCode)(equalTo(StatusCode.Conflict))
       },
       test("Returns expected InternalServerError") {
         val response = request
-          .body(partitioningSubmitDTO3)
+          .body(partitioningSubmitV2DTO3)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
