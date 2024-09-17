@@ -23,7 +23,7 @@ import sttp.client3.{UriContext, basicRequest}
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.{PartitioningSubmitDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.{PartitioningSubmitDTO, PartitioningSubmitV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
@@ -36,20 +36,20 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints w
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.postPartitioning(partitioningSubmitDTO1))
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO1))
     .thenReturn(ZIO.succeed((SingleSuccessResponse(partitioningWithIdDTO1, uuid1), "location")))
 
-  when(partitioningControllerMock.postPartitioning(partitioningSubmitDTO2))
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO2))
     .thenReturn(ZIO.fail(ConflictErrorResponse("Partitioning already exists")))
 
-  when(partitioningControllerMock.postPartitioning(partitioningSubmitDTO3))
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
 
   private val createPartitioningEndpointMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val createPartitioningServerEndpoint =
     postPartitioningEndpointV2.zServerLogic({
-      partitioningSubmitDTO: PartitioningSubmitDTO =>
+      partitioningSubmitDTO: PartitioningSubmitV2DTO =>
         PartitioningController.postPartitioning(partitioningSubmitDTO)
       }
     )
@@ -67,7 +67,7 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints w
     suite("CreatePartitioningEndpointSuite")(
       test("Returns expected PartitioningWithIdDTO and location header") {
         val response = request
-          .body(partitioningSubmitDTO1)
+          .body(partitioningSubmitV2DTO1)
           .send(backendStub)
 
         val body = response.map(_.body)
@@ -80,7 +80,7 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected BadRequest") {
         val response = request
-          .body(partitioningSubmitDTO2)
+          .body(partitioningSubmitV2DTO2)
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -89,7 +89,7 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints w
       },
       test("Returns expected InternalServerError") {
         val response = request
-          .body(partitioningSubmitDTO3)
+          .body(partitioningSubmitV2DTO3)
           .send(backendStub)
 
         val statusCode = response.map(_.code)

@@ -35,11 +35,11 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
-  when(partitioningServiceMock.createPartitioning(partitioningSubmitDTO1))
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO1))
     .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
-  when(partitioningServiceMock.createPartitioning(partitioningSubmitDTO2))
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
-  when(partitioningServiceMock.createPartitioning(partitioningSubmitDTO3))
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(ConflictServiceError("Partitioning already present")))
 
   when(partitioningServiceMock.getPartitioningMeasures(partitioningDTO1))
@@ -95,7 +95,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
       suite("CreatePartitioningSuite")(
         test("Returns expected PartitioningWithIdDTO") {
           for {
-            result <- PartitioningController.postPartitioning(partitioningSubmitDTO1)
+            result <- PartitioningController.postPartitioning(partitioningSubmitV2DTO1)
             expectedData = SingleSuccessResponse(partitioningWithIdDTO1, uuid1)
             actualData = result._1.copy(requestId = uuid1)
             expectedUri = s"/api/v2/partitionings/${partitioningWithIdDTO1.id}"
@@ -103,12 +103,12 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue(actualData == expectedData && actualUri == expectedUri)
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.postPartitioning(partitioningSubmitDTO2).exit)(
+          assertZIO(PartitioningController.postPartitioning(partitioningSubmitV2DTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         },
         test("Returns expected ConflictServiceError") {
-          assertZIO(PartitioningController.postPartitioning(partitioningSubmitDTO3).exit)(
+          assertZIO(PartitioningController.postPartitioning(partitioningSubmitV2DTO3).exit)(
             failsWithA[ConflictErrorResponse]
           )
         }

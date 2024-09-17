@@ -31,7 +31,7 @@ object CreatePartitioningIntegrationTests extends ConfigProviderTest with TestDa
       test("Returns expected Right") {
         for {
           createPartitioning <- ZIO.service[CreatePartitioning]
-          result <- createPartitioning(partitioningSubmitDTO1)
+          result <- createPartitioning(partitioningSubmitV2DTO1)
         } yield assertTrue(result.isRight)
       }
     ).provide(
