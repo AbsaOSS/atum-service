@@ -80,7 +80,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   }
 
   override def postPartitioning(
-    partitioningSubmitDTO: PartitioningSubmitDTO
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
     for {
       response <- mapToSingleSuccessResponse(

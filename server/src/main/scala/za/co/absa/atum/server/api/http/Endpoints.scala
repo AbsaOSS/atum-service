@@ -63,14 +63,14 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val postPartitioningEndpointV2: PublicEndpoint[
-    PartitioningSubmitDTO,
+    PartitioningSubmitV2DTO,
     ErrorResponse,
     (SingleSuccessResponse[PartitioningWithIdDTO], String),
     Any
   ] = {
     apiV2.post
       .in(V2Paths.Partitionings)
-      .in(jsonBody[PartitioningSubmitDTO])
+      .in(jsonBody[PartitioningSubmitV2DTO])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .out(header[String]("Location"))

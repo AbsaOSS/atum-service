@@ -29,7 +29,7 @@ trait PartitioningController {
   ): IO[ErrorResponse, AtumContextDTO]
 
   def postPartitioning(
-    partitioningSubmitDTO: PartitioningSubmitDTO
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)]
 
   def getPartitioningAdditionalDataV2(

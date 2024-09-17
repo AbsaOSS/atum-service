@@ -27,7 +27,7 @@ trait PartitioningRepository {
   def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[DatabaseError, Unit]
 
   def createPartitioning(
-    partitioningSubmitDTO: PartitioningSubmitDTO
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[DatabaseError, PartitioningWithIdDTO]
 
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]]

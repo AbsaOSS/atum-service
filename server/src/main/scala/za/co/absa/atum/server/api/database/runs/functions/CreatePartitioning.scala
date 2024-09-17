@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
 import io.circe.syntax.EncoderOps
-import za.co.absa.atum.model.dto.PartitioningSubmitDTO
+import za.co.absa.atum.model.dto.PartitioningSubmitV2DTO
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
@@ -30,11 +30,11 @@ import zio._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 
 class CreatePartitioning(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitDTO, Long, Task](partitioningSubmit =>
+  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitV2DTO, Long, Task](partitioningSubmit =>
     Seq(
       fr"${PartitioningForDB.fromSeqPartitionDTO(partitioningSubmit.partitioning).asJson}",
-      fr"${partitioningSubmit.authorIfNew}",
-      fr"${partitioningSubmit.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
+      fr"${partitioningSubmit.author}",
+      fr"${partitioningSubmit.parentPartitioningId}"
     )
   )
     with StandardStatusHandling {

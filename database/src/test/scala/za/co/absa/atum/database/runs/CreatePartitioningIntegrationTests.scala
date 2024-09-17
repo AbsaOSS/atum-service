@@ -55,7 +55,7 @@ class CreatePartitioningIntegrationTests extends DBTestSuite{
     val partitioningID = function(fncCreatePartitioning)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
-      .setParamNull("i_parent_partitioning")
+      .setParamNull("i_parent_partitioning_id")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -66,7 +66,6 @@ class CreatePartitioningIntegrationTests extends DBTestSuite{
 
     table("runs.partitionings").where(add("id_partitioning", partitioningID)) {partitioningResult =>
       val row = partitioningResult.next()
-      // assert(row.getJsonB("partitioning").contains(partitioning)) TODO keys are reordered in JsonB and whitespaces removed
       assert(row.getString("created_by").contains("Fantômas"))
       assert(row.getOffsetDateTime("created_at").contains(now()))
     }
@@ -91,6 +90,7 @@ class CreatePartitioningIntegrationTests extends DBTestSuite{
       assert(!flowsResult.hasNext)
     }
   }
+
   test("Partitioning created with parent partitioning that already exists") {
     val parentPartitioningID = function(fncCreatePartitioning)
       .setParam("i_partitioning", parentPartitioning)
@@ -109,12 +109,12 @@ class CreatePartitioningIntegrationTests extends DBTestSuite{
     val partitioningID = function(fncCreatePartitioning)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
-      .setParam("i_parent_partitioning", parentPartitioning)
+      .setParam("i_parent_partitioning_id", parentPartitioningID)
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
+        assert(row.getInt("status").contains(12))
+        assert(row.getString("status_text").contains("Partitioning created with parent partitioning"))
         row.getLong("id_partitioning").get
       }
 
@@ -130,7 +130,7 @@ class CreatePartitioningIntegrationTests extends DBTestSuite{
     val partitioningID = function(fncCreatePartitioning)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
-      .setParamNull("i_parent_partitioning")
+      .setParamNull("i_parent_partitioning_id")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -142,12 +142,12 @@ class CreatePartitioningIntegrationTests extends DBTestSuite{
     function(fncCreatePartitioning)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
-      .setParamNull("i_parent_partitioning")
+      .setParamNull("i_parent_partitioning_id")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
         assert(row.getInt("status").contains(31))
-        assert(row.getString("status_text").contains("Partitioning already present"))
+        assert(row.getString("status_text").contains("Partitioning already exists"))
         assert(row.getLong("id_partitioning").contains(partitioningID))
       }
 
@@ -160,7 +160,7 @@ class CreatePartitioningIntegrationTests extends DBTestSuite{
     val partitioningID = function(fncCreatePartitioning)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
-      .setParamNull("i_parent_partitioning")
+      .setParamNull("i_parent_partitioning_id")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -176,12 +176,12 @@ class CreatePartitioningIntegrationTests extends DBTestSuite{
     function(fncCreatePartitioning)
       .setParam("i_partitioning", partitioning)
       .setParam("i_by_user", "Fantômas")
-      .setParam("i_parent_partitioning", parentPartitioning)
+      .setParam("i_parent_partitioning_id", 123456789L)
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
         assert(row.getInt("status").contains(31))
-        assert(row.getString("status_text").contains("Partitioning already present"))
+        assert(row.getString("status_text").contains("Partitioning already exists"))
       }
 
     assert(

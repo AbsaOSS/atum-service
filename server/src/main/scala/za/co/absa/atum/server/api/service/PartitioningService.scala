@@ -26,7 +26,7 @@ trait PartitioningService {
   def createPartitioningIfNotExists(partitioningSubmitDTO: PartitioningSubmitDTO): IO[ServiceError, Unit]
 
   def createPartitioning(
-    partitioningSubmitDTO: PartitioningSubmitDTO
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[ServiceError, PartitioningWithIdDTO]
 
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]]
