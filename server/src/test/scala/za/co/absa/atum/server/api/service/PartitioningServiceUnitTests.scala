@@ -17,6 +17,7 @@
 package za.co.absa.atum.server.api.service
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
@@ -35,6 +36,13 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralDatabaseError("error in data")))
   when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO3))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO1))
+    .thenReturn(ZIO.succeed(PartitioningWithIdDTO(1L, Seq.empty, "author")))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO2))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("Partitioning already exists")))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1))
@@ -107,6 +115,27 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.createPartitioningIfNotExists(partitioningSubmitDTO3).exit)(
             failsWithA[ServiceError]
+          )
+        }
+      ),
+      suite("CreatePartitioningSuite")(
+        test("Returns expected Right with PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO1)
+          } yield assertTrue(result == PartitioningWithIdDTO(1L, Seq.empty, "author"))
+        },
+        test("Returns expected ConflictServiceError") {
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO2).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              ConflictServiceError("Failed to perform 'createPartitioning': Partitioning already exists")
+            )
+          )
+        },
+        test("Returns expected GeneralServiceError") {
+          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTO3).exit)(
+            failsWithA[GeneralServiceError]
           )
         }
       ),
