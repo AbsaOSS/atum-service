@@ -427,5 +427,4 @@ class GetFlowCheckpointsIntegrationTestV2 extends DBTestSuite {
 
   }
 
-
 }
