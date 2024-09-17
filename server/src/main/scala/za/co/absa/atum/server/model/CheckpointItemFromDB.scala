@@ -16,7 +16,8 @@
 
 package za.co.absa.atum.server.model
 
-import io.circe.{DecodingFailure, Json}
+import io.circe.generic.semiauto.deriveDecoder
+import io.circe.{Decoder, DecodingFailure, Json}
 import za.co.absa.atum.model.dto.{CheckpointV2DTO, MeasureDTO, MeasureResultDTO, MeasurementDTO}
 
 import java.time.ZonedDateTime
@@ -36,6 +37,7 @@ case class CheckpointItemFromDB(
 )
 
 object CheckpointItemFromDB {
+
 
   def fromItemsToCheckpointV2DTO(
     checkpointItems: Seq[CheckpointItemFromDB]

@@ -306,6 +306,7 @@ trait TestData {
     checkpointStartTime = Some(checkpointDTO1.processStartTime),
     checkpointEndTime = checkpointDTO1.processEndTime
   )
+
   protected val checkpointFromDB2: CheckpointFromDB = checkpointFromDB1
     .copy(
       idCheckpoint = Some(checkpointDTO2.id),
@@ -333,7 +334,8 @@ trait TestData {
     measuredColumns = checkpointV2DTO1.measurements.head.measure.measuredColumns,
     measurementValue = checkpointV2DTO1.measurements.head.result.asJson,
     checkpointStartTime = checkpointV2DTO1.processStartTime,
-    checkpointEndTime = checkpointV2DTO1.processEndTime
+    checkpointEndTime = checkpointV2DTO1.processEndTime,
+    hasMore = false
   )
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
