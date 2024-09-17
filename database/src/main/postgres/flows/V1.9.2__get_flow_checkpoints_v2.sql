@@ -16,21 +16,22 @@
 
 -- Function: flows.get_flow_checkpoints_v2(4)
 CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints_v2(
-    IN  i_flow_id            BIGINT,
-    IN  i_limit              INT DEFAULT 5,
-    IN  i_checkpoint_name    TEXT DEFAULT NULL,
-    IN  i_offset             BIGINT DEFAULT 0,
-    OUT status               INTEGER,
-    OUT status_text          TEXT,
-    OUT id_checkpoint        UUID,
-    OUT checkpoint_name      TEXT,
-    OUT author               TEXT,
+    IN  i_flow_id              BIGINT,
+    IN  i_limit                INT DEFAULT 5,
+    IN  i_checkpoint_name      TEXT DEFAULT NULL,
+    IN  i_offset               BIGINT DEFAULT 0,
+    OUT status                 INTEGER,
+    OUT status_text            TEXT,
+    OUT id_checkpoint          UUID,
+    OUT checkpoint_name        TEXT,
+    OUT author                 TEXT,
     OUT measured_by_atum_agent BOOLEAN,
-    OUT measure_name         TEXT,
-    OUT measured_columns     TEXT[],
-    OUT measurement_value    JSONB,
-    OUT checkpoint_start_time TIMESTAMP WITH TIME ZONE,
-    OUT checkpoint_end_time  TIMESTAMP WITH TIME ZONE
+    OUT measure_name           TEXT,
+    OUT measured_columns       TEXT[],
+    OUT measurement_value      JSONB,
+    OUT checkpoint_start_time  TIMESTAMP WITH TIME ZONE,
+    OUT checkpoint_end_time    TIMESTAMP WITH TIME ZONE,
+    OUT has_more               BOOLEAN
 ) RETURNS SETOF record AS
 $$
 --------------------------------------------------------------------------------------------------------------------
@@ -69,29 +70,17 @@ $$
 --      measured_columns       - measure columns associated with a given checkpoint
 --      measurement_value      - measurement details associated with a given checkpoint
 --      checkpoint_time        - time
+--      has_more               - flag indicating whether there are more checkpoints available
 --
 -- Status codes:
 --      11                     - OK
---      41                     - Partitioning not found
 --      42                     - Flow not found
 ---------------------------------------------------------------------------------------------------
 DECLARE
-    _fk_partitioning BIGINT;
+    _actual_limit INT := i_limit + 1;
+    _record_count INT;
 BEGIN
-
-    SELECT fk_partitioning
-    FROM flows.partitioning_to_flow
-    WHERE fk_flow = i_flow_id
-    INTO _fk_partitioning;
-
-    IF _fk_partitioning IS NULL THEN
-        status := 41;
-        status_text := 'Partitioning not found';
-        RETURN NEXT;
-        RETURN;
-    END IF;
-
-    -- Execute the query to retrieve checkpoints and their associated measurements
+    -- Execute the query to retrieve checkpoints flow and their associated measurements
     RETURN QUERY
         SELECT 11 AS status,
                'OK' AS status_text,
@@ -103,20 +92,29 @@ BEGIN
                MD.measured_columns,
                M.measurement_value,
                CP.process_start_time AS checkpoint_start_time,
-               CP.process_end_time AS checkpoint_end_time
+               CP.process_end_time AS checkpoint_end_time,
+               (ROW_NUMBER() OVER ()) <= i_limit AS has_more
         FROM flows.partitioning_to_flow AS PF
-        JOIN runs.checkpoints AS CP
-            ON PF.fk_partitioning = CP.fk_partitioning
-        JOIN runs.measurements AS M
-            ON CP.id_checkpoint = M.fk_checkpoint
-        JOIN runs.measure_definitions AS MD
-            ON M.fk_measure_definition = MD.id_measure_definition
+                 JOIN runs.checkpoints AS CP
+                      ON PF.fk_partitioning = CP.fk_partitioning
+                 JOIN runs.measurements AS M
+                      ON CP.id_checkpoint = M.fk_checkpoint
+                 JOIN runs.measure_definitions AS MD
+                      ON M.fk_measure_definition = MD.id_measure_definition
         WHERE PF.fk_flow = i_flow_id
-        AND (i_checkpoint_name IS NULL OR CP.checkpoint_name = i_checkpoint_name)
+          AND (i_checkpoint_name IS NULL OR CP.checkpoint_name = i_checkpoint_name)
         ORDER BY CP.process_start_time,
                  CP.id_checkpoint
-        LIMIT NULLIF(i_limit, 0)
+        LIMIT _actual_limit
         OFFSET i_offset;
+
+    GET DIAGNOSTICS _record_count = ROW_COUNT;
+
+    IF _record_count > i_limit THEN
+        has_more := TRUE;
+    ELSE
+        has_more := FALSE;
+    END IF;
 
     IF NOT FOUND THEN
         status := 42;

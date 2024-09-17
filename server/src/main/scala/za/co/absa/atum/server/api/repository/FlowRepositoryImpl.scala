@@ -16,10 +16,14 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryDTOV2}
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowCheckpointsV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, ErrorResponse, PaginatedResult}
+import za.co.absa.atum.server.model.SuccessResponse.PaginatedResponse
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2.GetFlowCheckpointsArgs
+import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio._
 import zio.interop.catz.asyncInstance
 
@@ -30,9 +34,28 @@ class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints, getFlowCheckp
     dbMultipleResultCallWithAggregatedStatus(getFlowCheckpointsFn(checkpointQueryDTO), "getFlowCheckpoints")
   }
 
-  override def getFlowCheckpointsV2(checkpointQueryDTO: CheckpointQueryDTOV2): IO[DatabaseError, Seq[CheckpointFromDB]] = {
-    dbMultipleResultCallWithAggregatedStatus(getFlowCheckpointsV2Fn(checkpointQueryDTO), "getFlowCheckpointsV2")
-  }
+  override def getFlowCheckpointsV2(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long],
+    checkpointName: Option[String] = None,
+   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
+      dbMultipleResultCallWithAggregatedStatus(
+        getFlowCheckpointsV2Fn(GetFlowCheckpointsArgs(partitioningId, limit, offset, checkpointName)),
+        "getPartitioningCheckpoints"
+      )
+        .map(_.flatten)
+        .flatMap { checkpointItems =>
+          ZIO
+            .fromEither(CheckpointItemFromDB.groupAndConvertItemsToCheckpointV2DTOs(checkpointItems))
+            .mapBoth(
+              error => GeneralDatabaseError(error.getMessage),
+              checkpoints =>
+                if (checkpointItems.nonEmpty && checkpointItems.head.hasMore) ResultHasMore(checkpoints)
+                else ResultNoMore(checkpoints)
+            )
+        }
+    }
 
 }
 

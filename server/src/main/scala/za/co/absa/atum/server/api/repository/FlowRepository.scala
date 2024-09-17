@@ -16,9 +16,10 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointQueryDTOV2}
+import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.{CheckpointFromDB, ErrorResponse, PaginatedResult}
+import za.co.absa.atum.server.model.SuccessResponse.PaginatedResponse
 import zio._
 import zio.macros.accessible
 
@@ -26,5 +27,11 @@ import zio.macros.accessible
 trait FlowRepository {
   def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
 
-  def getFlowCheckpointsV2(checkpointQueryDTO: CheckpointQueryDTOV2): IO[DatabaseError, Seq[CheckpointFromDB]]
+  def getFlowCheckpointsV2(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long],
+    checkpointName: Option[String] = None,
+  ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]]
+
 }

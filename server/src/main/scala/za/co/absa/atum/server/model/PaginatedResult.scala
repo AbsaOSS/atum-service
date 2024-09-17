@@ -16,6 +16,9 @@
 
 package za.co.absa.atum.server.model
 
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder}
+
 sealed trait PaginatedResult[R] {
   def data: Seq[R]
 }
@@ -23,6 +26,17 @@ sealed trait PaginatedResult[R] {
 object PaginatedResult {
 
   case class ResultHasMore[R](data: Seq[R]) extends PaginatedResult[R]
+
+  object ResultHasMore {
+    implicit def encoder[T: Encoder]: Encoder[ResultHasMore[T]] = deriveEncoder
+    implicit def decoder[T: Decoder]: Decoder[ResultHasMore[T]] = deriveDecoder
+  }
+
   case class ResultNoMore[R](data: Seq[R]) extends PaginatedResult[R]
+
+  object ResultNoMore {
+    implicit def encoder[T: Encoder]: Encoder[ResultNoMore[T]] = deriveEncoder
+    implicit def decoder[T: Decoder]: Decoder[ResultNoMore[T]] = deriveDecoder
+  }
 
 }

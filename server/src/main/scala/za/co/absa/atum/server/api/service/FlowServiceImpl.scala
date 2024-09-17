@@ -20,7 +20,7 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.FlowRepository
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.{CheckpointFromDB, PaginatedResult}
 import zio._
 
 class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with BaseService {
@@ -39,6 +39,17 @@ class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with B
     } yield checkpointDTOs
   }
 
+  override def getFlowCheckpointsV2(
+     partitioningId: Long,
+     limit: Option[Int],
+     offset: Option[Long],
+     checkpointName: Option[String]
+   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]] = {
+    repositoryCall(
+      flowRepository.getFlowCheckpointsV2(partitioningId, limit, offset, checkpointName),
+      "getFlowCheckpointsV2"
+    )
+  }
 }
 
 object FlowServiceImpl {
