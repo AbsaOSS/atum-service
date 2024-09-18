@@ -31,7 +31,7 @@ import za.co.absa.atum.server.api.controller.{CheckpointController, FlowControll
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
@@ -77,6 +77,13 @@ trait Routes extends Endpoints with ServerOptions {
         }
       ),
       createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
+      createServerEndpoint[
+        (Long, Option[Int], Option[Long], Option[String]),
+        ErrorResponse,
+        PaginatedResponse[CheckpointV2DTO]
+      ](getFlowCheckpointsEndpoint, { case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
+        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+      }),
       createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
       createServerEndpoint(getPartitioningEndpointV2, PartitioningController.getPartitioningV2),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)

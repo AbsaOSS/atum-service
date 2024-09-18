@@ -21,6 +21,9 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.FlowRepository
+import za.co.absa.atum.server.model.PaginatedResult.ResultHasMore
+import za.co.absa.atum.server.api.exception.DatabaseError.NotFoundDatabaseError
+import za.co.absa.atum.server.api.exception.ServiceError.NotFoundServiceError
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
@@ -31,6 +34,11 @@ object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
   when(flowRepositoryMock.getFlowCheckpoints(checkpointQueryDTO1)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
   when(flowRepositoryMock.getFlowCheckpoints(checkpointQueryDTO2))
     .thenReturn(ZIO.succeed(Seq(checkpointFromDB2)))
+
+  when(flowRepositoryMock.getFlowCheckpointsV2(1L, None, None, None))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
+  when(flowRepositoryMock.getFlowCheckpointsV2(2L, None, None, None))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Flow not found")))
 
   private val flowRepositoryMockLayer = ZLayer.succeed(flowRepositoryMock)
 
@@ -49,6 +57,20 @@ object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
           } yield assertTrue {
             result == Seq(checkpointDTO2)
           }
+        }
+      ),
+      suite("GetFlowCheckpointsV2Suite")(
+        test("Returns expected PaginatedResult[CheckpointV2DTO]") {
+          for {
+            result <- FlowService.getFlowCheckpointsV2(1L, None, None, None)
+          } yield assertTrue {
+            result == ResultHasMore(Seq(checkpointV2DTO1))
+          }
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(FlowService.getFlowCheckpointsV2(2L, None, None, None).exit)(
+            failsWithA[NotFoundServiceError]
+          )
         }
       )
     ).provide(

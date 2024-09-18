@@ -17,14 +17,15 @@
 package za.co.absa.atum.server.api.http
 
 import sttp.model.StatusCode
+import sttp.model.internal.Validate
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.ztapir._
 import sttp.tapir.json.circe.jsonBody
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
-import sttp.tapir.{PublicEndpoint, endpoint}
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
+import sttp.tapir.{PublicEndpoint, Validator, endpoint}
 import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
 
 import java.util.UUID
@@ -114,6 +115,17 @@ trait Endpoints extends BaseEndpoints {
       .in(jsonBody[CheckpointQueryDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
+  }
+
+  protected val getFlowCheckpointsEndpoint
+  : PublicEndpoint[(Long, Option[Int], Option[Long], Option[String]), ErrorResponse, PaginatedResponse[CheckpointV2DTO], Any] = {
+    apiV1.get
+      .in(V2Paths.Partitionings / path[Long]("flowId") / V2Paths.Checkpoints)
+      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
+      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
+      .in(query[Option[String]]("checkpointName"))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
   }
 
   protected val getPartitioningEndpointV2

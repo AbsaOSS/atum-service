@@ -17,6 +17,8 @@
 package za.co.absa.atum.server.api.database.flows.functions
 
 import doobie.implicits.toSqlInterpolator
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2.GetFlowCheckpointsArgs
@@ -30,12 +32,12 @@ import zio._
 
 
 class GetFlowCheckpointsV2 (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[CheckpointItemFromDB], Task](values =>
+  extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[CheckpointItemFromDB], Task](input =>
     Seq(
-      fr"${values.partitioningId}",
-      fr"${values.limit}",
-      fr"${values.checkpointName}",
-      fr"${values.offset}"
+      fr"${input.partitioningId}",
+      fr"${input.limit}",
+      fr"${input.checkpointName}",
+      fr"${input.offset}"
     )
   )
     with StandardStatusHandling
@@ -62,6 +64,11 @@ object GetFlowCheckpointsV2 {
      offset: Option[Long],
      checkpointName: Option[String]
   )
+
+  object GetFlowCheckpointsArgs {
+    implicit val encoder: Encoder[GetFlowCheckpointsArgs] = deriveEncoder
+    implicit val decoder: Decoder[GetFlowCheckpointsArgs] = deriveDecoder
+  }
 
   val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpointsV2] = ZLayer {
     for {

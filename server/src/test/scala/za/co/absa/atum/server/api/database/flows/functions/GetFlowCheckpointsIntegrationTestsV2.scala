@@ -33,7 +33,7 @@ object GetFlowCheckpointsIntegrationTestsV2 extends ConfigProviderTest {
     suite("GetFlowCheckpointsIntegrationTestsV2")(
       test("Should return checkpoints with the correct partitioningId, limit, and offset") {
         // Define the input arguments
-        val partitioningId: Long = 12345L
+        val partitioningId: Long = 1L
         val limit: Option[Int] = Some(10)
         val offset: Option[Long] = Some(0L)
         val checkpointName: Option[String] = Some("TestCheckpointName")

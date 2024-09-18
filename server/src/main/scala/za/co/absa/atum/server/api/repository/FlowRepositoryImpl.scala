@@ -20,7 +20,6 @@ import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowCheckpointsV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, PaginatedResult}
-//import za.co.absa.atum.server.model.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2.GetFlowCheckpointsArgs
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
