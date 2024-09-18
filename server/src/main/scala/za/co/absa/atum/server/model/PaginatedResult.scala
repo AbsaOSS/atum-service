@@ -26,15 +26,15 @@ sealed trait PaginatedResult[R] {
 object PaginatedResult {
 
   case class ResultHasMore[R](data: Seq[R]) extends PaginatedResult[R]
-  object ResultHasMore {
-    implicit def encoder[T: Encoder]: Encoder[ResultHasMore[T]] = deriveEncoder
-    implicit def decoder[T: Decoder]: Decoder[ResultHasMore[T]] = deriveDecoder
-  }
+//  object ResultHasMore {
+//    implicit def encoder[T: Encoder]: Encoder[ResultHasMore[T]] = deriveEncoder
+//    implicit def decoder[T: Decoder]: Decoder[ResultHasMore[T]] = deriveDecoder
+//  }
 
   case class ResultNoMore[R](data: Seq[R]) extends PaginatedResult[R]
-  object ResultNoMore {
-    implicit def encoder[T: Encoder]: Encoder[ResultNoMore[T]] = deriveEncoder
-    implicit def decoder[T: Decoder]: Decoder[ResultNoMore[T]] = deriveDecoder
-  }
+//  object ResultNoMore {
+//    implicit def encoder[T: Encoder]: Encoder[ResultNoMore[T]] = deriveEncoder
+//    implicit def decoder[T: Decoder]: Decoder[ResultNoMore[T]] = deriveDecoder
+//  }
 
 }
