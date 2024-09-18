@@ -89,6 +89,18 @@ trait TestData {
   protected val partitioningSubmitDTO3: PartitioningSubmitDTO =
     partitioningSubmitDTO1.copy(authorIfNew = "yetAnotherAuthor")
 
+  protected val partitioningSubmitV2DTO1: PartitioningSubmitV2DTO = PartitioningSubmitV2DTO(
+    partitioning = partitioningDTO1,
+    parentPartitioningId = None,
+    author = ""
+  )
+
+  protected val partitioningSubmitV2DTO2: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(author = "differentAuthor")
+
+  protected val partitioningSubmitV2DTO3: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(author = "yetAnotherAuthor")
+
   // Flow
   protected val flowDTO1: FlowDTO = FlowDTO(
     id = 1L,

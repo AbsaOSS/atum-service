@@ -34,6 +34,15 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def createPartitioning(
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
+  ): IO[ServiceError, PartitioningWithIdDTO] = {
+    repositoryCall(
+      partitioningRepository.createPartitioning(partitioningSubmitDTO),
+      "createPartitioning"
+    )
+  }
+
   override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]] = {
     repositoryCall(
       partitioningRepository.getPartitioningMeasures(partitioning),
