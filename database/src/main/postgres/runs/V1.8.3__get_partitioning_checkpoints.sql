@@ -64,8 +64,8 @@ RETURNS SETOF record AS
 --
 -- Status codes:
 --      11 - OK
+--      12 - OK with no checkpoints found
 --      41 - Partitioning not found
---      42 - No checkpoint data found
 --
 -------------------------------------------------------------------------------
 $$
@@ -102,7 +102,7 @@ BEGIN
             FROM runs.checkpoints C
             WHERE C.fk_partitioning = i_partitioning_id
               AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
-            ORDER BY C.process_start_time DESC, C.id_checkpoint
+            ORDER BY C.id_checkpoint, C.process_start_time
             LIMIT i_checkpoints_limit OFFSET i_offset
         )
         SELECT
@@ -120,16 +120,16 @@ BEGIN
             _has_more AS has_more
         FROM
             limited_checkpoints LC
-                JOIN
+                INNER JOIN
             runs.measurements M ON LC.id_checkpoint = M.fk_checkpoint
-                JOIN
+                INNER JOIN
             runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
         ORDER BY
-            LC.process_start_time, LC.id_checkpoint;
+            LC.id_checkpoint, LC.process_start_time;
 
     IF NOT FOUND THEN
-        status := 42;
-        status_text := 'No checkpoint data found';
+        status := 12;
+        status_text := 'OK with no checkpoints found';
         RETURN NEXT;
     END IF;
 END;

@@ -45,7 +45,7 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with E
   when(checkpointControllerMock.getPartitioningCheckpoints(1L, Some(20), Some(0), None))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(20, 0, hasMore = false), uuid)))
   when(checkpointControllerMock.getPartitioningCheckpoints(2L, Some(10), Some(0), None))
-    .thenReturn(ZIO.fail(NotFoundErrorResponse("not found checkpoint data for a given ID")))
+    .thenReturn(ZIO.fail(NotFoundErrorResponse("partitioning not found")))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
