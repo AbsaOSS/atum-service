@@ -60,8 +60,8 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
   private val id_measure_definition1: Long = 1
   private val id_measure_definition2: Long = 2
 
-  private val uuid1 = UUID.randomUUID
-  private val uuid2 = UUID.randomUUID
+  private val uuid1 = UUID.fromString("d56fa5e2-79af-4a08-8b0c-6f83ff12cb2c")
+  private val uuid2 = UUID.fromString("6e42d61e-5cfa-45c1-9d0d-e1f3120107da")
   private val startTime1 = OffsetDateTime.parse("1992-08-03T10:00:00Z")
   private val startTime2 = OffsetDateTime.parse("1993-08-03T10:00:00Z")
   private val endTime = OffsetDateTime.parse("2022-11-05T08:00:00Z")
