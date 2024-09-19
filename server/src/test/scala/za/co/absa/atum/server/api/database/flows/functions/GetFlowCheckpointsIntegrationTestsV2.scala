@@ -23,8 +23,7 @@ import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.test._
-import zio.interop.catz.implicits.rts
-import zio.interop.catz.temporalRuntimeInstance
+import zio.interop.catz.asyncInstance
 
 object GetFlowCheckpointsIntegrationTestsV2 extends ConfigProviderTest {
 
@@ -33,14 +32,14 @@ object GetFlowCheckpointsIntegrationTestsV2 extends ConfigProviderTest {
     suite("GetFlowCheckpointsIntegrationTestsV2")(
       test("Should return checkpoints with the correct partitioningId, limit, and offset") {
         // Define the input arguments
-        val partitioningId: Long = 1L
+        val flowId: Long = 1L
         val limit: Option[Int] = Some(10)
         val offset: Option[Long] = Some(0L)
         val checkpointName: Option[String] = Some("TestCheckpointName")
 
         // Define the GetFlowCheckpointsArgs DTO
         val args = GetFlowCheckpointsV2.GetFlowCheckpointsArgs(
-          partitioningId = partitioningId,
+          flowId = flowId,
           limit = limit,
           offset = offset,
           checkpointName = checkpointName
@@ -49,7 +48,7 @@ object GetFlowCheckpointsIntegrationTestsV2 extends ConfigProviderTest {
         for {
           getFlowCheckpoints <- ZIO.service[GetFlowCheckpointsV2]
           result <- getFlowCheckpoints(args)
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(42, "Flows not found"))))
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
       }
     ).provide(
       GetFlowCheckpointsV2.layer,

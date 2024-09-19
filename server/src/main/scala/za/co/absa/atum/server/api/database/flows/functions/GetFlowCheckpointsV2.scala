@@ -30,11 +30,15 @@ import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusA
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import doobie.postgres.implicits._
+
 
 class GetFlowCheckpointsV2 (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[CheckpointItemFromDB], Task](input =>
     Seq(
-      fr"${input.partitioningId}",
+      fr"${input.flowId}",
       fr"${input.limit}",
       fr"${input.checkpointName}",
       fr"${input.offset}"
@@ -59,7 +63,7 @@ class GetFlowCheckpointsV2 (implicit schema: DBSchema, dbEngine: DoobieEngine[Ta
 
 object GetFlowCheckpointsV2 {
   case class GetFlowCheckpointsArgs(
-     partitioningId: Long,
+     flowId: Long,
      limit: Option[Int],
      offset: Option[Long],
      checkpointName: Option[String]
