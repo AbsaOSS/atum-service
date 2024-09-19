@@ -28,10 +28,7 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
 
 class GetPartitioningMainFlow(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[Long, Option[FlowDTO], Task](
-      input => Seq(fr"$input"),
-      Some("get_partitioning_main_flow")
-    )
+    extends DoobieSingleResultFunctionWithStatus[Long, Option[FlowDTO], Task](input => Seq(fr"$input"))
     with StandardStatusHandling
     with ByFirstErrorStatusAggregator {
 
