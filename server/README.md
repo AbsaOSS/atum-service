@@ -48,3 +48,25 @@ When monitoring enabled, the application exposes `http://localhost:8080/metrics`
 and/or `http://localhost:8080/zio-metrics` endpoints which can be scraped by Prometheus.
 For testing purposes there is [docker-compose.yml](./docker-compose.yml) file which can be used to start up dockerized
 Prometheus and Grafana instances. Prometheus scraping configs are defined in [prometheus.yml](./prometheus.yml) file. 
+
+# Build & run docker image
+
+```shell
+sbt clean assembly
+
+docker build -t absaoss/atum-service:latest --progress=plain --no-cache \
+--build-arg BUILD_PROXY=http://zproxycloud.intra.absaafrica:80 \
+--build-arg CONFIG=./src/main/resources/reference.conf \
+--build-arg SSL=true \
+--build-arg LDAP_SSL_CERTS_PATH=./certs \
+--build-arg SSL_DNAME="CN=*.my.domain.com, OU=project1, O=mycorp, L=Johannesburg, ST=Gauteng, C=za" ./
+
+docker run -p 8080:8080 -p 8443:8443 absaoss/atum-service:latest
+
+# reference.conf file has to be configured as below when running with ssl enabled
+ssl {
+    enabled=true
+    keyStorePassword=changeit
+    keyStorePath="/etc/ssl/certs/selfsigned.jks"
+  }
+```

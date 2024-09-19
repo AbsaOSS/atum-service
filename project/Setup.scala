@@ -55,7 +55,7 @@ object Setup {
   }
 
   val serverMergeStrategy = assembly / assemblyMergeStrategy := {
-    case PathList("META-INF", "services") => MergeStrategy.filterDistinctLines
+    case PathList("META-INF", "services", _*) => MergeStrategy.concat
     case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") => MergeStrategy.singleOrError
     case PathList("META-INF", "resources", "webjars", "swagger-ui", _*) => MergeStrategy.singleOrError
     case PathList("META-INF", _*) => MergeStrategy.discard
