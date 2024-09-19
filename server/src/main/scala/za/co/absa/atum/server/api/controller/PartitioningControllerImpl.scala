@@ -18,6 +18,7 @@ package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
@@ -49,23 +50,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     atumContextDTOEffect
   }
 
-  override def createPartitioningIfNotExistsV2(
-    partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]] = {
-    mapToSingleSuccessResponse(createPartitioningIfNotExistsV1(partitioningSubmitDTO))
-  }
-
-  override def createOrUpdateAdditionalDataV2(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]] = {
-    mapToSingleSuccessResponse(
-      serviceCall[Unit, AdditionalDataSubmitDTO](
-        partitioningService.createOrUpdateAdditionalData(additionalData),
-        _ => additionalData
-      )
-    )
-  }
-
   override def getPartitioningCheckpointsV2(
     checkpointQueryDTO: CheckpointQueryDTO
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
@@ -94,6 +78,43 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
     )
   }
+
+  override def postPartitioning(
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
+  ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
+    for {
+      response <- mapToSingleSuccessResponse(
+        serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
+          partitioningService.createPartitioning(partitioningSubmitDTO)
+        )
+      )
+      uri <- createV2RootAnchoredResourcePath(
+        Seq(V2Paths.Partitionings, response.data.id.toString)
+      )
+    } yield (response, uri)
+  }
+
+  override def patchPartitioningAdditionalDataV2(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[AdditionalDataDTO, AdditionalDataDTO](
+        partitioningService.patchAdditionalData(partitioningId, additionalDataPatchDTO)
+      )
+    )
+  }
+
+  override def getPartitioningMeasuresV2(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[MeasureDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[MeasureDTO], Seq[MeasureDTO]](
+        partitioningService.getPartitioningMeasuresById(partitioningId)
+      )
+    )
+  }
+
 }
 
 object PartitioningControllerImpl {

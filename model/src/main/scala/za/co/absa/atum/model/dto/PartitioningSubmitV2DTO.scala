@@ -14,27 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.dto
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO}
+import io.circe.generic.semiauto._
+import io.circe._
 
-case class AdditionalDataItemFromDB(
-  adName: String,
-  adValue: Option[String],
+case class PartitioningSubmitV2DTO(
+  partitioning: PartitioningDTO,
+  parentPartitioningId: Option[Long],
   author: String
 )
 
-object AdditionalDataItemFromDB {
-  def additionalDataFromDBItems(dbItems: Seq[Option[AdditionalDataItemFromDB]]): AdditionalDataDTO = {
-    AdditionalDataDTO(
-      dbItems.flatten
-        .map(item =>
-          item.adValue match {
-            case Some(value) => item.adName -> Some(AdditionalDataItemDTO(Option(value), item.author))
-            case None => item.adName -> None
-          }
-        )
-        .toMap
-    )
-  }
+object PartitioningSubmitV2DTO {
+  implicit val decodePartitioningSubmitV2DTO: Decoder[PartitioningSubmitV2DTO] = deriveDecoder
+  implicit val encodePartitioningSubmitV2DTO: Encoder[PartitioningSubmitV2DTO] = deriveEncoder
 }

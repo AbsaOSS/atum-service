@@ -40,4 +40,10 @@ object AtumAgentException {
    * @param message A message describing the exception.
    */
   case class HttpException(statusCode: Int, message: String) extends AtumAgentException(message)
+
+  /**
+   * This type represents an exception related to partitioning update.
+   * @param message A message describing the exception.
+   */
+  case class PartitioningUpdateException(message: String) extends AtumAgentException(message)
 }

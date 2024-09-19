@@ -14,27 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.dto
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder}
 
-case class AdditionalDataItemFromDB(
-  adName: String,
-  adValue: Option[String],
+case class AdditionalDataPatchItemDTO(
+  value: String,
   author: String
 )
 
-object AdditionalDataItemFromDB {
-  def additionalDataFromDBItems(dbItems: Seq[Option[AdditionalDataItemFromDB]]): AdditionalDataDTO = {
-    AdditionalDataDTO(
-      dbItems.flatten
-        .map(item =>
-          item.adValue match {
-            case Some(value) => item.adName -> Some(AdditionalDataItemDTO(Option(value), item.author))
-            case None => item.adName -> None
-          }
-        )
-        .toMap
-    )
-  }
+object AdditionalDataPatchItemDTO {
+  implicit val encoderAdditionalDataPatchItem: Encoder[AdditionalDataPatchItemDTO] = deriveEncoder
+  implicit val decoderAdditionalDataPatchItem: Decoder[AdditionalDataPatchItemDTO] = deriveDecoder
 }

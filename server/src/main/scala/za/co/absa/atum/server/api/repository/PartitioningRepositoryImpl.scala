@@ -17,21 +17,24 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, CheckpointFromDB, MeasureFromDB, PartitioningFromDB}
+import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.model._
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
+  createPartitioningFn: CreatePartitioning,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
   getPartitioningByIdFn: GetPartitioningById,
-  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2
+  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -42,8 +45,25 @@ class PartitioningRepositoryImpl(
     )
   }
 
-  override def createOrUpdateAdditionalData(additionalData: AdditionalDataSubmitDTO): IO[DatabaseError, Unit] = {
-    dbSingleResultCallWithStatus(createOrUpdateAdditionalDataFn(additionalData), "createOrUpdateAdditionalData")
+  override def createPartitioning(
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
+  ): IO[DatabaseError, PartitioningWithIdDTO] = {
+    for {
+      result <- dbSingleResultCallWithStatus(
+        createPartitioningFn(partitioningSubmitDTO),
+        "createPartitioning"
+      )
+    } yield PartitioningWithIdDTO(result, partitioningSubmitDTO.partitioning, partitioningSubmitDTO.author)
+  }
+
+  override def createOrUpdateAdditionalData(
+    partitioningId: Long,
+    additionalData: AdditionalDataPatchDTO
+  ): IO[DatabaseError, AdditionalDataDTO] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      createOrUpdateAdditionalDataFn(CreateOrUpdateAdditionalDataArgs(partitioningId, additionalData)),
+      "createOrUpdateAdditionalData"
+    ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
   }
 
   override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] = {
@@ -75,10 +95,7 @@ class PartitioningRepositoryImpl(
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAdditionalDataV2Fn(partitioningId),
       "getPartitioningAdditionalData"
-    ).map(_.collect { case Some(AdditionalDataItemFromDB(adName, adValue, author)) =>
-      adName -> Some(AdditionalDataItemDTO(adValue, author))
-    }.toMap)
-      .map(AdditionalDataDTO(_))
+    ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
   }
 
   override def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
@@ -94,36 +111,48 @@ class PartitioningRepositoryImpl(
       }
   }
 
+  override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresByIdFn(partitioningId), "getPartitioningMeasures")
+      .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
+        MeasureDTO(measureName.get, measuredColumns.get)
+      })
+  }
+
 }
 
 object PartitioningRepositoryImpl {
   val layer: URLayer[
     CreatePartitioningIfNotExists
+      with CreatePartitioning
       with GetPartitioningMeasures
       with GetPartitioningAdditionalData
       with CreateOrUpdateAdditionalData
       with GetPartitioningCheckpoints
       with GetPartitioningAdditionalDataV2
-      with GetPartitioningCheckpoints
-      with GetPartitioningById,
+      with GetPartitioningById
+      with GetPartitioningMeasuresById,
     PartitioningRepository
   ] = ZLayer {
     for {
       createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
+      createPartitioning <- ZIO.service[CreatePartitioning]
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
       getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
+      getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
+      createPartitioning,
       getPartitioningMeasures,
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
       getPartitioningCheckpoints,
       getPartitioningById,
-      getPartitioningAdditionalDataV2
+      getPartitioningAdditionalDataV2,
+      getPartitioningMeasuresV2
     )
   }
 }

@@ -17,12 +17,13 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
-import za.co.absa.db.fadb.exceptions.{DataNotFoundException, ErrorInDataException}
+import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException, ErrorInDataException}
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
@@ -44,14 +45,35 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val createPartitioningIfNotExistsMockLayer = ZLayer.succeed(createPartitioningIfNotExistsMock)
 
+  // Create Partitioning If Not Exists V2 Mocks
+  private val createPartitioningMock = mock(classOf[CreatePartitioning])
+
+  when(createPartitioningMock.apply(partitioningSubmitV2DTO1))
+    .thenReturn(ZIO.right(Row(FunctionStatus(11, "success"), partitioningWithIdDTO1.id)))
+  when(createPartitioningMock.apply(partitioningSubmitV2DTO2))
+    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(31, "Partitioning already present"))))
+  when(createPartitioningMock.apply(partitioningSubmitV2DTO3))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
+
+  private val createPartitioningMockLayer = ZLayer.succeed(createPartitioningMock)
+
   // Create Additional Data Mocks
   private val createOrUpdateAdditionalDataMock = mock(classOf[CreateOrUpdateAdditionalData])
 
-  when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO1))
-    .thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), ())))
-  when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO2))
-    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(50, "error in AD data"))))
-  when(createOrUpdateAdditionalDataMock.apply(additionalDataSubmitDTO3))
+  when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(1L, additionalDataPatchDTO1)))
+    .thenReturn(
+      ZIO.right(
+        Seq(
+          Row(
+            FunctionStatus(11, "Additional data have been updated, added or both"),
+            Option.empty[AdditionalDataItemFromDB]
+          )
+        )
+      )
+    )
+  when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(0L, additionalDataPatchDTO1)))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(2L, additionalDataPatchDTO1)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val createOrUpdateAdditionalDataMockLayer = ZLayer.succeed(createOrUpdateAdditionalDataMock)
@@ -113,6 +135,19 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getPartitioningAdditionalDataV2MockLayer = ZLayer.succeed(getPartitioningAdditionalDataV2Mock)
 
+  private val getPartitioningMeasuresV2Mock = mock(classOf[GetPartitioningMeasuresById])
+
+  when(getPartitioningMeasuresV2Mock.apply(1L)).thenReturn(
+    ZIO.right(Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2)))
+  )
+  when(getPartitioningMeasuresV2Mock.apply(2L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getPartitioningMeasuresV2Mock.apply(3L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(42, "Measures not found"))))
+  when(getPartitioningMeasuresV2Mock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  private val getPartitioningMeasuresV2MockLayer = ZLayer.succeed(getPartitioningMeasuresV2Mock)
+
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("PartitioningRepositorySuite")(
@@ -139,26 +174,49 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
+      suite("CreatePartitioningSuite")(
+        test("Returns expected Right with PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTO1)
+          } yield assertTrue(result.isInstanceOf[PartitioningWithIdDTO])
+        },
+        test("Returns expected Left with DataConflictException") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTO2).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              ConflictDatabaseError(
+                "Exception caused by operation: 'createPartitioning': (31) Partitioning already present"
+              )
+            )
+          )
+        },
+        test("Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTO3).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
+      ),
       suite("CreateOrUpdateAdditionalDataSuite")(
         test("Returns expected Right with Unit") {
           for {
-            result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
-          } yield assertTrue(result == ())
+            result <- PartitioningRepository.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1)
+          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
         },
         test("Returns expected Left with StatusException") {
           for {
-            result <- PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
+            result <- PartitioningRepository.createOrUpdateAdditionalData(0L, additionalDataPatchDTO1).exit
           } yield assertTrue(
             result == Exit.fail(
-              GeneralDatabaseError(
-                "Exception caused by operation: 'createOrUpdateAdditionalData': (50) error in AD data"
+              NotFoundDatabaseError(
+                "Exception caused by operation: 'createOrUpdateAdditionalData': (41) Partitioning not found"
               )
             )
           )
         },
         test("Returns expected DatabaseError") {
-          assertZIO(PartitioningRepository.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
-            failsWithA[DatabaseError]
+          assertZIO(PartitioningRepository.createOrUpdateAdditionalData(2L, additionalDataPatchDTO1).exit)(
+            failsWithA[GeneralDatabaseError]
           )
         }
       ),
@@ -231,12 +289,36 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected DataNotFoundException") {
           for {
             result <- PartitioningRepository.getPartitioning(9999L).exit
-          } yield assertTrue(result == Exit.fail(NotFoundDatabaseError(
-              "Exception caused by operation: 'getPartitioningById': (41) Partitioning not found"))
+          } yield assertTrue(
+            result == Exit.fail(
+              NotFoundDatabaseError("Exception caused by operation: 'getPartitioningById': (41) Partitioning not found")
             )
+          )
         },
         test("Returns expected GeneralDatabaseError") {
           assertZIO(PartitioningRepository.getPartitioning(8888L).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
+      ),
+      suite("GetPartitioningMeasuresByIdSuite")(
+        test("Returns expected Seq") {
+          for {
+            result <- PartitioningRepository.getPartitioningMeasuresById(1L)
+          } yield assertTrue(result == Seq(measureDTO1, measureDTO2))
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMeasuresById(2L).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMeasuresById(3L).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningMeasuresById(4L).exit)(
             failsWithA[GeneralDatabaseError]
           )
         }
@@ -244,12 +326,14 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     ).provide(
       PartitioningRepositoryImpl.layer,
       createPartitioningIfNotExistsMockLayer,
+      createPartitioningMockLayer,
       getPartitioningMeasuresMockLayer,
       getPartitioningAdditionalDataMockLayer,
       createOrUpdateAdditionalDataMockLayer,
       getPartitioningCheckpointsMockLayer,
       getPartitioningByIdMockLayer,
-      getPartitioningAdditionalDataV2MockLayer
+      getPartitioningAdditionalDataV2MockLayer,
+      getPartitioningMeasuresV2MockLayer
     )
   }
 

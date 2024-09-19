@@ -19,16 +19,14 @@ package za.co.absa.atum.server.api.http
 import cats.syntax.semigroupk._
 import org.http4s.HttpRoutes
 import sttp.tapir.PublicEndpoint
-import sttp.tapir.model.ServerRequest
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
-import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
@@ -57,14 +55,20 @@ trait Routes extends Endpoints with ServerOptions {
         }
       ),
       createServerEndpoint(createPartitioningEndpointV1, PartitioningController.createPartitioningIfNotExistsV1),
-      createServerEndpoint(createPartitioningEndpointV2, PartitioningController.createPartitioningIfNotExistsV2),
+      createServerEndpoint(postPartitioningEndpointV2, PartitioningController.postPartitioning),
       createServerEndpoint(
         getPartitioningAdditionalDataEndpointV2,
         PartitioningController.getPartitioningAdditionalDataV2
       ),
-      createServerEndpoint(
-        createOrUpdateAdditionalDataEndpointV2,
-        PartitioningController.createOrUpdateAdditionalDataV2
+      createServerEndpoint[
+        (Long, AdditionalDataPatchDTO),
+        ErrorResponse,
+        SingleSuccessResponse[AdditionalDataDTO]
+      ](
+        patchPartitioningAdditionalDataEndpointV2,
+        { case (partitioningId: Long, additionalDataPatchDTO: AdditionalDataPatchDTO) =>
+          PartitioningController.patchPartitioningAdditionalDataV2(partitioningId, additionalDataPatchDTO)
+        }
       ),
       createServerEndpoint[
         (Long, UUID),
@@ -86,6 +90,7 @@ trait Routes extends Endpoints with ServerOptions {
       }),
       createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
       createServerEndpoint(getPartitioningEndpointV2, PartitioningController.getPartitioningV2),
+      createServerEndpoint(getPartitioningMeasuresEndpointV2, PartitioningController.getPartitioningMeasuresV2),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
@@ -99,11 +104,12 @@ trait Routes extends Endpoints with ServerOptions {
       createCheckpointEndpointV1,
       postCheckpointEndpointV2,
       createPartitioningEndpointV1,
-      createPartitioningEndpointV2,
-      createOrUpdateAdditionalDataEndpointV2,
+      postPartitioningEndpointV2,
+      patchPartitioningAdditionalDataEndpointV2,
       getPartitioningCheckpointsEndpointV2,
       getPartitioningCheckpointEndpointV2,
-      getFlowCheckpointsEndpointV2
+      getFlowCheckpointsEndpointV2,
+      getPartitioningMeasuresEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, SwaggerApiName, SwaggerApiVersion))

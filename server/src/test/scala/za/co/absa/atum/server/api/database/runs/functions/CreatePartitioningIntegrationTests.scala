@@ -18,27 +18,24 @@ package za.co.absa.atum.server.api.database.runs.functions
 
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.{TestData, TestTransactorProvider}
-import za.co.absa.db.fadb.exceptions.DataNotFoundException
-import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test._
 
-object CreateOrUpdateAdditionalDataIntegrationTests extends ConfigProviderTest with TestData {
+object CreatePartitioningIntegrationTests extends ConfigProviderTest with TestData {
 
-  override def spec: Spec[TestEnvironment with Scope, Any] = {
+  override def spec: Spec[Unit with TestEnvironment with Scope, Any] = {
 
-    suite("CreateOrUpdateAdditionalDataIntegrationSuite")(
-      test("Returns expected DataNotFoundException") {
+    suite("CreatePartitioningSuite")(
+      test("Returns expected Right") {
         for {
-          createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
-          result <- createOrUpdateAdditionalData(CreateOrUpdateAdditionalDataArgs(1L, additionalDataPatchDTO1))
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+          createPartitioning <- ZIO.service[CreatePartitioning]
+          result <- createPartitioning(partitioningSubmitV2DTO1)
+        } yield assertTrue(result.isRight)
       }
     ).provide(
-      CreateOrUpdateAdditionalData.layer,
+      CreatePartitioning.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )

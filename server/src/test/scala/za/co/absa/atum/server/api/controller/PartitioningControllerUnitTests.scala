@@ -19,9 +19,9 @@ package za.co.absa.atum.server.api.controller
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.ServiceError.{GeneralServiceError, NotFoundServiceError}
+import za.co.absa.atum.server.api.exception.ServiceError.{ConflictServiceError, GeneralServiceError, NotFoundServiceError}
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{InternalServerErrorResponse, NotFoundErrorResponse}
+import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.failsWithA
@@ -35,15 +35,24 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO1))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO2))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO3))
+    .thenReturn(ZIO.fail(ConflictServiceError("Partitioning already present")))
+
   when(partitioningServiceMock.getPartitioningMeasures(partitioningDTO1))
     .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
 
   when(partitioningServiceMock.getPartitioningAdditionalData(partitioningDTO1))
     .thenReturn(ZIO.succeed(Map.empty))
 
-  when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1))
-    .thenReturn(ZIO.unit)
-  when(partitioningServiceMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
+  when(partitioningServiceMock.patchAdditionalData(1L, additionalDataPatchDTO1))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningServiceMock.patchAdditionalData(0L, additionalDataPatchDTO1))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
+  when(partitioningServiceMock.patchAdditionalData(2L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO1))
@@ -83,16 +92,42 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("CreateOrUpdateAdditionalDataSuite")(
+      suite("CreatePartitioningSuite")(
+        test("Returns expected PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningController.postPartitioning(partitioningSubmitV2DTO1)
+            expectedData = SingleSuccessResponse(partitioningWithIdDTO1, uuid1)
+            actualData = result._1.copy(requestId = uuid1)
+            expectedUri = s"/api/v2/partitionings/${partitioningWithIdDTO1.id}"
+            actualUri = result._2
+          } yield assertTrue(actualData == expectedData && actualUri == expectedUri)
+        },
+        test("Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.postPartitioning(partitioningSubmitV2DTO2).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected ConflictServiceError") {
+          assertZIO(PartitioningController.postPartitioning(partitioningSubmitV2DTO3).exit)(
+            failsWithA[ConflictErrorResponse]
+          )
+        }
+      ),
+      suite("PatchAdditionalDataSuite")(
         test("Returns expected AdditionalDataSubmitDTO") {
           for {
-            result <- PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO1)
-            expected = SingleSuccessResponse(additionalDataSubmitDTO1, uuid1)
+            result <- PartitioningController.patchPartitioningAdditionalDataV2(1L, additionalDataPatchDTO1)
+            expected = SingleSuccessResponse(additionalDataDTO1, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
+        test("Returns expected NotFoundErrorResponse") {
+          assertZIO(PartitioningController.patchPartitioningAdditionalDataV2(0L, additionalDataPatchDTO1).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.createOrUpdateAdditionalDataV2(additionalDataSubmitDTO2).exit)(
+          assertZIO(PartitioningController.patchPartitioningAdditionalDataV2(2L, additionalDataPatchDTO1).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }

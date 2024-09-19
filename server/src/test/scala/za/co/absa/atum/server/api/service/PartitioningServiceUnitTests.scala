@@ -17,6 +17,7 @@
 package za.co.absa.atum.server.api.service
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
@@ -36,10 +37,18 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.createPartitioningIfNotExists(partitioningSubmitDTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO1)).thenReturn(ZIO.unit)
-  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO2))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("error in AD data")))
-  when(partitioningRepositoryMock.createOrUpdateAdditionalData(additionalDataSubmitDTO3))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO1))
+    .thenReturn(ZIO.succeed(PartitioningWithIdDTO(1L, Seq.empty, "author")))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO2))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("Partitioning already exists")))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO3))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  when(partitioningRepositoryMock.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningRepositoryMock.createOrUpdateAdditionalData(0L, additionalDataPatchDTO1))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+  when(partitioningRepositoryMock.createOrUpdateAdditionalData(2L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningMeasures(partitioningDTO1))
@@ -68,6 +77,13 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioning(8888L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
+  when(partitioningRepositoryMock.getPartitioningMeasuresById(1L))
+    .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
+  when(partitioningRepositoryMock.getPartitioningMeasuresById(2L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getPartitioningMeasuresById(3L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -92,23 +108,44 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("CreateOrUpdateAdditionalDataSuite")(
-        test("Returns expected Right with Unit") {
+      suite("CreatePartitioningSuite")(
+        test("Returns expected Right with PartitioningWithIdDTO") {
           for {
-            result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO1)
-          } yield assertTrue(result == ())
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO1)
+          } yield assertTrue(result == PartitioningWithIdDTO(1L, Seq.empty, "author"))
         },
-        test("Returns expected Left with StatusException") {
+        test("Returns expected ConflictServiceError") {
           for {
-            result <- PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO2).exit
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO2).exit
           } yield assertTrue(
             result == Exit.fail(
-              GeneralServiceError("Failed to perform 'createOrUpdateAdditionalData': error in AD data")
+              ConflictServiceError("Failed to perform 'createPartitioning': Partitioning already exists")
             )
           )
         },
-        test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.createOrUpdateAdditionalData(additionalDataSubmitDTO3).exit)(
+        test("Returns expected GeneralServiceError") {
+          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTO3).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("PatchAdditionalDataSuite")(
+        test("Returns expected Right with Unit") {
+          for {
+            result <- PartitioningService.patchAdditionalData(1L, additionalDataPatchDTO1)
+          } yield assertTrue(result == additionalDataDTO1)
+        },
+        test("Returns expected NotFoundServiceError") {
+          for {
+            result <- PartitioningService.patchAdditionalData(0L, additionalDataPatchDTO1).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              NotFoundServiceError("Failed to perform 'createOrUpdateAdditionalData': Partitioning not found")
+            )
+          )
+        },
+        test("Returns expected GeneralServiceError") {
+          assertZIO(PartitioningService.patchAdditionalData(2L, additionalDataPatchDTO1).exit)(
             failsWithA[GeneralServiceError]
           )
         }
@@ -181,6 +218,23 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningService.getPartitioning(8888L).exit
           } yield assertTrue(
             result == Exit.fail(NotFoundServiceError("Failed to perform 'getPartitioning': Partitioning not found"))
+          )
+        }
+      ),
+      suite("GetPartitioningMeasuresByIdSuite")(
+        test("Returns expected Right with Seq[MeasureDTO]") {
+          for {
+            result <- PartitioningService.getPartitioningMeasuresById(1L)
+          } yield assertTrue(result == Seq(measureDTO1, measureDTO2))
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioningMeasuresById(2L).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.getPartitioningMeasuresById(3L).exit)(
+            failsWithA[GeneralServiceError]
           )
         }
       )

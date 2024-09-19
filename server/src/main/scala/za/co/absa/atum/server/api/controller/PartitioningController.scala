@@ -28,17 +28,18 @@ trait PartitioningController {
     partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[ErrorResponse, AtumContextDTO]
 
-  def createPartitioningIfNotExistsV2(
-    partitioningSubmitDTO: PartitioningSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AtumContextDTO]]
+  def postPartitioning(
+    partitioningSubmitDTO: PartitioningSubmitV2DTO
+  ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)]
 
   def getPartitioningAdditionalDataV2(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
 
-  def createOrUpdateAdditionalDataV2(
-    additionalData: AdditionalDataSubmitDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataSubmitDTO]]
+  def patchPartitioningAdditionalDataV2(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
 
   def getPartitioningCheckpointsV2(
     checkpointQueryDTO: CheckpointQueryDTO
@@ -46,4 +47,8 @@ trait PartitioningController {
 
   def getPartitioningV2(partitioningId: Long): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]]
 
+
+  def getPartitioningMeasuresV2(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[MeasureDTO]]
 }
