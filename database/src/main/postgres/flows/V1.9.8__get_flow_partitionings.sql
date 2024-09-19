@@ -47,8 +47,8 @@ CREATE OR REPLACE FUNCTION flows.get_flow_partitionings(
 --
 -- Status codes:
 --      11 - OK
+--      12 - OK with no partitionings found
 --      41 - Flow not found
---      42 - Partitionings not found
 --
 -------------------------------------------------------------------------------
 $$
@@ -75,32 +75,26 @@ BEGIN
 
 
     RETURN QUERY
-        WITH limited_partitionings AS (
-            SELECT P.id_partitioning
-            FROM flows.partitioning_to_flow PF
-            JOIN runs.partitionings P ON PF.fk_partitioning = P.id_partitioning
-            WHERE PF.fk_flow = i_flow_id
-            ORDER BY P.created_at DESC, P.id_partitioning
-            LIMIT i_limit OFFSET i_offset
-        )
         SELECT
             11 AS status,
             'OK' AS status_text,
-            P.id_partitioning AS id,
+            P.id_partitioning,
             P.partitioning,
-            P.created_by AS author,
-            _has_more AS has_more
+            P.created_by,
+            _has_more
         FROM
-            runs.partitionings P
+            runs.partitionings P INNER JOIN
+            flows.partitioning_to_flow PF ON  PF.fk_partitioning = P.id_partitioning
         WHERE
-            P.id_partitioning IN (SELECT LP.id_partitioning FROM limited_partitionings LP)
+            PF.fk_flow = i_flow_id
         ORDER BY
-            P.created_at DESC,
-            P.id_partitioning;
+            P.id_partitioning,
+            P.created_at DESC
+        LIMIT i_limit OFFSET i_offset;
 
     IF NOT FOUND THEN
-        status := 42;
-        status_text := 'Partitionings not found';
+        status := 12;
+        status_text := 'OK with no partitionings found';
         RETURN NEXT;
     END IF;
 END;
