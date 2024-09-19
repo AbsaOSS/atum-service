@@ -5,9 +5,9 @@
             <Pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36}:%L - %msg %ex{short}%n</Pattern>
         </layout>
     </appender>
-    <root level="debug">
+    <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="za.co.absa" level="debug"/>
+    <logger name="za.co.absa" level="info"/>
     <logger name="com.zaxxer.hikari" level="warn"/>
 </configuration>
