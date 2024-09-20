@@ -8,7 +8,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 import scala.util.Random
 
-class GetFlowCheckpointsIntegrationTestV2 extends DBTestSuite {
+class GetFlowCheckpointsIntegrationTestsV2 extends DBTestSuite {
   private val fncGetFlowCheckpointsV2 = "flows.get_flow_checkpoints_v2"
 
   private val partitioning = JsonBString(
