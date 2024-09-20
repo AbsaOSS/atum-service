@@ -34,7 +34,7 @@ object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
   when(flowServiceMock.getFlowCheckpoints(checkpointQueryDTO2))
     .thenReturn(ZIO.succeed(Seq(checkpointDTO2)))
 
-  when(flowServiceMock.getFlowCheckpointsV2(1L, Some(5), None, None))
+  when(flowServiceMock.getFlowCheckpointsV2(1L, Some(5), Some(2), None))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
   when(flowServiceMock.getFlowCheckpointsV2(2L, Some(5), Some(0), None))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq(checkpointV2DTO2))))
@@ -60,8 +60,8 @@ object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
       suite("GetFlowCheckpointsV2Suite")(
         test("Returns expected Seq[CheckpointV2DTO] with Pagination indicating there is more data available") {
           for {
-            result <- FlowController.getFlowCheckpoints(1L, Some(5), None, None)
-          } yield assertTrue(result.data == Seq(checkpointV2DTO1) && result.pagination == Pagination(5, 0, hasMore = true))
+            result <- FlowController.getFlowCheckpoints(1L, Some(5), Some(2), None)
+          } yield assertTrue(result.data == Seq(checkpointV2DTO1) && result.pagination == Pagination(5, 2, hasMore = true))
         },
         test("Returns expected Seq[CheckpointV2DTO] with Pagination indicating there is no more data available") {
           for {

@@ -22,7 +22,7 @@ import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2.
 import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowCheckpointsV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
-import za.co.absa.atum.server.model.PaginatedResult.ResultHasMore
+import za.co.absa.atum.server.model.PaginatedResult.ResultNoMore
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
@@ -78,7 +78,7 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with CheckpointV2DTO") {
           for {
             result <- FlowRepository.getFlowCheckpointsV2(1, Some(1), Some(1), None)
-          } yield assertTrue(result == ResultHasMore(Seq(checkpointV2DTO1, checkpointV2DTO2)))
+          } yield assertTrue(result == ResultNoMore(Seq(checkpointV2DTO1, checkpointV2DTO2)))
         },
         test("Returns expected DatabaseError") {
           assertZIO(FlowRepository.getFlowCheckpointsV2(2, None, None, None).exit)(
