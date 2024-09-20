@@ -25,11 +25,11 @@ import zio._
 import zio.test._
 import zio.interop.catz.asyncInstance
 
-object GetFlowCheckpointsIntegrationTestsV2 extends ConfigProviderTest {
+object GetFlowCheckpointsV2IntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    suite("GetFlowCheckpointsIntegrationTestsV2")(
+    suite("GetFlowCheckpointsV2IntegrationTests")(
       test("Should return checkpoints with the correct partitioningId, limit, and offset") {
         // Define the input arguments
         val flowId: Long = 1L
