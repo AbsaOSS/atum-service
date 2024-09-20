@@ -173,11 +173,12 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
         .add("measurement_value", measurementSum)
     )
 
-    // Actual test execution and assertions
+    // Actual test execution and assertions with limit and offset applied
     val actualMeasures: Seq[MeasuredDetails] = function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", flowId)
-      .execute ("checkpoint_name") { queryResult =>
+      .execute("checkpoint_name") { queryResult =>
         assert(queryResult.hasNext)
+
         val row1 = queryResult.next()
         assert(row1.getInt("status").contains(11))
         assert(row1.getString("status_text").contains("OK"))
@@ -187,7 +188,6 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
         assert(row1.getBoolean("measured_by_atum_agent").contains(true))
         assert(row1.getOffsetDateTime("checkpoint_start_time").contains(startTime))
         assert(row1.getOffsetDateTime("checkpoint_end_time").contains(endTime))
-        assert(queryResult.hasNext)
 
         val measure1 = MeasuredDetails(
           row1.getString("measure_name").get,
@@ -204,13 +204,14 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
         assert(row2.getBoolean("measured_by_atum_agent").contains(true))
         assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
         assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
-        assert(queryResult.hasNext)
 
         val measure2 = MeasuredDetails(
           row2.getString("measure_name").get,
           row2.getArray[String]("measured_columns").map(_.toList).get,
           row2.getJsonB("measurement_value").get
         )
+
+        assert(queryResult.hasNext)
 
         val row3 = queryResult.next()
         assert(row3.getInt("status").contains(11))
@@ -228,22 +229,21 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
           row3.getJsonB("measurement_value").get
         )
 
-        assert(!queryResult.hasNext)
         Seq(measure1, measure2, measure3)
       }
 
     // Assertions for measures
     assert(actualMeasures.map(_.measureName).toSet == Set("avg", "cnt", "sum"))
-    assert(actualMeasures.map(_.measureColumns).toSet == Set(Seq("col1"), Seq("a", "b"), Seq("colOther")))
+    assert(actualMeasures.map(_.measureColumns).toSet == Set(List("a", "b"), List("col1"), List("colOther")))
 
     actualMeasures.foreach { currVal =>
       val currValStr = currVal.measurementValue.value
 
       currVal.measureName match {
-        case "avg" =>
-          assert(currValStr.contains(""""value": "2.71""""))
         case "cnt" =>
           assert(currValStr.contains(""""value": "3""""))
+        case "avg" =>
+          assert(currValStr.contains(""""value": "2.71""""))
         case "sum" =>
           assert(currValStr.contains(""""value": "3000""""))
         case other =>
@@ -252,7 +252,7 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
     }
   }
 
-  test("getFlowCheckpointsV2 should return limited checkpoints with offset for a given flow") {
+  test("getFlowCheckpointsV2 should return limited with checkpoints for a given flow") {
 
     val partitioningId: Long = Random.nextLong()
     table("runs.partitionings").insert(
@@ -349,14 +349,13 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
         .add("measurement_value", measurementSum)
     )
 
-    // Actual test execution and assertions with limit and offset applied
+    // Actual test execution and assertions
     val actualMeasures: Seq[MeasuredDetails] = function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", flowId)
-      .setParam("limit", 2)
-      .setParam("offset", 1)
+      .setParam("i_limit", 2)
+      .setParam("i_offset", 0)
       .execute("checkpoint_name") { queryResult =>
         assert(queryResult.hasNext)
-
         val row1 = queryResult.next()
         assert(row1.getInt("status").contains(11))
         assert(row1.getString("status_text").contains("OK"))
@@ -366,6 +365,7 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
         assert(row1.getBoolean("measured_by_atum_agent").contains(true))
         assert(row1.getOffsetDateTime("checkpoint_start_time").contains(startTime))
         assert(row1.getOffsetDateTime("checkpoint_end_time").contains(endTime))
+        assert(queryResult.hasNext)
 
         val measure1 = MeasuredDetails(
           row1.getString("measure_name").get,
@@ -376,12 +376,13 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
         val row2 = queryResult.next()
         assert(row2.getInt("status").contains(11))
         assert(row2.getString("status_text").contains("OK"))
-        assert(row2.getUUID("id_checkpoint").contains(checkpointId2))
-        assert(row2.getString("checkpoint_name").contains("CheckpointNameOther"))
+        assert(row2.getUUID("id_checkpoint").contains(checkpointId1))
+        assert(row2.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
         assert(row2.getString("author").contains("Joseph"))
         assert(row2.getBoolean("measured_by_atum_agent").contains(true))
         assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
         assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
+        assert(queryResult.hasNext)
 
         val measure2 = MeasuredDetails(
           row2.getString("measure_name").get,
@@ -389,10 +390,24 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
           row2.getJsonB("measurement_value").get
         )
 
-        printf(s"Measures: $measure1\n, $measure2\n")
+        val row3 = queryResult.next()
+        assert(row3.getInt("status").contains(11))
+        assert(row3.getString("status_text").contains("OK"))
+        assert(row3.getUUID("id_checkpoint").contains(checkpointId2))
+        assert(row3.getString("checkpoint_name").contains("CheckpointNameOther"))
+        assert(row3.getString("author").contains("Joseph"))
+        assert(row3.getBoolean("measured_by_atum_agent").contains(true))
+        assert(row3.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
+        assert(row3.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
 
-        assert(!queryResult.hasNext) // Should be no more rows due to limit
-        Seq(measure1, measure2)
+        val measure3 = MeasuredDetails(
+          row3.getString("measure_name").get,
+          row3.getArray[String]("measured_columns").map(_.toList).get,
+          row3.getJsonB("measurement_value").get
+        )
+
+        assert(!queryResult.hasNext)
+        Seq(measure1, measure2, measure3)
       }
 
     // Assertions for measures
@@ -403,6 +418,8 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
       val currValStr = currVal.measurementValue.value
 
       currVal.measureName match {
+        case "avg" =>
+          assert(currValStr.contains(""""value": "2.71""""))
         case "cnt" =>
           assert(currValStr.contains(""""value": "3""""))
         case "sum" =>
@@ -422,6 +439,9 @@ class GetFlowCheckpointsV2IntegrationTests extends DBTestSuite {
     val queryResult = function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", nonExistentFlowId)
       .execute { queryResult =>
+        val results = queryResult.next()
+        assert(results.getString("status_text").contains("Flow not found"))
+        assert(results.getInt("status").contains(42))
         assert(!queryResult.hasNext)
       }
 
