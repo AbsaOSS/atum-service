@@ -277,10 +277,6 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
       .setParam("i_offset", 1)
       .setParam("i_checkpoint_name", i_checkpoint_name)
       .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val result = queryResult.next()
-        assert(result.getInt("status").contains(12))
-        assert(result.getString("status_text").contains("OK with no checkpoints found"))
         assert(!queryResult.hasNext)
       }
 

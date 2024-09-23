@@ -64,7 +64,6 @@ RETURNS SETOF record AS
 --
 -- Status codes:
 --      11 - OK
---      12 - OK with no checkpoints found
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -126,12 +125,6 @@ BEGIN
             runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
         ORDER BY
             LC.id_checkpoint, LC.process_start_time;
-
-    IF NOT FOUND THEN
-        status := 12;
-        status_text := 'OK with no checkpoints found';
-        RETURN NEXT;
-    END IF;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
