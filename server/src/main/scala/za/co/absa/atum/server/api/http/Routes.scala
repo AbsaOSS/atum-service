@@ -81,11 +81,19 @@ trait Routes extends Endpoints with ServerOptions {
         }
       ),
       createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
+//      createServerEndpoint[
+//        (Long, Option[Int], Option[Long], Option[String]),
+//        ErrorResponse,
+//        PaginatedResponse[CheckpointV2DTO]
+//      ](getFlowCheckpointsEndpoint, { case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
+//        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+//      }),
       createServerEndpoint[
         (Long, Option[Int], Option[Long], Option[String]),
         ErrorResponse,
         PaginatedResponse[CheckpointV2DTO]
-      ](getFlowCheckpointsEndpoint, { case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
+      ](getFlowCheckpointsEndpoint, {
+        case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
         FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
       }),
       createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
