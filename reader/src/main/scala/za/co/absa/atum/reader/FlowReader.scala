@@ -17,10 +17,9 @@
 package za.co.absa.atum.reader
 
 import za.co.absa.atum.reader.basic.Reader
-import za.co.absa.atum.reader.provider.Provider
+import za.co.absa.atum.reader.server.GenericServerConnection
 
-// TODO
-class FlowReader[F[_]](override implicit val provider: Provider[F]) extends Reader[F]{
+class FlowReader[F[_]]()(override implicit val serverConnection: GenericServerConnection[F[_]]) extends Reader[F]{
   def foo(): String = {
     // just to have some testable content
     "bar"

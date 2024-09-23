@@ -16,6 +16,6 @@
 
 package za.co.absa.atum.reader.basic
 
-import za.co.absa.atum.reader.provider.Provider
+import za.co.absa.atum.reader.server.GenericServerConnection
 
-abstract class Reader[F[_]](implicit val provider: Provider[F[_]])
+abstract class Reader[F[_]](implicit val serverConnection: GenericServerConnection[F[_]])
