@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.provider
+package za.co.absa.atum.reader.server
 
 import _root_.io.circe.parser.decode
 import _root_.io.circe.Decoder
+import cats.Monad
+import cats.implicits.toFunctorOps
 import com.typesafe.config.Config
-import sttp.client3.{Response, SttpBackend, UriContext, basicRequest}
+import sttp.client3.{Identity, RequestT, Response, UriContext, basicRequest}
 import za.co.absa.atum.reader.exceptions.RequestException
+import za.co.absa.atum.reader.server.GenericServerConnection.ReaderResponse
 
 import scala.util.{Failure, Try}
 
@@ -28,32 +31,30 @@ import scala.util.{Failure, Try}
  * A HttpProvider is a component that is responsible for providing teh data to readers using REST API
  * @tparam F
  */
-abstract class AbstractHttpProvider[F[_]](val serverUrl: String) extends Provider[F] {
-  type RequestFunction = SttpBackend[F, Any] => F[Response[Either[String, String]]]
-  type ResponseMapperFunction[R] = Response[Either[String, String]] => Try[R]
+abstract class GenericServerConnection[F[_]: Monad](val serverUrl: String) {
 
-  protected def executeRequest(requestFnc: RequestFunction): F[Response[Either[String, String]]]
-  protected def mapResponse[R](response: F[Response[Either[String, String]]], mapperFnc: ResponseMapperFunction[R]): F[Try[R]]
+  protected def executeRequest(request: RequestT[Identity, Either[String, String], Any]): F[ReaderResponse]
 
-  protected def query[R: Decoder](endpointUri: String): F[Try[R]] = {
+  def query[R: Decoder](endpointUri: String): F[Try[R]] = {
     val endpointToQuery = serverUrl + endpointUri
     val request = basicRequest
       .get(uri"$endpointToQuery")
-    val response = executeRequest(request.send(_))
-    mapResponse(response, responseMapperFunction[R])
-  }
-
-  private def responseMapperFunction[R: Decoder](response: Response[Either[String, String]]): Try[R] = {
-    response.body match {
-      case Left(error) => Failure(RequestException(response.statusText, error, response.code, response.request))
-      case Right(body) => decode[R](body).toTry
+    val response = executeRequest(request)
+    // using map instead of Circe's `asJson` to have own exception from a failed response
+    response.map { responseData =>
+      responseData.body match {
+        case Left(error) => Failure(RequestException(responseData.statusText, error, responseData.code, responseData.request))
+        case Right(body) => decode[R](body).toTry
+      }
     }
   }
 
 }
 
-object AbstractHttpProvider {
+object GenericServerConnection {
   final val UrlKey = "atum.server.url"
+
+  type ReaderResponse = Response[Either[String, String]]
 
   def atumServerUrl(config: Config): String = {
     config.getString(UrlKey)

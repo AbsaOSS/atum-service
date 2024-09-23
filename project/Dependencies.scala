@@ -243,7 +243,7 @@ object Dependencies {
       "com.softwaremill.sttp.client3" %% "zio" % "3.9.8",
       "com.softwaremill.sttp.client3" %% "armeria-backend-zio" % "3.9.8",
       "org.typelevel" %% "cats-effect" % "3.3.14",
-      "dev.zio" %% "zio" % "2.1.4",
+      "dev.zio" %% "zio" % "2.1.4"
     ) ++
       testDependencies ++
       jsonSerdeDependencies

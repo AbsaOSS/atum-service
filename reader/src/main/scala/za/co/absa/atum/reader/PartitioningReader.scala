@@ -16,11 +16,10 @@
 
 package za.co.absa.atum.reader
 
-import cats.Monad
 import za.co.absa.atum.reader.basic.Reader
-import za.co.absa.atum.reader.provider.Provider
+import za.co.absa.atum.reader.server.GenericServerConnection
 
-class PartitioningReader[F[_]: Monad](partitioning: Partitioning)(override implicit val provider: Provider[F[_]]) extends Reader[F] {
+class PartitioningReader[F[_]]()(override implicit val serverConnection: GenericServerConnection[F[_]]) extends Reader[F] {
   def foo(): String = {
     // just to have some testable content
     "bar"
