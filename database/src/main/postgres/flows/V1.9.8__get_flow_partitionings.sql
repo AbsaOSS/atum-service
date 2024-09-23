@@ -91,12 +91,6 @@ BEGIN
             P.id_partitioning,
             P.created_at DESC
         LIMIT i_limit OFFSET i_offset;
-
-    IF NOT FOUND THEN
-        status := 12;
-        status_text := 'OK with no partitionings found';
-        RETURN NEXT;
-    END IF;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
