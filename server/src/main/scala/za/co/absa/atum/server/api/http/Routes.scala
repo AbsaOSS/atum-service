@@ -24,17 +24,18 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
 
 import java.util.UUID
+import scala.collection.immutable.ListMap
 
 trait Routes extends Endpoints with ServerOptions {
 
@@ -70,6 +71,7 @@ trait Routes extends Endpoints with ServerOptions {
           PartitioningController.patchPartitioningAdditionalDataV2(partitioningId, additionalDataPatchDTO)
         }
       ),
+      createServerEndpoint(getPartitioningEndpointV2, PartitioningController.getPartitioning),
       createServerEndpoint[
         (Long, UUID),
         ErrorResponse,
@@ -82,7 +84,7 @@ trait Routes extends Endpoints with ServerOptions {
       ),
       createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
       createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
-      createServerEndpoint(getPartitioningEndpointV2, PartitioningController.getPartitioningV2),
+      createServerEndpoint(getPartitioningByIdEndpointV2, PartitioningController.getPartitioningByIdV2),
       createServerEndpoint(getPartitioningMeasuresEndpointV2, PartitioningController.getPartitioningMeasuresV2),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )

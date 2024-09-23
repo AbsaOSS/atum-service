@@ -18,8 +18,11 @@ package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
+
+import scala.collection.immutable.ListMap
 
 @accessible
 trait PartitioningService {
@@ -42,7 +45,11 @@ trait PartitioningService {
 
   def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]]
 
-  def getPartitioning(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO]
+  def getPartitioningById(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO]
 
   def getPartitioningMeasuresById(partitioningId: Long): IO[ServiceError, Seq[MeasureDTO]]
+
+  def getPartitioning(
+    partitioning: PartitioningDTO
+  ): IO[ServiceError, PartitioningWithIdDTO]
 }

@@ -31,21 +31,21 @@ import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio.{Scope, ZIO, ZLayer}
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue}
 
-object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
+object GetPartitioningByIdEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.getPartitioningV2(1L))
+  when(partitioningControllerMock.getPartitioningByIdV2(1L))
     .thenReturn(ZIO.succeed(SingleSuccessResponse(partitioningWithIdDTO1)))
-  when(partitioningControllerMock.getPartitioningV2(2L))
+  when(partitioningControllerMock.getPartitioningByIdV2(2L))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
-  when(partitioningControllerMock.getPartitioningV2(3L))
+  when(partitioningControllerMock.getPartitioningByIdV2(3L))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("boom!")))
 
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getPartitioningServerEndpoint =
-    getPartitioningEndpointV2.zServerLogic(PartitioningController.getPartitioningV2)
+    getPartitioningByIdEndpointV2.zServerLogic(PartitioningController.getPartitioningByIdV2)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))

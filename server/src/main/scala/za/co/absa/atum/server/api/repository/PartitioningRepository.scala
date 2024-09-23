@@ -18,9 +18,11 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.{CheckpointFromDB, PaginatedResult}
 import zio.IO
 import zio.macros.accessible
+
+import scala.collection.immutable.ListMap
 
 @accessible
 trait PartitioningRepository {
@@ -45,8 +47,12 @@ trait PartitioningRepository {
 
   def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
 
-  def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
+  def getPartitioningById(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
 
 
   def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]]
+
+  def getPartitioning(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, PartitioningWithIdDTO]
 }

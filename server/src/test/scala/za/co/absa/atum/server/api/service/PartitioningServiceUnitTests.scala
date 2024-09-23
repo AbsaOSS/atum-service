@@ -71,10 +71,10 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(2L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.getPartitioning(1111L)).thenReturn(ZIO.succeed(partitioningWithIdDTO1))
-  when(partitioningRepositoryMock.getPartitioning(9999L))
+  when(partitioningRepositoryMock.getPartitioningById(1111L)).thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningRepositoryMock.getPartitioningById(9999L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
-  when(partitioningRepositoryMock.getPartitioning(8888L))
+  when(partitioningRepositoryMock.getPartitioningById(8888L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   when(partitioningRepositoryMock.getPartitioningMeasuresById(1L))
@@ -205,17 +205,17 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
       suite("GetPartitioningByIDSuite")(
         test("Returns expected Right with PartitioningWithIdDTO") {
           for {
-            result <- PartitioningService.getPartitioning(1111L)
+            result <- PartitioningService.getPartitioningById(1111L)
           } yield assertTrue(result == partitioningWithIdDTO1)
         },
         test("Returns expected GeneralDatabaseError") {
           for {
-            result <- PartitioningService.getPartitioning(9999L).exit
+            result <- PartitioningService.getPartitioningById(9999L).exit
           } yield assertTrue(result == Exit.fail(GeneralServiceError("Failed to perform 'getPartitioning': boom!")))
         },
         test("Returns expected NotFoundDatabaseError") {
           for {
-            result <- PartitioningService.getPartitioning(8888L).exit
+            result <- PartitioningService.getPartitioningById(8888L).exit
           } yield assertTrue(
             result == Exit.fail(NotFoundServiceError("Failed to perform 'getPartitioning': Partitioning not found"))
           )

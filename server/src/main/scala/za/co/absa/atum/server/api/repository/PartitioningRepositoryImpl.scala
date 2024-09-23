@@ -25,6 +25,8 @@ import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 
+import scala.collection.immutable.ListMap
+
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
   createPartitioningFn: CreatePartitioning,
@@ -98,7 +100,7 @@ class PartitioningRepositoryImpl(
     ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
   }
 
-  override def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
+  override def getPartitioningById(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
     dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
       .flatMap {
         case Some(PartitioningFromDB(id, partitioning, author)) =>
@@ -118,6 +120,11 @@ class PartitioningRepositoryImpl(
       })
   }
 
+  override def getPartitioning(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, PartitioningWithIdDTO] = {
+    ???
+  }
 }
 
 object PartitioningRepositoryImpl {

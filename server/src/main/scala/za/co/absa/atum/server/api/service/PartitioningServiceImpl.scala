@@ -20,8 +20,10 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.PartitioningRepository
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.{CheckpointFromDB, PaginatedResult}
 import zio._
+
+import scala.collection.immutable.ListMap
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     extends PartitioningService
@@ -93,8 +95,8 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
-  override def getPartitioning(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO] = {
-    repositoryCall(partitioningRepository.getPartitioning(partitioningId), "getPartitioning")
+  override def getPartitioningById(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO] = {
+    repositoryCall(partitioningRepository.getPartitioningById(partitioningId), "getPartitioning")
   }
 
   override def getPartitioningMeasuresById(partitioningId: Long): IO[ServiceError, Seq[MeasureDTO]] = {
@@ -104,6 +106,14 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def getPartitioning(
+    partitioning: PartitioningDTO
+  ): IO[ServiceError, PartitioningWithIdDTO] = {
+    repositoryCall(
+      partitioningRepository.getPartitioning(partitioning),
+      "getPartitionings"
+    )
+  }
 }
 
 object PartitioningServiceImpl {

@@ -16,18 +16,20 @@
 
 package za.co.absa.atum.server.api.http
 
+import io.circe.syntax.EncoderOps
+import io.circe.{Decoder, Encoder, parser}
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
-import sttp.tapir.ztapir._
 import sttp.tapir.json.circe.jsonBody
+import sttp.tapir.ztapir._
+import sttp.tapir.{Codec, CodecFormat, DecodeResult, PublicEndpoint, Validator, endpoint}
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
-import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
-import sttp.tapir.{PublicEndpoint, endpoint}
 import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
+import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 
-import java.util.UUID
+import java.util.{Base64, UUID}
 
 trait Endpoints extends BaseEndpoints {
 
@@ -78,7 +80,7 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val getPartitioningAdditionalDataEndpointV2
-  : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
+    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .out(statusCode(StatusCode.Ok))
@@ -87,14 +89,26 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val patchPartitioningAdditionalDataEndpointV2
-  : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
-    AdditionalDataDTO
-  ], Any] = {
+    : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
+      AdditionalDataDTO
+    ], Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .in(jsonBody[AdditionalDataPatchDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
+  protected val getPartitioningEndpointV2
+    : PublicEndpoint[String, ErrorResponse, SingleSuccessResponse[
+      PartitioningWithIdDTO
+    ], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings)
+      .in(query[String]("partitioning")).description("base64 encoded json representation of partitioning")
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
@@ -125,7 +139,7 @@ trait Endpoints extends BaseEndpoints {
       .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
   }
 
-  protected val getPartitioningEndpointV2
+  protected val getPartitioningByIdEndpointV2
     : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId"))
@@ -135,7 +149,7 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val getPartitioningMeasuresEndpointV2
-  : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
+    : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Measures)
       .out(statusCode(StatusCode.Ok))
@@ -149,4 +163,19 @@ trait Endpoints extends BaseEndpoints {
 
   protected val healthEndpoint: PublicEndpoint[Unit, Unit, Unit, Any] =
     endpoint.get.in(Health)
+
+  implicit def base64JsonCodec[T: Decoder: Encoder]: Codec[String, T, CodecFormat.TextPlain] = {
+    Codec.string.mapDecode { base64Str =>
+      val decodedBytes = Base64.getDecoder.decode(base64Str)
+      val jsonStr = new String(decodedBytes, "UTF-8")
+      parser.decode[T](jsonStr) match {
+        case Left(value) => DecodeResult.Error(jsonStr, value)
+        case Right(value) => DecodeResult.Value(value)
+      }
+    }(data => {
+      val jsonStr = data.asJson.noSpaces
+      Base64.getEncoder.encodeToString(jsonStr.getBytes("UTF-8"))
+    })
+  }
+
 }
