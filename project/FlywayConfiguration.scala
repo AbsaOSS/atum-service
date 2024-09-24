@@ -24,5 +24,5 @@ object FlywayConfiguration {
   val flywayPassword = "postgres"
   val flywayLocations: Seq[String] = Seq("filesystem:database/src/main/postgres")
   val flywaySqlMigrationSuffixes: Seq[String] = Seq(".sql",".ddl")
-
+  val flywayBaselineVersion = "0.1.0.42"
 }

@@ -38,7 +38,7 @@ class GetPartitioningCheckpointV2IntegrationTests extends DBTestSuite {
       |{
       | "version": 1,
       |  "keys": ["keyX", "keyY", "keyZ"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "keyX": "value1",
       |    "keyZ": "value3",
       |    "keyY": "value2"
@@ -52,7 +52,7 @@ class GetPartitioningCheckpointV2IntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key3", "key2", "key4"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueX",
       |    "key2": "valueY",
       |    "key3": "valueZ",

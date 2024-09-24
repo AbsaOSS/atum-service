@@ -29,7 +29,7 @@ class GetPartitioningMeasuresIntegrationTests extends DBTestSuite {
         |{
         |  "version": 1,
         |  "keys": ["key1", "key3", "key2", "key4"],
-        |  "keysToValues": {
+        |  "keysToValuesMap": {
         |    "key1": "valueX",
         |    "key2": "valueY",
         |    "key3": "valueZ",
@@ -91,7 +91,7 @@ class GetPartitioningMeasuresIntegrationTests extends DBTestSuite {
         |{
         |   "version": 1,
         |   "keys": ["key1"],
-        |   "keysToValues": {
+        |   "keysToValuesMap": {
         |     "key1": "value1"
         |   }
         |}
@@ -118,7 +118,7 @@ class GetPartitioningMeasuresIntegrationTests extends DBTestSuite {
         |    "keyC"
         |  ],
         |  "version": 1,
-        |  "keysToValues": {
+        |  "keysToValuesMap": {
         |    "keyA": "valueA",
         |    "keyB": "valueB",
         |    "keyC": "valueC"

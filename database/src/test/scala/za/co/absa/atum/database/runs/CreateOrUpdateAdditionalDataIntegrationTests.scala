@@ -29,7 +29,7 @@ class CreateOrUpdateAdditionalDataIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2", "key3"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2": "valueB",
       |    "key3": "valueC"

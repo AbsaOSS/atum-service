@@ -29,7 +29,7 @@ class UpdateExistingAdditionalDataIntegrationTests extends DBTestSuite{
     |{
     |  "version": 1,
     |  "keys": ["key1", "key2", "key3"],
-    |  "keysToValues": {
+    |  "keysToValuesMap": {
     |    "key1": "valueX",
     |    "key2": "valueY",
     |    "key3": "valueZ"
