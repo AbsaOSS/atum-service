@@ -56,12 +56,13 @@ sbt clean assembly
 
 docker build -t absaoss/atum-service:latest --progress=plain --no-cache \
 --build-arg BUILD_PROXY=http://zproxycloud.intra.absaafrica:80 \
---build-arg CONFIG=./src/main/resources/reference.conf \
---build-arg SSL=true \
+--build-arg SSL=false \
 --build-arg LDAP_SSL_CERTS_PATH=./certs \
 --build-arg SSL_DNAME="CN=*.my.domain.com, OU=project1, O=mycorp, L=Johannesburg, ST=Gauteng, C=za" ./
 
-docker run -p 8080:8080 -p 8443:8443 absaoss/atum-service:latest
+docker run /absolute/path/resource.conf:/opt/config/resource.conf \
+  -e AWS_ACCESS_KEY_ID="abc" -e AWS_SECRET_ACCESS_KEY="def" -e AWS_SESSION_TOKEN="xyz" \
+  -p 8080:8080 -p 8443:8443 absaoss/atum-service:latest
 
 # reference.conf file has to be configured as below when running with ssl enabled
 ssl {
