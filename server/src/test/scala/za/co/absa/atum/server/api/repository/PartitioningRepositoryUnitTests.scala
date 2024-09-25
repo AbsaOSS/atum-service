@@ -79,36 +79,36 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val createOrUpdateAdditionalDataMockLayer = ZLayer.succeed(createOrUpdateAdditionalDataMock)
 
   // Get Partitioning Measures Mocks
-  private val getPartitioningByIdMeasuresMock = mock(classOf[GetPartitioningMeasures])
+  private val getPartitioningMeasuresMock = mock(classOf[GetPartitioningMeasures])
 
-  when(getPartitioningByIdMeasuresMock.apply(partitioningDTO1))
+  when(getPartitioningMeasuresMock.apply(partitioningDTO1))
     .thenReturn(
       ZIO.right(
         Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2))
       )
     )
-  when(getPartitioningByIdMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
 
-  private val getPartitioningByIdMeasuresMockLayer = ZLayer.succeed(getPartitioningByIdMeasuresMock)
+  private val getPartitioningMeasuresMockLayer = ZLayer.succeed(getPartitioningMeasuresMock)
 
   // Get Partitioning Additional Data Mocks
-  private val getPartitioningByIdAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
+  private val getPartitioningAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
 
-  when(getPartitioningByIdAdditionalDataMock.apply(partitioningDTO1))
+  when(getPartitioningAdditionalDataMock.apply(partitioningDTO1))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), AdditionalDataFromDB(Some("key"), Some("value"))))))
-  when(getPartitioningByIdAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
 
-  private val getPartitioningByIdAdditionalDataMockLayer = ZLayer.succeed(getPartitioningByIdAdditionalDataMock)
+  private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
 
   // Get Partitioning Checkpoints Mocks
-  private val getPartitioningByIdCheckpointsMock = mock(classOf[GetPartitioningCheckpoints])
+  private val getPartitioningCheckpointsMock = mock(classOf[GetPartitioningCheckpoints])
 
-  when(getPartitioningByIdCheckpointsMock.apply(checkpointQueryDTO1))
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO1))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), checkpointFromDB1))))
-  when(getPartitioningByIdCheckpointsMock.apply(checkpointQueryDTO3)).thenReturn(ZIO.right(Seq.empty))
-  when(getPartitioningByIdCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO3)).thenReturn(ZIO.right(Seq.empty))
+  when(getPartitioningCheckpointsMock.apply(checkpointQueryDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
 
-  private val getPartitioningByIdCheckpointsMockLayer = ZLayer.succeed(getPartitioningByIdCheckpointsMock)
+  private val getPartitioningCheckpointsMockLayer = ZLayer.succeed(getPartitioningCheckpointsMock)
 
   // Get Partitioning By Id Mocks
   private val getPartitioningByIdByIdMock = mock(classOf[GetPartitioningById])
@@ -123,30 +123,30 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningByIdByIdMockLayer = ZLayer.succeed(getPartitioningByIdByIdMock)
 
   // GetPartitioningAdditionalDataV2
-  private val getPartitioningByIdAdditionalDataV2Mock = mock(classOf[GetPartitioningAdditionalDataV2])
+  private val getPartitioningAdditionalDataV2Mock = mock(classOf[GetPartitioningAdditionalDataV2])
 
-  when(getPartitioningByIdAdditionalDataV2Mock.apply(1L)).thenReturn(
+  when(getPartitioningAdditionalDataV2Mock.apply(1L)).thenReturn(
     ZIO.right(Seq(Row(FunctionStatus(0, "success"), Some(AdditionalDataItemFromDB("key", Some("value"), "author")))))
   )
-  when(getPartitioningByIdAdditionalDataV2Mock.apply(2L)).thenReturn(ZIO.fail(new Exception("boom!")))
-  when(getPartitioningByIdAdditionalDataV2Mock.apply(3L)).thenReturn(
+  when(getPartitioningAdditionalDataV2Mock.apply(2L)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningAdditionalDataV2Mock.apply(3L)).thenReturn(
     ZIO.left(DataNotFoundException(FunctionStatus(41, "not found")))
   )
 
-  private val getPartitioningByIdAdditionalDataV2MockLayer = ZLayer.succeed(getPartitioningByIdAdditionalDataV2Mock)
+  private val getPartitioningAdditionalDataV2MockLayer = ZLayer.succeed(getPartitioningAdditionalDataV2Mock)
 
-  private val getPartitioningByIdMeasuresV2Mock = mock(classOf[GetPartitioningMeasuresById])
+  private val getPartitioningMeasuresV2Mock = mock(classOf[GetPartitioningMeasuresById])
 
-  when(getPartitioningByIdMeasuresV2Mock.apply(1L)).thenReturn(
+  when(getPartitioningMeasuresV2Mock.apply(1L)).thenReturn(
     ZIO.right(Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2)))
   )
-  when(getPartitioningByIdMeasuresV2Mock.apply(2L))
+  when(getPartitioningMeasuresV2Mock.apply(2L))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
-  when(getPartitioningByIdMeasuresV2Mock.apply(3L))
+  when(getPartitioningMeasuresV2Mock.apply(3L))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(42, "Measures not found"))))
-  when(getPartitioningByIdMeasuresV2Mock.apply(4L)).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningMeasuresV2Mock.apply(4L)).thenReturn(ZIO.fail(new Exception("boom!")))
 
-  private val getPartitioningByIdMeasuresV2MockLayer = ZLayer.succeed(getPartitioningByIdMeasuresV2Mock)
+  private val getPartitioningMeasuresV2MockLayer = ZLayer.succeed(getPartitioningMeasuresV2Mock)
 
   private val getPartitioningMock = mock(classOf[GetPartitioning])
 
@@ -355,13 +355,13 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       PartitioningRepositoryImpl.layer,
       createPartitioningIfNotExistsMockLayer,
       createPartitioningMockLayer,
-      getPartitioningByIdMeasuresMockLayer,
-      getPartitioningByIdAdditionalDataMockLayer,
+      getPartitioningMeasuresMockLayer,
+      getPartitioningAdditionalDataMockLayer,
       createOrUpdateAdditionalDataMockLayer,
-      getPartitioningByIdCheckpointsMockLayer,
+      getPartitioningCheckpointsMockLayer,
       getPartitioningByIdByIdMockLayer,
-      getPartitioningByIdAdditionalDataV2MockLayer,
-      getPartitioningByIdMeasuresV2MockLayer,
+      getPartitioningAdditionalDataV2MockLayer,
+      getPartitioningMeasuresV2MockLayer,
       getPartitioningMockLayer
     )
   }
