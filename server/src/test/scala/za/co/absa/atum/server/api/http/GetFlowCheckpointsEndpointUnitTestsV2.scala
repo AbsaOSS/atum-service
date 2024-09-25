@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.http
 
 import org.mockito.Mockito.{mock, when}
 import sttp.client3.testing.SttpBackendStub
-import sttp.client3.{Identity, RequestT, ResponseException, UriContext, basicRequest}
+import sttp.client3.{UriContext, basicRequest}
 import sttp.client3.circe.asJson
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
@@ -38,18 +38,18 @@ object GetFlowCheckpointsEndpointUnitTestsV2 extends ZIOSpecDefault with Endpoin
   private val flowControllerMockV2 = mock(classOf[FlowController])
   private val uuid = UUID.randomUUID()
 
-  when(flowControllerMockV2.getFlowCheckpoints(1L, Some(5), Some(0), None))
+  when(flowControllerMockV2.getFlowCheckpointsV2(1L, Some(5), Some(0), None))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(5, 0, hasMore = true), uuid)))
-  when(flowControllerMockV2.getFlowCheckpoints(2L, Some(5), Some(0), None))
+  when(flowControllerMockV2.getFlowCheckpointsV2(2L, Some(5), Some(0), None))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO2), Pagination(5, 0, hasMore = false), uuid)))
-  when(flowControllerMockV2.getFlowCheckpoints(3L, Some(5), Some(0), None))
+  when(flowControllerMockV2.getFlowCheckpointsV2(3L, Some(5), Some(0), None))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
 
   private val flowControllerMockLayerV2 = ZLayer.succeed(flowControllerMockV2)
 
-  private val getFlowCheckpointServerEndpointV2 = getFlowCheckpointsEndpoint.zServerLogic({
+  private val getFlowCheckpointServerEndpointV2 = getFlowCheckpointsEndpointV2.zServerLogic({
       case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
-        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+        FlowController.getFlowCheckpointsV2(flowId, limit, offset, checkpointName)
     })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -75,49 +75,60 @@ object GetFlowCheckpointsEndpointUnitTestsV2 extends ZIOSpecDefault with Endpoin
             StatusCode.Ok
           )
         )
-      }
-//      test("Returns an expected PaginatedResponse[CheckpointV2DTO] with no more data available") {
-//        val response = createBasicRequest(2L, Some(5), Some(0), None)
-//          .send(backendStub)
-//
-//        val body = response.map(_.body)
-//        val statusCode = response.map(_.code)
-//
-//        println(s"body: $body and statusCode: $statusCode")
-//
-//        assertZIO(body <&> statusCode)(
-//          equalTo(
-//            Right(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(5, 0, hasMore = true), uuid)),
-//            StatusCode.Ok
-//          )
-//        )
-//      },
-//      test("Returns expected 404 when checkpoint data for a given ID doesn't exist") {
-//        val response = createBasicRequest(3L, Some(5), Some(0), None)
-//          .send(backendStub)
-//
-//        val statusCode = response.map(_.code)
-//
-//        assertZIO(statusCode)(equalTo(StatusCode.NotFound))
-//      },
-//      test("Returns expected 400 when limit is out of range") {
-//        val response = createBasicRequest(1L, Some(10000), Some(0), None)
-//          .send(backendStub)
-//
-//        val statusCode = response.map(_.code)
-//
-//        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
-//      },
-//      test("Returns expected 400 when offset is negative") {
-//        val response = createBasicRequest(1L, Some(10), Some(-1), None)
-//          .send(backendStub)
-//
-//        val statusCode = response.map(_.code)
-//
-//        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
-//      }
-    )
+      },
+      test("Returns an expected PaginatedResponse[CheckpointV2DTO] with no more data available") {
+        val baseUri = uri"https://test.com/api/v2/flows/2/checkpoints?limit=5&offset=0"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .send(backendStub)
 
+        val body = response.map(_.body)
+        val statusCode = response.map(_.code)
+
+        println(s"body: $body and statusCode: $statusCode")
+
+        assertZIO(body <&> statusCode)(
+          equalTo(
+            Right(PaginatedResponse(Seq(checkpointV2DTO2), Pagination(5, 0, hasMore = false), uuid)),
+            StatusCode.Ok
+          )
+        )
+      },
+      test("Returns expected 404 when checkpoint data for a given ID doesn't exist") {
+        val baseUri = uri"https://test.com/api/v2/flows/3/checkpoints?limit=5&offset=0"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.NotFound))
+      },
+      test("Returns expected 400 when limit is out of range") {
+        val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=1005&offset=0"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+      },
+      test("Returns expected 400 when offset is negative") {
+        val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=-1&offset=0"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+      }
+    )
   }.provide(
     flowControllerMockLayerV2
   )

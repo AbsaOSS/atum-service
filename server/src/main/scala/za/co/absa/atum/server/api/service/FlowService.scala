@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointQueryDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.model.PaginatedResult
 import zio._
@@ -24,7 +24,6 @@ import zio.macros.accessible
 
 @accessible
 trait FlowService {
-  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[ServiceError, Seq[CheckpointDTO]]
 
   def getFlowCheckpointsV2(
     partitioningId: Long,

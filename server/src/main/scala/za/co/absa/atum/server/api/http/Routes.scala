@@ -81,22 +81,14 @@ trait Routes extends Endpoints with ServerOptions {
         }
       ),
       createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
-//      createServerEndpoint[
-//        (Long, Option[Int], Option[Long], Option[String]),
-//        ErrorResponse,
-//        PaginatedResponse[CheckpointV2DTO]
-//      ](getFlowCheckpointsEndpoint, { case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
-//        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
-//      }),
       createServerEndpoint[
         (Long, Option[Int], Option[Long], Option[String]),
         ErrorResponse,
         PaginatedResponse[CheckpointV2DTO]
-      ](getFlowCheckpointsEndpoint, {
+      ](getFlowCheckpointsEndpointV2, {
         case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
-        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+        FlowController.getFlowCheckpointsV2(flowId, limit, offset, checkpointName)
       }),
-      createServerEndpoint(getFlowCheckpointsEndpointV2, FlowController.getFlowCheckpointsV2),
       createServerEndpoint(getPartitioningEndpointV2, PartitioningController.getPartitioningV2),
       createServerEndpoint(getPartitioningMeasuresEndpointV2, PartitioningController.getPartitioningMeasuresV2),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
@@ -117,7 +109,6 @@ trait Routes extends Endpoints with ServerOptions {
       getPartitioningCheckpointsEndpointV2,
       getPartitioningCheckpointEndpointV2,
       getFlowCheckpointsEndpointV2,
-      getFlowCheckpointsEndpoint,
       getPartitioningMeasuresEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))

@@ -16,22 +16,18 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, CheckpointV2DTO}
-import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowCheckpointsV2}
+import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, PaginatedResult}
+import za.co.absa.atum.server.model.{CheckpointItemFromDB, PaginatedResult}
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2.GetFlowCheckpointsArgs
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio._
 import zio.interop.catz.asyncInstance
 
-class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints, getFlowCheckpointsV2Fn: GetFlowCheckpointsV2)
+class FlowRepositoryImpl(getFlowCheckpointsV2Fn: GetFlowCheckpointsV2)
   extends FlowRepository with BaseRepository {
-
-  override def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]] = {
-    dbMultipleResultCallWithAggregatedStatus(getFlowCheckpointsFn(checkpointQueryDTO), "getFlowCheckpoints")
-  }
 
   override def getFlowCheckpointsV2(
     partitioningId: Long,
@@ -59,10 +55,9 @@ class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints, getFlowCheckp
 }
 
 object FlowRepositoryImpl {
-  val layer: URLayer[GetFlowCheckpoints with GetFlowCheckpointsV2, FlowRepository] = ZLayer {
+  val layer: URLayer[GetFlowCheckpointsV2, FlowRepository] = ZLayer {
     for {
-      getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
       getFlowCheckpointsV2 <- ZIO.service[GetFlowCheckpointsV2]
-    } yield new FlowRepositoryImpl(getFlowCheckpoints, getFlowCheckpointsV2)
+    } yield new FlowRepositoryImpl(getFlowCheckpointsV2)
   }
 }

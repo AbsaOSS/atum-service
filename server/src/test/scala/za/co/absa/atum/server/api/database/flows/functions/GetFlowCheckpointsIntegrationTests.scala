@@ -17,39 +17,41 @@
 package za.co.absa.atum.server.api.database.flows.functions
 
 import za.co.absa.atum.server.ConfigProviderTest
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
-import zio.interop.catz.asyncInstance
-import zio.{Scope, ZIO}
+import zio._
 import zio.test._
+import zio.interop.catz.asyncInstance
 
 object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    val partitioningDTO1: PartitioningDTO = Seq(
-      PartitionDTO("stringA", "stringA"),
-      PartitionDTO("stringB", "stringB")
-    )
-
     suite("GetFlowCheckpointsIntegrationTests")(
-      test("Returns expected sequence of flow of Checkpoints with existing partitioning") {
-        val partitioningQueryDTO: CheckpointQueryDTO = CheckpointQueryDTO(
-          partitioning = partitioningDTO1,
-          limit = Some(10),
-          checkpointName = Some("checkpointName")
+      test("Should return checkpoints with the correct flowId, limit, and offset") {
+        // Define the input arguments
+        val flowId: Long = 1L
+        val limit: Option[Int] = Some(10)
+        val offset: Option[Long] = Some(0L)
+        val checkpointName: Option[String] = Some("TestCheckpointName")
+
+        // Define the GetFlowCheckpointsArgs DTO
+        val args = GetFlowCheckpointsV2.GetFlowCheckpointsArgs(
+          flowId = flowId,
+          limit = limit,
+          offset = offset,
+          checkpointName = checkpointName
         )
 
         for {
-          getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
-          result <- getFlowCheckpoints(partitioningQueryDTO)
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+          getFlowCheckpoints <- ZIO.service[GetFlowCheckpointsV2]
+          result <- getFlowCheckpoints(args)
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
       }
     ).provide(
-      GetFlowCheckpoints.layer,
+      GetFlowCheckpointsV2.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )
