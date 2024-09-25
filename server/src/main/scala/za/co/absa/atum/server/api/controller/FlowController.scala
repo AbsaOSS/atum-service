@@ -29,10 +29,10 @@ trait FlowController {
   ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]]
 
   def getFlowCheckpoints(
-    partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long],
-    checkpointName: Option[String] = None,
+                          flowId: Long,
+                          limit: Option[Int],
+                          offset: Option[Long],
+                          checkpointName: Option[String],
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]]
 
 }

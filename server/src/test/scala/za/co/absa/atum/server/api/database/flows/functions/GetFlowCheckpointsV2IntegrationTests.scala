@@ -30,7 +30,7 @@ object GetFlowCheckpointsV2IntegrationTests extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("GetFlowCheckpointsV2IntegrationTests")(
-      test("Should return checkpoints with the correct partitioningId, limit, and offset") {
+      test("Should return checkpoints with the correct flowId, limit, and offset") {
         // Define the input arguments
         val flowId: Long = 1L
         val limit: Option[Int] = Some(10)

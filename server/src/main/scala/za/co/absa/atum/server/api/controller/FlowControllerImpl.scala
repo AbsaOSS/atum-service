@@ -36,13 +36,13 @@ class FlowControllerImpl(flowService: FlowService) extends FlowController with B
   }
 
   override def getFlowCheckpoints(
-    partitioningId: Long,
-    limit: Option[RuntimeFlags],
-    offset: Option[Long],
-    checkpointName: Option[String]
+                                   flowId: Long,
+                                   limit: Option[Int],
+                                   offset: Option[Long],
+                                   checkpointName: Option[String]
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
     val flowData = serviceCall[PaginatedResult[CheckpointV2DTO], PaginatedResult[CheckpointV2DTO]](
-      flowService.getFlowCheckpointsV2(partitioningId, limit, offset, checkpointName)
+      flowService.getFlowCheckpointsV2(flowId, limit, offset, checkpointName)
     )
     mapToPaginatedResponse(limit.get, offset.get, flowData)
   }
