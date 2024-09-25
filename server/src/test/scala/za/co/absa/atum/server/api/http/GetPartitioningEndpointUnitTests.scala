@@ -63,6 +63,13 @@ object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints wi
         val expectedResult = SingleSuccessResponse(partitioningWithIdDTO1, uuid1)
 
         assertZIO(body <&> statusCode)(equalTo(Right(expectedResult), StatusCode.Ok))
+      },
+      test("Returns NotFoundErrorResponse") {
+        val response = getRequestForPartitioningDTO(partitioningDTO2).send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.NotFound))
       }
     )
 
