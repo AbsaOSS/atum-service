@@ -20,7 +20,6 @@ import io.circe.{Decoder, parser}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.http.ApiPaths
-import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.atum.server.model.SuccessResponse._
 import za.co.absa.atum.server.model._
 import zio._

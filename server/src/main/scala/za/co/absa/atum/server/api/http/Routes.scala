@@ -24,18 +24,17 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
 
 import java.util.UUID
-import scala.collection.immutable.ListMap
 
 trait Routes extends Endpoints with ServerOptions {
 

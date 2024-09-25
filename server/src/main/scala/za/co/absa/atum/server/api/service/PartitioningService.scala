@@ -18,11 +18,8 @@ package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
-
-import scala.collection.immutable.ListMap
 
 @accessible
 trait PartitioningService {

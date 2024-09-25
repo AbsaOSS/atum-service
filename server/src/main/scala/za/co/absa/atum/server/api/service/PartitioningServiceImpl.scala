@@ -20,10 +20,8 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.PartitioningRepository
-import za.co.absa.atum.server.model.{CheckpointFromDB, PaginatedResult}
+import za.co.absa.atum.server.model.CheckpointFromDB
 import zio._
-
-import scala.collection.immutable.ListMap
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     extends PartitioningService
