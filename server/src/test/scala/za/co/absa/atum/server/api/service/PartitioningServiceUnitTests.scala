@@ -84,6 +84,13 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningMeasuresById(3L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.getPartitioning(partitioningDTO1))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningRepositoryMock.getPartitioning(partitioningDTO2))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+  when(partitioningRepositoryMock.getPartitioning(partitioningDTO3))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -234,6 +241,25 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningMeasuresById(3L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningSuite")(
+        test("GetPartitioning - Returns expected Right with PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningService.getPartitioning(partitioningDTO1)
+          } yield assertTrue(result == partitioningWithIdDTO1)
+        },
+        test("GetPartitioning - Returns expected NotFoundServiceError") {
+          for {
+            result <- PartitioningService.getPartitioning(partitioningDTO2).exit
+          } yield assertTrue(
+            result == Exit.fail(NotFoundServiceError("Failed to perform 'getPartitioning': Partitioning not found"))
+          )
+        },
+        test("GetPartitioning - Returns expected GeneralServiceError") {
+          assertZIO(PartitioningService.getPartitioning(partitioningDTO3).exit)(
             failsWithA[GeneralServiceError]
           )
         }

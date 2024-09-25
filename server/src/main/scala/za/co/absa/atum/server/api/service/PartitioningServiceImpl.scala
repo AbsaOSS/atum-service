@@ -111,7 +111,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   ): IO[ServiceError, PartitioningWithIdDTO] = {
     repositoryCall(
       partitioningRepository.getPartitioning(partitioning),
-      "getPartitionings"
+      "getPartitioning"
     )
   }
 }

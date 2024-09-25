@@ -28,6 +28,6 @@ package object dto {
   implicit val encodeAdditionalDataDTO: Encoder[InitialAdditionalDataDTO] = Encoder.encodeMap[String, Option[String]]
 
   // Implicit encoders and decoders for PartitioningDTO
-  implicit val decodePartitioningDTO: Decoder[PartitioningDTO] = Decoder.decodeSeq[PartitionDTO]
-  implicit val encodePartitioningDTO: Encoder[PartitioningDTO] = Encoder.encodeSeq[PartitionDTO]
+//  implicit val decodePartitioningDTO: Decoder[PartitioningDTO] = Decoder.decodeSeq[PartitionDTO]
+//  implicit val encodePartitioningDTO: Encoder[PartitioningDTO] = Encoder.encodeSeq[PartitionDTO]
 }

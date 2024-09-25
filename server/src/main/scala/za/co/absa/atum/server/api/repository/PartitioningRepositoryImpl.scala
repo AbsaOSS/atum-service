@@ -25,8 +25,6 @@ import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 
-import scala.collection.immutable.ListMap
-
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
   createPartitioningFn: CreatePartitioning,
@@ -36,7 +34,8 @@ class PartitioningRepositoryImpl(
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
   getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
-  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
+  getPartitioningFn: GetPartitioning
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -101,16 +100,9 @@ class PartitioningRepositoryImpl(
   }
 
   override def getPartitioningById(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
-    dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
-      .flatMap {
-        case Some(PartitioningFromDB(id, partitioning, author)) =>
-          val decodingResult = partitioning.as[PartitioningDTO]
-          decodingResult.fold(
-            error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
-            partitioningDTO => ZIO.succeed(PartitioningWithIdDTO(id, partitioningDTO, author))
-          )
-        case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
-      }
+    processPartitioningFromDBOptionIO(
+      dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
+    )
   }
 
   override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
@@ -123,7 +115,31 @@ class PartitioningRepositoryImpl(
   override def getPartitioning(
     partitioning: PartitioningDTO
   ): IO[DatabaseError, PartitioningWithIdDTO] = {
-    ???
+    processPartitioningFromDBOptionIO(
+      dbSingleResultCallWithStatus(
+        getPartitioningFn(PartitioningForDB.fromSeqPartitionDTO(partitioning)),
+        "getPartitioning"
+      )
+    )
+  }
+
+  private def processPartitioningFromDBOptionIO(
+    partitioningFromDBOptionIO: IO[DatabaseError, Option[PartitioningFromDB]]
+  ): IO[DatabaseError, PartitioningWithIdDTO] = {
+    partitioningFromDBOptionIO.flatMap {
+      case Some(PartitioningFromDB(id, partitioning, author)) =>
+        val decodingResult = partitioning.as[PartitioningForDB]
+        decodingResult.fold(
+          error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
+          partitioningForDB => {
+            val partitioningDTO: PartitioningDTO = partitioningForDB.keys.map { key =>
+              PartitionDTO(key, partitioningForDB.keysToValues(key))
+            }
+            ZIO.succeed(PartitioningWithIdDTO(id, partitioningDTO, author))
+          }
+        )
+      case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
+    }
   }
 }
 
@@ -137,7 +153,8 @@ object PartitioningRepositoryImpl {
       with GetPartitioningCheckpoints
       with GetPartitioningAdditionalDataV2
       with GetPartitioningById
-      with GetPartitioningMeasuresById,
+      with GetPartitioningMeasuresById
+      with GetPartitioning,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -150,6 +167,7 @@ object PartitioningRepositoryImpl {
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
       getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
+      getPartitioning <- ZIO.service[GetPartitioning]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       createPartitioning,
@@ -159,7 +177,8 @@ object PartitioningRepositoryImpl {
       getPartitioningCheckpoints,
       getPartitioningById,
       getPartitioningAdditionalDataV2,
-      getPartitioningMeasuresV2
+      getPartitioningMeasuresV2,
+      getPartitioning
     )
   }
 }
