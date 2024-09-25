@@ -60,6 +60,8 @@ docker build -t absaoss/atum-service:latest --progress=plain --no-cache \
 --build-arg LDAP_SSL_CERTS_PATH=./certs \
 --build-arg SSL_DNAME="CN=*.my.domain.com, OU=project1, O=mycorp, L=Johannesburg, ST=Gauteng, C=za" ./
 
+# If you want to run it against AWS, you need to add AWS related credentials into the docker container, possibly via 
+# environment variables; but you can also run it against your a local Postgres DB (in host or another Docker container).
 docker run /absolute/path/resource.conf:/opt/config/resource.conf \
   -e AWS_ACCESS_KEY_ID="abc" -e AWS_SECRET_ACCESS_KEY="def" -e AWS_SESSION_TOKEN="xyz" \
   -p 8080:8080 -p 8443:8443 absaoss/atum-service:latest
