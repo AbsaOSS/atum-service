@@ -24,7 +24,7 @@ import java.time.ZonedDateTime
 import java.util.{Base64, UUID}
 import MeasureResultDTO.TypedValue
 import io.circe.syntax.EncoderOps
-import za.co.absa.atum.model.ResultValueType
+import za.co.absa.atum.model.{ResultValueType, dto}
 
 trait TestData {
 
@@ -358,7 +358,7 @@ trait TestData {
   }
 
   protected def encodePartitioningDTO(partitioningDTO: PartitioningDTO): String = {
-    Base64.getUrlEncoder.encodeToString(partitioningDTO.asJson.noSpaces.getBytes("UTF-8"))
+    Base64.getUrlEncoder.encodeToString(partitioningDTO.asJson(dto.encodePartitioningDTO).noSpaces.getBytes("UTF-8"))
   }
 
 }
