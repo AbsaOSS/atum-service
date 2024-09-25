@@ -16,20 +16,18 @@
 
 package za.co.absa.atum.server.api.http
 
-import io.circe.syntax.EncoderOps
-import io.circe.{Decoder, Encoder, parser}
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
-import sttp.tapir.{Codec, CodecFormat, DecodeResult, PublicEndpoint, Validator, endpoint}
+import sttp.tapir.{PublicEndpoint, endpoint}
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 
-import java.util.{Base64, UUID}
+import java.util.UUID
 
 trait Endpoints extends BaseEndpoints {
 
@@ -163,19 +161,5 @@ trait Endpoints extends BaseEndpoints {
 
   protected val healthEndpoint: PublicEndpoint[Unit, Unit, Unit, Any] =
     endpoint.get.in(Health)
-
-  implicit def base64JsonCodec[T: Decoder: Encoder]: Codec[String, T, CodecFormat.TextPlain] = {
-    Codec.string.mapDecode { base64Str =>
-      val decodedBytes = Base64.getDecoder.decode(base64Str)
-      val jsonStr = new String(decodedBytes, "UTF-8")
-      parser.decode[T](jsonStr) match {
-        case Left(value) => DecodeResult.Error(jsonStr, value)
-        case Right(value) => DecodeResult.Value(value)
-      }
-    }(data => {
-      val jsonStr = data.asJson.noSpaces
-      Base64.getEncoder.encodeToString(jsonStr.getBytes("UTF-8"))
-    })
-  }
 
 }
