@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.{CheckpointFromDB, PaginatedResult}
+import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
 
