@@ -62,7 +62,7 @@ docker build -t absaoss/atum-service:latest --progress=plain --no-cache \
 
 # If you want to run it against AWS, you need to add AWS related credentials into the docker container, possibly via 
 # environment variables; but you can also run it against your a local Postgres DB (in host or another Docker container).
-docker run /absolute/path/resource.conf:/opt/config/resource.conf \
+docker run -v /absolute/path/resource.conf:/opt/config/resource.conf \
   -e AWS_ACCESS_KEY_ID="abc" -e AWS_SECRET_ACCESS_KEY="def" -e AWS_SESSION_TOKEN="xyz" \
   -p 8080:8080 -p 8443:8443 absaoss/atum-service:latest
 
