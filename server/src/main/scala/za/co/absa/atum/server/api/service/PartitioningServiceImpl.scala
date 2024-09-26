@@ -18,9 +18,8 @@ package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.PartitioningRepository
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
@@ -59,23 +58,6 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
-  override def getPartitioningCheckpoints(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[ServiceError, Seq[CheckpointDTO]] = {
-    for {
-      checkpointsFromDB <- repositoryCall(
-        partitioningRepository.getPartitioningCheckpoints(checkpointQueryDTO),
-        "getPartitioningCheckpoints"
-      )
-      checkpointDTOs <- ZIO.foreach(checkpointsFromDB) { checkpointFromDB =>
-        ZIO
-          .fromEither(CheckpointFromDB.toCheckpointDTO(checkpointQueryDTO.partitioning, checkpointFromDB))
-          .mapError(error => GeneralServiceError(error.getMessage))
-      }
-    } yield checkpointDTOs
-
-  }
-
   override def getPartitioningAdditionalDataV2(partitioningId: Long): IO[ServiceError, AdditionalDataDTO] = {
     repositoryCall(
       partitioningRepository.getPartitioningAdditionalDataV2(partitioningId),
@@ -104,6 +86,16 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def getFlowPartitionings(
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
+    repositoryCall(
+      partitioningRepository.getFlowPartitionings(flowId, limit, offset),
+      "getFlowPartitionings"
+    )
+  }
 }
 
 object PartitioningServiceImpl {

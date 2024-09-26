@@ -20,8 +20,8 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse, PaginatedResult}
+import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
@@ -48,16 +48,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalData)
 
     atumContextDTOEffect
-  }
-
-  override def getPartitioningCheckpointsV2(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
-    mapToMultiSuccessResponse(
-      serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
-      )
-    )
   }
 
   override def getPartitioningAdditionalDataV2(
@@ -111,6 +101,20 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToMultiSuccessResponse(
       serviceCall[Seq[MeasureDTO], Seq[MeasureDTO]](
         partitioningService.getPartitioningMeasuresById(partitioningId)
+      )
+    )
+  }
+
+  override def getFlowPartitionings(
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit.get,
+      offset.get,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.getFlowPartitionings(flowId, limit, offset)
       )
     )
   }

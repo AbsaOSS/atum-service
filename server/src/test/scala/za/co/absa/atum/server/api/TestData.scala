@@ -25,6 +25,7 @@ import java.util.UUID
 import MeasureResultDTO.TypedValue
 import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.ResultValueType
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
 
 trait TestData {
 
@@ -73,6 +74,20 @@ trait TestData {
     id = 1111L,
     partitioning = partitioningAsJson,
     author = "author"
+  )
+
+  protected val getFlowPartitioningsResult1: GetFlowPartitioningsResult = GetFlowPartitioningsResult(
+    id = 1111L,
+    partitioningJson = partitioningAsJson,
+    author = "author",
+    hasMore = false
+  )
+
+  protected val getFlowPartitioningsResult2: GetFlowPartitioningsResult = GetFlowPartitioningsResult(
+    id = 1111L,
+    partitioningJson = partitioningAsJson,
+    author = "author",
+    hasMore = true
   )
 
   // Partitioning with ID DTO
@@ -353,7 +368,8 @@ trait TestData {
     measuredColumns = checkpointV2DTO1.measurements.head.measure.measuredColumns,
     measurementValue = checkpointV2DTO1.measurements.head.result.asJson,
     checkpointStartTime = checkpointV2DTO1.processStartTime,
-    checkpointEndTime = checkpointV2DTO1.processEndTime
+    checkpointEndTime = checkpointV2DTO1.processEndTime,
+    hasMore = true
   )
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {

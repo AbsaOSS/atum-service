@@ -17,12 +17,12 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.CheckpointDTO
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.ServiceError.{ConflictServiceError, GeneralServiceError, NotFoundServiceError}
+import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.server.model.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model._
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
@@ -55,13 +55,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.patchAdditionalData(2L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
-  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO1))
-    .thenReturn(ZIO.succeed(Seq(checkpointDTO1, checkpointDTO2)))
-  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO2))
-    .thenReturn(ZIO.succeed(Seq.empty))
-  when(partitioningServiceMock.getPartitioningCheckpoints(checkpointQueryDTO3))
-    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
-
   when(partitioningServiceMock.getPartitioningAdditionalDataV2(1L))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningServiceMock.getPartitioningAdditionalDataV2(2L))
@@ -75,6 +68,15 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
   when(partitioningServiceMock.getPartitioning(99L))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
+  when(partitioningServiceMock.getFlowPartitionings(1L, Some(1), Some(0)))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningServiceMock.getFlowPartitionings(2L, Some(1), Some(0)))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningServiceMock.getFlowPartitionings(3L, Some(1), Some(0)))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+  when(partitioningServiceMock.getFlowPartitionings(4L, Some(1), Some(0)))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Flow not found")))
 
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
@@ -132,23 +134,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("GetPartitioningCheckpointsSuite")(
-        test("Returns expected Seq[MeasureDTO]") {
-          for {
-            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO1)
-          } yield assertTrue(result.data == Seq(checkpointDTO1, checkpointDTO2))
-        },
-        test("Returns expected empty sequence") {
-          for {
-            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO2)
-          } yield assertTrue(result.data == Seq.empty[CheckpointDTO])
-        },
-        test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO3).exit)(
-            failsWithA[InternalServerErrorResponse]
-          )
-        }
-      ),
       suite("GetPartitioningSuite")(
         test("Returns expected PartitioningWithIdDTO") {
           for {
@@ -183,6 +168,32 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected NotFoundServiceError") {
           assertZIO(PartitioningController.getPartitioningAdditionalDataV2(3L).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        }
+      ),
+      suite("GetFlowPartitioningsSuite")(
+        test("Returns expected PaginatedResponse[PartitioningWithIdDTO] with more data available") {
+          for {
+            result <- PartitioningController.getFlowPartitionings(1L, Some(1), Some(0))
+            expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = true), uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected PaginatedResponse[PartitioningWithIdDTO] with no more data available") {
+          for {
+            result <- PartitioningController.getFlowPartitionings(2L, Some(1), Some(0))
+            expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = false), uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected InternalServerErrorResponse when service call fails with GeneralServiceError") {
+          assertZIO(PartitioningController.getFlowPartitionings(3L, Some(1), Some(0)).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundErrorResponse when service call fails with NotFoundServiceError") {
+          assertZIO(PartitioningController.getFlowPartitionings(4L, Some(1), Some(0)).exit)(
             failsWithA[NotFoundErrorResponse]
           )
         }
