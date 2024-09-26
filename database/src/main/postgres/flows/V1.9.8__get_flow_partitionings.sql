@@ -47,7 +47,6 @@ CREATE OR REPLACE FUNCTION flows.get_flow_partitionings(
 --
 -- Status codes:
 --      11 - OK
---      12 - OK with no partitionings found
 --      41 - Flow not found
 --
 -------------------------------------------------------------------------------
