@@ -21,6 +21,7 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.CheckpointRepository
+import za.co.absa.atum.server.model.PaginatedResult.ResultHasMore
 import zio.test.Assertion.failsWithA
 import zio.test._
 import zio._
@@ -48,6 +49,11 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(checkpointV2DTO1))
   when(checkpointRepositoryMock.getCheckpointV2(partitioningId, checkpointV2DTO2.id))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("not found")))
+
+  when(checkpointRepositoryMock.getPartitioningCheckpoints(1L, None, None, None))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
+    when(checkpointRepositoryMock.getPartitioningCheckpoints(0L, None, None, None))
+      .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   private val checkpointRepositoryMockLayer = ZLayer.succeed(checkpointRepositoryMock)
 
@@ -101,6 +107,20 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Fails with an expected NotFoundServiceError") {
           assertZIO(CheckpointService.getCheckpointV2(partitioningId, checkpointV2DTO2.id).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningCheckpointsSuite")(
+        test("Returns expected Right with Seq[CheckpointDTO]") {
+          for {
+            result <- CheckpointService.getPartitioningCheckpoints(1L, None, None, None)
+          } yield assertTrue {
+            result == ResultHasMore(Seq(checkpointV2DTO1))
+          }
+        },
+        test("Returns expected NotFoundServiceError") {
+          assertZIO(CheckpointService.getPartitioningCheckpoints(0L, None, None, None).exit)(
             failsWithA[NotFoundServiceError]
           )
         }

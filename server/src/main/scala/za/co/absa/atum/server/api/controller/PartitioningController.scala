@@ -41,12 +41,7 @@ trait PartitioningController {
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
 
-  def getPartitioningCheckpointsV2(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]]
-
   def getPartitioningV2(partitioningId: Long): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]]
-
 
   def getPartitioningMeasuresV2(
     partitioningId: Long
