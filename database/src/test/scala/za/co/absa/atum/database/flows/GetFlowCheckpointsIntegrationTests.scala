@@ -411,8 +411,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
       }
 
     // Assertions for measures
-    assert(actualMeasures.map(_.measureName).toSet == Set("cnt", "sum"))
-    assert(actualMeasures.map(_.measureColumns).toSet == Set(Seq("col1"), Seq("colOther")))
+    assert(actualMeasures.map(_.measureName).toSet == Set("avg", "sum"))
+    assert(actualMeasures.map(_.measureColumns).toSet == Set(List("a", "b"), List("colOther")))
 
     actualMeasures.foreach { currVal =>
       val currValStr = currVal.measurementValue.value
