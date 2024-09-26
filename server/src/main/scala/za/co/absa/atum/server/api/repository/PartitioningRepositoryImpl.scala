@@ -37,7 +37,6 @@ class PartitioningRepositoryImpl(
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
-  getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
   getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
@@ -87,15 +86,6 @@ class PartitioningRepositoryImpl(
       getPartitioningAdditionalDataFn(partitioning),
       "getPartitioningAdditionalData"
     ).map(_.map { case AdditionalDataFromDB(adName, adValue) => adName.get -> adValue }.toMap)
-  }
-
-  override def getPartitioningCheckpoints(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[DatabaseError, Seq[CheckpointFromDB]] = {
-    dbMultipleResultCallWithAggregatedStatus(
-      getPartitioningCheckpointsFn(checkpointQueryDTO),
-      "getPartitioningCheckpoints"
-    )
   }
 
   override def getPartitioningAdditionalDataV2(partitioningId: Long): IO[DatabaseError, AdditionalDataDTO] = {
@@ -155,7 +145,6 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMeasures
       with GetPartitioningAdditionalData
       with CreateOrUpdateAdditionalData
-      with GetPartitioningCheckpoints
       with GetPartitioningAdditionalDataV2
       with GetPartitioningById
       with GetPartitioningMeasuresById
@@ -168,7 +157,6 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
-      getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
       getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
@@ -179,7 +167,6 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures,
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
-      getPartitioningCheckpoints,
       getPartitioningById,
       getPartitioningAdditionalDataV2,
       getPartitioningMeasuresV2,

@@ -108,12 +108,17 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val getPartitioningCheckpointsEndpointV2
-    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
+  : PublicEndpoint[(Long, Option[Int], Option[Long], Option[String]), ErrorResponse, PaginatedResponse[
+    CheckpointV2DTO
+  ], Any] = {
     apiV2.get
-      .in(GetPartitioningCheckpoints)
-      .in(jsonBody[CheckpointQueryDTO])
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
+      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
+      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
+      .in(query[Option[String]]("checkpoint-name"))
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
+      .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   protected val getFlowCheckpointsEndpointV2
