@@ -148,6 +148,19 @@ trait Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  protected val getFlowPartitioningsEndpointV2
+  : PublicEndpoint[(Long, Option[Int], Option[Long]), ErrorResponse, PaginatedResponse[
+    PartitioningWithIdDTO
+  ], Any] = {
+    apiV2.get
+      .in(V2Paths.Flows / path[Long]("flowId") / V2Paths.Partitionings)
+      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
+      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
   protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
     endpoint.get.in(ZioMetrics).out(stringBody)
   }

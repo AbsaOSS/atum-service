@@ -17,6 +17,11 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.{
+  GetFlowPartitioningsArgs,
+  GetFlowPartitioningsResult
+}
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
@@ -24,6 +29,7 @@ import za.co.absa.atum.server.model._
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
@@ -33,7 +39,8 @@ class PartitioningRepositoryImpl(
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
-  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
+  getFlowPartitioningsFn: GetFlowPartitionings
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -108,6 +115,27 @@ class PartitioningRepositoryImpl(
       })
   }
 
+  override def getFlowPartitionings(
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getFlowPartitioningsFn(GetFlowPartitioningsArgs(flowId, limit, offset)),
+      "getFlowPartitionings"
+    ).map(_.flatten)
+      .flatMap { partitioningResults =>
+        ZIO
+          .fromEither(GetFlowPartitioningsResult.resultsToPartitioningWithIdDTOs(partitioningResults, Seq.empty))
+          .mapBoth(
+            error => GeneralDatabaseError(error.getMessage),
+            partitionings => {
+              if (partitioningResults.nonEmpty && partitioningResults.head.hasMore) ResultHasMore(partitionings)
+              else ResultNoMore(partitionings)
+            }
+          )
+      }
+  }
 }
 
 object PartitioningRepositoryImpl {
@@ -119,7 +147,8 @@ object PartitioningRepositoryImpl {
       with CreateOrUpdateAdditionalData
       with GetPartitioningAdditionalDataV2
       with GetPartitioningById
-      with GetPartitioningMeasuresById,
+      with GetPartitioningMeasuresById
+      with GetFlowPartitionings,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -131,6 +160,7 @@ object PartitioningRepositoryImpl {
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
       getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
+      getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       createPartitioning,
@@ -139,7 +169,8 @@ object PartitioningRepositoryImpl {
       createOrUpdateAdditionalData,
       getPartitioningById,
       getPartitioningAdditionalDataV2,
-      getPartitioningMeasuresV2
+      getPartitioningMeasuresV2,
+      getFlowPartitionings
     )
   }
 }

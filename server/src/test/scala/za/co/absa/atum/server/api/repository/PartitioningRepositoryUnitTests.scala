@@ -19,17 +19,20 @@ package za.co.absa.atum.server.api.repository
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException, ErrorInDataException}
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB}
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, PaginatedResult}
 
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
@@ -137,6 +140,20 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningMeasuresV2Mock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val getPartitioningMeasuresV2MockLayer = ZLayer.succeed(getPartitioningMeasuresV2Mock)
+
+  private val getFlowPartitioningsMock = mock(classOf[GetFlowPartitionings])
+
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(1L, Some(10), Some(0)))
+    ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult1)))))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(2L, Some(10), Some(0)))
+  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult2)))))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(0L, None, None)))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Flow not found"))))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(3L, Some(10), Some(0)))
+    ).thenReturn(ZIO.fail(new Exception("boom!")))
+
+  private val getFlowPartitioningsMockLayer = ZLayer.succeed(getFlowPartitioningsMock)
+
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -295,6 +312,28 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[GeneralDatabaseError]
           )
         }
+      ),
+      suite("GetFlowPartitioningsSuite")(
+        test("Returns expected ResultNoMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningRepository.getFlowPartitionings(1L, Some(10), Some(0))
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected ResultHasMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningRepository.getFlowPartitionings(2L, Some(10), Some(0))
+          } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getFlowPartitionings(0L, None, None).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getFlowPartitionings(3L, Some(10), Some(0)).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
       )
     ).provide(
       PartitioningRepositoryImpl.layer,
@@ -305,7 +344,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       createOrUpdateAdditionalDataMockLayer,
       getPartitioningByIdMockLayer,
       getPartitioningAdditionalDataV2MockLayer,
-      getPartitioningMeasuresV2MockLayer
+      getPartitioningMeasuresV2MockLayer,
+      getFlowPartitioningsMockLayer
     )
   }
 

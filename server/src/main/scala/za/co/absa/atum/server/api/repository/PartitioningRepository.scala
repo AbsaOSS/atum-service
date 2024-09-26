@@ -18,6 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
 
@@ -44,6 +45,11 @@ trait PartitioningRepository {
 
   def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
 
-
   def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]]
+
+  def getFlowPartitionings(
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
 }
