@@ -45,7 +45,7 @@ trait Endpoints extends BaseEndpoints {
   protected val postCheckpointEndpointV2
     : PublicEndpoint[(Long, CheckpointV2DTO), ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String), Any] = {
     apiV2.post
-      .in(V2Paths.Partitionings / path[Long]("flowId") / V2Paths.Checkpoints)
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
       .in(jsonBody[CheckpointV2DTO])
       .out(statusCode(StatusCode.Created))
       .out(jsonBody[SingleSuccessResponse[CheckpointV2DTO]])
@@ -81,7 +81,7 @@ trait Endpoints extends BaseEndpoints {
   protected val getPartitioningAdditionalDataEndpointV2
   : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
     apiV2.get
-      .in(V2Paths.Partitionings / path[Long]("flowId") / V2Paths.AdditionalData)
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
@@ -92,7 +92,7 @@ trait Endpoints extends BaseEndpoints {
     AdditionalDataDTO
   ], Any] = {
     apiV2.patch
-      .in(V2Paths.Partitionings / path[Long]("flowId") / V2Paths.AdditionalData)
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .in(jsonBody[AdditionalDataPatchDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
@@ -102,7 +102,7 @@ trait Endpoints extends BaseEndpoints {
   protected val getPartitioningCheckpointEndpointV2
     : PublicEndpoint[(Long, UUID), ErrorResponse, SingleSuccessResponse[CheckpointV2DTO], Any] = {
     apiV2.get
-      .in(V2Paths.Partitionings / path[Long]("flowId") / V2Paths.Checkpoints / path[UUID]("checkpointId"))
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints / path[UUID]("checkpointId"))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[CheckpointV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
@@ -132,7 +132,7 @@ trait Endpoints extends BaseEndpoints {
   protected val getPartitioningEndpointV2
     : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO], Any] = {
     apiV2.get
-      .in(V2Paths.Partitionings / path[Long]("flowId"))
+      .in(V2Paths.Partitionings / path[Long]("partitioningId"))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
@@ -141,7 +141,7 @@ trait Endpoints extends BaseEndpoints {
   protected val getPartitioningMeasuresEndpointV2
   : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
     apiV2.get
-      .in(V2Paths.Partitionings / path[Long]("flowId") / V2Paths.Measures)
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Measures)
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[MultiSuccessResponse[MeasureDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
