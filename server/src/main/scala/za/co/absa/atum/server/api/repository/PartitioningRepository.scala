@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
 
@@ -43,10 +43,19 @@ trait PartitioningRepository {
     additionalData: AdditionalDataPatchDTO
   ): IO[DatabaseError, AdditionalDataDTO]
 
-  def getPartitioningCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
-
-  def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
-
+  def getPartitioningById(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
 
   def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]]
+
+  def getPartitioning(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, PartitioningWithIdDTO]
+
+  def getFlowPartitionings(
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO]
 }

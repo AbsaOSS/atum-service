@@ -64,3 +64,10 @@ object InternalServerErrorResponse {
   implicit val decoderInternalServerErrorResponse: Decoder[InternalServerErrorResponse] = deriveDecoder
   implicit val encoderInternalServerErrorResponse: Encoder[InternalServerErrorResponse] = deriveEncoder
 }
+
+final case class ErrorInDataErrorResponse(message: String, requestId: UUID = UUID.randomUUID()) extends ErrorResponse
+
+object ErrorInDataErrorResponse {
+  implicit val decoderInternalServerErrorResponse: Decoder[ErrorInDataErrorResponse] = deriveDecoder
+  implicit val encoderInternalServerErrorResponse: Encoder[ErrorInDataErrorResponse] = deriveEncoder
+}

@@ -14,31 +14,33 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database.runs.functions
+package za.co.absa.atum.server.api.database.flows.functions
 
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
-import zio._
+import zio.{Scope, ZIO}
+import zio.test.{Spec, TestEnvironment, assertTrue}
 import zio.interop.catz.asyncInstance
-import zio.test._
 
-object GetPartitioningAdditionalDataV2IntegrationTests extends ConfigProviderTest {
-  override def spec: Spec[TestEnvironment with Scope, Any] = {
-    suite("GetPartitioningAdditionalDataSuite")(
-      test("Returns expected sequence of Additional data with provided partitioning") {
-        val partitioningId: Long = 0L
+object GetFlowPartitioningsIntegrationTests extends ConfigProviderTest {
+
+  override def spec: Spec[Unit with TestEnvironment with Scope, Any] = {
+    suite("GetFlowPartitioningsIntegrationTests")(
+      test("Returns expected DataNotFoundException when flow not found") {
         for {
-          getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
-          result <- getPartitioningAdditionalDataV2(partitioningId)
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+          getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
+          result <- getFlowPartitionings(GetFlowPartitioningsArgs(0L, None, None))
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Flow not found"))))
       }
-    ).provide(
-      GetPartitioningAdditionalDataV2.layer,
-      PostgresDatabaseProvider.layer,
-      TestTransactorProvider.layerWithRollback
     )
-  }
+  }.provide(
+    GetFlowPartitionings.layer,
+    PostgresDatabaseProvider.layer,
+    TestTransactorProvider.layerWithRollback
+  )
+
 }

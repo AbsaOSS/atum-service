@@ -20,8 +20,8 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse}
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse._
+import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, PaginatedResult}
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
@@ -50,16 +50,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     atumContextDTOEffect
   }
 
-  override def getPartitioningCheckpointsV2(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
-    mapToMultiSuccessResponse(
-      serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
-      )
-    )
-  }
-
   override def getPartitioningAdditionalDataV2(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
@@ -69,12 +59,12 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
     )
   }
-  override def getPartitioningV2(
+  override def getPartitioningByIdV2(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
     mapToSingleSuccessResponse(
       serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
-        partitioningService.getPartitioning(partitioningId)
+        partitioningService.getPartitioningById(partitioningId)
       )
     )
   }
@@ -111,6 +101,46 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToMultiSuccessResponse(
       serviceCall[Seq[MeasureDTO], Seq[MeasureDTO]](
         partitioningService.getPartitioningMeasuresById(partitioningId)
+      )
+    )
+  }
+
+  override def getFlowPartitionings(
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit.get,
+      offset.get,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.getFlowPartitionings(flowId, limit, offset)
+      )
+    )
+  }
+
+  override def getPartitioning(
+    partitioning: String
+  ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
+    for {
+      decodedPartitions <- ZIO
+        .fromEither(base64Decode[PartitioningDTO](partitioning))
+        .mapError(error => GeneralErrorResponse(error.getMessage))
+      response <-
+        mapToSingleSuccessResponse[PartitioningWithIdDTO](
+          serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
+            partitioningService.getPartitioning(decodedPartitions)
+          )
+        )
+    } yield response
+  }
+
+  override def getPartitioningMainFlow(
+    partitioningId: Long
+  ): IO[ErrorResponse, SingleSuccessResponse[FlowDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[FlowDTO, FlowDTO](
+        partitioningService.getPartitioningMainFlow(partitioningId)
       )
     )
   }
