@@ -92,6 +92,7 @@ trait Routes extends Endpoints with ServerOptions {
       ),
       createServerEndpoint(getPartitioningByIdEndpointV2, PartitioningController.getPartitioningByIdV2),
       createServerEndpoint(getPartitioningMeasuresEndpointV2, PartitioningController.getPartitioningMeasuresV2),
+      createServerEndpoint(getPartitioningMainFlowEndpointV2, PartitioningController.getPartitioningMainFlow),
       createServerEndpoint[
         (Long, Option[Int], Option[Long]),
         ErrorResponse,
@@ -122,7 +123,8 @@ trait Routes extends Endpoints with ServerOptions {
       getPartitioningMeasuresEndpointV2,
       getPartitioningEndpointV2,
       getPartitioningMeasuresEndpointV2,
-      getFlowPartitioningsEndpointV2
+      getFlowPartitioningsEndpointV2,
+      getPartitioningMainFlowEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, "Atum API", "1.0"))

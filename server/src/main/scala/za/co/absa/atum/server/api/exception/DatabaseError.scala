@@ -23,5 +23,6 @@ object DatabaseError {
   case class GeneralDatabaseError(message: String) extends DatabaseError
   case class ConflictDatabaseError(message: String) extends DatabaseError
   case class NotFoundDatabaseError(message: String) extends DatabaseError
+  case class ErrorInDataDatabaseError(message: String) extends DatabaseError
 
 }

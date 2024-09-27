@@ -134,6 +134,17 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
         )
     } yield response
   }
+
+  override def getPartitioningMainFlow(
+    partitioningId: Long
+  ): IO[ErrorResponse, SingleSuccessResponse[FlowDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[FlowDTO, FlowDTO](
+        partitioningService.getPartitioningMainFlow(partitioningId)
+      )
+    )
+  }
+
 }
 
 object PartitioningControllerImpl {

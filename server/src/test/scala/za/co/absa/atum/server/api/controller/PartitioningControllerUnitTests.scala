@@ -85,6 +85,13 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.getFlowPartitionings(4L, Some(1), Some(0)))
     .thenReturn(ZIO.fail(NotFoundServiceError("Flow not found")))
 
+  when(partitioningServiceMock.getPartitioningMainFlow(111L))
+    .thenReturn(ZIO.succeed(flowDTO1))
+  when(partitioningServiceMock.getPartitioningMainFlow(222L))
+    .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
+  when(partitioningServiceMock.getPartitioningMainFlow(999L))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -223,11 +230,29 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[InternalServerErrorResponse]
           )
         }
+      ),
+      suite("GetPartitioningMainFlowSuite")(
+        test("Returns expected FlowDTO") {
+          for {
+            result <- PartitioningController.getPartitioningMainFlow(111L)
+            expected = SingleSuccessResponse(flowDTO1, uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected NotFoundErrorResponse") {
+          assertZIO(PartitioningController.getPartitioningMainFlow(222L).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        },
+        test("Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.getPartitioningMainFlow(999L).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        }
       )
     ).provide(
       PartitioningControllerImpl.layer,
       partitioningServiceMockLayer
     )
   }
-
 }

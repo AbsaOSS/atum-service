@@ -45,6 +45,13 @@ trait BaseEndpoints {
     )
   }
 
+  protected val errorInDataOneOfVariant: EndpointOutput.OneOfVariant[ErrorInDataErrorResponse] = {
+    oneOfVariantFromMatchType(
+      StatusCode.Conflict,
+      jsonBody[ErrorInDataErrorResponse]
+    )
+  }
+
   private val badRequestOneOfVariant: EndpointOutput.OneOfVariant[BadRequestResponse] = {
     oneOfVariantFromMatchType(
       StatusCode.BadRequest,

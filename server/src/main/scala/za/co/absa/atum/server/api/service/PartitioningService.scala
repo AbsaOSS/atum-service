@@ -54,4 +54,6 @@ trait PartitioningService {
     limit: Option[Int],
     offset: Option[Long]
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningMainFlow(partitioningId: Long): IO[ServiceError, FlowDTO]
 }

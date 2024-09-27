@@ -56,4 +56,8 @@ trait PartitioningController {
     limit: Option[Int],
     offset: Option[Long]
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
+
+  def getPartitioningMainFlow(
+    partitioningId: Long
+  ): IO[ErrorResponse, SingleSuccessResponse[FlowDTO]]
 }

@@ -38,7 +38,8 @@ class PartitioningRepositoryImpl (
   getPartitioningByIdFn: GetPartitioningById,
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
   getPartitioningFn: GetPartitioning,
-  getFlowPartitioningsFn: GetFlowPartitionings
+  getFlowPartitioningsFn: GetFlowPartitionings,
+  getPartitioningMainFlowFn: GetPartitioningMainFlow
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -156,6 +157,17 @@ class PartitioningRepositoryImpl (
           )
       }
   }
+
+  override def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO] = {
+    dbSingleResultCallWithStatus(
+      getPartitioningMainFlowFn(partitioningId),
+      "getPartitioningMainFlow"
+    ).flatMap {
+      case Some(flowDTO) => ZIO.succeed(flowDTO)
+      case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
+    }
+  }
+
 }
 
 object PartitioningRepositoryImpl {
@@ -169,7 +181,8 @@ object PartitioningRepositoryImpl {
       with GetPartitioningById
       with GetPartitioningMeasuresById
       with GetPartitioning
-      with GetFlowPartitionings,
+      with GetFlowPartitionings
+      with GetPartitioningMainFlow,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -183,6 +196,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasuresById <- ZIO.service[GetPartitioningMeasuresById]
       getPartitioning <- ZIO.service[GetPartitioning]
       getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
+      getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       createPartitioning,
@@ -193,7 +207,8 @@ object PartitioningRepositoryImpl {
       getPartitioningById,
       getPartitioningMeasuresById,
       getPartitioning,
-      getFlowPartitionings
+      getFlowPartitionings,
+      getPartitioningMainFlow
     )
   }
 
