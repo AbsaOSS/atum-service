@@ -69,11 +69,6 @@ object GetFlowCheckpointsV2 {
      checkpointName: Option[String]
   )
 
-  object GetFlowCheckpointsArgs {
-    implicit val encoder: Encoder[GetFlowCheckpointsArgs] = deriveEncoder
-    implicit val decoder: Decoder[GetFlowCheckpointsArgs] = deriveDecoder
-  }
-
   val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpointsV2] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
