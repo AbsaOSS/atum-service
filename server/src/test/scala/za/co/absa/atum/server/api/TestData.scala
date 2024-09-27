@@ -16,16 +16,16 @@
 
 package za.co.absa.atum.server.api
 
-import io.circe.{Json, parser}
+import io.circe.parser
+import io.circe.syntax.EncoderOps
+import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.{ResultValueType, dto}
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
 import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, MeasureFromDB, PartitioningFromDB}
 
 import java.time.ZonedDateTime
-import java.util.UUID
-import MeasureResultDTO.TypedValue
-import io.circe.syntax.EncoderOps
-import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
+import java.util.{Base64, UUID}
 
 trait TestData {
 
@@ -50,24 +50,19 @@ trait TestData {
     authorIfNew = ""
   )
 
-  private val partitioningAsJson: Json = parser
+  private val partitioningAsJson = parser
     .parse(
       """
-        |[
-        |  {
-        |    "key": "key1",
-        |    "value": "val1"
-        |  },
-        |  {
-        |    "key": "key2",
-        |    "value": "val2"
+        |{
+        |  "version": 1,
+        |  "keys": ["key1", "key2"],
+        |  "keysToValues": {
+        |    "key1": "val1",
+        |    "key2": "val2"
         |  }
-        |]
+        |}
         |""".stripMargin
-    )
-    .getOrElse {
-      throw new Exception("Failed to parse JSON")
-    }
+    ).getOrElse(throw new Exception("Failed to parse JSON"))
 
   // Partitioning from the DB
   protected val partitioningFromDB1: PartitioningFromDB = PartitioningFromDB(
@@ -390,6 +385,10 @@ trait TestData {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
     val additionalData: InitialAdditionalDataDTO = Map.empty
     AtumContextDTO(partitioningSubmitDTO.partitioning, measures, additionalData)
+  }
+
+  protected def encodePartitioningDTO(partitioningDTO: PartitioningDTO): String = {
+    Base64.getUrlEncoder.encodeToString(partitioningDTO.asJson(dto.encodePartitioningDTO).noSpaces.getBytes("UTF-8"))
   }
 
 }

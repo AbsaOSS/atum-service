@@ -32,7 +32,7 @@ import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, PaginatedResult}
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, PartitioningForDB}
 
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
@@ -90,7 +90,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2))
       )
     )
-  when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getPartitioningMeasuresMockLayer = ZLayer.succeed(getPartitioningMeasuresMock)
 
@@ -99,21 +99,21 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   when(getPartitioningAdditionalDataMock.apply(partitioningDTO1))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(0, "success"), AdditionalDataFromDB(Some("key"), Some("value"))))))
-  when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(getPartitioningAdditionalDataMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getPartitioningAdditionalDataMockLayer = ZLayer.succeed(getPartitioningAdditionalDataMock)
 
   // Get Partitioning By Id Mocks
-  private val getPartitioningByIdMock = mock(classOf[GetPartitioningById])
+  private val getPartitioningByIdByIdMock = mock(classOf[GetPartitioningById])
 
-  when(getPartitioningByIdMock.apply(1111L))
+  when(getPartitioningByIdByIdMock.apply(1111L))
     .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK"), Some(partitioningFromDB1))))
-  when(getPartitioningByIdMock.apply(9999L))
+  when(getPartitioningByIdByIdMock.apply(9999L))
     .thenReturn(ZIO.fail(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
-  when(getPartitioningByIdMock.apply(8888L))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(getPartitioningByIdByIdMock.apply(8888L))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
 
-  private val getPartitioningByIdMockLayer = ZLayer.succeed(getPartitioningByIdMock)
+  private val getPartitioningByIdByIdMockLayer = ZLayer.succeed(getPartitioningByIdByIdMock)
 
   // GetPartitioningAdditionalDataV2
   private val getPartitioningAdditionalDataV2Mock = mock(classOf[GetPartitioningAdditionalDataV2])
@@ -121,7 +121,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningAdditionalDataV2Mock.apply(1L)).thenReturn(
     ZIO.right(Seq(Row(FunctionStatus(0, "success"), Some(AdditionalDataItemFromDB("key", Some("value"), "author")))))
   )
-  when(getPartitioningAdditionalDataV2Mock.apply(2L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(getPartitioningAdditionalDataV2Mock.apply(2L)).thenReturn(ZIO.fail(new Exception("boom!")))
   when(getPartitioningAdditionalDataV2Mock.apply(3L)).thenReturn(
     ZIO.left(DataNotFoundException(FunctionStatus(41, "not found")))
   )
@@ -138,9 +138,20 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
   when(getPartitioningMeasuresV2Mock.apply(3L))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(42, "Measures not found"))))
-  when(getPartitioningMeasuresV2Mock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(getPartitioningMeasuresV2Mock.apply(4L)).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getPartitioningMeasuresV2MockLayer = ZLayer.succeed(getPartitioningMeasuresV2Mock)
+
+  private val getPartitioningMock = mock(classOf[GetPartitioning])
+
+  when(getPartitioningMock.apply(PartitioningForDB.fromSeqPartitionDTO(partitioningDTO1)))
+    .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK"), Some(partitioningFromDB1))))
+  when(getPartitioningMock.apply(PartitioningForDB.fromSeqPartitionDTO(partitioningDTO2)))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getPartitioningMock.apply(PartitioningForDB.fromSeqPartitionDTO(partitioningDTO3)))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
+
+  private val getPartitioningMockLayer = ZLayer.succeed(getPartitioningMock)
 
   private val getFlowPartitioningsMock = mock(classOf[GetFlowPartitionings])
 
@@ -284,22 +295,22 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         }
       ),
       suite("GetPartitioningByIdSuite")(
-        test("Returns expected PartitioningWithIdDTO") {
+        test("GetPartitioningById - Returns expected PartitioningWithIdDTO") {
           for {
-            result <- PartitioningRepository.getPartitioning(1111L)
+            result <- PartitioningRepository.getPartitioningById(1111L)
           } yield assertTrue(result == partitioningWithIdDTO1)
         },
-        test("Returns expected DataNotFoundException") {
+        test("GetPartitioningById - Returns expected DataNotFoundException") {
           for {
-            result <- PartitioningRepository.getPartitioning(9999L).exit
+            result <- PartitioningRepository.getPartitioningById(9999L).exit
           } yield assertTrue(
             result == Exit.fail(
               NotFoundDatabaseError("Exception caused by operation: 'getPartitioningById': (41) Partitioning not found")
             )
           )
         },
-        test("Returns expected GeneralDatabaseError") {
-          assertZIO(PartitioningRepository.getPartitioning(8888L).exit)(
+        test("GetPartitioningById - Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningById(8888L).exit)(
             failsWithA[GeneralDatabaseError]
           )
         }
@@ -369,20 +380,38 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[GeneralDatabaseError]
           )
         }
+      ),
+      suite("GetPartitioningSuite")(
+        test("GetPartitioning - Returns expected PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningRepository.getPartitioning(partitioningDTO1)
+          } yield assertTrue(result == partitioningWithIdDTO1)
+        },
+        test("GetPartitioning - Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioning(partitioningDTO2).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("GetPartitioning - Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioning(partitioningDTO3).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
       )
-    ).provide(
-      PartitioningRepositoryImpl.layer,
-      createPartitioningIfNotExistsMockLayer,
-      createPartitioningMockLayer,
-      getPartitioningMeasuresMockLayer,
-      getPartitioningAdditionalDataMockLayer,
-      createOrUpdateAdditionalDataMockLayer,
-      getPartitioningByIdMockLayer,
-      getPartitioningAdditionalDataV2MockLayer,
-      getPartitioningMeasuresV2MockLayer,
-      getFlowPartitioningsMockLayer,
-      getPartitioningMainFlowMockLayer
     )
-  }
+  }.provide(
+    PartitioningRepositoryImpl.layer,
+    createPartitioningIfNotExistsMockLayer,
+    createPartitioningMockLayer,
+    getPartitioningMeasuresMockLayer,
+    getPartitioningAdditionalDataMockLayer,
+    createOrUpdateAdditionalDataMockLayer,
+    getPartitioningByIdByIdMockLayer,
+    getPartitioningAdditionalDataV2MockLayer,
+    getPartitioningMockLayer,
+    getPartitioningMeasuresV2MockLayer,
+    getFlowPartitioningsMockLayer,
+    getPartitioningMainFlowMockLayer
+  )
 
 }

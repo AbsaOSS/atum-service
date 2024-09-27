@@ -62,11 +62,18 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.getPartitioningAdditionalDataV2(3L))
     .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
 
-  when(partitioningServiceMock.getPartitioning(11L))
+  when(partitioningServiceMock.getPartitioningById(11L))
     .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
-  when(partitioningServiceMock.getPartitioning(22L))
+  when(partitioningServiceMock.getPartitioningById(22L))
     .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
-  when(partitioningServiceMock.getPartitioning(99L))
+  when(partitioningServiceMock.getPartitioningById(99L))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
+  when(partitioningServiceMock.getPartitioning(partitioningDTO1))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningServiceMock.getPartitioning(partitioningDTO2))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
+  when(partitioningServiceMock.getPartitioning(partitioningDTO3))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMock.getFlowPartitionings(1L, Some(1), Some(0)))
@@ -141,21 +148,21 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("GetPartitioningSuite")(
+      suite("GetPartitioningByIdSuite")(
         test("Returns expected PartitioningWithIdDTO") {
           for {
-            result <- PartitioningController.getPartitioningV2(11L)
+            result <- PartitioningController.getPartitioningByIdV2(11L)
             expected = SingleSuccessResponse(partitioningWithIdDTO1, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
         test("Returns expected NotFoundErrorResponse") {
-          assertZIO(PartitioningController.getPartitioningV2(22L).exit)(
+          assertZIO(PartitioningController.getPartitioningByIdV2(22L).exit)(
             failsWithA[NotFoundErrorResponse]
           )
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.getPartitioningV2(99L).exit)(
+          assertZIO(PartitioningController.getPartitioningByIdV2(99L).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }
@@ -202,6 +209,25 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected NotFoundErrorResponse when service call fails with NotFoundServiceError") {
           assertZIO(PartitioningController.getFlowPartitionings(4L, Some(1), Some(0)).exit)(
             failsWithA[NotFoundErrorResponse]
+          )
+        }
+      ),
+      suite("GetPartitioningSuite")(
+        test("GetPartitioning - Returns expected PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningController.getPartitioning(encodePartitioningDTO(partitioningDTO1))
+            expected = SingleSuccessResponse(partitioningWithIdDTO1, uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("GetPartitioning - Returns expected NotFoundErrorResponse") {
+          assertZIO(PartitioningController.getPartitioning(encodePartitioningDTO(partitioningDTO2)).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        },
+        test("GetPartitioning - Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.getPartitioning(encodePartitioningDTO(partitioningDTO3)).exit)(
+            failsWithA[InternalServerErrorResponse]
           )
         }
       ),

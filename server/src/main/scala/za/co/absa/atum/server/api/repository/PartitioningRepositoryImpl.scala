@@ -17,13 +17,10 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.{
-  GetFlowPartitioningsArgs,
-  GetFlowPartitioningsResult
-}
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
+import za.co.absa.atum.server.api.database.flows.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model._
 import zio._
@@ -31,15 +28,16 @@ import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 
-class PartitioningRepositoryImpl(
+class PartitioningRepositoryImpl (
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
   createPartitioningFn: CreatePartitioning,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
-  getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
+  getPartitioningByIdFn: GetPartitioningById,
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
+  getPartitioningFn: GetPartitioning,
   getFlowPartitioningsFn: GetFlowPartitionings,
   getPartitioningMainFlowFn: GetPartitioningMainFlow
 ) extends PartitioningRepository
@@ -96,17 +94,10 @@ class PartitioningRepositoryImpl(
     ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
   }
 
-  override def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
-    dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
-      .flatMap {
-        case Some(PartitioningFromDB(id, partitioning, author)) =>
-          val decodingResult = partitioning.as[PartitioningDTO]
-          decodingResult.fold(
-            error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
-            partitioningDTO => ZIO.succeed(PartitioningWithIdDTO(id, partitioningDTO, author))
-          )
-        case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
-      }
+  override def getPartitioningById(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
+    processPartitioningFromDBOptionIO(
+      dbSingleResultCallWithStatus(getPartitioningByIdFn(partitioningId), "getPartitioningById")
+    )
   }
 
   override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
@@ -116,6 +107,35 @@ class PartitioningRepositoryImpl(
       })
   }
 
+  override def getPartitioning(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, PartitioningWithIdDTO] = {
+    processPartitioningFromDBOptionIO(
+      dbSingleResultCallWithStatus(
+        getPartitioningFn(PartitioningForDB.fromSeqPartitionDTO(partitioning)),
+        "getPartitioning"
+      )
+    )
+  }
+
+  private def processPartitioningFromDBOptionIO(
+    partitioningFromDBOptionIO: IO[DatabaseError, Option[PartitioningFromDB]]
+  ): IO[DatabaseError, PartitioningWithIdDTO] = {
+    partitioningFromDBOptionIO.flatMap {
+      case Some(PartitioningFromDB(id, partitioning, author)) =>
+        val decodingResult = partitioning.as[PartitioningForDB]
+        decodingResult.fold(
+          error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
+          partitioningForDB => {
+            val partitioningDTO: PartitioningDTO = partitioningForDB.keys.map { key =>
+              PartitionDTO(key, partitioningForDB.keysToValues(key))
+            }
+            ZIO.succeed(PartitioningWithIdDTO(id, partitioningDTO, author))
+          }
+        )
+      case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
+    }
+  }
   override def getFlowPartitionings(
     flowId: Long,
     limit: Option[Int],
@@ -137,6 +157,7 @@ class PartitioningRepositoryImpl(
           )
       }
   }
+
   override def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO] = {
     dbSingleResultCallWithStatus(
       getPartitioningMainFlowFn(partitioningId),
@@ -159,6 +180,7 @@ object PartitioningRepositoryImpl {
       with GetPartitioningAdditionalDataV2
       with GetPartitioningById
       with GetPartitioningMeasuresById
+      with GetPartitioning
       with GetFlowPartitionings
       with GetPartitioningMainFlow,
     PartitioningRepository
@@ -169,9 +191,10 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
-      getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
-      getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
+      getPartitioningById <- ZIO.service[GetPartitioningById]
+      getPartitioningMeasuresById <- ZIO.service[GetPartitioningMeasuresById]
+      getPartitioning <- ZIO.service[GetPartitioning]
       getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
     } yield new PartitioningRepositoryImpl(
@@ -180,11 +203,13 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures,
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
-      getPartitioningById,
       getPartitioningAdditionalDataV2,
-      getPartitioningMeasuresV2,
+      getPartitioningById,
+      getPartitioningMeasuresById,
+      getPartitioning,
       getFlowPartitionings,
       getPartitioningMainFlow
     )
   }
+
 }
