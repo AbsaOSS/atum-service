@@ -33,7 +33,7 @@ class FlowRepositoryImpl(getFlowCheckpointsV2Fn: GetFlowCheckpointsV2)
     partitioningId: Long,
     limit: Option[Int],
     offset: Option[Long],
-    checkpointName: Option[String] = None,
+    checkpointName: Option[String]
    ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
       dbMultipleResultCallWithAggregatedStatus(
         getFlowCheckpointsV2Fn(GetFlowCheckpointsArgs(partitioningId, limit, offset, checkpointName)),

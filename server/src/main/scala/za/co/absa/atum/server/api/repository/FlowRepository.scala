@@ -29,7 +29,7 @@ trait FlowRepository {
     partitioningId: Long,
     limit: Option[Int],
     offset: Option[Long],
-    checkpointName: Option[String] = None,
+    checkpointName: Option[String]
   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]]
 
 }
