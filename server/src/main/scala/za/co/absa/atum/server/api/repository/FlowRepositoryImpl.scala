@@ -37,7 +37,7 @@ class FlowRepositoryImpl(getFlowCheckpointsV2Fn: GetFlowCheckpointsV2)
    ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
       dbMultipleResultCallWithAggregatedStatus(
         getFlowCheckpointsV2Fn(GetFlowCheckpointsArgs(partitioningId, limit, offset, checkpointName)),
-        "getPartitioningCheckpoints"
+        "getFlowCheckpoints"
       )
         .map(_.flatten)
         .flatMap { checkpointItems =>
