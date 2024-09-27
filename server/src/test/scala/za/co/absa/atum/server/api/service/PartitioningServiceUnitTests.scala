@@ -23,6 +23,7 @@ import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.PartitioningRepository
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio.test.Assertion.failsWithA
 import zio.test._
 import zio._
@@ -61,11 +62,6 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO2))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO1))
-    .thenReturn(ZIO.succeed(Seq(checkpointFromDB1, checkpointFromDB2)))
-  when(partitioningRepositoryMock.getPartitioningCheckpoints(checkpointQueryDTO2))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
-
   when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(1L))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(2L))
@@ -84,6 +80,14 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningMeasuresById(3L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.getFlowPartitionings(1L, Some(1), Some(1L)))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningRepositoryMock.getFlowPartitionings(2L, Some(1), Some(1L)))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningRepositoryMock.getFlowPartitionings(3L, Some(1), Some(1L)))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getFlowPartitionings(4L, Some(1), Some(1L)))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Flow not found")))
 
   when(partitioningRepositoryMock.getPartitioningMainFlow(1L))
     .thenReturn(ZIO.succeed(flowDTO1))
@@ -185,20 +189,6 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("GetPartitioningCheckpointsSuite")(
-        test("Returns expected Right with Seq[CheckpointDTO]") {
-          for {
-            result <- PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO1)
-          } yield assertTrue {
-            result == Seq(checkpointDTO1, checkpointDTO2.copy(partitioning = checkpointDTO1.partitioning))
-          }
-        },
-        test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.getPartitioningCheckpoints(checkpointQueryDTO2).exit)(
-            failsWithA[ServiceError]
-          )
-        }
-      ),
       suite("GetPartitioningAdditionalDataV2Suite")(
         test("Returns expected Right with AdditionalDataDTO") {
           for {
@@ -263,11 +253,32 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[GeneralServiceError]
           )
         }
+      ),
+      suite("GetFlowPartitioningsSuite")(
+        test("Returns expected Right with ResultHasMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningService.getFlowPartitionings(1L, Some(1), Some(1L))
+          } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected Right with ResultNoMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningService.getFlowPartitionings(2L, Some(1), Some(1L))
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected GeneralServiceError when database error occurs") {
+          assertZIO(PartitioningService.getFlowPartitionings(3L, Some(1), Some(1L)).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        },
+        test("Returns expected NotFoundServiceError when flow doesn't exist") {
+          assertZIO(PartitioningService.getFlowPartitionings(4L, Some(1), Some(1L)).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        }
       )
-    ).provide(
-      PartitioningServiceImpl.layer,
-      partitioningRepositoryMockLayer
     )
-
-  }
+  }.provide(
+    PartitioningServiceImpl.layer,
+    partitioningRepositoryMockLayer
+  )
 }

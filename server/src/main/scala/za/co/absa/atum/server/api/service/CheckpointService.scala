@@ -18,6 +18,7 @@ package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
 
@@ -28,4 +29,10 @@ trait CheckpointService {
   def saveCheckpoint(checkpointDTO: CheckpointDTO): IO[ServiceError, Unit]
   def getCheckpointV2(partitioningId: Long, checkpointId: UUID): IO[ServiceError, CheckpointV2DTO]
   def saveCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[ServiceError, Unit]
+  def getPartitioningCheckpoints(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long],
+    checkpointName: Option[String]
+  ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]]
 }

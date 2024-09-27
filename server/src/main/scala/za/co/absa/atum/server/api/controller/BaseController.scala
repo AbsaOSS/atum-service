@@ -19,6 +19,7 @@ package za.co.absa.atum.server.api.controller
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.http.ApiPaths
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.atum.server.model.SuccessResponse._
 import za.co.absa.atum.server.model._
 import zio._
@@ -53,6 +54,17 @@ trait BaseController {
     effect: IO[ErrorResponse, Seq[A]]
   ): IO[ErrorResponse, MultiSuccessResponse[A]] = {
     effect.map(MultiSuccessResponse(_))
+  }
+
+  protected def mapToPaginatedResponse[A](
+    limit: Int,
+    offset: Long,
+    effect: IO[ErrorResponse, PaginatedResult[A]]
+  ): IO[ErrorResponse, PaginatedResponse[A]] = {
+    effect.map {
+      case ResultHasMore(data) => PaginatedResponse(data, Pagination(limit, offset, hasMore = true))
+      case ResultNoMore(data) => PaginatedResponse(data, Pagination(limit, offset, hasMore = false))
+    }
   }
 
   // Root-anchored URL path
