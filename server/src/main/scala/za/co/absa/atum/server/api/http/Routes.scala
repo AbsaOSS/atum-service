@@ -103,7 +103,8 @@ trait Routes extends Endpoints with ServerOptions {
       getPartitioningCheckpointsEndpointV2,
       getPartitioningCheckpointEndpointV2,
       getFlowCheckpointsEndpointV2,
-      getPartitioningMeasuresEndpointV2
+      getPartitioningMeasuresEndpointV2,
+      getPartitioningEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, SwaggerApiName, SwaggerApiVersion))

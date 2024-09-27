@@ -104,7 +104,7 @@ trait Endpoints extends BaseEndpoints {
     ], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings)
-      .in(query[String]("partitioning")).description("base64 encoded json representation of partitioning")
+      .in(query[String]("partitioning").description("base64 encoded json representation of partitioning"))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
