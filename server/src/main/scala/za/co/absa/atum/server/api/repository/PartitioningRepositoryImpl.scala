@@ -28,7 +28,7 @@ import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 
-class PartitioningRepositoryImpl(
+class PartitioningRepositoryImpl (
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
   createPartitioningFn: CreatePartitioning,
   getPartitioningMeasuresFn: GetPartitioningMeasures,

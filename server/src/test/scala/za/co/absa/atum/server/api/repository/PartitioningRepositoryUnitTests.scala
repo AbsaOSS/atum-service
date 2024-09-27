@@ -363,19 +363,19 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       )
-    ).provide(
-      PartitioningRepositoryImpl.layer,
-      createPartitioningIfNotExistsMockLayer,
-      createPartitioningMockLayer,
-      getPartitioningMeasuresMockLayer,
-      getPartitioningAdditionalDataMockLayer,
-      createOrUpdateAdditionalDataMockLayer,
-      getPartitioningByIdByIdMockLayer,
-      getPartitioningAdditionalDataV2MockLayer,
-      getPartitioningMockLayer,
-      getPartitioningMeasuresV2MockLayer,
-      getFlowPartitioningsMockLayer
     )
-  }
+  }.provide(
+    PartitioningRepositoryImpl.layer,
+    createPartitioningIfNotExistsMockLayer,
+    createPartitioningMockLayer,
+    getPartitioningMeasuresMockLayer,
+    getPartitioningAdditionalDataMockLayer,
+    createOrUpdateAdditionalDataMockLayer,
+    getPartitioningByIdByIdMockLayer,
+    getPartitioningAdditionalDataV2MockLayer,
+    getPartitioningMockLayer,
+    getPartitioningMeasuresV2MockLayer,
+    getFlowPartitioningsMockLayer
+  )
 
 }
