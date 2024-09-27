@@ -43,9 +43,13 @@ trait PartitioningRepository {
     additionalData: AdditionalDataPatchDTO
   ): IO[DatabaseError, AdditionalDataDTO]
 
-  def getPartitioning(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
+  def getPartitioningById(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
 
   def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]]
+
+  def getPartitioning(
+    partitioning: PartitioningDTO
+  ): IO[DatabaseError, PartitioningWithIdDTO]
 
   def getFlowPartitionings(
     flowId: Long,

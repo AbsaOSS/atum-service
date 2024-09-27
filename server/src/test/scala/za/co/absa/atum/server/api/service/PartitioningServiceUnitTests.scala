@@ -67,10 +67,10 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(2L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.getPartitioning(1111L)).thenReturn(ZIO.succeed(partitioningWithIdDTO1))
-  when(partitioningRepositoryMock.getPartitioning(9999L))
+  when(partitioningRepositoryMock.getPartitioningById(1111L)).thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningRepositoryMock.getPartitioningById(9999L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
-  when(partitioningRepositoryMock.getPartitioning(8888L))
+  when(partitioningRepositoryMock.getPartitioningById(8888L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   when(partitioningRepositoryMock.getPartitioningMeasuresById(1L))
@@ -78,6 +78,13 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningMeasuresById(2L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("boom!")))
   when(partitioningRepositoryMock.getPartitioningMeasuresById(3L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  when(partitioningRepositoryMock.getPartitioning(partitioningDTO1))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningRepositoryMock.getPartitioning(partitioningDTO2))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+  when(partitioningRepositoryMock.getPartitioning(partitioningDTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getFlowPartitionings(1L, Some(1), Some(1L)))
@@ -196,17 +203,17 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
       suite("GetPartitioningByIDSuite")(
         test("Returns expected Right with PartitioningWithIdDTO") {
           for {
-            result <- PartitioningService.getPartitioning(1111L)
+            result <- PartitioningService.getPartitioningById(1111L)
           } yield assertTrue(result == partitioningWithIdDTO1)
         },
         test("Returns expected GeneralDatabaseError") {
           for {
-            result <- PartitioningService.getPartitioning(9999L).exit
+            result <- PartitioningService.getPartitioningById(9999L).exit
           } yield assertTrue(result == Exit.fail(GeneralServiceError("Failed to perform 'getPartitioning': boom!")))
         },
         test("Returns expected NotFoundDatabaseError") {
           for {
-            result <- PartitioningService.getPartitioning(8888L).exit
+            result <- PartitioningService.getPartitioningById(8888L).exit
           } yield assertTrue(
             result == Exit.fail(NotFoundServiceError("Failed to perform 'getPartitioning': Partitioning not found"))
           )
@@ -225,6 +232,25 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningMeasuresById(3L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningSuite")(
+        test("GetPartitioning - Returns expected Right with PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningService.getPartitioning(partitioningDTO1)
+          } yield assertTrue(result == partitioningWithIdDTO1)
+        },
+        test("GetPartitioning - Returns expected NotFoundServiceError") {
+          for {
+            result <- PartitioningService.getPartitioning(partitioningDTO2).exit
+          } yield assertTrue(
+            result == Exit.fail(NotFoundServiceError("Failed to perform 'getPartitioning': Partitioning not found"))
+          )
+        },
+        test("GetPartitioning - Returns expected GeneralServiceError") {
+          assertZIO(PartitioningService.getPartitioning(partitioningDTO3).exit)(
             failsWithA[GeneralServiceError]
           )
         }
