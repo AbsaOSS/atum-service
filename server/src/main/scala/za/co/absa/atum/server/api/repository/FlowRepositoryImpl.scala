@@ -30,13 +30,13 @@ class FlowRepositoryImpl(getFlowCheckpointsV2Fn: GetFlowCheckpointsV2)
   extends FlowRepository with BaseRepository {
 
   override def getFlowCheckpointsV2(
-    partitioningId: Long,
+    flowId: Long,
     limit: Option[Int],
     offset: Option[Long],
     checkpointName: Option[String]
    ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
       dbMultipleResultCallWithAggregatedStatus(
-        getFlowCheckpointsV2Fn(GetFlowCheckpointsArgs(partitioningId, limit, offset, checkpointName)),
+        getFlowCheckpointsV2Fn(GetFlowCheckpointsArgs(flowId, limit, offset, checkpointName)),
         "getFlowCheckpoints"
       )
         .map(_.flatten)
