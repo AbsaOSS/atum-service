@@ -16,14 +16,16 @@
 
 package za.co.absa.atum.server.api
 
-import io.circe.{Json, parser}
+import io.circe.parser
+import io.circe.syntax.EncoderOps
+import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.{ResultValueType, dto}
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
 import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, MeasureFromDB, PartitioningFromDB}
+
 import java.time.ZonedDateTime
 import java.util.{Base64, UUID}
-import MeasureResultDTO.TypedValue
-import io.circe.syntax.EncoderOps
-import za.co.absa.atum.model.{ResultValueType, dto}
 
 trait TestData {
 

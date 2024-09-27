@@ -16,9 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import io.circe.syntax.EncoderOps
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{CheckpointDTO, PartitioningDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.PartitioningService
@@ -28,8 +26,6 @@ import za.co.absa.atum.server.model._
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
-
-import java.util.Base64
 
 object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   private val partitioningServiceMock = mock(classOf[PartitioningService])
@@ -141,23 +137,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.patchPartitioningAdditionalDataV2(2L, additionalDataPatchDTO1).exit)(
-            failsWithA[InternalServerErrorResponse]
-          )
-        }
-      ),
-      suite("GetPartitioningCheckpointsSuite")(
-        test("Returns expected Seq[MeasureDTO]") {
-          for {
-            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO1)
-          } yield assertTrue(result.data == Seq(checkpointDTO1, checkpointDTO2))
-        },
-        test("Returns expected empty sequence") {
-          for {
-            result <- PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO2)
-          } yield assertTrue(result.data == Seq.empty[CheckpointDTO])
-        },
-        test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.getPartitioningCheckpointsV2(checkpointQueryDTO3).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }

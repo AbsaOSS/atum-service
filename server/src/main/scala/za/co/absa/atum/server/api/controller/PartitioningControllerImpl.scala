@@ -21,7 +21,7 @@ import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.server.model.SuccessResponse._
-import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, PaginatedResult}
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)

@@ -17,13 +17,10 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.{
-  GetFlowPartitioningsArgs,
-  GetFlowPartitioningsResult
-}
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
+import za.co.absa.atum.server.api.database.flows.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.model._
 import zio._
@@ -37,11 +34,10 @@ class PartitioningRepositoryImpl(
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
-  getPartitioningByIdFn: GetPartitioningById,
   getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
+  getPartitioningByIdFn: GetPartitioningById,
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
   getPartitioningFn: GetPartitioning,
-  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
   getFlowPartitioningsFn: GetFlowPartitionings
 ) extends PartitioningRepository
     with BaseRepository {
@@ -173,7 +169,6 @@ object PartitioningRepositoryImpl {
       with GetPartitioningById
       with GetPartitioningMeasuresById
       with GetPartitioning
-      with GetPartitioningMeasuresById
       with GetFlowPartitionings,
     PartitioningRepository
   ] = ZLayer {
@@ -183,9 +178,9 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
-      getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
-      getPartitioningMeasuresV2 <- ZIO.service[GetPartitioningMeasuresById]
+      getPartitioningById <- ZIO.service[GetPartitioningById]
+      getPartitioningMeasuresById <- ZIO.service[GetPartitioningMeasuresById]
       getPartitioning <- ZIO.service[GetPartitioning]
       getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
     } yield new PartitioningRepositoryImpl(
@@ -194,12 +189,12 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasures,
       getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
-      getPartitioningById,
       getPartitioningAdditionalDataV2,
-      getPartitioningMeasuresV2,
-      getFlowPartitionings,
-      getPartitioningMeasuresV2,
-      getPartitioning
+      getPartitioningById,
+      getPartitioningMeasuresById,
+      getPartitioning,
+      getFlowPartitionings
     )
   }
+
 }

@@ -21,11 +21,10 @@ import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
 import za.co.absa.atum.server.model.SuccessResponse._
 import sttp.tapir.{PublicEndpoint, Validator, endpoint}
-import za.co.absa.atum.server.api.http.ApiPaths._
+import za.co.absa.atum.server.api.http.ApiPaths.{Health, ZioMetrics, _}
 
 import java.util.UUID
 
@@ -131,15 +130,6 @@ trait Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
-  }
-
-  protected val getFlowCheckpointsEndpointV2
-    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
-    apiV2.post
-      .in(GetFlowCheckpoints)
-      .in(jsonBody[CheckpointQueryDTO])
-      .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
   }
 
   protected val getPartitioningByIdEndpointV2

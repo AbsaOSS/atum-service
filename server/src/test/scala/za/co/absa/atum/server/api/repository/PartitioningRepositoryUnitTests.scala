@@ -32,7 +32,7 @@ import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
-import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, PaginatedResult, PartitioningForDB}
+import za.co.absa.atum.server.model.{AdditionalDataFromDB, AdditionalDataItemFromDB, PartitioningForDB}
 
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
@@ -372,7 +372,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       createOrUpdateAdditionalDataMockLayer,
       getPartitioningByIdByIdMockLayer,
       getPartitioningAdditionalDataV2MockLayer,
-      getPartitioningMeasuresV2MockLayer,
       getPartitioningMockLayer,
       getPartitioningMeasuresV2MockLayer,
       getFlowPartitioningsMockLayer
