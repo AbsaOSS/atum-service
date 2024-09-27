@@ -19,8 +19,7 @@ CREATE OR REPLACE FUNCTION flows._add_to_parent_flows(
     IN  i_fk_partitioning           BIGINT,
     IN  i_by_user                   TEXT,
     OUT status                      INTEGER,
-    OUT status_text                 TEXT,
-    OUT id_flow                     BIGINT
+    OUT status_text                 TEXT
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------

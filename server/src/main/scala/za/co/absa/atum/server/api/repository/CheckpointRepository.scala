@@ -18,6 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 import zio.macros.accessible
 
@@ -28,4 +29,10 @@ trait CheckpointRepository {
   def writeCheckpoint(checkpointDTO: CheckpointDTO): IO[DatabaseError, Unit]
   def writeCheckpointV2(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[DatabaseError, Unit]
   def getCheckpointV2(partitioningId: Long, checkpointId: UUID): IO[DatabaseError, CheckpointV2DTO]
+  def getPartitioningCheckpoints(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long],
+    checkpointName: Option[String]
+  ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]]
 }

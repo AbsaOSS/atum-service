@@ -50,16 +50,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     atumContextDTOEffect
   }
 
-  override def getPartitioningCheckpointsV2(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
-    mapToMultiSuccessResponse(
-      serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-        partitioningService.getPartitioningCheckpoints(checkpointQueryDTO)
-      )
-    )
-  }
-
   override def getPartitioningAdditionalDataV2(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
@@ -111,6 +101,20 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToMultiSuccessResponse(
       serviceCall[Seq[MeasureDTO], Seq[MeasureDTO]](
         partitioningService.getPartitioningMeasuresById(partitioningId)
+      )
+    )
+  }
+
+  override def getFlowPartitionings(
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit.get,
+      offset.get,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.getFlowPartitionings(flowId, limit, offset)
       )
     )
   }
