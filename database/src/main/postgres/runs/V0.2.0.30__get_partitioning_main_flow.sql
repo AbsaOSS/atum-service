@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_main_flow(
     OUT from_pattern BOOLEAN
 ) RETURNS record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_main_flow(1)
 --      Returns the main flow for the given partitioning

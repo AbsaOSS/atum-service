@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION validation.validate_partitioning(
     OUT error_message  TEXT
 ) RETURNS SETOF TEXT AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: validation.validate_partitioning(2)
 --      Validates the input partitioning and returns a set of individual error messages, one per an issue.

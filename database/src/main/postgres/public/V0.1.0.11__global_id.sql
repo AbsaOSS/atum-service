@@ -26,7 +26,7 @@ CREATE SEQUENCE IF NOT EXISTS public.global_id_seq
 
 CREATE OR REPLACE FUNCTION public.global_id() RETURNS BIGINT AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: public.global_id(0)
 --      Generates a unique ID

@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION validation.is_partitioning_valid(
     OUT is_valid         BOOLEAN
 ) RETURNS BOOLEAN AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: validation.is_partitioning_valid(2)
 --      Validates the input partitioning and raises exception if it's not valid.
