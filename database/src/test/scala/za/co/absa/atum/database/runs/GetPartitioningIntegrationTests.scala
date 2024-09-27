@@ -30,7 +30,7 @@ class GetPartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version":1,
       |  "keys":["key1","key2","key3","key4"],
-      |  "keysToValues":{
+      |  "keysToValuesMap":{
       |    "key1":"valueX",
       |    "key2":"valueY",
       |    "key3":"valueZ",
@@ -46,7 +46,7 @@ class GetPartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version":1,
       |  "keys":["key1","key2","key3","key4"],
-      |  "keysToValues":{
+      |  "keysToValuesMap":{
       |    "key1":"valueX",
       |    "key2":"valueX",
       |    "key3":"valueX",
@@ -91,7 +91,7 @@ class GetPartitioningIntegrationTests extends DBTestSuite {
         assert {
           val retrievedPartitioningAsJson = Json.fromString(row.getJsonB("o_partitioning").get.value)
           val expectedPartitioningAsJson = Json.fromString(partitioning1Value)
-          retrievedPartitioningAsJson \\ "keysToValues" == expectedPartitioningAsJson \\ "keysToValues" &&
+          retrievedPartitioningAsJson \\ "keysToValuesMap" == expectedPartitioningAsJson \\ "keysToValuesMap" &&
             retrievedPartitioningAsJson \\ "keys" == expectedPartitioningAsJson \\ "keys"
         }
         assert(row.getString("author").contains("Fantômas"))

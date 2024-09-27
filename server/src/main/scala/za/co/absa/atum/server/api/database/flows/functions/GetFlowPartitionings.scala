@@ -69,7 +69,7 @@ object GetFlowPartitionings {
           case Left(decodingFailure) => Left(decodingFailure)
           case Right(partitioningForDB) =>
             val partitioningDTO = partitioningForDB.keys.map { key =>
-              PartitionDTO(key, partitioningForDB.keysToValues(key))
+              PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
             }
             resultsToPartitioningWithIdDTOs(tail, acc :+ PartitioningWithIdDTO(head.id, partitioningDTO, head.author))
         }
