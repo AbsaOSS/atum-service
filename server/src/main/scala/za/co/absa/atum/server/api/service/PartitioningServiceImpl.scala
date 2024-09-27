@@ -75,8 +75,8 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
-  override def getPartitioning(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO] = {
-    repositoryCall(partitioningRepository.getPartitioning(partitioningId), "getPartitioning")
+  override def getPartitioningById(partitioningId: Long): IO[ServiceError, PartitioningWithIdDTO] = {
+    repositoryCall(partitioningRepository.getPartitioningById(partitioningId), "getPartitioning")
   }
 
   override def getPartitioningMeasuresById(partitioningId: Long): IO[ServiceError, Seq[MeasureDTO]] = {
@@ -94,6 +94,14 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     repositoryCall(
       partitioningRepository.getFlowPartitionings(flowId, limit, offset),
       "getFlowPartitionings"
+    )
+  }
+  override def getPartitioning(
+    partitioning: PartitioningDTO
+  ): IO[ServiceError, PartitioningWithIdDTO] = {
+    repositoryCall(
+      partitioningRepository.getPartitioning(partitioning),
+      "getPartitioning"
     )
   }
 }

@@ -20,8 +20,8 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
-import za.co.absa.atum.server.model.{ErrorResponse, InternalServerErrorResponse, PaginatedResult}
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse._
+import za.co.absa.atum.server.model.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, PaginatedResult}
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
@@ -59,12 +59,12 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
     )
   }
-  override def getPartitioningV2(
+  override def getPartitioningByIdV2(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
     mapToSingleSuccessResponse(
       serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
-        partitioningService.getPartitioning(partitioningId)
+        partitioningService.getPartitioningById(partitioningId)
       )
     )
   }
@@ -119,6 +119,21 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def getPartitioning(
+    partitioning: String
+  ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
+    for {
+      decodedPartitions <- ZIO
+        .fromEither(base64Decode[PartitioningDTO](partitioning))
+        .mapError(error => GeneralErrorResponse(error.getMessage))
+      response <-
+        mapToSingleSuccessResponse[PartitioningWithIdDTO](
+          serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
+            partitioningService.getPartitioning(decodedPartitions)
+          )
+        )
+    } yield response
+  }
 }
 
 object PartitioningControllerImpl {

@@ -18,14 +18,13 @@ package za.co.absa.atum.server.api.http
 
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
-import sttp.tapir.ztapir._
 import sttp.tapir.json.circe.jsonBody
+import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.Constants.Endpoints._
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse._
 import sttp.tapir.{PublicEndpoint, Validator, endpoint}
-import za.co.absa.atum.server.api.http.ApiPaths.{V1Paths, V2Paths}
+import za.co.absa.atum.server.api.http.ApiPaths.{Health, ZioMetrics, _}
 
 import java.util.UUID
 
@@ -78,7 +77,7 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val getPartitioningAdditionalDataEndpointV2
-  : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
+    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .out(statusCode(StatusCode.Ok))
@@ -87,14 +86,26 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val patchPartitioningAdditionalDataEndpointV2
-  : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
-    AdditionalDataDTO
-  ], Any] = {
+    : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
+      AdditionalDataDTO
+    ], Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .in(jsonBody[AdditionalDataPatchDTO])
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
+  protected val getPartitioningEndpointV2
+    : PublicEndpoint[String, ErrorResponse, SingleSuccessResponse[
+      PartitioningWithIdDTO
+    ], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings)
+      .in(query[String]("partitioning").description("base64 encoded json representation of partitioning"))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
@@ -121,16 +132,7 @@ trait Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  protected val getFlowCheckpointsEndpointV2
-    : PublicEndpoint[CheckpointQueryDTO, ErrorResponse, MultiSuccessResponse[CheckpointDTO], Any] = {
-    apiV2.post
-      .in(GetFlowCheckpoints)
-      .in(jsonBody[CheckpointQueryDTO])
-      .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[MultiSuccessResponse[CheckpointDTO]])
-  }
-
-  protected val getPartitioningEndpointV2
+  protected val getPartitioningByIdEndpointV2
     : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId"))
@@ -140,7 +142,7 @@ trait Endpoints extends BaseEndpoints {
   }
 
   protected val getPartitioningMeasuresEndpointV2
-  : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
+    : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Measures)
       .out(statusCode(StatusCode.Ok))
@@ -167,4 +169,5 @@ trait Endpoints extends BaseEndpoints {
 
   protected val healthEndpoint: PublicEndpoint[Unit, Unit, Unit, Any] =
     endpoint.get.in(Health)
+
 }
