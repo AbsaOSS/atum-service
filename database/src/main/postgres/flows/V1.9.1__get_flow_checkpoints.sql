@@ -118,7 +118,7 @@ BEGIN
         )
         SELECT
             11 AS status,
-            'Ok' AS status_text,
+            'OK' AS status_text,
             LC.id_checkpoint,
             LC.checkpoint_name,
             LC.created_by AS author,
