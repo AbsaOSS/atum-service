@@ -23,7 +23,7 @@ import za.co.absa.atum.server.model._
 import sttp.tapir.typelevel.MatchType
 import sttp.tapir.ztapir._
 import sttp.tapir.{EndpointOutput, PublicEndpoint}
-import za.co.absa.atum.server.Constants.Endpoints.{Api, V1, V2}
+import za.co.absa.atum.server.api.http.ApiPaths._
 
 import java.util.UUID
 
@@ -42,6 +42,13 @@ trait BaseEndpoints {
     oneOfVariantFromMatchType(
       StatusCode.NotFound,
       jsonBody[NotFoundErrorResponse]
+    )
+  }
+
+  protected val errorInDataOneOfVariant: EndpointOutput.OneOfVariant[ErrorInDataErrorResponse] = {
+    oneOfVariantFromMatchType(
+      StatusCode.Conflict,
+      jsonBody[ErrorInDataErrorResponse]
     )
   }
 

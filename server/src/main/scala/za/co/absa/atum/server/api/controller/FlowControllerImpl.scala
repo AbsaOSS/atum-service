@@ -24,6 +24,7 @@ import zio._
 
 class FlowControllerImpl(flowService: FlowService) extends FlowController with BaseController {
 
+  // to be replaced (and moved to checkpointcontroller) with new implementation in #233
   override def getFlowCheckpointsV2(
    flowId: Long,
    limit: Option[Int],

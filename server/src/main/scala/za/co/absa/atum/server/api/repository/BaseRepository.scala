@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
-import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException, StatusException}
+import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException, ErrorInDataException, StatusException}
 import za.co.absa.db.fadb.status.{FailedOrRow, FailedOrRows}
 import zio._
 
@@ -47,6 +47,7 @@ trait BaseRepository {
       statusException match {
         case DataConflictException(_) => ConflictDatabaseError(message)
         case DataNotFoundException(_) => NotFoundDatabaseError(message)
+        case ErrorInDataException(_) => ErrorInDataDatabaseError(message)
         case _ => GeneralDatabaseError(message)
       }
     case error =>

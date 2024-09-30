@@ -16,6 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
+import io.circe.{Decoder, parser}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.http.ApiPaths
@@ -23,6 +24,8 @@ import za.co.absa.atum.server.model.SuccessResponse._
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.atum.server.model._
 import zio._
+
+import java.util.Base64
 
 trait BaseController {
 
@@ -36,6 +39,7 @@ trait BaseController {
         case ConflictServiceError(message) => ConflictErrorResponse(message)
         case NotFoundServiceError(message) => NotFoundErrorResponse(message)
         case GeneralServiceError(message) => InternalServerErrorResponse(message)
+        case ErrorInDataServiceError(message) => ErrorInDataErrorResponse(message)
       }
       .flatMap { result =>
         ZIO.succeed(onSuccessFnc(result))
@@ -56,10 +60,10 @@ trait BaseController {
   }
 
   protected def mapToPaginatedResponse[A](
-     limit: Int,
-     offset: Long,
-     effect: IO[ErrorResponse, PaginatedResult[A]]
-   ): IO[ErrorResponse, PaginatedResponse[A]] = {
+    limit: Int,
+    offset: Long,
+    effect: IO[ErrorResponse, PaginatedResult[A]]
+  ): IO[ErrorResponse, PaginatedResponse[A]] = {
     effect.map {
       case ResultHasMore(data) => PaginatedResponse(data, Pagination(limit, offset, hasMore = true))
       case ResultNoMore(data) => PaginatedResponse(data, Pagination(limit, offset, hasMore = false))
@@ -70,5 +74,11 @@ trait BaseController {
   // https://stackoverflow.com/questions/2005079/absolute-vs-relative-urls/78439286#78439286
   protected def createV2RootAnchoredResourcePath(parts: Seq[String]): IO[ErrorResponse, String] = {
     ZIO.succeed(s"/${ApiPaths.Api}/${ApiPaths.V2}/${parts.mkString("/")}")
+  }
+
+  protected def base64Decode[T: Decoder](base64EncodedString: String): Either[io.circe.Error, T] = {
+    val decodedBytes = Base64.getDecoder.decode(base64EncodedString)
+    val decodedString = new String(decodedBytes, "UTF-8")
+    parser.decode[T](decodedString)
   }
 }

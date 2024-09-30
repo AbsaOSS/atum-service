@@ -19,28 +19,26 @@ package za.co.absa.atum.server.api.database.runs.functions
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
+import zio._
 import zio.interop.catz.asyncInstance
-import zio.{Scope, ZIO}
 import zio.test._
 
-object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
-
+object GetPartitioningMainFlowIntegrationTests extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
-    suite("GetPartitioningCheckpointsIntegrationTests")(
-      test("Returns expected sequence of Checkpoints with non-existing partitioning id") {
+    suite("GetPartitioningMainFlowSuite")(
+      test("Returns expected Flow DTO with provided partitioning") {
+        val partitioningId: Long = 0L
         for {
-          getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
-          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, None, None, None))
+          getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
+          result <- getPartitioningMainFlow(partitioningId)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
-      GetPartitioningCheckpoints.layer,
+      GetPartitioningMainFlow.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )
   }
-
 }

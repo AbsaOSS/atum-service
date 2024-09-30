@@ -24,12 +24,11 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO}
-import za.co.absa.atum.server.Constants.{SwaggerApiName, SwaggerApiVersion}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
 import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
+import za.co.absa.atum.server.model.SuccessResponse._
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
@@ -70,6 +69,7 @@ trait Routes extends Endpoints with ServerOptions {
           PartitioningController.patchPartitioningAdditionalDataV2(partitioningId, additionalDataPatchDTO)
         }
       ),
+      createServerEndpoint(getPartitioningEndpointV2, PartitioningController.getPartitioning),
       createServerEndpoint[
         (Long, UUID),
         ErrorResponse,
@@ -80,17 +80,37 @@ trait Routes extends Endpoints with ServerOptions {
           CheckpointController.getPartitioningCheckpointV2(partitioningId, checkpointId)
         }
       ),
-      createServerEndpoint(getPartitioningCheckpointsEndpointV2, PartitioningController.getPartitioningCheckpointsV2),
+      createServerEndpoint[
+        (Long, Option[Int], Option[Long], Option[String]),
+        ErrorResponse,
+        PaginatedResponse[CheckpointV2DTO]
+      ](
+        getPartitioningCheckpointsEndpointV2,
+        { case (partitioningId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
+          CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName)
+        }
+      ),
       createServerEndpoint[
         (Long, Option[Int], Option[Long], Option[String]),
         ErrorResponse,
         PaginatedResponse[CheckpointV2DTO]
       ](getFlowCheckpointsEndpointV2, {
         case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
-        FlowController.getFlowCheckpointsV2(flowId, limit, offset, checkpointName)
+          FlowController.getFlowCheckpointsV2(flowId, limit, offset, checkpointName)
       }),
-      createServerEndpoint(getPartitioningEndpointV2, PartitioningController.getPartitioningV2),
+      createServerEndpoint(getPartitioningByIdEndpointV2, PartitioningController.getPartitioningByIdV2),
       createServerEndpoint(getPartitioningMeasuresEndpointV2, PartitioningController.getPartitioningMeasuresV2),
+      createServerEndpoint(getPartitioningMainFlowEndpointV2, PartitioningController.getPartitioningMainFlow),
+      createServerEndpoint[
+        (Long, Option[Int], Option[Long]),
+        ErrorResponse,
+        PaginatedResponse[PartitioningWithIdDTO]
+      ](
+        getFlowPartitioningsEndpointV2,
+        { case (flowId: Long, limit: Option[Int], offset: Option[Long]) =>
+          PartitioningController.getFlowPartitionings(flowId, limit, offset)
+        }
+      ),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
@@ -108,11 +128,15 @@ trait Routes extends Endpoints with ServerOptions {
       patchPartitioningAdditionalDataEndpointV2,
       getPartitioningCheckpointsEndpointV2,
       getPartitioningCheckpointEndpointV2,
-      getFlowCheckpointsEndpointV2,
-      getPartitioningMeasuresEndpointV2
+      getPartitioningMeasuresEndpointV2,
+      getPartitioningEndpointV2,
+      getPartitioningMeasuresEndpointV2,
+      getFlowPartitioningsEndpointV2,
+      getPartitioningMainFlowEndpointV2,
+      getFlowCheckpointsEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
-      .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, SwaggerApiName, SwaggerApiVersion))
+      .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, "Atum API", "1.0"))
       .toRoutes
   }
 
