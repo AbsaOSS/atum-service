@@ -379,7 +379,7 @@ trait TestData {
     measurementValue = checkpointV2DTO1.measurements.head.result.asJson,
     checkpointStartTime = checkpointV2DTO1.processStartTime,
     checkpointEndTime = checkpointV2DTO1.processEndTime,
-    hasMore = false
+    hasMore = true
   )
 
   protected val checkpointItemFromDB2: CheckpointItemFromDB = CheckpointItemFromDB(
