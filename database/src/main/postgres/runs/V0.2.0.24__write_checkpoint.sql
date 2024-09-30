@@ -26,7 +26,7 @@ CREATE OR REPLACE FUNCTION runs.write_checkpoint(
     OUT status_text                 TEXT
 ) RETURNS record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.write_checkpoint(8)
 --      Creates a checkpoint and adds all the measurements that it consists of

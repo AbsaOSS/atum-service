@@ -23,7 +23,7 @@ import za.co.absa.atum.model.dto.PartitioningDTO
 private[server] case class PartitioningForDB private (
   version: Int = 1,
   keys: Seq[String],
-  keysToValues: Map[String, String]
+  keysToValuesMap: Map[String, String]
 )
 
 object PartitioningForDB {
@@ -32,7 +32,7 @@ object PartitioningForDB {
     val allKeys: Seq[String] = partitioning.map(_.key)
     val mapOfKeysAndValues: Map[String, String] = partitioning.map(p => p.key -> p.value).toMap
 
-    PartitioningForDB(keys = allKeys, keysToValues = mapOfKeysAndValues)
+    PartitioningForDB(keys = allKeys, keysToValuesMap = mapOfKeysAndValues)
   }
 
   implicit val encoder: Encoder[PartitioningForDB] = deriveEncoder

@@ -41,6 +41,7 @@ flywayUser := FlywayConfiguration.flywayUser
 flywayPassword := FlywayConfiguration.flywayPassword
 flywayLocations := FlywayConfiguration.flywayLocations
 flywaySqlMigrationSuffixes := FlywayConfiguration.flywaySqlMigrationSuffixes
+flywayBaselineVersion := FlywayConfiguration.flywayBaselineVersion
 libraryDependencies ++= flywayDependencies
 
 /**

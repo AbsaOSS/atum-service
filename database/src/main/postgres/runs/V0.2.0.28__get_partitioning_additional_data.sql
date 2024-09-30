@@ -23,7 +23,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_additional_data(
     OUT ad_author               TEXT
 ) RETURNS SETOF record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_additional_data(1)
 --      Returns additional data for the given partitioning

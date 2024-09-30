@@ -128,7 +128,7 @@ class PartitioningRepositoryImpl (
           error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
           partitioningForDB => {
             val partitioningDTO: PartitioningDTO = partitioningForDB.keys.map { key =>
-              PartitionDTO(key, partitioningForDB.keysToValues(key))
+              PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
             }
             ZIO.succeed(PartitioningWithIdDTO(id, partitioningDTO, author))
           }

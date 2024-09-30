@@ -27,3 +27,6 @@ alias testIT=; testOnly *IntegrationTests
 
 # Project specific aliases
 alias testDB=; project database; testOnly *
+
+# Run all tests
+alias testAll=; testOnly *

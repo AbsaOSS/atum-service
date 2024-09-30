@@ -12,7 +12,7 @@ class GetPartitioningMeasuresByIdV2IntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key3", "key2", "key4"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueX",
       |    "key2": "valueY",
       |    "key3": "valueZ",

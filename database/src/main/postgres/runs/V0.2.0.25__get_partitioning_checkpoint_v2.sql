@@ -30,7 +30,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoint_v2(
 )
     RETURNS SETOF record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_checkpoint_v2(BIGINT, UUID)
 --      Retrieves a single checkpoint (measures and their measurement details) related to a
