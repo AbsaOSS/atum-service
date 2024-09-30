@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
--- Function: flows.get_flow_checkpoints_v2(BIGINT, INT, BIGINT, TEXT)
-CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints_v2(
+CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
     IN  i_flow_id              BIGINT,
-    IN  i_limit                INT DEFAULT 5,
+    IN  i_checkpoints_limit     INT DEFAULT 5,
     IN  i_offset               BIGINT DEFAULT 0,
     IN  i_checkpoint_name      TEXT DEFAULT NULL,
     OUT status                 INTEGER,
@@ -36,7 +35,7 @@ CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints_v2(
 $$
 --------------------------------------------------------------------------------------------------------------------
 --
--- Function: flows.get_flow_checkpoints_v2(4)
+-- Function: flows.get_flow_checkpoints(4)
 --      Retrieves all checkpoints (measures and their measurement details) related to a primary flow
 --      associated with the input partitioning.
 --
@@ -49,14 +48,13 @@ $$
 -- Parameters:
 --      i_partitioning_of_flow  - partitioning to use for identifying the flow associate with checkpoints
 --                                that will be retrieved
---      i_limit                 - (optional) maximum number of checkpoint's measurements to return
---                                if 0 specified, all data will be returned, i.e. no limit will be applied
---      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
+--      i_checkpoints_limit     - (optional) maximum number of checkpoint's measurements to return
 --      i_offset                - (optional) offset for pagination
+--      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --
---      Note: checkpoint name uniqueness is not enforced by the data model, so there can be multiple different
---          checkpoints with the same name in the DB, i.e. multiple checkpoints can be retrieved even when
---          specifying `i_checkpoint_name` parameter
+--      Note: i_checkpoint_limit and i_offset are used for pagination purposes;
+--            checkpoints are ordered by process_start_time in descending order
+--            and then by id_checkpoint in ascending order
 --
 -- Returns:
 --      status                 - Status code
@@ -71,60 +69,76 @@ $$
 --      measurement_value      - measurement details associated with a given checkpoint
 --      checkpoint_start_time  - Time of the checkpoint
 --      checkpoint_end_time    - End time of the checkpoint computation
---      has_more               - flag indicating whether there are more checkpoints available
+--      has_more               - flag indicating whether there are more checkpoints available, always `false` if `i_limit` is NULL
 --
 -- Status codes:
 --      11                     - OK
 --      42                     - Flow not found
 ---------------------------------------------------------------------------------------------------
 DECLARE
-    _actual_limit INT := i_limit + 1;
-    _record_count INT;
+    _has_more BOOLEAN;
 BEGIN
-    -- Execute the query to retrieve checkpoints flow and their associated measurements
-    RETURN QUERY
-        SELECT 11 AS status,
-               'OK' AS status_text,
-               CP.id_checkpoint,
-               CP.checkpoint_name,
-               CP.created_by AS author,
-               CP.measured_by_atum_agent,
-               MD.measure_name,
-               MD.measured_columns,
-               M.measurement_value,
-               CP.process_start_time AS checkpoint_start_time,
-               CP.process_end_time AS checkpoint_end_time,
-               (ROW_NUMBER() OVER ()) <= i_limit AS has_more
-        FROM flows.partitioning_to_flow AS PF
-                 JOIN runs.checkpoints AS CP
-                      ON PF.fk_partitioning = CP.fk_partitioning
-                 JOIN runs.measurements AS M
-                      ON CP.id_checkpoint = M.fk_checkpoint
-                 JOIN runs.measure_definitions AS MD
-                      ON M.fk_measure_definition = MD.id_measure_definition
-        WHERE PF.fk_flow = i_flow_id
-          AND (i_checkpoint_name IS NULL OR CP.checkpoint_name = i_checkpoint_name)
-        ORDER BY CP.process_start_time,
-                 CP.id_checkpoint
-        LIMIT _actual_limit
-        OFFSET i_offset;
-
-    GET DIAGNOSTICS _record_count = ROW_COUNT;
-
-    IF _record_count > i_limit THEN
-        has_more := TRUE;
-    ELSE
-        has_more := FALSE;
-    END IF;
-
+    -- Check if the flow exists
+    PERFORM 1 FROM flows.partitioning_to_flow WHERE fk_flow = i_flow_id;
     IF NOT FOUND THEN
         status := 42;
         status_text := 'Flow not found';
         RETURN NEXT;
         RETURN;
     END IF;
+
+    -- Determine if there are more checkpoints than the limit
+    IF i_checkpoints_limit IS NOT NULL THEN
+        SELECT count(*) > i_checkpoints_limit
+        FROM runs.checkpoints C
+                 JOIN flows.partitioning_to_flow PF ON C.fk_partitioning = PF.fk_partitioning
+        WHERE PF.fk_flow = i_flow_id
+          AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
+        LIMIT i_checkpoints_limit + 1 OFFSET i_offset
+        INTO _has_more;
+    ELSE
+        _has_more := false;
+    END IF;
+
+    -- Retrieve the checkpoints and their associated measurements
+    RETURN QUERY
+        WITH limited_checkpoints AS (
+            SELECT C.id_checkpoint,
+                   C.checkpoint_name,
+                   C.created_by,
+                   C.measured_by_atum_agent,
+                   C.process_start_time,
+                   C.process_end_time
+            FROM runs.checkpoints C
+                     JOIN flows.partitioning_to_flow PF ON C.fk_partitioning = PF.fk_partitioning
+            WHERE PF.fk_flow = i_flow_id
+              AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
+            ORDER BY C.id_checkpoint, C.process_start_time
+            LIMIT i_checkpoints_limit OFFSET i_offset
+        )
+        SELECT
+            11 AS status,
+            'Ok' AS status_text,
+            LC.id_checkpoint,
+            LC.checkpoint_name,
+            LC.created_by AS author,
+            LC.measured_by_atum_agent,
+            MD.measure_name,
+            MD.measured_columns,
+            M.measurement_value,
+            LC.process_start_time AS checkpoint_start_time,
+            LC.process_end_time AS checkpoint_end_time,
+            _has_more AS has_more
+        FROM
+            limited_checkpoints LC
+                INNER JOIN
+            runs.measurements M ON LC.id_checkpoint = M.fk_checkpoint
+                INNER JOIN
+            runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
+        ORDER BY
+            LC.id_checkpoint, LC.process_start_time;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints_v2(BIGINT, INT, TEXT, BIGINT) TO atum_owner;
+GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints(BIGINT, INT, TEXT, BIGINT) TO atum_owner;
