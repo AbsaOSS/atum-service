@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
--- Function: flows.get_flow_checkpoints_v2(4)
+-- Function: flows.get_flow_checkpoints_v2(BIGINT, INT, BIGINT, TEXT)
 CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints_v2(
     IN  i_flow_id              BIGINT,
     IN  i_limit                INT DEFAULT 5,
-    IN  i_checkpoint_name      TEXT DEFAULT NULL,
     IN  i_offset               BIGINT DEFAULT 0,
+    IN  i_checkpoint_name      TEXT DEFAULT NULL,
     OUT status                 INTEGER,
     OUT status_text            TEXT,
     OUT id_checkpoint          UUID,
@@ -69,7 +69,8 @@ $$
 --      measure_name           - measure name associated with a given checkpoint
 --      measured_columns       - measure columns associated with a given checkpoint
 --      measurement_value      - measurement details associated with a given checkpoint
---      checkpoint_time        - time
+--      checkpoint_start_time  - Time of the checkpoint
+--      checkpoint_end_time    - End time of the checkpoint computation
 --      has_more               - flag indicating whether there are more checkpoints available
 --
 -- Status codes:
