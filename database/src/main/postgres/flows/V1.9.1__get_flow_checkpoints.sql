@@ -141,4 +141,4 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints(BIGINT, INT, TEXT, BIGINT) TO atum_owner;
+GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints(BIGINT, INT, BIGINT, TEXT) TO atum_owner;
