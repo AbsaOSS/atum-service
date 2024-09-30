@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.database.runs
+package za.co.absa.atum.database.validation
 
 import org.postgresql.util.PSQLException
 import za.co.absa.balta.DBTestSuite
@@ -29,7 +29,7 @@ class IsPartitioningValidIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2", "key3", "key4"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2": "valueB",
       |    "key3": "valueC",
@@ -44,7 +44,7 @@ class IsPartitioningValidIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2missing", "key3", "key4"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueX",
       |    "key3": "valueZ",
       |    "key4": "valueA"
@@ -59,7 +59,7 @@ class IsPartitioningValidIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2", "key3", "key4"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueX",
       |    "key2": "valueY",
       |    "key3": null,

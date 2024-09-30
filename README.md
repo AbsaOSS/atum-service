@@ -181,20 +181,26 @@ See the commands configured in the `.sbtrc` [(link)](https://www.scala-sbt.org/1
 
 ### Run Unit Tests
 Use the `test` command to execute all unit tests, skipping all other types of tests. 
-```
+```sbt
 sbt test
 ```
 
 ### Run Integration Tests
 Use the `testIT` command to execute all Integration tests, skipping all other test types.
-```
+```sbt
 sbt testIT
 ```
 
 Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules.
 - Hint: project custom command
-```
+```sbt
 sbt testDB
+```
+
+If you want to run all tests, use the following command.
+- Hint: project custom command
+```sbt
+sbt testAll
 ```
 
 

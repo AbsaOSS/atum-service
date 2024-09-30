@@ -15,8 +15,9 @@
  */
 
 CREATE OR REPLACE FUNCTION validation.is_partitioning_valid(
-    IN i_partitioning   JSONB,
-    IN i_strict_check   BOOLEAN = true
+    IN  i_partitioning   JSONB,
+    IN  i_strict_check   BOOLEAN = true,
+    OUT is_valid         BOOLEAN
 ) RETURNS BOOLEAN AS
 $$
 -------------------------------------------------------------------------------
@@ -41,18 +42,21 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-
+    _errors     TEXT;
+    _count      INTEGER;
 BEGIN
-    PERFORM validation.validate_partitioning(i_partitioning, i_strict_check)
-    LIMIT 1;
+    SELECT string_agg(VP.error_message, E',\n'), count(1)
+    FROM validation.validate_partitioning(i_partitioning, i_strict_check) VP
+    INTO _errors, _count;
 
-    IF found THEN
-        RAISE EXCEPTION 'The input partitioning is not valid: %', jsonb_pretty(i_partitioning);
+    IF _count > 0 THEN
+        RAISE EXCEPTION E'The input partitioning is not valid: %\nDue to issue(s):\n%', jsonb_pretty(i_partitioning), _errors ;
     END IF;
 
-    RETURN TRUE;
+    is_valid := TRUE;
+    RETURN;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER;
+    LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER;
 
 ALTER FUNCTION validation.is_partitioning_valid(JSONB, BOOL) OWNER TO atum_owner;

@@ -34,7 +34,7 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
       |{
       |   "version": 1,
       |   "keys": ["keyA", "keyB", "keyC"],
-      |   "keysToValues": {
+      |   "keysToValuesMap": {
       |     "keyA": "valueA",
       |     "keyB": "valueB",
       |     "keyC": "valueC"
@@ -48,7 +48,7 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
       |{
       |   "version": 1,
       |   "keys": ["keyA", "keyB"],
-      |   "keysToValues": {
+      |   "keysToValuesMap": {
       |     "keyA": "valueA",
       |     "keyB": "valueB"
       |   }
@@ -61,7 +61,7 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
       |{
       |   "version": 1,
       |   "keys": ["keyD", "keyE", "keyF"],
-      |   "keysToValues": {
+      |   "keysToValuesMap": {
       |     "keyD": "valueD",
       |     "keyE": "valueE",
       |     "keyF": "valueF"

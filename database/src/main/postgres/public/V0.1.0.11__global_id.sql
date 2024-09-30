@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,26 +13,34 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION public.jsonb_array_to_text_array(
-    IN i_json_array JSONB
-) RETURNS  text[]
+
+--DROP SEQUENCE IF EXISTS public.global_id_seq
+
+-- DB_ID should be a unique number within your deployment between 0 and 9222
+CREATE SEQUENCE IF NOT EXISTS public.global_id_seq
+    INCREMENT 1
+    START 2000000000000001
+    MINVALUE 2000000000000001
+    MAXVALUE 3000000000000000
+    CACHE 1;
+
+CREATE OR REPLACE FUNCTION public.global_id() RETURNS BIGINT AS
+$$
 -------------------------------------------------------------------------------
 --
--- Function: public.jsonb_array_to_text_array(1)
---      Converts a JSONB array into a Postgres array
---      Based on the answer in https://dba.stackexchange.com/questions/54283/how-to-turn-json-array-into-postgres-array?newreg=5b29b7ed90224c7e9624162a0b52e81f
---
--- Parameters:
---      i_json_array         - JSON array
+-- Function: public.global_id(0)
+--      Generates a unique ID
 --
 -- Returns:
---      Postgres array
+--      - The next ID to use
 --
 -------------------------------------------------------------------------------
-    LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
-BEGIN ATOMIC
-SELECT ARRAY(SELECT jsonb_array_elements_text(i_json_array));
+DECLARE
+BEGIN
+    RETURN nextval('global_id_seq');
 END;
+$$
+    LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
+GRANT EXECUTE ON FUNCTION public.global_id() TO PUBLIC;
 
-GRANT EXECUTE ON FUNCTION public.jsonb_array_to_text_array(JSONB) TO public;

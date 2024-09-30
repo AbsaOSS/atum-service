@@ -38,7 +38,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
       |{
       | "version": 1,
       |  "keys": ["keyX", "keyY", "keyZ"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "keyX": "value1",
       |    "keyZ": "value3",
       |    "keyY": "value2"

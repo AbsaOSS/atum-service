@@ -56,7 +56,7 @@ trait TestData {
         |{
         |  "version": 1,
         |  "keys": ["key1", "key2"],
-        |  "keysToValues": {
+        |  "keysToValuesMap": {
         |    "key1": "val1",
         |    "key2": "val2"
         |  }

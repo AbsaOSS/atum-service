@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.database.runs
+package za.co.absa.atum.database.validation
 
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
@@ -28,7 +28,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2", "key3"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2": "valueB",
       |    "key3": "valueC"
@@ -42,7 +42,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2 ", " key2", " "],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2 ": "valueB",
       |    " key2": "valueC",
@@ -57,7 +57,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2", "key3", "key4"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueX",
       |    "key2": "valueY",
       |    "key3": null,
@@ -72,7 +72,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2missing", "key3", "key4"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueX",
       |    "key3": "valueZ",
       |    "key4": "valueA"
@@ -87,7 +87,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2", "key3"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2": "valueB",
       |    "key4": "valueC"
@@ -101,7 +101,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 999,
       |  "keys": ["key1", "key2", "key3"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2": "valueB",
       |    "key3": "valueC"
@@ -115,7 +115,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2", "key3"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2": "valueB",
       |    "key3": "valueC"
@@ -143,7 +143,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 1,
       |  "keys": ["key1", "key2", "key2"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2": "valueB"
       |  }
@@ -156,7 +156,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
       |{
       |  "version": 999,
       |  "keys": ["key1", "key2", "key2"],
-      |  "keysToValues": {
+      |  "keysToValuesMap": {
       |    "key1": "valueA",
       |    "key2": "valueB"
       |  }
@@ -189,7 +189,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
           val row = queryResult.next()
           val errorDetails = row.resultSet.getString(1)
 
-          assert(errorDetails.startsWith("The input partitioning is invalid, some values in 'keysToValues' are NULLs:"))
+          assert(errorDetails.startsWith("The input partitioning is invalid, some values in 'keysToValuesMap' are NULLs:"))
           assert(!queryResult.hasNext)
         }
   }
@@ -205,7 +205,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
 
         assert(
           errorDetails.startsWith(
-            "The input partitioning is invalid, the keys in 'keys' and 'keysToValues' do not correspond."
+            "The input partitioning is invalid, the keys in 'keys' and 'keysToValuesMap' do not correspond."
           )
         )
         assert(!queryResult.hasNext)
@@ -241,7 +241,7 @@ class ValidatePartitioningIntegrationTests extends DBTestSuite {
 
         assert(
           errorDetails.startsWith(
-            "The input partitioning is invalid, the keys in 'keys' and 'keysToValues' do not correspond."
+            "The input partitioning is invalid, the keys in 'keys' and 'keysToValuesMap' do not correspond."
           )
         )
         assert(!queryResult.hasNext)
