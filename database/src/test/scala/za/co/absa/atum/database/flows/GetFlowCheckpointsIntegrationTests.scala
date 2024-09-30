@@ -9,7 +9,7 @@ import java.util.UUID
 import scala.util.Random
 
 class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
-  private val fncGetFlowCheckpointsV2 = "flows.get_flow_checkpoints_v2"
+  private val fncGetFlowCheckpointsV2 = "flows.get_flow_checkpoints"
 
   private val partitioning = JsonBString(
     """
