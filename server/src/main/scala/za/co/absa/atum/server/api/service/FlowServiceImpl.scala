@@ -24,15 +24,15 @@ import zio._
 
 class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with BaseService {
 
- override def getFlowCheckpointsV2(
+ override def getFlowCheckpoints(
      flowId: Long,
      limit: Option[Int],
      offset: Option[Long],
      checkpointName: Option[String]
    ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]] = {
     repositoryCall(
-      flowRepository.getFlowCheckpointsV2(flowId, limit, offset, checkpointName),
-      "getFlowCheckpointsV2"
+      flowRepository.getFlowCheckpoints(flowId, limit, offset, checkpointName),
+      "getFlowCheckpoints"
     )
   }
 

@@ -25,7 +25,7 @@ import zio.macros.accessible
 @accessible
 trait FlowRepository {
 
-  def getFlowCheckpointsV2(
+  def getFlowCheckpoints(
     partitioningId: Long,
     limit: Option[Int],
     offset: Option[Long],

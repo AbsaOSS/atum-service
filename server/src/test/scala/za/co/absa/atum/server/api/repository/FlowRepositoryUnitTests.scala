@@ -18,8 +18,8 @@ package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2.GetFlowCheckpointsArgs
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.atum.server.model.PaginatedResult.ResultNoMore
@@ -31,7 +31,7 @@ import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 
 object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
-  private val getFlowCheckpointsV2Mock = mock(classOf[GetFlowCheckpointsV2])
+  private val getFlowCheckpointsV2Mock = mock(classOf[GetFlowCheckpoints])
 
   when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(1, Some(1), Some(1), None)))
     .thenReturn(
@@ -53,11 +53,11 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("GetFlowCheckpointsV2Suite")(
         test("Returns expected Right with CheckpointV2DTO") {
           for {
-            result <- FlowRepository.getFlowCheckpointsV2(1, Some(1), Some(1), None)
+            result <- FlowRepository.getFlowCheckpoints(1, Some(1), Some(1), None)
           } yield assertTrue(result == ResultNoMore(Seq(checkpointV2DTO1, checkpointV2DTO2)))
         },
         test("Returns expected DatabaseError") {
-          assertZIO(FlowRepository.getFlowCheckpointsV2(2, None, None, None).exit)(
+          assertZIO(FlowRepository.getFlowCheckpoints(2, None, None, None).exit)(
             failsWithA[DatabaseError]
           )
         }

@@ -33,7 +33,7 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
       test("Should return checkpoints with the correct flowId, limit, and offset") {
 
         // Define the GetFlowCheckpointsArgs DTO
-        val args = GetFlowCheckpointsV2.GetFlowCheckpointsArgs(
+        val args = GetFlowCheckpoints.GetFlowCheckpointsArgs(
           flowId = 1L,
           limit = Some(10),
           offset = Some(0L),
@@ -41,12 +41,12 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
         )
 
         for {
-          getFlowCheckpoints <- ZIO.service[GetFlowCheckpointsV2]
+          getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
           result <- getFlowCheckpoints(args)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
       }
     ).provide(
-      GetFlowCheckpointsV2.layer,
+      GetFlowCheckpoints.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithRollback
     )

@@ -25,14 +25,14 @@ import zio._
 class FlowControllerImpl(flowService: FlowService) extends FlowController with BaseController {
 
   // to be replaced (and moved to checkpointcontroller) with new implementation in #233
-  override def getFlowCheckpointsV2(
+  override def getFlowCheckpoints(
    flowId: Long,
    limit: Option[Int],
    offset: Option[Long],
    checkpointName: Option[String]
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
     val flowData = serviceCall[PaginatedResult[CheckpointV2DTO], PaginatedResult[CheckpointV2DTO]](
-      flowService.getFlowCheckpointsV2(flowId, limit, offset, checkpointName)
+      flowService.getFlowCheckpoints(flowId, limit, offset, checkpointName)
     )
     mapToPaginatedResponse(limit.get, offset.get, flowData)
   }

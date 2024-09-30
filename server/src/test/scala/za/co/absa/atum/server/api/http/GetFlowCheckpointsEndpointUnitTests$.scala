@@ -34,22 +34,22 @@ import zio.test.Assertion.equalTo
 
 import java.util.UUID
 
-object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
+object GetFlowCheckpointsEndpointUnitTests$ extends ZIOSpecDefault with Endpoints with TestData {
   private val flowControllerMockV2 = mock(classOf[FlowController])
   private val uuid = UUID.randomUUID()
 
-  when(flowControllerMockV2.getFlowCheckpointsV2(1L, Some(5), Some(0), None))
+  when(flowControllerMockV2.getFlowCheckpoints(1L, Some(5), Some(0), None))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(5, 0, hasMore = true), uuid)))
-  when(flowControllerMockV2.getFlowCheckpointsV2(2L, Some(5), Some(0), None))
+  when(flowControllerMockV2.getFlowCheckpoints(2L, Some(5), Some(0), None))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO2), Pagination(5, 0, hasMore = false), uuid)))
-  when(flowControllerMockV2.getFlowCheckpointsV2(3L, Some(5), Some(0), None))
+  when(flowControllerMockV2.getFlowCheckpoints(3L, Some(5), Some(0), None))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
 
   private val flowControllerMockLayerV2 = ZLayer.succeed(flowControllerMockV2)
 
   private val getFlowCheckpointServerEndpointV2 = getFlowCheckpointsEndpointV2.zServerLogic({
       case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
-        FlowController.getFlowCheckpointsV2(flowId, limit, offset, checkpointName)
+        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
     })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {

@@ -96,7 +96,7 @@ trait Routes extends Endpoints with ServerOptions {
         PaginatedResponse[CheckpointV2DTO]
       ](getFlowCheckpointsEndpointV2, {
         case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
-          FlowController.getFlowCheckpointsV2(flowId, limit, offset, checkpointName)
+          FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
       }),
       createServerEndpoint(getPartitioningByIdEndpointV2, PartitioningController.getPartitioningByIdV2),
       createServerEndpoint(getPartitioningMeasuresEndpointV2, PartitioningController.getPartitioningMeasuresV2),

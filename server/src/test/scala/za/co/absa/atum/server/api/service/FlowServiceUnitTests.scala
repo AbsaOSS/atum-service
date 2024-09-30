@@ -29,9 +29,9 @@ import zio.test._
 object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
   private val flowRepositoryMock = mock(classOf[FlowRepository])
 
-  when(flowRepositoryMock.getFlowCheckpointsV2(1L, None, None, None))
+  when(flowRepositoryMock.getFlowCheckpoints(1L, None, None, None))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
-  when(flowRepositoryMock.getFlowCheckpointsV2(2L, None, None, None))
+  when(flowRepositoryMock.getFlowCheckpoints(2L, None, None, None))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Flow not found")))
 
   private val flowRepositoryMockLayer = ZLayer.succeed(flowRepositoryMock)
@@ -42,13 +42,13 @@ object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
       suite("GetFlowCheckpointsV2Suite")(
         test("Returns expected PaginatedResult[CheckpointV2DTO]") {
           for {
-            result <- FlowService.getFlowCheckpointsV2(1L, None, None, None)
+            result <- FlowService.getFlowCheckpoints(1L, None, None, None)
           } yield assertTrue {
             result == ResultHasMore(Seq(checkpointV2DTO1))
           }
         },
         test("Returns expected ServiceError") {
-          assertZIO(FlowService.getFlowCheckpointsV2(2L, None, None, None).exit)(
+          assertZIO(FlowService.getFlowCheckpoints(2L, None, None, None).exit)(
             failsWithA[NotFoundServiceError]
           )
         }

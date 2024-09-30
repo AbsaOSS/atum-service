@@ -17,11 +17,9 @@
 package za.co.absa.atum.server.api.database.flows.functions
 
 import doobie.implicits.toSqlInterpolator
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpointsV2.GetFlowCheckpointsArgs
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
 import za.co.absa.atum.server.model.CheckpointItemFromDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
@@ -35,7 +33,7 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 
 
-class GetFlowCheckpointsV2 (implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[CheckpointItemFromDB], Task](input =>
     Seq(
       fr"${input.flowId}",
@@ -61,7 +59,7 @@ class GetFlowCheckpointsV2 (implicit schema: DBSchema, dbEngine: DoobieEngine[Ta
   )
 }
 
-object GetFlowCheckpointsV2 {
+object GetFlowCheckpoints {
   case class GetFlowCheckpointsArgs(
      flowId: Long,
      limit: Option[Int],
@@ -69,9 +67,9 @@ object GetFlowCheckpointsV2 {
      checkpointName: Option[String]
   )
 
-  val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpointsV2] = ZLayer {
+  val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpoints] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new GetFlowCheckpointsV2()(Flows, dbProvider.dbEngine)
+    } yield new GetFlowCheckpoints()(Flows, dbProvider.dbEngine)
   }
 }
