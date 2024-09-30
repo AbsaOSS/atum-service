@@ -34,7 +34,7 @@ import zio.test.Assertion.equalTo
 
 import java.util.UUID
 
-object GetFlowCheckpointsEndpointUnitTests$ extends ZIOSpecDefault with Endpoints with TestData {
+object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
   private val flowControllerMockV2 = mock(classOf[FlowController])
   private val uuid = UUID.randomUUID()
 

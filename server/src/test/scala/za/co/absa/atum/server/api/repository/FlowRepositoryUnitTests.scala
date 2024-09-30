@@ -17,12 +17,13 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
-import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.api.exception.DatabaseError.NotFoundDatabaseError
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
-import za.co.absa.atum.server.model.PaginatedResult.ResultNoMore
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
@@ -42,7 +43,9 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
         )
       )
     )
-  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(2, None, None, None)))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(2, Some(1), Some(1), None)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "success"), None))))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(3, None, None, None)))
     .thenReturn(ZIO.fail(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
 
   private val getFlowCheckpointsV2MockLayer = ZLayer.succeed(getFlowCheckpointsV2Mock)
@@ -54,11 +57,16 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with CheckpointV2DTO") {
           for {
             result <- FlowRepository.getFlowCheckpoints(1, Some(1), Some(1), None)
-          } yield assertTrue(result == ResultNoMore(Seq(checkpointV2DTO1, checkpointV2DTO2)))
+          } yield assertTrue(result == ResultHasMore(Seq(checkpointV2DTO1, checkpointV2DTO2)))
+        },
+        test("Returns expected Right with CheckpointV2DTO") {
+          for {
+            result <- FlowRepository.getFlowCheckpoints(2, Some(1), Some(1), None)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[CheckpointV2DTO]))
         },
         test("Returns expected DatabaseError") {
-          assertZIO(FlowRepository.getFlowCheckpoints(2, None, None, None).exit)(
-            failsWithA[DatabaseError]
+          assertZIO(FlowRepository.getFlowCheckpoints(3, None, None, None).exit)(
+            failsWithA[NotFoundDatabaseError]
           )
         }
       )
