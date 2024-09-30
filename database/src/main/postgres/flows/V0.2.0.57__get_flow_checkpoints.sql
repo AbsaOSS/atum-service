@@ -16,7 +16,7 @@
 
 CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
     IN  i_flow_id              BIGINT,
-    IN  i_checkpoints_limit     INT DEFAULT 5,
+    IN  i_checkpoints_limit    INT DEFAULT 5,
     IN  i_offset               BIGINT DEFAULT 0,
     IN  i_checkpoint_name      TEXT DEFAULT NULL,
     OUT status                 INTEGER,
