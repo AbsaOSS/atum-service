@@ -31,11 +31,10 @@ import scala.collection.immutable.Queue
 class CapturingDispatcher(config: Config) extends Dispatcher(config) {
   import CapturingDispatcher._
 
-
   val captureLimit: Int = config.getInt(CheckpointLimitKey)
 
   /**
-   * This method is used to clear all captured data.
+   *  This method is used to clear all captured data.
    */
   def clear(): Unit = {
     val updateFunction = new UnaryOperator[Queue[CapturedCall]] {
@@ -45,45 +44,44 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
   }
 
   /**
-   * This method is used to check if the given function call has been captured.
+   *  This method is used to check if the given function call has been captured.
    *
-   * @param functionName - the function name that was supposed to be dispatched
-   * @return             - true if the function was captured, false otherwise
+   *  @param functionName - the function name that was supposed to be dispatched
+   *  @return             - true if the function was captured, false otherwise
    */
   def contains(functionName: String): Boolean = {
     captures.exists(_.functionName == functionName)
   }
 
   /**
-   * This method is used to check if the given function call has been captured.
+   *  This method is used to check if the given function call has been captured.
    *
-   * @param functionName - the function name that was supposed to be dispatched
-   * @param input        - the input parameter of the function
-   * @return             - true if the function was captured, false otherwise
+   *  @param functionName - the function name that was supposed to be dispatched
+   *  @param input        - the input parameter of the function
+   *  @return             - true if the function was captured, false otherwise
    */
   def contains[I](functionName: String, input: I): Boolean = {
     captures.exists(item => (item.functionName == functionName) && (item.input == input))
   }
 
   /**
-   * This method is used to check if the given function call has been captured.
+   *  This method is used to check if the given function call has been captured.
    *
-   * @param functionName - the function name that was supposed to be dispatched
-   * @param input        - the input parameter of the function
-   * @param result       - the result of the function
-   * @return             - true if the function was captured, false otherwise
+   *  @param functionName - the function name that was supposed to be dispatched
+   *  @param input        - the input parameter of the function
+   *  @param result       - the result of the function
+   *  @return             - true if the function was captured, false otherwise
    */
   def contains[I, R](functionName: String, input: I, result: R): Boolean = {
     captures.contains(CapturedCall(functionName, input, result))
   }
 
   /**
-   * This method is used to get the captured data.
+   *  This method is used to get the captured data.
    *
-   * @return the captured data
+   *  @return the captured data
    */
   def captures: Queue[CapturedCall] = capturesRef.get()
-
 
   private val capturesRef = new AtomicReference(Queue.empty[CapturedCall])
 
@@ -118,19 +116,28 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
 
   /**
    *  This method is used to save the additional data to the server.
-   *
-   *  @param additionalData the data to be saved.
+   *  @param partitioningId partitioning ID for which the additional data is to be saved.
+   *  @param additionalDataPatchDTO the data to be saved or updated if already existing.
    */
-  override protected[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
-    captureFunctionCall(additionalData, ())
+  override protected[agent] def updateAdditionalData(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): AdditionalDataDTO = {
+    val result = AdditionalDataDTO(
+      additionalDataPatchDTO.data.map { case (key, value) =>
+        key -> Some(AdditionalDataItemDTO(Some(value), additionalDataPatchDTO.byUser))
+      }
+    )
+
+    captureFunctionCall((partitioningId, additionalDataPatchDTO), result)
   }
 
   /**
-   * This method is used to ensure the server knows the given partitioning.
-   * As a response the `AtumContext` is fetched from the server.
+   *  This method is used to ensure the server knows the given partitioning.
+   *  As a response the `AtumContext` is fetched from the server.
    *
-   * @param partitioning  : PartitioningSubmitDTO to be used to ensure server knows the given partitioning.
-   * @return AtumContextDTO.
+   *  @param partitioning  : PartitioningSubmitDTO to be used to ensure server knows the given partitioning.
+   *  @return AtumContextDTO.
    */
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
     val result = AtumContextDTO(partitioning.partitioning)
@@ -151,8 +158,8 @@ object CapturingDispatcher {
 
   object CapturedCall {
 
-    final case class CapturedCallImpl[IX, RX] private[dispatcher](functionName: String, input: IX, result: RX)
-      extends CapturedCall {
+    final case class CapturedCallImpl[IX, RX] private[dispatcher] (functionName: String, input: IX, result: RX)
+        extends CapturedCall {
       type I = IX
       type R = RX
     }

@@ -28,12 +28,14 @@ import scala.collection.immutable.ListMap
 
 /**
  *  This class provides the methods to measure Spark `Dataframe`. Also allows to add and remove measures.
+ *  @param atumPartitioningId: Atum partitioning ID associated with a given Atum Context.
  *  @param atumPartitions: Atum partitions associated with a given Atum Context.
  *  @param agent: Reference to an Atum Agent object that will be used within the current Atum Contedt.
  *  @param measures: Variable set of measures associated with a given partitions / context.
  *  @param additionalData: Additional metadata or tags, associated with a given context.
  */
 class AtumContext private[agent] (
+  val atumPartitioningId: Long,
   val atumPartitions: AtumPartitions,
   val agent: AtumAgent,
   private var measures: Set[AtumMeasure] = Set.empty,
@@ -145,16 +147,14 @@ class AtumContext private[agent] (
    * @return the AtumContext after the AD has been dispatched and added
    */
   def addAdditionalData(newAdditionalDataToAdd: Map[String, String]): AtumContext = {
-    val currAdditionalData = newAdditionalDataToAdd.map{case (k,v) => (k, Some(v))}
-
-    val currAdditionalDataSubmit = AdditionalDataSubmitDTO(
-      AtumPartitions.toSeqPartitionDTO(atumPartitions),
-      currAdditionalData,
-      agent.currentUser
+    val currAdditionalDataSubmit = AdditionalDataPatchDTO(
+      agent.currentUser,
+      newAdditionalDataToAdd,
     )
-    agent.saveAdditionalData(currAdditionalDataSubmit)
+    agent.updateAdditionalData(this.atumPartitioningId, currAdditionalDataSubmit)
 
-    this.additionalData ++= currAdditionalData
+    this.additionalData ++= newAdditionalDataToAdd.map{case (k,v) => (k, Some(v))}
+
     this
   }
 
@@ -203,7 +203,7 @@ class AtumContext private[agent] (
     measures: Set[AtumMeasure] = measures,
     additionalData: InitialAdditionalDataDTO = additionalData
   ): AtumContext = {
-    new AtumContext(atumPartitions, agent, measures, additionalData)
+    new AtumContext(1L, atumPartitions, agent, measures, additionalData)
   }
 }
 
@@ -237,6 +237,7 @@ object AtumContext {
 
   private[agent] def fromDTO(atumContextDTO: AtumContextDTO, agent: AtumAgent): AtumContext = {
     new AtumContext(
+      1L, // TODO
       AtumPartitions.fromPartitioning(atumContextDTO.partitioning),
       agent,
       MeasuresBuilder.mapToMeasures(atumContextDTO.measures),

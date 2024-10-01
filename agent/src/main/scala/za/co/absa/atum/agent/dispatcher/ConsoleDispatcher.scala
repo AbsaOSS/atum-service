@@ -18,7 +18,14 @@ package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
 import org.apache.spark.internal.Logging
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO,
+  AdditionalDataItemDTO,
+  AdditionalDataPatchDTO,
+  AtumContextDTO,
+  CheckpointDTO,
+  PartitioningSubmitDTO
+}
 
 /**
  *  dispatcher useful for development, testing and debugging
@@ -36,8 +43,17 @@ class ConsoleDispatcher(config: Config) extends Dispatcher(config: Config) with 
     println(s"Saving checkpoint to server. $checkpoint")
   }
 
-  override protected[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
-    println(s"Saving the additional data to server. $additionalData")
+  override protected[agent] def updateAdditionalData(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): AdditionalDataDTO = {
+    println(s"Saving the additional data to server for partitioning ID: '$partitioningId'. $additionalDataPatchDTO")
+
+    AdditionalDataDTO(
+      additionalDataPatchDTO.data.map { case (key, value) =>
+        key -> Some(AdditionalDataItemDTO(Some(value), additionalDataPatchDTO.byUser))
+      }
+    )
   }
 
 }

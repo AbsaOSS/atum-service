@@ -19,6 +19,7 @@ package za.co.absa.atum.model.dto
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 
+// todo needed? Probably no?
 case class AdditionalDataPatchItemDTO(
   value: String,
   author: String

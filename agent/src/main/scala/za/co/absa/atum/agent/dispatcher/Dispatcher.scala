@@ -17,7 +17,13 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO,
+  AdditionalDataPatchDTO,
+  AtumContextDTO,
+  CheckpointDTO,
+  PartitioningSubmitDTO
+}
 
 /**
  *  This class provides a contract for different dispatchers. It has a constructor foe eventual creation via reflection.
@@ -40,8 +46,12 @@ abstract class Dispatcher(config: Config) {
   protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit
 
   /**
-   * This method is used to save the additional data to the server.
-   * @param additionalData the data to be saved.
+   *  This method is used to save the additional data to the server.
+   *  @param partitioningId partitioning ID for which the additional data is to be saved.
+   *  @param additionalDataPatchDTO the data to be saved or updated if already existing.
    */
-  protected[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit
+  protected[agent] def updateAdditionalData(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): AdditionalDataDTO
 }

@@ -19,6 +19,7 @@ package za.co.absa.atum.model.dto
 import io.circe.generic.semiauto._
 import io.circe._
 
+// not needed from 0.3.0
 case class AdditionalDataSubmitDTO(
   partitioning: PartitioningDTO,
   additionalData: InitialAdditionalDataDTO,

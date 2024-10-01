@@ -21,7 +21,13 @@ import org.apache.spark.internal.Logging
 import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, AtumContextDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO,
+  AdditionalDataPatchDTO,
+  AtumContextDTO,
+  CheckpointDTO,
+  PartitioningSubmitDTO
+}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 
 class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Logging {
@@ -31,9 +37,13 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
 
   private val apiV1 = "/api/v1"
   private val apiV2 = "/api/v2"
+
+  private val partitioningsPath = "partitionings"
+
   private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createPartitioning")
   private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createCheckpoint")
-  private val createAdditionalDataEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/writeAdditionalData")
+  private def createAdditionalDataEndpoint(partitioningId: Long): Uri =
+    Uri.unsafeParse(s"$serverUrl$apiV2/$partitioningsPath/$partitioningId/additional-data")
 
   private val commonAtumRequest = basicRequest
     .header("Content-Type", "application/json")
@@ -51,7 +61,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
 
     val response = backend.send(request)
 
-   handleResponseBody(response).as[AtumContextDTO]
+    handleResponseBody(response).as[AtumContextDTO]
   }
 
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
@@ -64,14 +74,17 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
     handleResponseBody(response)
   }
 
-  override protected[agent] def saveAdditionalData(additionalDataSubmitDTO: AdditionalDataSubmitDTO): Unit = {
+  override protected[agent] def updateAdditionalData(
+    partitioningId: Long,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): AdditionalDataDTO = {
     val request = commonAtumRequest
-      .post(createAdditionalDataEndpoint)
-      .body(additionalDataSubmitDTO.asJsonString)
+      .patch(createAdditionalDataEndpoint(partitioningId))
+      .body(additionalDataPatchDTO.asJsonString)
 
     val response = backend.send(request)
 
-    handleResponseBody(response)
+    handleResponseBody(response).as[AdditionalDataDTO]
   }
 
   private def handleResponseBody(response: Response[Either[String, String]]): String = {
