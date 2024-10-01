@@ -21,7 +21,7 @@ import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.{ErrorResponse, StatusResponse}
 import za.co.absa.atum.server.model.SuccessResponse._
 import sttp.tapir.{PublicEndpoint, Validator, endpoint}
 import za.co.absa.atum.server.api.http.ApiPaths.{Health, ZioMetrics, _}
@@ -177,7 +177,7 @@ trait Endpoints extends BaseEndpoints {
     endpoint.get.in(ZioMetrics).out(stringBody)
   }
 
-  protected val healthEndpoint: PublicEndpoint[Unit, Unit, Unit, Any] =
-    endpoint.get.in(Health)
+  protected val healthEndpoint: PublicEndpoint[Unit, Unit, StatusResponse, Any] =
+    endpoint.get.in(Health).out(jsonBody[StatusResponse].example(StatusResponse.up))
 
 }
