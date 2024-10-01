@@ -17,20 +17,18 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
+import io.circe.syntax.EncoderOps
 import org.apache.spark.internal.Logging
 import sttp.client3._
 import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
-import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO,
-  AdditionalDataPatchDTO,
-  AtumContextDTO,
-  CheckpointDTO,
-  PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto
+import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 
-class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Logging {
+import java.util.Base64
+
+class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   import HttpDispatcher._
 
   val serverUrl: String = config.getString(UrlKey)
@@ -42,6 +40,8 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
 
   private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createPartitioning")
   private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createCheckpoint")
+
+  private val getPartitioningIdEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/$partitioningsPath")
   private def createAdditionalDataEndpoint(partitioningId: Long): Uri =
     Uri.unsafeParse(s"$serverUrl$apiV2/$partitioningsPath/$partitioningId/additional-data")
 
@@ -53,6 +53,24 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
 
   logInfo("using http dispatcher")
   logInfo(s"serverUrl $serverUrl")
+
+  /**
+   *  This method is used to get the partitioning ID from the server.
+   *  @param partitioning: Partitioning to obtain ID for.
+   *  @return Long ID of the partitioning.
+   */
+
+  private[dispatcher] def getPartitioningId(partitioning: PartitioningDTO): Long = {
+    val encodedPartitioning = Base64.getUrlEncoder.encodeToString(
+      partitioning.asJson(dto.encodePartitioningDTO).noSpaces.getBytes("UTF-8")
+    )
+
+    val request = commonAtumRequest.get(getPartitioningIdEndpoint.addParam("partitioning", encodedPartitioning))
+
+    val response = backend.send(request)
+
+    handleResponseBody(response).as[PartitioningWithIdDTO].id
+  }
 
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
     val request = commonAtumRequest
@@ -75,9 +93,11 @@ class HttpDispatcher(config: Config) extends Dispatcher(config: Config) with Log
   }
 
   override protected[agent] def updateAdditionalData(
-    partitioningId: Long,
+    partitioning: PartitioningDTO,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO = {
+    val partitioningId = getPartitioningId(partitioning)
+
     val request = commonAtumRequest
       .patch(createAdditionalDataEndpoint(partitioningId))
       .body(additionalDataPatchDTO.asJsonString)

@@ -24,13 +24,14 @@ import za.co.absa.atum.model.dto.{
   AdditionalDataPatchDTO,
   AtumContextDTO,
   CheckpointDTO,
+  PartitioningDTO,
   PartitioningSubmitDTO
 }
 
 /**
  *  dispatcher useful for development, testing and debugging
  */
-class ConsoleDispatcher(config: Config) extends Dispatcher(config: Config) with Logging {
+class ConsoleDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
   logInfo("using console dispatcher")
 
@@ -44,10 +45,10 @@ class ConsoleDispatcher(config: Config) extends Dispatcher(config: Config) with 
   }
 
   override protected[agent] def updateAdditionalData(
-    partitioningId: Long,
+    partitioning: PartitioningDTO,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO = {
-    println(s"Saving the additional data to server for partitioning ID: '$partitioningId'. $additionalDataPatchDTO")
+    println(s"Saving the additional data to server for partitioning: '$partitioning': $additionalDataPatchDTO")
 
     AdditionalDataDTO(
       additionalDataPatchDTO.data.map { case (key, value) =>

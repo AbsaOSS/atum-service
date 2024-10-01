@@ -51,14 +51,14 @@ trait AtumAgent {
 
   /**
    *  Sends `AdditionalDataPatchDTO` to the AtumService API
-   *  @param partitioningId partitioning ID for which the additional data is to be saved.
+   *  @param atumPartitions: Partitioning for which the additional data is to be saved.
    *  @param additionalDataPatchDTO the data to be saved or updated if already existing.
    */
   private[agent] def updateAdditionalData(
-    partitioningId: Long,
+    atumPartitions: AtumPartitions,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO = {
-    dispatcher.updateAdditionalData(partitioningId, additionalDataPatchDTO)
+    dispatcher.updateAdditionalData(AtumPartitions.toSeqPartitionDTO(atumPartitions), additionalDataPatchDTO)
   }
 
   /**
@@ -126,7 +126,7 @@ object AtumAgent extends AtumAgent {
       case "http" => new HttpDispatcher(config)
       case "console" => new ConsoleDispatcher(config)
       case "capture" => new CapturingDispatcher(config)
-      case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+      case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt'")
     }
   }
 

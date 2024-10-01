@@ -22,6 +22,7 @@ import za.co.absa.atum.model.dto.{
   AdditionalDataPatchDTO,
   AtumContextDTO,
   CheckpointDTO,
+  PartitioningDTO,
   PartitioningSubmitDTO
 }
 
@@ -30,6 +31,7 @@ import za.co.absa.atum.model.dto.{
  *  @param config: Config to be used to create the dispatcher.
  */
 abstract class Dispatcher(config: Config) {
+
 
   /**
    *  This method is used to ensure the server knows the given partitioning.
@@ -47,11 +49,11 @@ abstract class Dispatcher(config: Config) {
 
   /**
    *  This method is used to save the additional data to the server.
-   *  @param partitioningId partitioning ID for which the additional data is to be saved.
+   *  @param partitioning partitioning for which the additional data is to be saved.
    *  @param additionalDataPatchDTO the data to be saved or updated if already existing.
    */
   protected[agent] def updateAdditionalData(
-    partitioningId: Long,
+    partitioning: PartitioningDTO,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO
 }

@@ -117,11 +117,11 @@ trait Routes extends Endpoints with ServerOptions {
       //      postCheckpointEndpointV2,
       createPartitioningEndpointV1,
       //      postPartitioningEndpointV2,
-      //      patchPartitioningAdditionalDataEndpointV2,
+      patchPartitioningAdditionalDataEndpointV2,
       //      getPartitioningCheckpointsEndpointV2,
       //      getPartitioningCheckpointEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
-      //      getPartitioningEndpointV2,
+      getPartitioningEndpointV2
       //      getPartitioningMeasuresEndpointV2,
       //      getFlowPartitioningsEndpointV2,
       //      getPartitioningMainFlowEndpointV2

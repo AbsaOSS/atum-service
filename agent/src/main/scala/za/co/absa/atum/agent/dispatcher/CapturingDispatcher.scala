@@ -116,11 +116,11 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
 
   /**
    *  This method is used to save the additional data to the server.
-   *  @param partitioningId partitioning ID for which the additional data is to be saved.
+   *  @param partitioning partitioning for which the additional data is to be saved.
    *  @param additionalDataPatchDTO the data to be saved or updated if already existing.
    */
   override protected[agent] def updateAdditionalData(
-    partitioningId: Long,
+    partitioning: PartitioningDTO,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO = {
     val result = AdditionalDataDTO(
@@ -129,7 +129,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
       }
     )
 
-    captureFunctionCall((partitioningId, additionalDataPatchDTO), result)
+    captureFunctionCall((partitioning, additionalDataPatchDTO), result)
   }
 
   /**
