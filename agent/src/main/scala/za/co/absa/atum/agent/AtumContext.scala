@@ -133,7 +133,7 @@ class AtumContext private[agent] (
    *
    * @return the AtumContext after the AD has been dispatched and added
    */
-  def addAdditionalData(key: String, value: String): AtumContext = {
+  private[agent] def addAdditionalData(key: String, value: String): AtumContext = {
     addAdditionalData(Map(key -> value))
   }
 
