@@ -27,7 +27,7 @@ import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
-import za.co.absa.atum.server.model.ErrorResponse
+import za.co.absa.atum.server.model.{ErrorResponse, StatusResponse}
 import za.co.absa.atum.server.model.SuccessResponse._
 import zio._
 import zio.interop.catz._
@@ -103,7 +103,7 @@ trait Routes extends Endpoints with ServerOptions {
           PartitioningController.getFlowPartitionings(flowId, limit, offset)
         }
       ),
-      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
+      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.succeed(StatusResponse.up))
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
   }
@@ -125,6 +125,7 @@ trait Routes extends Endpoints with ServerOptions {
       //      getPartitioningMeasuresEndpointV2,
       //      getFlowPartitioningsEndpointV2,
       //      getPartitioningMainFlowEndpointV2
+      healthEndpoint
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, "Atum API", "1.0"))
