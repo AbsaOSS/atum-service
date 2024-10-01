@@ -114,17 +114,17 @@ trait Routes extends Endpoints with ServerOptions {
   private def createSwaggerRoutes: HttpRoutes[HttpEnv.F] = {
     val endpoints = List(
       createCheckpointEndpointV1,
-      postCheckpointEndpointV2,
+      //      postCheckpointEndpointV2,
       createPartitioningEndpointV1,
-      postPartitioningEndpointV2,
-      patchPartitioningAdditionalDataEndpointV2,
-      getPartitioningCheckpointsEndpointV2,
-      getPartitioningCheckpointEndpointV2,
-      getPartitioningMeasuresEndpointV2,
-      getPartitioningEndpointV2,
-      getPartitioningMeasuresEndpointV2,
-      getFlowPartitioningsEndpointV2,
-      getPartitioningMainFlowEndpointV2
+      //      postPartitioningEndpointV2,
+      //      patchPartitioningAdditionalDataEndpointV2,
+      //      getPartitioningCheckpointsEndpointV2,
+      //      getPartitioningCheckpointEndpointV2,
+      //      getPartitioningMeasuresEndpointV2,
+      //      getPartitioningEndpointV2,
+      //      getPartitioningMeasuresEndpointV2,
+      //      getFlowPartitioningsEndpointV2,
+      //      getPartitioningMainFlowEndpointV2
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, "Atum API", "1.0"))
