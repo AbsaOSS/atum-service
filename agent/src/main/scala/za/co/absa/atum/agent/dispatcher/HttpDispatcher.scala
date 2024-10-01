@@ -24,6 +24,7 @@ import sttp.model.Uri
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.utils.DTOBase64Encoder.encodeDTO
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 
 import java.util.Base64
@@ -61,10 +62,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
    */
 
   private[dispatcher] def getPartitioningId(partitioning: PartitioningDTO): Long = {
-    val encodedPartitioning = Base64.getUrlEncoder.encodeToString(
-      partitioning.asJson(dto.encodePartitioningDTO).noSpaces.getBytes("UTF-8")
-    )
-
+    val encodedPartitioning = encodeDTO(partitioning, dto.encodePartitioningDTO)
     val request = commonAtumRequest.get(getPartitioningIdEndpoint.addParam("partitioning", encodedPartitioning))
 
     val response = backend.send(request)

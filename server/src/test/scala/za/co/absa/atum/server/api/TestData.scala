@@ -220,18 +220,6 @@ trait TestData {
     "key3" -> Some("value3")
   )
 
-  // Additional Data Submit DTO
-  protected val additionalDataSubmitDTO1: AdditionalDataSubmitDTO = AdditionalDataSubmitDTO(
-    partitioning = Seq.empty,
-    additionalData = Map.empty,
-    author = ""
-  )
-  protected val additionalDataSubmitDTO2: AdditionalDataSubmitDTO =
-    additionalDataSubmitDTO1.copy(author = "differentADAuthor")
-
-  protected val additionalDataSubmitDTO3: AdditionalDataSubmitDTO =
-    additionalDataSubmitDTO1.copy(author = "yetAnotherADAuthor")
-
   // Atum Context
   protected val atumContextDTO1: AtumContextDTO = AtumContextDTO(
     partitioning = partitioningSubmitDTO1.partitioning,
