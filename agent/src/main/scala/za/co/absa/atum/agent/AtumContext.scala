@@ -134,6 +134,7 @@ class AtumContext private[agent] (
    * @return the AtumContext after the AD has been dispatched and added
    */
   private[agent] def addAdditionalData(key: String, value: String): AtumContext = {
+    //TODO to make public again in #280
     addAdditionalData(Map(key -> value))
   }
 
@@ -144,7 +145,8 @@ class AtumContext private[agent] (
    *
    * @return the AtumContext after the AD has been dispatched and added
    */
-  def addAdditionalData(newAdditionalDataToAdd: Map[String, String]): AtumContext = {
+  private[agent] def addAdditionalData(newAdditionalDataToAdd: Map[String, String]): AtumContext = {
+    //TODO to make public again in #280
     val currAdditionalData = newAdditionalDataToAdd.map{case (k,v) => (k, Some(v))}
 
     val currAdditionalDataSubmit = AdditionalDataSubmitDTO(
