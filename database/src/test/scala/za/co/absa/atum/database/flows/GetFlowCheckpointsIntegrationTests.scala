@@ -352,8 +352,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     // Actual test execution and assertions
     val actualMeasures: Seq[MeasuredDetails] = function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", flowId)
-      .setParam("i_limit", 2)
-      .setParam("i_offset", 0)
+      .setParam("i_checkpoints_limit", 2)
+      .setParam("i_offset", 0L)
       .execute("checkpoint_name") { queryResult =>
         assert(queryResult.hasNext)
         val row1 = queryResult.next()
@@ -411,8 +411,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
       }
 
     // Assertions for measures
-    assert(actualMeasures.map(_.measureName).toSet == Set("cnt", "sum", "sum"))
-    assert(actualMeasures.map(_.measureColumns).toSet == Set(List("col1"), List("colOther"), List("colOther")))
+    assert(actualMeasures.map(_.measureName).toSet == Set("avg", "sum"))
+    assert(actualMeasures.map(_.measureColumns).toSet == Set(List("a", "b"), List("colOther")))
 
     actualMeasures.foreach { currVal =>
       val currValStr = currVal.measurementValue.value
