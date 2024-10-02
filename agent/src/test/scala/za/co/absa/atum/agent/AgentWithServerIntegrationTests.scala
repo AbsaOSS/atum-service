@@ -21,6 +21,7 @@ import org.apache.spark.sql.{Row, SparkSession}
 import za.co.absa.atum.agent.model.AtumMeasure.RecordCount
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
+import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 
 import scala.collection.immutable.ListMap
 
@@ -58,12 +59,21 @@ class AgentWithServerIntegrationTests extends DBTestSuite {
     val rdd = spark.sparkContext.parallelize(testDataForRDD)
     val df = spark.createDataFrame(rdd, testDataSchema)
 
-    // Atum Context Stuff Preparation - Partitioning, Measures, Additional Data, Checkpoint
+    // Atum Agent preparation - Agent configured to work with HTTP Dispatcher and service on localhost
+    val agent = AtumAgent
+    agent.dispatcherFromConfig(
+      ConfigFactory
+        .empty()
+        .withValue("atum.dispatcher.type", ConfigValueFactory.fromAnyRef("http"))
+        .withValue("atum.dispatcher.http.url", ConfigValueFactory.fromAnyRef("http://localhost:8080"))
+    )
+
+    // Atum Context stuff preparation - Partitioning, Measures, Additional Data, Checkpoint
     val domainAtumPartitioning = ListMap(
       "partition1" -> "valueFromTest1",
       "partition2" -> "valueFromTest2"
     )
-    val domainAtumContext = AtumAgent.getOrCreateAtumContext(domainAtumPartitioning)
+    val domainAtumContext = agent.getOrCreateAtumContext(domainAtumPartitioning)
 
     domainAtumContext.addMeasure(RecordCount("*"))
     domainAtumContext.addAdditionalData("author", "Laco")
