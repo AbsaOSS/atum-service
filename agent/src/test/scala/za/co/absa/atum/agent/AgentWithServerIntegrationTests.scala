@@ -24,7 +24,7 @@ import za.co.absa.balta.classes.JsonBString
 
 import scala.collection.immutable.ListMap
 
-class AgentWithServerE2ETests extends DBTestSuite {
+class AgentWithServerIntegrationTests extends DBTestSuite {
 
   private val testDataForRDD = Seq(
     Row("A", 8.0),
