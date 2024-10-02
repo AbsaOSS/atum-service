@@ -23,7 +23,7 @@ import java.util.Base64
 
 object DTOBase64Encoder {
 
-  def encodeDTO[T](input: T, encoder: Encoder[T]): String = {
+  def encodeDTOToBase64[T](input: T)(implicit encoder: Encoder[T]): String = {
     Base64.getUrlEncoder.encodeToString(
       input.asJson(encoder).noSpaces.getBytes("UTF-8")
     )

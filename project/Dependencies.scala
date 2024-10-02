@@ -39,7 +39,6 @@ object Dependencies {
     val sparkCommons = "0.6.1"
 
     val sttpClient = "3.5.2"
-    val sttpOkHttpBackend = "1.7.2"
     val sttpCirceJson = "3.9.7"
 
     val postgresql = "42.6.0"

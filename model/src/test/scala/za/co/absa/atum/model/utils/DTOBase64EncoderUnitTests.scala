@@ -18,22 +18,22 @@ package za.co.absa.atum.model.utils
 
 import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.model.dto.{AdditionalDataPatchDTO, PartitionDTO}
-import za.co.absa.atum.model.utils.DTOBase64Encoder.encodeDTO
+import za.co.absa.atum.model.utils.DTOBase64Encoder.encodeDTOToBase64
 
 class DTOBase64EncoderUnitTests extends AnyFlatSpecLike {
 
   "asJsonString" should "encode PartitionDTO into string" in {
     val expected = "eyJrZXkiOiJrZXkxIiwidmFsdWUiOiJ2YWx1ZTEifQ=="
-    val actual = encodeDTO(PartitionDTO("key1", "value1"), PartitionDTO.encodePartitionDTO)
+    val actual = encodeDTOToBase64(PartitionDTO("key1", "value1"))(PartitionDTO.encodePartitionDTO)
 
     assert(actual == expected)
   }
 
   "asJsonString" should "encode AdditionalDataDTO into string" in {
     val expected = "eyJieVVzZXIiOiJBcnR1cml0byIsImRhdGEiOnsiTGEiOiJjYXNhIiwiZGUiOiJwYXBlbCJ9fQ=="
-    val actual = encodeDTO(
-      AdditionalDataPatchDTO("Arturito", Map("La" -> "casa", "de" -> "papel")),
-      AdditionalDataPatchDTO.encoderAdditionalDataPatchDTO
+
+    val actual = encodeDTOToBase64(
+      AdditionalDataPatchDTO("Arturito", Map("La" -> "casa", "de" -> "papel"))
     )
 
     assert(actual == expected)

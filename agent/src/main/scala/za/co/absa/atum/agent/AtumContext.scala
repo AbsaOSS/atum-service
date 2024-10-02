@@ -149,10 +149,10 @@ class AtumContext private[agent] (
       agent.currentUser,
       newAdditionalDataToAdd,
     )
-    agent.updateAdditionalData(this.atumPartitions, currAdditionalDataSubmit)
+    val retrievedAD = agent.updateAdditionalData(this.atumPartitions, currAdditionalDataSubmit)
 
-    this.additionalData ++= newAdditionalDataToAdd.map{case (k,v) => (k, Some(v))}
-
+    // Could be different from the one that was submitted. Replacing, just to have the most fresh copy possible.
+    this.additionalData = retrievedAD.data.map{ case (k, v) => (k, v.flatMap(_.value)) }
     this
   }
 
