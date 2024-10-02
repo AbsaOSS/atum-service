@@ -45,6 +45,8 @@ object JacocoSetup {
     Seq(
       "**.api.http.*",
       "**.config.*",
+      "za.co.absa.atum.agent.dispatcher.Dispatcher",
+      "za.co.absa.atum.agent.dispatcher.ConsoleDispatcher",
       "za.co.absa.atum.server.Main*",
       "za.co.absa.atum.server.Constants*",
       "za.co.absa.atum.server.api.database.DoobieImplicits*",
