@@ -38,8 +38,8 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
     Seq(
       fr"${input.flowId}",
       fr"${input.limit}",
-      fr"${input.checkpointName}",
-      fr"${input.offset}"
+      fr"${input.offset}",
+      fr"${input.checkpointName}"
     )
   )
     with StandardStatusHandling
