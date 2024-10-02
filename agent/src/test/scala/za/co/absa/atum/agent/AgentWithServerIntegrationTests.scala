@@ -21,7 +21,7 @@ import org.apache.spark.sql.{Row, SparkSession}
 import za.co.absa.atum.agent.model.AtumMeasure.RecordCount
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
-import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 
 import scala.collection.immutable.ListMap
 
@@ -38,8 +38,8 @@ class AgentWithServerIntegrationTests extends DBTestSuite {
     .add(StructField("notImportantColumn", StringType))
     .add(StructField("columnForSum", DoubleType))
 
-  ignore("Need to add service & pg run in CI and perhaps make this a new test type - e2e")
-  test("Agent should be compatible with server") {
+  // Need to add service & pg run in CI and perhaps make this a new test type - e2e
+  ignore("Agent should be compatible with server") {
 
     val expectedMeasurement = JsonBString(
       """{"mainValue": {"value": "4", "valueType": "Long"}, "supportValues": {}}""".stripMargin
