@@ -38,6 +38,7 @@ class AgentWithServerIntegrationTests extends DBTestSuite {
     .add(StructField("notImportantColumn", StringType))
     .add(StructField("columnForSum", DoubleType))
 
+  ignore("Need to add service & pg run in CI and perhaps make this a new test type - e2e")
   test("Agent should be compatible with server") {
 
     val expectedMeasurement = JsonBString(
