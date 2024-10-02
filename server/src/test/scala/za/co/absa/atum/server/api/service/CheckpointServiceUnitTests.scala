@@ -21,7 +21,7 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.CheckpointRepository
-import za.co.absa.atum.server.model.PaginatedResult.ResultHasMore
+import za.co.absa.atum.model.envelopes.PaginatedResult.ResultHasMore
 import zio.test.Assertion.failsWithA
 import zio.test._
 import zio._

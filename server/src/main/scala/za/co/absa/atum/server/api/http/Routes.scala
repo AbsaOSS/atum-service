@@ -25,10 +25,10 @@ import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
-import za.co.absa.atum.server.model.{ErrorResponse, StatusResponse}
-import za.co.absa.atum.server.model.SuccessResponse._
+import za.co.absa.atum.model.envelopes.SuccessResponse._
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher

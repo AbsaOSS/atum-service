@@ -17,10 +17,10 @@
 package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.envelopes.InternalServerErrorResponse
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.FlowService
-import za.co.absa.atum.server.model.InternalServerErrorResponse
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._

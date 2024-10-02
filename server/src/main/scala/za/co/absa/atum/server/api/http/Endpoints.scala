@@ -21,10 +21,10 @@ import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.server.model.{ErrorResponse, StatusResponse}
-import za.co.absa.atum.server.model.SuccessResponse._
+import za.co.absa.atum.model.envelopes.SuccessResponse._
 import sttp.tapir.{PublicEndpoint, Validator, endpoint}
-import za.co.absa.atum.server.api.http.ApiPaths.{Health, ZioMetrics, _}
+import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
+import za.co.absa.atum.server.api.http.ApiPaths._
 
 import java.util.UUID
 

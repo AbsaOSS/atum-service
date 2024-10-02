@@ -22,7 +22,7 @@ import sttp.client3.{UriContext, basicRequest}
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.server.model.StatusResponse
+import za.co.absa.atum.model.envelopes.StatusResponse
 import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO}

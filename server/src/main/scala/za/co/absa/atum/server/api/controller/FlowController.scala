@@ -17,8 +17,8 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointQueryDTO}
-import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.MultiSuccessResponse
+import za.co.absa.atum.model.envelopes.ErrorResponse
+import za.co.absa.atum.model.envelopes.SuccessResponse.MultiSuccessResponse
 import zio.IO
 import zio.macros.accessible
 

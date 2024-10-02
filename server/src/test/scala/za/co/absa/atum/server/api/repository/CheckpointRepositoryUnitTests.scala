@@ -25,7 +25,7 @@ import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpo
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
 import za.co.absa.atum.server.api.exception.DatabaseError._
-import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.model.envelopes.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._

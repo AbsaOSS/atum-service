@@ -18,18 +18,13 @@ package za.co.absa.atum.server.api.controller
 
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.envelopes.{ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse, Pagination}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
-import za.co.absa.atum.server.model.{
-  ConflictErrorResponse,
-  InternalServerErrorResponse,
-  NotFoundErrorResponse,
-  Pagination
-}
+import za.co.absa.atum.model.envelopes.PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._

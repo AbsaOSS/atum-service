@@ -23,7 +23,7 @@ import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.repository.PartitioningRepository
-import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.model.envelopes.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio.test.Assertion.failsWithA
 import zio.test._
 import zio._

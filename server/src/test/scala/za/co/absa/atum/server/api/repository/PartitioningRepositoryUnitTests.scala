@@ -25,7 +25,7 @@ import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAddition
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
-import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.model.envelopes.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException, ErrorInDataException}
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._

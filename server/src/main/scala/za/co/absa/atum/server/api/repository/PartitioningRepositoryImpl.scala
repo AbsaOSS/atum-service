@@ -17,6 +17,7 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.envelopes.PaginatedResult
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
@@ -26,7 +27,7 @@ import za.co.absa.atum.server.model._
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
-import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.model.envelopes.PaginatedResult.{ResultHasMore, ResultNoMore}
 
 class PartitioningRepositoryImpl (
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,

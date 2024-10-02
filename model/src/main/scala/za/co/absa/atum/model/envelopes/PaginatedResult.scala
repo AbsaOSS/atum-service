@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.envelopes
 
 sealed trait PaginatedResult[R] {
   def data: Seq[R]

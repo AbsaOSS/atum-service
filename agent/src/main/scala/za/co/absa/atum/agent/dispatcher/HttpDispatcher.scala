@@ -17,17 +17,18 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
-import io.circe.syntax.EncoderOps
 import org.apache.spark.internal.Logging
+import sttp.capabilities
 import sttp.client3._
 import sttp.model.Uri
+import sttp.client3.okhttp.OkHttpSyncBackend
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.utils.DTOBase64Encoder.encodeDTO
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 
-import java.util.Base64
 
 class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   import HttpDispatcher._
@@ -50,7 +51,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     .header("Content-Type", "application/json")
     .response(asString)
 
-  private val backend = HttpURLConnectionBackend()
+  private val backend: SttpBackend[Identity, capabilities.WebSockets] = OkHttpSyncBackend()
 
   logInfo("using http dispatcher")
   logInfo(s"serverUrl $serverUrl")
@@ -67,7 +68,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
     val response = backend.send(request)
 
-    handleResponseBody(response).as[PartitioningWithIdDTO].id
+    handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data.id
   }
 
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
@@ -95,6 +96,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO = {
     val partitioningId = getPartitioningId(partitioning)
+    log.debug(s"Got partitioning ID: '$partitioningId'")
 
     val request = commonAtumRequest
       .patch(createAdditionalDataEndpoint(partitioningId))
@@ -102,7 +104,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
     val response = backend.send(request)
 
-    handleResponseBody(response).as[AdditionalDataDTO]
+    handleResponseBody(response).as[SingleSuccessResponse[AdditionalDataDTO]].data
   }
 
   private def handleResponseBody(response: Response[Either[String, String]]): String = {
