@@ -22,6 +22,7 @@ import za.co.absa.atum.agent.model.AtumMeasure.RecordCount
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import za.co.absa.atum.agent.dispatcher.HttpDispatcher
 
 import scala.collection.immutable.ListMap
 
@@ -61,13 +62,14 @@ class AgentWithServerIntegrationTests extends DBTestSuite {
     val df = spark.createDataFrame(rdd, testDataSchema)
 
     // Atum Agent preparation - Agent configured to work with HTTP Dispatcher and service on localhost
-    val agent = AtumAgent
-    agent.dispatcherFromConfig(
-      ConfigFactory
-        .empty()
-        .withValue("atum.dispatcher.type", ConfigValueFactory.fromAnyRef("http"))
-        .withValue("atum.dispatcher.http.url", ConfigValueFactory.fromAnyRef("http://localhost:8080"))
-    )
+    val agent: AtumAgent = new AtumAgent {
+      override val dispatcher: HttpDispatcher = new HttpDispatcher(
+        ConfigFactory
+          .empty()
+          .withValue("atum.dispatcher.type", ConfigValueFactory.fromAnyRef("http"))
+          .withValue("atum.dispatcher.http.url", ConfigValueFactory.fromAnyRef("http://localhost:8080"))
+      )
+    }
 
     // Atum Context stuff preparation - Partitioning, Measures, Additional Data, Checkpoint
     val domainAtumPartitioning = ListMap(
