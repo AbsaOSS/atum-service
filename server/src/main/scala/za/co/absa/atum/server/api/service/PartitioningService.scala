@@ -17,8 +17,8 @@
 package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.model.envelopes.PaginatedResult
 import za.co.absa.atum.server.api.exception.ServiceError
+import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
 
@@ -32,9 +32,7 @@ trait PartitioningService {
 
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]]
 
-  def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[ServiceError, InitialAdditionalDataDTO]
-
-  def getPartitioningAdditionalDataV2(partitioningId: Long): IO[ServiceError, AdditionalDataDTO]
+  def getPartitioningAdditionalData(partitioningId: Long): IO[ServiceError, AdditionalDataDTO]
 
   def patchAdditionalData(
     partitioningId: Long,

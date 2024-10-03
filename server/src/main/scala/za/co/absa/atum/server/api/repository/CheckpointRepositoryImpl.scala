@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
-import za.co.absa.atum.model.envelopes.PaginatedResult
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpointV2.GetPartitioningCheckpointV2Args
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
@@ -25,8 +24,8 @@ import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.Writ
 import za.co.absa.atum.server.api.database.runs.functions.{WriteCheckpoint, WriteCheckpointV2}
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
-import za.co.absa.atum.model.envelopes.PaginatedResult.{ResultHasMore, ResultNoMore}
-import za.co.absa.atum.server.model.CheckpointItemFromDB
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.server.model.{CheckpointItemFromDB, PaginatedResult}
 import zio._
 import zio.interop.catz.asyncInstance
 

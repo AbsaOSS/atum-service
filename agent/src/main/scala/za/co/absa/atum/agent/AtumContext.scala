@@ -161,7 +161,7 @@ class AtumContext private[agent] (
    *
    * @return the current additional data
    */
-  def currentAdditionalData: InitialAdditionalDataDTO = {
+  def currentAdditionalData: AdditionalData = {
     additionalData
   }
 
@@ -199,7 +199,7 @@ class AtumContext private[agent] (
     atumPartitions: AtumPartitions = atumPartitions,
     agent: AtumAgent = agent,
     measures: Set[AtumMeasure] = measures,
-    additionalData: InitialAdditionalDataDTO = additionalData
+    additionalData: AdditionalData = additionalData
   ): AtumContext = {
     new AtumContext(atumPartitions, agent, measures, additionalData)
   }
@@ -210,7 +210,7 @@ object AtumContext {
    * Type alias for Atum partitions.
    */
   type AtumPartitions = ListMap[String, String]
-  type AdditionalData = InitialAdditionalDataDTO
+  type AdditionalData = Map[String, Option[String]]
 
   /**
    * Object contains helper methods to work with Atum partitions.

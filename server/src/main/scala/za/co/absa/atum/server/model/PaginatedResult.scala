@@ -16,7 +16,13 @@
 
 package za.co.absa.atum.server.model
 
-case class AdditionalDataFromDB(
-  adName: Option[String],
-  adValue: Option[String]
-)
+sealed trait PaginatedResult[R] {
+  def data: Seq[R]
+}
+
+object PaginatedResult {
+
+  case class ResultHasMore[R](data: Seq[R]) extends PaginatedResult[R]
+  case class ResultNoMore[R](data: Seq[R]) extends PaginatedResult[R]
+
+}

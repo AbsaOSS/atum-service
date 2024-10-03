@@ -32,20 +32,20 @@ import zio._
 import zio.test.Assertion.equalTo
 import zio.test._
 
-object GetPartitioningAdditionalDataV2EndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
+object GetPartitioningAdditionalDataEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.getPartitioningAdditionalDataV2(1L))
+  when(partitioningControllerMock.getPartitioningAdditionalData(1L))
     .thenReturn(ZIO.succeed(SingleSuccessResponse(additionalDataDTO1, uuid1)))
-  when(partitioningControllerMock.getPartitioningAdditionalDataV2(2L))
+  when(partitioningControllerMock.getPartitioningAdditionalData(2L))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("partitioning not found")))
 
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getPartitioningAdditionalDataServerEndpointV2 = getPartitioningAdditionalDataEndpointV2
     .zServerLogic({ partitioningId: Long =>
-      PartitioningController.getPartitioningAdditionalDataV2(partitioningId)
+      PartitioningController.getPartitioningAdditionalData(partitioningId)
     })
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {

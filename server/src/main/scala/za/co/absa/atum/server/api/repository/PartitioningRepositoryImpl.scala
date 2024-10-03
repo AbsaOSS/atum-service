@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.model.envelopes.PaginatedResult
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
@@ -27,15 +26,14 @@ import za.co.absa.atum.server.model._
 import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
-import za.co.absa.atum.model.envelopes.PaginatedResult.{ResultHasMore, ResultNoMore}
+import PaginatedResult.{ResultHasMore, ResultNoMore}
 
-class PartitioningRepositoryImpl (
+class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
   createPartitioningFn: CreatePartitioning,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
-  getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
-  getPartitioningAdditionalDataV2Fn: GetPartitioningAdditionalDataV2,
+  getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
   getPartitioningByIdFn: GetPartitioningById,
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
   getPartitioningFn: GetPartitioning,
@@ -79,18 +77,9 @@ class PartitioningRepositoryImpl (
       })
   }
 
-  override def getPartitioningAdditionalData(
-    partitioning: PartitioningDTO
-  ): IO[DatabaseError, InitialAdditionalDataDTO] = {
+  override def getPartitioningAdditionalData(partitioningId: Long): IO[DatabaseError, AdditionalDataDTO] = {
     dbMultipleResultCallWithAggregatedStatus(
-      getPartitioningAdditionalDataFn(partitioning),
-      "getPartitioningAdditionalData"
-    ).map(_.map { case AdditionalDataFromDB(adName, adValue) => adName.get -> adValue }.toMap)
-  }
-
-  override def getPartitioningAdditionalDataV2(partitioningId: Long): IO[DatabaseError, AdditionalDataDTO] = {
-    dbMultipleResultCallWithAggregatedStatus(
-      getPartitioningAdditionalDataV2Fn(partitioningId),
+      getPartitioningAdditionalDataFn(partitioningId),
       "getPartitioningAdditionalData"
     ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
   }
@@ -176,9 +165,8 @@ object PartitioningRepositoryImpl {
     CreatePartitioningIfNotExists
       with CreatePartitioning
       with GetPartitioningMeasures
-      with GetPartitioningAdditionalData
       with CreateOrUpdateAdditionalData
-      with GetPartitioningAdditionalDataV2
+      with GetPartitioningAdditionalData
       with GetPartitioningById
       with GetPartitioningMeasuresById
       with GetPartitioning
@@ -190,9 +178,8 @@ object PartitioningRepositoryImpl {
       createPartitioningIfNotExists <- ZIO.service[CreatePartitioningIfNotExists]
       createPartitioning <- ZIO.service[CreatePartitioning]
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
-      getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
-      getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalDataV2]
+      getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
       getPartitioningById <- ZIO.service[GetPartitioningById]
       getPartitioningMeasuresById <- ZIO.service[GetPartitioningMeasuresById]
       getPartitioning <- ZIO.service[GetPartitioning]
@@ -202,9 +189,8 @@ object PartitioningRepositoryImpl {
       createPartitioningIfNotExists,
       createPartitioning,
       getPartitioningMeasures,
-      getPartitioningAdditionalData,
       createOrUpdateAdditionalData,
-      getPartitioningAdditionalDataV2,
+      getPartitioningAdditionalData,
       getPartitioningById,
       getPartitioningMeasuresById,
       getPartitioning,

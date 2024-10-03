@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.model.envelopes
 
-case class StatusResponse(status: String, message: String)
+case class StatusResponse private (status: String, message: String)
 
 object StatusResponse {
 
@@ -25,7 +25,7 @@ object StatusResponse {
   implicit val encoder: io.circe.Encoder[StatusResponse] = deriveEncoder
   implicit val decoder: io.circe.Decoder[StatusResponse] = deriveDecoder
 
-  def up: StatusResponse = {
+  lazy val up: StatusResponse = {
     StatusResponse(
       status = "UP",
       message = "Atum server is up and running"

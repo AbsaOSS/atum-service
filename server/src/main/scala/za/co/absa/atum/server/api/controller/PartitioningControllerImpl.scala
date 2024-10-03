@@ -17,11 +17,13 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.model.envelopes.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, PaginatedResult}
+import za.co.absa.atum.model.envelopes.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.model.envelopes.SuccessResponse._
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonDeserializationSyntax
+import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
@@ -35,27 +37,40 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       _ <- partitioningService
         .createPartitioningIfNotExists(partitioningSubmitDTO)
         .mapError(serviceError => InternalServerErrorResponse(serviceError.message))
+
+      partitioningWithId <- partitioningService
+        .getPartitioning(partitioningSubmitDTO.partitioning)
+        .mapError(serviceError => InternalServerErrorResponse(serviceError.message))
+
       measures <- partitioningService
         .getPartitioningMeasures(partitioningSubmitDTO.partitioning)
         .mapError { serviceError: ServiceError =>
           InternalServerErrorResponse(serviceError.message)
         }
+
       additionalData <- partitioningService
-        .getPartitioningAdditionalData(partitioningSubmitDTO.partitioning)
+        .getPartitioningAdditionalData(partitioningWithId.id)
         .mapError { serviceError: ServiceError =>
           InternalServerErrorResponse(serviceError.message)
         }
-    } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalData)
+
+      additionalDataForContext <- ZIO.succeed {
+        additionalData.data.map { case (key, value) =>
+          key -> value.flatMap(_.value)
+        }
+      }
+
+    } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalDataForContext)
 
     atumContextDTOEffect
   }
 
-  override def getPartitioningAdditionalDataV2(
+  override def getPartitioningAdditionalData(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
     mapToSingleSuccessResponse(
       serviceCall[AdditionalDataDTO, AdditionalDataDTO](
-        partitioningService.getPartitioningAdditionalDataV2(partitioningId)
+        partitioningService.getPartitioningAdditionalData(partitioningId)
       )
     )
   }
@@ -124,7 +139,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
     for {
       decodedPartitions <- ZIO
-        .fromEither(base64Decode[PartitioningDTO](partitioning))
+        .fromEither(partitioning.fromBase64As[PartitioningDTO])
         .mapError(error => GeneralErrorResponse(error.getMessage))
       response <-
         mapToSingleSuccessResponse[PartitioningWithIdDTO](

@@ -66,13 +66,18 @@ trait TestData {
 
   // Partitioning from the DB
   protected val partitioningFromDB1: PartitioningFromDB = PartitioningFromDB(
+    id = 1L,
+    partitioning = partitioningAsJson,
+    author = "author"
+  )
+  protected val partitioningFromDB2: PartitioningFromDB = PartitioningFromDB(
     id = 1111L,
     partitioning = partitioningAsJson,
     author = "author"
   )
 
   protected val getFlowPartitioningsResult1: GetFlowPartitioningsResult = GetFlowPartitioningsResult(
-    id = 1111L,
+    id = 1L,
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = false
@@ -88,6 +93,11 @@ trait TestData {
   // Partitioning with ID DTO
   protected val partitioningWithIdDTO1: PartitioningWithIdDTO = PartitioningWithIdDTO(
     id = partitioningFromDB1.id,
+    partitioning = partitioningDTO1,
+    author = partitioningFromDB1.author
+  )
+  protected val partitioningWithIdDTO2: PartitioningWithIdDTO = PartitioningWithIdDTO(
+    id = partitioningFromDB2.id,
     partitioning = partitioningDTO1,
     author = partitioningFromDB1.author
   )
@@ -134,18 +144,6 @@ trait TestData {
   protected val measureFromDB2: MeasureFromDB = MeasureFromDB(Some("count2"), Some(Seq("col_A2", "col_B2")))
 
   // Initial Additional Data
-  protected val initialAdditionalDataDTO1: InitialAdditionalDataDTO = Map(
-    "key1" -> Some("value1"),
-    "key2" -> None,
-    "key3" -> Some("value3")
-  )
-  protected val initialAdditionalDataDTO2: InitialAdditionalDataDTO = Map(
-    "key1" -> Some("value1"),
-    "key2" -> Some("value2"),
-    "key3" -> Some("value3")
-  )
-  protected val initialAdditionalDataDTO3: InitialAdditionalDataDTO = Map.empty
-
   protected val additionalDataDTO1: AdditionalDataDTO = AdditionalDataDTO(
     Map(
       "key1" -> Some(AdditionalDataItemDTO(Some("value1"), "author")),
@@ -224,7 +222,7 @@ trait TestData {
   protected val atumContextDTO1: AtumContextDTO = AtumContextDTO(
     partitioning = partitioningSubmitDTO1.partitioning,
     measures = Set(measureDTO1, measureDTO2),
-    additionalData = Map.empty
+    additionalData = additionalDataDTOSeq1.toMap
   )
 
   protected val atumContextDTO2: AtumContextDTO = atumContextDTO1.copy(
@@ -371,12 +369,8 @@ trait TestData {
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
-    val additionalData: InitialAdditionalDataDTO = Map.empty
+    val additionalData: Map[String, Option[String]] = Map.empty
     AtumContextDTO(partitioningSubmitDTO.partitioning, measures, additionalData)
-  }
-
-  protected def encodePartitioningDTO(partitioningDTO: PartitioningDTO): String = {
-    Base64.getUrlEncoder.encodeToString(partitioningDTO.asJson(dto.encodePartitioningDTO).noSpaces.getBytes("UTF-8"))
   }
 
 }

@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
@@ -30,11 +29,10 @@ object GetPartitioningAdditionalDataIntegrationTests extends ConfigProviderTest 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     suite("GetPartitioningAdditionalDataSuite")(
       test("Returns expected sequence of Additional data with provided partitioning") {
-        val partitioningDTO: PartitioningDTO =
-          Seq(PartitionDTO("stringA", "stringB"), PartitionDTO("string2", "string2"))
+        val partitioningId: Long = 0L
         for {
-          getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
-          result <- getPartitioningAdditionalData(partitioningDTO)
+          getPartitioningAdditionalDataV2 <- ZIO.service[GetPartitioningAdditionalData]
+          result <- getPartitioningAdditionalDataV2(partitioningId)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(

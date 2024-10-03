@@ -23,7 +23,7 @@ import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.CheckpointService
-import za.co.absa.atum.model.envelopes.PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import zio._
 import zio.test.Assertion.failsWithA

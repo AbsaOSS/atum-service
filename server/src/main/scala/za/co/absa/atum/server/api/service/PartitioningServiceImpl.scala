@@ -17,9 +17,9 @@
 package za.co.absa.atum.server.api.service
 
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.model.envelopes.PaginatedResult
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.repository.PartitioningRepository
+import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
@@ -49,19 +49,10 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
-  override def getPartitioningAdditionalData(
-    partitioning: PartitioningDTO
-  ): IO[ServiceError, InitialAdditionalDataDTO] = {
+  override def getPartitioningAdditionalData(partitioningId: Long): IO[ServiceError, AdditionalDataDTO] = {
     repositoryCall(
-      partitioningRepository.getPartitioningAdditionalData(partitioning),
+      partitioningRepository.getPartitioningAdditionalData(partitioningId),
       "getPartitioningAdditionalData"
-    )
-  }
-
-  override def getPartitioningAdditionalDataV2(partitioningId: Long): IO[ServiceError, AdditionalDataDTO] = {
-    repositoryCall(
-      partitioningRepository.getPartitioningAdditionalDataV2(partitioningId),
-      "getPartitioningAdditionalDataV2"
     )
   }
 

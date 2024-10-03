@@ -32,7 +32,7 @@ trait PartitioningController {
     partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)]
 
-  def getPartitioningAdditionalDataV2(
+  def getPartitioningAdditionalData(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]
 

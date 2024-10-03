@@ -19,7 +19,7 @@ package za.co.absa.atum.database.runs
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
-class GetPartitioningAdditionalDataIntegrationTests extends DBTestSuite{
+class GetPartitioningAdditionalDataIntegrationTests extends DBTestSuite {
 
   private val fncGetPartitioningAdditionalData = "runs.get_partitioning_additional_data"
 
@@ -88,19 +88,21 @@ class GetPartitioningAdditionalDataIntegrationTests extends DBTestSuite{
     )
 
     function(fncGetPartitioningAdditionalData)
-      .setParam("i_partitioning", partitioning1)
+      .setParam("i_partitioning_id", fkPartitioning1)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(11))
         assert(results.getString("status_text").contains("OK"))
         assert(results.getString("ad_name").contains("ad_1"))
         assert(results.getString("ad_value").contains("This is the additional data for Joseph"))
+        assert(results.getString("ad_author").contains("Joseph"))
 
         val results2 = queryResult.next()
         assert(results2.getInt("status").contains(11))
         assert(results2.getString("status_text").contains("OK"))
         assert(results2.getString("ad_name").contains("ad_2"))
         assert(results2.getString("ad_value").contains("This is the additional data for Joseph"))
+        assert(results2.getString("ad_author").contains("Joseph"))
 
         assert(!queryResult.hasNext)
       }
@@ -124,8 +126,11 @@ class GetPartitioningAdditionalDataIntegrationTests extends DBTestSuite{
     val fkPartitioning: Long = table("runs.partitionings").fieldValue("partitioning", partitioning2, "id_partitioning").get.get
 
     function(fncGetPartitioningAdditionalData)
-      .setParam("i_partitioning", partitioning2)
+      .setParam("i_partitioning_id", fkPartitioning)
       .execute { queryResult =>
+        val result = queryResult.next()
+        assert(result.getInt("status").contains(16))
+        assert(result.getString("status_text").contains("No additional data found"))
         assert(!queryResult.hasNext)
       }
 
@@ -135,20 +140,8 @@ class GetPartitioningAdditionalDataIntegrationTests extends DBTestSuite{
   }
 
   test("Get partitioning additional data should return error status code on non existing partitioning") {
-    val partitioning = JsonBString(
-      """
-        |{
-        |   "version": 1,
-        |   "keys": ["key1"],
-        |   "keysToValuesMap": {
-        |     "key1": "value1"
-        |   }
-        |}
-        |""".stripMargin
-    )
-
     function(fncGetPartitioningAdditionalData)
-      .setParam("i_partitioning", partitioning)
+      .setParam("i_partitioning_id", 0L)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(41))

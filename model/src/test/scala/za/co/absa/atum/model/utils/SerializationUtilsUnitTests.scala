@@ -421,6 +421,20 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     assert(actualPartitioningDTO == expectedPartitioningDTO)
   }
 
+  "asJsonString" should "encode PartitionDTO into string" in {
+    val expected = "eyJrZXkiOiJrZXkxIiwidmFsdWUiOiJ2YWx1ZTEifQ=="
+    val actual = PartitionDTO("key1", "value1").asBase64EncodedJsonString
+
+    assert(actual == expected)
+  }
+
+  "asJsonString" should "encode AdditionalDataDTO into string" in {
+    val expected = "eyJieVVzZXIiOiJBcnR1cml0byIsImRhdGEiOnsiTGEiOiJjYXNhIiwiZGUiOiJwYXBlbCJ9fQ=="
+    val actual = AdditionalDataPatchDTO("Arturito", Map("La" -> "casa", "de" -> "papel")).asBase64EncodedJsonString
+
+    assert(actual == expected)
+  }
+
 }
 
 object SerializationUtilsTest {
