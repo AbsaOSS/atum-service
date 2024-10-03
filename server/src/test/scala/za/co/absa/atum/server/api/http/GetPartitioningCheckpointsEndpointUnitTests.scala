@@ -24,10 +24,10 @@ import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.envelopes.{NotFoundErrorResponse, Pagination}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.CheckpointController
-import za.co.absa.atum.server.model.{NotFoundErrorResponse, Pagination}
-import za.co.absa.atum.server.model.SuccessResponse.PaginatedResponse
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import zio.test.Assertion.equalTo
 import zio.{Scope, ZIO, ZLayer}
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}

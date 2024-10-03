@@ -17,9 +17,10 @@
 package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.envelopes.ErrorResponse
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.server.api.service.FlowService
-import za.co.absa.atum.server.model.{ErrorResponse, PaginatedResult}
-import za.co.absa.atum.server.model.SuccessResponse.PaginatedResponse
+import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
 class FlowControllerImpl(flowService: FlowService) extends FlowController with BaseController {

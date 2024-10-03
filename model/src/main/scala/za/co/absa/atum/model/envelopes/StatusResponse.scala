@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.envelopes
 
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+case class StatusResponse private (status: String, message: String)
 
-case class Pagination(
-  limit: Int,
-  offset: Long,
-  hasMore: Boolean
-)
+object StatusResponse {
 
-object Pagination {
-  implicit val encoder: Encoder[Pagination] = deriveEncoder
-  implicit val decoder: Decoder[Pagination] = deriveDecoder
+  import io.circe.generic.semiauto._
+
+  implicit val encoder: io.circe.Encoder[StatusResponse] = deriveEncoder
+  implicit val decoder: io.circe.Decoder[StatusResponse] = deriveDecoder
+
+  lazy val up: StatusResponse = {
+    StatusResponse(
+      status = "UP",
+      message = "Atum server is up and running"
+    )
+  }
+
 }

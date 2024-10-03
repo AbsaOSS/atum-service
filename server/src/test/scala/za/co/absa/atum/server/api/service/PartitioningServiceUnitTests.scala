@@ -57,14 +57,9 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningMeasures(partitioningDTO2))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO1))
-    .thenReturn(ZIO.succeed(initialAdditionalDataDTO1))
-  when(partitioningRepositoryMock.getPartitioningAdditionalData(partitioningDTO2))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
-
-  when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(1L))
+  when(partitioningRepositoryMock.getPartitioningAdditionalData(1L))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
-  when(partitioningRepositoryMock.getPartitioningAdditionalDataV2(2L))
+  when(partitioningRepositoryMock.getPartitioningAdditionalData(2L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningById(1111L)).thenReturn(ZIO.succeed(partitioningWithIdDTO1))
@@ -184,25 +179,13 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         }
       ),
       suite("GetPartitioningAdditionalDataSuite")(
-        test("Returns expected Right with Seq[AdditionalDataDTO]") {
-          for {
-            result <- PartitioningService.getPartitioningAdditionalData(partitioningDTO1)
-          } yield assertTrue { result == initialAdditionalDataDTO1 }
-        },
-        test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.getPartitioningAdditionalData(partitioningDTO2).exit)(
-            failsWithA[ServiceError]
-          )
-        }
-      ),
-      suite("GetPartitioningAdditionalDataV2Suite")(
         test("Returns expected Right with AdditionalDataDTO") {
           for {
-            result <- PartitioningService.getPartitioningAdditionalDataV2(1L)
+            result <- PartitioningService.getPartitioningAdditionalData(1L)
           } yield assertTrue(result == additionalDataDTO1)
         },
         test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.getPartitioningAdditionalDataV2(2L).exit)(
+          assertZIO(PartitioningService.getPartitioningAdditionalData(2L).exit)(
             failsWithA[ServiceError]
           )
         }

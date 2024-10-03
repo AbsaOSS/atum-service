@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.envelopes
 
-case class AdditionalDataFromDB(
-  adName: Option[String],
-  adValue: Option[String]
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder}
+
+case class Pagination(
+  limit: Int,
+  offset: Long,
+  hasMore: Boolean
 )
+
+object Pagination {
+  implicit val encoder: Encoder[Pagination] = deriveEncoder
+  implicit val decoder: Decoder[Pagination] = deriveDecoder
+}

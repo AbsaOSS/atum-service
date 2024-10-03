@@ -14,22 +14,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.envelopes
 
-case class StatusResponse(status: String, message: String)
+import java.util.UUID
 
-object StatusResponse {
-
-  import io.circe.generic.semiauto._
-
-  implicit val encoder: io.circe.Encoder[StatusResponse] = deriveEncoder
-  implicit val decoder: io.circe.Decoder[StatusResponse] = deriveDecoder
-
-  def up: StatusResponse = {
-    StatusResponse(
-      status = "UP",
-      message = "Atum server is up and running"
-    )
-  }
-
+trait ResponseEnvelope {
+  def requestId: UUID
 }

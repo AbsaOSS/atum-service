@@ -32,9 +32,7 @@ trait PartitioningService {
 
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]]
 
-  def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[ServiceError, InitialAdditionalDataDTO]
-
-  def getPartitioningAdditionalDataV2(partitioningId: Long): IO[ServiceError, AdditionalDataDTO]
+  def getPartitioningAdditionalData(partitioningId: Long): IO[ServiceError, AdditionalDataDTO]
 
   def patchAdditionalData(
     partitioningId: Long,

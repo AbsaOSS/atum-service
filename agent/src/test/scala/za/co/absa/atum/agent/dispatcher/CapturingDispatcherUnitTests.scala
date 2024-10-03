@@ -88,7 +88,7 @@ class CapturingDispatcherUnitTests extends AnyWordSpec with Matchers {
       val unexpectedResult = AtumContextDTO(partitioning1)
       dispatcher.contains(nameOf(dispatcher.createPartitioning _), partitioning2Submit, unexpectedResult) shouldBe false
       dispatcher.contains(nameOf(dispatcher.createPartitioning _), partitioning1Submit) shouldBe false
-      dispatcher.contains(nameOf(dispatcher.saveAdditionalData _)) shouldBe false
+      dispatcher.contains(nameOf(dispatcher.updateAdditionalData _)) shouldBe false
     }
 
     "lists all captures" in {

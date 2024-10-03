@@ -20,7 +20,7 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.service.FlowService
-import za.co.absa.atum.server.model.{NotFoundErrorResponse, Pagination}
+import za.co.absa.atum.model.envelopes.{NotFoundErrorResponse, Pagination}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio._
 import zio.test.Assertion.failsWithA

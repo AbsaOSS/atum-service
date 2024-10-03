@@ -25,10 +25,10 @@ import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
-import za.co.absa.atum.server.model.{ErrorResponse, StatusResponse}
-import za.co.absa.atum.server.model.SuccessResponse._
+import za.co.absa.atum.model.envelopes.SuccessResponse._
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
@@ -57,7 +57,7 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint(postPartitioningEndpointV2, PartitioningController.postPartitioning),
       createServerEndpoint(
         getPartitioningAdditionalDataEndpointV2,
-        PartitioningController.getPartitioningAdditionalDataV2
+        PartitioningController.getPartitioningAdditionalData
       ),
       createServerEndpoint[
         (Long, AdditionalDataPatchDTO),
@@ -125,11 +125,11 @@ trait Routes extends Endpoints with ServerOptions {
       //      postCheckpointEndpointV2,
       createPartitioningEndpointV1,
       //      postPartitioningEndpointV2,
-      //      patchPartitioningAdditionalDataEndpointV2,
+      patchPartitioningAdditionalDataEndpointV2,
       //      getPartitioningCheckpointsEndpointV2,
       //      getPartitioningCheckpointEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
-      //      getPartitioningEndpointV2,
+      getPartitioningEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
       //      getFlowPartitioningsEndpointV2,
       //      getPartitioningMainFlowEndpointV2,

@@ -24,10 +24,10 @@ import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import sttp.client3.circe._
 import sttp.model.StatusCode
 import za.co.absa.atum.model.dto.PartitioningWithIdDTO
+import za.co.absa.atum.model.envelopes.{InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
-import za.co.absa.atum.server.model.{InternalServerErrorResponse, NotFoundErrorResponse}
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import zio.{Scope, ZIO, ZLayer}
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue}
 

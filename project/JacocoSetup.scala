@@ -32,7 +32,9 @@ object JacocoSetup {
   }
 
   def jacocoSettings(sparkVersion: String, scalaVersion: Version, moduleName: String): JacocoReportSettings = {
-    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `$moduleName` for spark:$sparkVersion - scala:${scalaVersion.asString} [$now]")
+    jacocoReportCommonSettings.withTitle(
+      s"Jacoco Report on `$moduleName` for spark:$sparkVersion - scala:${scalaVersion.asString} [$now]"
+    )
   }
 
   def jacocoSettings(scalaVersion: Version, moduleName: String): JacocoReportSettings = {
@@ -43,11 +45,14 @@ object JacocoSetup {
     Seq(
       "**.api.http.*",
       "**.config.*",
+      "za.co.absa.atum.agent.dispatcher.Dispatcher",
+      "za.co.absa.atum.agent.dispatcher.ConsoleDispatcher",
       "za.co.absa.atum.server.Main*",
       "za.co.absa.atum.server.Constants*",
       "za.co.absa.atum.server.api.database.DoobieImplicits*",
       "za.co.absa.atum.server.api.database.TransactorProvider*",
       "za.co.absa.atum.model.dto.*",
+      "za.co.absa.atum.model.envelopes.*"
     )
   }
 
