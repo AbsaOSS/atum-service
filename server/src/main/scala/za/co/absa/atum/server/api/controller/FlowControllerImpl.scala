@@ -16,25 +16,26 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointQueryDTO}
-import za.co.absa.atum.model.envelopes.ErrorResponse
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.service.FlowService
-import za.co.absa.atum.model.envelopes.SuccessResponse.MultiSuccessResponse
+import za.co.absa.atum.server.model.envelopes.{ErrorResponse, PaginatedResult}
+import za.co.absa.atum.server.model.envelopes.SuccessResponse.PaginatedResponse
 import zio._
 
 class FlowControllerImpl(flowService: FlowService) extends FlowController with BaseController {
 
   // to be replaced (and moved to checkpointcontroller) with new implementation in #233
-  override def getFlowCheckpointsV2(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]] = {
-    mapToMultiSuccessResponse(
-      serviceCall[Seq[CheckpointDTO], Seq[CheckpointDTO]](
-        flowService.getFlowCheckpoints(checkpointQueryDTO)
-      )
+  override def getFlowCheckpoints(
+   flowId: Long,
+   limit: Option[Int],
+   offset: Option[Long],
+   checkpointName: Option[String]
+  ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
+    val flowData = serviceCall[PaginatedResult[CheckpointV2DTO], PaginatedResult[CheckpointV2DTO]](
+      flowService.getFlowCheckpoints(flowId, limit, offset, checkpointName)
     )
+    mapToPaginatedResponse(limit.get, offset.get, flowData)
   }
-
 }
 
 object FlowControllerImpl {

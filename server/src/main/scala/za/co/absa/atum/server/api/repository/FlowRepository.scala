@@ -16,13 +16,20 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.CheckpointQueryDTO
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.CheckpointFromDB
+import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 import zio.macros.accessible
 
 @accessible
 trait FlowRepository {
-  def getFlowCheckpoints(checkpointQueryDTO: CheckpointQueryDTO): IO[DatabaseError, Seq[CheckpointFromDB]]
+
+  def getFlowCheckpoints(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long],
+    checkpointName: Option[String]
+  ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]]
+
 }

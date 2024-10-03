@@ -17,9 +17,13 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
+import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
-import za.co.absa.atum.server.api.exception.DatabaseError
+import za.co.absa.atum.server.api.exception.DatabaseError.NotFoundDatabaseError
+import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio._
 import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
@@ -28,36 +32,47 @@ import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 
 object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
-  private val getFlowCheckpointsMock = mock(classOf[GetFlowCheckpoints])
+  private val getFlowCheckpointsV2Mock = mock(classOf[GetFlowCheckpoints])
 
-  when(getFlowCheckpointsMock.apply(checkpointQueryDTO1)).thenReturn(ZIO.fail(new Exception("boom!")))
-  when(getFlowCheckpointsMock.apply(checkpointQueryDTO2))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(1, Some(1), Some(1), None)))
     .thenReturn(
       ZIO.right(
-        Seq(Row(FunctionStatus(0, "success"), checkpointFromDB1), Row(FunctionStatus(0, "success"), checkpointFromDB2))
+        Seq(
+          Row(FunctionStatus(11, "success"), Some(checkpointItemFromDB1)),
+          Row(FunctionStatus(11, "success"), Some(checkpointItemFromDB2))
+        )
       )
     )
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(2, Some(1), Some(1), None)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "success"), None))))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(3, None, None, None)))
+    .thenReturn(ZIO.fail(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
 
-  private val getFlowCheckpointsMockLayer = ZLayer.succeed(getFlowCheckpointsMock)
+  private val getFlowCheckpointsV2MockLayer = ZLayer.succeed(getFlowCheckpointsV2Mock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("FlowRepositoryIntegrationSuite")(
-      suite("GetFlowCheckpointsSuite")(
-        test("Returns expected DatabaseError") {
-          assertZIO(FlowRepository.getFlowCheckpoints(checkpointQueryDTO1).exit)(
-            failsWithA[DatabaseError]
-          )
-        },
-        test("Returns expected Left with StatusException") {
+      suite("GetFlowCheckpointsV2Suite")(
+        test("Returns expected Right with CheckpointV2DTO") {
           for {
-            result <- FlowRepository.getFlowCheckpoints(checkpointQueryDTO2)
-          } yield assertTrue(result == Seq(checkpointFromDB1, checkpointFromDB2))
+            result <- FlowRepository.getFlowCheckpoints(1, Some(1), Some(1), None)
+          } yield assertTrue(result == ResultHasMore(Seq(checkpointV2DTO1, checkpointV2DTO2)))
+        },
+        test("Returns expected Right with CheckpointV2DTO") {
+          for {
+            result <- FlowRepository.getFlowCheckpoints(2, Some(1), Some(1), None)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[CheckpointV2DTO]))
+        },
+        test("Returns expected DatabaseError") {
+          assertZIO(FlowRepository.getFlowCheckpoints(3, None, None, None).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
         }
       )
     ).provide(
       FlowRepositoryImpl.layer,
-      getFlowCheckpointsMockLayer
+      getFlowCheckpointsV2MockLayer
     )
 
   }

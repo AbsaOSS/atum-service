@@ -17,36 +17,33 @@
 package za.co.absa.atum.server.api.database.flows.functions
 
 import za.co.absa.atum.server.ConfigProviderTest
-import za.co.absa.atum.model.dto.{CheckpointQueryDTO, PartitionDTO, PartitioningDTO}
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
-import zio.interop.catz.asyncInstance
-import zio.{Scope, ZIO}
+import zio._
 import zio.test._
+import zio.interop.catz.asyncInstance
 
 object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
-    val partitioningDTO1: PartitioningDTO = Seq(
-      PartitionDTO("stringA", "stringA"),
-      PartitionDTO("stringB", "stringB")
-    )
-
     suite("GetFlowCheckpointsIntegrationTests")(
-      test("Returns expected sequence of flow of Checkpoints with existing partitioning") {
-        val partitioningQueryDTO: CheckpointQueryDTO = CheckpointQueryDTO(
-          partitioning = partitioningDTO1,
+      test("Should return checkpoints with the correct flowId, limit, and offset") {
+
+        // Define the GetFlowCheckpointsArgs DTO
+        val args = GetFlowCheckpoints.GetFlowCheckpointsArgs(
+          flowId = 1L,
           limit = Some(10),
-          checkpointName = Some("checkpointName")
+          offset = Some(0L),
+          checkpointName = Some("TestCheckpointName")
         )
 
         for {
           getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
-          result <- getFlowCheckpoints(partitioningQueryDTO)
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+          result <- getFlowCheckpoints(args)
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
       }
     ).provide(
       GetFlowCheckpoints.layer,
