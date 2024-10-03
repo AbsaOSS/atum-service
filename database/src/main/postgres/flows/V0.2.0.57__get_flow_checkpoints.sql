@@ -78,7 +78,12 @@ $$
 DECLARE
     _has_more BOOLEAN;
 BEGIN
-    -- Check if the flow exists
+    -- Check if the flow exists by querying the partitioning_to_flow table.
+    -- Rationale:
+    -- This table is preferred over the flows table because:
+    -- 1. Every flow has at least one record in partitioning_to_flow.
+    -- 2. This table is used in subsequent queries, providing a caching advantage.
+    -- 3. Improves performance by reducing the need to query the flows table directly.
     PERFORM 1 FROM flows.partitioning_to_flow WHERE fk_flow = i_flow_id;
     IF NOT FOUND THEN
         status := 42;
