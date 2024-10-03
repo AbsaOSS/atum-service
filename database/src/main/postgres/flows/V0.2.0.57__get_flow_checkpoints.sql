@@ -49,7 +49,7 @@ $$
 --      i_partitioning_of_flow  - partitioning to use for identifying the flow associate with checkpoints
 --                                that will be retrieved
 --      i_checkpoints_limit     - (optional) maximum number of checkpoint to return, returns all of them if NULL
---      i_offset                - (optional) offset for pagination
+--      i_offset                - (optional) offset for checkpoints pagination
 --      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --
 --      Note: i_checkpoint_limit and i_offset are used for pagination purposes;
