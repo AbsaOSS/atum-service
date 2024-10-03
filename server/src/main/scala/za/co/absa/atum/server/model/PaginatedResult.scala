@@ -23,6 +23,7 @@ sealed trait PaginatedResult[R] {
 object PaginatedResult {
 
   case class ResultHasMore[R](data: Seq[R]) extends PaginatedResult[R]
+
   case class ResultNoMore[R](data: Seq[R]) extends PaginatedResult[R]
 
 }
