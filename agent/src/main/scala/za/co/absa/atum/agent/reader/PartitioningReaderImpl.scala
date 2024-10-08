@@ -16,12 +16,15 @@
 
 package za.co.absa.atum.agent.reader
 
-class ParitioningReaderImpl (partitionData: Map[String, Any], checkpoints: List[String]) extends PartitionReader {
-  override def getAdditionalData: Option[Any] = {
-    partitionData.get("additionalData")
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, CheckpointV2DTO}
+
+class PartitioningReaderImpl(partitionData: Option[AdditionalDataDTO], checkpoints: List[CheckpointV2DTO])
+  extends PartitioningReader {
+  override def getAdditionalData: Option[AdditionalDataDTO] = {
+    partitionData
   }
 
-  override def getCheckpoints: List[String] = {
+  override def getCheckpoints: List[CheckpointV2DTO] = {
     checkpoints
   }
 

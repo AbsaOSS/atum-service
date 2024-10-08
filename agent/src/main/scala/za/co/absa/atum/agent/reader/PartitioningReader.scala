@@ -16,7 +16,9 @@
 
 package za.co.absa.atum.agent.reader
 
-trait PartitionReader {
-  def getAdditionalData: Option[Any]
-  def getCheckpoints: List[String]
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, CheckpointV2DTO}
+
+trait PartitioningReader {
+  def getAdditionalData: Option[AdditionalDataDTO]
+  def getCheckpoints: List[CheckpointV2DTO]
 }
