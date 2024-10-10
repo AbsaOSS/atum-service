@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.agent.reader
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, CheckpointV2DTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, CheckpointV2DTO}
 
 class PartitioningReaderImpl(partitionData: Option[AdditionalDataDTO], checkpoints: List[CheckpointV2DTO])
   extends PartitioningReader {
