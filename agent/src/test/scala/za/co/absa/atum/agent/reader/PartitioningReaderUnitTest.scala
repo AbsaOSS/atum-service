@@ -23,7 +23,7 @@ import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, Chec
 import java.util.UUID
 import java.time.ZonedDateTime
 
-class PartitioningReaderImplUnitTest extends AnyFlatSpec with Matchers {
+class PartitioningReaderUnitTest extends AnyFlatSpec with Matchers {
 
   "PartitioningReaderImpl" should "return the correct additional data" in {
     val additionalDataItem = AdditionalDataItemDTO(Some("value"), "author")
