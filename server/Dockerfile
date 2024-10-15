@@ -117,7 +117,7 @@ EXPOSE 8080
 # --- Final image assembly ---
 FROM base-ssl-${SSL} AS final
 
-COPY ./docker_entrypoint.sh /opt/app/docker_entrypoint.sh
+COPY ${AS_PREFIX}/docker_entrypoint.sh /opt/app/docker_entrypoint.sh
 RUN chmod +x /opt/app/docker_entrypoint.sh
 
 RUN echo "Running final stage with SSL_ENABLED=$SSL_ENABLED."
