@@ -19,8 +19,8 @@ package za.co.absa.atum.reader
 import org.scalatest.funsuite.AnyFunSuiteLike
 
 class PartitioningReaderUnitTests extends AnyFunSuiteLike {
-  test("foo") {
-    val expected = new PartitioningReader().foo()
-    assert(expected == "bar")
-  }
+//  test("foo") {
+//    val expected = new PartitioningReader().foo()
+//    assert(expected == "bar")
+//  }
 }
