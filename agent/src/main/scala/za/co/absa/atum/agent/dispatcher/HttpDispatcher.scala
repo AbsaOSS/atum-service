@@ -44,6 +44,8 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   private val getPartitioningIdEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/$partitioningsPath")
   private def createAdditionalDataEndpoint(partitioningId: Long): Uri =
     Uri.unsafeParse(s"$serverUrl$apiV2/$partitioningsPath/$partitioningId/additional-data")
+  private def getAdditionalDataEndpoint(partitioningId: Long): Uri =
+    Uri.unsafeParse(s"$serverUrl$apiV2/$partitioningsPath/$partitioningId/additional-data")
 
   private val commonAtumRequest = basicRequest
     .header("Content-Type", "application/json")
@@ -103,6 +105,36 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     val response = backend.send(request)
 
     handleResponseBody(response).as[SingleSuccessResponse[AdditionalDataDTO]].data
+  }
+
+  override def getAdditionalData(partitioning: PartitioningDTO): AdditionalDataDTO = {
+    val partitioningId = getPartitioningId(partitioning)
+    log.debug(s"Got partitioning ID: '$partitioningId'")
+
+    val request = commonAtumRequest
+      .get(getAdditionalDataEndpoint(partitioningId))
+
+    val response = backend.send(request)
+
+    handleResponseBody(response).as[SingleSuccessResponse[AdditionalDataDTO]].data
+  }
+
+  /**
+   * Fetches checkpoints for the given partitioning.
+   *
+   * @param partitioning The partitioning for which to fetch checkpoints.
+   * @return List of CheckpointDTO containing the checkpoints.
+   */
+  override def getCheckpoints(partitioning: PartitioningDTO): List[CheckpointV2DTO] = {
+    val partitioningId = getPartitioningId(partitioning)
+    log.debug(s"Got partitioning ID: '$partitioningId'")
+
+    val request = commonAtumRequest
+      .get(getAdditionalDataEndpoint(partitioningId))
+
+    val response = backend.send(request)
+
+    handleResponseBody(response).as[SingleSuccessResponse[List[CheckpointV2DTO]]].data
   }
 
   private def handleResponseBody(response: Response[Either[String, String]]): String = {
