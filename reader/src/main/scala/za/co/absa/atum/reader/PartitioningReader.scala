@@ -16,9 +16,45 @@
 
 package za.co.absa.atum.reader
 
-class PartitioningReader {
-  def foo(): String = {
-    // just to have some testable content
-    "bar"
+import com.typesafe.config.Config
+import io.circe.syntax.EncoderOps
+//import za.co.absa.atum.agent.AtumAgent.dispatcher
+import za.co.absa.atum.agent.dispatcher.HttpDispatcher
+import za.co.absa.atum.model.dto.{CheckpointV2DTO, PartitioningDTO}
+
+class PartitioningReader(config: Config) {
+
+  private val dispatcher: HttpDispatcher = new HttpDispatcher(config)
+
+  /**
+   * Fetches additional data for the given partitioning.
+   * @param partitioning The partitioning for which to fetch additional data.
+   * @return AdditionalDataDTO containing the additional data.
+   */
+  def getAdditionalData(partitioning: PartitioningDTO): String = {
+    dispatcher.getAdditionalData(partitioning).asJson.noSpaces
+  }
+
+  /**
+   * Fetches checkpoints for the given partitioning.
+   * @param partitioning The partitioning for which to fetch checkpoints.
+   * @return List of CheckpointDTO containing the checkpoints.
+   */
+  def getCheckpoints(partitioning: PartitioningDTO): List[CheckpointV2DTO] = {
+    dispatcher.getCheckpoints(partitioning).applyOrElse(partitioning, _ => List.empty)
+  }
+
+}
+
+object PartitioningReader {
+  def apply(config: Config): PartitioningReader = new PartitioningReader(config)
+
+  def apply(): PartitioningReader = new PartitioningReader(null)
+
+  def apply(config: Config, partitioning: PartitioningDTO): PartitioningReader = {
+    val reader = new PartitioningReader(config)
+    reader.getAdditionalData(partitioning)
+    reader.getCheckpoints(partitioning)
+    reader
   }
 }

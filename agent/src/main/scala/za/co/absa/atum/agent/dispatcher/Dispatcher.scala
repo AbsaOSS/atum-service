@@ -17,14 +17,7 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
-import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO,
-  AdditionalDataPatchDTO,
-  AtumContextDTO,
-  CheckpointDTO,
-  PartitioningDTO,
-  PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, AtumContextDTO, CheckpointDTO, CheckpointV2DTO, PartitioningDTO, PartitioningSubmitDTO}
 
 /**
  *  This class provides a contract for different dispatchers. It has a constructor foe eventual creation via reflection.
@@ -56,4 +49,18 @@ abstract class Dispatcher(config: Config) {
     partitioning: PartitioningDTO,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO
+
+  /**
+   *  This method is used to get the Additional data from the server.
+   *  @param partitioning: Partitioning to obtain ID for.
+   *  @return AdditionalDataDTO.
+   */
+  protected[agent] def getAdditionalData(partitioning: PartitioningDTO): AdditionalDataDTO
+
+  /**
+   *  This method is used to get the partitioning ID from the server.
+   *  @param partitioning: Partitioning to obtain ID for.
+   *  @return Long ID of the partitioning.
+   */
+  protected[agent] def getCheckpoints(partitioning: PartitioningDTO): Seq[CheckpointV2DTO]
 }
