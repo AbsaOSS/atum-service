@@ -27,6 +27,8 @@ class AwsSecretsProviderImpl(secretsManagerClient: SecretsManagerClient) extends
     ZIO.attempt {
       val getSecretValueRequest = GetSecretValueRequest.builder().secretId(secretName).build()
       secretsManagerClient.getSecretValue(getSecretValueRequest).secretString()
+    }.tapError { error =>
+      ZIO.logError(s"Failed to retrieve secret value for secret: $secretName. Error: ${error.getMessage}")
     }
   }
 }

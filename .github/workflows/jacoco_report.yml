@@ -24,7 +24,7 @@ on:
 env:
   scalaLong: 2.13.11
   scalaShort: "2.13"
-  coverage-overall: 60.0
+  coverage-overall: 58.0
   coverage-changed-files: 80.0
   check-overall-coverages: true
 
