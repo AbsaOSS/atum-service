@@ -150,6 +150,7 @@ object Dependencies {
 
     // aws
     lazy val awsSecretsManagerSdk = awsSdkOrg % "secretsmanager" % Versions.awssdk
+    lazy val awsStsSdk = awsSdkOrg % "sts" % Versions.awssdk
 
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
@@ -179,6 +180,7 @@ object Dependencies {
       sttpCirce,
       sttpCore,
       awsSecretsManagerSdk,
+      awsStsSdk,
       zioTest,
       zioTestSbt,
       zioTestJunit,
