@@ -143,30 +143,6 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
     val result = AtumContextDTO(partitioning.partitioning)
     captureFunctionCall(partitioning, result)
   }
-
-  /**
-   * This method is used to get the Partitioning Additional data from the server.
-   *
-   * @param partitioning  : Partitioning to obtain ID for.
-   * @return AdditionalDataDTO.
-   */
-  override protected[agent] def getAdditionalData(partitioning: PartitioningDTO): AdditionalDataDTO = {
-    val result = AdditionalDataDTO(
-      Map(
-        "key1" -> Some(AdditionalDataItemDTO(Some("value1"), "user1")),
-        "key2" -> Some(AdditionalDataItemDTO(Some("value2"), "user2"))
-      )
-    )
-    captureFunctionCall(partitioning, result)
-  }
-
-  /**
-   * This method is used to get the partitioning ID from the server.
-   *
-   * @param partitioning  : Partitioning to obtain ID for.
-   * @return Long ID of the partitioning.
-   */
-  override protected[agent] def getCheckpoints(partitioning: PartitioningDTO): Seq[CheckpointV2DTO] = ???
 }
 
 object CapturingDispatcher {

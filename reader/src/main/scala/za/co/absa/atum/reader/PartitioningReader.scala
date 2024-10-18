@@ -16,23 +16,26 @@
 
 package za.co.absa.atum.reader
 
-import com.typesafe.config.Config
-import io.circe.syntax.EncoderOps
-//import za.co.absa.atum.agent.AtumAgent.dispatcher
+import cats.Monad
+import za.co.absa.atum.model.types.BasicTypes.{AdditionalData, AtumPartitions}
+import za.co.absa.atum.model.types.Checkpoint
+import za.co.absa.atum.reader.server.GenericServerConnection
+import za.co.absa.atum.agent.AtumAgent.dispatcher
 import za.co.absa.atum.agent.dispatcher.HttpDispatcher
-import za.co.absa.atum.model.dto.{CheckpointV2DTO, PartitioningDTO}
 
-class PartitioningReader(config: Config) {
-
-  private val dispatcher: HttpDispatcher = new HttpDispatcher(config)
+class PartitioningReader[F[_] : Monad](partitioning: AtumPartitions)(implicit serverConnection : GenericServerConnection[F]) {
 
   /**
    * Fetches additional data for the given partitioning.
    * @param partitioning The partitioning for which to fetch additional data.
-   * @return AdditionalDataDTO containing the additional data.
+   * @return AdditionalData containing the additional data.
    */
-  def getAdditionalData(partitioning: PartitioningDTO): String = {
-    dispatcher.getAdditionalData(partitioning).asJson.noSpaces
+  def getAdditionalData(): F[AdditionalData] = {
+    // dispatcher.getAdditionalData(partitioning).asJson.noSpaces
+    // call uri to get id
+    // call the get partitioningAdditionalData
+    // transform envelope additionalDataDTO into AdditionalData
+//    serverConnection.getAdditionalData(partitioning)
   }
 
   /**
@@ -40,21 +43,9 @@ class PartitioningReader(config: Config) {
    * @param partitioning The partitioning for which to fetch checkpoints.
    * @return List of CheckpointDTO containing the checkpoints.
    */
-  def getCheckpoints(partitioning: PartitioningDTO): List[CheckpointV2DTO] = {
-    dispatcher.getCheckpoints(partitioning).applyOrElse(partitioning, _ => List.empty)
+  def getCheckpoints(): List[Checkpoint] = {
+    // Add optional parameters here.
+//    dispatcher.getCheckpoints(partitioning).applyOrElse(partitioning, _ => List.empty)
   }
 
-}
-
-object PartitioningReader {
-  def apply(config: Config): PartitioningReader = new PartitioningReader(config)
-
-  def apply(): PartitioningReader = new PartitioningReader(null)
-
-  def apply(config: Config, partitioning: PartitioningDTO): PartitioningReader = {
-    val reader = new PartitioningReader(config)
-    reader.getAdditionalData(partitioning)
-    reader.getCheckpoints(partitioning)
-    reader
-  }
 }
