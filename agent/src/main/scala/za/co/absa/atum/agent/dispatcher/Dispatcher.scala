@@ -56,4 +56,5 @@ abstract class Dispatcher(config: Config) {
     partitioning: PartitioningDTO,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO
+
 }
