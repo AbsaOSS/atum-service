@@ -20,22 +20,22 @@ import cats.Monad
 import za.co.absa.atum.model.types.BasicTypes.{AdditionalData, AtumPartitions}
 import za.co.absa.atum.model.types.Checkpoint
 import za.co.absa.atum.reader.server.GenericServerConnection
-import za.co.absa.atum.agent.AtumAgent.dispatcher
-import za.co.absa.atum.agent.dispatcher.HttpDispatcher
 
-class PartitioningReader[F[_] : Monad](partitioning: AtumPartitions)(implicit serverConnection : GenericServerConnection[F]) {
+import scala.language.higherKinds
+
+class PartitioningReader[F[_]: Monad](partitioning: AtumPartitions)(
+  implicit serverConnection: GenericServerConnection[F], dispatcher: Dispatcher) {
 
   /**
    * Fetches additional data for the given partitioning.
    * @param partitioning The partitioning for which to fetch additional data.
    * @return AdditionalData containing the additional data.
    */
-  def getAdditionalData(): F[AdditionalData] = {
-    // dispatcher.getAdditionalData(partitioning).asJson.noSpaces
-    // call uri to get id
-    // call the get partitioningAdditionalData
-    // transform envelope additionalDataDTO into AdditionalData
-//    serverConnection.getAdditionalData(partitioning)
+  def getAdditionalData: F[AdditionalData] = {
+    Monad[F].pure(dispatcher.getAdditionalData(partitioning).data.map {
+      case (key, Some(itemDTO)) => key -> Some(itemDTO.value)
+      case (key, None) => key -> None
+    })
   }
 
   /**
@@ -43,9 +43,24 @@ class PartitioningReader[F[_] : Monad](partitioning: AtumPartitions)(implicit se
    * @param partitioning The partitioning for which to fetch checkpoints.
    * @return List of CheckpointDTO containing the checkpoints.
    */
-  def getCheckpoints(): List[Checkpoint] = {
-    // Add optional parameters here.
-//    dispatcher.getCheckpoints(partitioning).applyOrElse(partitioning, _ => List.empty)
+  def getCheckpoints(limit: Option[Int], offset: Option[Long], checkpointName: Option[String]): F[List[Checkpoint]] = {
+    Monad[F].pure(dispatcher.getCheckpoints(partitioning, limit, offset, checkpointName).map { dto =>
+      Checkpoint(
+        id = dto.id.toString,
+        name = dto.name,
+        author = dto.author,
+        measuredByAtumAgent = dto.measuredByAtumAgent,
+        processStartTime = dto.processStartTime,
+        processEndTime = dto.processEndTime,
+        measurements = dto.measurements
+      )
+    }.toList)
   }
 
+}
+
+object PartitioningReader {
+  def apply[F[_]: Monad](partitioning: AtumPartitions)(
+    implicit serverConnection: GenericServerConnection[F], dispatcher: Dispatcher): PartitioningReader[F] =
+    new PartitioningReader[F](partitioning)
 }
