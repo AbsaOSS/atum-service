@@ -16,13 +16,6 @@
 
 name: Run Integration Tests With Docker
 
-#on:
-#  workflow_dispatch:
-#    inputs:
-#      branchName:
-#        description: 'Name of git branch to be checked out'
-#        required: true
-
 on:
   push:
     branches:
@@ -50,7 +43,6 @@ jobs:
         run: |
           cd server
           docker build -t absaoss/atum-service:latest --progress=plain --no-cache \
-#          --build-arg BUILD_PROXY=http://zproxycloud.intra.absaafrica:80 \
           --build-arg SSL=false \
           --build-arg LDAP_SSL_CERTS_PATH=./certs \
           --build-arg SSL_DNAME="CN=*.my.domain.com, OU=project1, O=mycorp, L=Johannesburg, ST=Gauteng, C=za" ./
