@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: Run Integration Tests
+name: Run Integration Tests With Docker
 
 #on:
 #  workflow_dispatch:
