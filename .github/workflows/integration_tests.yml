@@ -49,6 +49,7 @@ jobs:
 
   use-docker-image:
     runs-on: ubuntu-latest
+    needs: build
     services:
       postgres:
         image: postgres:15
