@@ -21,41 +21,43 @@ import org.mockito.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuiteLike
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, CheckpointV2DTO}
-import za.co.absa.atum.model.types.BasicTypes.{AtumPartitions, AdditionalData}
+import za.co.absa.atum.model.types.BasicTypes.{AdditionalData, AtumPartitions}
 import za.co.absa.atum.model.types.Checkpoint
-import za.co.absa.atum.reader.server.GenericServerConnection
 
 import java.time.ZonedDateTime
 import java.util.UUID
+import cats.Monad
+import scala.collection.immutable.ListMap
+//import za.co.absa.atum.reader.server.GenericServerConnection.Dispatcher
 
 class PartitioningReaderUnitTests extends AnyFunSuiteLike with Matchers with MockitoSugar {
 
+  private implicit val idMonad: Monad[Id] = Monad[Id]
+
   trait TestContext {
-    val partitioning: AtumPartitions = mock[AtumPartitions]
-    val serverConnection: GenericServerConnection[Id] = mock[GenericServerConnection[Id]]
-    val dispatcher: Dispatcher = mock[Dispatcher]
-    val reader: PartitioningReader[Id] = new PartitioningReader(partitioning)(serverConnection, dispatcher)
+    val partitioning: AtumPartitions = ListMap("key1" -> "value1", "key2" -> "value2")
+    implicit val dispatcher: Dispatcher = mock[Dispatcher]
+    val reader: PartitioningReader[Id] = new PartitioningReader[Id](partitioning)
   }
+
+  protected val additionalDataDTO1: AdditionalDataDTO = AdditionalDataDTO(
+    Map(
+      "key1" -> Some(AdditionalDataItemDTO(Some("value1"), "author")),
+      "key2" -> None,
+      "key3" -> Some(AdditionalDataItemDTO(Some("value3"), "author"))
+    ))
 
   test("getAdditionalData should fetch and transform additional data correctly") {
     new TestContext {
-      val additionalDataDTO: AdditionalDataDTO = AdditionalDataDTO(
-        data = Map(
-          "key1" -> Some(AdditionalDataItemDTO(Some("value1"), "author1")),
-          "key2" -> None
-        )
-      )
-
-      when(dispatcher.getAdditionalData(partitioning)).thenReturn(additionalDataDTO)
+      when(dispatcher.getAdditionalData(partitioning)).thenReturn(additionalDataDTO1)
 
       val result: Id[AdditionalData] = reader.getAdditionalData
 
-      result shouldEqual AdditionalData(
-        data = Map(
-          "key1" -> Some("value1"),
-          "key2" -> None
-        )
-      )
+      Map(
+        "key1" -> Some("value1"),
+        "key2" -> None,
+        "key3" -> Some("value3")
+      ) shouldEqual result
     }
   }
 
@@ -99,4 +101,5 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike with Matchers with Moc
       }.toList
     }
   }
+
 }
