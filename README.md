@@ -15,6 +15,8 @@
         - [Measurement](#measurement)
         - [Checkpoint](#checkpoint)
         - [Data Flow](#data-flow)
+    - [Usage](#usage)
+        - [Reader](#reader-usage)
     - [How to generate Code coverage report](#how-to-generate-code-coverage-report)
     - [How to Run in IntelliJ](#how-to-run-in-intellij)
     - [How to Run Tests](#how-to-run-tests)
@@ -156,6 +158,52 @@ We can even say, that `Checkpoint` is a result of particular `Measurements` (ver
 The journey of a dataset throughout various data transformations and pipelines. It captures the whole journey,
 even if it involves multiple applications or ETL pipelines.
 
+## Usage
+
+### Reader usage
+Reader module support several asynchronous http clients. The dependencies used for these clients are set as _optional_,
+so the user of the module can decide which client to use and include only the necessary dependencies. 
+
+The clients are:
+#### Future based `HttpClientServerConnection`
+Uses `java.net.http.HttpClient` to send requests to the server, therefore requires no additional dependencies. But works 
+only with Java 11 or higher. 
+
+#### Future based `ArmeririaServerConnection`
+Add 
+```scala
+"com.softwaremill.sttp.client3" %% "armeria-backend" % "[version]"
+```
+to your dependencies.
+
+#### Cats IO based `ArmeririaServerConnection`
+Add
+```scala
+"org.typelevel." %% "cats-effect" % "[version]"
+"com.softwaremill.sttp.client3" %% "armeria-backend-cats" % "[version]" // for cats-effect 3.x
+// or
+"com.softwaremill.sttp.client3" %% "armeria-backend-cats-ce2" % "[version]" // for cats-effect 2.x
+```
+"
+to your dependencies.
+
+#### ZIO based `HttpClientServerConnection`
+Add
+```scala
+"com.softwaremill.sttp.client3" %% "zio" % "[version]"  // for ZIO 2.x
+"com.softwaremill.sttp.client3" %% "zio1" % "[version]" // for ZIO 1.x
+```
+to your dependencies.
+
+#### ZIO based `ArmeririaServerConnection`
+Add
+```scala
+"com.softwaremill.sttp.client3" %% "armeria-backend-zio" % "[version]"  // for ZIO 2.x
+"com.softwaremill.sttp.client3" %% "armeria-backend-zio1" % "[version]" // for ZIO 1.x
+```
+to your dependencies.
+
+
 
 ## How to generate Code coverage report
 ```sbt
@@ -172,6 +220,7 @@ Code coverage wil be generated on path:
 To make this project runnable via IntelliJ, do the following:
 - Make sure that your configuration in `server/src/main/resources/reference.conf` 
   is configured according to your needs
+- When building within the UI be sure to have the option `-language:higherKinds` on in the compiler options
 
 ## How to Run Tests
 

@@ -16,45 +16,37 @@
 
 package za.co.absa.atum.reader.server
 
-import _root_.io.circe.parser.decode
 import _root_.io.circe.Decoder
-import cats.Monad
-import cats.implicits.toFunctorOps
+import _root_.io.circe.{Error => circeError}
 import com.typesafe.config.Config
-import sttp.client3.{Identity, RequestT, Response, UriContext, basicRequest}
-import za.co.absa.atum.reader.exceptions.RequestException
-import za.co.absa.atum.reader.server.GenericServerConnection.ReaderResponse
+import sttp.client3.{Identity, RequestT, ResponseException, basicRequest}
+import sttp.model.Uri
+import sttp.client3.circe._
 
-import scala.util.{Failure, Try}
+import za.co.absa.atum.model.envelopes.ErrorResponse
+import za.co.absa.atum.reader.server.GenericServerConnection.RequestResult
 
-/**
- * A HttpProvider is a component that is responsible for providing teh data to readers using REST API
- * @tparam F
- */
-abstract class GenericServerConnection[F[_]: Monad](val serverUrl: String) {
+abstract class GenericServerConnection[F[_]](val serverUrl: String) {
 
-  protected def executeRequest(request: RequestT[Identity, Either[String, String], Any]): F[ReaderResponse]
+  protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): F[RequestResult[R]]
 
-  def query[R: Decoder](endpointUri: String): F[Try[R]] = {
+  def getQuery[R: Decoder](endpointUri: String, params: Map[String, String] = Map.empty): F[RequestResult[R]] = {
     val endpointToQuery = serverUrl + endpointUri
-    val request = basicRequest
-      .get(uri"$endpointToQuery")
-    val response = executeRequest(request)
-    // using map instead of Circe's `asJson` to have own exception from a failed response
-    response.map { responseData =>
-      responseData.body match {
-        case Left(error) => Failure(RequestException(responseData.statusText, error, responseData.code, responseData.request))
-        case Right(body) => decode[R](body).toTry
-      }
-    }
+    val uri = Uri.unsafeParse(endpointToQuery).addParams(params)
+    val request: RequestT[Identity, RequestResult[R], Any] = basicRequest
+      .get(uri)
+      .response(asJsonEither[ErrorResponse, R])
+    executeRequest(request)
   }
+
+  def close(): F[Unit]
 
 }
 
 object GenericServerConnection {
   final val UrlKey = "atum.server.url"
 
-  type ReaderResponse = Response[Either[String, String]]
+  type RequestResult[R] = Either[ResponseException[ErrorResponse, circeError], R]
 
   def atumServerUrl(config: Config): String = {
     config.getString(UrlKey)

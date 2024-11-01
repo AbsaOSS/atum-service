@@ -40,17 +40,37 @@ object Setup {
   val serverAndDbScalaVersion: Version = scala213 //covers REST server and database modules
   val clientSupportedScalaVersions: Seq[Version] = Seq(scala212, scala213)
 
-  val commonScalacOptions: Seq[String] = Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
+  val commonScalacOptions: Seq[String] = Seq(
+    "-unchecked",
+    "-deprecation",
+    "-feature",
+    "-Xfatal-warnings"
+  )
 
-  val serverAndDbJavacOptions: Seq[String] = Seq("-source", "11", "-target", "11", "-Xlint")
-  val serverAndDbScalacOptions: Seq[String] = Seq("-Ymacro-annotations")
+  val serverAndDbJavacOptions: Seq[String] = Seq(
+    "-source", "11",
+    "-target", "11",
+    "-Xlint"
+  )
+  val serverAndDbScalacOptions: Seq[String] = Seq(
+    "-language:higherKinds",
+    "-Ymacro-annotations"
+  )
 
   val clientJavacOptions: Seq[String] = Seq("-source", "1.8", "-target", "1.8", "-Xlint")
   def clientScalacOptions(scalaVersion: Version): Seq[String] = {
     if (scalaVersion >= scala213) {
-      Seq("-release", "8", "-Ymacro-annotations")
+      Seq(
+        "-release", "8",
+        "-language:higherKinds",
+        "-Ymacro-annotations"
+      )
     } else {
-      Seq("-release", "8", "-target:8")
+      Seq(
+        "-release", "8",
+        "-language:higherKinds",
+        "-target:8"
+      )
     }
   }
 

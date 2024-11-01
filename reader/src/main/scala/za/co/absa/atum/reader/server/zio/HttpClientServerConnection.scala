@@ -17,29 +17,28 @@
 package za.co.absa.atum.reader.server.zio
 
 import com.typesafe.config.{Config, ConfigFactory}
-import sttp.client3.{Identity, RequestT, Response}
-import sttp.client3.armeria.zio.ArmeriaZioBackend
+import sttp.client3.{Identity, RequestT}
+import sttp.client3.httpclient.zio.HttpClientZioBackend
 import za.co.absa.atum.reader.server.GenericServerConnection
-import za.co.absa.atum.reader.server.GenericServerConnection.ReaderResponse
-import zio.{Task, ZIO, _}
+import za.co.absa.atum.reader.server.GenericServerConnection.RequestResult
+import zio.Task
 
 
-class ServerConnection(serverUrl: String)
-  extends GenericServerConnection[Task](serverUrl) {
+class HttpClientServerConnection(serverUrl: String) extends ZioServerConnection(serverUrl) {
 
   def this(config: Config = ConfigFactory.load()) = {
     this(GenericServerConnection.atumServerUrl(config ))
   }
 
-  override protected def executeRequest(request: RequestT[Identity, Either[String, String], Any]): Task[ReaderResponse] = {
-    val x = ArmeriaZioBackend.usingDefaultClient().flatMap { backend =>
-      val y: Task[Response[Either[String, String]]] = backend.send(request)
-      y
+  override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): Task[RequestResult[R]] = {
+    HttpClientZioBackend().flatMap { backend =>
+      val response = backend.send(request)
+      response.map(_.body)
     }
-    x
   }
+
 }
 
-object ServerConnection {
-  lazy implicit val serverConnection: ServerConnection = new ServerConnection()
+object HttpClientServerConnection {
+  lazy implicit val serverConnection: HttpClientServerConnection = new HttpClientServerConnection()
 }

@@ -38,8 +38,8 @@ object Dependencies {
 
     val sparkCommons = "0.6.1"
 
-    val sttpClient = "3.5.2"
-    val sttpCirceJson = "3.9.7"
+    val sttpClient = "3.10.1"
+    val sttpCirceJson = "3.10.1"
 
     val postgresql = "42.6.0"
 
@@ -63,6 +63,8 @@ object Dependencies {
     val scalaNameof = "4.0.0"
 
     val absaCommons = "2.0.0"
+
+    val catsEffect = "3.3.14"
 
     def truncateVersion(version: String, parts: Int): String = {
       version.split("\\.").take(parts).mkString(".")
@@ -236,17 +238,58 @@ object Dependencies {
   }
 
   def readerDependencies(scalaVersion: Version): Seq[ModuleID] = {
+    val zioOrg = "dev.zio"
+    val sbtOrg = "com.github.sbt"
+    val sttpClient3Org = "com.softwaremill.sttp.client3"
+    val typeLevelOrg = "org.typelevel"
+
+    // STTP core and Circe integration
+    lazy val sttpCore = sttpClient3Org %% "core" % Versions.sttpClient
+    lazy val sttpCirce = sttpClient3Org %% "circe" % Versions.sttpClient
+
+    // Armeria Future backend
+    lazy val sttpArmeririaFutureBackend = sttpClient3Org %% "armeria-backend" % Versions.sttpClient % Optional
+    // Armeria Cats backend
+    lazy val sttpArmeririaCatsBackend = sttpClient3Org %% "armeria-backend-cats" % Versions.sttpClient % Optional
+    lazy val catsEffect = typeLevelOrg %% "cats-effect" % Versions.catsEffect % Optional
+    // Armeria Zio backend
+    lazy val sttpArmeririaZioBackend = sttpClient3Org %% "armeria-backend-zio" % Versions.sttpClient % Optional
+    // HttpClient Zio backend
+    lazy val sttpHttpClientZioBackend = sttpClient3Org %% "zio" % Versions.sttpClient % Optional
+
+    // testing
+    lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
+    lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
+    lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
+    lazy val sbtJunitInterface = sbtOrg % "junit-interface" % Versions.sbtJunitInterface % Test
+
     Seq(
-      "com.softwaremill.sttp.client3" %% "core" % "3.9.7",
-      "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.9.6",
-      "com.softwaremill.sttp.client3" %% "armeria-backend-cats" % "3.9.8",
-      "com.softwaremill.sttp.client3" %% "zio" % "3.9.8",
-      "com.softwaremill.sttp.client3" %% "armeria-backend-zio" % "3.9.8",
-      "org.typelevel" %% "cats-effect" % "3.3.14",
-      "dev.zio" %% "zio" % "2.1.4"
+      sttpCore,
+      sttpCirce,
+      sttpArmeririaFutureBackend,
+      sttpArmeririaCatsBackend,
+      catsEffect,
+      sttpArmeririaZioBackend,
+      sttpHttpClientZioBackend,
+      zioTest,
+      zioTestSbt,
+      zioTestJunit,
+      sbtJunitInterface
     ) ++
       testDependencies ++
       jsonSerdeDependencies
+//      "com.softwaremill.sttp.client3" %% "core" % "3.9.7",
+//      "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.9.6",
+//      "com.softwaremill.sttp.client3" %% "armeria-backend-cats" % "3.9.8",
+//      "com.softwaremill.sttp.client3" %% "armeria-backend" % "3.9.8",
+//      "com.softwaremill.sttp.client3" %% "zio" % "3.9.8",
+//      "com.softwaremill.sttp.client3" %% "armeria-backend-zio" % "3.9.8",
+//      "org.typelevel" %% "cats-effect" % "3.3.14",
+//      "dev.zio" %% "zio" % "2.1.4",
+//      "dev.zio" %% "zio-interop-cats" % "23.1.0.1",
+//      "dev.zio" %% "zio-macros" % "2.1.4",
+//      "com.softwaremill.sttp.client3" %% "circe" % Versions.sttpCirceJson
+
   }
 
   def databaseDependencies: Seq[ModuleID] = {

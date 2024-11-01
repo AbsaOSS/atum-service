@@ -18,6 +18,8 @@ package za.co.absa.atum.reader
 
 import org.scalatest.funsuite.AnyFunSuiteLike
 
+import za.co.absa.atum.reader.server.future.ArmeriaServerConnection.serverConnection
+
 class FlowReaderUnitTests extends AnyFunSuiteLike {
   test("foo") {
     val expected = new FlowReader().foo()
