@@ -39,6 +39,7 @@ jobs:
           excludes: |
             server/src/test/scala/za/co/absa/atum/server/api/TestData.scala,
             server/src/test/scala/za/co/absa/atum/server/api/TestTransactorProvider.scala,
-            server/src/test/scala/za/co/absa/atum/server/ConfigProviderTest.scala
+            server/src/test/scala/za/co/absa/atum/server/ConfigProviderTest.scala,
+            model/src/test/scala/za/co/absa/atum/model/testing/*
           verbose-logging: 'false'
           fail-on-violation: 'true'

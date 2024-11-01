@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@
 package za.co.absa.atum.reader.server.zio
 
 import zio.{Exit, Task}
-
+import sttp.client3
+import sttp.client3.impl.zio.RIOMonadAsyncError
 import za.co.absa.atum.reader.server.GenericServerConnection
 
-abstract class ZioServerConnection(serverUrl: String) extends GenericServerConnection[Task](serverUrl) {
+
+abstract class ZioServerConnection(serverUrl: String) extends GenericServerConnection[Task](serverUrl)(new RIOMonadAsyncError[Any]) {
 
   override def close(): Task[Unit] = {
     Exit.succeed(())

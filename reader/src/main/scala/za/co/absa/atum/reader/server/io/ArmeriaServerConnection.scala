@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@ package za.co.absa.atum.reader.server.io
 
 import cats.effect.IO
 import com.typesafe.config.{Config, ConfigFactory}
-import sttp.client3.{Identity, RequestT, SttpBackend}
+import sttp.client3.{Identity, RequestT, Response, SttpBackend}
 import sttp.client3.armeria.cats.ArmeriaCatsBackend
-
+import sttp.client3.impl.cats.CatsMonadAsyncError
 import za.co.absa.atum.reader.server.GenericServerConnection
 import za.co.absa.atum.reader.server.GenericServerConnection.RequestResult
 
 
 class ArmeriaServerConnection protected(serverUrl: String, backend: SttpBackend[IO, Any], closeable: Boolean)
-  extends GenericServerConnection[IO](serverUrl) {
+  extends GenericServerConnection[IO](serverUrl)(new CatsMonadAsyncError[IO]) {
 
   def this(mserverUrl: String) = {
     this(mserverUrl, ArmeriaCatsBackend[IO](), closeable = true)
@@ -36,8 +36,8 @@ class ArmeriaServerConnection protected(serverUrl: String, backend: SttpBackend[
     this(GenericServerConnection.atumServerUrl(config ), ArmeriaCatsBackend[IO](), closeable = true)
   }
 
-  override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): IO[RequestResult[R]] = {
-    request.send(backend).map(_.body)
+  override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): IO[Response[RequestResult[R]]] = {
+    request.send(backend)
   }
 
   override def close(): IO[Unit] = {

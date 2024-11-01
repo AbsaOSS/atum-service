@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ABSA Group Limited
+ * Copyright 2024 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.model.testing.implicits
 
-import za.co.absa.atum.reader.server.GenericServerConnection
-
-abstract class Reader[F[_]](implicit val serverConnection: GenericServerConnection[F])
+object StringImplicits {
+  implicit class StringLinearization(val str: String) extends AnyVal {
+    def linearize: String = {
+      str.stripMargin.replace("\r", "").replace("\n", "")
+    }
+  }
+}

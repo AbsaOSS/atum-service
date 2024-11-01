@@ -21,7 +21,7 @@ import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
-import za.co.absa.atum.model.utils.SerializationUtilsTest.StringLinearization
+import za.co.absa.atum.model.testing.implicits.StringImplicits.StringLinearization
 
 import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.UUID
@@ -435,12 +435,4 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     assert(actual == expected)
   }
 
-}
-
-object SerializationUtilsTest {
-  implicit class StringLinearization(val str: String) extends AnyVal {
-    def linearize: String = {
-      str.stripMargin.replace("\r", "").replace("\n", "")
-    }
-  }
 }

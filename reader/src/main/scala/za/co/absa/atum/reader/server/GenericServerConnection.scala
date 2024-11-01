@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,17 @@ package za.co.absa.atum.reader.server
 import _root_.io.circe.Decoder
 import _root_.io.circe.{Error => circeError}
 import com.typesafe.config.Config
-import sttp.client3.{Identity, RequestT, ResponseException, basicRequest}
+import sttp.client3.{Identity, RequestT, Response, ResponseException, basicRequest}
 import sttp.model.Uri
 import sttp.client3.circe._
-
+import sttp.monad.MonadError
+import sttp.monad.syntax._
 import za.co.absa.atum.model.envelopes.ErrorResponse
 import za.co.absa.atum.reader.server.GenericServerConnection.RequestResult
 
-abstract class GenericServerConnection[F[_]](val serverUrl: String) {
+abstract class GenericServerConnection[F[_]: MonadError](val serverUrl: String) {
 
-  protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): F[RequestResult[R]]
+  protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): F[Response[RequestResult[R]]]
 
   def getQuery[R: Decoder](endpointUri: String, params: Map[String, String] = Map.empty): F[RequestResult[R]] = {
     val endpointToQuery = serverUrl + endpointUri
@@ -36,7 +37,8 @@ abstract class GenericServerConnection[F[_]](val serverUrl: String) {
     val request: RequestT[Identity, RequestResult[R], Any] = basicRequest
       .get(uri)
       .response(asJsonEither[ErrorResponse, R])
-    executeRequest(request)
+    val response = executeRequest(request)
+    response.map(_.body)
   }
 
   def close(): F[Unit]

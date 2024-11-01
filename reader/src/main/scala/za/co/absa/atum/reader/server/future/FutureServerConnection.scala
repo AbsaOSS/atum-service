@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 ABSA Group Limited
+ * Copyright 2021 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,20 @@
 
 package za.co.absa.atum.reader.server.future
 
-import scala.concurrent.{ExecutionContext, Future}
-import sttp.client3.{Identity, RequestT, SttpBackend}
 
+import scala.concurrent.{ExecutionContext, Future}
+import sttp.client3.{Identity, RequestT, Response, SttpBackend}
+import sttp.monad.FutureMonad
 import za.co.absa.atum.reader.server.GenericServerConnection
 import za.co.absa.atum.reader.server.GenericServerConnection.RequestResult
 
-
 abstract class FutureServerConnection(serverUrl: String, closeable: Boolean)(implicit executor: ExecutionContext)
-  extends GenericServerConnection[Future](serverUrl) {
+  extends GenericServerConnection[Future](serverUrl)(new FutureMonad) {
 
   protected val backend: SttpBackend[Future, Any]
 
-  override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): Future[RequestResult[R]] = {
-    request.send(backend).map(_.body)
+  override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): Future[Response[RequestResult[R]]] = {
+    request.send(backend)
   }
 
   override def close(): Future[Unit] = {
