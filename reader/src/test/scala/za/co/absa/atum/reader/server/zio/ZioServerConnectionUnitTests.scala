@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.reader.server.zio
 
-import sttp.client3.{Identity, RequestT}
+import sttp.client3.{Identity, RequestT, Response}
 import za.co.absa.atum.reader.server.GenericServerConnection.RequestResult
 import zio.test.ZIOSpecDefault
 import zio._
@@ -27,7 +27,7 @@ object ZioServerConnectionUnitTests extends ZIOSpecDefault {
     suite("ZioServerConnection")(
       test("close does nothing and succeeds") {
         val connection = new ZioServerConnection("foo.bar") {
-          override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): Task[RequestResult[R]] = ???
+          override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): Task[Response[RequestResult[R]]] = ???
         }
         val expected: Unit = ()
         for {
