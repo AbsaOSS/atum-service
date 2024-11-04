@@ -255,7 +255,7 @@ object Dependencies {
     // Armeria Zio backend
     lazy val sttpArmeririaZioBackend = sttpClient3Org %% "armeria-backend-zio" % Versions.sttpClient % Optional
     // HttpClient Zio backend
-    lazy val sttpHttpClientZioBackend = sttpClient3Org %% "zio" % Versions.sttpClient % Optional
+//    lazy val sttpHttpClientZioBackend = sttpClient3Org %% "zio" % Versions.sttpClient % Optional TODO #298 needs Java 11 cross-build
 
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
@@ -270,7 +270,7 @@ object Dependencies {
       sttpArmeririaCatsBackend,
       catsEffect,
       sttpArmeririaZioBackend,
-      sttpHttpClientZioBackend,
+//      sttpHttpClientZioBackend, TODO #298 needs Java 11 cross-build
       zioTest,
       zioTestSbt,
       zioTestJunit,
@@ -278,18 +278,6 @@ object Dependencies {
     ) ++
       testDependencies ++
       jsonSerdeDependencies
-//      "com.softwaremill.sttp.client3" %% "core" % "3.9.7",
-//      "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.9.6",
-//      "com.softwaremill.sttp.client3" %% "armeria-backend-cats" % "3.9.8",
-//      "com.softwaremill.sttp.client3" %% "armeria-backend" % "3.9.8",
-//      "com.softwaremill.sttp.client3" %% "zio" % "3.9.8",
-//      "com.softwaremill.sttp.client3" %% "armeria-backend-zio" % "3.9.8",
-//      "org.typelevel" %% "cats-effect" % "3.3.14",
-//      "dev.zio" %% "zio" % "2.1.4",
-//      "dev.zio" %% "zio-interop-cats" % "23.1.0.1",
-//      "dev.zio" %% "zio-macros" % "2.1.4",
-//      "com.softwaremill.sttp.client3" %% "circe" % Versions.sttpCirceJson
-
   }
 
   def databaseDependencies: Seq[ModuleID] = {

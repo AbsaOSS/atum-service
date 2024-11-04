@@ -16,28 +16,29 @@
 
 package za.co.absa.atum.reader.server.zio
 
-import com.typesafe.config.{Config, ConfigFactory}
-import sttp.client3.{Identity, RequestT, Response}
-import sttp.client3.httpclient.zio.HttpClientZioBackend
-import za.co.absa.atum.reader.server.GenericServerConnection
-import za.co.absa.atum.reader.server.GenericServerConnection.RequestResult
-import zio.Task
-
-
-class HttpClientServerConnection(serverUrl: String) extends ZioServerConnection(serverUrl) {
-
-  def this(config: Config = ConfigFactory.load()) = {
-    this(GenericServerConnection.atumServerUrl(config ))
-  }
-
-  override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): Task[Response[RequestResult[R]]] = {
-    HttpClientZioBackend().flatMap { backend =>
-      backend.send(request)
-    }
-  }
-
-}
-
-object HttpClientServerConnection {
-  lazy implicit val serverConnection: HttpClientServerConnection = new HttpClientServerConnection()
-}
+//TODO #298 needs Java 11 cross-build
+//import com.typesafe.config.{Config, ConfigFactory}
+//import sttp.client3.{Identity, RequestT, Response}
+//import sttp.client3.httpclient.zio.HttpClientZioBackend
+//import za.co.absa.atum.reader.server.GenericServerConnection
+//import za.co.absa.atum.reader.server.GenericServerConnection.RequestResult
+//import zio.Task
+//
+//
+//class HttpClientServerConnection(serverUrl: String) extends ZioServerConnection(serverUrl) {
+//
+//  def this(config: Config = ConfigFactory.load()) = {
+//    this(GenericServerConnection.atumServerUrl(config ))
+//  }
+//
+//  override protected def executeRequest[R](request: RequestT[Identity, RequestResult[R], Any]): Task[Response[RequestResult[R]]] = {
+//    HttpClientZioBackend().flatMap { backend =>
+//      backend.send(request)
+//    }
+//  }
+//
+//}
+//
+//object HttpClientServerConnection {
+//  lazy implicit val serverConnection: HttpClientServerConnection = new HttpClientServerConnection()
+//}

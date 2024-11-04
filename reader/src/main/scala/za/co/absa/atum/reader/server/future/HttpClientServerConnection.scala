@@ -16,38 +16,39 @@
 
 package za.co.absa.atum.reader.server.future
 
-import com.typesafe.config.{Config, ConfigFactory}
-import scala.concurrent.{ExecutionContext, Future}
-import sttp.client3.{HttpClientFutureBackend, SttpBackend}
-
-import za.co.absa.atum.reader.server.GenericServerConnection
-
-
-class HttpClientServerConnection private(serverUrl: String, closeable: Boolean)(implicit executor: ExecutionContext)
-  extends FutureServerConnection(serverUrl, closeable) {
-
-  def this(serverUrl: String)(implicit executor: ExecutionContext) = {
-    this(serverUrl, true)(executor)
-  }
-
-  def this(config: Config = ConfigFactory.load())(implicit executor: ExecutionContext) = {
-    this(GenericServerConnection.atumServerUrl(config))(executor)
-  }
-
-  override protected val backend: SttpBackend[Future, Any] = HttpClientFutureBackend()
-
-}
-
-object HttpClientServerConnection {
-  lazy implicit val serverConnection: FutureServerConnection = new HttpClientServerConnection()(ExecutionContext.Implicits.global)
-
-  def use[R](serverUrl: String)(fnc: HttpClientServerConnection => Future[R])
-            (implicit executor: ExecutionContext): Future[R] = {
-    val serverConnection = new HttpClientServerConnection(serverUrl)
-    try {
-      fnc(serverConnection)
-    } finally {
-      serverConnection.close()
-    }
-  }
-}
+// TODO #298 needs Java 11 cross-build
+//import com.typesafe.config.{Config, ConfigFactory}
+//import scala.concurrent.{ExecutionContext, Future}
+//import sttp.client3.{HttpClientFutureBackend, SttpBackend}
+//
+//import za.co.absa.atum.reader.server.GenericServerConnection
+//
+//
+//class HttpClientServerConnection private(serverUrl: String, closeable: Boolean)(implicit executor: ExecutionContext)
+//  extends FutureServerConnection(serverUrl, closeable) {
+//
+//  def this(serverUrl: String)(implicit executor: ExecutionContext) = {
+//    this(serverUrl, true)(executor)
+//  }
+//
+//  def this(config: Config = ConfigFactory.load())(implicit executor: ExecutionContext) = {
+//    this(GenericServerConnection.atumServerUrl(config))(executor)
+//  }
+//
+//  override protected val backend: SttpBackend[Future, Any] = HttpClientFutureBackend()
+//
+//}
+//
+//object HttpClientServerConnection {
+//  lazy implicit val serverConnection: FutureServerConnection = new HttpClientServerConnection()(ExecutionContext.Implicits.global)
+//
+//  def use[R](serverUrl: String)(fnc: HttpClientServerConnection => Future[R])
+//            (implicit executor: ExecutionContext): Future[R] = {
+//    val serverConnection = new HttpClientServerConnection(serverUrl)
+//    try {
+//      fnc(serverConnection)
+//    } finally {
+//      serverConnection.close()
+//    }
+//  }
+//}
