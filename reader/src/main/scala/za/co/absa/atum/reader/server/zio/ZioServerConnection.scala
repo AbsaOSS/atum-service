@@ -16,8 +16,7 @@
 
 package za.co.absa.atum.reader.server.zio
 
-import zio.{Exit, Task}
-import sttp.client3
+import zio.{Task, ZIO}
 import sttp.client3.impl.zio.RIOMonadAsyncError
 import za.co.absa.atum.reader.server.GenericServerConnection
 
@@ -25,7 +24,7 @@ import za.co.absa.atum.reader.server.GenericServerConnection
 abstract class ZioServerConnection(serverUrl: String) extends GenericServerConnection[Task](serverUrl)(new RIOMonadAsyncError[Any]) {
 
   override def close(): Task[Unit] = {
-    Exit.succeed(())
+    ZIO.unit
   }
 
 }
