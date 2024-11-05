@@ -38,8 +38,8 @@ object Dependencies {
 
     val sparkCommons = "0.6.1"
 
-    val sttpClient = "3.6.2"
-    val sttpCirceJson = "3.10.1"
+    val sttpClient = "3.5.2" //last supported version for Java 8
+    val sttpCirceJson = "3.9.7"
 
     val postgresql = "42.6.0"
 
