@@ -165,9 +165,14 @@ Reader module support several asynchronous http clients. The dependencies used f
 so the user of the module can decide which client to use and include only the necessary dependencies. 
 
 The clients are:
-#### Future based `HttpClientServerConnection`
-Uses `java.net.http.HttpClient` to send requests to the server, therefore requires no additional dependencies. But works 
-only with Java 11 or higher. 
+
+[//]: # (TODO #298 needs Java 11 cross-build)
+
+[//]: # (#### Future based `HttpClientServerConnection`)
+
+[//]: # (Uses `java.net.http.HttpClient` to send requests to the server, therefore requires no additional dependencies. But works )
+
+[//]: # (only with Java 11 or higher. )
 
 #### Future based `ArmeririaServerConnection`
 Add 
@@ -187,13 +192,21 @@ Add
 "
 to your dependencies.
 
-#### ZIO based `HttpClientServerConnection`
-Add
-```scala
-"com.softwaremill.sttp.client3" %% "zio" % "[version]"  // for ZIO 2.x
-"com.softwaremill.sttp.client3" %% "zio1" % "[version]" // for ZIO 1.x
-```
-to your dependencies.
+[//]: # (TODO #298 needs Java 11 cross-build)
+
+[//]: # (#### ZIO based `HttpClientServerConnection`)
+
+[//]: # (Add)
+
+[//]: # (```scala)
+
+[//]: # ("com.softwaremill.sttp.client3" %% "zio" % "[version]"  // for ZIO 2.x)
+
+[//]: # ("com.softwaremill.sttp.client3" %% "zio1" % "[version]" // for ZIO 1.x)
+
+[//]: # (```)
+
+[//]: # (to your dependencies.)
 
 #### ZIO based `ArmeririaServerConnection`
 Add
