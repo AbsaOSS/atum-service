@@ -30,7 +30,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: false
       - uses: coursier/cache-action@v5
 
       - name: Setup Scala
@@ -64,7 +65,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: false
       - uses: coursier/cache-action@v5
 
       - name: Setup Scala
