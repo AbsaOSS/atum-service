@@ -27,7 +27,6 @@ import za.co.absa.atum.agent.dispatcher.HttpDispatcher
 
 import scala.collection.immutable.ListMap
 
-@Ignore
 class AgentWithServerIntegrationTests extends DBTestSuite {
 
   private val testDataForRDD = Seq(
