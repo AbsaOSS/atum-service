@@ -19,7 +19,7 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, Dispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.{AdditionalDataSubmitDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointDTO, PartitioningSubmitDTO}
 
 /**
  *  Entity that communicate with the API, primarily focused on spawning Atum Context(s).
@@ -31,8 +31,8 @@ trait AtumAgent {
   val dispatcher: Dispatcher
 
   /**
-   *  Returns a user under who's security context the JVM is running.
-   *  It's purpose is for auditing in author/createdBy fields.
+   *  Returns a user under whose security context the JVM is running.
+   *  Its purpose is for auditing in author/createdBy fields.
    *
    *  Important: It's not supposed to be used for authorization as it can be spoofed!
    *
@@ -50,11 +50,15 @@ trait AtumAgent {
   }
 
   /**
-   *  Sends the `Metadata` to the Atumservice API
-   *  @param additionalData the metadata to be saved to the server.
+   *  Sends `AdditionalDataPatchDTO` to the AtumService API
+   *  @param atumPartitions: Partitioning for which the additional data is to be saved.
+   *  @param additionalDataPatchDTO the data to be saved or updated if already existing.
    */
-  private[agent] def saveAdditionalData(additionalData: AdditionalDataSubmitDTO): Unit = {
-    dispatcher.saveAdditionalData(additionalData)
+  private[agent] def updateAdditionalData(
+    atumPartitions: AtumPartitions,
+    additionalDataPatchDTO: AdditionalDataPatchDTO
+  ): AdditionalDataDTO = {
+    dispatcher.updateAdditionalData(AtumPartitions.toSeqPartitionDTO(atumPartitions), additionalDataPatchDTO)
   }
 
   /**
@@ -122,7 +126,7 @@ object AtumAgent extends AtumAgent {
       case "http" => new HttpDispatcher(config)
       case "console" => new ConsoleDispatcher(config)
       case "capture" => new CapturingDispatcher(config)
-      case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt''")
+      case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt'")
     }
   }
 

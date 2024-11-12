@@ -16,15 +16,19 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointQueryDTO}
-import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.MultiSuccessResponse
+import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.envelopes.ErrorResponse
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import zio.IO
 import zio.macros.accessible
 
 @accessible
 trait FlowController {
-  def getFlowCheckpointsV2(
-    checkpointQueryDTO: CheckpointQueryDTO
-  ): IO[ErrorResponse, MultiSuccessResponse[CheckpointDTO]]
+  def getFlowCheckpoints(
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long],
+    checkpointName: Option[String],
+  ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]]
+
 }

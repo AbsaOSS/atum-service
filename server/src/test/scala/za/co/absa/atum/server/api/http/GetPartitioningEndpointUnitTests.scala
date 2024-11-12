@@ -25,10 +25,11 @@ import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.{PartitioningDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.envelopes.NotFoundErrorResponse
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
-import za.co.absa.atum.server.model.NotFoundErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
 import zio.test.Assertion.equalTo
 import zio.{Scope, ZIO, ZLayer}
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
@@ -37,9 +38,9 @@ object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints wi
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.getPartitioning(encodePartitioningDTO(partitioningDTO1)))
+  when(partitioningControllerMock.getPartitioning(partitioningDTO1.asBase64EncodedJsonString))
     .thenReturn(ZIO.succeed(SingleSuccessResponse(partitioningWithIdDTO1, uuid1)))
-  when(partitioningControllerMock.getPartitioning(encodePartitioningDTO(partitioningDTO2)))
+  when(partitioningControllerMock.getPartitioning(partitioningDTO2.asBase64EncodedJsonString))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Partitioning not found")))
 
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
@@ -80,7 +81,7 @@ object GetPartitioningEndpointUnitTests extends ZIOSpecDefault with Endpoints wi
     SingleSuccessResponse[PartitioningWithIdDTO]
   ], Any] = {
     val baseUrl = uri"https://test.com/api/v2/partitionings"
-    val encodedPartitioning = encodePartitioningDTO(partitioningDTO)
+    val encodedPartitioning = partitioningDTO.asBase64EncodedJsonString
 
     basicRequest
       .get(baseUrl.addParam("partitioning", encodedPartitioning))

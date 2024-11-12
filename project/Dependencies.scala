@@ -38,7 +38,8 @@ object Dependencies {
 
     val sparkCommons = "0.6.1"
 
-    val sttp = "3.5.2"
+    val sttpClient = "3.5.2"
+    val sttpCirceJson = "3.9.7"
 
     val postgresql = "42.6.0"
 
@@ -56,7 +57,6 @@ object Dependencies {
     val http4sBlazeBackend = "0.23.15"
     val http4sPrometheus = "0.23.6"
     val circeJson = "0.14.7"
-    val sttpCirceJson = "3.9.7"
 
     val awssdk = "2.23.15"
 
@@ -83,7 +83,7 @@ object Dependencies {
 
     Seq(
       scalatest,
-      mockito,
+      mockito
     )
   }
 
@@ -97,7 +97,7 @@ object Dependencies {
     Seq(
       circeCore,
       circeParser,
-      circeGeneric,
+      circeGeneric
     )
   }
 
@@ -150,6 +150,7 @@ object Dependencies {
 
     // aws
     lazy val awsSecretsManagerSdk = awsSdkOrg % "secretsmanager" % Versions.awssdk
+    lazy val awsStsSdk = awsSdkOrg % "sts" % Versions.awssdk
 
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
@@ -179,6 +180,7 @@ object Dependencies {
       sttpCirce,
       sttpCore,
       awsSecretsManagerSdk,
+      awsStsSdk,
       zioTest,
       zioTestSbt,
       zioTestJunit,
@@ -198,11 +200,14 @@ object Dependencies {
     lazy val sparkCommons = "za.co.absa" % s"spark-commons-spark${sparkMinorVersion}_$scalaMinorVersion" % Versions.sparkCommons
     lazy val sparkCommonsTest = "za.co.absa" % s"spark-commons-test_$scalaMinorVersion" % Versions.sparkCommons % Test
 
-    lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
+    lazy val sttpClient3 = "com.softwaremill.sttp.client3" %% "core" % Versions.sttpClient
+    lazy val sttpOkHttpBackend = "com.softwaremill.sttp.client3" %% "okhttp-backend" % Versions.sttpClient
 
     lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
 
     lazy val nameOf = "com.github.dwickern" %% "scala-nameof" % Versions.scalaNameof % Provided // it's provided, as it's a macro needed only at runtime
+
+    lazy val balta = "za.co.absa" %% "balta" % Versions.balta % Test
 
     Seq(
       sparkCore,
@@ -210,11 +215,12 @@ object Dependencies {
       typeSafeConfig,
       sparkCommons,
       sparkCommonsTest,
-      sttp,
+      sttpClient3,
+      sttpOkHttpBackend,
       logback,
       nameOf
     ) ++
-      testDependencies
+      testDependencies :+ balta
   }
 
   def modelDependencies(scalaVersion: Version): Seq[ModuleID] = {
@@ -245,7 +251,7 @@ object Dependencies {
       scalaTest,
       balta,
       circe,
-      parser,
+      parser
     )
   }
 

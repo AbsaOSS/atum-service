@@ -145,16 +145,14 @@ class AtumContext private[agent] (
    * @return the AtumContext after the AD has been dispatched and added
    */
   def addAdditionalData(newAdditionalDataToAdd: Map[String, String]): AtumContext = {
-    val currAdditionalData = newAdditionalDataToAdd.map{case (k,v) => (k, Some(v))}
-
-    val currAdditionalDataSubmit = AdditionalDataSubmitDTO(
-      AtumPartitions.toSeqPartitionDTO(atumPartitions),
-      currAdditionalData,
-      agent.currentUser
+    val currAdditionalDataSubmit = AdditionalDataPatchDTO(
+      agent.currentUser,
+      newAdditionalDataToAdd,
     )
-    agent.saveAdditionalData(currAdditionalDataSubmit)
+    val retrievedAD = agent.updateAdditionalData(this.atumPartitions, currAdditionalDataSubmit)
 
-    this.additionalData ++= currAdditionalData
+    // Could be different from the one that was submitted. Replacing, just to have the most fresh copy possible.
+    this.additionalData = retrievedAD.data.map{ case (k, v) => (k, v.flatMap(_.value)) }
     this
   }
 
@@ -163,7 +161,7 @@ class AtumContext private[agent] (
    *
    * @return the current additional data
    */
-  def currentAdditionalData: InitialAdditionalDataDTO = {
+  def currentAdditionalData: AdditionalData = {
     additionalData
   }
 
@@ -201,7 +199,7 @@ class AtumContext private[agent] (
     atumPartitions: AtumPartitions = atumPartitions,
     agent: AtumAgent = agent,
     measures: Set[AtumMeasure] = measures,
-    additionalData: InitialAdditionalDataDTO = additionalData
+    additionalData: AdditionalData = additionalData
   ): AtumContext = {
     new AtumContext(atumPartitions, agent, measures, additionalData)
   }
@@ -212,7 +210,7 @@ object AtumContext {
    * Type alias for Atum partitions.
    */
   type AtumPartitions = ListMap[String, String]
-  type AdditionalData = InitialAdditionalDataDTO
+  type AdditionalData = Map[String, Option[String]]
 
   /**
    * Object contains helper methods to work with Atum partitions.

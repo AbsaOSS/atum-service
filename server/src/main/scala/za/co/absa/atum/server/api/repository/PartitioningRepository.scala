@@ -32,9 +32,7 @@ trait PartitioningRepository {
 
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]]
 
-  def getPartitioningAdditionalData(partitioning: PartitioningDTO): IO[DatabaseError, InitialAdditionalDataDTO]
-
-  def getPartitioningAdditionalDataV2(
+  def getPartitioningAdditionalData(
     partitioningId: Long
   ): IO[DatabaseError, AdditionalDataDTO]
 

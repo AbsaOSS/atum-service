@@ -26,10 +26,10 @@ import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO}
+import za.co.absa.atum.model.envelopes.{InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
-import za.co.absa.atum.server.model.SuccessResponse.SingleSuccessResponse
-import za.co.absa.atum.server.model.{InternalServerErrorResponse, NotFoundErrorResponse}
+import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO, ZLayer}

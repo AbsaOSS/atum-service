@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.envelopes
 
 import io.circe._
 import io.circe.generic.semiauto._

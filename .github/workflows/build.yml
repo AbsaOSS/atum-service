@@ -79,4 +79,4 @@ jobs:
         run: sbt flywayMigrate
 
       - name: Build and run integration tests
-        run: sbt  "project database" testIT "project server" testIT
+        run: sbt "project database" testIT "project server" testIT

@@ -14,9 +14,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model
+package za.co.absa.atum.model.envelopes
 
-case class AdditionalDataFromDB(
-  adName: Option[String],
-  adValue: Option[String]
-)
+case class StatusResponse private (status: String, message: String)
+
+object StatusResponse {
+
+  import io.circe.generic.semiauto._
+
+  implicit val encoder: io.circe.Encoder[StatusResponse] = deriveEncoder
+  implicit val decoder: io.circe.Decoder[StatusResponse] = deriveDecoder
+
+  lazy val up: StatusResponse = {
+    StatusResponse(
+      status = "UP",
+      message = "Atum server is up and running"
+    )
+  }
+
+}

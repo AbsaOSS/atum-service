@@ -17,29 +17,31 @@
 package za.co.absa.atum.server.api.database.flows.functions
 
 import doobie.implicits.toSqlInterpolator
-import za.co.absa.atum.model.dto.CheckpointQueryDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
-import za.co.absa.atum.server.model.{CheckpointFromDB, PartitioningForDB}
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
+import za.co.absa.atum.server.model.CheckpointItemFromDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
-import zio._
-import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
-import doobie.postgres.implicits._
-import za.co.absa.db.fadb.doobie.postgres.circe.implicits.{jsonbGet, jsonbPut}
-import io.circe.syntax.EncoderOps
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
+import zio._
+
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import doobie.postgres.implicits._
+
 
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[CheckpointQueryDTO, CheckpointFromDB, Task](values =>
-      Seq(
-        fr"${PartitioningForDB.fromSeqPartitionDTO(values.partitioning).asJson}",
-        fr"${values.limit}",
-        fr"${values.checkpointName}"
-      )
+  extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[CheckpointItemFromDB], Task](input =>
+    Seq(
+      fr"${input.flowId}",
+      fr"${input.limit}",
+      fr"${input.offset}",
+      fr"${input.checkpointName}"
     )
+  )
     with StandardStatusHandling
     with ByFirstErrorStatusAggregator {
 
@@ -52,11 +54,19 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
     "measured_columns",
     "measurement_value",
     "checkpoint_start_time",
-    "checkpoint_end_time"
+    "checkpoint_end_time",
+    "has_more"
   )
 }
 
 object GetFlowCheckpoints {
+  case class GetFlowCheckpointsArgs(
+     flowId: Long,
+     limit: Option[Int],
+     offset: Option[Long],
+     checkpointName: Option[String]
+  )
+
   val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpoints] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]

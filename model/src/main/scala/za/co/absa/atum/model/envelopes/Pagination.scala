@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.model.envelopes
 
-import io.circe.generic.semiauto._
-import io.circe._
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder}
 
-case class AdditionalDataSubmitDTO(
-  partitioning: PartitioningDTO,
-  additionalData: InitialAdditionalDataDTO,
-  author: String
+case class Pagination(
+  limit: Int,
+  offset: Long,
+  hasMore: Boolean
 )
 
-object AdditionalDataSubmitDTO {
-  implicit val decodeAdditionalDataSubmitDTO: Decoder[AdditionalDataSubmitDTO] = deriveDecoder[AdditionalDataSubmitDTO]
-  implicit val encodeAdditionalDataSubmitDTO: Encoder[AdditionalDataSubmitDTO] = deriveEncoder[AdditionalDataSubmitDTO]
+object Pagination {
+  implicit val encoder: Encoder[Pagination] = deriveEncoder
+  implicit val decoder: Decoder[Pagination] = deriveDecoder
 }
