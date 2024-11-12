@@ -92,6 +92,13 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.getPartitioningMainFlow(999L))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
+  when(partitioningServiceMock.getAncestors(1111L, Some(1), Some(0)))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningServiceMock.getAncestors(8888L, Some(1), Some(0)))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+  when(partitioningServiceMock.getAncestors(9999L, Some(1), Some(0)))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Child Partitioning not found")))
+
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -228,6 +235,25 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("GetPartitioning - Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.getPartitioning(encodePartitioningDTO(partitioningDTO3)).exit)(
             failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+      suite("GetAncestorsSuite")(
+        test("Returns expected PaginatedResponse[PartitioningWithIdDTO] with more data available") {
+          for {
+            result <- PartitioningController.getAncestors(1111L, Some(1), Some(0))
+            expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = true), uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected InternalServerErrorResponse when service call fails with GeneralServiceError") {
+          assertZIO(PartitioningController.getAncestors(8888L, Some(1), Some(0)).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundErrorResponse when service call fails with NotFoundServiceError") {
+          assertZIO(PartitioningController.getAncestors(9999L, Some(1), Some(0)).exit)(
+            failsWithA[NotFoundErrorResponse]
           )
         }
       ),

@@ -103,6 +103,16 @@ trait Routes extends Endpoints with ServerOptions {
           PartitioningController.getFlowPartitionings(flowId, limit, offset)
         }
       ),
+      createServerEndpoint[
+        (Long, Option[Int], Option[Long]),
+        ErrorResponse,
+        PaginatedResponse[PartitioningWithIdDTO]
+      ](
+        getAncestorsEndpointV2,
+        { case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
+          PartitioningController.getAncestors(partitioningId, limit, offset)
+        }
+      ),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes

@@ -73,6 +73,15 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningById(8888L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
+  when(partitioningRepositoryMock.getAncestors(1111L, Some(1), Some(1L)))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningRepositoryMock.getAncestors(2222L, Some(1), Some(1L)))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningRepositoryMock.getAncestors(8888L, Some(1), Some(1L)))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getAncestors(9999L, Some(1), Some(1L)))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Child Partitioning not found")))
+
   when(partitioningRepositoryMock.getPartitioningMeasuresById(1L))
     .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
   when(partitioningRepositoryMock.getPartitioningMeasuresById(2L))
@@ -223,6 +232,28 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningService.getPartitioningById(8888L).exit
           } yield assertTrue(
             result == Exit.fail(NotFoundServiceError("Failed to perform 'getPartitioning': Partitioning not found"))
+          )
+        }
+      ),
+      suite("GetAncestorsSuite")(
+        test("Returns expected Right with ResultHasMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningService.getAncestors(1111L, Some(1), Some(1L))
+          } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected Right with ResultNoMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningService.getAncestors(2222L, Some(1), Some(1L))
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected GeneralServiceError when database error occurs") {
+          assertZIO(PartitioningService.getAncestors(8888L, Some(1), Some(1L)).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        },
+        test("Returns expected NotFoundServiceError when child partition does not exist") {
+          assertZIO(PartitioningService.getAncestors(9999L, Some(1), Some(1L)).exit)(
+            failsWithA[NotFoundServiceError]
           )
         }
       ),

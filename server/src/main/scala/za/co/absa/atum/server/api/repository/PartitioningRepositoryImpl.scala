@@ -18,6 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
+import za.co.absa.atum.server.api.database.runs.functions.GetAncestors._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.database.flows.functions._
@@ -39,6 +40,7 @@ class PartitioningRepositoryImpl (
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
   getPartitioningFn: GetPartitioning,
   getFlowPartitioningsFn: GetFlowPartitionings,
+  getAncestorsFn: GetAncestors,
   getPartitioningMainFlowFn: GetPartitioningMainFlow
 ) extends PartitioningRepository
     with BaseRepository {
@@ -158,6 +160,28 @@ class PartitioningRepositoryImpl (
       }
   }
 
+  override def getAncestors(
+   partitioningId: Long,
+   limit: Option[Int],
+   offset: Option[Long]
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getAncestorsFn(GetAncestorsArgs(partitioningId, limit, offset)),
+      "getAncestors"
+    ).map(_.flatten)
+      .flatMap { partitioningResults =>
+        ZIO
+          .fromEither(GetAncestorsResult.resultsToPartitioningWithIdDTOs(partitioningResults, Seq.empty))
+          .mapBoth(
+            error => GeneralDatabaseError(error.getMessage),
+            partitionings => {
+              if (partitioningResults.nonEmpty && partitioningResults.head.hasMore) ResultHasMore(partitionings)
+              else ResultNoMore(partitionings)
+            }
+          )
+      }
+  }
+
   override def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO] = {
     dbSingleResultCallWithStatus(
       getPartitioningMainFlowFn(partitioningId),
@@ -182,6 +206,7 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMeasuresById
       with GetPartitioning
       with GetFlowPartitionings
+      with GetAncestors
       with GetPartitioningMainFlow,
     PartitioningRepository
   ] = ZLayer {
@@ -197,6 +222,7 @@ object PartitioningRepositoryImpl {
       getPartitioning <- ZIO.service[GetPartitioning]
       getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
+      getAncestors <- ZIO.service[GetAncestors]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       createPartitioning,
@@ -208,6 +234,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasuresById,
       getPartitioning,
       getFlowPartitionings,
+      getAncestors,
       getPartitioningMainFlow
     )
   }

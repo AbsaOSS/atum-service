@@ -32,3 +32,10 @@ to remove them or
 sbt flywayBaseline 
 ```
 to set the current state as the baseline.
+
+```zsh
+docker kill atum_db
+docker rm atum_db
+docker run --name=atum_db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=atum_db -p 5432:5432 -d postgres:16
+sbt flywayMigrate
+```
