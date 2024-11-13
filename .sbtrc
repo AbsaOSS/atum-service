@@ -30,3 +30,6 @@ alias testDB=; project database; testOnly *
 
 # Run all tests
 alias testAll=; testOnly *
+
+# Run Agent-Server integration tests
+alias testAgentServer=; testOnly *AgentServerTests
