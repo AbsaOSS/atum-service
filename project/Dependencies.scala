@@ -208,7 +208,6 @@ object Dependencies {
     lazy val nameOf = "com.github.dwickern" %% "scala-nameof" % Versions.scalaNameof % Provided // it's provided, as it's a macro needed only at runtime
 
     lazy val balta = "za.co.absa" %% "balta" % Versions.balta % Test
-//    lazy val postgresql = "org.postgresql" % "postgresql" % Versions.postgresql % Test
 
     Seq(
       sparkCore,
@@ -221,7 +220,7 @@ object Dependencies {
       logback,
       nameOf
     ) ++
-      testDependencies :+ balta //:+ postgresql
+      testDependencies :+ balta
   }
 
   def modelDependencies(scalaVersion: Version): Seq[ModuleID] = {
