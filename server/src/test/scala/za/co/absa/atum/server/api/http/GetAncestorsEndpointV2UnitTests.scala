@@ -24,10 +24,10 @@ import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.PartitioningWithIdDTO
+import za.co.absa.atum.model.envelopes.{InternalServerErrorResponse, NotFoundErrorResponse, Pagination}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.PartitioningController
-import za.co.absa.atum.server.model.{InternalServerErrorResponse, NotFoundErrorResponse, Pagination}
-import za.co.absa.atum.server.model.SuccessResponse.PaginatedResponse
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO, ZLayer}

@@ -25,10 +25,10 @@ import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
-import za.co.absa.atum.server.model.ErrorResponse
-import za.co.absa.atum.server.model.SuccessResponse._
+import za.co.absa.atum.model.envelopes.SuccessResponse._
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
@@ -57,7 +57,7 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint(postPartitioningEndpointV2, PartitioningController.postPartitioning),
       createServerEndpoint(
         getPartitioningAdditionalDataEndpointV2,
-        PartitioningController.getPartitioningAdditionalDataV2
+        PartitioningController.getPartitioningAdditionalData
       ),
       createServerEndpoint[
         (Long, AdditionalDataPatchDTO),
@@ -90,6 +90,14 @@ trait Routes extends Endpoints with ServerOptions {
           CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName)
         }
       ),
+      createServerEndpoint[
+        (Long, Option[Int], Option[Long], Option[String]),
+        ErrorResponse,
+        PaginatedResponse[CheckpointV2DTO]
+      ](getFlowCheckpointsEndpointV2, {
+        case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
+          FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+      }),
       createServerEndpoint(getPartitioningByIdEndpointV2, PartitioningController.getPartitioningByIdV2),
       createServerEndpoint(getPartitioningMeasuresEndpointV2, PartitioningController.getPartitioningMeasuresV2),
       createServerEndpoint(getPartitioningMainFlowEndpointV2, PartitioningController.getPartitioningMainFlow),
@@ -113,7 +121,7 @@ trait Routes extends Endpoints with ServerOptions {
           PartitioningController.getAncestors(partitioningId, limit, offset)
         }
       ),
-      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.unit)
+      createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.succeed(StatusResponse.up))
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
   }
@@ -127,14 +135,16 @@ trait Routes extends Endpoints with ServerOptions {
       //      postCheckpointEndpointV2,
       createPartitioningEndpointV1,
       //      postPartitioningEndpointV2,
-      //      patchPartitioningAdditionalDataEndpointV2,
+      patchPartitioningAdditionalDataEndpointV2,
       //      getPartitioningCheckpointsEndpointV2,
       //      getPartitioningCheckpointEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
-      //      getPartitioningEndpointV2,
+      getPartitioningEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
       //      getFlowPartitioningsEndpointV2,
-      //      getPartitioningMainFlowEndpointV2
+      //      getPartitioningMainFlowEndpointV2,
+      //      getFlowCheckpointsEndpointV2,
+      healthEndpoint
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, "Atum API", "1.0"))
@@ -149,16 +159,16 @@ trait Routes extends Endpoints with ServerOptions {
   }
 
   private def createServerEndpoint[I, E, O](
-    endpoint: PublicEndpoint[I, E, O, Any],
-    logic: I => ZIO[HttpEnv.Env, E, O]
-  ): ZServerEndpoint[HttpEnv.Env, Any] = {
+                                             endpoint: PublicEndpoint[I, E, O, Any],
+                                             logic: I => ZIO[HttpEnv.Env, E, O]
+                                           ): ZServerEndpoint[HttpEnv.Env, Any] = {
     endpoint.zServerLogic(logic).widen[HttpEnv.Env]
   }
 
   protected def allRoutes(
-    httpMonitoringConfig: HttpMonitoringConfig,
-    jvmMonitoringConfig: JvmMonitoringConfig
-  ): HttpRoutes[HttpEnv.F] = {
+                           httpMonitoringConfig: HttpMonitoringConfig,
+                           jvmMonitoringConfig: JvmMonitoringConfig
+                         ): HttpRoutes[HttpEnv.F] = {
     createAllServerRoutes(httpMonitoringConfig) <+>
       createSwaggerRoutes <+>
       (if (httpMonitoringConfig.enabled) http4sMetricsRoutes else HttpRoutes.empty[HttpEnv.F]) <+>

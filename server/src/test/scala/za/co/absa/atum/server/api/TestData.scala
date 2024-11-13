@@ -92,7 +92,7 @@ trait TestData {
   )
 
   protected val getAncestorsResult1: GetAncestorsResult = GetAncestorsResult(
-    ancestor_id = 1111L,
+    ancestor_id = 1L,
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = false
@@ -103,13 +103,6 @@ trait TestData {
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = true
-  )
-
-  protected val getAncestorsResult3: GetAncestorsResult = GetAncestorsResult(
-    ancestor_id = 3333L,
-    partitioningJson = partitioningAsJson,
-    author = "author",
-    hasMore = false
   )
 
   // Partitioning with ID DTO
