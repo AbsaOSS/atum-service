@@ -21,6 +21,8 @@ import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, Part
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
+import za.co.absa.atum.server.api.database.runs.functions.GetAncestors
+import za.co.absa.atum.server.api.database.runs.functions.GetAncestors.GetAncestorsArgs
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
@@ -147,15 +149,29 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getFlowPartitioningsMock = mock(classOf[GetFlowPartitionings])
 
   when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(1L, Some(10), Some(0)))
-    ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult1)))))
+  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult1)))))
   when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(2L, Some(10), Some(0)))
   ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult2)))))
   when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(0L, None, None)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Flow not found"))))
   when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(3L, Some(10), Some(0)))
-    ).thenReturn(ZIO.fail(new Exception("boom!")))
+  ).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getFlowPartitioningsMockLayer = ZLayer.succeed(getFlowPartitioningsMock)
+
+  // Get Ancestors By Id Mocks
+  private val getAncestorsMock = mock(classOf[GetAncestors])
+
+  when(getAncestorsMock.apply(GetAncestorsArgs(1L, Some(10), Some(0)))
+  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getAncestorsResult1)))))
+  when(getAncestorsMock.apply(GetAncestorsArgs(1111L, Some(10), Some(0)))
+  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getAncestorsResult2)))))
+  when(getAncestorsMock.apply(GetAncestorsArgs(9999L, Some(10), Some(0)))
+  ).thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Child Partitioning not found"))))
+  when(getAncestorsMock.apply(GetAncestorsArgs(8888L, Some(10), Some(0)))
+  ).thenReturn(ZIO.fail(new Exception("boom!")))
+
+  private val getAncestorsMockLayer = ZLayer.succeed(getAncestorsMock)
 
   // Create Partitioning Mocks
   private val getPartitioningMainFlowMock = mock(classOf[GetPartitioningMainFlow])
@@ -360,6 +376,28 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
+      suite("GetAncestorsSuite")(
+        test("Returns expected ResultNoMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningRepository.getAncestors(1L, Some(10), Some(0))
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected ResultHasMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningRepository.getAncestors(1111L, Some(10), Some(0))
+          } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO2)))
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getAncestors(9999L, Some(10), Some(0)).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getAncestors(8888L, Some(10), Some(0)).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
+      ),
       suite("GetPartitioningSuite")(
         test("GetPartitioning - Returns expected PartitioningWithIdDTO") {
           for {
@@ -389,6 +427,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     getPartitioningMockLayer,
     getPartitioningMeasuresV2MockLayer,
     getFlowPartitioningsMockLayer,
+    getAncestorsMockLayer,
     getPartitioningMainFlowMockLayer
   )
 

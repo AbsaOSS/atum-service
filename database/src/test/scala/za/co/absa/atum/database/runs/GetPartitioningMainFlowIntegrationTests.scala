@@ -127,6 +127,8 @@ class GetPartitioningMainFlowIntegrationTests extends DBTestSuite {
       assert(row.getLong("id_flow").contains(1L))
       assert(row.getString("flow_name").contains("Flow1"))
       assert(row.getString("created_by").contains("Sirius"))
+      print(row.getString("flow_name"))
+
 
       assert(!queryResult.hasNext)
     }

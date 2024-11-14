@@ -22,6 +22,7 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.{ResultValueType, dto}
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
+import za.co.absa.atum.server.api.database.runs.functions.GetAncestors.GetAncestorsResult
 import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, MeasureFromDB, PartitioningFromDB}
 
 import java.time.ZonedDateTime
@@ -85,6 +86,20 @@ trait TestData {
 
   protected val getFlowPartitioningsResult2: GetFlowPartitioningsResult = GetFlowPartitioningsResult(
     id = 1111L,
+    partitioningJson = partitioningAsJson,
+    author = "author",
+    hasMore = true
+  )
+
+  protected val getAncestorsResult1: GetAncestorsResult = GetAncestorsResult(
+    ancestor_id = 1L,
+    partitioningJson = partitioningAsJson,
+    author = "author",
+    hasMore = false
+  )
+
+  protected val getAncestorsResult2: GetAncestorsResult = GetAncestorsResult(
+    ancestor_id = 1111L,
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = true
