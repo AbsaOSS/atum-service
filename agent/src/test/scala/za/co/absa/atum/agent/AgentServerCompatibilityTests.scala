@@ -26,7 +26,7 @@ import za.co.absa.atum.agent.dispatcher.HttpDispatcher
 
 import scala.collection.immutable.ListMap
 
-class AgentWithServerIntegrationTests extends DBTestSuite {
+class AgentServerCompatibilityTests extends DBTestSuite {
 
   private val testDataForRDD = Seq(
     Row("A", 8.0),
@@ -40,7 +40,7 @@ class AgentWithServerIntegrationTests extends DBTestSuite {
     .add(StructField("columnForSum", DoubleType))
 
   // Need to add service & pg run in CI
-  ignore("Agent should be compatible with server") {
+  test("Agent should be compatible with server") {
 
     val expectedMeasurement = JsonBString(
       """{"mainValue": {"value": "4", "valueType": "Long"}, "supportValues": {}}""".stripMargin
