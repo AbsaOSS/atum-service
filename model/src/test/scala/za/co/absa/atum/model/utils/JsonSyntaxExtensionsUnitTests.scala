@@ -26,7 +26,7 @@ import za.co.absa.atum.model.testing.implicits.StringImplicits.StringLinearizati
 import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
-class SerializationUtilsUnitTests extends AnyFlatSpecLike {
+class JsonSyntaxExtensionsUnitTests extends AnyFlatSpecLike {
 
   // AdditionalDataDTO
   "asJsonString" should "serialize AdditionalDataDTO into json string" in {

@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.server.zio
+package za.co.absa.atum.reader.implicits
 
-import zio.{Task, ZIO}
 import sttp.client3.impl.zio.RIOMonadAsyncError
-import za.co.absa.atum.reader.server.GenericServerConnection
 
-
-abstract class ZioServerConnection(serverUrl: String) extends GenericServerConnection[Task](serverUrl)(new RIOMonadAsyncError[Any]) {
-
-  override def close(): Task[Unit] = {
-    ZIO.unit
-  }
-
+object zio {
+  implicit val ZIOMonad: RIOMonadAsyncError[Any] = new RIOMonadAsyncError[Any]
 }
-
-

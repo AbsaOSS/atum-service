@@ -247,15 +247,12 @@ object Dependencies {
     lazy val sttpCore = sttpClient3Org %% "core" % Versions.sttpClient
     lazy val sttpCirce = sttpClient3Org %% "circe" % Versions.sttpClient
 
-    // Armeria Future backend
-    lazy val sttpArmeririaFutureBackend = sttpClient3Org %% "armeria-backend" % Versions.sttpClient % Optional
-    // Armeria Cats backend
-    lazy val sttpArmeririaCatsBackend = sttpClient3Org %% "armeria-backend-cats" % Versions.sttpClient % Optional
+    // Cats backend
     lazy val catsEffect = typeLevelOrg %% "cats-effect" % Versions.catsEffect % Optional
-    // Armeria Zio backend
-    lazy val sttpArmeririaZioBackend = sttpClient3Org %% "armeria-backend-zio" % Versions.sttpClient % Optional
-    // HttpClient Zio backend
-//    lazy val sttpHttpClientZioBackend = sttpClient3Org %% "zio" % Versions.sttpClient % Optional TODO #298 needs Java 11 cross-build
+    lazy val sttpCats = sttpClient3Org %% "cats" % Versions.sttpClient % Optional
+
+    // ZIO backend
+    lazy val sttpZio = sttpClient3Org %% "zio" % Versions.sttpClient % Optional
 
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
@@ -266,15 +263,13 @@ object Dependencies {
     Seq(
       sttpCore,
       sttpCirce,
-      sttpArmeririaFutureBackend,
-      sttpArmeririaCatsBackend,
+      sttpCats,
       catsEffect,
-      sttpArmeririaZioBackend,
-//      sttpHttpClientZioBackend, TODO #298 needs Java 11 cross-build
+      sttpZio,
       zioTest,
-      zioTestSbt,
-      zioTestJunit,
-      sbtJunitInterface
+//      zioTestSbt,
+//      zioTestJunit,
+//      sbtJunitInterface
     ) ++
       testDependencies ++
       jsonSerdeDependencies

@@ -24,7 +24,7 @@ import za.co.absa.commons.version.Version
 
 
 object Setup {
-  //supported Scala versions
+  //possible supported Scala versions
   val scala211: Version = Version.asSemVer("2.11.12")
   val scala212: Version = Version.asSemVer("2.12.18")
   val scala213: Version = Version.asSemVer("2.13.11")
@@ -38,7 +38,10 @@ object Setup {
   )
 
   val serverAndDbScalaVersion: Version = scala213 //covers REST server and database modules
-  val clientSupportedScalaVersions: Seq[Version] = Seq(scala212, scala213)
+  val clientSupportedScalaVersions: Seq[Version] = Seq(
+    scala212,
+    scala213,
+  )
 
   val commonScalacOptions: Seq[String] = Seq(
     "-unchecked",

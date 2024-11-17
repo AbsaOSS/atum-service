@@ -16,10 +16,24 @@
 
 package za.co.absa.atum.reader
 
-import za.co.absa.atum.reader.basic.Reader
-import za.co.absa.atum.reader.server.GenericServerConnection
+import sttp.client3.SttpBackend
+import sttp.monad.MonadError
+import za.co.absa.atum.model.types.basic.AtumPartitions
+import za.co.absa.atum.reader.basic.ReaderWithPartitioningId
+import za.co.absa.atum.reader.server.ServerConfig
 
-class PartitioningReader[F[_]]()(override implicit val serverConnection: GenericServerConnection[F]) extends Reader[F] {
+/**
+ *
+ * @param partitioning  - the Atum partitions to read the information from
+ * @param serverConfig  - tha Atum server configuration
+ * @param backend       - sttp backend, that will be executing the requests
+ * @param ev            - using evidence based approach to ensure that the type F is a MonadError instead of using context
+ *                      bounds, as it make the imports easier to follow
+ * @tparam F            - the effect type (e.g. Future, IO, Task, etc.)
+ */
+case class PartitioningReader[F[_]](partitioning: AtumPartitions)
+                                   (implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any], ev: MonadError[F])
+  extends ReaderWithPartitioningId[F] {
   def foo(): String = {
     // just to have some testable content
     "bar"

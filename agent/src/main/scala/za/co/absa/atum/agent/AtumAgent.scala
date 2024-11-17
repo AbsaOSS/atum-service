@@ -17,9 +17,10 @@
 package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigFactory}
-import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, Dispatcher, HttpDispatcher}
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.types.basic.AtumPartitions
+import za.co.absa.atum.model.types.basic.AtumPartitionsOps
 
 /**
  *  Entity that communicate with the API, primarily focused on spawning Atum Context(s).
@@ -58,7 +59,7 @@ trait AtumAgent {
     atumPartitions: AtumPartitions,
     additionalDataPatchDTO: AdditionalDataPatchDTO
   ): AdditionalDataDTO = {
-    dispatcher.updateAdditionalData(AtumPartitions.toSeqPartitionDTO(atumPartitions), additionalDataPatchDTO)
+    dispatcher.updateAdditionalData(atumPartitions.toPartitioningDTO, additionalDataPatchDTO)
   }
 
   /**
@@ -75,7 +76,7 @@ trait AtumAgent {
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
     val authorIfNew = AtumAgent.currentUser
-    val partitioningDTO = PartitioningSubmitDTO(AtumPartitions.toSeqPartitionDTO(atumPartitions), None, authorIfNew)
+    val partitioningDTO = PartitioningSubmitDTO(atumPartitions.toPartitioningDTO, None, authorIfNew)
 
     val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
     val atumContext = AtumContext.fromDTO(atumContextDTO, this)
@@ -94,8 +95,8 @@ trait AtumAgent {
     val authorIfNew = AtumAgent.currentUser
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
 
-    val newPartitionsDTO = AtumPartitions.toSeqPartitionDTO(newPartitions)
-    val parentPartitionsDTO = Some(AtumPartitions.toSeqPartitionDTO(parentAtumContext.atumPartitions))
+    val newPartitionsDTO = newPartitions.toPartitioningDTO
+    val parentPartitionsDTO = Some(parentAtumContext.atumPartitions.toPartitioningDTO)
     val partitioningDTO = PartitioningSubmitDTO(newPartitionsDTO, parentPartitionsDTO, authorIfNew)
 
     val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)

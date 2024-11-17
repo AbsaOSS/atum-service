@@ -36,10 +36,14 @@ object JsonSyntaxExtensions {
 
   implicit class JsonDeserializationSyntax(jsonStr: String) {
     def as[T: Decoder]: T = {
-      decode[T](jsonStr) match {
+      asSafe[T] match {
         case Right(value) => value
-        case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")
+        case Left(error) => throw error
       }
+    }
+
+    def asSafe[T: Decoder]: Either[io.circe.Error, T] = {
+      decode[T](jsonStr)
     }
 
     def fromBase64As[T: Decoder]: Either[io.circe.Error, T] = {

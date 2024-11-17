@@ -32,11 +32,6 @@ object VersionAxes {
     override val idSuffix: String = directorySuffix.replaceAll("""\W+""", "_")
   }
 
-  case class JavaVersionAxis(javaVersion: String) extends sbt.VirtualAxis.WeakAxis {
-    override val directorySuffix = s"-jdk$javaVersion"
-    override val idSuffix: String = directorySuffix.replaceAll("""\W+""", "_")
-  }
-
   private def camelCaseToLowerDashCase(origName: String): String = {
     origName
       .replaceAll("([A-Z])", "-$1")

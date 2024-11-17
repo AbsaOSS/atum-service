@@ -16,19 +16,29 @@
 
 package za.co.absa.atum.model.envelopes
 
+import io.circe.parser.decode
 import io.circe._
 import io.circe.generic.semiauto._
 
 import java.util.UUID
 
 object ErrorResponse {
-  implicit val decodeErrorResponse: Decoder[ErrorResponse] = deriveDecoder
+  implicit val decodeErrorResponse: Decoder[ErrorResponse] = deriveDecoder //TODo neeeded?
   implicit val encodeErrorResponse: Encoder[ErrorResponse] = deriveEncoder
+
+  def basedOnStatusCode(statusCode: Int, jsonString: String): Either[Error, ErrorResponse] = {
+    statusCode match {
+      case 400 => decode[BadRequestResponse](jsonString)
+      case 401 => decode[UnauthorizedErrorResponse](jsonString)
+      case 404 => decode[NotFoundErrorResponse](jsonString)
+      case 409 => decode[ConflictErrorResponse](jsonString)
+      case 500 => decode[InternalServerErrorResponse](jsonString)
+      case _   => decode[GeneralErrorResponse](jsonString)
+    }
+  }
 }
 
-sealed trait ErrorResponse extends ResponseEnvelope {
-  def message: String
-}
+sealed trait ErrorResponse extends ResponseEnvelope
 
 final case class BadRequestResponse(message: String, requestId: UUID = UUID.randomUUID()) extends ErrorResponse
 
@@ -71,3 +81,11 @@ object ErrorInDataErrorResponse {
   implicit val decoderInternalServerErrorResponse: Decoder[ErrorInDataErrorResponse] = deriveDecoder
   implicit val encoderInternalServerErrorResponse: Encoder[ErrorInDataErrorResponse] = deriveEncoder
 }
+
+final case class UnauthorizedErrorResponse(message: String, requestId: UUID = UUID.randomUUID()) extends ErrorResponse
+
+object UnauthorizedErrorResponse {
+  implicit val decoderInternalServerErrorResponse: Decoder[UnauthorizedErrorResponse] = deriveDecoder
+  implicit val encoderInternalServerErrorResponse: Encoder[UnauthorizedErrorResponse] = deriveEncoder
+}
+

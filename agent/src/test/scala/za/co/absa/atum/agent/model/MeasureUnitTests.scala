@@ -19,11 +19,11 @@ package za.co.absa.atum.agent.model
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumAgent
-import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.AtumMeasure.{AbsSumOfValuesOfColumn, RecordCount, SumOfHashesOfColumn, SumOfValuesOfColumn}
 import za.co.absa.spark.commons.test.SparkTestBase
 import za.co.absa.atum.agent.AtumContext._
 import za.co.absa.atum.model.ResultValueType
+import za.co.absa.atum.model.types.basic.AtumPartitions
 
 class MeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase { self =>
 

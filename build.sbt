@@ -20,7 +20,7 @@ import Dependencies.*
 import Dependencies.Versions.spark3
 import VersionAxes.*
 
-ThisBuild / scalaVersion := Setup.scala213.asString  // default version TODO
+//ThisBuild / scalaVersion := Setup.scala212.asString  // default version TODO
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -34,6 +34,8 @@ initialize := {
   println(s"Running on Java version $currentJavaVersion, required is at least version $requiredJavaVersion")
   //this routine can be used to assert the required Java version
 }
+
+Test/parallelExecution := false
 
 enablePlugins(FlywayPlugin)
 flywayUrl := FlywayConfiguration.flywayUrl
