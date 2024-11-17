@@ -27,11 +27,11 @@ import za.co.absa.atum.reader.basic.RequestResult._
 
 /**
  * Reader is a base class for reading data from a remote server.
- * @param monadError$F$0  - the context bind for the F type; it's MonadError to allow not just map, flatMap but eventually
- *                        also error handling easily on a higher level
  * @param serverConfig    - the configuration hwo to reach the Atum server
  * @param backend         - sttp backend to use to send requests
  * @tparam F              - the monadic effect used to get the data (e.g. Future, IO, Task, etc.)
+ *                        the context bind for the F type is MonadError to allow not just map, flatMap but eventually
+ *                        also error handling easily on a higher level
  */
 abstract class Reader[F[_]: MonadError](implicit val serverConfig: ServerConfig, val backend: SttpBackend[F, Any]) {
 
