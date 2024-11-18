@@ -34,7 +34,6 @@ initialize := {
   //this routine can be used to assert the required Java version
 }
 
-Test/parallelExecution := false
 
 enablePlugins(FlywayPlugin)
 flywayUrl := FlywayConfiguration.flywayUrl

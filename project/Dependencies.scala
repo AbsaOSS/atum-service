@@ -244,18 +244,18 @@ object Dependencies {
     val typeLevelOrg = "org.typelevel"
 
     // STTP core and Circe integration
-    lazy val sttpCore = sttpClient3Org %% "core" % Versions.sttpClient
-    lazy val sttpCirce = sttpClient3Org %% "circe" % Versions.sttpClient
+    val sttpCore = sttpClient3Org %% "core" % Versions.sttpClient
+    val sttpCirce = sttpClient3Org %% "circe" % Versions.sttpClient
 
     // Cats backend
-    lazy val catsEffect = typeLevelOrg %% "cats-effect" % Versions.catsEffect % Optional
-    lazy val sttpCats = sttpClient3Org %% "cats" % Versions.sttpClient % Optional
+    val catsEffect = typeLevelOrg %% "cats-effect" % Versions.catsEffect % Optional
+    val sttpCats = sttpClient3Org %% "cats" % Versions.sttpClient % Optional
 
     // ZIO backend
-    lazy val sttpZio = sttpClient3Org %% "zio" % Versions.sttpClient % Optional
+    val sttpZio = sttpClient3Org %% "zio" % Versions.sttpClient % Optional
 
     // testing
-    lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
+    val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
 
     Seq(
       sttpCore,
