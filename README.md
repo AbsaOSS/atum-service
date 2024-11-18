@@ -78,11 +78,11 @@ the BCBS set of regulations requires analysis and reporting to be based on data 
 Thus it is critical at the ingestion stage to preserve the accuracy and integrity of the data gathered from a
 source system.
 
-The purpose of Atum is to provide means of ensuring no critical fields have been modified during
-the processing and no records are added or lost. To do this the library provides an ability
-to calculate *hash sums* of explicitly specified columns. We call the set of hash sums at a given time
-a *checkpoint* and each hash sum we call a *control measurement*. Checkpoints can be calculated anytime
-between Spark transformations and actions.
+The purpose of Atum is to provide means of ensuring no critical fields have been modified during the processing and no 
+records are added or lost. To do this the library provides an ability to calculate *control numbers* of explicitly 
+specified columns using a selection of agregate function. We call the set of such measurements at a given time
+a *checkpoint* and each value - a result of the function computation - we call a *control measurement*. Checkpoints can 
+be calculated anytime between Spark transformations and actions, so as at the start of the process or after its end.
 
 We assume the data for ETL are processed in a series of batch jobs. Let's call each data set for a given batch
 job a *batch*. All checkpoints are calculated for a specific batch.
