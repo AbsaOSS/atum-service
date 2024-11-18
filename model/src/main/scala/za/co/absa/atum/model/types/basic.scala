@@ -40,14 +40,6 @@ object basic {
       ListMap(elems:_*)
     }
 
-    /*TODO private[agent]*/ def toPartitionDTO(atumPartitions: AtumPartitions): PartitioningDTO = {
-      atumPartitions.map { case (key, value) => PartitionDTO(key, value) }.toSeq
-    }
-
-    /*TOD private[agent]*/ def fromPartitioningDTO(partitioning: PartitioningDTO): AtumPartitions = {
-      AtumPartitions(partitioning.map(partition => Tuple2(partition.key, partition.value)).toList)
-    }
-
   }
 
   implicit class AtumPartitionsOps(val atumPartitions: AtumPartitions) extends AnyVal {

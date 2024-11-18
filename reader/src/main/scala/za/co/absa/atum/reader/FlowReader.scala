@@ -36,9 +36,4 @@ class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
 
   override def partitioning: AtumPartitions = mainFlowPartitioning
 
-  def foo(): String = {
-    // just to have some testable content
-    "bar"
-  }
-
 }

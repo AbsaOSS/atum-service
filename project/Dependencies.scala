@@ -256,9 +256,6 @@ object Dependencies {
 
     // testing
     lazy val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
-    lazy val zioTestSbt = zioOrg %% "zio-test-sbt" % Versions.zio % Test
-    lazy val zioTestJunit = zioOrg %% "zio-test-junit" % Versions.zio % Test
-    lazy val sbtJunitInterface = sbtOrg % "junit-interface" % Versions.sbtJunitInterface % Test
 
     Seq(
       sttpCore,
@@ -266,10 +263,7 @@ object Dependencies {
       sttpCats,
       catsEffect,
       sttpZio,
-      zioTest,
-//      zioTestSbt,
-//      zioTestJunit,
-//      sbtJunitInterface
+      zioTest
     ) ++
       testDependencies ++
       jsonSerdeDependencies

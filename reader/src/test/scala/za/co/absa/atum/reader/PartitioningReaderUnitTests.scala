@@ -35,7 +35,6 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
       "a" -> "b",
       "c" -> "d"
     ))
-    //implicit val monad: FutureMonad = new FutureMonad()
     implicit val server: SttpBackend[Future, Any] = SttpBackendStub.asynchronousFuture
     val result = PartitioningReader(atumPartitions).foo()
     assert(result == "bar")

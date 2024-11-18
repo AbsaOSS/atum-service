@@ -23,9 +23,6 @@ import io.circe.generic.semiauto._
 import java.util.UUID
 
 object ErrorResponse {
-  implicit val decodeErrorResponse: Decoder[ErrorResponse] = deriveDecoder //TODo neeeded?
-  implicit val encodeErrorResponse: Encoder[ErrorResponse] = deriveEncoder
-
   def basedOnStatusCode(statusCode: Int, jsonString: String): Either[Error, ErrorResponse] = {
     statusCode match {
       case 400 => decode[BadRequestResponse](jsonString)

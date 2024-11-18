@@ -20,7 +20,6 @@ import Dependencies.*
 import Dependencies.Versions.spark3
 import VersionAxes.*
 
-//ThisBuild / scalaVersion := Setup.scala212.asString  // default version TODO
 
 ThisBuild / versionScheme := Some("early-semver")
 

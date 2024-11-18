@@ -28,14 +28,14 @@ import scala.concurrent.Future
 class FlowReaderUnitTests extends AnyFunSuiteLike {
   private implicit val severConfig: ServerConfig = ServerConfig.fromConfig()
 
-  test("foo") {
+  test("mainFlowPartitioning is the same as partitioning") {
     val atumPartitions: AtumPartitions = AtumPartitions(List(
       "a" -> "b",
       "c" -> "d"
     ))
     implicit val server: SttpBackend[Future, Any] = SttpBackendStub.asynchronousFuture
 
-    val result = new FlowReader(atumPartitions).foo()
-    assert(result == "bar")
+    val result = new FlowReader(atumPartitions).mainFlowPartitioning
+    assert(result == atumPartitions)
   }
 }
