@@ -23,13 +23,16 @@ CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
     OUT status_text            TEXT,
     OUT id_checkpoint          UUID,
     OUT checkpoint_name        TEXT,
-    OUT author                 TEXT,
+    OUT checkpoint_author      TEXT,
     OUT measured_by_atum_agent BOOLEAN,
     OUT measure_name           TEXT,
     OUT measured_columns       TEXT[],
     OUT measurement_value      JSONB,
     OUT checkpoint_start_time  TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time    TIMESTAMP WITH TIME ZONE,
+    OUT id_partitioning        BIGINT,
+    OUT o_partitioning         JSONB,
+    OUT partitioning_author    TEXT,
     OUT has_more               BOOLEAN
 ) RETURNS SETOF record AS
 $$
@@ -61,7 +64,7 @@ $$
 --      status_text            - Status text
 --      id_checkpoint          - ID of retrieved checkpoint
 --      checkpoint_name        - Name of the retrieved checkpoint
---      author                 - Author of the checkpoint
+--      checkpoint_author      - Author of the checkpoint
 --      measured_by_atum_agent - Flag indicating whether the checkpoint was measured by Atum Agent
 --                               (if false, data supplied manually)
 --      measure_name           - measure name associated with a given checkpoint
@@ -69,6 +72,9 @@ $$
 --      measurement_value      - measurement details associated with a given checkpoint
 --      checkpoint_start_time  - Time of the checkpoint
 --      checkpoint_end_time    - End time of the checkpoint computation
+--      id_partitioning        - ID of the partitioning
+--      o_partitioning         - Partitioning value
+--      partitioning_author    - Author of the partitioning
 --      has_more               - flag indicating whether there are more checkpoints available, always `false` if `i_limit` is NULL
 --
 -- Status codes:
@@ -109,6 +115,7 @@ BEGIN
     RETURN QUERY
         WITH limited_checkpoints AS (
             SELECT C.id_checkpoint,
+                   C.fk_partitioning,
                    C.checkpoint_name,
                    C.created_by,
                    C.measured_by_atum_agent,
@@ -118,7 +125,7 @@ BEGIN
                      JOIN flows.partitioning_to_flow PF ON C.fk_partitioning = PF.fk_partitioning
             WHERE PF.fk_flow = i_flow_id
               AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
-            ORDER BY C.id_checkpoint, C.process_start_time
+            ORDER BY C.process_start_time desc
             LIMIT i_checkpoints_limit OFFSET i_offset
         )
         SELECT
@@ -133,6 +140,9 @@ BEGIN
             M.measurement_value,
             LC.process_start_time AS checkpoint_start_time,
             LC.process_end_time AS checkpoint_end_time,
+            LC.fk_partitioning AS id_partitioning,
+            P.partitioning AS o_partitioning,
+            P.created_by AS partitioning_author,
             _has_more AS has_more
         FROM
             limited_checkpoints LC
@@ -140,8 +150,9 @@ BEGIN
             runs.measurements M ON LC.id_checkpoint = M.fk_checkpoint
                 INNER JOIN
             runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
-        ORDER BY
-            LC.id_checkpoint, LC.process_start_time;
+                INNER JOIN
+            runs.partitionings P ON LC.fk_partitioning = P.id_partitioning
+        ORDER BY LC.process_start_time desc;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
