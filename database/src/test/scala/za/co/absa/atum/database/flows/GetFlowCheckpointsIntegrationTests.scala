@@ -1,5 +1,7 @@
 package za.co.absa.atum.database.flows
 
+import io.circe.Json
+import io.circe.parser.parse
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
@@ -76,7 +78,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
-  ignore("getFlowCheckpointsV2 should return all checkpoints for a given flow") {
+  test("getFlowCheckpointsV2 should return all checkpoints for a given flow") {
 
     val partitioningId: Long = Random.nextLong()
     table("runs.partitionings").insert(
@@ -252,7 +254,6 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     }
   }
 
-  // *********
   test("getFlowCheckpointsV2 should return all checkpoints of a given name and a given flow") {
 
     val partitioningId: Long = Random.nextLong()
@@ -279,10 +280,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
 
     // Insert checkpoints and measure definitions
     val checkpointId1 = UUID.fromString("e9efe108-d8fc-42ad-b367-aa1b17f6c450")
-//    val startTime = OffsetDateTime.parse("1993-02-14T10:00:00Z")
-    val startTime1 = OffsetDateTime.now()
-//    val endTime = OffsetDateTime.parse("2024-04-24T10:00:00Z")
-    val endTime1 = OffsetDateTime.now()
+    val startTime1 = OffsetDateTime.parse("1993-02-14T10:00:00Z")
+    val endTime1 = OffsetDateTime.parse("2024-04-24T10:00:00Z")
     table("runs.checkpoints").insert(
       add("id_checkpoint", checkpointId1)
         .add("fk_partitioning", partitioningId)
@@ -307,10 +306,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     val checkpointId3 = UUID.fromString("41ea35cd-6398-42ed-b6d3-a8d613176575")
-//    val startTime3 = OffsetDateTime.parse("1993-02-14T11:00:00Z")
-    val startTime3 = startTime1.plusHours(1L)
-//    val endTime3 = OffsetDateTime.parse("2024-04-24T11:00:00Z")
-    val endTime3 = endTime1.plusHours(1L)
+    val startTime3 = OffsetDateTime.parse("1993-02-14T11:00:00Z")
+    val endTime3 = OffsetDateTime.parse("2024-04-24T11:00:00Z")
     table("runs.checkpoints").insert(
       add("id_checkpoint", checkpointId3)
         .add("fk_partitioning", partitioningId)
@@ -361,16 +358,14 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         .add("measurement_value", measurementAvg)
     )
 
-    val measureDefinitionCntId3: Long = Random.nextLong()
     table("runs.measurements").insert(
-      add("fk_measure_definition", measureDefinitionCntId3)
+      add("fk_measure_definition", measureDefinitionCntId)
         .add("fk_checkpoint", checkpointId3)
         .add("measurement_value", measurementCnt)
     )
 
-    val measureDefinitionAvgId3: Long = Random.nextLong()
     table("runs.measurements").insert(
-      add("fk_measure_definition", measureDefinitionAvgId3)
+      add("fk_measure_definition", measureDefinitionAvgId)
         .add("fk_checkpoint", checkpointId3)
         .add("measurement_value", measurementAvg)
     )
@@ -398,7 +393,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row1.getOffsetDateTime("checkpoint_start_time").contains(startTime3))
         assert(row1.getOffsetDateTime("checkpoint_end_time").contains(endTime3))
         assert(row1.getLong("id_partitioning").contains(partitioningId))
-        assert(row1.getJsonB("o_partitioning").contains(partitioning))
+        val expectingPartitioningJson1 = parseJsonBStringOrThrow(partitioning)
+        val returnedPartitioningJson1 = parseJsonBStringOrThrow(row1.getJsonB("o_partitioning").get)
+        assert(expectingPartitioningJson1 == returnedPartitioningJson1)
         assert(row1.getString("partitioning_author").contains("Joseph"))
 
         val measure1 = MeasuredDetails(
@@ -417,7 +414,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTime3))
         assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTime3))
         assert(row2.getLong("id_partitioning").contains(partitioningId))
-        assert(row2.getJsonB("o_partitioning").contains(partitioning))
+        val expectingPartitioningJson2 = parseJsonBStringOrThrow(partitioning)
+        val returnedPartitioningJson2 = parseJsonBStringOrThrow(row2.getJsonB("o_partitioning").get)
+        assert(expectingPartitioningJson2 == returnedPartitioningJson2)
         assert(row2.getString("partitioning_author").contains("Joseph"))
 
         val measure2 = MeasuredDetails(
@@ -438,7 +437,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row3.getOffsetDateTime("checkpoint_start_time").contains(startTime1))
         assert(row3.getOffsetDateTime("checkpoint_end_time").contains(endTime1))
         assert(row3.getLong("id_partitioning").contains(partitioningId))
-        assert(row3.getJsonB("o_partitioning").contains(partitioning))
+        val expectingPartitioningJson3 = parseJsonBStringOrThrow(partitioning)
+        val returnedPartitioningJson3 = parseJsonBStringOrThrow(row2.getJsonB("o_partitioning").get)
+        assert(expectingPartitioningJson3 == returnedPartitioningJson3)
         assert(row3.getString("partitioning_author").contains("Joseph"))
 
         val measure3 = MeasuredDetails(
@@ -457,7 +458,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row4.getOffsetDateTime("checkpoint_start_time").contains(startTime1))
         assert(row4.getOffsetDateTime("checkpoint_end_time").contains(endTime1))
         assert(row4.getLong("id_partitioning").contains(partitioningId))
-        assert(row4.getJsonB("o_partitioning").contains(partitioning))
+        val expectingPartitioningJson4 = parseJsonBStringOrThrow(partitioning)
+        val returnedPartitioningJson4 = parseJsonBStringOrThrow(row2.getJsonB("o_partitioning").get)
+        assert(expectingPartitioningJson4 == returnedPartitioningJson4)
         assert(row4.getString("partitioning_author").contains("Joseph"))
 
         val measure4 = MeasuredDetails(
@@ -487,7 +490,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     }
   }
 
-  ignore("getFlowCheckpointsV2 should return limited with checkpoints for a given flow") {
+  test("getFlowCheckpointsV2 should return limited with checkpoints for a given flow") {
 
     val partitioningId: Long = Random.nextLong()
     table("runs.partitionings").insert(
@@ -665,7 +668,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     }
   }
 
-  ignore("getFlowCheckpointsV2 should return no flows when flow_id is not found") {
+  test("getFlowCheckpointsV2 should return no flows when flow_id is not found") {
 
     // Create a non-existent flowId that doesn't exist in the database
     val nonExistentFlowId: Long = Random.nextLong()
@@ -680,6 +683,10 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(!queryResult.hasNext)
       }
 
+  }
+
+  private def parseJsonBStringOrThrow(jsonBString: JsonBString): Json = {
+    parse(jsonBString.value).getOrElse(throw new Exception("Failed to parse JsonBString to Json"))
   }
 
 }
