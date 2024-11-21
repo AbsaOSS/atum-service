@@ -24,7 +24,7 @@ import za.co.absa.commons.version.Version
 
 
 object Setup {
-  //supprtted Java versions
+  //supported Java versions
   val requiredJava: Double = "1.8".toDouble
   val recommendedJava: Double = "11".toDouble
   val currentJava: Double =  sys.props("java.specification.version").toDouble
