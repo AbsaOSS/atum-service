@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.service
 
-import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.model.PaginatedResult
 import zio._
@@ -30,6 +30,6 @@ trait FlowService {
     limit: Option[Int],
     offset: Option[Long],
     checkpointName: Option[String]
-  ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]]
+  ): IO[ServiceError, PaginatedResult[CheckpointWithPartitioningDTO]]
 
 }

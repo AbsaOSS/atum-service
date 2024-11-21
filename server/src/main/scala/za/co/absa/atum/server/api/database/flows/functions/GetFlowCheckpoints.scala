@@ -20,51 +20,54 @@ import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
-import za.co.absa.atum.server.model.CheckpointItemFromDB
+import za.co.absa.atum.server.model.CheckpointItemWithPartitioningFromDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
-
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 
-
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[CheckpointItemFromDB], Task](input =>
-    Seq(
-      fr"${input.flowId}",
-      fr"${input.limit}",
-      fr"${input.offset}",
-      fr"${input.checkpointName}"
+    extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[
+      CheckpointItemWithPartitioningFromDB
+    ], Task](input =>
+      Seq(
+        fr"${input.flowId}",
+        fr"${input.limit}",
+        fr"${input.offset}",
+        fr"${input.checkpointName}"
+      )
     )
-  )
     with StandardStatusHandling
     with ByFirstErrorStatusAggregator {
 
   override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq(
     "id_checkpoint",
     "checkpoint_name",
-    "author",
+    "checkpoint_author",
     "measured_by_atum_agent",
     "measure_name",
     "measured_columns",
     "measurement_value",
     "checkpoint_start_time",
     "checkpoint_end_time",
+    "id_partitioning",
+    "o_partitioning",
+    "partitioning_author",
     "has_more"
   )
 }
 
 object GetFlowCheckpoints {
   case class GetFlowCheckpointsArgs(
-     flowId: Long,
-     limit: Option[Int],
-     offset: Option[Long],
-     checkpointName: Option[String]
+    flowId: Long,
+    limit: Option[Int],
+    offset: Option[Long],
+    checkpointName: Option[String]
   )
 
   val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpoints] = ZLayer {

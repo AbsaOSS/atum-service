@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.repository
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
@@ -38,8 +38,7 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(
       ZIO.right(
         Seq(
-          Row(FunctionStatus(11, "success"), Some(checkpointItemFromDB1)),
-          Row(FunctionStatus(11, "success"), Some(checkpointItemFromDB2))
+          Row(FunctionStatus(11, "success"), Some(checkpointItemWithPartitioningFromDB1))
         )
       )
     )
@@ -57,12 +56,12 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with CheckpointV2DTO") {
           for {
             result <- FlowRepository.getFlowCheckpoints(1, Some(1), Some(1), None)
-          } yield assertTrue(result == ResultHasMore(Seq(checkpointV2DTO1, checkpointV2DTO2)))
+          } yield assertTrue(result == ResultHasMore(Seq(checkpointWithPartitioningDTO1)))
         },
         test("Returns expected Right with CheckpointV2DTO") {
           for {
             result <- FlowRepository.getFlowCheckpoints(2, Some(1), Some(1), None)
-          } yield assertTrue(result == ResultNoMore(Seq.empty[CheckpointV2DTO]))
+          } yield assertTrue(result == ResultNoMore(Seq.empty[CheckpointWithPartitioningDTO]))
         },
         test("Returns expected DatabaseError") {
           assertZIO(FlowRepository.getFlowCheckpoints(3, None, None, None).exit)(
