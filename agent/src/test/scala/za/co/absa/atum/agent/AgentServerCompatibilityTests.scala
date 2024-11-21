@@ -22,12 +22,10 @@ import za.co.absa.atum.agent.model.AtumMeasure.RecordCount
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import org.scalatest.Ignore
 import za.co.absa.atum.agent.dispatcher.HttpDispatcher
 
 import scala.collection.immutable.ListMap
 
-@Ignore
 class AgentServerCompatibilityTests extends DBTestSuite {
 
   private val testDataForRDD = Seq(
@@ -42,7 +40,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     .add(StructField("columnForSum", DoubleType))
 
   // Need to add service & pg run in CI
-  test("Agent should be compatible with server") {
+  ignore("Agent should be compatible with server") {
 
     val expectedMeasurement = JsonBString(
       """{"mainValue": {"value": "4", "valueType": "Long"}, "supportValues": {}}""".stripMargin
