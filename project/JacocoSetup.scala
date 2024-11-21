@@ -51,7 +51,7 @@ object JacocoSetup {
       "za.co.absa.atum.server.Constants*",
       "za.co.absa.atum.server.api.database.DoobieImplicits*",
       "za.co.absa.atum.server.api.database.TransactorProvider*",
-      "za.co.absa.atum.model.dto.*",
+//TDO      "za.co.absa.atum.model.dto.*",
       "za.co.absa.atum.model.envelopes.Pagination",
       "za.co.absa.atum.model.envelopes.ResponseEnvelope",
       "za.co.absa.atum.model.envelopes.StatusResponse",
