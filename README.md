@@ -214,8 +214,9 @@ TBD
 
 ### Control measurement types
 
-The control measurement of a column is a hash sum. It can be calculated differently depending on the column's data type and
-on business requirements. This table represents all currently supported measurement types:
+The control measurement of one or more columns is an aggregation function result executed over the dataset. It can be 
+calculated differently depending on the column's data type, on business requirements and function used. This table 
+represents all currently supported measurement types (aka measures):
 
 | Type                               | Description                                                   |
 |------------------------------------|:--------------------------------------------------------------|
