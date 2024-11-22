@@ -30,7 +30,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: false
       - uses: coursier/cache-action@v5
 
       - name: Setup Scala
@@ -38,11 +39,11 @@ jobs:
         with:
           java-version: "adopt@1.8"
 
-      - name: Build and run unit tests
-        run: sbt "project model" test doc "project reader" test doc "project agent_spark3" test doc
+      - name: Build and run tests
+        run: sbt testAll
 
-      - name: Build and run integration tests
-        run: sbt "project model" testIT "project reader" testIT "project agent_spark3" testIT
+      - name: Generate documenation
+        run: sbt doc
 
   test-database-and-server:
     name: Test Database and Server
@@ -64,7 +65,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: false
       - uses: coursier/cache-action@v5
 
       - name: Setup Scala
@@ -73,10 +75,14 @@ jobs:
           java-version: "adopt@1.11.0-11"
 
       - name: Build and run unit tests
-        run: sbt "project database" test doc "project server" test doc
+        run: sbt "project database" test "project server" test
 
       - name: Prepare testing database
         run: sbt flywayMigrate
 
       - name: Build and run integration tests
         run: sbt "project database" testIT "project server" testIT
+
+      - name: Generate documentation
+        run: sbt "project database" doc "project server" doc
+

@@ -14,30 +14,31 @@
 # limitations under the License.
 #
 
-name: Format Check
+name: Release Notes Presence Check
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
     branches: [ master ]
-    types: [ assigned, opened, synchronize ]
+
+env:
+  SKIP_LABEL: 'no RN'
+  RLS_NOTES_TAG_REGEX: 'Release Notes:'
 
 jobs:
-  scala-format-check:
-    name: Scala Format Check
+  release-notes-presence-check:
+    name: Release Notes Presence Check
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5.1.1
         with:
-          persist-credentials: false
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
+          python-version: '3.11'
 
-      - name: Setup Scala
-        uses: olafurpg/setup-scala@v10
+      - name: Check presence of release notes in PR description
+        uses: AbsaOSS/release-notes-presence-check@v0.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          java-version: "adopt@1.8"
-
-      - name: Run scalafmt And Print Diff
-        continue-on-error: true
-        run: sbt scalafmt scalafmtSbt && git diff --exit-code
+          github-repository: ${{ github.repository }}
+          pr-number: ${{ github.event.number }}

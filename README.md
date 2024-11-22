@@ -1,6 +1,19 @@
 # Atum Service
 
+[![Build](https://github.com/AbsaOSS/spark-commons/actions/workflows/build.yml/badge.svg)](https://github.com/AbsaOSS/spark-commons/actions/workflows/build.yml)
+[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+
+| Atum Server                                                                                                                                                                                                         | Atum Agent                                                                                                                                                                                                        | Atum Model | Atum Reader                                                                                                                                                                                                  |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [![GitHub release](https://img.shields.io/github/release/AbsaOSS/atum-service.svg)](https://GitHub.com/AbsaOSS/atum-service/releases/) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.atum-service/atum-agent-spark3_2.13/badge.svg)](https://central.sonatype.com/search?q=atum-agent&namespace=za.co.absa.atum-service) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.atum-service/atum-model_2.13/badge.svg)](https://central.sonatype.com/search?q=atum-model&namespace=za.co.absa.atum-service) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.atum-service/atum-reader_2.13/badge.svg)](https://central.sonatype.com/search?q=atum-reader&namespace=za.co.absa.atum-service) |                                                                             
+
+
+
+
 - [Atum Service](#atum-service)
+    - [Motivation](#motivation)
+    - [Features](#features)
     - [Modules](#modules)
         - [Agent `agent/`](#agent-agent)
         - [Reader `reader/`](#agent-agent)
@@ -15,6 +28,9 @@
         - [Measurement](#measurement)
         - [Checkpoint](#checkpoint)
         - [Data Flow](#data-flow)
+    - [Usage](#usage)
+        - [Atum Agent routines](#atum-agent-routines)
+        - [Control measurement types](#control-measurement-types)
     - [How to generate Code coverage report](#how-to-generate-code-coverage-report)
     - [How to Run in IntelliJ](#how-to-run-in-intellij)
     - [How to Run Tests](#how-to-run-tests)
@@ -41,6 +57,39 @@ functions and are stored on a single central place, in a relational database. Co
 checkpoints is not only helpful for complying with strict regulatory frameworks, but also helps during development 
 and debugging of your Spark-based data processing.
 
+## Motivation
+
+Big Data strategy for a company usually includes data gathering and ingestion processes.
+That is the definition of how data from different systems operating inside a company
+are gathered and stored for further analysis and reporting. An ingestion processes can involve
+various transformations like:
+* Converting between data formats (XML, CSV, etc.)
+* Data type casting, for example converting XML strings to numeric values
+* Joining reference tables. For example this can include enriching existing
+  data with additional information available through dictionary mappings.
+  This constitutes a common ETL (Extract, Transform and Load) process.
+
+During such transformations, sometimes data can get corrupted (e.g. during casting), records can
+get added or lost. For instance, *outer joining* a table holding duplicate keys can result in records explosion.
+And *inner joining* a table which has no matching keys for some records will result in loss of records.
+
+In regulated industries it is crucial to ensure data integrity and accuracy. For instance, in the banking industry
+the BCBS set of regulations requires analysis and reporting to be based on data accuracy and integrity principles.
+Thus it is critical at the ingestion stage to preserve the accuracy and integrity of the data gathered from a
+source system.
+
+The purpose of Atum is to provide means of ensuring no critical fields have been modified during the processing and no 
+records are added or lost. To do this the library provides an ability to calculate *control numbers* of explicitly 
+specified columns using a selection of agregate function. We call the set of such measurements at a given time
+a *checkpoint* and each value - a result of the function computation - we call a *control measurement*. Checkpoints can 
+be calculated anytime between Spark transformations and actions, so as at the start of the process or after its end.
+
+We assume the data for ETL are processed in a series of batch jobs. Let's call each data set for a given batch
+job a *batch*. All checkpoints are calculated for a specific batch.
+
+## Features
+
+TBD
 
 ## Modules
 
@@ -155,6 +204,32 @@ We can even say, that `Checkpoint` is a result of particular `Measurements` (ver
 
 The journey of a dataset throughout various data transformations and pipelines. It captures the whole journey,
 even if it involves multiple applications or ETL pipelines.
+
+
+## Usage
+
+### Atum Agent routines
+
+TBD
+
+### Control measurement types
+
+The control measurement of one or more columns is an aggregation function result executed over the dataset. It can be 
+calculated differently depending on the column's data type, on business requirements and function used. This table 
+represents all currently supported measurement types (aka measures):
+
+| Type                               | Description                                                   |
+|------------------------------------|:--------------------------------------------------------------|
+| AtumMeasure.RecordCount            | Calculates the number of rows in the dataset                  |
+| AtumMeasure.DistinctRecordCount    | Calculates DISTINCT(COUNT(()) of the specified column         |
+| AtumMeasure.SumOfValuesOfColumn    | Calculates SUM() of the specified column                      |
+| AtumMeasure.AbsSumOfValuesOfColumn | Calculates SUM(ABS()) of the specified column                 |
+| AtumMeasure.SumOfHashesOfColumn    | Calculates SUM(CRC32()) of the specified column               |
+| Measure.UnknownMeasure             | Custom measure where the data are provided by the application |
+
+[//]: # (| controlType.aggregatedTruncTotal    | Calculates SUM&#40;TRUNC&#40;&#41;&#41; of the specified column       |)
+
+[//]: # (| controlType.absAggregatedTruncTotal | Calculates SUM&#40;TRUNC&#40;ABS&#40;&#41;&#41;&#41; of the specified column  |)
 
 
 ## How to generate Code coverage report
