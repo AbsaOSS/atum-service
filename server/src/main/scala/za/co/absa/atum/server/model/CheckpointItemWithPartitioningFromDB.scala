@@ -113,12 +113,8 @@ object CheckpointItemWithPartitioningFromDB {
 
     val result = orderedCheckpointIds.map { id => fromItemsToCheckpointWithPartitioningDTO(groupedItems(id)) }
 
-    val errors = result.collect { case Left(err) => err }
-    if (errors.nonEmpty) {
-      Left(errors.head)
-    } else {
-      Right(result.collect { case Right(dto) => dto })
-    }
+    val error = result.collectFirst { case Left(err) => Left(err) }
+    error.getOrElse(Right(result.collect { case Right(dto) => dto }))
   }
 
 }
