@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.utils
+package za.co.absa.atum.model.dto
 
 import org.scalatest.flatspec.AnyFlatSpecLike
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
-import za.co.absa.atum.model.dto._
-import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.model.testing.implicits.StringImplicits.StringLinearization
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 
 import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.UUID

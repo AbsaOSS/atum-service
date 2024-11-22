@@ -16,10 +16,9 @@
 
 package za.co.absa.atum.model.types
 
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
-import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-
 import scala.collection.immutable.ListMap
+import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
+
 
 object basic {
   /**
