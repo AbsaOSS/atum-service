@@ -132,7 +132,7 @@ BEGIN
                      JOIN flows.partitioning_to_flow PF ON C.fk_partitioning = PF.fk_partitioning
             WHERE PF.fk_flow = i_flow_id
               AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
-            ORDER BY C.process_start_time desc
+            ORDER BY C.process_start_time DESC
             LIMIT i_checkpoints_limit OFFSET i_offset
         )
         SELECT
@@ -159,7 +159,7 @@ BEGIN
             runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
                 INNER JOIN
             runs.partitionings P ON LC.fk_partitioning = P.id_partitioning
-        ORDER BY LC.process_start_time desc;
+        ORDER BY LC.process_start_time DESC;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
