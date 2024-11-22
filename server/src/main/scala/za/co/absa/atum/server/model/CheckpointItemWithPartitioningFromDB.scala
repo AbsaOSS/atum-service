@@ -63,19 +63,16 @@ object CheckpointItemWithPartitioningFromDB {
     }
     val partitioningOrErr: Either[DecodingFailure, PartitioningWithIdDTO] = {
       val decodingResult = checkpointItems.head.partitioning.as[PartitioningForDB]
-      decodingResult match {
-        case Left(decodingFailure) => Left(decodingFailure)
-        case Right(partitioningForDB) =>
-          val partitioningDTO = partitioningForDB.keys.map { key =>
-            PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-          }
-          Right(
-            PartitioningWithIdDTO(
-              id = checkpointItems.head.idPartitioning,
-              partitioning = partitioningDTO,
-              author = checkpointItems.head.partitioningAuthor
-            )
-          )
+      decodingResult.map{ partitioningForDB =>
+        val partitioningDTO = partitioningForDB.keys.map { key =>
+          PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
+        }
+        PartitioningWithIdDTO(
+          id = checkpointItems.head.idPartitioning,
+          partitioning = partitioningDTO,
+          author = checkpointItems.head.partitioningAuthor
+        )
+      }
       }
 
     }
