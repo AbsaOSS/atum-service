@@ -56,7 +56,7 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
     "checkpoint_start_time",
     "checkpoint_end_time",
     "id_partitioning",
-    "o_partitioning",
+    "partitioning",
     "partitioning_author",
     "has_more"
   )

@@ -38,7 +38,7 @@ CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
     OUT checkpoint_start_time  TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time    TIMESTAMP WITH TIME ZONE,
     OUT id_partitioning        BIGINT,
-    OUT o_partitioning         JSONB,
+    OUT partitioning           JSONB,
     OUT partitioning_author    TEXT,
     OUT has_more               BOOLEAN
 ) RETURNS SETOF record AS
@@ -80,7 +80,7 @@ $$
 --      checkpoint_start_time  - Time of the checkpoint
 --      checkpoint_end_time    - End time of the checkpoint computation
 --      id_partitioning        - ID of the partitioning
---      o_partitioning         - Partitioning value
+--      partitioning         - Partitioning value
 --      partitioning_author    - Author of the partitioning
 --      has_more               - flag indicating whether there are more checkpoints available, always `false` if `i_limit` is NULL
 --
@@ -148,7 +148,7 @@ BEGIN
             LC.process_start_time AS checkpoint_start_time,
             LC.process_end_time AS checkpoint_end_time,
             LC.fk_partitioning AS id_partitioning,
-            P.partitioning AS o_partitioning,
+            P.partitioning AS partitioning,
             P.created_by AS partitioning_author,
             _has_more AS has_more
         FROM
