@@ -24,6 +24,11 @@ import za.co.absa.commons.version.Version
 
 
 object Setup {
+  //supported Java versions
+  val requiredJava: Double = "1.8".toDouble
+  val recommendedJava: Double = "11".toDouble
+  val currentJava: Double =  sys.props("java.specification.version").toDouble
+
   //supported Scala versions
   val scala211: Version = Version.asSemVer("2.11.12")
   val scala212: Version = Version.asSemVer("2.12.18")
