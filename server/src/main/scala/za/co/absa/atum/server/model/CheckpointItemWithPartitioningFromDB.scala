@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.model
 
-import io.circe.{DecodingFailure, Json}
+import io.circe.Json
 import za.co.absa.atum.model.dto.{
   CheckpointWithPartitioningDTO,
   MeasureDTO,
@@ -50,6 +50,26 @@ object CheckpointItemWithPartitioningFromDB {
   private def fromItemsToCheckpointWithPartitioningDTO(
     checkpointItems: Seq[CheckpointItemWithPartitioningFromDB]
   ): Either[Throwable, CheckpointWithPartitioningDTO] = {
+    for {
+      measurements <- extractMeasurements(checkpointItems)
+      partitioning <- extractPartitioning(checkpointItems)
+    } yield {
+      CheckpointWithPartitioningDTO(
+        id = checkpointItems.head.idCheckpoint,
+        name = checkpointItems.head.checkpointName,
+        author = checkpointItems.head.author,
+        measuredByAtumAgent = checkpointItems.head.measuredByAtumAgent,
+        processStartTime = checkpointItems.head.checkpointStartTime,
+        processEndTime = checkpointItems.head.checkpointEndTime,
+        measurements = measurements.toSet,
+        partitioning
+      )
+    }
+  }
+
+  private def extractMeasurements(
+    checkpointItems: Seq[CheckpointItemWithPartitioningFromDB]
+  ): Either[Throwable, Seq[MeasurementDTO]] = {
     val measurementsOrErr = checkpointItems.map { checkpointItem =>
       checkpointItem.measurementValue.as[MeasureResultDTO].map { measureResult =>
         MeasurementDTO(
@@ -61,40 +81,22 @@ object CheckpointItemWithPartitioningFromDB {
         )
       }
     }
-    val partitioningOrErr: Either[DecodingFailure, PartitioningWithIdDTO] = {
-      val decodingResult = checkpointItems.head.partitioning.as[PartitioningForDB]
-      decodingResult.map{ partitioningForDB =>
-        val partitioningDTO = partitioningForDB.keys.map { key =>
-          PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-        }
-        PartitioningWithIdDTO(
-          id = checkpointItems.head.idPartitioning,
-          partitioning = partitioningDTO,
-          author = checkpointItems.head.partitioningAuthor
-        )
+    measurementsOrErr
+      .collectFirst { case Left(err) => Left(err) }
+      .getOrElse(Right(measurementsOrErr.collect { case Right(measurement) => measurement }))
+  }
+
+  private def extractPartitioning(
+    checkpointItems: Seq[CheckpointItemWithPartitioningFromDB]
+  ): Either[Throwable, PartitioningWithIdDTO] = {
+    checkpointItems.head.partitioning.as[PartitioningForDB].map { partitioningForDB =>
+      val partitioningDTO = partitioningForDB.keys.map { key =>
+        PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
       }
-      }
-
-    }
-
-    val measurementsErrors = measurementsOrErr.collect { case Left(err) => err }
-    val errors = measurementsErrors ++ partitioningOrErr.left.toSeq
-
-    if (errors.nonEmpty) {
-      Left(measurementsErrors.head)
-    } else {
-      val measurements = measurementsOrErr.collect { case Right(measurement) => measurement }.toSet
-      Right(
-        CheckpointWithPartitioningDTO(
-          id = checkpointItems.head.idCheckpoint,
-          name = checkpointItems.head.checkpointName,
-          author = checkpointItems.head.author,
-          measuredByAtumAgent = checkpointItems.head.measuredByAtumAgent,
-          processStartTime = checkpointItems.head.checkpointStartTime,
-          processEndTime = checkpointItems.head.checkpointEndTime,
-          measurements = measurements,
-          partitioningOrErr.toOption.get
-        )
+      PartitioningWithIdDTO(
+        id = checkpointItems.head.idPartitioning,
+        partitioning = partitioningDTO,
+        author = checkpointItems.head.partitioningAuthor
       )
     }
   }
