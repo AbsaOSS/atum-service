@@ -205,34 +205,7 @@ class AtumContext private[agent] (
 }
 
 object AtumContext {
-// TODO ---
-//  /**
-//   * Type alias for Atum partitions.
-//   */
-//  type AtumPartitions = ListMap[String, String]
-//  type AdditionalData = Map[String, Option[String]]
-//
-//  /**
-//   * Object contains helper methods to work with Atum partitions.
-//   */
-//  object AtumPartitions {
-//    def apply(elems: (String, String)): AtumPartitions = {
-//      ListMap(elems)
-//    }
-//
-//    def apply(elems: List[(String, String)]): AtumPartitions = {
-//      ListMap(elems:_*)
-//    }
-//
-//    private[agent] def toSeqPartitionDTO(atumPartitions: AtumPartitions): PartitioningDTO = {
-//      atumPartitions.map { case (key, value) => PartitionDTO(key, value) }.toSeq
-//    }
-//
-//    private[agent] def fromPartitioning(partitioning: PartitioningDTO): AtumPartitions = {
-//      AtumPartitions(partitioning.map(partition => Tuple2(partition.key, partition.value)).toList)
-//    }
-//  }
-//
+
   private[agent] def fromDTO(atumContextDTO: AtumContextDTO, agent: AtumAgent): AtumContext = {
     new AtumContext(
       atumContextDTO.partitioning.toAtumPartitions,

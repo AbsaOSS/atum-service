@@ -29,6 +29,9 @@ import za.co.absa.atum.reader.server.ServerConfig
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue}
 import zio.{Scope, Task}
 
+// This test is disabled as is breaks on JaCoCo execution
+// Once the problem is figured out or how to cirmvent it, this can be re-enabled
+//
 //object Reader_ZIOUnitTests extends ZIOSpecDefault {
 //  private implicit val serverConfig: ServerConfig = ServerConfig("http://localhost:8080")
 //
