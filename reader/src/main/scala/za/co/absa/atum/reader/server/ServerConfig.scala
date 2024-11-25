@@ -18,6 +18,10 @@ package za.co.absa.atum.reader.server
 
 import com.typesafe.config.{Config, ConfigFactory}
 
+/**
+ * A case class representing the configuration to connect to an Atum server instance.
+ * @param host  The URL of the Atum server instance.
+ */
 case class ServerConfig (host: String)
 
 object ServerConfig {
