@@ -393,9 +393,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row1.getOffsetDateTime("checkpoint_start_time").contains(startTime3))
         assert(row1.getOffsetDateTime("checkpoint_end_time").contains(endTime3))
         assert(row1.getLong("id_partitioning").contains(partitioningId))
-        val expectingPartitioningJson1 = parseJsonBStringOrThrow(partitioning)
+        val expectedPartitioningJson1 = parseJsonBStringOrThrow(partitioning)
         val returnedPartitioningJson1 = parseJsonBStringOrThrow(row1.getJsonB("partitioning").get)
-        assert(expectingPartitioningJson1 == returnedPartitioningJson1)
+        assert(returnedPartitioningJson1 == expectedPartitioningJson1)
         assert(row1.getString("partitioning_author").contains("Joseph"))
 
         val measure1 = MeasuredDetails(
@@ -414,9 +414,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTime3))
         assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTime3))
         assert(row2.getLong("id_partitioning").contains(partitioningId))
-        val expectingPartitioningJson2 = parseJsonBStringOrThrow(partitioning)
+        val expectedPartitioningJson2 = parseJsonBStringOrThrow(partitioning)
         val returnedPartitioningJson2 = parseJsonBStringOrThrow(row2.getJsonB("partitioning").get)
-        assert(expectingPartitioningJson2 == returnedPartitioningJson2)
+        assert(returnedPartitioningJson2 == expectedPartitioningJson2)
         assert(row2.getString("partitioning_author").contains("Joseph"))
 
         val measure2 = MeasuredDetails(
@@ -437,9 +437,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row3.getOffsetDateTime("checkpoint_start_time").contains(startTime1))
         assert(row3.getOffsetDateTime("checkpoint_end_time").contains(endTime1))
         assert(row3.getLong("id_partitioning").contains(partitioningId))
-        val expectingPartitioningJson3 = parseJsonBStringOrThrow(partitioning)
+        val expectedPartitioningJson3 = parseJsonBStringOrThrow(partitioning)
         val returnedPartitioningJson3 = parseJsonBStringOrThrow(row2.getJsonB("partitioning").get)
-        assert(expectingPartitioningJson3 == returnedPartitioningJson3)
+        assert(returnedPartitioningJson3 == expectedPartitioningJson3)
         assert(row3.getString("partitioning_author").contains("Joseph"))
 
         val measure3 = MeasuredDetails(
@@ -458,9 +458,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row4.getOffsetDateTime("checkpoint_start_time").contains(startTime1))
         assert(row4.getOffsetDateTime("checkpoint_end_time").contains(endTime1))
         assert(row4.getLong("id_partitioning").contains(partitioningId))
-        val expectingPartitioningJson4 = parseJsonBStringOrThrow(partitioning)
+        val expectedPartitioningJson4 = parseJsonBStringOrThrow(partitioning)
         val returnedPartitioningJson4 = parseJsonBStringOrThrow(row2.getJsonB("partitioning").get)
-        assert(expectingPartitioningJson4 == returnedPartitioningJson4)
+        assert(returnedPartitioningJson4 == expectedPartitioningJson4)
         assert(row4.getString("partitioning_author").contains("Joseph"))
 
         val measure4 = MeasuredDetails(
