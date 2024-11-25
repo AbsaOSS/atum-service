@@ -41,7 +41,6 @@ initialize := {
   }
 }
 
-
 enablePlugins(FlywayPlugin)
 flywayUrl := FlywayConfiguration.flywayUrl
 flywayUser := FlywayConfiguration.flywayUser
