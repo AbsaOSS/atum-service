@@ -40,7 +40,7 @@ case class CheckpointItemWithPartitioningFromDB(
   checkpointStartTime: ZonedDateTime,
   checkpointEndTime: Option[ZonedDateTime],
   idPartitioning: Long,
-  partitioning: Json,
+  partitioning: Json, // JSON representation of `PartitioningForDB`
   partitioningAuthor: String,
   hasMore: Boolean
 )
