@@ -140,7 +140,7 @@ BEGIN
                     END DESC,
                 CASE
                     WHEN NOT i_latest_first THEN C.process_start_time
-                    END
+                    END ASC
             LIMIT i_checkpoints_limit OFFSET i_offset
         )
         SELECT
@@ -173,7 +173,7 @@ BEGIN
                 END DESC,
             CASE
                 WHEN NOT i_latest_first THEN LC.process_start_time
-                END;
+                END ASC;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
