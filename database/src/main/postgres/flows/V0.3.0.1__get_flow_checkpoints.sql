@@ -26,6 +26,7 @@ CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
     IN  i_checkpoints_limit    INT DEFAULT 5,
     IN  i_offset               BIGINT DEFAULT 0,
     IN  i_checkpoint_name      TEXT DEFAULT NULL,
+    IN  i_latest_first         BOOLEAN DEFAULT TRUE,
     OUT status                 INTEGER,
     OUT status_text            TEXT,
     OUT id_checkpoint          UUID,
@@ -61,6 +62,7 @@ $$
 --      i_checkpoints_limit     - (optional) maximum number of checkpoint to return, returns all of them if NULL
 --      i_offset                - (optional) offset for checkpoints pagination
 --      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
+--      i_latest_first          - (optional) if true, checkpoints are ordered by process_start_time in descending order
 --
 --      Note: i_checkpoint_limit and i_offset are used for pagination purposes;
 --            checkpoints are ordered by process_start_time in descending order
@@ -132,7 +134,13 @@ BEGIN
                      JOIN flows.partitioning_to_flow PF ON C.fk_partitioning = PF.fk_partitioning
             WHERE PF.fk_flow = i_flow_id
               AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
-            ORDER BY C.process_start_time DESC
+            ORDER BY
+                CASE
+                    WHEN i_latest_first THEN C.process_start_time
+                    END DESC,
+                CASE
+                    WHEN NOT i_latest_first THEN C.process_start_time
+                    END
             LIMIT i_checkpoints_limit OFFSET i_offset
         )
         SELECT
@@ -159,9 +167,15 @@ BEGIN
             runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
                 INNER JOIN
             runs.partitionings P ON LC.fk_partitioning = P.id_partitioning
-        ORDER BY LC.process_start_time DESC;
+        ORDER BY
+            CASE
+                WHEN i_latest_first THEN LC.process_start_time
+                END DESC,
+            CASE
+                WHEN NOT i_latest_first THEN LC.process_start_time
+                END;
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints(BIGINT, INT, BIGINT, TEXT) TO atum_owner;
+GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints(BIGINT, INT, BIGINT, TEXT, BOOLEAN) TO atum_owner;
