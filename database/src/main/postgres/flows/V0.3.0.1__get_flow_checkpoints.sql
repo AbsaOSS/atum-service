@@ -92,6 +92,7 @@ $$
 ---------------------------------------------------------------------------------------------------
 DECLARE
     _has_more BOOLEAN;
+    _latest_first BOOLEAN := coalesce(i_latest_first, TRUE);
 BEGIN
     -- Check if the flow exists by querying the partitioning_to_flow table.
     -- Rationale:
@@ -136,10 +137,10 @@ BEGIN
               AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
             ORDER BY
                 CASE
-                    WHEN i_latest_first THEN C.process_start_time
+                    WHEN _latest_first THEN C.process_start_time
                     END DESC,
                 CASE
-                    WHEN NOT i_latest_first THEN C.process_start_time
+                    WHEN NOT _latest_first THEN C.process_start_time
                     END ASC
             LIMIT i_checkpoints_limit OFFSET i_offset
         )
@@ -169,10 +170,10 @@ BEGIN
             runs.partitionings P ON LC.fk_partitioning = P.id_partitioning
         ORDER BY
             CASE
-                WHEN i_latest_first THEN LC.process_start_time
+                WHEN _latest_first THEN LC.process_start_time
                 END DESC,
             CASE
-                WHEN NOT i_latest_first THEN LC.process_start_time
+                WHEN NOT _latest_first THEN LC.process_start_time
                 END ASC;
 END;
 $$
