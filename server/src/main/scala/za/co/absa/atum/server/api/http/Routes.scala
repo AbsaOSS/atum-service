@@ -24,7 +24,7 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, CheckpointWithPartitioningDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
@@ -93,7 +93,7 @@ trait Routes extends Endpoints with ServerOptions {
       createServerEndpoint[
         (Long, Option[Int], Option[Long], Option[String]),
         ErrorResponse,
-        PaginatedResponse[CheckpointV2DTO]
+        PaginatedResponse[CheckpointWithPartitioningDTO]
       ](getFlowCheckpointsEndpointV2, {
         case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
           FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)

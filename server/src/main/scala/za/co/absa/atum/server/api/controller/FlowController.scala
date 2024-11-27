@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.controller
 
-import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
 import za.co.absa.atum.model.envelopes.ErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import zio.IO
@@ -29,6 +29,6 @@ trait FlowController {
     limit: Option[Int],
     offset: Option[Long],
     checkpointName: Option[String],
-  ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]]
+  ): IO[ErrorResponse, PaginatedResponse[CheckpointWithPartitioningDTO]]
 
 }

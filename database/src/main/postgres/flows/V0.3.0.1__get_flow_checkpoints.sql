@@ -14,26 +14,37 @@
  * limitations under the License.
  */
 
+DROP FUNCTION IF EXISTS flows.get_flow_checkpoints(
+    i_flow_id BIGINT,
+    i_checkpoints_limit INT,
+    i_offset BIGINT,
+    i_checkpoint_name TEXT
+);
+
 CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
     IN  i_flow_id              BIGINT,
     IN  i_checkpoints_limit    INT DEFAULT 5,
     IN  i_offset               BIGINT DEFAULT 0,
     IN  i_checkpoint_name      TEXT DEFAULT NULL,
+    IN  i_latest_first         BOOLEAN DEFAULT TRUE,
     OUT status                 INTEGER,
     OUT status_text            TEXT,
     OUT id_checkpoint          UUID,
     OUT checkpoint_name        TEXT,
-    OUT author                 TEXT,
+    OUT checkpoint_author      TEXT,
     OUT measured_by_atum_agent BOOLEAN,
     OUT measure_name           TEXT,
     OUT measured_columns       TEXT[],
     OUT measurement_value      JSONB,
     OUT checkpoint_start_time  TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time    TIMESTAMP WITH TIME ZONE,
+    OUT id_partitioning        BIGINT,
+    OUT partitioning           JSONB,
+    OUT partitioning_author    TEXT,
     OUT has_more               BOOLEAN
 ) RETURNS SETOF record AS
 $$
-    --------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
 --
 -- Function: flows.get_flow_checkpoints(4)
 --      Retrieves all checkpoints (measures and their measurement details) related to a primary flow
@@ -51,6 +62,7 @@ $$
 --      i_checkpoints_limit     - (optional) maximum number of checkpoint to return, returns all of them if NULL
 --      i_offset                - (optional) offset for checkpoints pagination
 --      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
+--      i_latest_first          - (optional) if true, checkpoints are ordered by process_start_time in descending order
 --
 --      Note: i_checkpoint_limit and i_offset are used for pagination purposes;
 --            checkpoints are ordered by process_start_time in descending order
@@ -61,7 +73,7 @@ $$
 --      status_text            - Status text
 --      id_checkpoint          - ID of retrieved checkpoint
 --      checkpoint_name        - Name of the retrieved checkpoint
---      author                 - Author of the checkpoint
+--      checkpoint_author      - Author of the checkpoint
 --      measured_by_atum_agent - Flag indicating whether the checkpoint was measured by Atum Agent
 --                               (if false, data supplied manually)
 --      measure_name           - measure name associated with a given checkpoint
@@ -69,6 +81,9 @@ $$
 --      measurement_value      - measurement details associated with a given checkpoint
 --      checkpoint_start_time  - Time of the checkpoint
 --      checkpoint_end_time    - End time of the checkpoint computation
+--      id_partitioning        - ID of the partitioning
+--      partitioning         - Partitioning value
+--      partitioning_author    - Author of the partitioning
 --      has_more               - flag indicating whether there are more checkpoints available, always `false` if `i_limit` is NULL
 --
 -- Status codes:
@@ -77,6 +92,7 @@ $$
 ---------------------------------------------------------------------------------------------------
 DECLARE
     _has_more BOOLEAN;
+    _latest_first BOOLEAN := coalesce(i_latest_first, TRUE);
 BEGIN
     -- Check if the flow exists by querying the partitioning_to_flow table.
     -- Rationale:
@@ -109,6 +125,7 @@ BEGIN
     RETURN QUERY
         WITH limited_checkpoints AS (
             SELECT C.id_checkpoint,
+                   C.fk_partitioning,
                    C.checkpoint_name,
                    C.created_by,
                    C.measured_by_atum_agent,
@@ -118,7 +135,13 @@ BEGIN
                      JOIN flows.partitioning_to_flow PF ON C.fk_partitioning = PF.fk_partitioning
             WHERE PF.fk_flow = i_flow_id
               AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
-            ORDER BY C.id_checkpoint, C.process_start_time
+            ORDER BY
+                CASE
+                    WHEN _latest_first THEN C.process_start_time
+                    END DESC,
+                CASE
+                    WHEN NOT _latest_first THEN C.process_start_time
+                    END ASC
             LIMIT i_checkpoints_limit OFFSET i_offset
         )
         SELECT
@@ -133,6 +156,9 @@ BEGIN
             M.measurement_value,
             LC.process_start_time AS checkpoint_start_time,
             LC.process_end_time AS checkpoint_end_time,
+            LC.fk_partitioning AS id_partitioning,
+            P.partitioning AS partitioning,
+            P.created_by AS partitioning_author,
             _has_more AS has_more
         FROM
             limited_checkpoints LC
@@ -140,10 +166,17 @@ BEGIN
             runs.measurements M ON LC.id_checkpoint = M.fk_checkpoint
                 INNER JOIN
             runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
+                INNER JOIN
+            runs.partitionings P ON LC.fk_partitioning = P.id_partitioning
         ORDER BY
-            LC.id_checkpoint, LC.process_start_time;
+            CASE
+                WHEN _latest_first THEN LC.process_start_time
+                END DESC,
+            CASE
+                WHEN NOT _latest_first THEN LC.process_start_time
+                END ASC;
 END;
 $$
-    LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints(BIGINT, INT, BIGINT, TEXT) TO atum_owner;
+GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints(BIGINT, INT, BIGINT, TEXT, BOOLEAN) TO atum_owner;

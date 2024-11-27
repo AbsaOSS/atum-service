@@ -30,7 +30,7 @@ object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
   private val flowRepositoryMock = mock(classOf[FlowRepository])
 
   when(flowRepositoryMock.getFlowCheckpoints(1L, None, None, None))
-    .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointWithPartitioningDTO1))))
   when(flowRepositoryMock.getFlowCheckpoints(2L, None, None, None))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Flow not found")))
 
@@ -44,7 +44,7 @@ object FlowServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- FlowService.getFlowCheckpoints(1L, None, None, None)
           } yield assertTrue {
-            result == ResultHasMore(Seq(checkpointV2DTO1))
+            result == ResultHasMore(Seq(checkpointWithPartitioningDTO1))
           }
         },
         test("Returns expected ServiceError") {

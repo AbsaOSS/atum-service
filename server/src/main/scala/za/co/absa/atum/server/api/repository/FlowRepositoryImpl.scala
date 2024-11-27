@@ -16,10 +16,10 @@
 
 package za.co.absa.atum.server.api.repository
 
-import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.{CheckpointItemFromDB, PaginatedResult}
+import za.co.absa.atum.server.model.{CheckpointItemWithPartitioningFromDB, PaginatedResult}
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
@@ -34,7 +34,7 @@ class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints)
     limit: Option[Int],
     offset: Option[Long],
     checkpointName: Option[String]
-   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
+   ): IO[DatabaseError, PaginatedResult[CheckpointWithPartitioningDTO]] = {
       dbMultipleResultCallWithAggregatedStatus(
         getFlowCheckpointsFn(GetFlowCheckpointsArgs(flowId, limit, offset, checkpointName)),
         "getFlowCheckpoints"
@@ -42,7 +42,7 @@ class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints)
         .map(_.flatten)
         .flatMap { checkpointItems =>
           ZIO
-            .fromEither(CheckpointItemFromDB.groupAndConvertItemsToCheckpointV2DTOs(checkpointItems))
+            .fromEither(CheckpointItemWithPartitioningFromDB.groupAndConvertItemsToCheckpointWithPartitioningDTOs(checkpointItems))
             .mapBoth(
               error => GeneralDatabaseError(error.getMessage),
               checkpoints =>
