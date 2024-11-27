@@ -38,7 +38,7 @@ class Reader_FutureUnitTests extends AnyFunSuiteLike {
   }
 
   test("Using Future based backend") {
-    import za.co.absa.atum.reader.implicits.future.FutureMonad
+    import za.co.absa.atum.reader.implicits.future.futureMonadError
 
     val partitionDTO = PartitionDTO("someKey", "someValue")
     implicit val server: SttpBackend[Future, Any] = SttpBackendStub.asynchronousFuture

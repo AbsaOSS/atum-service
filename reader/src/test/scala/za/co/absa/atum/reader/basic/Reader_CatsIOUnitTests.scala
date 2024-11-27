@@ -37,7 +37,7 @@ class Reader_CatsIOUnitTests extends AnyFunSuiteLike {
 
   test("Using Cats IO based backend") {
     import cats.effect.IO
-    import za.co.absa.atum.reader.implicits.io.CatsIOMonad
+    import za.co.absa.atum.reader.implicits.io.catsIOMonadError
 
     val partitionDTO = PartitionDTO("someKey", "someValue")
     implicit val server: SttpBackendStub[IO, Any] = SttpBackendStub[IO, Any](implicitly[MonadAsyncError[IO]])
@@ -47,11 +47,6 @@ class Reader_CatsIOUnitTests extends AnyFunSuiteLike {
     val query = reader.getQuery[PartitionDTO]("/test", Map.empty)
     val result = query.unsafeRunSync()
     assert(result == Right(partitionDTO))
-
-
-//      .map { result =>
-//      fail("This test is expected to fail")
-//    }
   }
 
 }

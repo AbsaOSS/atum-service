@@ -42,7 +42,7 @@ object JsonSyntaxExtensions {
       }
     }
 
-    def asSafe[T: Decoder]: Either[io.circe.Error, T] = {
+    private def asSafe[T: Decoder]: Either[io.circe.Error, T] = {
       decode[T](jsonStr)
     }
 

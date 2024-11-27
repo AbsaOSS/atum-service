@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.testing.implicits
+package za.co.absa.atum.testing.implicits
 
 object StringImplicits {
   implicit class StringLinearization(val str: String) extends AnyVal {

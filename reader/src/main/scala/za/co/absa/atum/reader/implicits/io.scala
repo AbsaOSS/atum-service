@@ -20,5 +20,5 @@ import cats.effect.IO
 import sttp.client3.impl.cats.CatsMonadAsyncError
 
 object io {
-  implicit val CatsIOMonad: CatsMonadAsyncError[IO] = new CatsMonadAsyncError[IO]
+  final implicit val catsIOMonadError: CatsMonadAsyncError[IO] = new CatsMonadAsyncError[IO]
 }

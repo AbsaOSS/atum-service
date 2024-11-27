@@ -238,7 +238,6 @@ object Dependencies {
   }
 
   def readerDependencies(scalaVersion: Version): Seq[ModuleID] = {
-    val zioOrg = "dev.zio"
     val sbtOrg = "com.github.sbt"
     val sttpClient3Org = "com.softwaremill.sttp.client3"
     val typeLevelOrg = "org.typelevel"
@@ -251,19 +250,11 @@ object Dependencies {
     val catsEffect = typeLevelOrg %% "cats-effect" % Versions.catsEffect % Optional
     val sttpCats = sttpClient3Org %% "cats" % Versions.sttpClient % Optional
 
-    // ZIO backend
-    val sttpZio = sttpClient3Org %% "zio" % Versions.sttpClient % Optional
-
-    // testing
-    val zioTest = zioOrg %% "zio-test" % Versions.zio % Test
-
     Seq(
       sttpCore,
       sttpCirce,
       sttpCats,
-      catsEffect,
-      sttpZio,
-      zioTest
+      catsEffect
     ) ++
       testDependencies ++
       jsonSerdeDependencies

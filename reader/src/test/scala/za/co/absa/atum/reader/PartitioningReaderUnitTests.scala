@@ -21,7 +21,7 @@ import sttp.client3.SttpBackend
 import sttp.client3.testing.SttpBackendStub
 import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.atum.reader.server.ServerConfig
-import za.co.absa.atum.reader.implicits.future.FutureMonad
+import za.co.absa.atum.reader.implicits.future.futureMonadError
 
 import scala.concurrent.Future
 

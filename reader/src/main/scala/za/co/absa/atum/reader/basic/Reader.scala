@@ -47,7 +47,3 @@ abstract class Reader[F[_]: MonadError](implicit val serverConfig: ServerConfig,
     response.map(_.toRequestResult)
   }
 }
-
-object Reader {
-
-}

@@ -22,6 +22,7 @@ import sttp.client3._
 import sttp.client3.monad.IdMonad
 import sttp.client3.testing.SttpBackendStub
 import sttp.model._
+import sttp.monad.MonadError
 import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.model.envelopes.NotFoundErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
@@ -30,7 +31,7 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
 import za.co.absa.atum.reader.basic.RequestResult._
 import za.co.absa.atum.reader.server.ServerConfig
 
-class ReaderWithPartitioningIdUnitTests extends AnyFunSuiteLike {
+class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
   private val serverUrl = "http://localhost:8080"
   private val atumPartitionsToReply = AtumPartitions("a", "b")
   private val atumPartitionsToFailedDecode = AtumPartitions("c", "d")
@@ -53,10 +54,11 @@ class ReaderWithPartitioningIdUnitTests extends AnyFunSuiteLike {
   }
 
 
-  private case class ReaderWithPartitioningIdForTest[F[_]](partitioning: AtumPartitions)
+  private case class ReaderWithPartitioningIdForTest(partitioning: AtumPartitions)
                                                   (implicit serverConfig: ServerConfig)
-        extends ReaderWithPartitioningId {
-    override def partitioningId(): Identity[RequestResult[Long]] = super.partitioningId()
+        extends Reader[Identity] with PartitioningIdProvider[Identity]{
+
+    override def partitioningId()(implicit monad: MonadError[Identity]): Identity[RequestResult[Long]] = super.partitioningId()
   }
 
 

@@ -21,5 +21,5 @@ import sttp.monad.{FutureMonad => SttpFutureMonad}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object future {
-  implicit val FutureMonad: SttpFutureMonad = new SttpFutureMonad
+  final implicit val futureMonadError: SttpFutureMonad = new SttpFutureMonad
 }
