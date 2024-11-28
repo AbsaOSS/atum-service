@@ -42,6 +42,17 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def patchPartitioningParent(
+  partitioningId: Long,
+  parentPartitioningID: Long,
+  byUser: String
+  ): IO[ServiceError, ParentPatchV2DTO] = {
+    repositoryCall(
+      partitioningRepository.patchPartitioningParent(partitioningId, parentPartitioningID, byUser),
+      "patchPartitioningParent"
+    )
+  }
+
   override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]] = {
     repositoryCall(
       partitioningRepository.getPartitioningMeasures(partitioning),

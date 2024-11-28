@@ -107,6 +107,13 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningMainFlow(3L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.patchPartitioningParent(111L, 1111L, "Jack"))
+    .thenReturn(ZIO.succeed(parentPatchV2DTO01))
+  when(partitioningRepositoryMock.patchPartitioningParent(222L, 2222L, "Jill"))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("boom!")))
+  when(partitioningRepositoryMock.patchPartitioningParent(333L, 3333L, "Bean"))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -289,6 +296,23 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningMainFlow(3L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("PatchPartitioningParent")(
+        test("Returns expected Right with ParentPatchV2DTO") {
+          for {
+            result <- PartitioningService.patchPartitioningParent(111L, 1111L, "Jack")
+          } yield assertTrue(result == parentPatchV2DTO01)
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.patchPartitioningParent(222L, 2222L, "Jill").exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        },
+        test("Returns expected ServiceError") {
+          assertZIO(PartitioningService.patchPartitioningParent(333L, 3333L, "Bean").exit)(
             failsWithA[GeneralServiceError]
           )
         }

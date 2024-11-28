@@ -24,7 +24,7 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, ParentPatchV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
@@ -119,6 +119,16 @@ trait Routes extends Endpoints with ServerOptions {
         getAncestorsEndpointV2,
         { case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
           PartitioningController.getAncestors(partitioningId, limit, offset)
+        }
+      ),
+      createServerEndpoint[
+        (Long, Long, String),
+        ErrorResponse,
+        SingleSuccessResponse[ParentPatchV2DTO]
+      ](
+        patchPartitioningParentEndpointV2,
+        { case (partitioningId: Long, parentPartitioningId: Long, byUser: String) =>
+          PartitioningController.patchPartitioningParentV2(partitioningId, parentPartitioningId, byUser)
         }
       ),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.succeed(StatusResponse.up))

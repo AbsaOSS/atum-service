@@ -32,6 +32,12 @@ trait PartitioningController {
     partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)]
 
+  def patchPartitioningParentV2(
+     partitioningId: Long,
+     parentPartitioningID: Long,
+     byUser: String
+ ): IO[ErrorResponse, SingleSuccessResponse[ParentPatchV2DTO]]
+
   def getPartitioningAdditionalData(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]]

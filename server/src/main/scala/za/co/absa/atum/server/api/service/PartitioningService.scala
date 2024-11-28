@@ -30,6 +30,12 @@ trait PartitioningService {
     partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[ServiceError, PartitioningWithIdDTO]
 
+  def patchPartitioningParent(
+   partitioningId: Long,
+   parentPartitioningID: Long,
+   byUser: String
+  ): IO[ServiceError, ParentPatchV2DTO]
+
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]]
 
   def getPartitioningAdditionalData(partitioningId: Long): IO[ServiceError, AdditionalDataDTO]

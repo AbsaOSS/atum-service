@@ -76,6 +76,18 @@ trait Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
   }
 
+  protected val patchPartitioningParentEndpointV2
+  : PublicEndpoint[(Long, Long, String), ErrorResponse, SingleSuccessResponse[
+    ParentPatchV2DTO
+  ], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Parents / path[Long]("partitioningId") / V2Paths.Parents )
+      .in(query[String]("byUser"))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[ParentPatchV2DTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
   protected val getPartitioningAdditionalDataEndpointV2
     : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
     apiV2.get

@@ -62,4 +62,10 @@ trait PartitioningRepository {
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
 
   def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO]
+
+  def patchPartitioningParent(
+   partitioningId: Long,
+   parentPartitioningID: Long,
+   byUser: String
+ ): IO[DatabaseError, ParentPatchV2DTO]
 }

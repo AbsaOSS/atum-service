@@ -99,6 +99,18 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     } yield (response, uri)
   }
 
+  override def patchPartitioningParentV2(
+    partitioningId: Long,
+    parentPartitioningID: Long,
+    byUser: String
+  ): IO[ErrorResponse,SingleSuccessResponse[ParentPatchV2DTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[ParentPatchV2DTO, ParentPatchV2DTO](
+        partitioningService.patchPartitioningParent(partitioningId, parentPartitioningID, byUser)
+      )
+    )
+  }
+
   override def patchPartitioningAdditionalDataV2(
     partitioningId: Long,
     additionalDataPatchDTO: AdditionalDataPatchDTO

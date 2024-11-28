@@ -136,6 +136,15 @@ trait TestData {
   protected val partitioningSubmitV2DTO3: PartitioningSubmitV2DTO =
     partitioningSubmitV2DTO1.copy(author = "yetAnotherAuthor")
 
+
+  protected val parentPatchV2DTO01: ParentPatchV2DTO = ParentPatchV2DTO(
+    parentPartitioningId = 1111L
+  )
+
+  protected val parentPatchV2DTO02: ParentPatchV2DTO = ParentPatchV2DTO(
+    parentPartitioningId = 2222L
+  )
+
   // Flow
   protected val flowDTO1: FlowDTO = FlowDTO(
     id = 1L,

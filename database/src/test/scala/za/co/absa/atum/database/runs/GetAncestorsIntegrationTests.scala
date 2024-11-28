@@ -24,6 +24,8 @@ class GetAncestorsIntegrationTests extends DBTestSuite {
 
   private val getAncestorsFn = "runs.get_ancestors"
   private val partitioningsTable = "runs.partitionings"
+  private val updateParentFn = "runs.patch_partitioning_parent"
+  private val createPartitioningFn = "runs.create_partitioning"
 
   private val createFlowFn = "flows._create_flow"
   private val addToParentFlowsFn = "flows._add_to_parent_flows"
@@ -425,6 +427,112 @@ class GetAncestorsIntegrationTests extends DBTestSuite {
         assert(returnedPartitioningParsed == expectedPartitioning7)
         assert(row.getString("author").contains("Daughter"))
         }
+  }
+
+  test("Change in Parent") {
+
+    println("IDS:")
+
+    val partId1 = function(createPartitioningFn)
+      .setParam("i_partitioning", partitioning1)
+      .setParam("i_by_user", "GrandPa")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Partitioning created"))
+        row.getLong("id_partitioning").get
+      }
+
+    val partId2 = function(createPartitioningFn)
+      .setParam("i_partitioning", partitioning2)
+      .setParam("i_by_user", "GrandMa")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Partitioning created"))
+        row.getLong("id_partitioning").get
+      }
+
+    val partId3 = function(createPartitioningFn)
+      .setParam("i_partitioning", partitioning3)
+      .setParam("i_parent_partitioning_id", partId1)
+      .setParam("i_by_user", "Father")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(12))
+        assert(row.getString("status_text").contains("Partitioning created with parent partitioning"))
+        row.getLong("id_partitioning").get
+      }
+
+    println(partId1)
+    println(partId2)
+    println(partId3)
+
+    println("OLD:")
+    function(getAncestorsFn)
+      .setParam("i_partitioning_id", partId3)
+      .execute { queryResult =>
+        val row = queryResult.next()
+        val returnedPartitioning = row.getJsonB("partitioning").get
+        val returnedPartitioningParsed = parse(returnedPartitioning.value)
+          .getOrElse(fail("Failed to parse returned partitioning"))
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("OK"))
+        assert(row.getLong("ancestor_id").contains(partId1))
+        assert(returnedPartitioningParsed == expectedPartitioning1)
+        assert(row.getString("author").contains("GrandPa"))
+        println(partId3)
+      }
+
+    println("COMPLETE")
+    println("NEW:")
+
+    function(updateParentFn)
+      .setParam("i_partitioning_id", partId3)
+      .setParam("i_parent_id", partId2)
+      .setParam("i_by_user", "Happy Nappy")
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Parent Updated"))
+        assert(row.getLong("parent_id").contains(partId2))
+        println(partId2)
+        assert(!queryResult.hasNext)
+      }
+
+    println("COMPLETE")
+    println("EXTRA CHECK")
+    table("flows.partitioning_to_flow").all() { partToFlowResult =>
+      while (partToFlowResult.hasNext) {
+        val partToFlowRow = partToFlowResult.next()
+        val result = partToFlowRow.getLong("fk_flow")
+        val fk_partitioning = partToFlowRow.getLong("fk_partitioning")
+        println()
+        println("flow: " + result)
+        println("part ID:" + fk_partitioning)
+      }
+    }
+
+    function(getAncestorsFn)
+      .setParam("i_partitioning_id", partId3)
+      .execute { queryResult =>
+        val row = queryResult.next()
+        val returnedPartitioning = row.getJsonB("partitioning").get
+        val returnedPartitioningParsed = parse(returnedPartitioning.value)
+          .getOrElse(fail("Failed to parse returned partitioning"))
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("OK"))
+        assert(row.getLong("ancestor_id").contains(partId2))
+        assert(returnedPartitioningParsed == expectedPartitioning2)
+        assert(row.getString("author").contains("GrandMa"))
+        println(partId3)
+        print(partId2)
+      }
+    println("COMPLETE")
   }
 
   test("Child Partitioning not found") {

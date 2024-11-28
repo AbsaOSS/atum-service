@@ -24,6 +24,7 @@ import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.
 import za.co.absa.atum.server.api.database.runs.functions.GetAncestors
 import za.co.absa.atum.server.api.database.runs.functions.GetAncestors.GetAncestorsArgs
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
+import za.co.absa.atum.server.api.database.runs.functions.PatchPartitioningParent.PatchPartitioningParentArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
@@ -185,6 +186,19 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningMainFlowMock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val getPartitioningMainFlowMockLayer = ZLayer.succeed(getPartitioningMainFlowMock)
+
+  // Create Partitioning Mocks
+  private val patchPartitioningParentMock = mock(classOf[PatchPartitioningParent])
+
+  when(patchPartitioningParentMock.apply(PatchPartitioningParentArgs(111L, 1111L, "Jack"))).thenReturn(
+    ZIO.right(Row(FunctionStatus(11, "OK"), Some(parentPatchV2DTO01))))
+  when(patchPartitioningParentMock.apply(PatchPartitioningParentArgs(222L, 2222L, "Jill")))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Child Partitioning not found"))))
+  when(patchPartitioningParentMock.apply(PatchPartitioningParentArgs(333L, 3333L, "Bean")))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Parent Partitioning not found"))))
+  when(patchPartitioningParentMock.apply(PatchPartitioningParentArgs(444L, 1111L, "Bean"))).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  private val patchPartitioningParentMockLayer = ZLayer.succeed(patchPartitioningParentMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -354,6 +368,28 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
+      suite("PatchPartitioningParentSuite")(
+        test("Returns expected parentPatchV2DTO") {
+          for {
+            result <- PartitioningRepository.patchPartitioningParent(111L, 1111L, "Jack")
+          } yield assertTrue(result == parentPatchV2DTO01)
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.patchPartitioningParent(222L, 2222L, "Jill").exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.patchPartitioningParent(333L, 3333L, "Bean").exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.patchPartitioningParent(444L, 1111L, "Bean").exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
+      ),
       suite("GetFlowPartitioningsSuite")(
         test("Returns expected ResultNoMore[PartitioningWithIdDTO]") {
           for {
@@ -428,7 +464,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     getPartitioningMeasuresV2MockLayer,
     getFlowPartitioningsMockLayer,
     getAncestorsMockLayer,
-    getPartitioningMainFlowMockLayer
+    getPartitioningMainFlowMockLayer,
+    patchPartitioningParentMockLayer
   )
 
 }
