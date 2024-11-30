@@ -26,9 +26,7 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
 import za.co.absa.atum.reader.basic.RequestResult.RequestResult
 
 trait PartitioningIdProvider[F[_]] {self: Reader[F] =>
-  def partitioning: AtumPartitions
-
-  def partitioningId()(implicit monad: MonadError[F]): F[RequestResult[Long]] = {
+  def partitioningId(partitioning: AtumPartitions)(implicit monad: MonadError[F]): F[RequestResult[Long]] = {
     val encodedPartitioning = partitioning.toPartitioningDTO.asBase64EncodedJsonString
     val queryResult = getQuery[SingleSuccessResponse[PartitioningWithIdDTO]]("/api/v2/partitionings", Map("partitioning" -> encodedPartitioning))
     queryResult.map{result =>

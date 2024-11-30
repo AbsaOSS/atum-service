@@ -58,20 +58,22 @@ class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
                                                   (implicit serverConfig: ServerConfig)
         extends Reader[Identity] with PartitioningIdProvider[Identity]{
 
-    override def partitioningId()(implicit monad: MonadError[Identity]): Identity[RequestResult[Long]] = super.partitioningId()
+    override def partitioningId(partitioning: AtumPartitions)
+                               (implicit monad: MonadError[Identity]): Identity[RequestResult[Long]] =
+      super.partitioningId(partitioning)
   }
 
 
   test("Gets the partitioning id") {
     val reader = ReaderWithPartitioningIdForTest(atumPartitionsToReply)
-    val response = reader.partitioningId()
+    val response = reader.partitioningId(atumPartitionsToReply)
     val result: Long = response.getOrElse(throw new Exception("Failed to get partitioning id"))
     assert(result == 1)
   }
 
   test("Not found on the partitioning id") {
     val reader = ReaderWithPartitioningIdForTest(atumPartitionsToNotFound)
-    val result = reader.partitioningId()
+    val result = reader.partitioningId(atumPartitionsToNotFound)
     result match {
       case Right(_) => fail("Expected a failure, but OK response received")
       case Left(_: DeserializationException[CirceError]) => fail("Expected a not found response, but deserialization error received")
@@ -82,9 +84,10 @@ class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
     }
   }
 
-  test("Failure to decode response body") {
+  test("Failure to decode res  " +
+    "]ponse body") {
     val reader = ReaderWithPartitioningIdForTest(atumPartitionsToFailedDecode)
-    val result = reader.partitioningId()
+    val result = reader.partitioningId(atumPartitionsToFailedDecode)
     assert(result.isLeft)
     result.swap.map(e => assert(e.isInstanceOf[DeserializationException[CirceError]]))
   }

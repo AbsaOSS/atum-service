@@ -35,6 +35,4 @@ class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
                       (implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any], ev: MonadError[F])
   extends Reader[F] with PartitioningIdProvider[F]{
 
-  override def partitioning: AtumPartitions = mainFlowPartitioning
-
 }
