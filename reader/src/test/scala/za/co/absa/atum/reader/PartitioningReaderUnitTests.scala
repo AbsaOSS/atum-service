@@ -28,7 +28,7 @@ import scala.concurrent.Future
 
 
 class PartitioningReaderUnitTests extends AnyFunSuiteLike {
-  private implicit val severConfig: ServerConfig = ServerConfig.fromConfig()
+  private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
 
   test("foo") {
     val atumPartitions: AtumPartitions = AtumPartitions(List(

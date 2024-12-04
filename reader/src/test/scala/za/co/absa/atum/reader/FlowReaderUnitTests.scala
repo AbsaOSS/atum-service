@@ -26,7 +26,7 @@ import za.co.absa.atum.reader.implicits.future.futureMonadError
 import scala.concurrent.Future
 
 class FlowReaderUnitTests extends AnyFunSuiteLike {
-  private implicit val severConfig: ServerConfig = ServerConfig.fromConfig()
+  private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
 
   test("mainFlowPartitioning is the same as partitioning") {
     val atumPartitions: AtumPartitions = AtumPartitions(List(
