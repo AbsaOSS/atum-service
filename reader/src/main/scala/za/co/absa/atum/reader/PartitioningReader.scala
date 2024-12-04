@@ -25,7 +25,7 @@ import za.co.absa.atum.reader.server.ServerConfig
 /**
  *
  * @param partitioning  - the Atum partitions to read the information from
- * @param serverConfig  - tha Atum server configuration
+ * @param serverConfig  - the Atum server configuration
  * @param backend       - sttp backend, that will be executing the requests
  * @param ev            - using evidence based approach to ensure that the type F is a MonadError instead of using context
  *                      bounds, as it make the imports easier to follow

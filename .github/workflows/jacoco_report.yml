@@ -116,7 +116,7 @@ jobs:
           echo "Total 'model' module coverage ${{ steps.jacoco-model.outputs.coverage-overall }}"
           echo "Changed files of 'model' module coverage ${{ steps.jacoco-model.outputs.coverage-changed-files }}"
           echo "Total 'server' module coverage ${{ steps.jacoco-server.outputs.coverage-overall }}"
-          echo "Changed files of'server' module coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
+          echo "Changed files of 'server' module coverage ${{ steps.jacoco-server.outputs.coverage-changed-files }}"
       - name: Fail PR if changed files coverage is less than ${{ env.coverage-changed-files }}%
         if: steps.jacocorun.outcome == 'success'
         uses: actions/github-script@v6

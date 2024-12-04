@@ -23,7 +23,7 @@ import sttp.client3.circe.asJson
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.CheckpointV2DTO
+import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.controller.FlowController
 import za.co.absa.atum.model.envelopes.{NotFoundErrorResponse, Pagination}
@@ -39,18 +39,22 @@ object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoin
   private val uuid = UUID.randomUUID()
 
   when(flowControllerMockV2.getFlowCheckpoints(1L, Some(5), Some(0), None))
-    .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(5, 0, hasMore = true), uuid)))
+    .thenReturn(
+      ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
+    )
   when(flowControllerMockV2.getFlowCheckpoints(2L, Some(5), Some(0), None))
-    .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO2), Pagination(5, 0, hasMore = false), uuid)))
+    .thenReturn(
+      ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO2), Pagination(5, 0, hasMore = false), uuid))
+    )
   when(flowControllerMockV2.getFlowCheckpoints(3L, Some(5), Some(0), None))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
 
   private val flowControllerMockLayerV2 = ZLayer.succeed(flowControllerMockV2)
 
   private val getFlowCheckpointServerEndpointV2 = getFlowCheckpointsEndpointV2.zServerLogic({
-      case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
-        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
-    })
+    case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
+      FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+  })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[FlowController]))
@@ -63,7 +67,7 @@ object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoin
         val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0"
         val response = basicRequest
           .get(baseUri)
-          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
           .send(backendStub)
 
         val body = response.map(_.body)
@@ -71,7 +75,7 @@ object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoin
 
         assertZIO(body <&> statusCode)(
           equalTo(
-            Right(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(5, 0, hasMore = true), uuid)),
+            Right(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid)),
             StatusCode.Ok
           )
         )
@@ -80,7 +84,7 @@ object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoin
         val baseUri = uri"https://test.com/api/v2/flows/2/checkpoints?limit=5&offset=0"
         val response = basicRequest
           .get(baseUri)
-          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
           .send(backendStub)
 
         val body = response.map(_.body)
@@ -90,7 +94,7 @@ object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoin
 
         assertZIO(body <&> statusCode)(
           equalTo(
-            Right(PaginatedResponse(Seq(checkpointV2DTO2), Pagination(5, 0, hasMore = false), uuid)),
+            Right(PaginatedResponse(Seq(checkpointWithPartitioningDTO2), Pagination(5, 0, hasMore = false), uuid)),
             StatusCode.Ok
           )
         )
@@ -99,7 +103,7 @@ object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoin
         val baseUri = uri"https://test.com/api/v2/flows/3/checkpoints?limit=5&offset=0"
         val response = basicRequest
           .get(baseUri)
-          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -110,7 +114,7 @@ object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoin
         val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=1005&offset=0"
         val response = basicRequest
           .get(baseUri)
-          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
           .send(backendStub)
 
         val statusCode = response.map(_.code)
@@ -121,7 +125,7 @@ object GetFlowCheckpointsV2EndpointUnitTests extends ZIOSpecDefault with Endpoin
         val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=-1&offset=0"
         val response = basicRequest
           .get(baseUri)
-          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
           .send(backendStub)
 
         val statusCode = response.map(_.code)

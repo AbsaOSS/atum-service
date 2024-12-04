@@ -30,9 +30,9 @@ object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
   private val flowServiceMock = mock(classOf[FlowService])
 
   when(flowServiceMock.getFlowCheckpoints(1L, Some(5), Some(2), None))
-    .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointWithPartitioningDTO1))))
   when(flowServiceMock.getFlowCheckpoints(2L, Some(5), Some(0), None))
-    .thenReturn(ZIO.succeed(ResultNoMore(Seq(checkpointV2DTO2))))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(checkpointWithPartitioningDTO2))))
   when(flowServiceMock.getFlowCheckpoints(3L, Some(5), Some(0), None))
     .thenReturn(ZIO.fail(NotFoundServiceError("Flow not found")))
 
@@ -44,12 +44,16 @@ object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Seq[CheckpointV2DTO] with Pagination indicating there is more data available") {
           for {
             result <- FlowController.getFlowCheckpoints(1L, Some(5), Some(2), None)
-          } yield assertTrue(result.data == Seq(checkpointV2DTO1) && result.pagination == Pagination(5, 2, hasMore = true))
+          } yield assertTrue(
+            result.data == Seq(checkpointWithPartitioningDTO1) && result.pagination == Pagination(5, 2, hasMore = true)
+          )
         },
         test("Returns expected Seq[CheckpointV2DTO] with Pagination indicating there is no more data available") {
           for {
             result <- FlowController.getFlowCheckpoints(2L, Some(5), Some(0), None)
-          } yield assertTrue(result.data == Seq(checkpointV2DTO2) && result.pagination == Pagination(5, 0, hasMore = false))
+          } yield assertTrue(
+            result.data == Seq(checkpointWithPartitioningDTO2) && result.pagination == Pagination(5, 0, hasMore = false)
+          )
         },
         test("Returns expected NotFoundServiceError when service returns NotFoundServiceError") {
           assertZIO(FlowController.getFlowCheckpoints(3L, Some(5), Some(0), None).exit)(

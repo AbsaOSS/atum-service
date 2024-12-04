@@ -27,7 +27,7 @@ import za.co.absa.atum.reader.basic.RequestResult._
 
 /**
  * Reader is a base class for reading data from a remote server.
- * @param serverConfig    - the configuration hwo to reach the Atum server
+ * @param serverConfig    - the configuration how to reach the Atum server
  * @param backend         - sttp backend to use to send requests
  * @tparam F              - the monadic effect used to get the data (e.g. Future, IO, Task, etc.)
  *                        the context bind for the F type is MonadError to allow not just map, flatMap but eventually

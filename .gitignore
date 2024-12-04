@@ -91,3 +91,4 @@ utils/resources/*.conf
 /server/certs/
 /server/selfsigned.crt
 /server/selfsigned.p12
+/.bloop/
