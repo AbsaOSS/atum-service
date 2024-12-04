@@ -29,7 +29,7 @@ class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with B
      limit: Option[Int],
      offset: Option[Long],
      checkpointName: Option[String]
-   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]] = {
+   ): IO[ServiceError, PaginatedResult[CheckpointWithPartitioningDTO]] = {
     repositoryCall(
       flowRepository.getFlowCheckpoints(flowId, limit, offset, checkpointName),
       "getFlowCheckpoints"

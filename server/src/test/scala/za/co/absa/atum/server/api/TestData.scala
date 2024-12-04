@@ -16,13 +16,13 @@
 
 package za.co.absa.atum.server.api
 
-import io.circe.parser
+import io.circe.{Json, parser}
 import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.{ResultValueType, dto}
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
-import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, MeasureFromDB, PartitioningFromDB}
+import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, CheckpointItemWithPartitioningFromDB, MeasureFromDB, PartitioningFromDB}
 
 import java.time.ZonedDateTime
 import java.util.{Base64, UUID}
@@ -50,7 +50,7 @@ trait TestData {
     authorIfNew = ""
   )
 
-  private val partitioningAsJson = parser
+  protected val partitioningAsJson: Json = parser
     .parse(
       """
         |{
@@ -299,6 +299,29 @@ trait TestData {
   protected val checkpointV2DTO3: CheckpointV2DTO = checkpointV2DTO1.copy(id = UUID.randomUUID())
   protected val checkpointV2DTO4: CheckpointV2DTO = checkpointV2DTO1.copy(id = UUID.randomUUID())
 
+  protected val measurementValue1: Json =
+    parser
+      .parse(
+        """
+          |{
+          |  "mainValue": {
+          |    "value": "123",
+          |    "valueType": "Long"
+          |  },
+          |  "supportValues": {
+          |    "key1": {
+          |      "value": "123456789",
+          |      "valueType": "Long"
+          |    },
+          |    "key2": {
+          |      "value": "12345.6789",
+          |      "valueType": "BigDecimal"
+          |    }
+          |  }
+          |}
+          |""".stripMargin
+      ).toOption.get
+
   // Checkpoint From DB
   protected val checkpointFromDB1: CheckpointFromDB = CheckpointFromDB(
     idCheckpoint = Some(checkpointDTO1.id),
@@ -380,6 +403,84 @@ trait TestData {
     checkpointEndTime = checkpointV2DTO2.processEndTime,
     hasMore = false
   )
+
+  protected val checkpointItemWithPartitioningFromDB1: CheckpointItemWithPartitioningFromDB =
+    CheckpointItemWithPartitioningFromDB(
+      idCheckpoint = checkpointItemFromDB1.idCheckpoint,
+      checkpointName = checkpointItemFromDB1.checkpointName,
+      author = checkpointItemFromDB1.author,
+      measuredByAtumAgent = checkpointItemFromDB1.measuredByAtumAgent,
+      measureName = checkpointItemFromDB1.measureName,
+      measuredColumns = checkpointItemFromDB1.measuredColumns,
+      measurementValue = checkpointItemFromDB1.measurementValue,
+      checkpointStartTime = checkpointItemFromDB1.checkpointStartTime,
+      checkpointEndTime = checkpointItemFromDB1.checkpointEndTime,
+      idPartitioning = partitioningFromDB1.id,
+      partitioning = partitioningFromDB1.partitioning,
+      partitioningAuthor = partitioningFromDB1.author,
+      hasMore = checkpointItemFromDB1.hasMore
+    )
+
+  protected val checkpointItemWithPartitioningFromDB2: CheckpointItemWithPartitioningFromDB =
+    CheckpointItemWithPartitioningFromDB(
+      idCheckpoint = checkpointItemFromDB2.idCheckpoint,
+      checkpointName = checkpointItemFromDB2.checkpointName,
+      author = checkpointItemFromDB2.author,
+      measuredByAtumAgent = checkpointItemFromDB2.measuredByAtumAgent,
+      measureName = checkpointItemFromDB2.measureName,
+      measuredColumns = checkpointItemFromDB2.measuredColumns,
+      measurementValue = checkpointItemFromDB2.measurementValue,
+      checkpointStartTime = checkpointItemFromDB2.checkpointStartTime,
+      checkpointEndTime = checkpointItemFromDB2.checkpointEndTime,
+      idPartitioning = partitioningFromDB1.id,
+      partitioning = partitioningFromDB1.partitioning,
+      partitioningAuthor = partitioningFromDB1.author,
+      hasMore = checkpointItemFromDB2.hasMore
+    )
+
+  protected val checkpointWithPartitioningDTO1: CheckpointWithPartitioningDTO =
+    CheckpointWithPartitioningDTO(
+      id = checkpointItemWithPartitioningFromDB1.idCheckpoint,
+      name = checkpointItemWithPartitioningFromDB1.checkpointName,
+      author = checkpointItemWithPartitioningFromDB1.author,
+      measuredByAtumAgent = checkpointItemWithPartitioningFromDB1.measuredByAtumAgent,
+      processStartTime = checkpointItemWithPartitioningFromDB1.checkpointStartTime,
+      processEndTime = checkpointItemWithPartitioningFromDB1.checkpointEndTime,
+      measurements = Seq(
+        MeasurementDTO(
+          measure = MeasureDTO(
+            measureName = checkpointItemWithPartitioningFromDB1.measureName,
+            measuredColumns = checkpointItemWithPartitioningFromDB1.measuredColumns
+          ),
+          result = checkpointItemWithPartitioningFromDB1.measurementValue.as[MeasureResultDTO].getOrElse(
+            throw new Exception("Failed to parse JSON")
+          )
+        )
+      ).toSet,
+      partitioning = partitioningWithIdDTO1
+    )
+
+  protected val checkpointWithPartitioningDTO2: CheckpointWithPartitioningDTO =
+    CheckpointWithPartitioningDTO(
+      id = checkpointItemWithPartitioningFromDB2.idCheckpoint,
+      name = checkpointItemWithPartitioningFromDB2.checkpointName,
+      author = checkpointItemWithPartitioningFromDB2.author,
+      measuredByAtumAgent = checkpointItemWithPartitioningFromDB2.measuredByAtumAgent,
+      processStartTime = checkpointItemWithPartitioningFromDB2.checkpointStartTime,
+      processEndTime = checkpointItemWithPartitioningFromDB2.checkpointEndTime,
+      measurements = Seq(
+        MeasurementDTO(
+          measure = MeasureDTO(
+            measureName = checkpointItemWithPartitioningFromDB2.measureName,
+            measuredColumns = checkpointItemWithPartitioningFromDB2.measuredColumns
+          ),
+          result = checkpointItemWithPartitioningFromDB2.measurementValue.as[MeasureResultDTO].getOrElse(
+            throw new Exception("Failed to parse JSON")
+          )
+        )
+      ).toSet,
+      partitioning = partitioningWithIdDTO1
+    )
 
   protected def createAtumContextDTO(partitioningSubmitDTO: PartitioningSubmitDTO): AtumContextDTO = {
     val measures: Set[MeasureDTO] = Set(MeasureDTO("count", Seq("*")))
