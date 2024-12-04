@@ -246,7 +246,7 @@ Code coverage wil be generated on path:
 To make this project runnable via IntelliJ, do the following:
 - Make sure that your configuration in `server/src/main/resources/reference.conf` 
   is configured according to your needs
-- When building within the UI be sure to have the option `-language:higherKinds` on in the compiler options
+- When building within an IDE sure to have the option `-language:higherKinds` on in the compiler options, as it's often not picked up from the SBT project settings.
 
 ## How to Run Tests
 

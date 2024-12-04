@@ -84,8 +84,7 @@ class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
     }
   }
 
-  test("Failure to decode res  " +
-    "]ponse body") {
+  test("Failure to decode response body") {
     val reader = ReaderWithPartitioningIdForTest(atumPartitionsToFailedDecode)
     val result = reader.partitioningId(atumPartitionsToFailedDecode)
     assert(result.isLeft)
