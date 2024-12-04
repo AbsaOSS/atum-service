@@ -17,10 +17,25 @@
 package za.co.absa.atum.reader
 
 import org.scalatest.funsuite.AnyFunSuiteLike
+import sttp.client3.SttpBackend
+import sttp.client3.testing.SttpBackendStub
+import za.co.absa.atum.model.types.basic.AtumPartitions
+import za.co.absa.atum.reader.server.ServerConfig
+import za.co.absa.atum.reader.implicits.future.futureMonadError
+
+import scala.concurrent.Future
 
 class FlowReaderUnitTests extends AnyFunSuiteLike {
-  test("foo") {
-    val expected = new FlowReader().foo()
-    assert(expected == "bar")
+  private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
+
+  test("mainFlowPartitioning is the same as partitioning") {
+    val atumPartitions: AtumPartitions = AtumPartitions(List(
+      "a" -> "b",
+      "c" -> "d"
+    ))
+    implicit val server: SttpBackend[Future, Any] = SttpBackendStub.asynchronousFuture
+
+    val result = new FlowReader(atumPartitions).mainFlowPartitioning
+    assert(result == atumPartitions)
   }
 }

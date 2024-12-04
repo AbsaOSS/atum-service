@@ -38,7 +38,7 @@ object Dependencies {
 
     val sparkCommons = "0.6.1"
 
-    val sttpClient = "3.5.2"
+    val sttpClient = "3.5.2" //last supported version for Java 8
     val sttpCirceJson = "3.9.7"
 
     val postgresql = "42.6.0"
@@ -63,6 +63,8 @@ object Dependencies {
     val scalaNameof = "4.0.0"
 
     val absaCommons = "2.0.0"
+
+    val catsEffect = "3.3.14"
 
     def truncateVersion(version: String, parts: Int): String = {
       version.split("\\.").take(parts).mkString(".")
@@ -90,9 +92,9 @@ object Dependencies {
   private def jsonSerdeDependencies: Seq[ModuleID] = {
 
     // Circe dependencies
-    lazy val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
-    lazy val circeParser = "io.circe" %% "circe-parser" % Versions.circeJson
-    lazy val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeJson
+    val circeCore = "io.circe" %% "circe-core" % Versions.circeJson
+    val circeParser = "io.circe" %% "circe-parser" % Versions.circeJson
+    val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeJson
 
     Seq(
       circeCore,
@@ -236,9 +238,26 @@ object Dependencies {
   }
 
   def readerDependencies(scalaVersion: Version): Seq[ModuleID] = {
+    val sbtOrg = "com.github.sbt"
+    val sttpClient3Org = "com.softwaremill.sttp.client3"
+    val typeLevelOrg = "org.typelevel"
+
+    // STTP core and Circe integration
+    val sttpCore = sttpClient3Org %% "core" % Versions.sttpClient
+    val sttpCirce = sttpClient3Org %% "circe" % Versions.sttpClient
+
+    // Cats backend
+    val catsEffect = typeLevelOrg %% "cats-effect" % Versions.catsEffect % Optional
+    val sttpCats = sttpClient3Org %% "cats" % Versions.sttpClient % Optional
+
     Seq(
+      sttpCore,
+      sttpCirce,
+      sttpCats,
+      catsEffect
     ) ++
-      testDependencies
+      testDependencies ++
+      jsonSerdeDependencies
   }
 
   def databaseDependencies: Seq[ModuleID] = {

@@ -7,26 +7,26 @@
 
 ## Usage
 
-Create multiple `AtumContext` with different control measures to be applied 
+Create multiple `AtumContext` with different control measures to be applied
 
 ### Option 1
 ```scala
 val atumContextInstanceWithRecordCount = AtumContext(processor = processor)
-  .withMeasureAdded(RecordCount(MockMeasureNames.recordCount1, measuredColumn = "id"))
+  .withMeasureAdded(RecordCount(MockMeasureNames.recordCount1))
 
 val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
   .withMeasureAdded(AbsSumOfValuesOfColumn(measuredColumn = "salary"))
 ```
 
-### Option 2 
+### Option 2
 Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAgent`.
 ```scala
     val atumContext1 = AtumAgent.createAtumContext(atumPartition)
 ```
 
 #### AtumPartitions
-A list of key values that maintains the order of arrival of the items, the `AtumService` 
-is able to deliver the correct `AtumContext` according to the `AtumPartitions` we give it. 
+A list of key values that maintains the order of arrival of the items, the `AtumService`
+is able to deliver the correct `AtumContext` according to the `AtumPartitions` we give it.
 ```scala
     val atumPartitions = AtumPartitions().withPartitions(ListMap("name" -> "partition-name", "country" -> "SA", "gender" -> "female" ))
 

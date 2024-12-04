@@ -17,10 +17,26 @@
 package za.co.absa.atum.reader
 
 import org.scalatest.funsuite.AnyFunSuiteLike
+import sttp.client3.SttpBackend
+import sttp.client3.testing.SttpBackendStub
+import za.co.absa.atum.model.types.basic.AtumPartitions
+import za.co.absa.atum.reader.server.ServerConfig
+import za.co.absa.atum.reader.implicits.future.futureMonadError
+
+import scala.concurrent.Future
+
+
 
 class PartitioningReaderUnitTests extends AnyFunSuiteLike {
+  private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
+
   test("foo") {
-    val expected = new PartitioningReader().foo()
-    assert(expected == "bar")
+    val atumPartitions: AtumPartitions = AtumPartitions(List(
+      "a" -> "b",
+      "c" -> "d"
+    ))
+    implicit val server: SttpBackend[Future, Any] = SttpBackendStub.asynchronousFuture
+    val result = PartitioningReader(atumPartitions).foo()
+    assert(result == "bar")
   }
 }

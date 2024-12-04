@@ -29,7 +29,7 @@ object Setup {
   val recommendedJava: Double = "11".toDouble
   val currentJava: Double =  sys.props("java.specification.version").toDouble
 
-  //supported Scala versions
+  //possible supported Scala versions
   val scala211: Version = Version.asSemVer("2.11.12")
   val scala212: Version = Version.asSemVer("2.12.18")
   val scala213: Version = Version.asSemVer("2.13.11")
@@ -43,19 +43,42 @@ object Setup {
   )
 
   val serverAndDbScalaVersion: Version = scala213 //covers REST server and database modules
-  val clientSupportedScalaVersions: Seq[Version] = Seq(scala212, scala213)
+  val clientSupportedScalaVersions: Seq[Version] = Seq(
+    scala212,
+    scala213,
+  )
 
-  val commonScalacOptions: Seq[String] = Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
+  val commonScalacOptions: Seq[String] = Seq(
+    "-unchecked",
+    "-deprecation",
+    "-feature",
+    "-Xfatal-warnings"
+  )
 
-  val serverAndDbJavacOptions: Seq[String] = Seq("-source", "11", "-target", "11", "-Xlint")
-  val serverAndDbScalacOptions: Seq[String] = Seq("-Ymacro-annotations")
+  val serverAndDbJavacOptions: Seq[String] = Seq(
+    "-source", "11",
+    "-target", "11",
+    "-Xlint"
+  )
+  val serverAndDbScalacOptions: Seq[String] = Seq(
+    "-language:higherKinds",
+    "-Ymacro-annotations"
+  )
 
   val clientJavacOptions: Seq[String] = Seq("-source", "1.8", "-target", "1.8", "-Xlint")
   def clientScalacOptions(scalaVersion: Version): Seq[String] = {
     if (scalaVersion >= scala213) {
-      Seq("-release", "8", "-Ymacro-annotations")
+      Seq(
+        "-release", "8",
+        "-language:higherKinds",
+        "-Ymacro-annotations"
+      )
     } else {
-      Seq("-release", "8", "-target:8")
+      Seq(
+        "-release", "8",
+        "-language:higherKinds",
+        "-target:8"
+      )
     }
   }
 

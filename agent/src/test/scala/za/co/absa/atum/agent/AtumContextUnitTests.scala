@@ -22,11 +22,11 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.{mock, times, verify, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.{Measure, MeasureResult, MeasurementBuilder, UnknownMeasure}
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.types.basic._
 
 class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
@@ -95,12 +95,12 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
-
-    assert(argument.getValue.name == "testCheckpoint")
-    assert(argument.getValue.author == authorTest)
-    assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
-    assert(argument.getValue.measurements.head.result.mainValue.value == "3")
-    assert(argument.getValue.measurements.head.result.mainValue.valueType == ResultValueType.LongValue)
+    val value: CheckpointDTO = argument.getValue
+    assert(value.name == "testCheckpoint")
+    assert(value.author == authorTest)
+    assert(value.partitioning == atumPartitions.toPartitioningDTO)
+    assert(value.measurements.head.result.mainValue.value == "3")
+    assert(value.measurements.head.result.mainValue.valueType == ResultValueType.LongValue)
   }
 
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
@@ -123,13 +123,14 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
+    val value: CheckpointDTO = argument.getValue
 
-    assert(argument.getValue.name == "name")
-    assert(argument.getValue.author == authorTest)
-    assert(!argument.getValue.measuredByAtumAgent)
-    assert(argument.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
-    assert(argument.getValue.processStartTime == argument.getValue.processEndTime.get)
-    assert(argument.getValue.measurements == MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements))
+    assert(value.name == "name")
+    assert(value.author == authorTest)
+    assert(!value.measuredByAtumAgent)
+    assert(value.partitioning == atumPartitions.toPartitioningDTO)
+    assert(value.processStartTime == value.processEndTime.get)
+    assert(value.measurements == MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements))
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
@@ -167,12 +168,13 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     val argumentFirst = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent, times(1)).saveCheckpoint(argumentFirst.capture())
+    val valueFirst: CheckpointDTO = argumentFirst.getValue
 
-    assert(argumentFirst.getValue.name == "checkPointNameCount")
-    assert(argumentFirst.getValue.author == authorTest)
-    assert(argumentFirst.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
-    assert(argumentFirst.getValue.measurements.head.result.mainValue.value == "4")
-    assert(argumentFirst.getValue.measurements.head.result.mainValue.valueType == ResultValueType.LongValue)
+    assert(valueFirst.name == "checkPointNameCount")
+    assert(valueFirst.author == authorTest)
+    assert(valueFirst.partitioning == atumPartitions.toPartitioningDTO)
+    assert(valueFirst.measurements.head.result.mainValue.value == "4")
+    assert(valueFirst.measurements.head.result.mainValue.valueType == ResultValueType.LongValue)
 
     atumContext.addMeasure(SumOfValuesOfColumn("columnForSum"))
     when(mockAgent.currentUser).thenReturn(authorTest + "Another")  // maybe a process changed the author / current user
@@ -180,12 +182,13 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     val argumentSecond = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent, times(2)).saveCheckpoint(argumentSecond.capture())
+    val valueSecond: CheckpointDTO = argumentSecond.getValue
 
-    assert(argumentSecond.getValue.name == "checkPointNameSum")
-    assert(argumentSecond.getValue.author == authorTest + "Another")
-    assert(argumentSecond.getValue.partitioning == AtumPartitions.toSeqPartitionDTO(atumPartitions))
-    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.value == "22.5")
-    assert(argumentSecond.getValue.measurements.tail.head.result.mainValue.valueType == ResultValueType.BigDecimalValue)
+    assert(valueSecond.name == "checkPointNameSum")
+    assert(valueSecond.author == authorTest + "Another")
+    assert(valueSecond.partitioning == atumPartitions.toPartitioningDTO)
+    assert(valueSecond.measurements.tail.head.result.mainValue.value == "22.5")
+    assert(valueSecond.measurements.tail.head.result.mainValue.valueType == ResultValueType.BigDecimalValue)
   }
 
   "addAdditionalData" should "add key/value pair to map for additional data" in {

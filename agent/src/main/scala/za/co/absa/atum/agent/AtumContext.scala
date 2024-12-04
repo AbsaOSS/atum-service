@@ -17,14 +17,13 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.atum.agent.AtumContext.{AdditionalData, AtumPartitions}
 import za.co.absa.atum.agent.exception.AtumAgentException.PartitioningUpdateException
 import za.co.absa.atum.agent.model._
 import za.co.absa.atum.model.dto._
+import za.co.absa.atum.model.types.basic.{AdditionalData, AtumPartitions, AtumPartitionsOps, PartitioningDTOOps}
 
 import java.time.ZonedDateTime
 import java.util.UUID
-import scala.collection.immutable.ListMap
 
 /**
  *  This class provides the methods to measure Spark `Dataframe`. Also allows to add and remove measures.
@@ -91,7 +90,7 @@ class AtumContext private[agent] (
       name = checkpointName,
       author = agent.currentUser,
       measuredByAtumAgent = true,
-      partitioning = AtumPartitions.toSeqPartitionDTO(atumPartitions),
+      partitioning = atumPartitions.toPartitioningDTO,
       processStartTime = startTime,
       processEndTime = Some(endTime),
       measurements = measurementDTOs
@@ -115,7 +114,7 @@ class AtumContext private[agent] (
       id = UUID.randomUUID(),
       name = checkpointName,
       author = agent.currentUser,
-      partitioning = AtumPartitions.toSeqPartitionDTO(atumPartitions),
+      partitioning = atumPartitions.toPartitioningDTO,
       processStartTime = dateTimeNow,
       processEndTime = Some(dateTimeNow),
       measurements = MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements)
@@ -206,36 +205,10 @@ class AtumContext private[agent] (
 }
 
 object AtumContext {
-  /**
-   * Type alias for Atum partitions.
-   */
-  type AtumPartitions = ListMap[String, String]
-  type AdditionalData = Map[String, Option[String]]
-
-  /**
-   * Object contains helper methods to work with Atum partitions.
-   */
-  object AtumPartitions {
-    def apply(elems: (String, String)): AtumPartitions = {
-      ListMap(elems)
-    }
-
-    def apply(elems: List[(String, String)]): AtumPartitions = {
-      ListMap(elems:_*)
-    }
-
-    private[agent] def toSeqPartitionDTO(atumPartitions: AtumPartitions): PartitioningDTO = {
-      atumPartitions.map { case (key, value) => PartitionDTO(key, value) }.toSeq
-    }
-
-    private[agent] def fromPartitioning(partitioning: PartitioningDTO): AtumPartitions = {
-      AtumPartitions(partitioning.map(partition => Tuple2(partition.key, partition.value)).toList)
-    }
-  }
 
   private[agent] def fromDTO(atumContextDTO: AtumContextDTO, agent: AtumAgent): AtumContext = {
     new AtumContext(
-      AtumPartitions.fromPartitioning(atumContextDTO.partitioning),
+      atumContextDTO.partitioning.toAtumPartitions,
       agent,
       MeasuresBuilder.mapToMeasures(atumContextDTO.measures),
       atumContextDTO.additionalData

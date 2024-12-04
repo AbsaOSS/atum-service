@@ -205,7 +205,6 @@ We can even say, that `Checkpoint` is a result of particular `Measurements` (ver
 The journey of a dataset throughout various data transformations and pipelines. It captures the whole journey,
 even if it involves multiple applications or ETL pipelines.
 
-
 ## Usage
 
 ### Atum Agent routines
@@ -247,6 +246,7 @@ Code coverage wil be generated on path:
 To make this project runnable via IntelliJ, do the following:
 - Make sure that your configuration in `server/src/main/resources/reference.conf` 
   is configured according to your needs
+- When building within an IDE sure to have the option `-language:higherKinds` on in the compiler options, as it's often not picked up from the SBT project settings.
 
 ## How to Run Tests
 

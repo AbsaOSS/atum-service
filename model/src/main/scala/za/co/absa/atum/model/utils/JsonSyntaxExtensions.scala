@@ -18,7 +18,7 @@ package za.co.absa.atum.model.utils
 
 import io.circe.parser.decode
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, parser}
+import io.circe.{Decoder, Encoder}
 
 import java.util.Base64
 
@@ -36,16 +36,20 @@ object JsonSyntaxExtensions {
 
   implicit class JsonDeserializationSyntax(jsonStr: String) {
     def as[T: Decoder]: T = {
-      decode[T](jsonStr) match {
+      asSafe[T] match {
         case Right(value) => value
-        case Left(error) => throw new RuntimeException(s"Failed to decode JSON: $error")
+        case Left(error) => throw error
       }
+    }
+
+    private def asSafe[T: Decoder]: Either[io.circe.Error, T] = {
+      decode[T](jsonStr)
     }
 
     def fromBase64As[T: Decoder]: Either[io.circe.Error, T] = {
       val decodedBytes = Base64.getDecoder.decode(jsonStr)
       val decodedString = new String(decodedBytes, "UTF-8")
-      parser.decode[T](decodedString)
+      decode[T](decodedString)
     }
   }
 

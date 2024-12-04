@@ -18,8 +18,8 @@ package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
 import org.scalatest.funsuite.AnyFunSuiteLike
-import za.co.absa.atum.agent.AtumContext.AtumPartitions
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.model.types.basic.AtumPartitions
 
 class AtumAgentUnitTests extends AnyFunSuiteLike {
 

@@ -21,9 +21,10 @@ import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructT
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.agent.AtumAgent
-import za.co.absa.atum.agent.AtumContext.{AtumPartitions, DatasetWrapper}
+import za.co.absa.atum.agent.AtumContext.DatasetWrapper
 import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.ResultValueType
+import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.spark.commons.test.SparkTestBase
 
 class AtumMeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase { self =>
