@@ -40,7 +40,7 @@ object Checkpoint {
       measuredByAtumAgent = from.measuredByAtumAgent,
       processStartTime = from.processStartTime,
       processEndTime = from.processEndTime,
-      measurements = from.measurements.map()
+      measurements = from.measurements.map(Measurement(_))
     )
   }
 }

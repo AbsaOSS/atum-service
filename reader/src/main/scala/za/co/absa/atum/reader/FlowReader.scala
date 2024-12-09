@@ -21,16 +21,16 @@ import sttp.monad.MonadError
 import sttp.monad.syntax._
 import za.co.absa.atum.model.dto.{CheckpointWithPartitioningDTO, FlowDTO}
 import za.co.absa.atum.model.envelopes.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
-import za.co.absa.atum.model.types.basic.AtumPartitions
+import za.co.absa.atum.model.types.basic.{AtumPartitions, PartitioningDTOOps}
 import za.co.absa.atum.reader.basic.RequestResult.RequestResult
 import za.co.absa.atum.reader.basic.{PartitioningIdProvider, Reader}
 import za.co.absa.atum.model.ApiPaths._
+import za.co.absa.atum.model.types.{AtumPartitionsCheckpoint, Checkpoint}
 import za.co.absa.atum.reader.implicits.PaginatedResponseImplicits.PaginatedResponseMonadEnhancements
 import za.co.absa.atum.reader.implicits.EitherImplicits.EitherMonadEnhancements
 import za.co.absa.atum.reader.result.Page
 import za.co.absa.atum.reader.result.Page.PageRoller
 import za.co.absa.atum.reader.server.ServerConfig
-
 import za.co.absa.atum.reader.basic.RequestResult.RequestPageResultOps
 
 /**
@@ -66,8 +66,8 @@ class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
     getQuery(endpoint, params)
   }
 
-  private def doGetCheckpoints(checkpointName: Option[String], pageSize: Int = 10, offset: Long = 0): F[RequestResult[Page[CheckpointWithPartitioningDTO, F]]] = {
-    val pageRoller: PageRoller[CheckpointWithPartitioningDTO, F] = doGetCheckpoints(checkpointName, _, _)
+  private def geetCheckpointDTOs(checkpointName: Option[String], pageSize: Int = 10, offset: Long = 0): F[RequestResult[Page[CheckpointWithPartitioningDTO, F]]] = {
+    val pageRoller: PageRoller[CheckpointWithPartitioningDTO, F] = geetCheckpointDTOs(checkpointName, _, _)
 
     for {
       mainPartitioningId <- partitioningId(mainFlowPartitioning)
@@ -77,11 +77,16 @@ class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
 
   }
 
-  def getCheckpoints(pageSize: Int = 10, offset: Long = 0) = {
-    doGetCheckpoints(None, pageSize, offset).map(_.pageMap(data =>))
+  def getCheckpoints(pageSize: Int = 10, offset: Long = 0): F[RequestResult[Page[AtumPartitionsCheckpoint, F]]] = {
+    def checkpointMapper(data: CheckpointWithPartitioningDTO): AtumPartitionsCheckpoint = {
+      val atumPartitions = data.partitioning.partitioning.toAtumPartitions
+      val checkpoint = Checkpoint(data)
+      AtumPartitionsCheckpoint(atumPartitions, checkpoint)
+    }
+    geetCheckpointDTOs(None, pageSize, offset).map(_.pageMap(checkpointMapper))
   }
 
   def getCheckpointsOfName(name: String, pageSize: Int = 10, offset: Int = 0) = {
-    doGetCheckpoints(Some(name), pageSize, offset)
+    geetCheckpointDTOs(Some(name), pageSize, offset)
   }
 }

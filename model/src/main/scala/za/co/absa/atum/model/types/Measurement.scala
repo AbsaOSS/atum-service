@@ -19,19 +19,64 @@ package za.co.absa.atum.model.types
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.MeasurementDTO
 
-case class Measurement[T] (
-                         measureName: String,
-                         measuredColumns: Seq[String],
-                         valueType: ResultValueType,
-                         value: T
-                       )
+trait Measurement {
+  type T
+  def measureName: String
+  def measuredColumns: Seq[String]
+  def valueType: ResultValueType
+  def value: T
+  def stringValue: String
+}
 
 object Measurement {
+
   def apply[T](from: MeasurementDTO): Measurement = {
-    new Measurement(
-      measureName = from.measure.measureName,
-      measuredColumns = from.measure.measuredColumns,
-      value = from.result.mainValue.value
-    )
+    from.result.mainValue.valueType match {
+      case ResultValueType.StringValue => StringMeasurement(from.measure.measureName, from.measure.measuredColumns, from.result.mainValue.value)
+      case ResultValueType.LongValue => LongMeasurement(from.measure.measureName, from.measure.measuredColumns, from.result.mainValue.value.toLong)
+      case ResultValueType.BigDecimalValue => BigDecimalMeasurement(from.measure.measureName, from.measure.measuredColumns, BigDecimal(from.result.mainValue.value))
+      case ResultValueType.DoubleValue => DoubleMeasurement(from.measure.measureName, from.measure.measuredColumns, from.result.mainValue.value.toDouble)
+    }
   }
+
+  case class StringMeasurement(
+                                measureName: String,
+                                measuredColumns: Seq[String],
+                                value: String
+                              ) extends Measurement {
+    override type T = String
+    override def valueType: ResultValueType = ResultValueType.StringValue
+    override def stringValue: String = value
+  }
+
+  case class LongMeasurement(
+    measureName: String,
+    measuredColumns: Seq[String],
+    value: Long
+  ) extends Measurement {
+    override type T = Long
+    override def valueType: ResultValueType = ResultValueType.LongValue
+    override def stringValue: String = value.toString
+  }
+
+  case class BigDecimalMeasurement(
+    measureName: String,
+    measuredColumns: Seq[String],
+    value: BigDecimal
+  ) extends Measurement {
+    override type T = BigDecimal
+    override def valueType: ResultValueType = ResultValueType.BigDecimalValue
+    override def stringValue: String = value.toString
+  }
+
+  case class DoubleMeasurement(
+    measureName: String,
+    measuredColumns: Seq[String],
+    value: Double
+  ) extends Measurement {
+    override type T = Double
+    override def valueType: ResultValueType = ResultValueType.DoubleValue
+    override def stringValue: String = value.toString
+  }
+
 }
