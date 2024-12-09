@@ -18,6 +18,7 @@ package za.co.absa.atum.reader.basic
 
 import sttp.monad.MonadError
 import sttp.monad.syntax._
+import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.types.basic.AtumPartitions
@@ -28,8 +29,8 @@ import za.co.absa.atum.reader.basic.RequestResult.RequestResult
 trait PartitioningIdProvider[F[_]] {self: Reader[F] =>
   def partitioningId(partitioning: AtumPartitions)(implicit monad: MonadError[F]): F[RequestResult[Long]] = {
     val encodedPartitioning = partitioning.toPartitioningDTO.asBase64EncodedJsonString
-    val queryResult = getQuery[SingleSuccessResponse[PartitioningWithIdDTO]]("/api/v2/partitionings", Map("partitioning" -> encodedPartitioning))
-    queryResult.map{result =>
+    val queryResult = getQuery[SingleSuccessResponse[PartitioningWithIdDTO]](s"/$Api/$V2/${V2Paths.Partitionings}", Map("partitioning" -> encodedPartitioning))
+    queryResult.map{ result =>
       result.map(_.data.id)
     }
   }

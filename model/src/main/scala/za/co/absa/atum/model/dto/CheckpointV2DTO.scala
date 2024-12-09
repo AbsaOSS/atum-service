@@ -18,11 +18,12 @@ package za.co.absa.atum.model.dto
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import za.co.absa.atum.model.dto.traits.CheckpointCore
 
 import java.time.ZonedDateTime
 import java.util.UUID
 
-case class CheckpointV2DTO(
+case class CheckpointV2DTO (
   id: UUID,
   name: String,
   author: String,
@@ -30,7 +31,7 @@ case class CheckpointV2DTO(
   processStartTime: ZonedDateTime,
   processEndTime: Option[ZonedDateTime],
   measurements: Set[MeasurementDTO]
-)
+) extends CheckpointCore
 
 object CheckpointV2DTO {
   implicit val decodeCheckpointDTO: Decoder[CheckpointV2DTO] = deriveDecoder

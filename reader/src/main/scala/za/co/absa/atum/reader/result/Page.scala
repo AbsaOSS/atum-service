@@ -16,28 +16,60 @@
 
 package za.co.absa.atum.reader.result
 
-import za.co.absa.atum.reader.basic.Reader
+import sttp.monad.MonadError
+import sttp.monad.syntax._
+import za.co.absa.atum.reader.basic.RequestResult.{RequestFail, RequestResult}
+import za.co.absa.atum.reader.exceptions.RequestException.NoDataException
+import za.co.absa.atum.reader.result.Page.PageRoller
 
-class Page[T, F[_]](
-                     parentReader: Reader[F[_]],
-                     items: Vector[T],
-                     hasNext: Boolean,
-
-                   ) {
+case class Page[T, F[_]: MonadError](
+                                      items: Vector[T],
+                                      hasNext: Boolean,
+                                      limit: Int,
+                                      offset: Long,
+                                      private[reader] val pageRoller: PageRoller[T, F]
+                                    ) {
 
   def apply(index: Int): T = items(index)
 
+  def map[B](f: T => B): Page[B, F] = {
+    val newItems = items.map(f)
+    val newPageRoller: PageRoller[B, F] = (limit, offset) => pageRoller(limit, offset).map(_.map(_.map(f)))
+    this.copy(items = newItems, pageRoller = newPageRoller)
+  }
+
+//  def flatMap[B](f: T => IterableOnce[B]): Page[B, F] = {
+//    val newItems = items.flatMap(f)
+//    ???
+  // TODO
+//  }
+
   def pageSize: Int = items.size
 
-  def hasPrior: Boolean = {
-    ???
+  def hasPrior: Boolean = offset > 0
+
+  def prior(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
+    if (hasPrior) {
+      val newOffset = (offset - limit).max(0)
+      pageRoller(newPageSize, newOffset)
+    } else {
+      MonadError[F].unit(RequestFail(NoDataException("No prior page")))
+    }
   }
 
-  def prior: Page[T, F] = {
-    ???
+  def prior(): F[RequestResult[Page[T, F]]] = prior(limit)
+
+  def next(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
+    if (hasNext) {
+      pageRoller(newPageSize, offset + limit)
+    } else {
+      MonadError[F].unit(RequestFail(NoDataException("No next page")))
+    }
   }
 
-  def next: Page[T, F] = {
-    ???
-  }
+  def next: F[RequestResult[Page[T, F]]] = next(limit)
+}
+
+object Page {
+  type PageRoller[T, F[_]] = (Int, Long) => F[RequestResult[Page[T, F]]]
 }

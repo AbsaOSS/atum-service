@@ -18,9 +18,20 @@ package za.co.absa.atum.reader
 
 import sttp.client3.SttpBackend
 import sttp.monad.MonadError
+import sttp.monad.syntax._
+import za.co.absa.atum.model.dto.{CheckpointWithPartitioningDTO, FlowDTO}
+import za.co.absa.atum.model.envelopes.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.types.basic.AtumPartitions
+import za.co.absa.atum.reader.basic.RequestResult.RequestResult
 import za.co.absa.atum.reader.basic.{PartitioningIdProvider, Reader}
+import za.co.absa.atum.model.ApiPaths._
+import za.co.absa.atum.reader.implicits.PaginatedResponseImplicits.PaginatedResponseMonadEnhancements
+import za.co.absa.atum.reader.implicits.EitherImplicits.EitherMonadEnhancements
+import za.co.absa.atum.reader.result.Page
+import za.co.absa.atum.reader.result.Page.PageRoller
 import za.co.absa.atum.reader.server.ServerConfig
+
+import za.co.absa.atum.reader.basic.RequestResult.RequestPageResultOps
 
 /**
  * This class is a reader that reads data tight to a flow.
@@ -35,4 +46,42 @@ class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
                       (implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any], ev: MonadError[F])
   extends Reader[F] with PartitioningIdProvider[F]{
 
+  private def flowId(mainPartitioningId: Long): F[RequestResult[Long]] = {
+    val endpoint = s"/$Api/$V2/${V2Paths.Partitionings}/$mainPartitioningId/${V2Paths.MainFlow}"
+    val queryResult = getQuery[SingleSuccessResponse[FlowDTO]](endpoint)
+    queryResult.map{ result =>
+      result.map(_.data.id)
+    }
+  }
+
+  private def queryCheckpoints(flowId: Long,
+                               checkpointName: Option[String],
+                               pageSize: Int,
+                               offset: Long): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
+    val endpoint = s"/$Api/$V2/${V2Paths.Flows}/$flowId/${V2Paths.Checkpoints}"
+    val params = Map(
+      "limit" -> pageSize.toString,
+      "offset" -> offset.toString
+    ) ++ checkpointName.map(("checkpoint-name" -> _))
+    getQuery(endpoint, params)
+  }
+
+  private def doGetCheckpoints(checkpointName: Option[String], pageSize: Int = 10, offset: Long = 0): F[RequestResult[Page[CheckpointWithPartitioningDTO, F]]] = {
+    val pageRoller: PageRoller[CheckpointWithPartitioningDTO, F] = doGetCheckpoints(checkpointName, _, _)
+
+    for {
+      mainPartitioningId <- partitioningId(mainFlowPartitioning)
+      flowId <- mainPartitioningId.project(flowId)
+      checkpoints <- flowId.project(queryCheckpoints(_, checkpointName, pageSize, offset))
+    } yield checkpoints.map(_.toPage(pageRoller))
+
+  }
+
+  def getCheckpoints(pageSize: Int = 10, offset: Long = 0) = {
+    doGetCheckpoints(None, pageSize, offset).map(_.pageMap(data =>))
+  }
+
+  def getCheckpointsOfName(name: String, pageSize: Int = 10, offset: Int = 0) = {
+    doGetCheckpoints(Some(name), pageSize, offset)
+  }
 }

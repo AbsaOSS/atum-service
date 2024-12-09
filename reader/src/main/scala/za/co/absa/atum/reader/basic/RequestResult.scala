@@ -17,22 +17,32 @@
 package za.co.absa.atum.reader.basic
 
 import sttp.client3.{DeserializationException, HttpError, Response, ResponseException}
+import sttp.monad.MonadError
 import za.co.absa.atum.model.envelopes.ErrorResponse
+import za.co.absa.atum.reader.exceptions.RequestException.{CirceError, HttpException, ParsingException}
+import za.co.absa.atum.reader.exceptions.{ReaderException, RequestException}
+import za.co.absa.atum.reader.result.Page
 
 object RequestResult {
-  type CirceError = io.circe.Error
-  type RequestResult[R] = Either[ResponseException[ErrorResponse, CirceError], R]
+  type RequestResult[R] = Either[RequestException, R]
+
+  def RequestOK[T](value: T): RequestResult[T] = Right(value)
+  def RequestFail[T](error: RequestException): RequestResult[T] = Left(error)
 
   implicit class ResponseOps[R](val response: Response[Either[ResponseException[String, CirceError], R]]) extends AnyVal {
     def toRequestResult: RequestResult[R] = {
       response.body.left.map {
         case he: HttpError[String] =>
           ErrorResponse.basedOnStatusCode(he.statusCode.code, he.body) match {
-            case Right(er) => HttpError(er, he.statusCode)
-            case Left(ce)  => DeserializationException(he.body, ce)
+            case Right(er) => HttpException(he.getMessage, he.statusCode, er, response.request.uri)
+            case Left(ce)  => ParsingException.fromCirceError(ce, he.body)
           }
-        case de: DeserializationException[CirceError] => de
+        case de: DeserializationException[CirceError] => ParsingException.fromCirceError(de.error, de.body)
       }
     }
+  }
+
+  implicit class RequestPageResultOps[A, F[_]: MonadError](requestResult: RequestResult[Page[A, F]]) {
+    def pageMap[B](f: A => B): RequestResult[Page[B, F]] = requestResult.map(_.map(f))
   }
 }
