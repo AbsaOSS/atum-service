@@ -22,16 +22,16 @@ import sttp.monad.syntax._
 import za.co.absa.atum.model.dto.{CheckpointWithPartitioningDTO, FlowDTO}
 import za.co.absa.atum.model.envelopes.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.types.basic.{AtumPartitions, PartitioningDTOOps}
-import za.co.absa.atum.reader.basic.RequestResult.RequestResult
+import za.co.absa.atum.reader.basic.RequestResult.{RequestPageResultOps, RequestResult}
 import za.co.absa.atum.reader.basic.{PartitioningIdProvider, Reader}
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.types.{AtumPartitionsCheckpoint, Checkpoint}
 import za.co.absa.atum.reader.implicits.PaginatedResponseImplicits.PaginatedResponseMonadEnhancements
 import za.co.absa.atum.reader.implicits.EitherImplicits.EitherMonadEnhancements
+import za.co.absa.atum.reader.implicits.PaginatedResponseImplicits
 import za.co.absa.atum.reader.result.Page
-import za.co.absa.atum.reader.result.Page.PageRoller
 import za.co.absa.atum.reader.server.ServerConfig
-import za.co.absa.atum.reader.basic.RequestResult.RequestPageResultOps
+import za.co.absa.atum.reader.result.Page.PageRoller
 
 /**
  * This class is a reader that reads data tight to a flow.
@@ -62,7 +62,7 @@ class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
     val params = Map(
       "limit" -> pageSize.toString,
       "offset" -> offset.toString
-    ) ++ checkpointName.map(("checkpoint-name" -> _))
+    ) ++ checkpointName.map("checkpoint-name" -> _)
     getQuery(endpoint, params)
   }
 
@@ -83,10 +83,10 @@ class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
       val checkpoint = Checkpoint(data)
       AtumPartitionsCheckpoint(atumPartitions, checkpoint)
     }
-    geetCheckpointDTOs(None, pageSize, offset).map(_.pageMap(checkpointMapper))
+    geetCheckpointDTOs(None, pageSize, offset).map(_.pageMap((checkpointMapper)))
   }
 
-  def getCheckpointsOfName(name: String, pageSize: Int = 10, offset: Int = 0) = {
+  def getCheckpointsOfName(name: String, pageSize: Int = 10, offset: Int = 0): F[RequestResult[Page[CheckpointWithPartitioningDTO, F]]] = {
     geetCheckpointDTOs(Some(name), pageSize, offset)
   }
 }

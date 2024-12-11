@@ -18,9 +18,13 @@ package za.co.absa.atum.reader.result
 
 import sttp.monad.MonadError
 import sttp.monad.syntax._
-import za.co.absa.atum.reader.basic.RequestResult.{RequestFail, RequestResult}
+import za.co.absa.atum.reader.basic.RequestResult.{RequestFail, RequestPageResultOps, RequestResult}
 import za.co.absa.atum.reader.exceptions.RequestException.NoDataException
+import za.co.absa.atum.reader.implicits.VectorImplicits.VectorEnhancements
+import za.co.absa.atum.reader.result.GroupedPage.GroupPageRoller
 import za.co.absa.atum.reader.result.Page.PageRoller
+
+import scala.collection.immutable.ListMap
 
 case class Page[T, F[_]: MonadError](
                                       items: Vector[T],
@@ -28,25 +32,33 @@ case class Page[T, F[_]: MonadError](
                                       limit: Int,
                                       offset: Long,
                                       private[reader] val pageRoller: PageRoller[T, F]
-                                    ) {
+                                    ) extends AbstractPage[Vector[T], F] {
 
   def apply(index: Int): T = items(index)
 
   def map[B](f: T => B): Page[B, F] = {
     val newItems = items.map(f)
-    val newPageRoller: PageRoller[B, F] = (limit, offset) => pageRoller(limit, offset).map(_.map(_.map(f)))
+    val newPageRoller: PageRoller[B, F] = (limit, offset) => pageRoller(limit, offset).map(_.pageMap(f))
     this.copy(items = newItems, pageRoller = newPageRoller)
   }
 
-//  def flatMap[B](f: T => IterableOnce[B]): Page[B, F] = {
-//    val newItems = items.flatMap(f)
-//    ???
-  // TODO
-//  }
+  def groupBy[K](f: T => K): GroupedPage[K, T, F] = {
+    val newItems = items.foldLeft(ListMap.empty[K, Vector[T]]) { (acc, x) =>
+      val k = f(x)
+      acc.updated(k, acc.getOrElse(k, Vector.empty) :+ x)
+    }
+    val newPageRoller: GroupPageRoller[K, T, F] = (limit, offset) =>
+      pageRoller(limit, offset)
+        .map(_.map(_.groupBy(f)))
 
-  def pageSize: Int = items.size
-
-  def hasPrior: Boolean = offset > 0
+    GroupedPage(
+      newItems,
+      hasNext,
+      limit,
+      offset,
+      newPageRoller
+    )
+  }
 
   def prior(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
     if (hasPrior) {
