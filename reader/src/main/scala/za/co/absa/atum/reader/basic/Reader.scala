@@ -24,6 +24,7 @@ import sttp.monad.MonadError
 import sttp.monad.syntax._
 import za.co.absa.atum.reader.server.ServerConfig
 import za.co.absa.atum.reader.basic.RequestResult._
+import za.co.absa.atum.reader.exceptions.RequestException.CirceError
 
 /**
  * Reader is a base class for reading data from a remote server.

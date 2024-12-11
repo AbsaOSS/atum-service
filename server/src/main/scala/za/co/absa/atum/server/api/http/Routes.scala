@@ -132,7 +132,7 @@ trait Routes extends Endpoints with ServerOptions {
       getPartitioningEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
       //      getFlowPartitioningsEndpointV2,
-      //      getPartitioningMainFlowEndpointV2,
+      getPartitioningMainFlowEndpointV2,
       //      getFlowCheckpointsEndpointV2,
       healthEndpoint
     )

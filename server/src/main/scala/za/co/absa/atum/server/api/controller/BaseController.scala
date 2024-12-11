@@ -16,10 +16,10 @@
 
 package za.co.absa.atum.server.api.controller
 
+import za.co.absa.atum.model.ApiPaths
 import za.co.absa.atum.model.envelopes.{ConflictErrorResponse, ErrorInDataErrorResponse, ErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse, Pagination}
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
-import za.co.absa.atum.server.api.http.ApiPaths
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.atum.model.envelopes.SuccessResponse._
 import za.co.absa.atum.server.model._

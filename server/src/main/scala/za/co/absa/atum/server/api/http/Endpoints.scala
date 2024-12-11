@@ -24,7 +24,7 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse._
 import sttp.tapir.{PublicEndpoint, Validator, endpoint}
 import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
-import za.co.absa.atum.server.api.http.ApiPaths._
+import za.co.absa.atum.model.ApiPaths._
 
 import java.util.UUID
 

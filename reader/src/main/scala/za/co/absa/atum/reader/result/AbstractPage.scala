@@ -14,33 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.http
+package za.co.absa.atum.reader.result
 
-object ApiPaths {
+import sttp.monad.MonadError
+import za.co.absa.atum.reader.basic.RequestResult.RequestResult
 
-  final val Api = "api"
-  final val V1 = "v1"
-  final val V2 = "v2"
+abstract class AbstractPage [T <: Iterable[_], F[_]: MonadError] {
+    def items: T
+    def hasNext: Boolean
+    def limit: Int
+    def offset: Long
 
-  final val Health = "health"
-  final val ZioMetrics = "zio-metrics"
-
-  object V1Paths {
-
-    final val CreateCheckpoint = "createCheckpoint"
-    final val CreatePartitioning = "createPartitioning"
-
-  }
-
-  object V2Paths {
-
-    final val Partitionings = "partitionings"
-    final val Checkpoints = "checkpoints"
-    final val AdditionalData = "additional-data"
-    final val Flows = "flows"
-    final val Measures = "measures"
-    final val MainFlow = "main-flow"
-
-  }
-
+    def pageSize: Int = items.size
+    def hasPrior: Boolean = offset > 0
 }
+

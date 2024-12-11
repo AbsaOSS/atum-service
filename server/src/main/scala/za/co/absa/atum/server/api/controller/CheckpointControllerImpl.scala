@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.controller
 
 import za.co.absa.atum.model.dto.{CheckpointDTO, CheckpointV2DTO}
 import za.co.absa.atum.model.envelopes.ErrorResponse
-import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
+import za.co.absa.atum.model.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.CheckpointService
 import za.co.absa.atum.model.envelopes.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.server.model.PaginatedResult
