@@ -20,7 +20,6 @@ import sttp.monad.MonadError
 import sttp.monad.syntax._
 import za.co.absa.atum.reader.basic.RequestResult.{RequestFail, RequestPageResultOps, RequestResult}
 import za.co.absa.atum.reader.exceptions.RequestException.NoDataException
-import za.co.absa.atum.reader.implicits.VectorImplicits.VectorEnhancements
 import za.co.absa.atum.reader.result.GroupedPage.GroupPageRoller
 import za.co.absa.atum.reader.result.Page.PageRoller
 
@@ -43,9 +42,9 @@ case class Page[T, F[_]: MonadError](
   }
 
   def groupBy[K](f: T => K): GroupedPage[K, T, F] = {
-    val newItems = items.foldLeft(ListMap.empty[K, Vector[T]]) { (acc, x) =>
-      val k = f(x)
-      acc.updated(k, acc.getOrElse(k, Vector.empty) :+ x)
+    val (newItems, itemsCounts) = items.foldLeft(ListMap.empty[K, Vector[T]], 0) { case ((groupsAcc, count), item) =>
+      val k = f(item)
+      (groupsAcc.updated(k, groupsAcc.getOrElse(k, Vector.empty) :+ item), count + 1)
     }
     val newPageRoller: GroupPageRoller[K, T, F] = (limit, offset) =>
       pageRoller(limit, offset)
@@ -56,13 +55,14 @@ case class Page[T, F[_]: MonadError](
       hasNext,
       limit,
       offset,
+      itemsCounts,
       newPageRoller
     )
   }
 
   def prior(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
     if (hasPrior) {
-      val newOffset = (offset - limit).max(0)
+      val newOffset = (offset - newPageSize).max(0)
       pageRoller(newPageSize, newOffset)
     } else {
       MonadError[F].unit(RequestFail(NoDataException("No prior page")))
@@ -73,13 +73,19 @@ case class Page[T, F[_]: MonadError](
 
   def next(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
     if (hasNext) {
-      pageRoller(newPageSize, offset + limit)
+      pageRoller(newPageSize, offset + pageSize)
     } else {
       MonadError[F].unit(RequestFail(NoDataException("No next page")))
     }
   }
 
   def next: F[RequestResult[Page[T, F]]] = next(limit)
+
+  def +(other: Page[T, F]): Page[T, F] = {
+    val newItems = items ++ other.items
+    val newOffset = offset min other.offset
+    this.copy(items = newItems, offset = newOffset)
+  }
 }
 
 object Page {

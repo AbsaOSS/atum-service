@@ -30,10 +30,13 @@ case class GroupedPage[K, V, F[_]: MonadError](
                                                 hasNext: Boolean,
                                                 limit: Int,
                                                 offset: Long,
+                                                override val pageSize: Int,
                                                 private[reader] val pageRoller: GroupPageRoller[K, V, F]
                                     ) extends AbstractPage[Map[K, Vector[V]], F] {
 
   def apply(key: K): Vector[V] = items(key)
+  def keys: Iterable[K] = items.keys
+  def groupCount: Int = items.size
 
   def map[K1, V1](f: ((K, Vector[V])) => (K1, Vector[V1])): GroupedPage[K1, V1, F] = {
     val newItems = items.map(f)
@@ -86,6 +89,13 @@ case class GroupedPage[K, V, F[_]: MonadError](
   }
 
   def next: F[RequestResult[GroupedPage[K, V, F]]] = next(limit)
+
+  def +(other: GroupedPage[K, V, F]): GroupedPage[K, V, F] = {
+    val newItems = items ++ other.items
+    val newOffset = offset min other.offset
+    val newPageSize = pageSize + other.pageSize
+    this.copy(items = newItems, offset = newOffset, pageSize = newPageSize)
+  }
 }
 
 object GroupedPage {
