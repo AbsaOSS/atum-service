@@ -121,16 +121,16 @@ trait Routes extends Endpoints with ServerOptions {
           PartitioningController.getAncestors(partitioningId, limit, offset)
         }
       ),
-      createServerEndpoint[
-        (Long, Long, String),
-        ErrorResponse,
-        SingleSuccessResponse[ParentPatchV2DTO]
-      ](
-        patchPartitioningParentEndpointV2,
-        { case (partitioningId: Long, parentPartitioningId: Long, byUser: String) =>
-          PartitioningController.patchPartitioningParentV2(partitioningId, parentPartitioningId, byUser)
-        }
-      ),
+//      createServerEndpoint[
+//        (Long, Long, String),
+//        ErrorResponse,
+//        SingleSuccessResponse[ParentPatchV2DTO]
+//      ](
+//        patchPartitioningParentEndpointV2,
+//        { case (partitioningId: Long, parentPartitioningId: Long, byUser: String) =>
+//          PartitioningController.patchPartitioningParentV2(partitioningId, parentPartitioningId, byUser)
+//        }
+//      ),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.succeed(StatusResponse.up))
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
@@ -150,6 +150,8 @@ trait Routes extends Endpoints with ServerOptions {
       //      getPartitioningCheckpointEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
       getPartitioningEndpointV2,
+      getAncestorsEndpointV2,
+      //      patchPartitioningParentEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
       //      getFlowPartitioningsEndpointV2,
       //      getPartitioningMainFlowEndpointV2,
@@ -169,16 +171,16 @@ trait Routes extends Endpoints with ServerOptions {
   }
 
   private def createServerEndpoint[I, E, O](
-                                             endpoint: PublicEndpoint[I, E, O, Any],
-                                             logic: I => ZIO[HttpEnv.Env, E, O]
-                                           ): ZServerEndpoint[HttpEnv.Env, Any] = {
+     endpoint: PublicEndpoint[I, E, O, Any],
+     logic: I => ZIO[HttpEnv.Env, E, O]
+   ): ZServerEndpoint[HttpEnv.Env, Any] = {
     endpoint.zServerLogic(logic).widen[HttpEnv.Env]
   }
 
   protected def allRoutes(
-                           httpMonitoringConfig: HttpMonitoringConfig,
-                           jvmMonitoringConfig: JvmMonitoringConfig
-                         ): HttpRoutes[HttpEnv.F] = {
+     httpMonitoringConfig: HttpMonitoringConfig,
+     jvmMonitoringConfig: JvmMonitoringConfig
+    ): HttpRoutes[HttpEnv.F] = {
     createAllServerRoutes(httpMonitoringConfig) <+>
       createSwaggerRoutes <+>
       (if (httpMonitoringConfig.enabled) http4sMetricsRoutes else HttpRoutes.empty[HttpEnv.F]) <+>

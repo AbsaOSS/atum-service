@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION runs.get_ancestors(
     IN i_offset             BIGINT DEFAULT 0,
     OUT status              INTEGER,
     OUT status_text         TEXT,
-    OUT id_ancestor         BIGINT,
+    OUT ancestorid         BIGINT,
     OUT partitioning        JSONB,
     OUT author              TEXT,
     OUT has_more            BOOLEAN
@@ -39,7 +39,7 @@ $$
 -- Returns:
 --      status              - Status code
 --      status_text         - Status message
---      id_ancestor         - ID of Ancestor partition
+--      ancestorid         - ID of Ancestor partition
 --      partitioning        - partitioning data of ancestor
 --      author              - author of the Ancestor partitioning
 --      has_more            - Flag indicating if there are more partitionings available
@@ -86,7 +86,7 @@ BEGIN
         SELECT
             11 AS status,
             'OK' AS status_text,
-            P.id_partitioning AS id_ancestor,
+            P.id_partitioning AS ancestorid,
             P.partitioning AS partitioning,
             P.created_by AS author,
             _has_more AS has_more

@@ -47,12 +47,12 @@ class GetAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     with StandardStatusHandling
     with ByFirstErrorStatusAggregator {
 
-  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("ancestor_id", "partitioning", "author", "has_more")
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("ancestorid", "partitioning", "author", "has_more")
 }
 
 object GetAncestors {
   case class GetAncestorsArgs(partitioningId: Long, limit: Option[Int], offset: Option[Long])
-  case class GetAncestorsResult(ancestor_id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
+  case class GetAncestorsResult(ancestorid: Long, partitioningJson: Json, author: String, hasMore: Boolean)
 
   object GetAncestorsResult {
 
@@ -71,7 +71,7 @@ object GetAncestors {
             val partitioningDTO = partitioningForDB.keys.map { key =>
               PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
             }
-            resultsToPartitioningWithIdDTOs(tail, acc :+ PartitioningWithIdDTO(head.ancestor_id, partitioningDTO, head.author))
+            resultsToPartitioningWithIdDTOs(tail, acc :+ PartitioningWithIdDTO(head.ancestorid, partitioningDTO, head.author))
         }
       }
     }

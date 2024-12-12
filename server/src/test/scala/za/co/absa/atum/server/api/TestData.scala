@@ -92,14 +92,14 @@ trait TestData {
   )
 
   protected val getAncestorsResult1: GetAncestorsResult = GetAncestorsResult(
-    ancestor_id = 1L,
+    ancestorid = 1L,
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = false
   )
 
   protected val getAncestorsResult2: GetAncestorsResult = GetAncestorsResult(
-    ancestor_id = 1111L,
+    ancestorid = 1111L,
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = true

@@ -36,7 +36,7 @@ object GetAncestorsIntegrationTests extends ConfigProviderTest {
           getAncestors <- ZIO.service[GetAncestors]
           result <- getAncestors(GetAncestorsArgs(partitioningID, None, None))
 
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Child Partitioning not found"))))
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     )
   }.provide(

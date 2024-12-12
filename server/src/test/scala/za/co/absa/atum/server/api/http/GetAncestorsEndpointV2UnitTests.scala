@@ -45,7 +45,7 @@ object GetAncestorsEndpointV2UnitTests extends ZIOSpecDefault with Endpoints wit
   when(partitioningControllerMock.getAncestors(8888L, Some(1), Some(0)))
     .thenReturn(
       ZIO.fail(
-        NotFoundErrorResponse("Child Partitioning not found")
+        NotFoundErrorResponse("Partitioning not found")
       )
     )
   when(partitioningControllerMock.getAncestors(9999L, Some(1), Some(0)))

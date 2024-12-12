@@ -75,7 +75,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getAncestors(8888L, Some(1), Some(1L)))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
   when(partitioningRepositoryMock.getAncestors(9999L, Some(1), Some(1L)))
-    .thenReturn(ZIO.fail(NotFoundDatabaseError("Child Partitioning not found")))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   when(partitioningRepositoryMock.getPartitioningMeasuresById(1L))
     .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
@@ -107,12 +107,12 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningMainFlow(3L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
-  when(partitioningRepositoryMock.patchPartitioningParent(111L, 1111L, "Jack"))
-    .thenReturn(ZIO.succeed(parentPatchV2DTO01))
-  when(partitioningRepositoryMock.patchPartitioningParent(222L, 2222L, "Jill"))
-    .thenReturn(ZIO.fail(NotFoundDatabaseError("boom!")))
-  when(partitioningRepositoryMock.patchPartitioningParent(333L, 3333L, "Bean"))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+//  when(partitioningRepositoryMock.patchPartitioningParent(111L, 1111L, "Jack"))
+//    .thenReturn(ZIO.succeed(parentPatchV2DTO01))
+//  when(partitioningRepositoryMock.patchPartitioningParent(222L, 2222L, "Jill"))
+//    .thenReturn(ZIO.fail(NotFoundDatabaseError("boom!")))
+//  when(partitioningRepositoryMock.patchPartitioningParent(333L, 3333L, "Bean"))
+//    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
@@ -300,23 +300,23 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("PatchPartitioningParent")(
-        test("Returns expected Right with ParentPatchV2DTO") {
-          for {
-            result <- PartitioningService.patchPartitioningParent(111L, 1111L, "Jack")
-          } yield assertTrue(result == parentPatchV2DTO01)
-        },
-        test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.patchPartitioningParent(222L, 2222L, "Jill").exit)(
-            failsWithA[NotFoundServiceError]
-          )
-        },
-        test("Returns expected ServiceError") {
-          assertZIO(PartitioningService.patchPartitioningParent(333L, 3333L, "Bean").exit)(
-            failsWithA[GeneralServiceError]
-          )
-        }
-      ),
+//      suite("PatchPartitioningParent")(
+//        test("Returns expected Right with ParentPatchV2DTO") {
+//          for {
+//            result <- PartitioningService.patchPartitioningParent(111L, 1111L, "Jack")
+//          } yield assertTrue(result == parentPatchV2DTO01)
+//        },
+//        test("Returns expected ServiceError") {
+//          assertZIO(PartitioningService.patchPartitioningParent(222L, 2222L, "Jill").exit)(
+//            failsWithA[NotFoundServiceError]
+//          )
+//        },
+//        test("Returns expected ServiceError") {
+//          assertZIO(PartitioningService.patchPartitioningParent(333L, 3333L, "Bean").exit)(
+//            failsWithA[GeneralServiceError]
+//          )
+//        }
+//      ),
       suite("GetFlowPartitioningsSuite")(
         test("Returns expected Right with ResultHasMore[PartitioningWithIdDTO]") {
           for {
