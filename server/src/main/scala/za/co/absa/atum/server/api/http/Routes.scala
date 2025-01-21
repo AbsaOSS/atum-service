@@ -111,6 +111,26 @@ trait Routes extends Endpoints with ServerOptions {
           PartitioningController.getFlowPartitionings(flowId, limit, offset)
         }
       ),
+      createServerEndpoint[
+        (Long, Option[Int], Option[Long]),
+        ErrorResponse,
+        PaginatedResponse[PartitioningWithIdDTO]
+      ](
+        getAncestorsEndpointV2,
+        { case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
+          PartitioningController.getAncestors(partitioningId, limit, offset)
+        }
+      ),
+//      createServerEndpoint[
+//        (Long, Long, String),
+//        ErrorResponse,
+//        SingleSuccessResponse[ParentPatchV2DTO]
+//      ](
+//        patchPartitioningParentEndpointV2,
+//        { case (partitioningId: Long, parentPartitioningId: Long, byUser: String) =>
+//          PartitioningController.patchPartitioningParentV2(partitioningId, parentPartitioningId, byUser)
+//        }
+//      ),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.succeed(StatusResponse.up))
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
@@ -130,6 +150,8 @@ trait Routes extends Endpoints with ServerOptions {
       //      getPartitioningCheckpointEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
       getPartitioningEndpointV2,
+      getAncestorsEndpointV2,
+      //      patchPartitioningParentEndpointV2,
       //      getPartitioningMeasuresEndpointV2,
       //      getFlowPartitioningsEndpointV2,
       //      getPartitioningMainFlowEndpointV2,

@@ -90,6 +90,20 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.getPartitioningMainFlow(999L))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
+//  when(partitioningServiceMock.patchPartitioningParent(111L, 1111L, "Jack"))
+//    .thenReturn(ZIO.succeed(parentPatchV2DTO01))
+//  when(partitioningServiceMock.patchPartitioningParent(222L, 2222L, "Jill"))
+//    .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
+//  when(partitioningServiceMock.patchPartitioningParent(999L, 2222L, "Bean"))
+//    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
+  when(partitioningServiceMock.getAncestors(1111L, Some(1), Some(0)))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningServiceMock.getAncestors(8888L, Some(1), Some(0)))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+  when(partitioningServiceMock.getAncestors(9999L, Some(1), Some(0)))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
+
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -229,6 +243,44 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
+      suite("GetAncestorsSuite")(
+        test("Returns expected PaginatedResponse[PartitioningWithIdDTO] with more data available") {
+          for {
+            result <- PartitioningController.getAncestors(1111L, Some(1), Some(0))
+            expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = true), uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected InternalServerErrorResponse when service call fails with GeneralServiceError") {
+          assertZIO(PartitioningController.getAncestors(8888L, Some(1), Some(0)).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundErrorResponse when service call fails with NotFoundServiceError") {
+          assertZIO(PartitioningController.getAncestors(9999L, Some(1), Some(0)).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        }
+      ),
+//      suite("PatchParentSuite")(
+//        test("Returns expected ParentPatchV2DTO") {
+//          for {
+//            result <- PartitioningController.patchPartitioningParentV2(111L, 1111L, "Jack")
+//            expected = SingleSuccessResponse(parentPatchV2DTO01, uuid1)
+//            actual = result.copy(requestId = uuid1)
+//          } yield assertTrue(actual == expected)
+//        },
+//        test("Returns expected NotFoundErrorResponse") {
+//          assertZIO(PartitioningController.patchPartitioningParentV2(222L, 2222L, "Jill").exit)(
+//            failsWithA[NotFoundErrorResponse]
+//          )
+//        },
+//        test("Returns expected InternalServerErrorResponse") {
+//          assertZIO(PartitioningController.patchPartitioningParentV2(999L, 2222L, "Bean").exit)(
+//            failsWithA[InternalServerErrorResponse]
+//          )
+//        }
+//      ),
       suite("GetPartitioningMainFlowSuite")(
         test("Returns expected FlowDTO") {
           for {
