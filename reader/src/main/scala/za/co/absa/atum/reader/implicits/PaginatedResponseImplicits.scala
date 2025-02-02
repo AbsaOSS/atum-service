@@ -29,7 +29,8 @@ object PaginatedResponseImplicits {
           items = data,
           hasNext = paginatedResponse.pagination.hasMore,
           limit = paginatedResponse.pagination.limit,
-          offset = paginatedResponse.pagination.offset,
+          pageStart = paginatedResponse.pagination.offset,
+          pageEnd = paginatedResponse.pagination.offset + data.size - 1,
           pageRoller = pageRoller
         )
       }

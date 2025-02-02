@@ -23,7 +23,8 @@ import sttp.client3.testing.SttpBackendStub
 import sttp.monad.MonadError
 import za.co.absa.atum.model.dto.PartitionDTO
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.basic.RequestResult.RequestResult
+import za.co.absa.atum.reader.core.Reader
+import za.co.absa.atum.reader.core.RequestResult.RequestResult
 import za.co.absa.atum.reader.server.ServerConfig
 
 import scala.concurrent.duration.Duration

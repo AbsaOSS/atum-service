@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import sttp.client3.{DeserializationException, HttpError, Response, ResponseException}
 import sttp.monad.MonadError
 import za.co.absa.atum.model.envelopes.ErrorResponse
 import za.co.absa.atum.reader.exceptions.RequestException.{CirceError, HttpException, ParsingException}
-import za.co.absa.atum.reader.exceptions.{ReaderException, RequestException}
-import za.co.absa.atum.reader.result.{GroupedPage, Page}
+import za.co.absa.atum.reader.exceptions.RequestException
+import za.co.absa.atum.reader.result.Page
 
 object RequestResult {
   type RequestResult[R] = Either[RequestException, R]

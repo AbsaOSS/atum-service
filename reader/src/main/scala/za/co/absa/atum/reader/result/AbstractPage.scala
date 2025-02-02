@@ -17,15 +17,16 @@
 package za.co.absa.atum.reader.result
 
 import sttp.monad.MonadError
-import za.co.absa.atum.reader.basic.RequestResult.RequestResult
+import za.co.absa.atum.reader.core.RequestResult.RequestResult
 
 abstract class AbstractPage [T <: Iterable[_], F[_]: MonadError] {
     def items: T
     def hasNext: Boolean
     def limit: Int
-    def offset: Long
+    def pageStart: Long
+    def pageEnd: Long
 
-    def pageSize: Int = items.size
-    def hasPrior: Boolean = offset > 0
+    def pageSize: Int = (pageEnd - pageStart).toInt + 1
+    def hasPrior: Boolean = pageStart > 0
 }
 

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import io.circe.Decoder
-import sttp.client3.{Identity, RequestT, ResponseException, SttpBackend, basicRequest}
+import sttp.client3.{DeserializationException, Identity, RequestT, ResponseException, SttpBackend, basicRequest}
 import sttp.client3.circe.asJson
 import sttp.model.Uri
 import sttp.monad.MonadError
 import sttp.monad.syntax._
 import za.co.absa.atum.reader.server.ServerConfig
-import za.co.absa.atum.reader.basic.RequestResult._
+import RequestResult._
 import za.co.absa.atum.reader.exceptions.RequestException.CirceError
 
 /**
@@ -39,12 +39,12 @@ abstract class Reader[F[_]: MonadError](implicit val serverConfig: ServerConfig,
   protected def getQuery[R: Decoder](endpointUri: String, params: Map[String, String] = Map.empty): F[RequestResult[R]] = {
     val endpointToQuery = serverConfig.host + endpointUri
     val uri = Uri.unsafeParse(endpointToQuery).addParams(params)
+    println(s"Uri: $uri") //TODO ---
     val request: RequestT[Identity, Either[ResponseException[String, CirceError], R], Any] = basicRequest
       .get(uri)
       .response(asJson[R])
 
     val response = backend.send(request)
-
     response.map(_.toRequestResult)
   }
 }

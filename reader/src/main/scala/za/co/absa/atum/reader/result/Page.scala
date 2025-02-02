@@ -18,7 +18,7 @@ package za.co.absa.atum.reader.result
 
 import sttp.monad.MonadError
 import sttp.monad.syntax._
-import za.co.absa.atum.reader.basic.RequestResult.{RequestFail, RequestPageResultOps, RequestResult}
+import za.co.absa.atum.reader.core.RequestResult.{RequestFail, RequestPageResultOps, RequestResult}
 import za.co.absa.atum.reader.exceptions.RequestException.NoDataException
 import za.co.absa.atum.reader.result.GroupedPage.GroupPageRoller
 import za.co.absa.atum.reader.result.Page.PageRoller
@@ -29,7 +29,8 @@ case class Page[T, F[_]: MonadError](
                                       items: Vector[T],
                                       hasNext: Boolean,
                                       limit: Int,
-                                      offset: Long,
+                                      pageStart: Long,
+                                      pageEnd: Long,
                                       private[reader] val pageRoller: PageRoller[T, F]
                                     ) extends AbstractPage[Vector[T], F] {
 
@@ -39,6 +40,35 @@ case class Page[T, F[_]: MonadError](
     val newItems = items.map(f)
     val newPageRoller: PageRoller[B, F] = (limit, offset) => pageRoller(limit, offset).map(_.pageMap(f))
     this.copy(items = newItems, pageRoller = newPageRoller)
+  }
+
+  def prior(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
+    if (hasPrior) {
+      val newOffset = (pageStart - newPageSize).max(0)
+      pageRoller(newPageSize, newOffset)
+    } else {
+      MonadError[F].unit(RequestFail(NoDataException("No prior page")))
+    }
+  }
+
+  def prior(): F[RequestResult[Page[T, F]]] = prior(limit)
+
+  def next(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
+    if (hasNext) {
+      pageRoller(newPageSize, pageStart + pageSize)
+    } else {
+      MonadError[F].unit(RequestFail(NoDataException("No next page")))
+    }
+  }
+
+  def next: F[RequestResult[Page[T, F]]] = next(limit)
+
+  def +(other: Page[T, F]): Page[T, F] = {
+    val newItems = items ++ other.items
+    val newPageStart = pageStart min other.pageStart
+    val newPageEnd = pageEnd max other.pageEnd
+    val newHasNext = hasNext && other.hasNext
+    this.copy(items = newItems, hasNext = newHasNext, pageStart = newPageStart, pageEnd = newPageEnd)
   }
 
   def groupBy[K](f: T => K): GroupedPage[K, T, F] = {
@@ -54,37 +84,10 @@ case class Page[T, F[_]: MonadError](
       newItems,
       hasNext,
       limit,
-      offset,
-      itemsCounts,
+      pageStart,
+      pageEnd,
       newPageRoller
     )
-  }
-
-  def prior(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
-    if (hasPrior) {
-      val newOffset = (offset - newPageSize).max(0)
-      pageRoller(newPageSize, newOffset)
-    } else {
-      MonadError[F].unit(RequestFail(NoDataException("No prior page")))
-    }
-  }
-
-  def prior(): F[RequestResult[Page[T, F]]] = prior(limit)
-
-  def next(newPageSize: Int): F[RequestResult[Page[T, F]]] = {
-    if (hasNext) {
-      pageRoller(newPageSize, offset + pageSize)
-    } else {
-      MonadError[F].unit(RequestFail(NoDataException("No next page")))
-    }
-  }
-
-  def next: F[RequestResult[Page[T, F]]] = next(limit)
-
-  def +(other: Page[T, F]): Page[T, F] = {
-    val newItems = items ++ other.items
-    val newOffset = offset min other.offset
-    this.copy(items = newItems, offset = newOffset)
   }
 }
 

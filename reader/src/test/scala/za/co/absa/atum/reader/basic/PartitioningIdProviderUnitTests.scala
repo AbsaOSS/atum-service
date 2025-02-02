@@ -28,7 +28,8 @@ import za.co.absa.atum.model.envelopes.NotFoundErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.basic.RequestResult._
+import za.co.absa.atum.reader.core.{PartitioningIdProvider, Reader}
+import za.co.absa.atum.reader.core.RequestResult._
 import za.co.absa.atum.reader.exceptions.RequestException.{HttpException, ParsingException}
 import za.co.absa.atum.reader.server.ServerConfig
 
@@ -39,7 +40,7 @@ class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
   private val atumPartitionsToNotFound = AtumPartitions(List.empty)
 
   private implicit val serverConfig: ServerConfig = ServerConfig(serverUrl)
-  private implicit val monad: IdMonad.type = IdMonad
+  private implicit val monad: MonadError[Identity] = IdMonad
   private implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
     .whenRequestMatches(request => isUriOfAtumPartitions(request.uri, atumPartitionsToReply))
       .thenRespond(SingleSuccessResponse(PartitioningWithIdDTO(1, atumPartitionsToReply.toPartitioningDTO, "Gimli")).asJsonString)

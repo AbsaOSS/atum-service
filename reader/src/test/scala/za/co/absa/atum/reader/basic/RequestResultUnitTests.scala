@@ -23,7 +23,7 @@ import sttp.model.{StatusCode, Uri}
 import za.co.absa.atum.model.dto.PartitionDTO
 import za.co.absa.atum.model.envelopes.NotFoundErrorResponse
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.basic.RequestResult._
+import za.co.absa.atum.reader.core.RequestResult._
 import za.co.absa.atum.reader.exceptions.RequestException.{CirceError, HttpException, ParsingException}
 
 class RequestResultUnitTests extends AnyFunSuiteLike {
