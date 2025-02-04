@@ -19,7 +19,7 @@ package za.co.absa.atum.reader
 import sttp.client3.SttpBackend
 import sttp.monad.MonadError
 import za.co.absa.atum.model.types.basic.AtumPartitions
-import za.co.absa.atum.reader.basic.{PartitioningIdProvider, Reader}
+import za.co.absa.atum.reader.core.{PartitioningIdProvider, Reader}
 import za.co.absa.atum.reader.server.ServerConfig
 
 /**

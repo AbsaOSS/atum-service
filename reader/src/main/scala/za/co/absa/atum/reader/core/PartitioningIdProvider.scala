@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import sttp.monad.MonadError
 import sttp.monad.syntax._
@@ -23,7 +23,7 @@ import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.atum.model.types.basic.AtumPartitionsOps
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.basic.RequestResult.RequestResult
+import RequestResult.RequestResult
 
 trait PartitioningIdProvider[F[_]] {self: Reader[F] =>
   def partitioningId(partitioning: AtumPartitions)(implicit monad: MonadError[F]): F[RequestResult[Long]] = {
