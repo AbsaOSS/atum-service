@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import org.scalatest.funsuite.AnyFunSuiteLike
 import sttp.capabilities
@@ -28,7 +28,6 @@ import za.co.absa.atum.model.envelopes.NotFoundErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.core.{PartitioningIdProvider, Reader}
 import za.co.absa.atum.reader.core.RequestResult._
 import za.co.absa.atum.reader.exceptions.RequestException.{HttpException, ParsingException}
 import za.co.absa.atum.reader.server.ServerConfig

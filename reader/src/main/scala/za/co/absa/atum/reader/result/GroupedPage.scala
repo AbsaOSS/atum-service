@@ -21,7 +21,6 @@ import sttp.monad.syntax._
 import za.co.absa.atum.reader.core.RequestResult.{RequestFail, RequestResult}
 import za.co.absa.atum.reader.exceptions.RequestException.NoDataException
 import za.co.absa.atum.reader.result.GroupedPage.GroupPageRoller
-import za.co.absa.atum.reader.result.Page.PageRoller
 
 import scala.collection.immutable.ListMap
 

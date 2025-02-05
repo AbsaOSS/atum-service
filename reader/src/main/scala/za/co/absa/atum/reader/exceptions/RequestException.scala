@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.reader.exceptions
 
-import sttp.client3.HttpError
 import sttp.model.{StatusCode, Uri}
 import za.co.absa.atum.model.envelopes.ErrorResponse
 

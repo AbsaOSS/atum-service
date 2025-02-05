@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import io.circe.ParsingFailure
 import org.scalatest.funsuite.AnyFunSuiteLike

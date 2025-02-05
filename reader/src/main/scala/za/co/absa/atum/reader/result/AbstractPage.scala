@@ -17,7 +17,6 @@
 package za.co.absa.atum.reader.result
 
 import sttp.monad.MonadError
-import za.co.absa.atum.reader.core.RequestResult.RequestResult
 
 abstract class AbstractPage [T <: Iterable[_], F[_]: MonadError] {
     def items: T
