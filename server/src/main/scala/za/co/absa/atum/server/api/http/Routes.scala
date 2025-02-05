@@ -133,7 +133,7 @@ trait Routes extends Endpoints with ServerOptions {
       //      getPartitioningMeasuresEndpointV2,
       //      getFlowPartitioningsEndpointV2,
       getPartitioningMainFlowEndpointV2,
-      //      getFlowCheckpointsEndpointV2,
+      getFlowCheckpointsEndpointV2,
       healthEndpoint
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
