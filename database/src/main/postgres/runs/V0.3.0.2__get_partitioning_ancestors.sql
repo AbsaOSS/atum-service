@@ -50,10 +50,10 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _partitioningCreateAt TIMESTAMP;
     _has_more BOOLEAN;
 
 BEGIN
+
     -- Check if the partitioning exists
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_id_partitioning;
     IF NOT FOUND THEN
@@ -62,12 +62,6 @@ BEGIN
         RETURN NEXT;
         RETURN;
     END IF;
-
-    -- Get the creation timestamp of the partitioning
-    SELECT created_at
-    FROM runs.partitionings
-    WHERE id_partitioning = i_id_partitioning
-    INTO _partitioningCreateAt;
 
     -- Check if there are more partitionings than the limit
     SELECT count(*) > i_limit
@@ -89,37 +83,24 @@ BEGIN
             P.partitioning AS partitioning,
             P.created_by AS author,
             _has_more AS has_more
---        FROM
---            flows.partitioning_to_flow PF
---                INNER JOIN flows.flows F ON F.id_flow = PF.fk_flow
---                INNER JOIN runs.partitionings P ON P.id_partitioning = F.fk_primary_partitioning
---        WHERE
---            PF.fk_partitioning = i_id_partitioning AND
---            P.id_partitioning IS DISTINCT FROM i_id_partitioning
         FROM
-            runs.partitionings P
-                INNER JOIN flows.partitioning_to_flow PF ON PF.fk_partitioning = P.id_partitioning
-                INNER JOIN flows.partitioning_to_flow PF2 ON PF2.fk_flow = PF.fk_flow
+            flows.partitioning_to_flow PF
+                INNER JOIN flows.flows F ON F.id_flow = PF.fk_flow
+                INNER JOIN runs.partitionings P ON P.id_partitioning = F.fk_primary_partitioning
         WHERE
-            PF2.fk_partitioning = i_id_partitioning
-            AND
-            PF.created_at <= PF2.created_at
-        GROUP BY P.id_partitioning , PF.created_at
-        ORDER BY P.id_partitioning , PF.created_at DESC
+            PF.fk_partitioning = i_id_partitioning AND
+            P.id_partitioning IS DISTINCT FROM i_id_partitioning
+        GROUP BY P.id_partitioning
+        ORDER BY P.id_partitioning
         LIMIT i_limit
         OFFSET i_offset;
 
-
+    --If no ancestors found send an OK status
     IF NOT FOUND THEN
         status := 10;
         status_text := 'OK';
         RETURN NEXT;
--- TODO: Remove comment if not needed
---   ELSE
---        status := 42;
---        status_text := 'Ancestor Partitioning not found';
     END IF;
---    RETURN NEXT;
     RETURN;
 
 END;
