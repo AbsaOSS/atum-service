@@ -20,9 +20,10 @@ import io.circe.parser.parse
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 
-import java.time.OffsetDateTime
+import scala.collection.mutable
+import scala.util.control.Breaks.{break, breakable}
 
-class GetAncestorsIntegrationTests extends DBTestSuite {
+class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
 
   private val getAncestorsFn = "runs.get_partitioning_ancestors"
   private val createPartitioningFn = "runs.create_partitioning_if_not_exists"
@@ -324,6 +325,17 @@ class GetAncestorsIntegrationTests extends DBTestSuite {
         assert(result1.getString("status_text").get == "Partitioning added to flows")
       }
 
+    //Used Linked Hash Map to keep structure and order
+    val resultsMap = mutable.LinkedHashMap(
+      "Grandma" -> (partitioningID1, expectedPartitioning1),
+      "Grandpa" -> (partitioningID2, expectedPartitioning2),
+      "Mother" -> (partitioningID3, expectedPartitioning3),
+      "Father" -> (partitioningID4, expectedPartitioning4),
+      "Son" -> (partitioningID5, expectedPartitioning5),
+      "Daughter" -> (partitioningID6, expectedPartitioning6),
+      "Granddaughter" -> (partitioningID7, expectedPartitioning7)
+    )
+
     //Test 1 Ancestor
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID3)
@@ -334,8 +346,8 @@ class GetAncestorsIntegrationTests extends DBTestSuite {
           .getOrElse(fail("Failed to parse returned partitioning"))
         assert(row.getInt("status").contains(10))
         assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID1))
-        assert(returnedPartitioningParsed == expectedPartitioning1)
+        assert(row.getLong("ancestor_id").contains(resultsMap("Grandma")._1))
+        assert(returnedPartitioningParsed == resultsMap("Grandma")._2)
         assert(row.getString("author").contains("Grandma"))
         assert(!queryResult.hasNext)
       }
@@ -348,40 +360,22 @@ class GetAncestorsIntegrationTests extends DBTestSuite {
         var returnedPartitioning = row.getJsonB("partitioning").get
         var returnedPartitioningParsed = parse(returnedPartitioning.value)
           .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID1))
-        assert(returnedPartitioningParsed == expectedPartitioning1)
-        assert(row.getString("author").contains("Grandma"))
-        assert(queryResult.hasNext)
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID2))
-        assert(returnedPartitioningParsed == expectedPartitioning2)
-        assert(row.getString("author").contains("Grandpa"))
-        assert(queryResult.hasNext)
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID3))
-        assert(returnedPartitioningParsed == expectedPartitioning3)
-        assert(row.getString("author").contains("Mother"))
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID4))
-        assert(returnedPartitioningParsed == expectedPartitioning4)
-        assert(row.getString("author").contains("Father"))
+        //Used breakable to be able to break the loop
+        breakable {
+          for ((k, v) <- resultsMap) {
+            assert(row.getInt("status").contains(10))
+            assert(row.getString("status_text").contains("OK"))
+            assert(row.getLong("ancestor_id").contains(v._1))
+            assert(returnedPartitioningParsed == v._2)
+            assert(row.getString("author").contains(k))
+            if (!queryResult.hasNext) break()
+            assert(queryResult.hasNext)
+            row = queryResult.next()
+            returnedPartitioning = row.getJsonB("partitioning").get
+            returnedPartitioningParsed = parse(returnedPartitioning.value)
+              .getOrElse(fail("Failed to parse returned partitioning"))
+          }
+        }
         assert(!queryResult.hasNext)
       }
 
@@ -395,8 +389,8 @@ class GetAncestorsIntegrationTests extends DBTestSuite {
           .getOrElse(fail("Failed to parse returned partitioning"))
         assert(row.getInt("status").contains(10))
         assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID6))
-        assert(returnedPartitioningParsed == expectedPartitioning6)
+        assert(row.getLong("ancestor_id").contains(resultsMap("Daughter")._1))
+        assert(returnedPartitioningParsed == resultsMap("Daughter")._2)
         assert(row.getString("author").contains("Daughter"))
         assert(!queryResult.hasNext)
       }
@@ -409,78 +403,22 @@ class GetAncestorsIntegrationTests extends DBTestSuite {
         var returnedPartitioning = row.getJsonB("partitioning").get
         var returnedPartitioningParsed = parse(returnedPartitioning.value)
           .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID1))
-        assert(returnedPartitioningParsed == expectedPartitioning1)
-        assert(row.getString("author").contains("Grandma"))
-        assert(queryResult.hasNext)
-
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID2))
-        assert(returnedPartitioningParsed == expectedPartitioning2)
-        assert(row.getString("author").contains("Grandpa"))
-        assert(queryResult.hasNext)
-
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID3))
-        assert(returnedPartitioningParsed == expectedPartitioning3)
-        assert(row.getString("author").contains("Mother"))
-        assert(queryResult.hasNext)
-
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID4))
-        assert(returnedPartitioningParsed == expectedPartitioning4)
-        assert(row.getString("author").contains("Father"))
-        assert(queryResult.hasNext)
-
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID5))
-        assert(returnedPartitioningParsed == expectedPartitioning5)
-        assert(row.getString("author").contains("Son"))
-        assert(queryResult.hasNext)
-
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID6))
-        assert(returnedPartitioningParsed == expectedPartitioning6)
-        assert(row.getString("author").contains("Daughter"))
-        assert(queryResult.hasNext)
-
-        row = queryResult.next()
-        returnedPartitioning = row.getJsonB("partitioning").get
-        returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID7))
-        assert(returnedPartitioningParsed == expectedPartitioning7)
-        assert(row.getString("author").contains("Granddaughter"))
-
+        //Used breakable to be able to break the loop
+        breakable {
+          for ((k, v) <- resultsMap) {
+            assert(row.getInt("status").contains(10))
+            assert(row.getString("status_text").contains("OK"))
+            assert(row.getLong("ancestor_id").contains(v._1))
+            assert(returnedPartitioningParsed == v._2)
+            assert(row.getString("author").contains(k))
+            if (!queryResult.hasNext) break()
+            assert(queryResult.hasNext)
+            row = queryResult.next()
+            returnedPartitioning = row.getJsonB("partitioning").get
+            returnedPartitioningParsed = parse(returnedPartitioning.value)
+              .getOrElse(fail("Failed to parse returned partitioning"))
+          }
+        }
         assert(!queryResult.hasNext)
       }
   }
