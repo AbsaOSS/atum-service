@@ -18,6 +18,7 @@ package za.co.absa.atum.server.api.repository
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.database.flows.functions._
@@ -29,16 +30,17 @@ import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import PaginatedResult.{ResultHasMore, ResultNoMore}
 
 class PartitioningRepositoryImpl(
-  createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
-  createPartitioningFn: CreatePartitioning,
-  getPartitioningMeasuresFn: GetPartitioningMeasures,
-  createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
-  getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
-  getPartitioningByIdFn: GetPartitioningById,
-  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
-  getPartitioningFn: GetPartitioning,
-  getFlowPartitioningsFn: GetFlowPartitionings,
-  getPartitioningMainFlowFn: GetPartitioningMainFlow
+                                  createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
+                                  createPartitioningFn: CreatePartitioning,
+                                  getPartitioningMeasuresFn: GetPartitioningMeasures,
+                                  createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
+                                  getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
+                                  getPartitioningByIdFn: GetPartitioningById,
+                                  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
+                                  getPartitioningFn: GetPartitioning,
+                                  getFlowPartitioningsFn: GetFlowPartitionings,
+                                  getPartitioningAncestorsFn: GetPartitioningAncestors,
+                                  getPartitioningMainFlowFn: GetPartitioningMainFlow
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -148,6 +150,28 @@ class PartitioningRepositoryImpl(
       }
   }
 
+  override def getPartitioningAncestors(
+   partitioningId: Long,
+   limit: Option[Int],
+   offset: Option[Long]
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getPartitioningAncestorsFn(GetPartitioningAncestorsArgs(partitioningId, limit, offset)),
+      "getPartitioningAncestors"
+    ).map(_.flatten)
+      .flatMap { partitioningResults =>
+        ZIO
+          .fromEither(GetPartitioningAncestorsResult.resultsToPartitioningWithIdDTOs(partitioningResults, Seq.empty))
+          .mapBoth(
+            error => GeneralDatabaseError(error.getMessage),
+            partitionings => {
+              if (partitioningResults.nonEmpty && partitioningResults.head.hasMore) ResultHasMore(partitionings)
+              else ResultNoMore(partitionings)
+            }
+          )
+      }
+  }
+
   override def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO] = {
     dbSingleResultCallWithStatus(
       getPartitioningMainFlowFn(partitioningId),
@@ -171,6 +195,7 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMeasuresById
       with GetPartitioning
       with GetFlowPartitionings
+      with GetPartitioningAncestors
       with GetPartitioningMainFlow,
     PartitioningRepository
   ] = ZLayer {
@@ -185,6 +210,7 @@ object PartitioningRepositoryImpl {
       getPartitioning <- ZIO.service[GetPartitioning]
       getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
+      getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
     } yield new PartitioningRepositoryImpl(
       createPartitioningIfNotExists,
       createPartitioning,
@@ -195,6 +221,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasuresById,
       getPartitioning,
       getFlowPartitionings,
+      getPartitioningAncestors,
       getPartitioningMainFlow
     )
   }
