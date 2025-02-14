@@ -160,7 +160,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
-  override def getAncestors(
+  override def getPartitioningAncestors(
     partitioningId: Long,
     limit: Option[Int],
     offset: Option[Long]
@@ -169,7 +169,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       limit.get,
       offset.get,
       serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
-        partitioningService.getAncestors(partitioningId, limit, offset)
+        partitioningService.getPartitioningAncestors(partitioningId, limit, offset)
       )
     )
   }

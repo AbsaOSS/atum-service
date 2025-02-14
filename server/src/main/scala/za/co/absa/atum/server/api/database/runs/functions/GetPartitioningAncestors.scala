@@ -21,7 +21,7 @@ import io.circe.{DecodingFailure, Json}
 import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.api.database.runs.functions.GetAncestors._
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
@@ -34,9 +34,9 @@ import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
 import scala.annotation.tailrec
 
-class GetAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[GetAncestorsArgs, Option[
-    GetAncestorsResult
+class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+  extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningAncestorsArgs, Option[
+    GetPartitioningAncestorsResult
   ], Task](args =>
     Seq(
       fr"${args.partitioningId}",
@@ -47,17 +47,17 @@ class GetAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     with StandardStatusHandling
     with ByFirstErrorStatusAggregator {
 
-  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("ancestorid", "partitioning", "author", "has_more")
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("ancestor_id", "partitioning", "author", "has_more")
 }
 
-object GetAncestors {
-  case class GetAncestorsArgs(partitioningId: Long, limit: Option[Int], offset: Option[Long])
-  case class GetAncestorsResult(ancestorid: Long, partitioningJson: Json, author: String, hasMore: Boolean)
+object GetPartitioningAncestors {
+  case class GetPartitioningAncestorsArgs(partitioningId: Long, limit: Option[Int], offset: Option[Long])
+  case class GetPartitioningAncestorsResult(ancestor_id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
 
-  object GetAncestorsResult {
+  object GetPartitioningAncestorsResult {
 
     @tailrec def resultsToPartitioningWithIdDTOs(
-                                                  results: Seq[GetAncestorsResult],
+                                                  results: Seq[GetPartitioningAncestorsResult],
                                                   acc: Seq[PartitioningWithIdDTO]
                                                 ): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
       if (results.isEmpty) Right(acc)
@@ -71,16 +71,16 @@ object GetAncestors {
             val partitioningDTO = partitioningForDB.keys.map { key =>
               PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
             }
-            resultsToPartitioningWithIdDTOs(tail, acc :+ PartitioningWithIdDTO(head.ancestorid, partitioningDTO, head.author))
+            resultsToPartitioningWithIdDTOs(tail, acc :+ PartitioningWithIdDTO(head.ancestor_id, partitioningDTO, head.author))
         }
       }
     }
 
   }
 
-  val layer: URLayer[PostgresDatabaseProvider, GetAncestors] = ZLayer {
+  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAncestors] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new GetAncestors()(Runs, dbProvider.dbEngine)
+    } yield new GetPartitioningAncestors()(Runs, dbProvider.dbEngine)
   }
 }

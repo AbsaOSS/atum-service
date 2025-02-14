@@ -19,28 +19,28 @@ package za.co.absa.atum.server.api.database.runs.functions
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.functions.GetAncestors.GetAncestorsArgs
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio.{Scope, ZIO}
 import zio.test.{Spec, TestEnvironment, assertTrue}
 import zio.interop.catz.asyncInstance
 
-object GetAncestorsIntegrationTests extends ConfigProviderTest {
+object GetPartitioningAncestorsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[Unit with TestEnvironment with Scope, Any] = {
-    suite("GetAncestorsIntegrationTests")(
+    suite("GetPartitioningAncestorsIntegrationTests")(
       test("Retrieve Ancestors' partitions for a given id") {
         val partitioningID: Long = 1111L
         for {
-          getAncestors <- ZIO.service[GetAncestors]
-          result <- getAncestors(GetAncestorsArgs(partitioningID, None, None))
+          getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
+          result <- getPartitioningAncestors(GetPartitioningAncestorsArgs(partitioningID, None, None))
 
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     )
   }.provide(
-    GetAncestors.layer,
+    GetPartitioningAncestors.layer,
     PostgresDatabaseProvider.layer,
     TestTransactorProvider.layerWithRollback
   )

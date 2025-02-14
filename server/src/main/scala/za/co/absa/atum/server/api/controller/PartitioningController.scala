@@ -61,7 +61,7 @@ trait PartitioningController {
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[FlowDTO]]
 
-  def getAncestors(
+  def getPartitioningAncestors(
     partitioningId: Long,
     limit: Option[Int],
     offset: Option[Long]

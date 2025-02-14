@@ -104,14 +104,14 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
-  override def getAncestors(
+  override def getPartitioningAncestors(
      partitioningId: Long,
      limit: Option[Int],
      offset: Option[Long]
    ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
     repositoryCall(
-      partitioningRepository.getAncestors(partitioningId, limit, offset),
-      "getAncestors"
+      partitioningRepository.getPartitioningAncestors(partitioningId, limit, offset),
+      "getPartitioningAncestors"
     )
   }
 

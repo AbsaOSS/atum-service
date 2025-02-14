@@ -55,7 +55,7 @@ trait PartitioningRepository {
     offset: Option[Long]
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
 
-  def getAncestors(
+  def getPartitioningAncestors(
     partitioningId: Long,
     limit: Option[Int],
     offset: Option[Long]

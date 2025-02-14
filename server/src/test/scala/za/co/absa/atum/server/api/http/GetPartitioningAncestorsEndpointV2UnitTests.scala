@@ -32,23 +32,23 @@ import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO, ZLayer}
 
-object GetAncestorsEndpointV2UnitTests extends ZIOSpecDefault with Endpoints with TestData {
+object GetPartitioningAncestorsEndpointV2UnitTests extends ZIOSpecDefault with Endpoints with TestData {
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.getAncestors(1111L, Some(1), Some(0)))
+  when(partitioningControllerMock.getPartitioningAncestors(1111L, Some(1), Some(0)))
     .thenReturn(
       ZIO.succeed(
         PaginatedResponse(Seq.empty, Pagination(1, 0, hasMore = true), uuid1)
       )
     )
-  when(partitioningControllerMock.getAncestors(8888L, Some(1), Some(0)))
+  when(partitioningControllerMock.getPartitioningAncestors(8888L, Some(1), Some(0)))
     .thenReturn(
       ZIO.fail(
         NotFoundErrorResponse("Partitioning not found")
       )
     )
-  when(partitioningControllerMock.getAncestors(9999L, Some(1), Some(0)))
+  when(partitioningControllerMock.getPartitioningAncestors(9999L, Some(1), Some(0)))
     .thenReturn(
       ZIO.fail(
         InternalServerErrorResponse("internal server error")
@@ -57,14 +57,14 @@ object GetAncestorsEndpointV2UnitTests extends ZIOSpecDefault with Endpoints wit
 
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
-  private val getAncestorsServerEndpoint =
-    getAncestorsEndpointV2.zServerLogic({ case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
-      PartitioningController.getAncestors(partitioningId, limit: Option[Int], offset: Option[Long])
+  private val getPartitioningAncestorsServerEndpoint =
+    getPartitioningAncestorsEndpointV2.zServerLogic({ case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
+      PartitioningController.getPartitioningAncestors(partitioningId, limit: Option[Int], offset: Option[Long])
     })
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
-      .whenServerEndpoint(getAncestorsServerEndpoint)
+      .whenServerEndpoint(getPartitioningAncestorsServerEndpoint)
       .thenRunLogic()
       .backend()
 

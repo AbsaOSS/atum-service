@@ -185,7 +185,7 @@ trait Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(errorInDataOneOfVariant)
   }
 
-  protected val getAncestorsEndpointV2
+  protected val getPartitioningAncestorsEndpointV2
   : PublicEndpoint[(Long, Option[Int], Option[Long]), ErrorResponse, PaginatedResponse[
     PartitioningWithIdDTO
   ], Any] = {
