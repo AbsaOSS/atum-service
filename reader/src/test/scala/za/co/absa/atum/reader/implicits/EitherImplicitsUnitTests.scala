@@ -22,7 +22,7 @@ import sttp.client3.monad.IdMonad
 import sttp.monad.MonadError
 import za.co.absa.atum.reader.implicits.EitherImplicits.EitherMonadEnhancements
 
-class EitherImplicitsUnitsTests extends AnyFunSuiteLike {
+class EitherImplicitsUnitTests extends AnyFunSuiteLike {
   private implicit val monad: MonadError[Identity] = IdMonad
 
   test("EitherMonadEnhancements should project Right") {
