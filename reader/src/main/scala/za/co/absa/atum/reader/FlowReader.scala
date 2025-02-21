@@ -26,6 +26,7 @@ import za.co.absa.atum.reader.core.RequestResult.RequestResult
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.reader.core.{PartitioningIdProvider, Reader}
 import za.co.absa.atum.reader.implicits.EitherImplicits.EitherMonadEnhancements
+import za.co.absa.atum.reader.requests.QueryParamNames
 import za.co.absa.atum.reader.server.ServerConfig
 
 /**
@@ -51,22 +52,22 @@ class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
 
   private def queryCheckpoints(flowId: Long,
                                checkpointName: Option[String],
-                               pageSize: Int,
+                               limit: Int,
                                offset: Long): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
     val endpoint = s"/$Api/$V2/${V2Paths.Flows}/$flowId/${V2Paths.Checkpoints}"
     val params = Map(
-      "limit" -> pageSize.toString,
-      "offset" -> offset.toString
-    ) ++ checkpointName.map("checkpoint-name" -> _)
+      QueryParamNames.limit -> limit.toString,
+      QueryParamNames.offset -> offset.toString
+    ) ++ checkpointName.map(QueryParamNames.checkpointName -> _)
     getQuery(endpoint, params)
   }
 
   def getCheckpointsPage(pageSize: Int = 10, offset: Long = 0): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
     for {
-      mainPartitioningId <- partitioningId(mainFlowPartitioning)
-      flowId <- mainPartitioningId.project(queryFlowId)
-      checkpoints <- flowId.project(queryCheckpoints(_, None, pageSize, offset))
-    } yield checkpoints
+      mainPartitioningIdOrErrror <- partitioningId(mainFlowPartitioning)
+      flowIdOrError <- mainPartitioningIdOrErrror.project(queryFlowId)
+      checkpointsOrError <- flowIdOrError.project(queryCheckpoints(_, None, pageSize, offset))
+    } yield checkpointsOrError
   }
 
   def getCheckpointsOfNamePage(checkpointName: String, pageSize: Int = 10, offset: Long = 0): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {

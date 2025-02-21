@@ -42,8 +42,4 @@ object RequestException {
     }
   }
 
-
-  final case class NoDataException(
-                                    message: String
-                                  ) extends RequestException(message)
 }
