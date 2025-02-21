@@ -18,7 +18,6 @@ package za.co.absa.atum.model.dto
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import za.co.absa.atum.model.dto.traits.CheckpointCore
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -32,7 +31,7 @@ case class CheckpointWithPartitioningDTO(
   processEndTime: Option[ZonedDateTime],
   measurements: Set[MeasurementDTO],
   partitioning: PartitioningWithIdDTO
-) extends CheckpointCore
+)
 
 object CheckpointWithPartitioningDTO {
 

@@ -28,8 +28,6 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto.{CheckpointWithPartitioningDTO, MeasureDTO, MeasureResultDTO, MeasurementDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.model.envelopes.Pagination
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
-import za.co.absa.atum.model.types.Measurement.LongMeasurement
-import za.co.absa.atum.model.types.{AtumPartitionsCheckpoint, Checkpoint}
 import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 import za.co.absa.atum.reader.FlowReaderUnitTests._
 import za.co.absa.atum.reader.server.ServerConfig
