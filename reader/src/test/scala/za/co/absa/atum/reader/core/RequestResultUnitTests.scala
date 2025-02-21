@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import io.circe.ParsingFailure
 import org.scalatest.funsuite.AnyFunSuiteLike
 import sttp.client3.{DeserializationException, HttpError, Response, ResponseException}
-import sttp.model.StatusCode
+import sttp.model.{StatusCode, Uri}
 import za.co.absa.atum.model.dto.PartitionDTO
 import za.co.absa.atum.model.envelopes.NotFoundErrorResponse
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.basic.RequestResult._
+import za.co.absa.atum.reader.core.RequestResult._
+import za.co.absa.atum.reader.exceptions.RequestException.{CirceError, HttpException, ParsingException}
 
 class RequestResultUnitTests extends AnyFunSuiteLike {
   test("Response.toRequestResult keeps the right value") {
@@ -37,7 +38,8 @@ class RequestResultUnitTests extends AnyFunSuiteLike {
     assert(result == body)
   }
 
-  test("Response.toRequestResult keeps the left value if it's a CirceError") {
+  test("Response.toRequestResult keeps the left value if it's a CirceError with its message") {
+
     val circeError: CirceError = ParsingFailure("Just a test error", new Exception)
     val deserializationException = DeserializationException("This is not a json", circeError)
     val body = Left(deserializationException)
@@ -46,20 +48,30 @@ class RequestResultUnitTests extends AnyFunSuiteLike {
       StatusCode.Ok
     )
     val result = source.toRequestResult
-    assert(result == body)
+    result match {
+      case Left(ParsingException(message, body)) =>
+        assert(message == "Just a test error")
+        assert(body == "This is not a json")
+      case _ => fail("Unexpected result")
+    }
   }
 
   test("Response.toRequestResult decodes NotFound error") {
-    val error = NotFoundErrorResponse("This is a test")
-    val errorResponse = error.asJsonString
-    val httpError = HttpError(errorResponse, StatusCode.NotFound)
+    val sourceError = NotFoundErrorResponse("This is a test")
+    val sourceErrorResponse = sourceError.asJsonString
+    val httpError = HttpError(sourceErrorResponse, StatusCode.NotFound)
     val source: Response[Either[ResponseException[String, CirceError], PartitionDTO]] = Response(
       Left(httpError),
       StatusCode.Ok
     )
     val result = source.toRequestResult
-    val expected: RequestResult[PartitionDTO] = Left(HttpError(error, httpError.statusCode))
-    assert(result == expected)
+    result match {
+      case Left(HttpException(_, statusCode, errorResponse, request)) =>
+        assert(statusCode == StatusCode.NotFound)
+        assert(errorResponse == sourceError)
+        assert(request == Uri("example.com"))
+      case _ => fail("Unexpected result")
+    }
   }
 
   test("Response.toRequestResult fails to decode InternalServerErrorResponse error") {
@@ -74,8 +86,8 @@ class RequestResultUnitTests extends AnyFunSuiteLike {
     assert(result.isLeft)
     result.swap.foreach { e =>
       // investigate the error
-      assert(e.isInstanceOf[DeserializationException[_]])
-      val ce = e.asInstanceOf[DeserializationException[ParsingFailure]]
+      assert(e.isInstanceOf[ParsingException])
+      val ce = e.asInstanceOf[ParsingException]
       assert(ce.body == responseBody)
     }
   }

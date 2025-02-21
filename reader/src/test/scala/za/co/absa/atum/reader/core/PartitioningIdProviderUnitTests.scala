@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import org.scalatest.funsuite.AnyFunSuiteLike
 import sttp.capabilities
@@ -28,7 +28,8 @@ import za.co.absa.atum.model.envelopes.NotFoundErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.basic.RequestResult._
+import za.co.absa.atum.reader.core.RequestResult._
+import za.co.absa.atum.reader.exceptions.RequestException.{HttpException, ParsingException}
 import za.co.absa.atum.reader.server.ServerConfig
 
 class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
@@ -38,7 +39,7 @@ class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
   private val atumPartitionsToNotFound = AtumPartitions(List.empty)
 
   private implicit val serverConfig: ServerConfig = ServerConfig(serverUrl)
-  private implicit val monad: IdMonad.type = IdMonad
+  private implicit val monad: MonadError[Identity] = IdMonad
   private implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
     .whenRequestMatches(request => isUriOfAtumPartitions(request.uri, atumPartitionsToReply))
       .thenRespond(SingleSuccessResponse(PartitioningWithIdDTO(1, atumPartitionsToReply.toPartitioningDTO, "Gimli")).asJsonString)
@@ -76,9 +77,8 @@ class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
     val result = reader.partitioningId(atumPartitionsToNotFound)
     result match {
       case Right(_) => fail("Expected a failure, but OK response received")
-      case Left(_: DeserializationException[CirceError]) => fail("Expected a not found response, but deserialization error received")
-      case Left(x: HttpError[_]) =>
-        assert(x.body.isInstanceOf[NotFoundErrorResponse])
+      case Left(x: HttpException) =>
+        assert(x.errorResponse.isInstanceOf[NotFoundErrorResponse])
         assert(x.statusCode == StatusCode.NotFound)
       case _ => fail("Unexpected response")
     }
@@ -88,6 +88,6 @@ class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
     val reader = ReaderWithPartitioningIdForTest(atumPartitionsToFailedDecode)
     val result = reader.partitioningId(atumPartitionsToFailedDecode)
     assert(result.isLeft)
-    result.swap.map(e => assert(e.isInstanceOf[DeserializationException[CirceError]]))
+    result.swap.map(e => assert(e.isInstanceOf[ParsingException]))
   }
 }

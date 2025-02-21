@@ -1,0 +1,28 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0" version="24.8.6">
+  <diagram name="Page-1" id="M1M2r3vxqz2qx0Wid1ZL">
+    <mxGraphModel dx="1434" dy="733" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="rmWetNVkiCoe2Ea992-S-1" value="PartitioningReader" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="40" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rmWetNVkiCoe2Ea992-S-2" value="FlowReader" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="40" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rmWetNVkiCoe2Ea992-S-4" value="&lt;div align=&quot;left&quot;&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;Identified by the main paritioining&lt;/b&gt;&lt;/li&gt;&lt;li&gt;ability to retrieve &lt;i&gt;id_flow&lt;/i&gt; based on the main partitioing &lt;br&gt;&lt;/li&gt;&lt;li&gt;Getting the checkpoints belonging to the flow&lt;/li&gt;&lt;li&gt;Getting checkpoints of certain name only&lt;/li&gt;&lt;li&gt;Getting it&#39;s partitioning (phase 2)&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;" vertex="1" parent="1">
+          <mxGeometry x="80" y="110" width="240" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="rmWetNVkiCoe2Ea992-S-5" value="&lt;div align=&quot;left&quot;&gt;Data returned&lt;ul&gt;&lt;li&gt;Checkpoints including partitioiing info in form of DTOs&lt;/li&gt;&lt;li&gt;returns just the dto as pagination&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="310" width="250" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="rmWetNVkiCoe2Ea992-S-7" value="&lt;blockquote&gt;&lt;div align=&quot;left&quot;&gt;&lt;li&gt;&lt;b&gt;Identified by the paritioining&lt;/b&gt;&lt;/li&gt;&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;&lt;li&gt;ability to retrieve &lt;i&gt;id_partitioing&lt;/i&gt; based on the partitioing &lt;/li&gt;&lt;li&gt;Getting the checkpoints&lt;/li&gt;&lt;li&gt;Getting checkpoint(s) filtered by name&lt;/li&gt;&lt;li&gt;Getting the additional data&lt;/li&gt;&lt;li&gt;Getting the checkpoints + additional data in form of _INFO file format (phase 2)&lt;/li&gt;&lt;/div&gt;&lt;/blockquote&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="110" width="240" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="rmWetNVkiCoe2Ea992-S-8" value="&lt;div align=&quot;left&quot;&gt;Data returned&lt;ul&gt;&lt;li&gt;Checkpoints in the form of DTO in Pagination DTO&lt;/li&gt;&lt;li&gt;additional data as their DTO&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="320" width="240" height="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
