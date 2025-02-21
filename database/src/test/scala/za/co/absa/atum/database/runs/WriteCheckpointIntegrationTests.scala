@@ -159,7 +159,7 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       .setParam("i_process_start_time", startTime)
       .setParam("i_process_end_time", endTime)
       .setParam("i_measurements", CustomDBType(measurements, "JSONB[]"))
-      .setParam("i_measured_by_atum_agent", false)
+      //.setParam("i_measured_by_atum_agent", false)
       .setParam("i_by_user", user)
       .execute { queryResult =>
         assert(queryResult.hasNext)
@@ -235,7 +235,7 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
         .add("checkpoint_name", "I came before")
         .add("process_start_time", now())
         .add("process_end_time", now())
-        .add("measured_by_atum_agent", false)
+        //.add("measured_by_atum_agent", false)
         .add("created_by", origAuthor)
     )
 
