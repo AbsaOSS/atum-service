@@ -24,13 +24,17 @@ import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.atum.model.types.basic.AtumPartitionsOps
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import RequestResult.RequestResult
+import za.co.absa.atum.reader.core.RequestResult.RequestResult
 
-trait PartitioningIdProvider[F[_]] {self: Reader[F] =>
+trait PartitioningIdProvider[F[_]] {
+  self: Reader[F] =>
   def partitioningId(partitioning: AtumPartitions)(implicit monad: MonadError[F]): F[RequestResult[Long]] = {
     val encodedPartitioning = partitioning.toPartitioningDTO.asBase64EncodedJsonString
-    val queryResult = getQuery[SingleSuccessResponse[PartitioningWithIdDTO]](s"/$Api/$V2/${V2Paths.Partitionings}", Map("partitioning" -> encodedPartitioning))
-    queryResult.map{ result =>
+    val queryResult = getQuery[SingleSuccessResponse[PartitioningWithIdDTO]](
+      s"/$Api/$V2/${V2Paths.Partitionings}",
+      Map("partitioning" -> encodedPartitioning)
+    )
+    queryResult.map { result =>
       result.map(_.data.id)
     }
   }

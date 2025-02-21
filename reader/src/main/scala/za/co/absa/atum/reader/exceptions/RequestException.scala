@@ -35,7 +35,8 @@ object RequestException {
   final case class ParsingException(
                                      message: String,
                                      body: String
-                                    ) extends RequestException(message)
+                                   ) extends RequestException(message)
+
   object ParsingException {
     def fromCirceError(error: CirceError, body: String): ParsingException = {
       ParsingException(error.getMessage, body)

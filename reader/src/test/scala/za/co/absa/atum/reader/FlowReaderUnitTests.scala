@@ -31,7 +31,6 @@ import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 import za.co.absa.atum.reader.FlowReaderUnitTests._
 import za.co.absa.atum.reader.server.ServerConfig
-import za.co.absa.atum.reader.implicits.future.futureMonadError
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -46,7 +45,7 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
       "a" -> "b",
       "c" -> "d"
     ))
-    implicit val server: SttpBackend[Future, Any] = SttpBackendStub.asynchronousFuture
+    implicit val server: SttpBackend[Identity, Any] = SttpBackendStub.synchronous
 
     val result = new FlowReader(atumPartitions).mainFlowPartitioning
     assert(result == atumPartitions)

@@ -31,21 +31,22 @@ import za.co.absa.atum.reader.server.ServerConfig
 
 /**
  * This class is a reader that reads data tight to a flow.
- * @param mainFlowPartitioning  - the partitioning of the main flow; renamed from ancestor's 'flowPartitioning'
- * @param serverConfig          - the Atum server configuration
- * @param backend               - sttp backend, that will be executing the requests
- * @param ev                    - using evidence based approach to ensure that the type F is a MonadError instead of using context
- *                              bounds, as it make the imports easier to follow
- * @tparam F                    - the effect type (e.g. Future, IO, Task, etc.)
+ *
+ * @param mainFlowPartitioning - the partitioning of the main flow; renamed from ancestor's 'flowPartitioning'
+ * @param serverConfig         - the Atum server configuration
+ * @param backend              - sttp backend, that will be executing the requests
+ * @param ev                   - using evidence based approach to ensure that the type F is a MonadError instead of using context
+ *                             bounds, as it make the imports easier to follow
+ * @tparam F - the effect type (e.g. Future, IO, Task, etc.)
  */
-class FlowReader[F[_]](val mainFlowPartitioning: AtumPartitions)
-                      (implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any], ev: MonadError[F])
-  extends Reader[F] with PartitioningIdProvider[F]{
+class FlowReader[F[_]: MonadError](val mainFlowPartitioning: AtumPartitions)
+                      (implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any])
+  extends Reader[F] with PartitioningIdProvider[F] {
 
   private def queryFlowId(mainPartitioningId: Long): F[RequestResult[Long]] = {
     val endpoint = s"/$Api/$V2/${V2Paths.Partitionings}/$mainPartitioningId/${V2Paths.MainFlow}"
     val queryResult = getQuery[SingleSuccessResponse[FlowDTO]](endpoint)
-    queryResult.map{ result =>
+    queryResult.map { result =>
       result.map(_.data.id)
     }
   }
