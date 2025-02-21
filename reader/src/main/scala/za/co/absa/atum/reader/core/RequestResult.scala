@@ -21,7 +21,6 @@ import sttp.monad.MonadError
 import za.co.absa.atum.model.envelopes.ErrorResponse
 import za.co.absa.atum.reader.exceptions.RequestException.{CirceError, HttpException, ParsingException}
 import za.co.absa.atum.reader.exceptions.RequestException
-import za.co.absa.atum.reader.result.Page
 
 object RequestResult {
   type RequestResult[R] = Either[RequestException, R]
@@ -40,10 +39,6 @@ object RequestResult {
         case de: DeserializationException[CirceError] => ParsingException.fromCirceError(de.error, de.body)
       }
     }
-  }
-
-  implicit class RequestPageResultOps[A, F[_]: MonadError](requestResult: RequestResult[Page[A, F]]) {
-    def pageMap[B](f: A => B): RequestResult[Page[B, F]] = requestResult.map(_.map(f))
   }
 
 }

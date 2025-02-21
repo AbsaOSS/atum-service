@@ -19,7 +19,7 @@ package za.co.absa.atum.reader.exceptions
 import sttp.model.{StatusCode, Uri}
 import za.co.absa.atum.model.envelopes.ErrorResponse
 
-abstract class RequestException(message: String) extends ReaderException(message)
+sealed abstract class RequestException(message: String) extends ReaderException(message)
 
 
 object RequestException {
