@@ -36,6 +36,11 @@ import za.co.absa.atum.reader.exceptions.RequestException.CirceError
  */
 abstract class Reader[F[_]: MonadError](implicit val serverConfig: ServerConfig, val backend: SttpBackend[F, Any]) {
 
+  protected def mapRequestResultF[I, O](requestResult: RequestResult[I], f: I => F[RequestResult[O]]): F[RequestResult[O]] = requestResult match {
+    case Right(b) => f(b)
+    case Left(a) => MonadError[F].unit(Left(a))
+  }
+
   protected def getQuery[R: Decoder](endpointUri: String, params: Map[String, String] = Map.empty): F[RequestResult[R]] = {
     val endpointToQuery = serverConfig.host + endpointUri
     val uri = Uri.unsafeParse(endpointToQuery).addParams(params)

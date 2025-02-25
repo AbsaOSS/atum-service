@@ -34,7 +34,6 @@ import za.co.absa.atum.reader.server.ServerConfig
 
 import java.time.ZonedDateTime
 import java.util.UUID
-import scala.concurrent.Future
 
 class FlowReaderUnitTests extends AnyFunSuiteLike {
   private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
