@@ -20,8 +20,8 @@ CREATE OR REPLACE FUNCTION runs.write_checkpoint(
     IN  i_process_start_time        TIMESTAMP WITH TIME ZONE,
     IN  i_process_end_time          TIMESTAMP WITH TIME ZONE,
     IN  i_measurements              JSONB[],
+    IN  i_measured_by_atum_agent    BOOLEAN,
     IN  i_by_user                   TEXT,
-    IN  i_measured_by_atum_agent    BOOLEAN DEFAULT FALSE,
     OUT status                      INTEGER,
     OUT status_text                 TEXT
 ) RETURNS record AS
@@ -47,7 +47,7 @@ $$
 --                                        whatever here
 --                                      }
 --                                    }
---      i_measured_by_atum_agent    - flag it the checkpoint was measured by Atum or data provided by user (Default FALSE)
+--      i_measured_by_atum_agent    - flag it the checkpoint was measured by Atum or data provided by user
 --      i_by_user                   - user behind the change
 --
 -- Returns:
@@ -105,5 +105,5 @@ END;
 $$
     LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.write_checkpoint(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], TEXT, BOOLEAN) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.write_checkpoint(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], TEXT, BOOLEAN) TO atum_user;
+ALTER FUNCTION runs.write_checkpoint(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.write_checkpoint(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT) TO atum_user;

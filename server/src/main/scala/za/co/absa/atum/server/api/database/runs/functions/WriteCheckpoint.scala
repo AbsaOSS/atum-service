@@ -42,8 +42,8 @@ class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
         fr"${values.processStartTime}",
         fr"${values.processEndTime}",
         fr"${values.measurements.toList.map(_.asJson)}",
-        fr"${values.author}",
-        fr"${values.measuredByAtumAgent}"
+        fr"${values.measuredByAtumAgent}",
+        fr"${values.author}"
       )
     )
     with StandardStatusHandling
