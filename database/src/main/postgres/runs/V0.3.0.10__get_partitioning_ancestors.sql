@@ -46,6 +46,7 @@ $$
 
 -- Status codes:
 --      10 - OK
+--      14 - OK (No Ancestors found, therefore no op)
 --      41 - Partitioning not found
 --
 -------------------------------------------------------------------------------
@@ -65,12 +66,13 @@ BEGIN
 
     -- Check if there are more partitionings than the limit
     SELECT count(*) > i_limit
-    FROM flows.partitioning_to_flow PTF
-    WHERE PTF.fk_flow IN (
-        SELECT fk_flow
-        FROM flows.partitioning_to_flow
-        WHERE fk_partitioning = i_id_partitioning
-    )
+    FROM
+        flows.partitioning_to_flow PF
+            INNER JOIN flows.flows F ON F.id_flow = PF.fk_flow
+            INNER JOIN runs.partitionings P ON P.id_partitioning = F.fk_primary_partitioning
+    WHERE
+        PF.fk_partitioning = i_id_partitioning AND
+        P.id_partitioning IS DISTINCT FROM i_id_partitioning
     LIMIT i_limit + 1 OFFSET i_offset
     INTO _has_more;
 
@@ -90,14 +92,13 @@ BEGIN
         WHERE
             PF.fk_partitioning = i_id_partitioning AND
             P.id_partitioning IS DISTINCT FROM i_id_partitioning
-        GROUP BY P.id_partitioning
         ORDER BY P.id_partitioning
         LIMIT i_limit
         OFFSET i_offset;
 
     --If no ancestors found send an OK status
     IF NOT FOUND THEN
-        status := 10;
+        status := 14;
         status_text := 'OK';
         RETURN NEXT;
     END IF;
