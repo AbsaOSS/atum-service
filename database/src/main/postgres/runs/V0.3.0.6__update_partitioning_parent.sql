@@ -67,7 +67,7 @@ BEGIN
         RETURN;
     END IF;
 
-    --IF additional data is true,
+    --IF i_copy_additional_data is true,
     --THEN copy additional data of parent to child
     IF i_copy_additional_data THEN
         SELECT
@@ -79,8 +79,8 @@ BEGIN
         PERFORM 1 FROM runs.create_or_update_additional_data(i_id_partitioning, _additional_data, i_by_user);
     END IF;
 
-    --IF measurements is true,
-    --THEN measurements of parent to child
+    --IF i_copy_measurements is true,
+    --THEN copy measurements of parent to child
     IF i_copy_measurements THEN
         INSERT INTO runs.measure_definitions (fk_partitioning, measure_name, measured_columns, created_by)
         SELECT i_id_partitioning, PMI.measure_name, PMI.measured_columns, i_by_user
@@ -90,7 +90,7 @@ BEGIN
 
     PERFORM 1 FROM flows._add_to_parent_flows(i_id_parent_partitioning, i_id_partitioning, i_by_user);
     status := 11;
-    status_text := 'Parent Updated';
+    status_text := 'OK';
     RETURN;
 
 END;

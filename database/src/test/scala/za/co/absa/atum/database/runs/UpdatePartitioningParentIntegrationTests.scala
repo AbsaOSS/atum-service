@@ -55,37 +55,65 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
-  private val parentPartitioning2 = JsonBString(
-    """
-      |{
-      |  "version": 1,
-      |  "keys": ["key1", "key3"],
-      |  "keysToValuesMap": {
-      |    "key1": "valueW",
-      |    "key3": "valueY"
-      |  }
-      |}
-      |""".stripMargin
-  )
-
-  //Check for child partitioning
-  test("Child Partitioning not found") {
+  //Data Preparation Step
+  def DataPreparation(): (Long, Long, Long) = {
     val nonExistentID = 9999L
 
-    val parentPartitioningID = function(createPartitioningFn)
+    val parentPartitioningIDTest = function(createPartitioningFn)
       .setParam("i_partitioning", parentPartitioning)
       .setParam("i_by_user", "Albert Einstein")
       .execute { queryResult =>
-        assert(queryResult.hasNext)
         val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
         row.getLong("id_partitioning").get
       }
 
+    val childPartitioningIDTest = function(createPartitioningFn)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_by_user", "Albert Einstein")
+      .execute { queryResult =>
+        val row = queryResult.next()
+        row.getLong("id_partitioning").get
+      }
+
+    table("runs.additional_data").insert(
+      add("fk_partitioning", parentPartitioningIDTest)
+        .add("created_by", "Joseph")
+        .add("ad_name", "ad_1")
+        .add("ad_value", "This is the additional data for Joseph")
+    )
+
+    table("runs.additional_data").insert(
+      add("fk_partitioning", parentPartitioningIDTest)
+        .add("created_by", "Joseph")
+        .add("ad_name", "ad_2")
+        .add("ad_value", "This is the additional data for Joseph")
+    )
+
+    table("runs.measure_definitions").insert(
+      add("fk_partitioning", parentPartitioningIDTest)
+        .add("created_by", "Joseph")
+        .add("measure_name", "measure1")
+        .add("measured_columns", CustomDBType("""{"col1"}""", "TEXT[]"))
+    )
+
+    table("runs.measure_definitions").insert(
+      add("fk_partitioning", parentPartitioningIDTest)
+        .add("created_by", "Joseph")
+        .add("measure_name", "measure2")
+        .add("measured_columns", CustomDBType("""{"col2"}""", "TEXT[]"))
+    )
+
+    return (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest)
+  }
+
+  //Check for child partitioning
+  test("Child Partitioning not found") {
+
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
+
     function(updateParentFn)
       .setParam("i_id_partitioning", nonExistentID)
-      .setParam("i_id_parent_partitioning", parentPartitioningID)
+      .setParam("i_id_parent_partitioning", parentPartitioningIDTest)
       .setParam("i_by_user", "Fantômas")
       .setParam("i_copy_measurements", true)
       .setParam("i_copy_additional_data", true)
@@ -100,33 +128,11 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
 
   //Check for Parent Partitioning
   test("Parent Partitioning not found") {
-    val nonExistentID = 9999L
 
-    val parentPartitioningID = function(createPartitioningFn)
-      .setParam("i_partitioning", parentPartitioning)
-      .setParam("i_by_user", "Albert Einstein")
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
-        row.getLong("id_partitioning").get
-      }
-
-    val partitioningID = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning)
-      .setParam("i_by_user", "Fantômas")
-      .setParam("i_parent_partitioning_id", parentPartitioningID)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(12))
-        assert(row.getString("status_text").contains("Partitioning created with parent partitioning"))
-        row.getLong("id_partitioning").get
-      }
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
 
     function(updateParentFn)
-      .setParam("i_id_partitioning", partitioningID)
+      .setParam("i_id_partitioning", childPartitioningIDTest)
       .setParam("i_id_parent_partitioning", nonExistentID)
       .setParam("i_by_user", "Fantômas")
       .setParam("i_copy_measurements", true)
@@ -143,43 +149,11 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   //Update Parent with no additional data and no measurements
   test("Parent Partitioning Updated no additional data and no measurements") {
 
-    val parentPartitioningID = function(createPartitioningFn)
-      .setParam("i_partitioning", parentPartitioning)
-      .setParam("i_by_user", "Albert Einstein")
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
-        row.getLong("id_partitioning").get
-      }
-
-    val parentPartitioningID2 = function(createPartitioningFn)
-      .setParam("i_partitioning", parentPartitioning2)
-      .setParam("i_by_user", "Tomas Riddle")
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
-        row.getLong("id_partitioning").get
-      }
-
-    val partitioningID = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning)
-      .setParam("i_by_user", "Fantômas")
-      .setParam("i_parent_partitioning_id", parentPartitioningID)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(12))
-        assert(row.getString("status_text").contains("Partitioning created with parent partitioning"))
-        row.getLong("id_partitioning").get
-      }
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
 
     function(updateParentFn)
-      .setParam("i_id_partitioning", partitioningID)
-      .setParam("i_id_parent_partitioning", parentPartitioningID)
+      .setParam("i_id_partitioning", childPartitioningIDTest)
+      .setParam("i_id_parent_partitioning", parentPartitioningIDTest)
       .setParam("i_by_user", "Happy Nappy")
       .setParam("i_copy_measurements", false)
       .setParam("i_copy_additional_data", false)
@@ -187,75 +161,41 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val row = queryResult.next()
         assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Parent Updated"))
+        assert(row.getString("status_text").contains("OK"))
         assert(!queryResult.hasNext)
       }
 
     assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID)) == 1
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningIDTest)) == 1
     )
     assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID2)) == 1
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", childPartitioningIDTest)) == 2
     )
-    assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", partitioningID)) == 2
-    )
+
+    function(fncGetPartitioningAdditionalData)
+      .setParam("i_partitioning_id", childPartitioningIDTest)
+      .execute { queryResult =>
+        val result = queryResult.next()
+        assert(result.getInt("status").contains(16))
+        assert(result.getString("status_text").contains("No additional data found"))
+        assert(!queryResult.hasNext)
+      }
+
+    function(fncGetPartitioningMeasuresById)
+      .setParam(childPartitioningIDTest)
+      .execute { queryResult =>
+        assert(!queryResult.hasNext)
+      }
   }
 
   //Update Parent with additional data and no measurements
   test("Parent Partitioning Updated with additional data and no measurements") {
 
-    val parentPartitioningID = function(createPartitioningFn)
-      .setParam("i_partitioning", parentPartitioning)
-      .setParam("i_by_user", "Albert Einstein")
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
-        row.getLong("id_partitioning").get
-      }
-
-    val parentPartitioningID2 = function(createPartitioningFn)
-      .setParam("i_partitioning", parentPartitioning2)
-      .setParam("i_by_user", "Tomas Riddle")
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
-        row.getLong("id_partitioning").get
-      }
-
-    val partitioningID = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning)
-      .setParam("i_by_user", "Fantômas")
-      .setParam("i_parent_partitioning_id", parentPartitioningID)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(12))
-        assert(row.getString("status_text").contains("Partitioning created with parent partitioning"))
-        row.getLong("id_partitioning").get
-      }
-
-    table("runs.additional_data").insert(
-      add("fk_partitioning", parentPartitioningID)
-        .add("created_by", "Joseph")
-        .add("ad_name", "ad_1")
-        .add("ad_value", "This is the additional data for Joseph")
-    )
-
-    table("runs.additional_data").insert(
-      add("fk_partitioning", parentPartitioningID)
-        .add("created_by", "Joseph")
-        .add("ad_name", "ad_2")
-        .add("ad_value", "This is the additional data for Joseph")
-    )
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
 
     function(updateParentFn)
-      .setParam("i_id_partitioning", partitioningID)
-      .setParam("i_id_parent_partitioning", parentPartitioningID)
+      .setParam("i_id_partitioning", childPartitioningIDTest)
+      .setParam("i_id_parent_partitioning", parentPartitioningIDTest)
       .setParam("i_by_user", "Happy Nappy")
       .setParam("i_copy_measurements", false)
       .setParam("i_copy_additional_data", true)
@@ -263,22 +203,19 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val row = queryResult.next()
         assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Parent Updated"))
+        assert(row.getString("status_text").contains("OK"))
         assert(!queryResult.hasNext)
       }
 
     assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID)) == 1
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningIDTest)) == 1
     )
     assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID2)) == 1
-    )
-    assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", partitioningID)) == 2
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", childPartitioningIDTest)) == 2
     )
 
     function(fncGetPartitioningAdditionalData)
-      .setParam("i_partitioning_id", partitioningID)
+      .setParam("i_partitioning_id", childPartitioningIDTest)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(11))
@@ -293,7 +230,12 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
         assert(results2.getString("ad_name").contains("ad_2"))
         assert(results2.getString("ad_value").contains("This is the additional data for Joseph"))
         assert(results2.getString("ad_author").contains("Happy Nappy"))
+        assert(!queryResult.hasNext)
+      }
 
+    function(fncGetPartitioningMeasuresById)
+      .setParam(childPartitioningIDTest)
+      .execute { queryResult =>
         assert(!queryResult.hasNext)
       }
   }
@@ -301,64 +243,11 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   //Update Parent with additional data and with measurements
   test("Parent Partitioning Updated with additional data and with measurements") {
 
-    val parentPartitioningID = function(createPartitioningFn)
-      .setParam("i_partitioning", parentPartitioning)
-      .setParam("i_by_user", "Albert Einstein")
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
-        row.getLong("id_partitioning").get
-      }
-
-    val parentPartitioningID2 = function(createPartitioningFn)
-      .setParam("i_partitioning", parentPartitioning2)
-      .setParam("i_by_user", "Tomas Riddle")
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
-        row.getLong("id_partitioning").get
-      }
-
-    val partitioningID = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning)
-      .setParam("i_by_user", "Fantômas")
-      .setParam("i_parent_partitioning_id", parentPartitioningID)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(12))
-        assert(row.getString("status_text").contains("Partitioning created with parent partitioning"))
-        row.getLong("id_partitioning").get
-      }
-
-    table("runs.additional_data").insert(
-      add("fk_partitioning", parentPartitioningID)
-        .add("created_by", "Joseph")
-        .add("ad_name", "ad_1")
-        .add("ad_value", "This is the additional data for Joseph")
-    )
-
-    table("runs.measure_definitions").insert(
-      add("fk_partitioning", parentPartitioningID)
-        .add("created_by", "Joseph")
-        .add("measure_name", "measure1")
-        .add("measured_columns", CustomDBType("""{"col1"}""", "TEXT[]"))
-    )
-
-    table("runs.measure_definitions").insert(
-      add("fk_partitioning", parentPartitioningID)
-        .add("created_by", "Joseph")
-        .add("measure_name", "measure2")
-        .add("measured_columns", CustomDBType("""{"col2"}""", "TEXT[]"))
-    )
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
 
     function(updateParentFn)
-      .setParam("i_id_partitioning", partitioningID)
-      .setParam("i_id_parent_partitioning", parentPartitioningID)
+      .setParam("i_id_partitioning", childPartitioningIDTest)
+      .setParam("i_id_parent_partitioning", parentPartitioningIDTest)
       .setParam("i_by_user", "Happy Nappy")
       .setParam("i_copy_measurements", true)
       .setParam("i_copy_additional_data", true)
@@ -366,22 +255,19 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val row = queryResult.next()
         assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Parent Updated"))
+        assert(row.getString("status_text").contains("OK"))
         assert(!queryResult.hasNext)
       }
 
     assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID)) == 1
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningIDTest)) == 1
     )
     assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningID2)) == 1
-    )
-    assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", partitioningID)) == 2
+      table("flows.partitioning_to_flow").count(add("fk_partitioning", childPartitioningIDTest)) == 2
     )
 
     function(fncGetPartitioningAdditionalData)
-      .setParam("i_partitioning_id", partitioningID)
+      .setParam("i_partitioning_id", childPartitioningIDTest)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(11))
@@ -389,10 +275,18 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
         assert(results.getString("ad_name").contains("ad_1"))
         assert(results.getString("ad_value").contains("This is the additional data for Joseph"))
         assert(results.getString("ad_author").contains("Happy Nappy"))
+
+        val results2 = queryResult.next()
+        assert(results2.getInt("status").contains(11))
+        assert(results2.getString("status_text").contains("OK"))
+        assert(results2.getString("ad_name").contains("ad_2"))
+        assert(results2.getString("ad_value").contains("This is the additional data for Joseph"))
+        assert(results2.getString("ad_author").contains("Happy Nappy"))
+        assert(!queryResult.hasNext)
       }
 
     function(fncGetPartitioningMeasuresById)
-      .setParam("i_partitioning_id", partitioningID)
+      .setParam("i_partitioning_id", childPartitioningIDTest)
       .execute { queryResult =>
         val results = queryResult.next()
         assert(results.getInt("status").contains(11))
@@ -405,6 +299,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
         assert(results2.getString("status_text").contains("OK"))
         assert(results2.getString("measure_name").contains("measure2"))
         assert(results2.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col2")))
+        assert(!queryResult.hasNext)
       }
   }
 }
