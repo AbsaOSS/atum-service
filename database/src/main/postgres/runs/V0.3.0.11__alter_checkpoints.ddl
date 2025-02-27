@@ -13,4 +13,10 @@
  * limitations under the License.
  */
 
-ALTER TABLE runs.checkpoints ALTER COLUMN measured_by_atum_agent SET NOT NULL;
+ UPDATE runs.checkpoints
+ SET measured_by_atum_agent = FALSE
+ WHERE measured_by_atum_agent IS NULL;
+
+ALTER TABLE runs.checkpoints
+    ALTER COLUMN measured_by_atum_agent SET DEFAULT FALSE,
+    ALTER COLUMN measured_by_atum_agent SET NOT NULL;
