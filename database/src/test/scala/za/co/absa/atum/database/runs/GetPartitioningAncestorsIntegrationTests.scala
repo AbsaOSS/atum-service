@@ -254,7 +254,15 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
       }
 
     //Used Linked Hash Map to keep structure and order
-    val resultsMap = mutable.LinkedHashMap(
+    val resultsMapFor5 = mutable.LinkedHashMap(
+      "Grandma" -> (partitioningID1, expectedPartitioning1),
+      "Grandpa" -> (partitioningID2, expectedPartitioning2),
+      "Mother" -> (partitioningID3, expectedPartitioning3),
+      "Father" -> (partitioningID4, expectedPartitioning4),
+    )
+
+    //Used Linked Hash Map to keep structure and order
+    val resultsMapFor8 = mutable.LinkedHashMap(
       "Grandma" -> (partitioningID1, expectedPartitioning1),
       "Grandpa" -> (partitioningID2, expectedPartitioning2),
       "Mother" -> (partitioningID3, expectedPartitioning3),
@@ -273,10 +281,11 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
         val returnedPartitioning = row.getJsonB("partitioning").get
         val returnedPartitioningParsed = parse(returnedPartitioning.value)
           .getOrElse(fail("Failed to parse returned partitioning"))
+
         assert(row.getInt("status").contains(10))
         assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(resultsMap("Grandma")._1))
-        assert(returnedPartitioningParsed == resultsMap("Grandma")._2)
+        assert(row.getLong("ancestor_id").contains(partitioningID1))
+        assert(returnedPartitioningParsed == expectedPartitioning1)
         assert(row.getString("author").contains("Grandma"))
         assert(!queryResult.hasNext)
       }
@@ -285,25 +294,22 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID5)
       .execute { queryResult =>
-        var row = queryResult.next()
-        var returnedPartitioning = row.getJsonB("partitioning").get
-        var returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        //Used breakable to be able to break the loop
-        breakable {
-          for ((k, v) <- resultsMap) {
-            assert(row.getInt("status").contains(10))
-            assert(row.getString("status_text").contains("OK"))
-            assert(row.getLong("ancestor_id").contains(v._1))
-            assert(returnedPartitioningParsed == v._2)
-            assert(row.getString("author").contains(k))
-            if (!queryResult.hasNext) break()
-            assert(queryResult.hasNext)
-            row = queryResult.next()
-            returnedPartitioning = row.getJsonB("partitioning").get
-            returnedPartitioningParsed = parse(returnedPartitioning.value)
-              .getOrElse(fail("Failed to parse returned partitioning"))
-          }
+        for ((k, v) <- resultsMapFor5) {
+          assert(queryResult.hasNext)
+
+          val row = queryResult.next()
+          val returnedPartitioning = row.getJsonB("partitioning").get
+          val returnedPartitioningParsed = parse(returnedPartitioning.value)
+            .getOrElse(fail("Failed to parse returned partitioning"))
+          val expectedPartitioningId = v._1
+          val expectedPartitioning = v._2
+          val expectedAuthor = k
+
+          assert(row.getInt("status").contains(10))
+          assert(row.getString("status_text").contains("OK"))
+          assert(row.getLong("ancestor_id").contains(expectedPartitioningId))
+          assert(returnedPartitioningParsed == expectedPartitioning)
+          assert(row.getString("author").contains(expectedAuthor))
         }
         assert(!queryResult.hasNext)
       }
@@ -316,10 +322,11 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
         val returnedPartitioning = row.getJsonB("partitioning").get
         val returnedPartitioningParsed = parse(returnedPartitioning.value)
           .getOrElse(fail("Failed to parse returned partitioning"))
+
         assert(row.getInt("status").contains(10))
         assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(resultsMap("Daughter")._1))
-        assert(returnedPartitioningParsed == resultsMap("Daughter")._2)
+        assert(row.getLong("ancestor_id").contains(partitioningID6))
+        assert(returnedPartitioningParsed == expectedPartitioning6)
         assert(row.getString("author").contains("Daughter"))
         assert(!queryResult.hasNext)
       }
@@ -328,25 +335,22 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID8)
       .execute { queryResult =>
-        var row = queryResult.next()
-        var returnedPartitioning = row.getJsonB("partitioning").get
-        var returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-        //Used breakable to be able to break the loop
-        breakable {
-          for ((k, v) <- resultsMap) {
-            assert(row.getInt("status").contains(10))
-            assert(row.getString("status_text").contains("OK"))
-            assert(row.getLong("ancestor_id").contains(v._1))
-            assert(returnedPartitioningParsed == v._2)
-            assert(row.getString("author").contains(k))
-            if (!queryResult.hasNext) break()
-            assert(queryResult.hasNext)
-            row = queryResult.next()
-            returnedPartitioning = row.getJsonB("partitioning").get
-            returnedPartitioningParsed = parse(returnedPartitioning.value)
-              .getOrElse(fail("Failed to parse returned partitioning"))
-          }
+        for ((k, v) <- resultsMapFor8) {
+          assert(queryResult.hasNext)
+
+          val row = queryResult.next()
+          val returnedPartitioning = row.getJsonB("partitioning").get
+          val returnedPartitioningParsed = parse(returnedPartitioning.value)
+            .getOrElse(fail("Failed to parse returned partitioning"))
+          val expectedPartitioningId = v._1
+          val expectedPartitioning = v._2
+          val expectedAuthor = k
+
+          assert(row.getInt("status").contains(10))
+          assert(row.getString("status_text").contains("OK"))
+          assert(row.getLong("ancestor_id").contains(expectedPartitioningId))
+          assert(returnedPartitioningParsed == expectedPartitioning)
+          assert(row.getString("author").contains(expectedAuthor))
         }
         assert(!queryResult.hasNext)
       }
