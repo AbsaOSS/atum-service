@@ -36,8 +36,8 @@ import za.co.absa.atum.reader.server.ServerConfig
  * @param backend              - sttp backend, that will be executing the requests
  * @tparam F                   - the effect type (e.g. Future, IO, Task, etc.)
  */
-class FlowReader[F[_]: MonadError](val mainFlowPartitioning: AtumPartitions)
-                      (implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any])
+case class FlowReader[F[_]: MonadError](mainFlowPartitioning: AtumPartitions)
+                                       (implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any])
   extends Reader[F] with PartitioningIdProvider[F] {
 
   /**
