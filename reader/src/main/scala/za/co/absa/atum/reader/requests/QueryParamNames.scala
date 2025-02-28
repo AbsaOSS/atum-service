@@ -17,7 +17,7 @@
 package za.co.absa.atum.reader.requests
 
 object QueryParamNames {
-  val limit = "limit"
-  val offset = "offset"
-  val checkpointName = "checkpoint-name"
+  final val Limit = "limit"
+  final val Offset = "offset"
+  final val CheckpointName = "checkpoint-name"
 }

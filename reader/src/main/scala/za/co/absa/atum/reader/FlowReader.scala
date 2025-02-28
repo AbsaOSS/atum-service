@@ -87,9 +87,9 @@ class FlowReader[F[_]: MonadError](val mainFlowPartitioning: AtumPartitions)
                                offset: Long): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
     val endpoint = s"/$Api/$V2/${V2Paths.Flows}/$flowId/${V2Paths.Checkpoints}"
     val params = Map(
-      QueryParamNames.limit -> limit.toString,
-      QueryParamNames.offset -> offset.toString
-    ) ++ checkpointName.map(QueryParamNames.checkpointName -> _)
+      QueryParamNames.Limit -> limit.toString,
+      QueryParamNames.Offset -> offset.toString
+    ) ++ checkpointName.map(QueryParamNames.CheckpointName -> _)
     getQuery(endpoint, params)
   }
 
