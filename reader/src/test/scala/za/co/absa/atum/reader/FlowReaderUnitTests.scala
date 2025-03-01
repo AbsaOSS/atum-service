@@ -117,7 +117,7 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
       requestId = UUID.fromString("29ce91a7-b668-41d2-a160-26402551fb0b")
     )
 
-    val reader = new FlowReader(atumPartitions)
+    val reader = FlowReader(atumPartitions)
     val result = reader.getCheckpointsPage()
     assert(result == Right(expectedData))
   }
@@ -190,7 +190,7 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
       requestId = UUID.fromString("29ce91a7-b668-41d2-a160-26402551fb0b")
     )
 
-    val reader = new FlowReader(atumPartitions)
+    val reader = FlowReader(atumPartitions)
     val result = reader.getCheckpointsOfNamePage("Test checkpoints 1")
     assert(result == Right(expectedData))
   }
