@@ -55,9 +55,9 @@ case class PartitioningReader[F[_]: MonadError](partitioning: AtumPartitions)
   }
 
   /**
-   * Function to retrieve a page of checkpoints of the given name belonging to the partitioning (while the usual logic
+   * Function to retrieve a page of checkpoints of the given name belonging to the partitioning. (While the usual logic
    * would suggest, there would be only one checkpoint of a name, nothing prevents to have checkpoints of the same name;
-   * also during reprocessing the checkpoints might multiply.
+   * also during reprocessing the checkpoints might multiply.)
    * The checkpoints are ordered by their creation order.
    *
    * @param checkpointName  - the name to filter with
