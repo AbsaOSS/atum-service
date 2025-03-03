@@ -56,7 +56,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
       additionalDataForContext <- ZIO.succeed {
         additionalData.data.map { case (key, value) =>
-          key -> value.flatMap(_.value)
+          key -> value.map(_.value)
         }
       }
 

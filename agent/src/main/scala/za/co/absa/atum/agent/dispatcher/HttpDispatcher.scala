@@ -23,6 +23,7 @@ import sttp.client3._
 import sttp.model.Uri
 import sttp.client3.okhttp.OkHttpSyncBackend
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
+import za.co.absa.atum.model.ApiPaths
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
@@ -31,19 +32,17 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   import HttpDispatcher._
 
-  val serverUrl: String = config.getString(UrlKey)
+  private val serverUrl: String = config.getString(UrlKey)
 
-  private val apiV1 = "/api/v1"
-  private val apiV2 = "/api/v2"
+  private val apiV1 = s"/${ApiPaths.Api}/${ApiPaths.V1}"
+  private val apiV2 = s"/${ApiPaths.Api}/${ApiPaths.V2}"
 
-  private val partitioningsPath = "partitionings"
+  private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/${ApiPaths.V1Paths.CreatePartitioning}")
+  private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/${ApiPaths.V1Paths.CreateCheckpoint}")
 
-  private val createPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createPartitioning")
-  private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/createCheckpoint")
-
-  private val getPartitioningIdEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/$partitioningsPath")
+  private val getPartitioningIdEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
   private def createAdditionalDataEndpoint(partitioningId: Long): Uri =
-    Uri.unsafeParse(s"$serverUrl$apiV2/$partitioningsPath/$partitioningId/additional-data")
+    Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.AdditionalData}")
 
   private val commonAtumRequest = basicRequest
     .header("Content-Type", "application/json")

@@ -151,7 +151,7 @@ class AtumContext private[agent] (
     val retrievedAD = agent.updateAdditionalData(this.atumPartitions, currAdditionalDataSubmit)
 
     // Could be different from the one that was submitted. Replacing, just to have the most fresh copy possible.
-    this.additionalData = retrievedAD.data.map{ case (k, v) => (k, v.flatMap(_.value)) }
+    this.additionalData = retrievedAD.data.map{ case (k, v) => (k, v.map(_.value)) }
     this
   }
 
