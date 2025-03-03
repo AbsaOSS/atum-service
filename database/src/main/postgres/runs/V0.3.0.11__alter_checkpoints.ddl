@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,17 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+ UPDATE runs.checkpoints
+ SET measured_by_atum_agent = FALSE
+ WHERE measured_by_atum_agent IS NULL;
 
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import io.circe.{Decoder, Encoder}
-
-case class AdditionalDataItemDTO(
-  value: String,
-  author: String
-)
-
-object AdditionalDataItemDTO {
-  implicit val encoderAdditionalDataItem: Encoder[AdditionalDataItemDTO] = deriveEncoder
-  implicit val decoderAdditionalDataItem: Decoder[AdditionalDataItemDTO] = deriveDecoder
-}
+ALTER TABLE runs.checkpoints
+    ALTER COLUMN measured_by_atum_agent SET DEFAULT FALSE,
+    ALTER COLUMN measured_by_atum_agent SET NOT NULL;

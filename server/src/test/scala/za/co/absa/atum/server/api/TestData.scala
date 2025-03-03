@@ -146,17 +146,17 @@ trait TestData {
   // Initial Additional Data
   protected val additionalDataDTO1: AdditionalDataDTO = AdditionalDataDTO(
     Map(
-      "key1" -> Some(AdditionalDataItemDTO(Some("value1"), "author")),
+      "key1" -> Some(AdditionalDataItemDTO("value1", "author")),
       "key2" -> None,
-      "key3" -> Some(AdditionalDataItemDTO(Some("value3"), "author"))
+      "key3" -> Some(AdditionalDataItemDTO("value3", "author"))
     )
   )
 
   protected val additionalDataDTO2: AdditionalDataDTO = AdditionalDataDTO(
     Map(
-      "key1" -> Some(AdditionalDataItemDTO(Some("value1"), "author")),
-      "key2" -> Some(AdditionalDataItemDTO(Some("value2"), "author")),
-      "key3" -> Some(AdditionalDataItemDTO(Some("value3"), "author"))
+      "key1" -> Some(AdditionalDataItemDTO("value1", "author")),
+      "key2" -> Some(AdditionalDataItemDTO("value2", "author")),
+      "key3" -> Some(AdditionalDataItemDTO("value3", "author"))
     )
   )
 

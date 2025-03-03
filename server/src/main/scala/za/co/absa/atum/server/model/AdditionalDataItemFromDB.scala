@@ -30,7 +30,7 @@ object AdditionalDataItemFromDB {
       dbItems.flatten
         .map(item =>
           item.adValue match {
-            case Some(value) => item.adName -> Some(AdditionalDataItemDTO(Option(value), item.author))
+            case Some(value) => item.adName -> Some(AdditionalDataItemDTO(value, item.author))
             case None => item.adName -> None
           }
         )

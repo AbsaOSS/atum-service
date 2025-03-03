@@ -14,33 +14,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.http
+package za.co.absa.atum.reader.requests
 
-object ApiPaths {
-
-  final val Api = "api"
-  final val V1 = "v1"
-  final val V2 = "v2"
-
-  final val Health = "health"
-  final val ZioMetrics = "zio-metrics"
-
-  object V1Paths {
-
-    final val CreateCheckpoint = "createCheckpoint"
-    final val CreatePartitioning = "createPartitioning"
-
-  }
-
-  object V2Paths {
-
-    final val Partitionings = "partitionings"
-    final val Checkpoints = "checkpoints"
-    final val AdditionalData = "additional-data"
-    final val Flows = "flows"
-    final val Measures = "measures"
-    final val MainFlow = "main-flow"
-
-  }
-
+object QueryParamNames {
+  final val Limit = "limit"
+  final val Offset = "offset"
+  final val CheckpointName = "checkpoint-name"
 }

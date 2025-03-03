@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import cats.effect.unsafe.implicits.global
 import io.circe.Decoder
@@ -24,7 +24,7 @@ import sttp.client3.testing.SttpBackendStub
 import sttp.monad.{MonadAsyncError, MonadError}
 import za.co.absa.atum.model.dto.PartitionDTO
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.basic.RequestResult.RequestResult
+import za.co.absa.atum.reader.core.RequestResult.RequestResult
 import za.co.absa.atum.reader.server.ServerConfig
 
 class Reader_CatsIOUnitTests extends AnyFunSuiteLike {
