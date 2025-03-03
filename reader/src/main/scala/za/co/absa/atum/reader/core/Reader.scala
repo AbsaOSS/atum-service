@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.reader.basic
+package za.co.absa.atum.reader.core
 
 import io.circe.Decoder
 import sttp.client3.{Identity, RequestT, ResponseException, SttpBackend, basicRequest}
@@ -22,8 +22,9 @@ import sttp.client3.circe.asJson
 import sttp.model.Uri
 import sttp.monad.MonadError
 import sttp.monad.syntax._
+import za.co.absa.atum.reader.core.RequestResult._
 import za.co.absa.atum.reader.server.ServerConfig
-import za.co.absa.atum.reader.basic.RequestResult._
+import za.co.absa.atum.reader.exceptions.RequestException.CirceError
 
 /**
  * Reader is a base class for reading data from a remote server.
@@ -34,6 +35,11 @@ import za.co.absa.atum.reader.basic.RequestResult._
  *                        also error handling easily on a higher level
  */
 abstract class Reader[F[_]: MonadError](implicit val serverConfig: ServerConfig, val backend: SttpBackend[F, Any]) {
+
+  protected def mapRequestResultF[I, O](requestResult: RequestResult[I], f: I => F[RequestResult[O]]): F[RequestResult[O]] = requestResult match {
+    case Right(b) => f(b)
+    case Left(a) => MonadError[F].unit(Left(a))
+  }
 
   protected def getQuery[R: Decoder](endpointUri: String, params: Map[String, String] = Map.empty): F[RequestResult[R]] = {
     val endpointToQuery = serverConfig.host + endpointUri

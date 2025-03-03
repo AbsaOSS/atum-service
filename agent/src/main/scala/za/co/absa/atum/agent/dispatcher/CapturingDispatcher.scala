@@ -125,7 +125,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
   ): AdditionalDataDTO = {
     val result = AdditionalDataDTO(
       additionalDataPatchDTO.data.map { case (key, value) =>
-        key -> Some(AdditionalDataItemDTO(Some(value), additionalDataPatchDTO.byUser))
+        key -> Some(AdditionalDataItemDTO(value, additionalDataPatchDTO.byUser))
       }
     )
 

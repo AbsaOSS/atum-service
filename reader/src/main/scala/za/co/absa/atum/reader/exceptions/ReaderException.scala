@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.model.dto
+package za.co.absa.atum.reader.exceptions
 
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import io.circe.{Decoder, Encoder}
-
-case class AdditionalDataItemDTO(
-  value: String,
-  author: String
-)
-
-object AdditionalDataItemDTO {
-  implicit val encoderAdditionalDataItem: Encoder[AdditionalDataItemDTO] = deriveEncoder
-  implicit val decoderAdditionalDataItem: Decoder[AdditionalDataItemDTO] = deriveDecoder
-}
+class ReaderException(message: String) extends Exception(message)

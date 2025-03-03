@@ -136,8 +136,7 @@ lazy val reader = (projectMatrix in file("reader"))
   .settings(
     Setup.commonSettings ++ Seq(
       name := "atum-reader",
-      javacOptions ++= Setup.clientJavacOptions,
-      publish / skip := true // module is not yet finished, so we don't want to publish it
+      javacOptions ++= Setup.clientJavacOptions
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
