@@ -84,8 +84,8 @@ jobs:
           skip-release-notes-label: "no RN"
           print-empty-chapters: false
           chapters-to-pr-without-issue: true
-          row-format-issue: '#_{title}_ {developed-by} {co-authored-by} in {number}'
-          row-format-pr: '#_{title}_ {developed-by} {co-authored-by} in {number}'
+          row-format-issue: '_{title}_ {developed-by} {co-authored-by} in #{number}'
+          row-format-pr: '_{title}_ {developed-by} {co-authored-by} in #{number}'
           row-format-link-pr: true
 
       - name: Create and Push Tag
