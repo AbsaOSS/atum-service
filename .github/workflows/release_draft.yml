@@ -66,14 +66,15 @@ jobs:
         with:
           tag-name: ${{ github.event.inputs.tag-name }}
           chapters: '[
-            {"title": "No entry 🚫", "label": "duplicate"},
-            {"title": "No entry 🚫", "label": "invalid"},
-            {"title": "No entry 🚫", "label": "wontfix"},
-            {"title": "No entry 🚫", "label": "no RN"},
+            {"title": "Entries to skip 🚫", "label": "duplicate"},
+            {"title": "Entries to skip 🚫", "label": "invalid"},
+            {"title": "Entries to skip 🚫", "label": "wontfix"},
+            {"title": "Entries to skip 🚫", "label": "no RN"},
             {"title": "Breaking Changes 💥", "label": "breaking-change"},
             {"title": "New Features 🎉", "label": "enhancement"},
             {"title": "New Features 🎉", "label": "feature"},
             {"title": "Bugfixes 🛠", "label": "bug"},
+            {"title": "Epics 📖", "label": "Epic"},
             {"title": "Infrastructure ⚙️", "label": "infrastructure"},
             {"title": "Silent-live 🤫", "label": "silent-live"},
             {"title": "Documentation 📜", "label": "documentation"}
@@ -84,8 +85,8 @@ jobs:
           skip-release-notes-label: "no RN"
           print-empty-chapters: false
           chapters-to-pr-without-issue: true
-          row-format-issue: '#_{title}_ {developed-by} {co-authored-by} in {number}'
-          row-format-pr: '#_{title}_ {developed-by} {co-authored-by} in {number}'
+          row-format-issue: '_{title}_ {developed-by} {co-authored-by} in #{number}'
+          row-format-pr: '_{title}_ {developed-by} {co-authored-by} in #{number}'
           row-format-link-pr: true
 
       - name: Create and Push Tag
