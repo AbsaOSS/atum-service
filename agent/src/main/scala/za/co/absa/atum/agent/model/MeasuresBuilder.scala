@@ -49,6 +49,8 @@ private [agent] object MeasuresBuilder extends Logging {
         case DistinctRecordCount.measureName => DistinctRecordCount(measuredColumns)
         case SumOfValuesOfColumn.measureName => SumOfValuesOfColumn(measuredColumns.head)
         case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(measuredColumns.head)
+        case SumOfTruncatedValuesOfColumn.measureName => SumOfTruncatedValuesOfColumn(measuredColumns.head)
+        case AbsSumOfTruncatedValuesOfColumn.measureName => AbsSumOfTruncatedValuesOfColumn(measuredColumns.head)
         case SumOfHashesOfColumn.measureName => SumOfHashesOfColumn(measuredColumns.head)
       }
     }.toOption

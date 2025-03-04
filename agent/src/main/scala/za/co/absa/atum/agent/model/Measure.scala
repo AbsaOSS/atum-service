@@ -44,6 +44,8 @@ object AtumMeasure {
     DistinctRecordCount.measureName,
     SumOfValuesOfColumn.measureName,
     AbsSumOfValuesOfColumn.measureName,
+    SumOfTruncatedValuesOfColumn.measureName,
+    AbsSumOfTruncatedValuesOfColumn.measureName,
     SumOfHashesOfColumn.measureName
   )
 
@@ -115,6 +117,42 @@ object AtumMeasure {
   object AbsSumOfValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTotal"
     def apply(measuredCol: String): AbsSumOfValuesOfColumn = AbsSumOfValuesOfColumn(measureName, measuredCol)
+  }
+
+  case class SumOfTruncatedValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
+    //Cast to LongType to remove decimal points then cast back to decimal to ensure compatibility
+    private val columnAggFn: Column => Column = column => sum(column.cast(LongType).cast(DecimalType(38, 0)))
+
+    override def function: MeasurementFunction = (ds: DataFrame) => {
+      val dataType = ds.select(measuredCol).schema.fields(0).dataType
+      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
+      MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
+    }
+
+    override def measuredColumns: Seq[String] = Seq(measuredCol)
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
+  }
+  object SumOfTruncatedValuesOfColumn {
+    private[agent] val measureName: String = "aggregatedTruncTotal"
+    def apply(measuredCol: String): SumOfTruncatedValuesOfColumn = SumOfTruncatedValuesOfColumn(measureName, measuredCol)
+  }
+
+  case class AbsSumOfTruncatedValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
+    //Cast to LongType to remove decimal points then cast back to decimal to ensure compatibility
+    private val columnAggFn: Column => Column = column => sum(abs(column.cast(LongType).cast(DecimalType(38, 0))))
+
+    override def function: MeasurementFunction = (ds: DataFrame) => {
+      val dataType = ds.select(measuredCol).schema.fields(0).dataType
+      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
+      MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
+    }
+
+    override def measuredColumns: Seq[String] = Seq(measuredCol)
+    override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
+  }
+  object AbsSumOfTruncatedValuesOfColumn {
+    private[agent] val measureName: String = "absAggregatedTruncTotal"
+    def apply(measuredCol: String): AbsSumOfTruncatedValuesOfColumn = AbsSumOfTruncatedValuesOfColumn(measureName, measuredCol)
   }
 
   case class SumOfHashesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
