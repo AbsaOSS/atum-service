@@ -39,15 +39,15 @@ final case class UnknownMeasure(measureName: String, measuredColumns: Seq[String
 
 object AtumMeasure {
 
-  val supportedMeasureNames: Seq[String] = Seq(
-    RecordCount.measureName,
-    DistinctRecordCount.measureName,
-    SumOfValuesOfColumn.measureName,
-    AbsSumOfValuesOfColumn.measureName,
-    SumOfTruncatedValuesOfColumn.measureName,
-    AbsSumOfTruncatedValuesOfColumn.measureName,
-    SumOfHashesOfColumn.measureName
-  )
+//  val supportedMeasureNames: Seq[String] = Seq(
+//    RecordCount.measureName,
+//    DistinctRecordCount.measureName,
+//    SumOfValuesOfColumn.measureName,
+//    AbsSumOfValuesOfColumn.measureName,
+//    SumOfTruncatedValuesOfColumn.measureName,
+//    AbsSumOfTruncatedValuesOfColumn.measureName,
+//    SumOfHashesOfColumn.measureName
+//  )
 
   case class RecordCount private (measureName: String) extends AtumMeasure {
     private val columnExpression = count("*")
@@ -121,7 +121,8 @@ object AtumMeasure {
 
   case class SumOfTruncatedValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
     //Cast to LongType to remove decimal points then cast back to decimal to ensure compatibility
-    private val columnAggFn: Column => Column = column => sum(column.cast(LongType).cast(DecimalType(38, 0)))
+    //private val columnAggFn: Column => Column = column => sum(column.cast(LongType).cast(DecimalType(38, 0)))
+    private val columnAggFn: Column => Column = column => sum(when(column >= 0, floor(column)).otherwise(ceil(column)))
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
@@ -139,7 +140,8 @@ object AtumMeasure {
 
   case class AbsSumOfTruncatedValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
     //Cast to LongType to remove decimal points then cast back to decimal to ensure compatibility
-    private val columnAggFn: Column => Column = column => sum(abs(column.cast(LongType).cast(DecimalType(38, 0))))
+    //private val columnAggFn: Column => Column = column => sum(abs(column.cast(LongType).cast(DecimalType(38, 0))))
+    private val columnAggFn: Column => Column = column => sum(abs(when(column >= 0, floor(column)).otherwise(ceil(column))))
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
