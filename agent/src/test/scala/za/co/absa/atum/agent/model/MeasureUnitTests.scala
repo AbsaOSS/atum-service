@@ -127,13 +127,13 @@ class MeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase { se
     assert(dfFullSalarySumResult.resultValue == "2987144")
     assert(dfFullSalarySumResult.resultValueType == ResultValueType.BigDecimalValue)
     assert(dfExtraPersonSalarySumTruncResult.resultValue == "2989144")
-    assert(dfExtraPersonSalarySumTruncResult.resultValueType == ResultValueType.BigDecimalValue)
+    assert(dfExtraPersonSalarySumTruncResult.resultValueType == ResultValueType.LongValue)
     assert(dfFullSalarySumTruncResult.resultValue == "2987144")
-    assert(dfFullSalarySumTruncResult.resultValueType == ResultValueType.BigDecimalValue)
+    assert(dfFullSalarySumTruncResult.resultValueType == ResultValueType.LongValue)
     assert(dfExtraPersonSalaryAbsSumTruncResult.resultValue == "2991144")
-    assert(dfExtraPersonSalaryAbsSumTruncResult.resultValueType == ResultValueType.BigDecimalValue)
+    assert(dfExtraPersonSalaryAbsSumTruncResult.resultValueType == ResultValueType.LongValue)
     assert(dfFullSalaryAbsSumTruncResult.resultValue == "2987144")
-    assert(dfFullSalaryAbsSumTruncResult.resultValueType == ResultValueType.BigDecimalValue)
+    assert(dfFullSalaryAbsSumTruncResult.resultValueType == ResultValueType.LongValue)
   }
 
 }
