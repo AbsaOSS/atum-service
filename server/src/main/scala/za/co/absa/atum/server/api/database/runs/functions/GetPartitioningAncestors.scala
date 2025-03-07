@@ -22,6 +22,7 @@ import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
+import za.co.absa.atum.server.implicits.SeqImplicits.SeqEnhancements
 import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
@@ -29,10 +30,7 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWith
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
-
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
-
-import scala.annotation.tailrec
 
 class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningAncestorsArgs, Option[
@@ -55,27 +53,16 @@ object GetPartitioningAncestors {
   case class GetPartitioningAncestorsResult(ancestor_id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
 
   object GetPartitioningAncestorsResult {
-
-    @tailrec def resultsToPartitioningWithIdDTOs(
-                                                  results: Seq[GetPartitioningAncestorsResult],
-                                                  acc: Seq[PartitioningWithIdDTO]
-                                                ): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
-      if (results.isEmpty) Right(acc)
-      else {
-        val head = results.head
-        val tail = results.tail
-        val decodingResult = head.partitioningJson.as[PartitioningForDB]
-        decodingResult match {
-          case Left(decodingFailure) => Left(decodingFailure)
-          case Right(partitioningForDB) =>
-            val partitioningDTO = partitioningForDB.keys.map { key =>
-              PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-            }
-            resultsToPartitioningWithIdDTOs(tail, acc :+ PartitioningWithIdDTO(head.ancestor_id, partitioningDTO, head.author))
+    def resultsToPartitioningWithIdDTOs(results: Seq[GetPartitioningAncestorsResult]): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
+      results.decode { result =>
+        result.partitioningJson.as[PartitioningForDB].map { partitioningForDB =>
+          val partitioningDTO = partitioningForDB.keys.map { key =>
+            PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
+          }
+          PartitioningWithIdDTO(result.ancestor_id, partitioningDTO, result.author)
         }
       }
     }
-
   }
 
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAncestors] = ZLayer {

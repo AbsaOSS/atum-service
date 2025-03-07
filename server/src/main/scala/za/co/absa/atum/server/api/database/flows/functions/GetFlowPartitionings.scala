@@ -29,10 +29,8 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWith
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
-
+import za.co.absa.atum.server.implicits.SeqImplicits.SeqEnhancements
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
-
-import scala.annotation.tailrec
 
 class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetFlowPartitioningsArgs, Option[
@@ -55,27 +53,16 @@ object GetFlowPartitionings {
   case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
 
   object GetFlowPartitioningsResult {
-
-    @tailrec def resultsToPartitioningWithIdDTOs(
-      results: Seq[GetFlowPartitioningsResult],
-      acc: Seq[PartitioningWithIdDTO]
-    ): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
-      if (results.isEmpty) Right(acc)
-      else {
-        val head = results.head
-        val tail = results.tail
-        val decodingResult = head.partitioningJson.as[PartitioningForDB]
-        decodingResult match {
-          case Left(decodingFailure) => Left(decodingFailure)
-          case Right(partitioningForDB) =>
-            val partitioningDTO = partitioningForDB.keys.map { key =>
-              PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-            }
-            resultsToPartitioningWithIdDTOs(tail, acc :+ PartitioningWithIdDTO(head.id, partitioningDTO, head.author))
+    def resultsToPartitioningWithIdDTOs(results: Seq[GetFlowPartitioningsResult]): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
+      results.decode { result =>
+        result.partitioningJson.as[PartitioningForDB].map { partitioningForDB =>
+          val partitioningDTO = partitioningForDB.keys.map { key =>
+            PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
+          }
+          PartitioningWithIdDTO(result.id, partitioningDTO, result.author)
         }
       }
     }
-
   }
 
   val layer: URLayer[PostgresDatabaseProvider, GetFlowPartitionings] = ZLayer {

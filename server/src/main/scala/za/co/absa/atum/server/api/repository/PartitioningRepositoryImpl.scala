@@ -28,6 +28,7 @@ import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import PaginatedResult.{ResultHasMore, ResultNoMore}
+import za.co.absa.atum.server.implicits.SeqImplicits.SeqEnhancements
 
 class PartitioningRepositoryImpl(
                                   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
@@ -139,7 +140,7 @@ class PartitioningRepositoryImpl(
     ).map(_.flatten)
       .flatMap { partitioningResults =>
         ZIO
-          .fromEither(GetFlowPartitioningsResult.resultsToPartitioningWithIdDTOs(partitioningResults, Seq.empty))
+          .fromEither(GetFlowPartitioningsResult.resultsToPartitioningWithIdDTOs(partitioningResults))
           .mapBoth(
             error => GeneralDatabaseError(error.getMessage),
             partitionings => {
@@ -161,7 +162,7 @@ class PartitioningRepositoryImpl(
     ).map(_.flatten)
       .flatMap { partitioningResults =>
         ZIO
-          .fromEither(GetPartitioningAncestorsResult.resultsToPartitioningWithIdDTOs(partitioningResults, Seq.empty))
+          .fromEither(GetPartitioningAncestorsResult.resultsToPartitioningWithIdDTOs(partitioningResults))
           .mapBoth(
             error => GeneralDatabaseError(error.getMessage),
             partitionings => {
