@@ -159,6 +159,19 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getFlowPartitioningsMockLayer = ZLayer.succeed(getFlowPartitioningsMock)
 
+  // Create Partitioning Mocks
+  private val getPartitioningMainFlowMock = mock(classOf[GetPartitioningMainFlow])
+
+  when(getPartitioningMainFlowMock.apply(1L)).thenReturn(
+    ZIO.right(Row(FunctionStatus(0, "success"), Some(flowDTO1))))
+  when(getPartitioningMainFlowMock.apply(2L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getPartitioningMainFlowMock.apply(3L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(50, "Main flow not found"))))
+  when(getPartitioningMainFlowMock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  private val getPartitioningMainFlowMockLayer = ZLayer.succeed(getPartitioningMainFlowMock)
+
   // Get Ancestors By Id Mocks
   private val getPartitioningAncestorsMock = mock(classOf[GetPartitioningAncestors])
 
@@ -172,19 +185,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   ).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getPartitioningAncestorsMockLayer = ZLayer.succeed(getPartitioningAncestorsMock)
-
-  // Create Partitioning Mocks
-  private val getPartitioningMainFlowMock = mock(classOf[GetPartitioningMainFlow])
-
-  when(getPartitioningMainFlowMock.apply(1L)).thenReturn(
-    ZIO.right(Row(FunctionStatus(0, "success"), Some(flowDTO1))))
-  when(getPartitioningMainFlowMock.apply(2L))
-    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
-  when(getPartitioningMainFlowMock.apply(3L))
-    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(50, "Main flow not found"))))
-  when(getPartitioningMainFlowMock.apply(4L)).thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
-
-  private val getPartitioningMainFlowMockLayer = ZLayer.succeed(getPartitioningMainFlowMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -376,6 +376,23 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
+      suite("GetPartitioningSuite")(
+        test("GetPartitioning - Returns expected PartitioningWithIdDTO") {
+          for {
+            result <- PartitioningRepository.getPartitioning(partitioningDTO1)
+          } yield assertTrue(result == partitioningWithIdDTO1)
+        },
+        test("GetPartitioning - Returns expected NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioning(partitioningDTO2).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("GetPartitioning - Returns expected GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioning(partitioningDTO3).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
+      ),
       suite("GetPartitioningAncestorsSuite")(
         test("Returns expected ResultNoMore[PartitioningWithIdDTO]") {
           for {
@@ -397,23 +414,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             failsWithA[GeneralDatabaseError]
           )
         }
-      ),
-      suite("GetPartitioningSuite")(
-        test("GetPartitioning - Returns expected PartitioningWithIdDTO") {
-          for {
-            result <- PartitioningRepository.getPartitioning(partitioningDTO1)
-          } yield assertTrue(result == partitioningWithIdDTO1)
-        },
-        test("GetPartitioning - Returns expected NotFoundDatabaseError") {
-          assertZIO(PartitioningRepository.getPartitioning(partitioningDTO2).exit)(
-            failsWithA[NotFoundDatabaseError]
-          )
-        },
-        test("GetPartitioning - Returns expected GeneralDatabaseError") {
-          assertZIO(PartitioningRepository.getPartitioning(partitioningDTO3).exit)(
-            failsWithA[GeneralDatabaseError]
-          )
-        }
       )
     )
   }.provide(
@@ -427,8 +427,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     getPartitioningMockLayer,
     getPartitioningMeasuresV2MockLayer,
     getFlowPartitioningsMockLayer,
-    getPartitioningAncestorsMockLayer,
-    getPartitioningMainFlowMockLayer
+    getPartitioningMainFlowMockLayer,
+    getPartitioningAncestorsMockLayer
   )
 
 }

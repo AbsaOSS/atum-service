@@ -236,25 +236,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("GetPartitioningAncestorsSuite")(
-        test("Returns expected PaginatedResponse[PartitioningWithIdDTO] with more data available") {
-          for {
-            result <- PartitioningController.getPartitioningAncestors(1111L, Some(1), Some(0))
-            expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = true), uuid1)
-            actual = result.copy(requestId = uuid1)
-          } yield assertTrue(actual == expected)
-        },
-        test("Returns expected InternalServerErrorResponse when service call fails with GeneralServiceError") {
-          assertZIO(PartitioningController.getPartitioningAncestors(8888L, Some(1), Some(0)).exit)(
-            failsWithA[InternalServerErrorResponse]
-          )
-        },
-        test("Returns expected NotFoundErrorResponse when service call fails with NotFoundServiceError") {
-          assertZIO(PartitioningController.getPartitioningAncestors(9999L, Some(1), Some(0)).exit)(
-            failsWithA[NotFoundErrorResponse]
-          )
-        }
-      ),
       suite("GetPartitioningMainFlowSuite")(
         test("Returns expected FlowDTO") {
           for {
@@ -271,6 +252,25 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.getPartitioningMainFlow(999L).exit)(
             failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+      suite("GetPartitioningAncestorsSuite")(
+        test("Returns expected PaginatedResponse[PartitioningWithIdDTO] with more data available") {
+          for {
+            result <- PartitioningController.getPartitioningAncestors(1111L, Some(1), Some(0))
+            expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = true), uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected InternalServerErrorResponse when service call fails with GeneralServiceError") {
+          assertZIO(PartitioningController.getPartitioningAncestors(8888L, Some(1), Some(0)).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundErrorResponse when service call fails with NotFoundServiceError") {
+          assertZIO(PartitioningController.getPartitioningAncestors(9999L, Some(1), Some(0)).exit)(
+            failsWithA[NotFoundErrorResponse]
           )
         }
       )

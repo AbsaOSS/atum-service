@@ -28,20 +28,19 @@ import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import PaginatedResult.{ResultHasMore, ResultNoMore}
-import za.co.absa.atum.server.implicits.SeqImplicits.SeqEnhancements
 
 class PartitioningRepositoryImpl(
-                                  createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
-                                  createPartitioningFn: CreatePartitioning,
-                                  getPartitioningMeasuresFn: GetPartitioningMeasures,
-                                  createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
-                                  getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
-                                  getPartitioningByIdFn: GetPartitioningById,
-                                  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
-                                  getPartitioningFn: GetPartitioning,
-                                  getFlowPartitioningsFn: GetFlowPartitionings,
-                                  getPartitioningAncestorsFn: GetPartitioningAncestors,
-                                  getPartitioningMainFlowFn: GetPartitioningMainFlow
+  createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
+  createPartitioningFn: CreatePartitioning,
+  getPartitioningMeasuresFn: GetPartitioningMeasures,
+  createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
+  getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
+  getPartitioningByIdFn: GetPartitioningById,
+  getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
+  getPartitioningFn: GetPartitioning,
+  getFlowPartitioningsFn: GetFlowPartitionings,
+  getPartitioningMainFlowFn: GetPartitioningMainFlow,
+  getPartitioningAncestorsFn: GetPartitioningAncestors,
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -151,11 +150,21 @@ class PartitioningRepositoryImpl(
       }
   }
 
+  override def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO] = {
+    dbSingleResultCallWithStatus(
+      getPartitioningMainFlowFn(partitioningId),
+      "getPartitioningMainFlow"
+    ).flatMap {
+      case Some(flowDTO) => ZIO.succeed(flowDTO)
+      case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
+    }
+  }
+
   override def getPartitioningAncestors(
-   partitioningId: Long,
-   limit: Option[Int],
-   offset: Option[Long]
-  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+                                         partitioningId: Long,
+                                         limit: Option[Int],
+                                         offset: Option[Long]
+                                       ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAncestorsFn(GetPartitioningAncestorsArgs(partitioningId, limit, offset)),
       "getPartitioningAncestors"
@@ -173,16 +182,6 @@ class PartitioningRepositoryImpl(
       }
   }
 
-  override def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO] = {
-    dbSingleResultCallWithStatus(
-      getPartitioningMainFlowFn(partitioningId),
-      "getPartitioningMainFlow"
-    ).flatMap {
-      case Some(flowDTO) => ZIO.succeed(flowDTO)
-      case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
-    }
-  }
-
 }
 
 object PartitioningRepositoryImpl {
@@ -196,8 +195,8 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMeasuresById
       with GetPartitioning
       with GetFlowPartitionings
-      with GetPartitioningAncestors
-      with GetPartitioningMainFlow,
+      with GetPartitioningMainFlow
+      with GetPartitioningAncestors,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -222,8 +221,8 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasuresById,
       getPartitioning,
       getFlowPartitionings,
-      getPartitioningAncestors,
-      getPartitioningMainFlow
+      getPartitioningMainFlow,
+      getPartitioningAncestors
     )
   }
 
