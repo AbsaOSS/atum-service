@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.controller
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.{ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse}
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.api.http.ApiPaths.V2Paths
+import za.co.absa.atum.model.ApiPaths.V2Paths
 import za.co.absa.atum.server.api.service.PartitioningService
 import za.co.absa.atum.model.envelopes.SuccessResponse._
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonDeserializationSyntax
@@ -56,7 +56,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
       additionalDataForContext <- ZIO.succeed {
         additionalData.data.map { case (key, value) =>
-          key -> value.flatMap(_.value)
+          key -> value.map(_.value)
         }
       }
 

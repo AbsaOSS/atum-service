@@ -135,16 +135,16 @@ trait Routes extends Endpoints with ServerOptions {
       //      postCheckpointEndpointV2,
       createPartitioningEndpointV1,
       //      postPartitioningEndpointV2,
+      getPartitioningAdditionalDataEndpointV2,
       patchPartitioningAdditionalDataEndpointV2,
-      //      getPartitioningCheckpointsEndpointV2,
-      //      getPartitioningCheckpointEndpointV2,
-      //      getPartitioningMeasuresEndpointV2,
+      getPartitioningCheckpointsEndpointV2,
+      getPartitioningCheckpointEndpointV2,
       getPartitioningEndpointV2,
+      getPartitioningMeasuresEndpointV2,
+      getFlowPartitioningsEndpointV2,
+      getPartitioningMainFlowEndpointV2,
+      getFlowCheckpointsEndpointV2,
       getPartitioningAncestorsEndpointV2,
-      //      getPartitioningMeasuresEndpointV2,
-      //      getFlowPartitioningsEndpointV2,
-      //      getPartitioningMainFlowEndpointV2,
-      //      getFlowCheckpointsEndpointV2,
       healthEndpoint
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))

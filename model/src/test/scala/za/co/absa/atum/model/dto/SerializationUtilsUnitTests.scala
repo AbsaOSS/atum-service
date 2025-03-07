@@ -31,8 +31,8 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
   "asJsonString" should "serialize AdditionalDataDTO into json string" in {
     val additionalDataDTO = AdditionalDataDTO(
       Map[String, Option[AdditionalDataItemDTO]](
-        "key1" -> Some(AdditionalDataItemDTO(Some("val1"), "testAuthor")),
-        "key2" -> Some(AdditionalDataItemDTO(Some("val2"), "testAuthor")),
+        "key1" -> Some(AdditionalDataItemDTO("val1", "testAuthor")),
+        "key2" -> Some(AdditionalDataItemDTO("val2", "testAuthor")),
         "key3" -> None
       )
     )
@@ -55,8 +55,8 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
 
     val expectedAdditionalDataDTO = AdditionalDataDTO(
       Map[String, Option[AdditionalDataItemDTO]](
-        "key1" -> Some(AdditionalDataItemDTO(Some("val1"), "testAuthor")),
-        "key2" -> Some(AdditionalDataItemDTO(Some("val2"), "testAuthor"))
+        "key1" -> Some(AdditionalDataItemDTO("val1", "testAuthor")),
+        "key2" -> Some(AdditionalDataItemDTO("val2", "testAuthor"))
       )
     )
     val actualAdditionalDataDTO = additionalDataDTOJson.as[AdditionalDataDTO]

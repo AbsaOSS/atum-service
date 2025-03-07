@@ -24,7 +24,7 @@ import sttp.tapir.typelevel.MatchType
 import sttp.tapir.ztapir._
 import sttp.tapir.{EndpointOutput, PublicEndpoint}
 import za.co.absa.atum.model.envelopes.{BadRequestResponse, ConflictErrorResponse, ErrorInDataErrorResponse, ErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
-import za.co.absa.atum.server.api.http.ApiPaths._
+import za.co.absa.atum.model.ApiPaths._
 
 import java.util.UUID
 
