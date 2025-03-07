@@ -40,7 +40,7 @@ class PartitioningRepositoryImpl(
   getPartitioningFn: GetPartitioning,
   getFlowPartitioningsFn: GetFlowPartitionings,
   getPartitioningMainFlowFn: GetPartitioningMainFlow,
-  getPartitioningAncestorsFn: GetPartitioningAncestors,
+  getPartitioningAncestorsFn: GetPartitioningAncestors
 ) extends PartitioningRepository
     with BaseRepository {
 

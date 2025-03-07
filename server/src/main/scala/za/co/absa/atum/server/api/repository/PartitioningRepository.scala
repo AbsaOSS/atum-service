@@ -57,7 +57,6 @@ trait PartitioningRepository {
 
   def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO]
 
-
   def getPartitioningAncestors(
                                 partitioningId: Long,
                                 limit: Option[Int],
