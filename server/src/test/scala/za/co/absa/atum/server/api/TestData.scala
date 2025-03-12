@@ -20,12 +20,13 @@ import io.circe.{Json, parser}
 import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.model.{ResultValueType, dto}
+import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, CheckpointItemWithPartitioningFromDB, MeasureFromDB, PartitioningFromDB}
 
 import java.time.ZonedDateTime
-import java.util.{Base64, UUID}
+import java.util.UUID
 
 trait TestData {
 
@@ -85,6 +86,21 @@ trait TestData {
 
   protected val getFlowPartitioningsResult2: GetFlowPartitioningsResult = GetFlowPartitioningsResult(
     id = 1111L,
+    partitioningJson = partitioningAsJson,
+    author = "author",
+    hasMore = true
+  )
+
+  //Ancestor Partitionings
+  protected val getPartitioningAncestorsResult1: GetPartitioningAncestorsResult = GetPartitioningAncestorsResult(
+    ancestor_id = 1L,
+    partitioningJson = partitioningAsJson,
+    author = "author",
+    hasMore = false
+  )
+
+  protected val getPartitioningAncestorsResult2: GetPartitioningAncestorsResult = GetPartitioningAncestorsResult(
+    ancestor_id = 1111L,
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = true
