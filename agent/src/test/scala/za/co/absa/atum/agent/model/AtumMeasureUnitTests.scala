@@ -32,12 +32,12 @@ class AtumMeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase 
   "Measure" should "be based on the dataframe" in {
 
     // Measures
-    val measureIds: AtumMeasure = RecordCount()
-    val salaryAbsSum: AtumMeasure = AbsSumOfValuesOfColumn(
-      measuredCol = "salary"
-    )
-    val salarySum = SumOfValuesOfColumn(measuredCol = "salary")
-    val sumOfHashes: AtumMeasure = SumOfHashesOfColumn(measuredCol = "id")
+    val measureIds: AtumMeasure     = RecordCount()
+    val salaryAbsSum: AtumMeasure   = AbsSumOfValuesOfColumn(measuredCol = "salary")
+    val salarySum                   = SumOfValuesOfColumn(measuredCol = "salary")
+    val salaryTruncSum              = SumOfTruncatedValuesOfColumn(measuredCol = "salary")
+    val salaryAbsTruncSum           = AbsSumOfTruncatedValuesOfColumn(measuredCol = "salary")
+    val sumOfHashes: AtumMeasure    = SumOfHashesOfColumn(measuredCol = "id")
 
     // AtumContext contains `Measurement`
     val atumContextInstanceWithRecordCount = AtumAgent
@@ -86,12 +86,34 @@ class AtumMeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase 
         .removeMeasure(salaryAbsSum)
     )
 
+    val dfExtraPersonWithDecimalSalary = spark
+      .createDataFrame(
+        Seq(
+          ("id", "firstName", "lastName", "email", "email2", "profession", "3000.98"),
+          ("id", "firstName", "lastName", "email", "email2", "profession", "-1000.76")
+        )
+      )
+      .toDF("id", "firstName", "lastName", "email", "email2", "profession", "salary")
+
+    val dfExtraDecimalPerson = dfExtraPersonWithDecimalSalary.union(dfPersons)
+
+    dfExtraDecimalPerson.createCheckpoint("a checkpoint name")(
+      atumContextWithSalaryAbsMeasure
+        .removeMeasure(measureIds)
+        .removeMeasure(salaryAbsSum)
+    )
+
+
     val dfPersonCntResult = measureIds.function(dfPersons)
     val dfFullCntResult = measureIds.function(dfFull)
     val dfFullSalaryAbsSumResult = salaryAbsSum.function(dfFull)
     val dfFullHashResult = sumOfHashes.function(dfFull)
     val dfExtraPersonSalarySumResult = salarySum.function(dfExtraPerson)
     val dfFullSalarySumResult = salarySum.function(dfFull)
+    val dfExtraPersonSalarySumTruncResult = salaryTruncSum.function(dfExtraDecimalPerson)
+    val dfFullSalarySumTruncResult = salaryTruncSum.function(dfFull)
+    val dfExtraPersonSalaryAbsSumTruncResult = salaryAbsTruncSum.function(dfExtraDecimalPerson)
+    val dfFullSalaryAbsSumTruncResult = salaryAbsTruncSum.function(dfFull)
 
     // Assertions
     assert(dfPersonCntResult.resultValue == "1000")
@@ -106,6 +128,14 @@ class AtumMeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase 
     assert(dfExtraPersonSalarySumResult.resultValueType == ResultValueType.BigDecimalValue)
     assert(dfFullSalarySumResult.resultValue == "2987144")
     assert(dfFullSalarySumResult.resultValueType == ResultValueType.BigDecimalValue)
+    assert(dfExtraPersonSalarySumTruncResult.resultValue == "2989144")
+    assert(dfExtraPersonSalarySumTruncResult.resultValueType == ResultValueType.LongValue)
+    assert(dfFullSalarySumTruncResult.resultValue == "2987144")
+    assert(dfFullSalarySumTruncResult.resultValueType == ResultValueType.LongValue)
+    assert(dfExtraPersonSalaryAbsSumTruncResult.resultValue == "2991144")
+    assert(dfExtraPersonSalaryAbsSumTruncResult.resultValueType == ResultValueType.LongValue)
+    assert(dfFullSalaryAbsSumTruncResult.resultValue == "2987144")
+    assert(dfFullSalaryAbsSumTruncResult.resultValueType == ResultValueType.LongValue)
   }
 
   "AbsSumOfValuesOfColumn" should "return expected value" in {
@@ -187,4 +217,33 @@ class AtumMeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase 
     assert(result.resultValueType == ResultValueType.BigDecimalValue)
   }
 
+  "SumTruncOfValuesOfColumn" should "return expected value" in {
+    val distinctCount = SumOfTruncatedValuesOfColumn("colA")
+
+    val data = List(Row("1.98", "b1"), Row("-1.76", "b2"), Row("1.54", "b2"), Row("1.32", "b2"))
+    val rdd = spark.sparkContext.parallelize(data)
+
+    val schema = StructType(Array(StructField("colA", StringType), StructField("colB", StringType)))
+    val df = spark.createDataFrame(rdd, schema)
+
+    val result = distinctCount.function(df)
+
+    assert(result.resultValue == "2")
+    assert(result.resultValueType == ResultValueType.LongValue)
+  }
+
+  "AbsSumTruncOfValuesOfColumn" should "return expected value" in {
+    val distinctCount = AbsSumOfTruncatedValuesOfColumn("colA")
+
+    val data = List(Row("1.98", "b1"), Row("-1.76", "b2"), Row("1.54", "b2"), Row("-1.32", "b2"))
+    val rdd = spark.sparkContext.parallelize(data)
+
+    val schema = StructType(Array(StructField("colA", StringType), StructField("colB", StringType)))
+    val df = spark.createDataFrame(rdd, schema)
+
+    val result = distinctCount.function(df)
+
+    assert(result.resultValue == "4")
+    assert(result.resultValueType == ResultValueType.LongValue)
+  }
 }
