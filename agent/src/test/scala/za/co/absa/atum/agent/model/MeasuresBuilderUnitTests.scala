@@ -28,6 +28,8 @@ class MeasuresBuilderUnitTests extends AnyFlatSpecLike {
       MeasureDTO("distinctCount", Seq("distinctCountCol")),
       MeasureDTO("aggregatedTotal", Seq("aggregatedTotalCol")),
       MeasureDTO("absAggregatedTotal", Seq("absAggregatedTotalCol")),
+      MeasureDTO("aggregatedTruncTotal", Seq("aggregatedTruncTotalCol")),
+      MeasureDTO("absAggregatedTruncTotal", Seq("absAggregatedTruncTotalCol")),
       MeasureDTO("hashCrc32", Seq("hashCrc32Col"))
     )
 
@@ -36,6 +38,8 @@ class MeasuresBuilderUnitTests extends AnyFlatSpecLike {
       DistinctRecordCount(Seq("distinctCountCol")),
       SumOfValuesOfColumn("aggregatedTotalCol"),
       AbsSumOfValuesOfColumn("absAggregatedTotalCol"),
+      SumOfTruncatedValuesOfColumn("aggregatedTruncTotalCol"),
+      AbsSumOfTruncatedValuesOfColumn("absAggregatedTruncTotalCol"),
       SumOfHashesOfColumn("hashCrc32Col")
     )
 
