@@ -56,7 +56,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   )
 
   //Data Preparation Step
-  def DataPreparation(): (Long, Long, Long) = {
+  def dataPreparation(): (Long, Long, Long) = {
     val nonExistentID = 9999L
 
     val parentPartitioningIDTest = function(createPartitioningFn)
@@ -109,7 +109,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   //Check for child partitioning
   test("Child Partitioning not found") {
 
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
 
     function(updateParentFn)
       .setParam("i_id_partitioning", nonExistentID)
@@ -129,7 +129,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   //Check for Parent Partitioning
   test("Parent Partitioning not found") {
 
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
 
     function(updateParentFn)
       .setParam("i_id_partitioning", childPartitioningIDTest)
@@ -149,7 +149,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   //Update Parent with no additional data and no measurements
   test("Parent Partitioning Updated no additional data and no measurements") {
 
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
 
     function(updateParentFn)
       .setParam("i_id_partitioning", childPartitioningIDTest)
@@ -191,7 +191,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   //Update Parent with additional data and no measurements
   test("Parent Partitioning Updated with additional data and no measurements") {
 
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
 
     function(updateParentFn)
       .setParam("i_id_partitioning", childPartitioningIDTest)
@@ -243,7 +243,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   //Update Parent with additional data and with measurements
   test("Parent Partitioning Updated with additional data and with measurements") {
 
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = DataPreparation()
+    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
 
     function(updateParentFn)
       .setParam("i_id_partitioning", childPartitioningIDTest)
