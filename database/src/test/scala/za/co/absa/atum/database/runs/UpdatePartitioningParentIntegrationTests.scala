@@ -103,7 +103,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
         .add("measured_columns", CustomDBType("""{"col2"}""", "TEXT[]"))
     )
 
-    return (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest)
+    (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest)
   }
 
   //Check for child partitioning
