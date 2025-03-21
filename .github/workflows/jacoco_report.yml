@@ -90,7 +90,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{ env.coverage-overall }}
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
-          title: JaCoCo model module code coverage report - scala ${{ env.scalaLong }}
+          title: Old JaCoCo model module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Add coverage to PR (agent)
         if: steps.jacocorun.outcome == 'success'
@@ -101,7 +101,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{ env.coverage-overall }}
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
-          title: JaCoCo agent module code coverage report - scala ${{ env.scalaLong }}
+          title: Old JaCoCo agent module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Add coverage to PR (reader)
         if: steps.jacocorun.outcome == 'success'
@@ -112,7 +112,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{ env.coverage-overall }}
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
-          title: JaCoCo reader module code coverage report - scala ${{ env.scalaLong }}
+          title: Old JaCoCo reader module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Add coverage to PR (server)
         if: steps.jacocorun.outcome == 'success'
@@ -123,7 +123,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: ${{env.coverage-overall }}
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
-          title: JaCoCo server module code coverage report - scala ${{ env.scalaLong }}
+          title: Old JaCoCo server module code coverage report - scala ${{ env.scalaLong }}
           update-comment: true
       - name: Get the Coverage info
         if: steps.jacocorun.outcome == 'success'
