@@ -74,7 +74,7 @@ jobs:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
             **/target/**/jacoco/report/jacoco.xml
-          title: JaCoCo code coverage report - Scala ${{ matrix.scala }}
+          title: JaCoCo code coverage report - scala ${{ env.scalaLong }}
           sensitivity: "detail"
           comment-mode: 'multi'
           min-coverage-overall: ${{ env.coverage-overall }}
