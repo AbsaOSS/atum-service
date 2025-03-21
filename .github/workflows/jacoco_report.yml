@@ -62,6 +62,25 @@ jobs:
         continue-on-error: true
         id: jacocorun
         run: sbt jacoco
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Add JaCoCo Report in PR comments
+        id: jacoco
+        uses: MoranaApps/jacoco-report@feature/4-Integrate-with-1st-project
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}'
+          paths: |
+            **/target/site/jacoco/jacoco.xml
+          title: JaCoCo code coverage report - Scala ${{ matrix.scala }}
+          sensitivity: "detail"
+          comment-mode: 'multi'
+          min-coverage-overall: ${{ env.coverage-overall }}
+          min-coverage-changed-files: ${{ env.coverage-changed-files }}
+          debug: 'true'
+
       - name: Add coverage to PR (model)
         if: steps.jacocorun.outcome == 'success'
         id: jacoco-model

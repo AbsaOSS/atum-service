@@ -34,6 +34,8 @@ object ApiPaths {
 
   object V2Paths {
 
+
+
     final val Partitionings = "partitionings"
     final val Checkpoints = "checkpoints"
     final val AdditionalData = "additional-data"

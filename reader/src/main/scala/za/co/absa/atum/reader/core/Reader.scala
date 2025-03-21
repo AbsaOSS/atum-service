@@ -41,6 +41,9 @@ abstract class Reader[F[_]: MonadError](implicit val serverConfig: ServerConfig,
     case Left(a) => MonadError[F].unit(Left(a))
   }
 
+
+
+
   protected def getQuery[R: Decoder](endpointUri: String, params: Map[String, String] = Map.empty): F[RequestResult[R]] = {
     val endpointToQuery = serverConfig.host + endpointUri
     val uri = Uri.unsafeParse(endpointToQuery).addParams(params)

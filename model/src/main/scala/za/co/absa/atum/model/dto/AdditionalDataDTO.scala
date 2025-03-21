@@ -26,4 +26,5 @@ case class AdditionalDataDTO(
 object AdditionalDataDTO {
   implicit val encodeAdditionalDataDTO: Encoder[AdditionalDataDTO] = deriveEncoder
   implicit val decodeAdditionalDataDTO: Decoder[AdditionalDataDTO] = deriveDecoder
+
 }

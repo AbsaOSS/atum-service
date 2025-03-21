@@ -41,6 +41,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
       override def apply(queue: Queue[CapturedCall]): Queue[CapturedCall] = Queue.empty
     }
     capturesRef.updateAndGet(updateFunction)
+
   }
 
   /**
