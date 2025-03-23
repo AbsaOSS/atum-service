@@ -15,7 +15,7 @@
 
 import com.github.sbt.jacoco.JacocoKeys.JacocoReportFormats
 import com.github.sbt.jacoco.report.JacocoReportSettings
-import za.co.absa.commons.version.Versio
+import za.co.absa.commons.version.Version
 
 object JacocoSetup {
 
