@@ -45,10 +45,6 @@ trait BaseController {
 
   }
 
-
-
-
-
   protected def mapToSingleSuccessResponse[A](
     effect: IO[ErrorResponse, A]
   ): IO[ErrorResponse, SingleSuccessResponse[A]] = {

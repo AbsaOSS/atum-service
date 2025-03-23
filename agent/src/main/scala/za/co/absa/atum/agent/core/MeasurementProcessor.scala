@@ -42,5 +42,4 @@ object MeasurementProcessor {
    * @return Result of measurement.
    */
   type MeasurementFunction = DataFrame => MeasureResult
-
 }
