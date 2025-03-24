@@ -93,14 +93,14 @@ trait TestData {
 
   //Ancestor Partitionings
   protected val getPartitioningAncestorsResult1: GetPartitioningAncestorsResult = GetPartitioningAncestorsResult(
-    ancestor_id = 1L,
+    id = 1L,
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = false
   )
 
   protected val getPartitioningAncestorsResult2: GetPartitioningAncestorsResult = GetPartitioningAncestorsResult(
-    ancestor_id = 1111L,
+    id = 1111L,
     partitioningJson = partitioningAsJson,
     author = "author",
     hasMore = true

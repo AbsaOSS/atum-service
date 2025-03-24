@@ -16,30 +16,44 @@
 
 package za.co.absa.atum.server.implicits
 
-import io.circe.DecodingFailure
-import scala.annotation.tailrec
+import io.circe.{Decoder, DecodingFailure, Json}
+import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.server.model.PartitioningForDB
 
 object SeqImplicits {
 
-  implicit class SeqEnhancements[T](val seq:Seq[T]) extends AnyVal {
-    def decode[R](decodingFnc: T=>Either[DecodingFailure, R]): Either[DecodingFailure, Seq[R]] = {
-      decodingStep(seq, Seq.empty, decodingFnc)
-    }
+  trait PartitioningResult[T] {
+    def partitioningJson: T
+    def author: String
+    def id: Long
+    def hasMore: Boolean
 
-    @tailrec
-    private def decodingStep[R](
-        input: Seq[T],
-        acc: Seq[R],
-        fnc: T=>Either[DecodingFailure, R]
-      ): Either[DecodingFailure, Seq[R]] = {
-      input match {
-        case head :: tail =>
-          fnc(head) match {
-            case Left(decodingFailure) => Left(decodingFailure)
-            case Right(item)           => decodingStep(tail, acc :+ item, fnc)
-          }
-        case _            => Right(acc)
+    def toPartitioningWithIdDTO(implicit decoder: Decoder[PartitioningForDB]): Either[DecodingFailure, PartitioningWithIdDTO] = {
+      implicitly[Decoder[PartitioningForDB]].decodeJson(partitioningJson.asInstanceOf[Json]).map { partitioningForDB =>
+        val partitioningDTO = partitioningForDB.keys.map { key =>
+          PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
+        }
+        PartitioningWithIdDTO(id, partitioningDTO, author)
       }
+    }
+  }
+
+  object PartitioningResult {
+
+    def resultsToPartitioningWithIdDTOs[T <: PartitioningResult[_]](results: Seq[T]): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
+      results.seqDecode(_.toPartitioningWithIdDTO)
+    }
+  }
+
+  implicit class SeqEnhancements[T](val seq: Seq[T]) extends AnyVal {
+
+    def seqDecode[R](decodingFnc: T => Either[DecodingFailure, R]): Either[DecodingFailure, Seq[R]] = {
+      seq.foldLeft(Right(List.empty[R]): Either[DecodingFailure, List[R]]) { (acc, item) =>
+        for {
+          decodedList <- acc
+          decodedItem <- decodingFnc(item)
+        } yield decodedItem :: decodedList
+      }.map(_.reverse)
     }
   }
 }

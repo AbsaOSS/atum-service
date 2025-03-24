@@ -17,13 +17,11 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import io.circe.{DecodingFailure, Json}
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
+import io.circe.Json
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
-import za.co.absa.atum.server.implicits.SeqImplicits.SeqEnhancements
-import za.co.absa.atum.server.model.PartitioningForDB
+import za.co.absa.atum.server.implicits.SeqImplicits.PartitioningResult
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
@@ -50,20 +48,7 @@ class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine
 
 object GetPartitioningAncestors {
   case class GetPartitioningAncestorsArgs(partitioningId: Long, limit: Option[Int], offset: Option[Long])
-  case class GetPartitioningAncestorsResult(ancestor_id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
-
-  object GetPartitioningAncestorsResult {
-    def resultsToPartitioningWithIdDTOs(results: Seq[GetPartitioningAncestorsResult]): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
-      results.decode { result =>
-        result.partitioningJson.as[PartitioningForDB].map { partitioningForDB =>
-          val partitioningDTO = partitioningForDB.keys.map { key =>
-            PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-          }
-          PartitioningWithIdDTO(result.ancestor_id, partitioningDTO, result.author)
-        }
-      }
-    }
-  }
+  case class GetPartitioningAncestorsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean) extends PartitioningResult[Json]
 
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAncestors] = ZLayer {
     for {

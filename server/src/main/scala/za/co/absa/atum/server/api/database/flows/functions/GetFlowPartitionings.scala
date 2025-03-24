@@ -17,19 +17,17 @@
 package za.co.absa.atum.server.api.database.flows.functions
 
 import doobie.implicits.toSqlInterpolator
-import io.circe.{DecodingFailure, Json}
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
+import io.circe.Json
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
-import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
-import za.co.absa.atum.server.implicits.SeqImplicits.SeqEnhancements
+import za.co.absa.atum.server.implicits.SeqImplicits.PartitioningResult
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
 class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
@@ -50,20 +48,7 @@ class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Tas
 
 object GetFlowPartitionings {
   case class GetFlowPartitioningsArgs(flowId: Long, limit: Option[Int], offset: Option[Long])
-  case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
-
-  object GetFlowPartitioningsResult {
-    def resultsToPartitioningWithIdDTOs(results: Seq[GetFlowPartitioningsResult]): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
-      results.decode { result =>
-        result.partitioningJson.as[PartitioningForDB].map { partitioningForDB =>
-          val partitioningDTO = partitioningForDB.keys.map { key =>
-            PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-          }
-          PartitioningWithIdDTO(result.id, partitioningDTO, result.author)
-        }
-      }
-    }
-  }
+  case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean) extends PartitioningResult[Json]
 
   val layer: URLayer[PostgresDatabaseProvider, GetFlowPartitionings] = ZLayer {
     for {
