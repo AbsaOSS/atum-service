@@ -80,4 +80,3 @@ jobs:
           comment-mode: 'multi'
           min-coverage-overall: ${{ env.coverage-overall }}
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
-          debug: 'true'
