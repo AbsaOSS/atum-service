@@ -17,28 +17,20 @@ import com.github.sbt.jacoco.JacocoKeys.JacocoReportFormats
 import com.github.sbt.jacoco.report.JacocoReportSettings
 import za.co.absa.commons.version.Version
 
-import java.time.format.DateTimeFormatter
-import java.time.{ZoneId, ZonedDateTime}
-
 object JacocoSetup {
 
   private val jacocoReportCommonSettings: JacocoReportSettings = JacocoReportSettings(
     formats = Seq(JacocoReportFormats.HTML, JacocoReportFormats.XML)
   )
 
-  private def now: String = {
-    val utcDateTime = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC"))
-    s"as of ${DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm Z z").format(utcDateTime)}"
-  }
-
   def jacocoSettings(sparkVersion: String, scalaVersion: Version, moduleName: String): JacocoReportSettings = {
     jacocoReportCommonSettings.withTitle(
-      s"Jacoco Report on `$moduleName` for spark:$sparkVersion - scala:${scalaVersion.asString} [$now]"
+      s"Jacoco Report on `$moduleName` for spark:$sparkVersion - scala:${scalaVersion.asString}"
     )
   }
 
   def jacocoSettings(scalaVersion: Version, moduleName: String): JacocoReportSettings = {
-    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `$moduleName` for scala:${scalaVersion.asString} [$now]")
+    jacocoReportCommonSettings.withTitle(s"Jacoco Report on `$moduleName` for scala:${scalaVersion.asString}")
   }
 
   def jacocoProjectExcludes(): Seq[String] = {
