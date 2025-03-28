@@ -16,35 +16,9 @@
 
 package za.co.absa.atum.server.implicits
 
-import io.circe.{Decoder, DecodingFailure, Json}
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
-import za.co.absa.atum.server.model.PartitioningForDB
+import io.circe.DecodingFailure
 
 object SeqImplicits {
-
-  trait PartitioningResult[T] {
-    def partitioningJson: T
-    def author: String
-    def id: Long
-    def hasMore: Boolean
-
-    def toPartitioningWithIdDTO(implicit decoder: Decoder[PartitioningForDB]): Either[DecodingFailure, PartitioningWithIdDTO] = {
-      implicitly[Decoder[PartitioningForDB]].decodeJson(partitioningJson.asInstanceOf[Json]).map { partitioningForDB =>
-        val partitioningDTO = partitioningForDB.keys.map { key =>
-          PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-        }
-        PartitioningWithIdDTO(id, partitioningDTO, author)
-      }
-    }
-  }
-
-  object PartitioningResult {
-
-    def resultsToPartitioningWithIdDTOs[T <: PartitioningResult[_]](results: Seq[T]): Either[DecodingFailure, Seq[PartitioningWithIdDTO]] = {
-      results.seqDecode(_.toPartitioningWithIdDTO)
-    }
-  }
-
   implicit class SeqEnhancements[T](val seq: Seq[T]) extends AnyVal {
 
     def seqDecode[R](decodingFnc: T => Either[DecodingFailure, R]): Either[DecodingFailure, Seq[R]] = {

@@ -27,7 +27,7 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWith
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
-import za.co.absa.atum.server.implicits.SeqImplicits.PartitioningResult
+import za.co.absa.atum.server.model.PartitioningResult
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
 class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
@@ -48,7 +48,8 @@ class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Tas
 
 object GetFlowPartitionings {
   case class GetFlowPartitioningsArgs(flowId: Long, limit: Option[Int], offset: Option[Long])
-  case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean) extends PartitioningResult[Json]
+  case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
+    extends PartitioningResult(id, partitioningJson, author)
 
   val layer: URLayer[PostgresDatabaseProvider, GetFlowPartitionings] = ZLayer {
     for {

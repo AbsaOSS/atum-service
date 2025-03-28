@@ -21,7 +21,7 @@ import io.circe.Json
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
-import za.co.absa.atum.server.implicits.SeqImplicits.PartitioningResult
+import za.co.absa.atum.server.model.PartitioningResult
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
@@ -48,7 +48,8 @@ class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine
 
 object GetPartitioningAncestors {
   case class GetPartitioningAncestorsArgs(partitioningId: Long, limit: Option[Int], offset: Option[Long])
-  case class GetPartitioningAncestorsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean) extends PartitioningResult[Json]
+  case class GetPartitioningAncestorsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
+    extends PartitioningResult(id, partitioningJson, author)
 
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAncestors] = ZLayer {
     for {

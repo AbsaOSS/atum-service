@@ -28,7 +28,6 @@ import zio._
 import zio.interop.catz.asyncInstance
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import PaginatedResult.{ResultHasMore, ResultNoMore}
-import za.co.absa.atum.server.implicits.SeqImplicits.PartitioningResult
 
 class PartitioningRepositoryImpl(
   createPartitioningIfNotExistsFn: CreatePartitioningIfNotExists,
