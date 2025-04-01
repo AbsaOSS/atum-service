@@ -169,6 +169,17 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(errorInDataOneOfVariant)
   }
 
+  protected val patchPartitioningParentEndpointV2
+  : PublicEndpoint[(Long, PartitioningParentPatchDTO), ErrorResponse, SingleSuccessResponse[PartitioningParentPatchDTO], Any] = {
+    apiV2.patch
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
+      .in(jsonBody[PartitioningParentPatchDTO])
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[PartitioningParentPatchDTO]])
+      .errorOutVariantPrepend(conflictErrorOneOfVariant)
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
   val serverEndpoints: List[ZServerEndpoint[HttpEnv.Env, Any]] = List(
     createServerEndpoint[
       (Long, CheckpointV2DTO),
