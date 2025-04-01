@@ -40,6 +40,7 @@ object ApiPaths {
     final val Flows = "flows"
     final val Measures = "measures"
     final val MainFlow = "main-flow"
+    final val Ancestors = "ancestors"
 
   }
 

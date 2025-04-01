@@ -24,7 +24,7 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, CheckpointWithPartitioningDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointV2DTO, CheckpointWithPartitioningDTO, PartitioningParentPatchDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
 import za.co.absa.atum.server.api.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
@@ -111,6 +111,16 @@ trait Routes extends Endpoints with ServerOptions {
           PartitioningController.getFlowPartitionings(flowId, limit, offset)
         }
       ),
+      createServerEndpoint[
+        (Long, PartitioningParentPatchDTO),
+        ErrorResponse,
+        SingleSuccessResponse[PartitioningParentPatchDTO]
+      ](
+        patchPartitioningParentEndpointV2,
+        { case (partitioningId: Long, partitioningParentPatchDTO: PartitioningParentPatchDTO) =>
+          PartitioningController.patchPartitioningParent(partitioningId, partitioningParentPatchDTO)
+        }
+      ),
       createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.succeed(StatusResponse.up))
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
@@ -134,6 +144,7 @@ trait Routes extends Endpoints with ServerOptions {
       getFlowPartitioningsEndpointV2,
       getPartitioningMainFlowEndpointV2,
       getFlowCheckpointsEndpointV2,
+      patchPartitioningParentEndpointV2,
       healthEndpoint
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
