@@ -46,6 +46,8 @@ object JacocoSetup {
       "za.co.absa.atum.server.api.database.TransactorProvider*",
       "za.co.absa.atum.server.api.repository.PartitioningRepository*",
       "za.co.absa.atum.server.api.service.PartitioningService*",
+      "za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings*",
+      "za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors*",
       "za.co.absa.atum.server.implicits.SeqImplicits*",
       "za.co.absa.atum.model.envelopes.Pagination",
       "za.co.absa.atum.model.ApiPaths*",
