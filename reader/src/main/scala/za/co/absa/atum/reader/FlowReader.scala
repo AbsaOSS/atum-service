@@ -29,26 +29,32 @@ import za.co.absa.atum.reader.requests.QueryParamNames
 import za.co.absa.atum.reader.server.ServerConfig
 
 /**
- * This class is a reader that reads data tight to a flow.
+ *  This class is a reader that reads data tight to a flow.
  *
- * @param mainFlowPartitioning - the partitioning of the main flow; renamed from ancestor's 'flowPartitioning'
- * @param serverConfig         - the Atum server configuration
- * @param backend              - sttp backend, that will be executing the requests
- * @tparam F                   - the effect type (e.g. Future, IO, Task, etc.)
+ *  @param mainFlowPartitioning - the partitioning of the main flow; renamed from ancestor's 'flowPartitioning'
+ *  @param serverConfig         - the Atum server configuration
+ *  @param backend              - sttp backend, that will be executing the requests
+ *  @tparam F                   - the effect type (e.g. Future, IO, Task, etc.)
  */
-case class FlowReader[F[_]: MonadError](mainFlowPartitioning: AtumPartitions)
-                                       (implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any])
-  extends Reader[F] with PartitioningIdProvider[F] {
+case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
+  serverConfig: ServerConfig,
+  backend: SttpBackend[F, Any],
+  me: MonadError[F]
+) extends Reader[F]
+    with PartitioningIdProvider[F] {
 
   /**
-   * Function to retrieve a page of checkpoints belonging to the flow.
-   * The checkpoints are ordered by their creation order.
+   *  Function to retrieve a page of checkpoints belonging to the flow.
+   *  The checkpoints are ordered by their creation order.
    *
-   * @param pageSize  - the size of the page (record count) to be returned
-   * @param offset    - offset of the page (starting position)
-   * @return          - a page of checkpoints
+   *  @param pageSize  - the size of the page (record count) to be returned
+   *  @param offset    - offset of the page (starting position)
+   *  @return          - a page of checkpoints
    */
-  def getCheckpointsPage(pageSize: Int = 10, offset: Long = 0): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
+  def getCheckpointsPage(
+    pageSize: Int = 10,
+    offset: Long = 0
+  ): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
     for {
       mainPartitioningIdOrError <- partitioningId(mainFlowPartitioning)
       flowIdOrError <- mapRequestResultF(mainPartitioningIdOrError, queryFlowId)
@@ -57,19 +63,26 @@ case class FlowReader[F[_]: MonadError](mainFlowPartitioning: AtumPartitions)
   }
 
   /**
-   * Function to retrieve a page of checkpoints of the given name belonging to the flow.
-   * The checkpoints are ordered by their creation order.
+   *  Function to retrieve a page of checkpoints of the given name belonging to the flow.
+   *  The checkpoints are ordered by their creation order.
    *
-   * @param checkpointName  - the name to filter with
-   * @param pageSize        - the size of the page (record count) to be returned
-   * @param offset          - offset of the page (starting position)
-   * @return                - a page of checkpoints
+   *  @param checkpointName  - the name to filter with
+   *  @param pageSize        - the size of the page (record count) to be returned
+   *  @param offset          - offset of the page (starting position)
+   *  @return                - a page of checkpoints
    */
-  def getCheckpointsOfNamePage(checkpointName: String, pageSize: Int = 10, offset: Long = 0): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
+  def getCheckpointsOfNamePage(
+    checkpointName: String,
+    pageSize: Int = 10,
+    offset: Long = 0
+  ): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
     for {
       mainPartitioningIdOrError <- partitioningId(mainFlowPartitioning)
       flowIdOrError <- mapRequestResultF(mainPartitioningIdOrError, queryFlowId)
-      checkpointsOrError <- mapRequestResultF(flowIdOrError, queryCheckpoints(_, Some(checkpointName), pageSize, offset))
+      checkpointsOrError <- mapRequestResultF(
+        flowIdOrError,
+        queryCheckpoints(_, Some(checkpointName), pageSize, offset)
+      )
     } yield checkpointsOrError
   }
 
@@ -81,10 +94,12 @@ case class FlowReader[F[_]: MonadError](mainFlowPartitioning: AtumPartitions)
     }
   }
 
-  private def queryCheckpoints(flowId: Long,
-                               checkpointName: Option[String],
-                               limit: Int,
-                               offset: Long): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
+  private def queryCheckpoints(
+    flowId: Long,
+    checkpointName: Option[String],
+    limit: Int,
+    offset: Long
+  ): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
     val endpoint = s"/$Api/$V2/${V2Paths.Flows}/$flowId/${V2Paths.Checkpoints}"
     val params = Map(
       QueryParamNames.Limit -> limit.toString,
