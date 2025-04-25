@@ -190,6 +190,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row1.getBoolean("measured_by_atum_agent").contains(true))
         assert(row1.getOffsetDateTime("checkpoint_start_time").contains(startTime))
         assert(row1.getOffsetDateTime("checkpoint_end_time").contains(endTime))
+        assert(row1.getBoolean("has_more").contains(false))
 
         val measure1 = MeasuredDetails(
           row1.getString("measure_name").get,
@@ -206,6 +207,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row2.getBoolean("measured_by_atum_agent").contains(true))
         assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
         assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
+        assert(row1.getBoolean("has_more").contains(false))
 
         val measure2 = MeasuredDetails(
           row2.getString("measure_name").get,
@@ -224,6 +226,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row3.getBoolean("measured_by_atum_agent").contains(true))
         assert(row3.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
         assert(row3.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
+        assert(row1.getBoolean("has_more").contains(false))
 
         val measure3 = MeasuredDetails(
           row3.getString("measure_name").get,
@@ -252,6 +255,33 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
           fail(s"Unexpected measure name: $other")
       }
     }
+
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoints_limit", 1)
+      .execute("checkpoint_name") { queryResult =>
+        assert(queryResult.hasNext)
+
+        val row1 = queryResult.next()
+        assert(row1.getBoolean("has_more").contains(true))
+
+        val row2 = queryResult.next()
+        assert(row2.getBoolean("has_more").contains(true))
+
+        assert(!queryResult.hasNext)
+      }
+
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_offset", 1)
+      .execute("checkpoint_name") { queryResult =>
+        assert(queryResult.hasNext)
+
+        val row1 = queryResult.next()
+        assert(row1.getBoolean("has_more").contains(false))
+
+        assert(!queryResult.hasNext)
+      }
   }
 
   test("getFlowCheckpointsV2 should return all checkpoints of a given name and a given flow") {
@@ -674,7 +704,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     val nonExistentFlowId: Long = Random.nextLong()
 
     // Execute the function with the non-existent flowId
-    val queryResult = function(fncGetFlowCheckpointsV2)
+    function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", nonExistentFlowId)
       .execute { queryResult =>
         val results = queryResult.next()
