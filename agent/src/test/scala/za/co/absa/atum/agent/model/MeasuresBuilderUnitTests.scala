@@ -24,7 +24,7 @@ class MeasuresBuilderUnitTests extends AnyFlatSpecLike {
 
   "mapToMeasures" should "map MeasureDTO into Measure for supported measures" in {
     val supportedMeasures = Set(
-      MeasureDTO("count", Seq("*")),
+      MeasureDTO("count", Seq.empty),
       MeasureDTO("distinctCount", Seq("distinctCountCol")),
       MeasureDTO("aggregatedTotal", Seq("aggregatedTotalCol")),
       MeasureDTO("absAggregatedTotal", Seq("absAggregatedTotalCol")),
@@ -34,7 +34,7 @@ class MeasuresBuilderUnitTests extends AnyFlatSpecLike {
     )
 
     val expectedMeasures = Set(
-      RecordCount(),
+      RecordCount,
       DistinctRecordCount(Seq("distinctCountCol")),
       SumOfValuesOfColumn("aggregatedTotalCol"),
       AbsSumOfValuesOfColumn("absAggregatedTotalCol"),

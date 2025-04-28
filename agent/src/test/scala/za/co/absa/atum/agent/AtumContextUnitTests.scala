@@ -22,7 +22,7 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.{mock, times, verify, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.atum.agent.model.AtumMeasure.{RecordCount, SumOfValuesOfColumn}
+import za.co.absa.atum.agent.model.AtumMeasure.{DistinctRecordCount, RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.{Measure, MeasureResult, MeasurementBuilder, UnknownMeasure}
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.CheckpointDTO
@@ -37,21 +37,14 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(atumContext.currentMeasures.isEmpty)
 
     val atumContextWithRecordCount =
-      atumContext.addMeasure(RecordCount("id"))
+      atumContext.addMeasure(RecordCount)
     assert(atumContextWithRecordCount.currentMeasures.size == 1)
 
     val atumContextWithTwoRecordCount =
       atumContextWithRecordCount.addMeasures(
-        Set(RecordCount("id"), RecordCount("x"))
+        Set(RecordCount, DistinctRecordCount(Seq("col")))
       )
     assert(atumContextWithTwoRecordCount.currentMeasures.size == 2)
-
-    val atumContextWithTwoDistinctRecordCount =
-      atumContextWithRecordCount.addMeasures(
-        Set(RecordCount("id"), RecordCount("one"))
-      )
-
-    assert(atumContextWithTwoDistinctRecordCount.currentMeasures.size == 3)
   }
 
   "withMeasureRemoved" should "remove a measure if exists" in {
@@ -60,13 +53,12 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(atumContext.currentMeasures.isEmpty)
 
     val atumContext1 = atumContext.addMeasures(
-      Set(RecordCount("id"), RecordCount("id"), RecordCount("other"))
+      Set(RecordCount)
     )
-    assert(atumContext1.currentMeasures.size == 2)
+    assert(atumContext1.currentMeasures.size == 1)
 
-    val atumContextRemoved = atumContext1.removeMeasure(RecordCount("id"))
-    assert(atumContextRemoved.currentMeasures.size == 1)
-    assert(atumContextRemoved.currentMeasures.head == RecordCount("other"))
+    val atumContextRemoved = atumContext1.removeMeasure(RecordCount)
+    assert(atumContextRemoved.currentMeasures.isEmpty)
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint" in {
@@ -78,7 +70,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     val atumPartitions = AtumPartitions("foo2" -> "bar")
 
     val atumContext = new AtumContext(atumPartitions, mockAgent)
-      .addMeasure(RecordCount("letter"))
+      .addMeasure(RecordCount)
 
     val spark = SparkSession.builder()
       .master("local")
@@ -113,7 +105,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
 
     val measurements: Map[Measure, MeasureResult] = Map(
-      RecordCount("col")          -> MeasureResult(1L),
+      RecordCount         -> MeasureResult(1L),
       SumOfValuesOfColumn("col")  -> MeasureResult(BigDecimal(1)),
       UnknownMeasure("customMeasureName", Seq("col"), ResultValueType.BigDecimalValue) -> MeasureResult(BigDecimal(1))
     )
@@ -141,7 +133,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     val atumPartitions = AtumPartitions("foo2" -> "bar")
     implicit val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
-      .addMeasure(RecordCount("notImportantColumn"))
+      .addMeasure(RecordCount)
 
     val spark = SparkSession.builder()
       .master("local")

@@ -45,7 +45,7 @@ private [agent] object MeasuresBuilder extends Logging {
 
     Try {
       measure.measureName match {
-        case RecordCount.measureName => RecordCount()
+        case RecordCount.measureName => RecordCount
         case DistinctRecordCount.measureName => DistinctRecordCount(measuredColumns)
         case SumOfValuesOfColumn.measureName => SumOfValuesOfColumn(measuredColumns.head)
         case AbsSumOfValuesOfColumn.measureName => AbsSumOfValuesOfColumn(measuredColumns.head)
