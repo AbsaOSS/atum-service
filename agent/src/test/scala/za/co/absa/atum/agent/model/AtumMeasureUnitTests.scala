@@ -32,7 +32,7 @@ class AtumMeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase 
   "Measure" should "be based on the dataframe" in {
 
     // Measures
-    val measureIds: AtumMeasure     = RecordCount
+    val measureIds: AtumMeasure     = RecordCount()
     val salaryAbsSum: AtumMeasure   = AbsSumOfValuesOfColumn(measuredCol = "salary")
     val salarySum                   = SumOfValuesOfColumn(measuredCol = "salary")
     val salaryTruncSum              = SumOfTruncatedValuesOfColumn(measuredCol = "salary")
@@ -169,7 +169,7 @@ class AtumMeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase 
   }
 
   "RecordCount" should "return expected value" in {
-    val distinctCount = RecordCount
+    val distinctCount = RecordCount()
 
     val data = List(Row("a1", "b1"), Row("a1", "b2"), Row("a2", "b2"), Row("a2", "b2"))
     val rdd = spark.sparkContext.parallelize(data)

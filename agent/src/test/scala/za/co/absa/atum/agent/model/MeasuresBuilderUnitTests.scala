@@ -34,7 +34,7 @@ class MeasuresBuilderUnitTests extends AnyFlatSpecLike {
     )
 
     val expectedMeasures = Set(
-      RecordCount,
+      RecordCount(),
       DistinctRecordCount(Seq("distinctCountCol")),
       SumOfValuesOfColumn("aggregatedTotalCol"),
       AbsSumOfValuesOfColumn("absAggregatedTotalCol"),

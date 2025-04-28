@@ -37,12 +37,12 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(atumContext.currentMeasures.isEmpty)
 
     val atumContextWithRecordCount =
-      atumContext.addMeasure(RecordCount)
+      atumContext.addMeasure(RecordCount())
     assert(atumContextWithRecordCount.currentMeasures.size == 1)
 
     val atumContextWithTwoRecordCount =
       atumContextWithRecordCount.addMeasures(
-        Set(RecordCount, DistinctRecordCount(Seq("col")))
+        Set(RecordCount(), DistinctRecordCount(Seq("col")))
       )
     assert(atumContextWithTwoRecordCount.currentMeasures.size == 2)
   }
@@ -53,11 +53,11 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(atumContext.currentMeasures.isEmpty)
 
     val atumContext1 = atumContext.addMeasures(
-      Set(RecordCount)
+      Set(RecordCount())
     )
     assert(atumContext1.currentMeasures.size == 1)
 
-    val atumContextRemoved = atumContext1.removeMeasure(RecordCount)
+    val atumContextRemoved = atumContext1.removeMeasure(RecordCount())
     assert(atumContextRemoved.currentMeasures.isEmpty)
   }
 
@@ -70,7 +70,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     val atumPartitions = AtumPartitions("foo2" -> "bar")
 
     val atumContext = new AtumContext(atumPartitions, mockAgent)
-      .addMeasure(RecordCount)
+      .addMeasure(RecordCount())
 
     val spark = SparkSession.builder()
       .master("local")
@@ -105,7 +105,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
 
     val measurements: Map[Measure, MeasureResult] = Map(
-      RecordCount         -> MeasureResult(1L),
+      RecordCount()         -> MeasureResult(1L),
       SumOfValuesOfColumn("col")  -> MeasureResult(BigDecimal(1)),
       UnknownMeasure("customMeasureName", Seq("col"), ResultValueType.BigDecimalValue) -> MeasureResult(BigDecimal(1))
     )
@@ -133,7 +133,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     val atumPartitions = AtumPartitions("foo2" -> "bar")
     implicit val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
-      .addMeasure(RecordCount)
+      .addMeasure(RecordCount())
 
     val spark = SparkSession.builder()
       .master("local")

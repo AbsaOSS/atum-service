@@ -78,7 +78,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     )
     val domainAtumContext = agent.getOrCreateAtumContext(domainAtumPartitioning)
 
-    domainAtumContext.addMeasure(RecordCount)
+    domainAtumContext.addMeasure(RecordCount())
     domainAtumContext.addAdditionalData("author", "Laco")
     domainAtumContext.addAdditionalData(Map("author" -> "LacoNew", "version" -> "1.0"))
 

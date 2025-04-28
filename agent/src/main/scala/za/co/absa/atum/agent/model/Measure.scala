@@ -32,15 +32,27 @@ sealed trait Measure {
   val resultValueType: ResultValueType
 }
 
-trait AtumMeasure extends Measure with MeasurementProcessor
+trait AtumMeasure extends Measure with MeasurementProcessor {
+  protected def productIterator: Iterator[Any]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: AtumMeasure =>
+      this.getClass == that.getClass &&
+        this.productIterator.sameElements(that.productIterator)
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    productIterator.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+}
 
 final case class UnknownMeasure(measureName: String, measuredColumns: Seq[String], resultValueType: ResultValueType)
     extends Measure
 
 object AtumMeasure {
 
-  final case object RecordCount extends AtumMeasure {
-    val measureName: String = "count"
+  final class RecordCount private (val measureName: String) extends AtumMeasure {
     private val columnExpression = count("*")
 
     override def function: MeasurementFunction =
@@ -51,6 +63,12 @@ object AtumMeasure {
 
     override def measuredColumns: Seq[String] = Seq.empty
     override val resultValueType: ResultValueType = ResultValueType.LongValue
+
+    override protected def productIterator: Iterator[Any] = Iterator(measureName)
+  }
+  object RecordCount {
+    private[agent] val measureName: String = "count"
+    def apply(): RecordCount = new RecordCount(measureName)
   }
 
   final class DistinctRecordCount private (val measureName: String, val measuredCols: Seq[String]) extends AtumMeasure {
@@ -67,17 +85,7 @@ object AtumMeasure {
     override def measuredColumns: Seq[String] = measuredCols
     override val resultValueType: ResultValueType = ResultValueType.LongValue
 
-    override def equals(other: Any): Boolean = other match {
-      case that: DistinctRecordCount =>
-        measureName == that.measureName &&
-        measuredCols == that.measuredCols
-      case _ => false
-    }
-
-    override def hashCode(): Int = {
-      val state = Seq(measureName, measuredCols)
-      state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-    }
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCols)
   }
   object DistinctRecordCount {
     private[agent] val measureName: String = "distinctCount"
@@ -96,17 +104,7 @@ object AtumMeasure {
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
 
-    override def equals(other: Any): Boolean = other match {
-      case that: SumOfValuesOfColumn =>
-        measureName == that.measureName &&
-        measuredCol == that.measuredCol
-      case _ => false
-    }
-
-    override def hashCode(): Int = {
-      val state = Seq(measureName, measuredCol)
-      state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-    }
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object SumOfValuesOfColumn {
     private[agent] val measureName: String = "aggregatedTotal"
@@ -125,17 +123,7 @@ object AtumMeasure {
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
 
-    override def equals(other: Any): Boolean = other match {
-      case that: AbsSumOfValuesOfColumn =>
-        measureName == that.measureName &&
-        measuredCol == that.measuredCol
-      case _ => false
-    }
-
-    override def hashCode(): Int = {
-      val state = Seq(measureName, measuredCol)
-      state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-    }
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object AbsSumOfValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTotal"
@@ -156,17 +144,7 @@ object AtumMeasure {
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.LongValue
 
-    override def equals(other: Any): Boolean = other match {
-      case that: SumOfTruncatedValuesOfColumn =>
-        measureName == that.measureName &&
-        measuredCol == that.measuredCol
-      case _ => false
-    }
-
-    override def hashCode(): Int = {
-      val state = Seq(measureName, measuredCol)
-      state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-    }
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object SumOfTruncatedValuesOfColumn {
     private[agent] val measureName: String = "aggregatedTruncTotal"
@@ -189,17 +167,7 @@ object AtumMeasure {
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.LongValue
 
-    override def equals(other: Any): Boolean = other match {
-      case that: AbsSumOfTruncatedValuesOfColumn =>
-        measureName == that.measureName &&
-        measuredCol == that.measuredCol
-      case _ => false
-    }
-
-    override def hashCode(): Int = {
-      val state = Seq(measureName, measuredCol)
-      state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-    }
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object AbsSumOfTruncatedValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTruncTotal"
@@ -217,17 +185,7 @@ object AtumMeasure {
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.StringValue
 
-    override def equals(other: Any): Boolean = other match {
-      case that: SumOfHashesOfColumn =>
-        measureName == that.measureName &&
-        measuredCol == that.measuredCol
-      case _ => false
-    }
-
-    override def hashCode(): Int = {
-      val state = Seq(measureName, measuredCol)
-      state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-    }
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object SumOfHashesOfColumn {
     private[agent] val measureName: String = "hashCrc32"
