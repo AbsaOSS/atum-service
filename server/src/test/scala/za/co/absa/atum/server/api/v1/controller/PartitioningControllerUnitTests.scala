@@ -19,8 +19,9 @@ package za.co.absa.atum.server.api.v1.controller
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.envelopes.InternalServerErrorResponse
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
+import za.co.absa.atum.server.api.exception.ServiceError.{GeneralServiceError, NotFoundServiceError}
 import za.co.absa.atum.server.api.v1.service.{PartitioningService => PartitioningServiceV1}
+import za.co.absa.atum.server.api.v2.controller.PartitioningControllerUnitTests.{additionalDataDTO1, measureDTO1, measureDTO2, partitioningDTO1, partitioningDTO2, partitioningDTO3, partitioningServiceMock, partitioningWithIdDTO1}
 import za.co.absa.atum.server.api.v2.service.{PartitioningService => PartitioningServiceV2}
 import zio._
 import zio.test.Assertion.failsWithA
@@ -34,6 +35,23 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.unit)
   when(partitioningServiceMockV1.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
+  when(partitioningServiceMockV2.getPartitioningMeasures(partitioningDTO1))
+    .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
+
+  when(partitioningServiceMockV2.getPartitioning(partitioningDTO1))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningServiceMockV2.getPartitioning(partitioningDTO2))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
+  when(partitioningServiceMockV2.getPartitioning(partitioningDTO3))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+
+  when(partitioningServiceMockV2.getPartitioningAdditionalData(1L))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
+  when(partitioningServiceMockV2.getPartitioningAdditionalData(2L))
+    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
+  when(partitioningServiceMockV2.getPartitioningAdditionalData(3L))
+    .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
 
   private val partitioningServiceMockV1Layer = ZLayer.succeed(partitioningServiceMockV1)
   private val partitioningServiceMockV2Layer = ZLayer.succeed(partitioningServiceMockV2)
