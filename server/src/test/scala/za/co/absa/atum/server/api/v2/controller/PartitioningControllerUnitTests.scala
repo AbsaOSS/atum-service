@@ -113,18 +113,18 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
       suite("PatchAdditionalDataSuite")(
         test("Returns expected AdditionalDataSubmitDTO") {
           for {
-            result <- PartitioningController.patchPartitioningAdditionalDataV2(1L, additionalDataPatchDTO1)
+            result <- PartitioningController.patchPartitioningAdditionalData(1L, additionalDataPatchDTO1)
             expected = SingleSuccessResponse(additionalDataDTO1, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
         test("Returns expected NotFoundErrorResponse") {
-          assertZIO(PartitioningController.patchPartitioningAdditionalDataV2(0L, additionalDataPatchDTO1).exit)(
+          assertZIO(PartitioningController.patchPartitioningAdditionalData(0L, additionalDataPatchDTO1).exit)(
             failsWithA[NotFoundErrorResponse]
           )
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.patchPartitioningAdditionalDataV2(2L, additionalDataPatchDTO1).exit)(
+          assertZIO(PartitioningController.patchPartitioningAdditionalData(2L, additionalDataPatchDTO1).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }
@@ -132,18 +132,18 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
       suite("GetPartitioningByIdSuite")(
         test("Returns expected PartitioningWithIdDTO") {
           for {
-            result <- PartitioningController.getPartitioningByIdV2(11L)
+            result <- PartitioningController.getPartitioningById(11L)
             expected = SingleSuccessResponse(partitioningWithIdDTO1, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
         test("Returns expected NotFoundErrorResponse") {
-          assertZIO(PartitioningController.getPartitioningByIdV2(22L).exit)(
+          assertZIO(PartitioningController.getPartitioningById(22L).exit)(
             failsWithA[NotFoundErrorResponse]
           )
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(PartitioningController.getPartitioningByIdV2(99L).exit)(
+          assertZIO(PartitioningController.getPartitioningById(99L).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }

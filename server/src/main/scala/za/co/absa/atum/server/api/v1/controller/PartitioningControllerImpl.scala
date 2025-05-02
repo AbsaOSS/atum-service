@@ -26,7 +26,7 @@ import zio._
 
 class PartitioningControllerImpl(
   partitioningService: PartitioningService,
-  // unfortunately service needs to depend on the v2 service to get the partitioning measures and additional data
+  // unfortunately the controller needs to depend on the v2 service to get the partitioning measures and additional data
   // as the v1 service does not have this information (shouldn't have been introduced to v1 after its release)
   partitioningServiceV2: PartitioningServiceV2
 ) extends PartitioningController

@@ -35,18 +35,18 @@ object GetPartitioningMeasuresEndpointUnitTests extends ZIOSpecDefault with Test
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.getPartitioningMeasuresV2(1L))
+  when(partitioningControllerMock.getPartitioningMeasures(1L))
     .thenReturn(ZIO.succeed(MultiSuccessResponse(Seq(measureDTO1, measureDTO2), uuid1)))
-  when(partitioningControllerMock.getPartitioningMeasuresV2(2L))
+  when(partitioningControllerMock.getPartitioningMeasures(2L))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
-  when(partitioningControllerMock.getPartitioningMeasuresV2(3L))
+  when(partitioningControllerMock.getPartitioningMeasures(3L))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("boom!")))
 
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getPartitioningMeasuresServerEndpoint =
     Endpoints.getPartitioningMeasuresEndpoint.zServerLogic({partitioningId: Long =>
-      PartitioningController.getPartitioningMeasuresV2(partitioningId)
+      PartitioningController.getPartitioningMeasures(partitioningId)
     })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {

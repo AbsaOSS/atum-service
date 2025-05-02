@@ -20,20 +20,24 @@ import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.envelopes.InternalServerErrorResponse
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError.GeneralServiceError
-import za.co.absa.atum.server.api.v1.service.PartitioningService
+import za.co.absa.atum.server.api.v1.service.{PartitioningService => PartitioningServiceV1}
+import za.co.absa.atum.server.api.v2.service.{PartitioningService => PartitioningServiceV2}
 import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
 
 object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
-  private val partitioningServiceMock = mock(classOf[PartitioningService])
+  private val partitioningServiceMockV1 = mock(classOf[PartitioningServiceV1])
+  private val partitioningServiceMockV2 = mock(classOf[PartitioningServiceV2])
 
-  when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO1))
+  when(partitioningServiceMockV1.createPartitioningIfNotExists(partitioningSubmitDTO1))
     .thenReturn(ZIO.unit)
-  when(partitioningServiceMock.createPartitioningIfNotExists(partitioningSubmitDTO2))
+  when(partitioningServiceMockV1.createPartitioningIfNotExists(partitioningSubmitDTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
-  private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
+  private val partitioningServiceMockV1Layer = ZLayer.succeed(partitioningServiceMockV1)
+  private val partitioningServiceMockV2Layer = ZLayer.succeed(partitioningServiceMockV2)
+
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     suite("PartitioningControllerSuite")(
@@ -51,7 +55,8 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
       ),
     ).provide(
       PartitioningControllerImpl.layer,
-      partitioningServiceMockLayer
+      partitioningServiceMockV1Layer,
+      partitioningServiceMockV2Layer
     )
   }
 }

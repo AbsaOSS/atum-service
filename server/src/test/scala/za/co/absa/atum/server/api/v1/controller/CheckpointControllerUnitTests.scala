@@ -44,16 +44,16 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
       suite("CreateCheckpointSuite")(
         test("Returns expected CheckpointDTO") {
           for {
-            result <- CheckpointController.createCheckpointV1(checkpointDTO1)
+            result <- CheckpointController.createCheckpoint(checkpointDTO1)
           } yield assertTrue(result == checkpointDTO1)
         },
         test("Returns expected ConflictServiceError") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO2).exit)(
+          assertZIO(CheckpointController.createCheckpoint(checkpointDTO2).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         },
         test("Returns expected ConflictServiceError") {
-          assertZIO(CheckpointController.createCheckpointV1(checkpointDTO3).exit)(
+          assertZIO(CheckpointController.createCheckpoint(checkpointDTO3).exit)(
             failsWithA[ConflictErrorResponse]
           )
         }
