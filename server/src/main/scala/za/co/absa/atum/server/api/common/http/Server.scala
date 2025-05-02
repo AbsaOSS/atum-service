@@ -24,7 +24,7 @@ import zio.interop.catz._
 
 import javax.net.ssl.SSLContext
 
-trait Server extends Routes {
+object Server {
 
   private def createServer(port: Int, sslContext: Option[SSLContext] = None): ZIO[HttpEnv.Env, Throwable, Unit] =
     for {
@@ -34,7 +34,7 @@ trait Server extends Routes {
       builder = BlazeServerBuilder[HttpEnv.F]
         .bindHttp(port, "0.0.0.0")
         .withExecutionContext(executor.asExecutionContext)
-        .withHttpApp(Router("/" -> allRoutes(httpMonitoringConfig, jvmMonitoringConfig)).orNotFound)
+        .withHttpApp(Router("/" -> Routes.allRoutes(httpMonitoringConfig, jvmMonitoringConfig)).orNotFound)
       builderWithSsl = sslContext.fold(builder)(ctx => builder.withSslContext(ctx))
       _ <- builderWithSsl.serve.compile.drain
     } yield ()
@@ -42,7 +42,7 @@ trait Server extends Routes {
   private val httpServer = createServer(8080)
   private val httpsServer = SSL.context.flatMap(context => createServer(8443, Some(context)))
 
-  protected val server: ZIO[HttpEnv.Env, Throwable, Unit] = for {
+  val server: ZIO[HttpEnv.Env, Throwable, Unit] = for {
     sslConfig <- ZIO.config[SslConfig](SslConfig.config)
     server <- if (sslConfig.enabled) httpsServer else httpServer
   } yield server

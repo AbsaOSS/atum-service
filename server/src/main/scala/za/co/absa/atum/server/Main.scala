@@ -64,13 +64,13 @@ import zio.metrics.jvm.DefaultJvmMetrics
 
 import java.time.Duration
 
-object Main extends ZIOAppDefault with Server {
+object Main extends ZIOAppDefault {
 
   private val configProvider: ConfigProvider = TypesafeConfigProvider.fromResourcePath()
 
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
     ZIO.config[JvmMonitoringConfig](JvmMonitoringConfig.config).flatMap { jvmMonitoringConfig =>
-      server
+      Server.server
         .provide(
           // controllers
           PartitioningControllerImplV1.layer,

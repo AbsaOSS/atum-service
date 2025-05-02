@@ -31,7 +31,7 @@ import zio.metrics.connectors.prometheus.PrometheusPublisher
 
 import za.co.absa.atum.server.api
 
-trait Routes extends ServerOptions {
+object Routes extends ServerOptions {
 
   private def createAllServerRoutes(httpMonitoringConfig: HttpMonitoringConfig): HttpRoutes[HttpEnv.F] = {
     val metricsInterceptorOption: Option[MetricsRequestInterceptor[HttpEnv.F]] = {
@@ -90,7 +90,7 @@ trait Routes extends ServerOptions {
     endpoint.zServerLogic(logic).widen[HttpEnv.Env]
   }
 
-  protected def allRoutes(
+  def allRoutes(
     httpMonitoringConfig: HttpMonitoringConfig,
     jvmMonitoringConfig: JvmMonitoringConfig
   ): HttpRoutes[HttpEnv.F] = {

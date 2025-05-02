@@ -21,7 +21,6 @@ import za.co.absa.atum.model.envelopes.InternalServerErrorResponse
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError.{GeneralServiceError, NotFoundServiceError}
 import za.co.absa.atum.server.api.v1.service.{PartitioningService => PartitioningServiceV1}
-import za.co.absa.atum.server.api.v2.controller.PartitioningControllerUnitTests.{additionalDataDTO1, measureDTO1, measureDTO2, partitioningDTO1, partitioningDTO2, partitioningDTO3, partitioningServiceMock, partitioningWithIdDTO1}
 import za.co.absa.atum.server.api.v2.service.{PartitioningService => PartitioningServiceV2}
 import zio._
 import zio.test.Assertion.failsWithA
