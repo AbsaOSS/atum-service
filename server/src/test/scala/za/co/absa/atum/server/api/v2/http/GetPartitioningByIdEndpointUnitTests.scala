@@ -35,17 +35,17 @@ object GetPartitioningByIdEndpointUnitTests extends ZIOSpecDefault with TestData
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.getPartitioningByIdV2(1L))
+  when(partitioningControllerMock.getPartitioningById(1L))
     .thenReturn(ZIO.succeed(SingleSuccessResponse(partitioningWithIdDTO1)))
-  when(partitioningControllerMock.getPartitioningByIdV2(2L))
+  when(partitioningControllerMock.getPartitioningById(2L))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
-  when(partitioningControllerMock.getPartitioningByIdV2(3L))
+  when(partitioningControllerMock.getPartitioningById(3L))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("boom!")))
 
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getPartitioningServerEndpoint =
-    Endpoints.getPartitioningByIdEndpoint.zServerLogic(PartitioningController.getPartitioningByIdV2)
+    Endpoints.getPartitioningByIdEndpoint.zServerLogic(PartitioningController.getPartitioningById)
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
