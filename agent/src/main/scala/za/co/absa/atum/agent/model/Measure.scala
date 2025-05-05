@@ -65,10 +65,10 @@ object AtumMeasure {
     override val resultValueType: ResultValueType = ResultValueType.LongValue
 
     override protected def productIterator: Iterator[Any] = Iterator(measureName)
+    
+    def apply(): RecordCount = this
   }
-  object RecordCount {
-    private[agent] val measureName: String = "count"
-    def apply(): RecordCount = new RecordCount(measureName)
+  object RecordCount extends RecordCount("count") {
   }
 
   final class DistinctRecordCount private (val measureName: String, val measuredCols: Seq[String]) extends AtumMeasure {
