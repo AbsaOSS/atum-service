@@ -52,7 +52,8 @@ final case class UnknownMeasure(measureName: String, measuredColumns: Seq[String
 
 object AtumMeasure {
 
-  final class RecordCount private (val measureName: String) extends AtumMeasure {
+  object RecordCount extends AtumMeasure {
+    final val measureName: String = "count"
     private val columnExpression = count("*")
 
     override def function: MeasurementFunction =
@@ -65,11 +66,10 @@ object AtumMeasure {
     override val resultValueType: ResultValueType = ResultValueType.LongValue
 
     override protected def productIterator: Iterator[Any] = Iterator(measureName)
-    
-    def apply(): RecordCount = this
+
+    def apply() = this
   }
-  object RecordCount extends RecordCount("count") {
-  }
+
 
   final class DistinctRecordCount private (val measureName: String, val measuredCols: Seq[String]) extends AtumMeasure {
     require(measuredCols.nonEmpty, "At least one measured column has to be defined.")
