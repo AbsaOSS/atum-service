@@ -52,8 +52,8 @@ final case class UnknownMeasure(measureName: String, measuredColumns: Seq[String
 
 object AtumMeasure {
 
-  object RecordCount extends AtumMeasure {
-    final val measureName: String = "count"
+  sealed class RecordCount extends AtumMeasure {
+    private[agent] val measureName: String = "count"
     private val columnExpression = count("*")
 
     override def function: MeasurementFunction =
@@ -66,8 +66,10 @@ object AtumMeasure {
     override val resultValueType: ResultValueType = ResultValueType.LongValue
 
     override protected def productIterator: Iterator[Any] = Iterator(measureName)
+  }
 
-    def apply() = this
+  object RecordCount extends RecordCount {
+    def apply(): RecordCount = this
   }
 
 
