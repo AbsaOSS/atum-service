@@ -53,7 +53,7 @@ final case class UnknownMeasure(measureName: String, measuredColumns: Seq[String
 object AtumMeasure {
 
   sealed class RecordCount extends AtumMeasure {
-    private[agent] val measureName: String = "count"
+    val measureName: String = "count"
     private val columnExpression = count("*")
 
     override def function: MeasurementFunction =
