@@ -29,8 +29,8 @@ env:
   check-overall-coverages: true
 
 jobs:
-  build-test-and-measure:
-    name: Build, Test and Measure
+  jacoco-report:
+    name: JaCoCo Report
     runs-on: ubuntu-latest
 
     services:
@@ -52,13 +52,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+
       - name: Setup Scala
         uses: olafurpg/setup-scala@v14
         with:
           java-version: "adopt@1.11.0-11"
+
       - name: Prepare testing database
         run: sbt flywayMigrate
-      - name: Build and run tests
+
+      - name: Build and run tests with test coverage
         continue-on-error: true
         id: jacocorun
         run: sbt jacoco
@@ -67,7 +70,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Add JaCoCo Report in PR comments
+      - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
         uses: MoranaApps/jacoco-report@v1
         with:
