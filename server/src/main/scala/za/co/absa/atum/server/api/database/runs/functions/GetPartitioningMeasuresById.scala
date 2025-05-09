@@ -25,9 +25,9 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWith
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
-import za.co.absa.atum.server.model.MeasureFromDB
 
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
+import za.co.absa.atum.server.model.database.MeasureFromDB
 
 class GetPartitioningMeasuresById(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunctionWithAggStatus[Long, MeasureFromDB, Task](values =>

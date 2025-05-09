@@ -19,7 +19,6 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.AdditionalDataItemFromDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.doobie.DoobieEngine
@@ -29,6 +28,7 @@ import io.circe.syntax._
 import doobie.postgres.implicits._
 import za.co.absa.atum.model.dto.AdditionalDataPatchDTO
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
+import za.co.absa.atum.server.model.database.AdditionalDataItemFromDB
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])

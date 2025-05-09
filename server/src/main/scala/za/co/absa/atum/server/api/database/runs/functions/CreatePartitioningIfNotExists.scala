@@ -25,7 +25,7 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithSt
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.PartitioningForDB
+import za.co.absa.atum.server.model.database.PartitioningForDB
 import zio._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 

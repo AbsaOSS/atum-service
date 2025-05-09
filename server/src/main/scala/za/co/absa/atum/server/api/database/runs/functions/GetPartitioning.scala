@@ -20,7 +20,7 @@ import doobie.implicits.toSqlInterpolator
 import io.circe.syntax.EncoderOps
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.{PartitioningForDB, PartitioningFromDB}
+import za.co.absa.atum.server.model.database.{PartitioningForDB, PartitioningFromDB}
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus

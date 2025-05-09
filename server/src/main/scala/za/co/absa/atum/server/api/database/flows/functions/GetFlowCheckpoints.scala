@@ -20,7 +20,6 @@ import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
-import za.co.absa.atum.server.model.CheckpointItemWithPartitioningFromDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
@@ -30,6 +29,7 @@ import zio._
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
+import za.co.absa.atum.server.model.database.CheckpointItemWithPartitioningFromDB
 
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[
