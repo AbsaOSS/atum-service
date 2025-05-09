@@ -66,6 +66,7 @@ object Main extends ZIOAppDefault with Server {
           GetPartitioning.layer,
           GetFlowPartitionings.layer,
           GetPartitioningMainFlow.layer,
+          UpdatePartitioningParent.layer,
           PostgresDatabaseProvider.layer,
           TransactorProvider.layer,
           AwsSecretsProviderImpl.layer,

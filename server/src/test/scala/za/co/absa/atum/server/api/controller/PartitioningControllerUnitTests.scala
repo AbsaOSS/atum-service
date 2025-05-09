@@ -90,6 +90,19 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningServiceMock.getPartitioningMainFlow(999L))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
+  private val partitioningId1 = 1L
+
+  when(partitioningServiceMock.patchPartitioningParent(partitioningId1, partitioningParentPatchDTO1))
+    .thenReturn(ZIO.unit)
+  when(partitioningServiceMock.patchPartitioningParent(partitioningId1, partitioningParentPatchDTO2))
+    .thenReturn(ZIO.fail(GeneralServiceError("error in data")))
+  when(partitioningServiceMock.patchPartitioningParent(partitioningId1, partitioningParentPatchDTO3))
+    .thenReturn(ZIO.fail(ConflictServiceError("boom!")))
+  when(partitioningServiceMock.patchPartitioningParent(1L, partitioningParentPatchDTO5))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Parent Partitioning not found")))
+  when(partitioningServiceMock.patchPartitioningParent(0L, partitioningParentPatchDTO3))
+    .thenReturn(ZIO.fail(NotFoundServiceError("Child Partitioning not found")))
+
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -143,6 +156,35 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.patchPartitioningAdditionalDataV2(2L, additionalDataPatchDTO1).exit)(
             failsWithA[InternalServerErrorResponse]
+          )
+        }
+      ),
+      suite("PatchPartitioningParentSuite")(
+        test("Returns expected PartitioningParentPatchDTO") {
+          for {
+            result <- PartitioningController.patchPartitioningParent(partitioningId1, partitioningParentPatchDTO1)
+            expected = SingleSuccessResponse(partitioningParentPatchDTO1, uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected InternalServerErrorResponse") {
+          assertZIO(PartitioningController.patchPartitioningParent(partitioningId1, partitioningParentPatchDTO2).exit)(
+            failsWithA[InternalServerErrorResponse]
+          )
+        },
+        test("Returns expected ConflictServiceError") {
+          assertZIO(PartitioningController.patchPartitioningParent(partitioningId1, partitioningParentPatchDTO3).exit)(
+            failsWithA[ConflictErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundErrorResponse") {
+          assertZIO(PartitioningController.patchPartitioningParent(1L, partitioningParentPatchDTO5).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        },
+        test("Returns expected NotFoundErrorResponse") {
+          assertZIO(PartitioningController.patchPartitioningParent(0L, partitioningParentPatchDTO3).exit)(
+            failsWithA[NotFoundErrorResponse]
           )
         }
       ),

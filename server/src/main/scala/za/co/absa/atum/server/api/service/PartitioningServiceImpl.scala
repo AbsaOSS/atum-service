@@ -104,6 +104,15 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def patchPartitioningParent(
+    partitioningId: Long,
+    partitioningParentPatchDTO: PartitioningParentPatchDTO
+  ): IO[ServiceError, Unit] = {
+    repositoryCall(
+      partitioningRepository.updatePartitioningParent(partitioningId, partitioningParentPatchDTO),
+      "updatePartitioningParent"
+    )
+  }
 }
 
 object PartitioningServiceImpl {

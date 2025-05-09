@@ -60,4 +60,10 @@ trait PartitioningController {
   def getPartitioningMainFlow(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[FlowDTO]]
+
+  def patchPartitioningParent(
+    partitioningId: Long,
+    partitioningParentPatchDTO: PartitioningParentPatchDTO
+  ): IO[ErrorResponse, SingleSuccessResponse[PartitioningParentPatchDTO]]
+
 }
