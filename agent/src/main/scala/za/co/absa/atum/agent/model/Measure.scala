@@ -32,14 +32,28 @@ sealed trait Measure {
   val resultValueType: ResultValueType
 }
 
-trait AtumMeasure extends Measure with MeasurementProcessor
+trait AtumMeasure extends Measure with MeasurementProcessor {
+  protected def productIterator: Iterator[Any]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: AtumMeasure =>
+      this.getClass == that.getClass &&
+        this.productIterator.sameElements(that.productIterator)
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    productIterator.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+}
 
 final case class UnknownMeasure(measureName: String, measuredColumns: Seq[String], resultValueType: ResultValueType)
-  extends Measure
+    extends Measure
 
 object AtumMeasure {
 
-  case class RecordCount private (measureName: String) extends AtumMeasure {
+  sealed class RecordCount extends AtumMeasure {
+    val measureName: String = "count"
     private val columnExpression = count("*")
 
     override def function: MeasurementFunction =
@@ -50,13 +64,16 @@ object AtumMeasure {
 
     override def measuredColumns: Seq[String] = Seq.empty
     override val resultValueType: ResultValueType = ResultValueType.LongValue
-  }
-  object RecordCount {
-    private[agent] val measureName: String = "count"
-    def apply(): RecordCount = RecordCount(measureName)
+
+    override protected def productIterator: Iterator[Any] = Iterator(measureName)
   }
 
-  case class DistinctRecordCount private (measureName: String, measuredCols: Seq[String]) extends AtumMeasure {
+  object RecordCount extends RecordCount {
+    def apply(): RecordCount = this
+  }
+
+
+  final class DistinctRecordCount private (val measureName: String, val measuredCols: Seq[String]) extends AtumMeasure {
     require(measuredCols.nonEmpty, "At least one measured column has to be defined.")
 
     private val columnExpression = countDistinct(col(measuredCols.head), measuredCols.tail.map(col): _*)
@@ -69,13 +86,15 @@ object AtumMeasure {
 
     override def measuredColumns: Seq[String] = measuredCols
     override val resultValueType: ResultValueType = ResultValueType.LongValue
+
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCols)
   }
   object DistinctRecordCount {
     private[agent] val measureName: String = "distinctCount"
-    def apply(measuredCols: Seq[String]): DistinctRecordCount = DistinctRecordCount(measureName, measuredCols)
+    def apply(measuredCols: Seq[String]): DistinctRecordCount = new DistinctRecordCount(measureName, measuredCols)
   }
 
-  case class SumOfValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
+  final class SumOfValuesOfColumn private (val measureName: String, val measuredCol: String) extends AtumMeasure {
     private val columnAggFn: Column => Column = column => sum(column)
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
@@ -86,13 +105,15 @@ object AtumMeasure {
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
+
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object SumOfValuesOfColumn {
     private[agent] val measureName: String = "aggregatedTotal"
-    def apply(measuredCol: String): SumOfValuesOfColumn = SumOfValuesOfColumn(measureName, measuredCol)
+    def apply(measuredCol: String): SumOfValuesOfColumn = new SumOfValuesOfColumn(measureName, measuredCol)
   }
 
-  case class AbsSumOfValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
+  final class AbsSumOfValuesOfColumn private (val measureName: String, val measuredCol: String) extends AtumMeasure {
     private val columnAggFn: Column => Column = column => sum(abs(column))
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
@@ -103,13 +124,16 @@ object AtumMeasure {
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.BigDecimalValue
+
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object AbsSumOfValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTotal"
-    def apply(measuredCol: String): AbsSumOfValuesOfColumn = AbsSumOfValuesOfColumn(measureName, measuredCol)
+    def apply(measuredCol: String): AbsSumOfValuesOfColumn = new AbsSumOfValuesOfColumn(measureName, measuredCol)
   }
 
-  case class SumOfTruncatedValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
+  final class SumOfTruncatedValuesOfColumn private (val measureName: String, val measuredCol: String)
+      extends AtumMeasure {
 
     private val columnAggFn: Column => Column = column => sum(when(column >= 0, floor(column)).otherwise(ceil(column)))
 
@@ -121,15 +145,20 @@ object AtumMeasure {
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.LongValue
+
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object SumOfTruncatedValuesOfColumn {
     private[agent] val measureName: String = "aggregatedTruncTotal"
-    def apply(measuredCol: String): SumOfTruncatedValuesOfColumn = SumOfTruncatedValuesOfColumn(measureName, measuredCol)
+    def apply(measuredCol: String): SumOfTruncatedValuesOfColumn =
+      new SumOfTruncatedValuesOfColumn(measureName, measuredCol)
   }
 
-  case class AbsSumOfTruncatedValuesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
+  final class AbsSumOfTruncatedValuesOfColumn private (val measureName: String, val measuredCol: String)
+      extends AtumMeasure {
 
-    private val columnAggFn: Column => Column = column => sum(abs(when(column >= 0, floor(column)).otherwise(ceil(column))))
+    private val columnAggFn: Column => Column = column =>
+      sum(abs(when(column >= 0, floor(column)).otherwise(ceil(column))))
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
@@ -139,13 +168,16 @@ object AtumMeasure {
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.LongValue
+
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object AbsSumOfTruncatedValuesOfColumn {
     private[agent] val measureName: String = "absAggregatedTruncTotal"
-    def apply(measuredCol: String): AbsSumOfTruncatedValuesOfColumn = AbsSumOfTruncatedValuesOfColumn(measureName, measuredCol)
+    def apply(measuredCol: String): AbsSumOfTruncatedValuesOfColumn =
+      new AbsSumOfTruncatedValuesOfColumn(measureName, measuredCol)
   }
 
-  case class SumOfHashesOfColumn private (measureName: String, measuredCol: String) extends AtumMeasure {
+  final class SumOfHashesOfColumn private (val measureName: String, val measuredCol: String) extends AtumMeasure {
     private val columnExpression: Column = sum(crc32(col(measuredCol).cast("String")))
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val resultValue = ds.select(columnExpression).collect()
@@ -154,10 +186,12 @@ object AtumMeasure {
 
     override def measuredColumns: Seq[String] = Seq(measuredCol)
     override val resultValueType: ResultValueType = ResultValueType.StringValue
+
+    override protected def productIterator: Iterator[Any] = Iterator(measureName, measuredCol)
   }
   object SumOfHashesOfColumn {
     private[agent] val measureName: String = "hashCrc32"
-    def apply(measuredCol: String): SumOfHashesOfColumn = SumOfHashesOfColumn(measureName, measuredCol)
+    def apply(measuredCol: String): SumOfHashesOfColumn = new SumOfHashesOfColumn(measureName, measuredCol)
   }
 
   private def castForAggregation(

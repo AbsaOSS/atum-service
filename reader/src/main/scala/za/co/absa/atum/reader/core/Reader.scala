@@ -27,21 +27,31 @@ import za.co.absa.atum.reader.server.ServerConfig
 import za.co.absa.atum.reader.exceptions.RequestException.CirceError
 
 /**
- * Reader is a base class for reading data from a remote server.
- * @param serverConfig    - the configuration how to reach the Atum server
- * @param backend         - sttp backend to use to send requests
- * @tparam F              - the monadic effect used to get the data (e.g. Future, IO, Task, etc.)
+ *  Reader is a base class for reading data from a remote server.
+ *  @param serverConfig    - the configuration how to reach the Atum server
+ *  @param backend         - sttp backend to use to send requests
+ *  @tparam F              - the monadic effect used to get the data (e.g. Future, IO, Task, etc.)
  *                        the context bind for the F type is MonadError to allow not just map, flatMap but eventually
  *                        also error handling easily on a higher level
  */
-abstract class Reader[F[_]: MonadError](implicit val serverConfig: ServerConfig, val backend: SttpBackend[F, Any]) {
+abstract class Reader[F[_]](implicit
+  serverConfig: ServerConfig,
+  backend: SttpBackend[F, Any],
+  me: MonadError[F]
+) {
 
-  protected def mapRequestResultF[I, O](requestResult: RequestResult[I], f: I => F[RequestResult[O]]): F[RequestResult[O]] = requestResult match {
+  protected def mapRequestResultF[I, O](
+    requestResult: RequestResult[I],
+    f: I => F[RequestResult[O]]
+  ): F[RequestResult[O]] = requestResult match {
     case Right(b) => f(b)
-    case Left(a) => MonadError[F].unit(Left(a))
+    case Left(a) => me.unit(Left(a))
   }
 
-  protected def getQuery[R: Decoder](endpointUri: String, params: Map[String, String] = Map.empty): F[RequestResult[R]] = {
+  protected def getQuery[R: Decoder](
+    endpointUri: String,
+    params: Map[String, String] = Map.empty
+  ): F[RequestResult[R]] = {
     val endpointToQuery = serverConfig.host + endpointUri
     val uri = Uri.unsafeParse(endpointToQuery).addParams(params)
     val request: RequestT[Identity, Either[ResponseException[String, CirceError], R], Any] = basicRequest
