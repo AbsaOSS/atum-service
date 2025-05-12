@@ -35,7 +35,7 @@ class PartitioningControllerImpl(
   override def createPartitioningIfNotExists(
     partitioningSubmitDTO: PartitioningSubmitDTO
   ): IO[ErrorResponse, AtumContextDTO] = {
-    val atumContextDTOEffect = for {
+    for {
       _ <- partitioningService
         .createPartitioningIfNotExists(partitioningSubmitDTO)
         .mapError(serviceError => InternalServerErrorResponse(serviceError.message))
@@ -63,8 +63,6 @@ class PartitioningControllerImpl(
       }
 
     } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalDataForContext)
-
-    atumContextDTOEffect
   }
 
 }

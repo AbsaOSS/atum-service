@@ -18,7 +18,6 @@ package za.co.absa.atum.server.api.common.http
 
 import cats.syntax.semigroupk._
 import org.http4s.HttpRoutes
-import sttp.tapir.PublicEndpoint
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
@@ -31,7 +30,7 @@ import zio.metrics.connectors.prometheus.PrometheusPublisher
 
 import za.co.absa.atum.server.api
 
-object Routes extends ServerOptions {
+object Routes extends ServerOptions with ServerUtils {
 
   private def createAllServerRoutes(httpMonitoringConfig: HttpMonitoringConfig): HttpRoutes[HttpEnv.F] = {
     val metricsInterceptorOption: Option[MetricsRequestInterceptor[HttpEnv.F]] = {
@@ -81,13 +80,6 @@ object Routes extends ServerOptions {
       )
     } else Nil
     ZHttp4sServerInterpreter[HttpEnv.Env]().from(endpointsList).toRoutes
-  }
-
-  private def createServerEndpoint[I, E, O](
-    endpoint: PublicEndpoint[I, E, O, Any],
-    logic: I => ZIO[HttpEnv.Env, E, O]
-  ): ZServerEndpoint[HttpEnv.Env, Any] = {
-    endpoint.zServerLogic(logic).widen[HttpEnv.Env]
   }
 
   def allRoutes(

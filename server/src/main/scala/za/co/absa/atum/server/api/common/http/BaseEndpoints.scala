@@ -24,11 +24,10 @@ import sttp.tapir.ztapir._
 import sttp.tapir.{EndpointOutput, PublicEndpoint}
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.envelopes._
-import zio.ZIO
 
 import java.util.UUID
 
-trait BaseEndpoints {
+trait BaseEndpoints extends ServerUtils {
 
   implicit val uuidMatchType: MatchType[UUID] = (a: Any) => a.isInstanceOf[UUID]
 
@@ -90,13 +89,6 @@ trait BaseEndpoints {
 
   protected val apiV2: PublicEndpoint[Unit, ErrorResponse, Unit, Any] = {
     baseEndpoint.in(Api / V2)
-  }
-
-  protected def createServerEndpoint[I, E, O](
-    endpoint: PublicEndpoint[I, E, O, Any],
-    logic: I => ZIO[HttpEnv.Env, E, O]
-  ): ZServerEndpoint[HttpEnv.Env, Any] = {
-    endpoint.zServerLogic(logic).widen[HttpEnv.Env]
   }
 
 }
