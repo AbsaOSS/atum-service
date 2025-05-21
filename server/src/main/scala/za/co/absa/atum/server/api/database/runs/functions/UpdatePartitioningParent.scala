@@ -28,6 +28,7 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithSt
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 
+
 class UpdatePartitioningParent(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[UpdatePartitioningParentArgs, Unit, Task](args =>
       Seq(
