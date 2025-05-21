@@ -18,7 +18,6 @@ package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.model.dto.CheckpointDTO
-import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieSingleResultFunctionWithStatus
@@ -32,6 +31,7 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbArrayPut
 import doobie.postgres.implicits._
+import za.co.absa.atum.server.model.database.PartitioningForDB
 
 class WriteCheckpoint(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[CheckpointDTO, Unit, Task](values =>

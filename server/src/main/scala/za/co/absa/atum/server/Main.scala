@@ -16,14 +16,44 @@
 
 package za.co.absa.atum.server
 
-import za.co.absa.atum.server.api.controller._
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
-import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
+import za.co.absa.atum.server.api.common.http.Server
+
+import za.co.absa.atum.server.api.v1.controller.{
+  PartitioningControllerImpl => PartitioningControllerImplV1,
+  CheckpointControllerImpl => CheckpointControllerImplV1
+}
+import za.co.absa.atum.server.api.v2.controller.{
+  PartitioningControllerImpl => PartitioningControllerImplV2,
+  CheckpointControllerImpl => CheckpointControllerImplV2,
+  FlowControllerImpl => FlowControllerImplV2
+}
+
+import za.co.absa.atum.server.api.v1.service.{
+  PartitioningServiceImpl => PartitioningServiceImplV1,
+  CheckpointServiceImpl => CheckpointServiceImplV1
+}
+
+import za.co.absa.atum.server.api.v2.service.{
+  PartitioningServiceImpl => PartitioningServiceImplV2,
+  CheckpointServiceImpl => CheckpointServiceImplV2,
+  FlowServiceImpl => FlowServiceImplV2
+}
+
+import za.co.absa.atum.server.api.v1.repository.{
+  PartitioningRepositoryImpl => PartitioningRepositoryImplV1,
+  CheckpointRepositoryImpl => CheckpointRepositoryImplV1
+}
+
+import za.co.absa.atum.server.api.v2.repository.{
+  PartitioningRepositoryImpl => PartitioningRepositoryImplV2,
+  CheckpointRepositoryImpl => CheckpointRepositoryImplV2,
+  FlowRepositoryImpl => FlowRepositoryImplV2
+}
+
+import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowPartitionings}
 import za.co.absa.atum.server.api.database.runs.functions._
-import za.co.absa.atum.server.api.http.Server
-import za.co.absa.atum.server.api.repository._
-import za.co.absa.atum.server.api.service._
+import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
+
 import za.co.absa.atum.server.aws.AwsSecretsProviderImpl
 import za.co.absa.atum.server.config.JvmMonitoringConfig
 import zio._
@@ -34,23 +64,33 @@ import zio.metrics.jvm.DefaultJvmMetrics
 
 import java.time.Duration
 
-object Main extends ZIOAppDefault with Server {
+object Main extends ZIOAppDefault {
 
   private val configProvider: ConfigProvider = TypesafeConfigProvider.fromResourcePath()
 
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
     ZIO.config[JvmMonitoringConfig](JvmMonitoringConfig.config).flatMap { jvmMonitoringConfig =>
-      server
+      Server.server
         .provide(
-          PartitioningControllerImpl.layer,
-          CheckpointControllerImpl.layer,
-          FlowControllerImpl.layer,
-          PartitioningServiceImpl.layer,
-          CheckpointServiceImpl.layer,
-          FlowServiceImpl.layer,
-          PartitioningRepositoryImpl.layer,
-          CheckpointRepositoryImpl.layer,
-          FlowRepositoryImpl.layer,
+          // controllers
+          PartitioningControllerImplV1.layer,
+          PartitioningControllerImplV2.layer,
+          CheckpointControllerImplV1.layer,
+          CheckpointControllerImplV2.layer,
+          FlowControllerImplV2.layer,
+          // services
+          PartitioningServiceImplV1.layer,
+          PartitioningServiceImplV2.layer,
+          CheckpointServiceImplV1.layer,
+          CheckpointServiceImplV2.layer,
+          FlowServiceImplV2.layer,
+          // repositories
+          PartitioningRepositoryImplV1.layer,
+          PartitioningRepositoryImplV2.layer,
+          CheckpointRepositoryImplV1.layer,
+          CheckpointRepositoryImplV2.layer,
+          FlowRepositoryImplV2.layer,
+          // database
           CreatePartitioningIfNotExists.layer,
           CreatePartitioning.layer,
           GetPartitioningMeasures.layer,
@@ -69,9 +109,11 @@ object Main extends ZIOAppDefault with Server {
           UpdatePartitioningParent.layer,
           PostgresDatabaseProvider.layer,
           TransactorProvider.layer,
+          // aws
           AwsSecretsProviderImpl.layer,
+          // scope
           zio.Scope.default,
-          // for Prometheus
+          // prometheus
           prometheus.publisherLayer,
           prometheus.prometheusLayer,
           // enabling conditionally collection of ZIO runtime metrics and default JVM metrics
