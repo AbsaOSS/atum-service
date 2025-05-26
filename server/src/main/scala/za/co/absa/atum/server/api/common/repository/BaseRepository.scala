@@ -37,8 +37,6 @@ trait BaseRepository {
           )
         case Right(_) => ZIO.logDebug(s"Operation '$operationName' succeeded in database")
       }
-
-
   }
 
   private def defaultErrorHandler(operationName: String): PartialFunction[Throwable, DatabaseError] = {

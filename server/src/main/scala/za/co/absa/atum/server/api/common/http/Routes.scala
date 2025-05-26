@@ -42,7 +42,6 @@ object Routes extends ServerOptions with ServerUtils {
         api.common.http.Endpoints.serverEndpoints
     }
 
-
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
   }
 

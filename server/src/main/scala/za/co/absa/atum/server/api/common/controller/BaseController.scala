@@ -43,7 +43,6 @@ trait BaseController {
         ZIO.succeed(onSuccessFnc(result))
       }
 
-
   }
 
   protected def mapToSingleSuccessResponse[A](

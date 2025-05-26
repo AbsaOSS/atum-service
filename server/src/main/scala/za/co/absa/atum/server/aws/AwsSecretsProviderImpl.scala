@@ -25,7 +25,6 @@ import zio._
 class AwsSecretsProviderImpl(secretsManagerClient: SecretsManagerClient) extends AwsSecretsProvider {
   override def getSecretValue(secretName: String): Task[String] = {
     ZIO.attempt {
-
       val getSecretValueRequest = GetSecretValueRequest.builder().secretId(secretName).build()
       secretsManagerClient.getSecretValue(getSecretValueRequest).secretString()
     }.tapError { error =>
