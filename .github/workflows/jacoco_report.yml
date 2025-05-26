@@ -73,7 +73,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@feature/76-Changed-files-can-in-multi-regime-shows-more-than-100-coverage
+        uses: MoranaApps/jacoco-report@feature/75--Input-to-disable-fail-of-action-if-global-threshold-is-breached-
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
