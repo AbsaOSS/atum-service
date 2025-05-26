@@ -73,7 +73,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@feature/75--Input-to-disable-fail-of-action-if-global-threshold-is-breached-
+        uses: MoranaApps/jacoco-report@v2
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
@@ -86,5 +86,3 @@ jobs:
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
           min-coverage-per-changed-file: ${{ env.coverage-per-changed-file }}
           skip-unchanged: true
-          fail-on-threshold: per-changed-file
-          debug: true
