@@ -37,7 +37,6 @@ class UpdatePartitioningParent(implicit schema: DBSchema, dbEngine: DoobieEngine
         fr"${args.partitioningParentPatchDTO.copyMeasurements}",
         fr"${args.partitioningParentPatchDTO.copyAdditionalData}",
       ),
-      Some("update_partitioning_parent")
     )
     with StandardStatusHandling
 
