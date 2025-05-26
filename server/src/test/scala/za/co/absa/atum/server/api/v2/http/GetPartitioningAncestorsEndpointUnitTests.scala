@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.http
+package za.co.absa.atum.server.api.v2.http
 
 import org.mockito.Mockito.{mock, when}
 import sttp.client3.circe.asJson
@@ -26,13 +26,14 @@ import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.model.envelopes.{InternalServerErrorResponse, NotFoundErrorResponse, Pagination}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.controller.PartitioningController
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
+import za.co.absa.atum.server.api.v2.controller.PartitioningController
+import za.co.absa.atum.server.api.v2.http.Endpoints.getPartitioningAncestorsEndpoint
 import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO, ZLayer}
 
-object GetPartitioningAncestorsEndpointV2UnitTests extends ZIOSpecDefault with Endpoints with TestData {
+object GetPartitioningAncestorsEndpointUnitTests extends ZIOSpecDefault with TestData {
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
@@ -58,7 +59,7 @@ object GetPartitioningAncestorsEndpointV2UnitTests extends ZIOSpecDefault with E
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getPartitioningAncestorsServerEndpoint =
-    getPartitioningAncestorsEndpointV2.zServerLogic({ case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
+    getPartitioningAncestorsEndpoint.zServerLogic({ case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
       PartitioningController.getPartitioningAncestors(partitioningId, limit: Option[Int], offset: Option[Long])
     })
 
