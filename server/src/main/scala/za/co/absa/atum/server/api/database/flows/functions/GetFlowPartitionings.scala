@@ -22,7 +22,7 @@ import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.Flows
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
-import za.co.absa.atum.server.model.PartitioningForDB
+import za.co.absa.atum.server.model.database.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus

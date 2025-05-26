@@ -19,13 +19,13 @@ package za.co.absa.atum.server.api.database.runs.functions
 import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.model.AdditionalDataItemFromDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import zio.{Task, URLayer, ZIO, ZLayer}
 
 import za.co.absa.atum.server.api.database.DoobieImplicits.getMapWithOptionStringValues
+import za.co.absa.atum.server.model.database.AdditionalDataItemFromDB
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
