@@ -26,7 +26,7 @@ env:
   scalaShort: "2.13"
   coverage-overall: 56.0
   coverage-changed-files: 80.0
-  coverage-per-changed-file: 0.0
+  coverage-per-changed-file: 80.0
   check-overall-coverages: true
 
 jobs:
@@ -86,5 +86,5 @@ jobs:
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
           min-coverage-per-changed-file: ${{ env.coverage-per-changed-file }}
           skip-unchanged: true
-          fail-on-threshold: overall, per-changed-file
+          fail-on-threshold: per-changed-file
           debug: true
