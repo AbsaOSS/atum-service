@@ -24,7 +24,7 @@ on:
 env:
   scalaLong: 2.13.11
   scalaShort: "2.13"
-  coverage-overall: 56.0
+  coverage-overall: 90.0
   coverage-changed-files: 80.0
   coverage-changed-per-file: 80.0
   check-overall-coverages: true
@@ -73,7 +73,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@feature/76-Changed-files-can-in-multi-regime-shows-more-than-100-coverage
+        uses: MoranaApps/jacoco-report@feature/feature/75--Input-to-disable-fail-of-action-if-global-threshold-is-breached-
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
@@ -85,3 +85,4 @@ jobs:
           min-coverage-overall: ${{ env.coverage-overall }}
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
           min-coverage-per-changed-file: ${{ env.coverage-changed-per-file }}
+          skip-unchanged: true
