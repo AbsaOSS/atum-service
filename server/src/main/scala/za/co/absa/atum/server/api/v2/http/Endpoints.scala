@@ -169,7 +169,7 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(errorInDataOneOfVariant)
   }
 
-  protected val patchPartitioningParentEndpointV2
+  val patchPartitioningParentEndpoint
   : PublicEndpoint[(Long, PartitioningParentPatchDTO), ErrorResponse, SingleSuccessResponse[PartitioningParentPatchDTO], Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
@@ -249,7 +249,17 @@ object Endpoints extends BaseEndpoints {
       { case (flowId: Long, limit: Option[Int], offset: Option[Long]) =>
         PartitioningController.getFlowPartitionings(flowId, limit, offset)
       }
-    )
+    ),
+    createServerEndpoint[
+      (Long, PartitioningParentPatchDTO),
+      ErrorResponse,
+      SingleSuccessResponse[PartitioningParentPatchDTO]
+    ](
+      patchPartitioningParentEndpoint,
+      { case (partitioningId: Long, partitioningParentPatchDTO: PartitioningParentPatchDTO) =>
+        PartitioningController.patchPartitioningParent(partitioningId, partitioningParentPatchDTO)
+      }
+    ),
   )
 
 }

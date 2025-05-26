@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.http
+package za.co.absa.atum.server.api.v2.http
 
-import io.circe
 import org.mockito.Mockito.{mock, when}
 import sttp.client3.circe._
 import sttp.client3.testing.SttpBackendStub
-import sttp.client3.{Identity, RequestT, ResponseException, UriContext, basicRequest}
+import sttp.client3.{UriContext, basicRequest}
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
@@ -28,12 +27,13 @@ import za.co.absa.atum.model.dto.PartitioningParentPatchDTO
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.envelopes.{ConflictErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.controller.PartitioningController
+import za.co.absa.atum.server.api.v2.controller.PartitioningController
+import za.co.absa.atum.server.api.v2.http.Endpoints.patchPartitioningParentEndpoint
 import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO, ZLayer}
 
-object PatchPartitioningParentEndpointUnitTests extends ZIOSpecDefault with Endpoints with TestData {
+object PatchPartitioningParentEndpointUnitTests extends ZIOSpecDefault with TestData {
 
   private val partitioningControllerMock: PartitioningController = mock(classOf[PartitioningController])
 
@@ -50,7 +50,7 @@ object PatchPartitioningParentEndpointUnitTests extends ZIOSpecDefault with Endp
 
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
-  private val patchPartitioningParentEndpointLogic = patchPartitioningParentEndpointV2
+  private val patchPartitioningParentEndpointLogic = patchPartitioningParentEndpoint
     .zServerLogic({ case (partitioningId: Long, partitioningParentPatchDTO: PartitioningParentPatchDTO) =>
       PartitioningController.patchPartitioningParent(partitioningId, partitioningParentPatchDTO)
     })
