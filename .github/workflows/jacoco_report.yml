@@ -73,7 +73,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@feature/feature/75--Input-to-disable-fail-of-action-if-global-threshold-is-breached-
+        uses: MoranaApps/jacoco-report@feature/75--Input-to-disable-fail-of-action-if-global-threshold-is-breached-
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
