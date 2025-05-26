@@ -87,3 +87,4 @@ jobs:
           min-coverage-per-changed-file: ${{ env.coverage-per-changed-file }}
           skip-unchanged: true
           fail-on-threshold: overall, changed-files-average, per-changed-file
+          debug: true
