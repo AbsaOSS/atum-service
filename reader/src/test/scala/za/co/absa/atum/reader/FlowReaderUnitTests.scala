@@ -37,7 +37,7 @@ import java.util.UUID
 
 class FlowReaderUnitTests extends AnyFunSuiteLike {
   private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
-  private implicit val monad: MonadError[Identity] = IdMonad
+  private implicit val monadError: MonadError[Identity] = IdMonad
 
   test("mainFlowPartitioning is the same as partitioning") {
     val atumPartitions: AtumPartitions = AtumPartitions(List(
@@ -46,7 +46,7 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     ))
     implicit val server: SttpBackend[Identity, Any] = SttpBackendStub.synchronous
 
-    val result = new FlowReader(atumPartitions).mainFlowPartitioning
+    val result = FlowReader(atumPartitions).mainFlowPartitioning
     assert(result == atumPartitions)
   }
 
@@ -193,6 +193,17 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     val reader = FlowReader(atumPartitions)
     val result = reader.getCheckpointsOfNamePage("Test checkpoints 1")
     assert(result == Right(expectedData))
+  }
+
+  test("Instantiate FlowReader with implicit arguments passed explicitly") {
+    val atumPartitions: AtumPartitions = AtumPartitions(List(
+      "a" -> "b",
+      "c" -> "d"
+    ))
+    implicit val server: SttpBackend[Identity, Any] = SttpBackendStub.synchronous
+
+    val flowReader = FlowReader(atumPartitions)(serverConfig, server, monadError)
+    assert(flowReader.isInstanceOf[FlowReader[Identity]])
   }
 
 }

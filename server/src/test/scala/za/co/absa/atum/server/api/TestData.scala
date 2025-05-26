@@ -22,6 +22,7 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
+import za.co.absa.atum.server.model.database._
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 import za.co.absa.atum.server.model.{CheckpointFromDB, CheckpointItemFromDB, CheckpointItemWithPartitioningFromDB, MeasureFromDB, PartitioningFromDB}
 

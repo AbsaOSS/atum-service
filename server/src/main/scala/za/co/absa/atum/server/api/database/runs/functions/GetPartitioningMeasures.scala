@@ -18,7 +18,6 @@ package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
 import za.co.absa.atum.model.dto.PartitioningDTO
-import za.co.absa.atum.server.model.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
@@ -28,7 +27,7 @@ import zio._
 import io.circe.syntax._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.circe.jsonb.implicits.jsonbPut
-import za.co.absa.atum.server.model.MeasureFromDB
+import za.co.absa.atum.server.model.database.{MeasureFromDB, PartitioningForDB}
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
