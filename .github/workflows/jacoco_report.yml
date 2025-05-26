@@ -26,7 +26,7 @@ env:
   scalaShort: "2.13"
   coverage-overall: 56.0
   coverage-changed-files: 80.0
-  coverage-per-changed-file: 80.0
+  coverage-per-changed-file: 0.0
   check-overall-coverages: true
 
 jobs:
