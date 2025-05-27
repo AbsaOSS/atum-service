@@ -71,12 +71,8 @@ object PatchPartitioningParentEndpointUnitTests extends ZIOSpecDefault with Test
           .body(partitioningParentPatchDTO1)
           .send(backendStub)
 
-        val body = response.map(_.body)
         val statusCode = response.map(_.code)
-
-        assertZIO(body <&> statusCode)(
-          equalTo(Right(SingleSuccessResponse(partitioningParentPatchDTO1, uuid1)), StatusCode.Ok)
-        )
+        assertZIO(statusCode)(equalTo(StatusCode.NoContent))
       },
       test("Returns expected BadRequest") {
         val response = request

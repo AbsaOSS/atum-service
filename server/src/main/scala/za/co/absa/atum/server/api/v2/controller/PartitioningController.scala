@@ -61,6 +61,6 @@ trait PartitioningController {
   def patchPartitioningParent(
     partitioningId: Long,
     partitioningParentPatchDTO: PartitioningParentPatchDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[PartitioningParentPatchDTO]]
+  ): IO[ErrorResponse, Unit]
 
 }

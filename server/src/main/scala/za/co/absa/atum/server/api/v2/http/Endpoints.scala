@@ -170,12 +170,11 @@ object Endpoints extends BaseEndpoints {
   }
 
   val patchPartitioningParentEndpoint
-  : PublicEndpoint[(Long, PartitioningParentPatchDTO), ErrorResponse, SingleSuccessResponse[PartitioningParentPatchDTO], Any] = {
+  : PublicEndpoint[(Long, PartitioningParentPatchDTO), ErrorResponse, Unit, Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
       .in(jsonBody[PartitioningParentPatchDTO])
-      .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[PartitioningParentPatchDTO]])
+      .out(statusCode(StatusCode.NoContent))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
@@ -253,7 +252,7 @@ object Endpoints extends BaseEndpoints {
     createServerEndpoint[
       (Long, PartitioningParentPatchDTO),
       ErrorResponse,
-      SingleSuccessResponse[PartitioningParentPatchDTO]
+      Unit
     ](
       patchPartitioningParentEndpoint,
       { case (partitioningId: Long, partitioningParentPatchDTO: PartitioningParentPatchDTO) =>
