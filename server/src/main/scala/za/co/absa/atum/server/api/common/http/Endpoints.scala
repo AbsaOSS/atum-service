@@ -33,8 +33,18 @@ object Endpoints extends BaseEndpoints {
   val healthEndpoint: PublicEndpoint[Unit, Unit, StatusResponse, Any] =
     endpoint.get.in(Health).out(jsonBody[StatusResponse].example(StatusResponse.up))
 
+  val readinessEndpoint: PublicEndpoint[Unit, Unit, StatusResponse, Any] =
+    endpoint.get.in(Health/Readiness).out(jsonBody[StatusResponse])
+
+  val livenessEndpoint: PublicEndpoint[Unit, Unit, StatusResponse, Any] =
+    endpoint.get.in(Health/Liveness).out(jsonBody[StatusResponse])
+
+  private final val healthLogic = (_: Unit) => ZIO.succeed(StatusResponse.up)
+
   val serverEndpoints: List[ZServerEndpoint[HttpEnv.Env, Any]] = List(
-    createServerEndpoint(healthEndpoint, (_: Unit) => ZIO.succeed(StatusResponse.up))
+    createServerEndpoint(healthEndpoint, healthLogic),
+    createServerEndpoint(readinessEndpoint, healthLogic),
+    createServerEndpoint(livenessEndpoint, healthLogic),
   )
 
 }
