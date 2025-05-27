@@ -23,6 +23,8 @@ object ApiPaths {
   final val V2 = "v2"
 
   final val Health = "health"
+  final val Readiness = "readiness"
+  final val Liveness = "liveness"
   final val ZioMetrics = "zio-metrics"
 
   object V1Paths {
