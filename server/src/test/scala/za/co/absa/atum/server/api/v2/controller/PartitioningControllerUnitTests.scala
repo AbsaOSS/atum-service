@@ -143,13 +143,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         }
       ),
       suite("PatchPartitioningParentSuite")(
-        test("Returns expected PartitioningParentPatchDTO") {
-          for {
-            result <- PartitioningController.patchPartitioningParent(partitioningId1, partitioningParentPatchDTO1)
-            expected = SingleSuccessResponse(partitioningParentPatchDTO1, uuid1)
-            actual = result.copy(requestId = uuid1)
-          } yield assertTrue(actual == expected)
-        },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.patchPartitioningParent(partitioningId1, partitioningParentPatchDTO2).exit)(
             failsWithA[InternalServerErrorResponse]

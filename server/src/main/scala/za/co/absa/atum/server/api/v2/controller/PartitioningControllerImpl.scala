@@ -126,12 +126,10 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   override def patchPartitioningParent(
     partitioningId: Long,
     partitioningParentPatchDTO: PartitioningParentPatchDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[PartitioningParentPatchDTO]] = {
-    mapToSingleSuccessResponse(
-        serviceCall[Unit, PartitioningParentPatchDTO](
+  ): IO[ErrorResponse, Unit] = {
+        serviceCall[Unit, Unit](
           partitioningService.patchPartitioningParent(partitioningId, partitioningParentPatchDTO),
-          _ => partitioningParentPatchDTO
-        )
+          _ => ()
       )
   }
 }
