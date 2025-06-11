@@ -24,9 +24,18 @@ on:
 env:
   scalaLong: 2.13.11
   scalaShort: "2.13"
-  coverage-overall: 56.0
+  coverage-overall: 80.0
   coverage-changed-files: 80.0
+  coverage-per-changed-file: 0.0
   check-overall-coverages: true
+  MODULES: |
+    atum-agent: agent
+    atum-model: model
+    atum-reader: reader
+    atum-server: server
+  MODULES_THRESHOLDS: |
+    atum-model: 56*80*
+    atum-server: 66*80*
 
 jobs:
   jacoco-report:
@@ -72,7 +81,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@v1
+        uses: MoranaApps/jacoco-report@v2
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
@@ -83,3 +92,7 @@ jobs:
           comment-mode: 'multi'
           min-coverage-overall: ${{ env.coverage-overall }}
           min-coverage-changed-files: ${{ env.coverage-changed-files }}
+          min-coverage-per-changed-file: ${{ env.coverage-per-changed-file }}
+          skip-unchanged: false
+          modules: ${{ env.MODULES }}
+          modules-thresholds: ${{ env.MODULES_THRESHOLDS }}
