@@ -27,6 +27,8 @@ import za.co.absa.atum.model.types.basic.AtumPartitionsOps
  */
 trait AtumAgent {
 
+
+
   private[this] var contexts: Map[AtumPartitions, AtumContext] = Map.empty
 
   val dispatcher: Dispatcher
