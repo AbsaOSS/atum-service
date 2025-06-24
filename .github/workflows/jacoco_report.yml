@@ -84,7 +84,7 @@ jobs:
       - name: Checkout jacoco-filter tool
         uses: actions/checkout@v4
         with:
-          repository: atum-service/jacoco-filter
+          repository: MoranaApps/jacoco-filter
           path: jacoco-filter
 
       - name: Install jacoco-filter dependencies
