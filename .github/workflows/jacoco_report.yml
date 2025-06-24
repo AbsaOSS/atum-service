@@ -80,21 +80,11 @@ jobs:
           python-version: '3.12'
 
 
-
-      - name: Download latest jacoco-filter Linux binary
-        run: |
-          curl -s https://api.github.com/repos/MoranaApps/jacoco-filter/releases/latest \
-            | grep "browser_download_url.*jacoco-filter-linux" \
-            | cut -d '"' -f 4 \
-            | xargs curl -L -o jacoco-filter
-
-          chmod +x jacoco-filter
-          ./jacoco-filter --help || echo "✅ Binary is ready"
-
-      - name: Run jacoco-filter on this project
-        run: |
-          ./jacoco-filter --config jacoco_filter.toml
-
+      - name: Run jacoco-filter
+        uses: MoranaApps/jacoco-filter@feature/add-action-yml-support
+        with:
+          config: jacoco_filter.toml
+          verbose: true
 
 
       - name: Check coverage thresholds and add reports in PR comments
