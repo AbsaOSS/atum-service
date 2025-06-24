@@ -1,4 +1,4 @@
-inputs = ["**/*2.13/**/jacoco.xml"]
+inputs = ["**/*2.13*/**/jacoco.xml"]
 exclude_paths = []
 verbose = true
 
