@@ -83,7 +83,7 @@ jobs:
       - name: Run jacoco-filter
         uses: MoranaApps/jacoco-filter@feature/add-action-yml-support
         with:
-          config: jacoco_filter.toml
+          config: ${{ github.repository }}/jacoco_filter.toml
           verbose: true
 
 
