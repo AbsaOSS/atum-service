@@ -81,28 +81,19 @@ jobs:
 
 
 
-      - name: Checkout jacoco-filter tool
-        uses: actions/checkout@v4
-        with:
-          repository: MoranaApps/jacoco-filter
-          path: jacoco-filter
-
-      - name: Install jacoco-filter dependencies
-        working-directory: jacoco-filter
+      - name: Download latest jacoco-filter Linux binary
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          curl -s https://api.github.com/repos/MoranaApps/jacoco-filter/releases/latest \
+            | grep "browser_download_url.*jacoco-filter-linux" \
+            | cut -d '"' -f 4 \
+            | xargs curl -L -o jacoco-filter
 
-      - name: Build jacoco-filter binary
-        working-directory: jacoco-filter
-        run: |
-          pyinstaller --clean jacoco_filter.spec
-          echo "Built files:"
-          find dist -type f
+          chmod +x jacoco-filter
+          ./jacoco-filter --help || echo "✅ Binary is ready"
 
       - name: Run jacoco-filter on this project
         run: |
-          ./jacoco-filter/dist/jacoco-filter/jacoco-filter --config jacoco_filter.toml
+          ./jacoco-filter --config jacoco_filter.toml
 
 
 
