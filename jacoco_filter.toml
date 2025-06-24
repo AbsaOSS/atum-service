@@ -3,5 +3,5 @@ exclude_paths = []
 verbose = true
 
 inline_rules = [
+    "method:za.co.absa.atum.agent.AtumAgent$#dispatcherFromConfig"
 ]
-
