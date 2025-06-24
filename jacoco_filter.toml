@@ -1,0 +1,7 @@
+inputs = ["**/jacoco.xml"]
+exclude_paths = []
+verbose = true
+
+inline_rules = [
+]
+

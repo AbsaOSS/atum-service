@@ -102,7 +102,7 @@ jobs:
 
       - name: Run jacoco-filter on this project
         run: |
-          ./jacoco-filter/dist/jacoco-filter/jacoco-filter
+          ./jacoco-filter/dist/jacoco-filter/jacoco-filter --config jacoco_filter.toml
 
 
 
