@@ -85,6 +85,13 @@ jobs:
           config: ${{ github.workspace }}/jacoco_filter.toml
           verbose: true
 
+      - name: Upload JaCoCo XMLs (original and filtered)
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-xmls
+          path: |
+            **/jacoco.xml
+            **/jacoco.filtered.xml
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
