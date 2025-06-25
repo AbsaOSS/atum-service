@@ -79,7 +79,6 @@ jobs:
         with:
           python-version: '3.12'
 
-
       - name: Run jacoco-filter
         uses: MoranaApps/jacoco-filter@feature/add-action-yml-support
         with:

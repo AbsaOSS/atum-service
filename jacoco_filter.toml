@@ -2,6 +2,6 @@ inputs = ["**/*2.13*/**/jacoco.xml"]
 exclude_paths = []
 verbose = true
 
-inline_rules = [
+rules = [
     "method:za.co.absa.atum.agent.AtumAgent$#dispatcherFromConfig"
 ]
