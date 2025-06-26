@@ -15,9 +15,17 @@
 
 import com.github.sbt.jacoco.JacocoKeys.JacocoReportFormats
 import com.github.sbt.jacoco.report.JacocoReportSettings
+import sbt.*
+import sbt.Keys.*
+
+import scala.sys.process.*
 import za.co.absa.commons.version.Version
 
+import java.nio.file.{Files, StandardCopyOption}
+
 object JacocoSetup {
+
+  private val JacocoCLI = config("jacococli").hide
 
   private val jacocoReportCommonSettings: JacocoReportSettings = JacocoReportSettings(
     formats = Seq(JacocoReportFormats.HTML, JacocoReportFormats.XML)
@@ -50,4 +58,113 @@ object JacocoSetup {
     )
   }
 
+  // Injectable task
+  def filterJacocoTask: Def.Initialize[Task[Unit]] = Def.task {
+    val log = streams.value.log
+    val os = sys.props("os.name").toLowerCase
+    val isWindows = os.contains("win")
+    val isMac = os.contains("mac")
+    val isLinux = os.contains("linux")
+
+    val zipName = if (isWindows) {
+      "jacoco-filter-Windows.zip"
+    } else if (isMac) {
+      "jacoco-filter-macOS.zip"
+    } else if (isLinux) {
+      "jacoco-filter-Linux.zip"
+    } else {
+      sys.error(s"Unsupported OS: $os")
+    }
+
+    val downloadUrl = s"https://github.com/MoranaApps/jacoco-filter/releases/latest/download/$zipName"
+    val targetDir = target.value
+    val zipPath = targetDir / zipName
+    val binaryName = zipName.replace(".zip", "")
+    val binaryPath = targetDir / binaryName / "jacoco-filter" / binaryName.toLowerCase()
+
+    if (!binaryPath.exists()) {
+      log.info(s"Downloading $zipName...")
+
+      val connection = new URL(downloadUrl).openConnection()
+      val inputStream = connection.getInputStream
+      Files.copy(inputStream, zipPath.toPath, StandardCopyOption.REPLACE_EXISTING)
+      inputStream.close()
+
+      log.info("Unzipping binary...")
+      IO.unzip(zipPath, targetDir)
+
+      if (!isWindows) {
+        binaryPath.setExecutable(true)
+      }
+    } else {
+      log.info(s"Binary already exists: $binaryPath")
+    }
+
+    val tomlPath = baseDirectory.value / "jacoco_filter.toml"
+    if (!tomlPath.exists()) {
+      sys.error(s"Config file not found: $tomlPath")
+    }
+
+    log.info(s"Running jacoco-filter with config: $tomlPath")
+
+    val cmd = if (isWindows)
+      Seq("cmd", "/c", binaryPath.getAbsolutePath, "--config", tomlPath.getAbsolutePath)
+    else
+      Seq(binaryPath.getAbsolutePath, "--config", tomlPath.getAbsolutePath)
+
+    val exitCode = Process(cmd).!
+
+    if (exitCode != 0)
+      sys.error(s"jacoco-filter failed with exit code $exitCode")
+  }
+
+  def generateFilteredHtmlReportTask: Def.Initialize[Task[Unit]] = Def.task {
+    val log = streams.value.log
+    val baseDir = baseDirectory.value
+    val filteredXmlFiles = (baseDir ** "jacoco.filtered.xml").get
+
+    val zipName = "jacoco-0.8.13.zip"
+    val downloadUrl = s"https://github.com/jacoco/jacoco/releases/latest/download/$zipName"
+    val targetDir = target.value
+    val zipPath = targetDir / zipName
+    val jarPath = targetDir / "jacoco-rls" / "lib" / "jacococli.jar"
+
+    if (!jarPath.exists()) {
+      log.info(s"Downloading $zipName...")
+
+      val connection = new URL(downloadUrl).openConnection()
+      val inputStream = connection.getInputStream
+      Files.copy(inputStream, zipPath.toPath, StandardCopyOption.REPLACE_EXISTING)
+      inputStream.close()
+
+      log.info("Unzipping zip...")
+      IO.unzip(zipPath, targetDir / "jacoco-rls")
+    } else {
+      log.info(s"Jar file already exists: $jarPath")
+    }
+
+    if (filteredXmlFiles.isEmpty) {
+      log.warn("No filtered XML files found. Skipping HTML report generation.")
+    } else {
+      filteredXmlFiles.foreach { xml =>
+        log.info(s"Generating html report for: ${xml.getAbsolutePath}")
+
+        val classFilesDir = new File(xml.getParentFile.getParentFile.getParentFile, "classes")
+        val reportDir = new File(xml.getParentFile, "html-filtered")
+        IO.createDirectory(reportDir)
+
+        val cmd = Seq(
+          "java", "-jar", jarPath.getAbsolutePath,
+          "report", xml.getAbsolutePath,
+          "--classfiles", classFilesDir.getAbsolutePath,
+          "--html", reportDir.getAbsolutePath
+        )
+        log.info(s"cmd: ${cmd.mkString(" ")}")
+        val exitCode = Process(cmd, baseDir).!
+        if (exitCode != 0) sys.error("JaCoCo CLI report generation failed")
+
+        log.info(s"Filtered HTML report generated at: ${reportDir.getAbsolutePath}")
+      }
+    }
+  }
 }
