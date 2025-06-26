@@ -25,8 +25,6 @@ import java.nio.file.{Files, StandardCopyOption}
 
 object JacocoSetup {
 
-  private val JacocoCLI = config("jacococli").hide
-
   private val jacocoReportCommonSettings: JacocoReportSettings = JacocoReportSettings(
     formats = Seq(JacocoReportFormats.HTML, JacocoReportFormats.XML)
   )
@@ -58,7 +56,6 @@ object JacocoSetup {
     )
   }
 
-  // Injectable task
   def filterJacocoTask: Def.Initialize[Task[Unit]] = Def.task {
     val log = streams.value.log
     val os = sys.props("os.name").toLowerCase

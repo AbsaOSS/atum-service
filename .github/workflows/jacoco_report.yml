@@ -73,14 +73,12 @@ jobs:
       - name: Build and run tests with test coverage
         continue-on-error: true
         id: jacocorun
-        run: |
-          sbt jacoco
+        run: sbt jacoco
 
       - name: Filter jacoco xml files
         continue-on-error: true
         id: jacocofilter
-        run: |
-          sbt filterJacoco
+        run: sbt filterJacoco
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco

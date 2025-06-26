@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import sbt.*
+import sbt.Keys.*
 import Dependencies.*
 import Dependencies.Versions.spark3
 import VersionAxes.*
-import sbt.*
-import sbt.Keys.*
 
 ThisBuild / scalaVersion := Setup.scala213.asString
 
