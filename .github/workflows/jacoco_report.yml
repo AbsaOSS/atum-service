@@ -75,25 +75,12 @@ jobs:
         id: jacocorun
         run: |
           sbt jacoco
+
+      - name: Filter jacoco xml files
+        continue-on-error: true
+        id: jacocofilter
+        run: |
           sbt filterJacoco
-
-#      - uses: actions/setup-python@v5
-#        with:
-#          python-version: '3.12'
-#
-#      - name: Run jacoco-filter
-#        uses: MoranaApps/jacoco-filter@feature/add-action-yml-support
-#        with:
-#          config: ${{ github.workspace }}/jacoco_filter.toml
-#          verbose: true
-
-      - name: Upload JaCoCo XMLs (original and filtered)
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-xmls
-          path: |
-            **/jacoco.xml
-            **/jacoco.filtered.xml
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
