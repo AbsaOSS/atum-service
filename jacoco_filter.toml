@@ -3,6 +3,9 @@ exclude_paths = []
 verbose = true
 
 rules = [
-    "method:za.co.absa.atum.agent.AtumAgent#dispatcherFromConfig*",
-    "method:za.co.absa.atum.agent.AtumAgent$#dispatcherFromConfig*"
+    # filter-out method from AtumAgent class
+    #"method:za.co.absa.atum.agent.AtumAgent#dispatcherFromConfig*",
+
+    # filter-out method from AtumAgent object
+    #"method:za.co.absa.atum.agent.AtumAgent$#dispatcherFromConfig*"
 ]

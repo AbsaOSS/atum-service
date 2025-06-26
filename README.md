@@ -236,10 +236,59 @@ represents all currently supported measurement types (aka measures):
 sbt jacoco
 ```
 
-Code coverage wil be generated on path:
+The HTML report of coverage will be generated on the path:
+
 ```
-{project-root}/{module}/target/jvm-{scala_version}/jacoco/report/html
+{project-root}/{module}/target/jvm-{scala_version}/jacoco/report/html/index.html
 ```
+
+The XML report of coverage will be generated on the path:
+
+```
+{project-root}/{module}/target/jvm-{scala_version}/jacoco/report/jacoco.xml
+```
+
+### Exclusion During Coverage Report Generation
+
+To filter out files from the code coverage report, you can define their sequence in the file `{project-root}/project/JacocoSetup.scala`.
+
+```
+  def jacocoProjectExcludes(): Seq[String] = {
+    Seq(
+      "**.api.http.*",
+      "**.config.*",
+      "za.co.absa.atum.agent.dispatcher.Dispatcher",
+      "za.co.absa.atum.agent.dispatcher.ConsoleDispatcher",
+      "za.co.absa.atum.server.Main*",
+      "za.co.absa.atum.server.Constants*",
+      "za.co.absa.atum.server.api.database.DoobieImplicits*",
+      "za.co.absa.atum.server.api.database.TransactorProvider*",
+      "za.co.absa.atum.model.envelopes.Pagination",
+      "za.co.absa.atum.model.envelopes.ResponseEnvelope",
+      "za.co.absa.atum.model.envelopes.StatusResponse",
+      "za.co.absa.atum.model.envelopes.SuccessResponse"
+    )
+  }
+```
+
+### Exclusion After Coverage Report Generation
+
+To filter out files, objects (`class`, `object`, `trait`), and methods from the code coverage report after it has been generated, you can define their sequence in the file `{project-root}/jacoco_filter.toml`.
+
+```
+rules = [
+    # filter-out methods from AtumAgent class
+    "method:za.co.absa.atum.agent.AtumAgent#dispatcherFromConfig*",
+
+    # filter-out methods from AtumAgent object
+    "method:za.co.absa.atum.agent.AtumAgent$#dispatcherFromConfig*"
+]
+```
+
+> For filtration, a [Jacoco Filter](https://github.com/MoranaApps/jacoco-filter) tool is used.
+> <br>**Hint:** To identify object names, observe values in the jacoco.xml files with non-zero missed instructions.
+
+> **Important:** In the used version of the tool, the filtration is applied on the XML report, not on the HTML report!
 
 ## How to Run in IntelliJ
 
