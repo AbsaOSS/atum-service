@@ -47,6 +47,7 @@ trait AtumMeasure extends Measure with MeasurementProcessor {
   }
 }
 
+
 final case class UnknownMeasure(measureName: String, measuredColumns: Seq[String], resultValueType: ResultValueType)
     extends Measure
 
