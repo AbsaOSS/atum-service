@@ -59,7 +59,7 @@ Note: Each Postman collection run in sequence from the top to the bottom.
 ```yaml
 cd api-tests
 
-newman run ./1_shot/Atum-Service_1-Shot_test_isolated_calls.postman_collection.json \
+newman run ./1_shot/Atum-Service_1-Shot_test_flow.postman_collection.json \
 --environment Atum-Service_DEV_env.postman_environment.json --reporters cli,csv --insecure \
 --reporter-csv-export 1_shot_test_run_1.csv
 ```
