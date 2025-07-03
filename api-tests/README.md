@@ -57,44 +57,9 @@ Note: Each Postman collection run in sequence from the top to the bottom.
 
 ### Local Using Newman
 ```yaml
-cd {working_directory}
+cd api-tests
 
-newman run ./1_shot/{SOME_FILE}.postman_collection.json \
+newman run ./1_shot/Atum-Service_1-Shot_test_isolated_calls.postman_collection.json \
 --environment Atum-Service_DEV_env.postman_environment.json --reporters cli,csv --insecure \
 --reporter-csv-export 1_shot_test_run_1.csv
 ```
-
-## Utils
-
-### Extract Project Endpoints
-The python script `extract_project_endpoints.py` extracts all endpoints from the project source code. 
-
-- The output is used during CI run to check if all endpoints are covered by API tests.
-- The output example:
-```yaml
-path_to_file,extracted_values
-/{path-to-file}/DomainManagementController.scala,GET:/api-v2/domain-management/queries/domain-primary-owner/{domainID}
-/{path-to-file}/DomainManagementController.scala,GET:/api-v2/domain-management/queries/domain-name/{domainID}
-/{path-to-file}/DomainManagementController.scala,GET:/api-v2/domain-management/queries/domain/{domainID}
-```
-
-### Extract Endpoints covered in API Test
-The python script `extract_endpoints_from_postman_collection.py` extracts all endpoints from the Postman collection.
-As the source of covered endpoints, it uses the test folder's descriptions.
-
-- The output example:
-```yaml
-extracted_values
-GET:/api-v2/info/version
-GET:/api-v2/user-identity-info/users/{userID}
-```
-
-## Endpoints Coverage Measurement
-The python script `endpoints_coverage.py` measures the coverage of the endpoints in the project source code and the API tests.
-As inputs are used the extracted endpoints from the project source code and the API tests.
-- The script creates an environment variables `TOTAL_EXPECTED_TESTS` and `COVERED_TESTS`.
-- The script prints a list of endpoints detected from source code and count of their usage in Postman API tests. **Use to find missing coverage easily!**
-- The script prints a list of endpoints detected in Postman API tests and not present in the source code. **POSSIBLE BUGS in tests!**
-
-## Postman Csv Report Analyser
-The python script `postman_csv_report_analysis.py` analyses the Postman CSV reports and creates an environment variables `SUCCESS_COUNT` and `FAILED_COUNT`.
