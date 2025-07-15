@@ -22,20 +22,44 @@ import za.co.absa.atum.model.dto.{CheckpointV2DTO, MeasureDTO, MeasureResultDTO,
 import java.time.ZonedDateTime
 import java.util.UUID
 
-case class CheckpointItemFromDB(
-  idCheckpoint: UUID,
-  checkpointName: String,
-  author: String,
-  measuredByAtumAgent: Boolean,
-  measureName: String,
-  measuredColumns: Seq[String],
-  measurementValue: Json, // JSON representation of `MeasurementDTO`
-  checkpointStartTime: ZonedDateTime,
-  checkpointEndTime: Option[ZonedDateTime],
-  hasMore: Boolean
-)
+trait CheckpointItemFromDB {
+  def idCheckpoint: UUID
+  def checkpointName: String
+  def author: String
+  def measuredByAtumAgent: Boolean
+  def measureName: String
+  def measuredColumns: Seq[String]
+  def measurementValue: Json // JSON representation of `MeasurementDTO`
+  def checkpointStartTime: ZonedDateTime
+  def checkpointEndTime: Option[ZonedDateTime]
+}
 
 object CheckpointItemFromDB {
+
+  case class NotPaginated(
+    override val idCheckpoint: UUID,
+    override val checkpointName: String,
+    override val author: String,
+    override val measuredByAtumAgent: Boolean,
+    override val measureName: String,
+    override val measuredColumns: Seq[String],
+    override val measurementValue: Json, // JSON representation of `MeasurementDTO`
+    override val checkpointStartTime: ZonedDateTime,
+    override val checkpointEndTime: Option[ZonedDateTime]
+  ) extends CheckpointItemFromDB
+
+  case class Paginated(
+    override val idCheckpoint: UUID,
+    override val checkpointName: String,
+    override val author: String,
+    override val measuredByAtumAgent: Boolean,
+    override val measureName: String,
+    override val measuredColumns: Seq[String],
+    override val measurementValue: Json, // JSON representation of `MeasurementDTO`
+    override val checkpointStartTime: ZonedDateTime,
+    override val checkpointEndTime: Option[ZonedDateTime],
+    hasMore: Boolean
+  ) extends CheckpointItemFromDB
 
   def fromItemsToCheckpointV2DTO(
     checkpointItems: Seq[CheckpointItemFromDB]
