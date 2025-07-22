@@ -55,7 +55,7 @@ object CheckpointItemFromDB {
     override val measuredByAtumAgent: Boolean,
     override val measureName: String,
     override val measuredColumns: Seq[String],
-    override val measurementValue: Json, // JSON representation of `MeasurementDTO`
+    override val measurementValue: Json,
     override val checkpointStartTime: ZonedDateTime,
     override val checkpointEndTime: Option[ZonedDateTime],
     hasMore: Boolean
