@@ -522,7 +522,7 @@
 									"        pm.test(\"Response has id and status for 201\", function () {",
 									"            const expectedCheckpointId = pm.collectionVariables.get(\"checkpoint_id\");",
 									"            const expectedAuthor = pm.collectionVariables.get(\"checkpoint_author\");",
-									"            const expectedMeasurements = pm.collectionVariables.get(\"measurements\");",
+									"            const expectedMeasurements = pm.collectionVariables.get(\"measurements_as_obj\");",
 									"",
 									"            pm.expect(jsonData[\"data\"][\"id\"]).to.eql(expectedCheckpointId);",
 									"            pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
