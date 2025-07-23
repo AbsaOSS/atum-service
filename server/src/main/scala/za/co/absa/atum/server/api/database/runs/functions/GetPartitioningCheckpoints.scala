@@ -26,13 +26,15 @@ import zio._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
-import za.co.absa.atum.server.model.database.{CheckpointFromDB, CheckpointItemFromDB}
+import za.co.absa.atum.server.model.database.CheckpointItemFromDB
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
 class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointsArgs, Option[CheckpointItemFromDB], Task](args =>
+    extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointsArgs, Option[
+      CheckpointItemFromDB.Paginated
+    ], Task](args =>
       Seq(
         fr"${args.partitioningId}",
         fr"${args.limit}",

@@ -20,12 +20,12 @@ import io.circe.{Json, parser}
 import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.model.{ResultValueType, dto}
+import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
 import za.co.absa.atum.server.model.database._
 
 import java.time.ZonedDateTime
-import java.util.{Base64, UUID}
+import java.util.UUID
 
 trait TestData {
 
@@ -323,62 +323,7 @@ trait TestData {
       ).toOption.get
 
   // Checkpoint From DB
-  protected val checkpointFromDB1: CheckpointFromDB = CheckpointFromDB(
-    idCheckpoint = Some(checkpointDTO1.id),
-    checkpointName = checkpointQueryDTO1.checkpointName,
-    author = Some("author"),
-    measuredByAtumAgent = Some(true),
-    measureName = Some(measureDTO1.measureName),
-    measuredColumns = Some(measureDTO1.measuredColumns.toIndexedSeq),
-    measurementValue = Some(
-      parser
-        .parse(
-          """
-        |{
-        |  "mainValue": {
-        |    "value": "123",
-        |    "valueType": "Long"
-        |  },
-        |  "supportValues": {
-        |    "key1": {
-        |      "value": "123456789",
-        |      "valueType": "Long"
-        |    },
-        |    "key2": {
-        |      "value": "12345.6789",
-        |      "valueType": "BigDecimal"
-        |    }
-        |  }
-        |}
-        |""".stripMargin
-        )
-        .getOrElse {
-          throw new Exception("Failed to parse JSON")
-        }
-    ),
-    checkpointStartTime = Some(checkpointDTO1.processStartTime),
-    checkpointEndTime = checkpointDTO1.processEndTime
-  )
-
-  protected val checkpointFromDB2: CheckpointFromDB = checkpointFromDB1
-    .copy(
-      idCheckpoint = Some(checkpointDTO2.id),
-      checkpointName = checkpointQueryDTO2.checkpointName,
-      author = Some("author2"),
-      measuredByAtumAgent = Some(true),
-      measureName = Some(measureDTO2.measureName),
-      measuredColumns = Some(measureDTO2.measuredColumns.toIndexedSeq),
-      checkpointStartTime = Some(checkpointDTO2.processStartTime),
-      checkpointEndTime = checkpointDTO2.processEndTime
-    )
-
-  protected val checkpointFromDB3: CheckpointFromDB = checkpointFromDB1
-    .copy(
-      idCheckpoint = Some(checkpointDTO3.id),
-      checkpointStartTime = Some(checkpointDTO3.processStartTime)
-    )
-
-  protected val checkpointItemFromDB1: CheckpointItemFromDB = CheckpointItemFromDB(
+  protected val checkpointItemNotPaginatedFromDB: CheckpointItemFromDB.NotPaginated = CheckpointItemFromDB.NotPaginated(
     idCheckpoint = checkpointV2DTO1.id,
     checkpointName = checkpointV2DTO1.name,
     author = checkpointV2DTO1.author,
@@ -387,11 +332,10 @@ trait TestData {
     measuredColumns = checkpointV2DTO1.measurements.head.measure.measuredColumns,
     measurementValue = checkpointV2DTO1.measurements.head.result.asJson,
     checkpointStartTime = checkpointV2DTO1.processStartTime,
-    checkpointEndTime = checkpointV2DTO1.processEndTime,
-    hasMore = true
+    checkpointEndTime = checkpointV2DTO1.processEndTime
   )
 
-  protected val checkpointItemFromDB2: CheckpointItemFromDB = CheckpointItemFromDB(
+  protected val checkpointItemPaginatedFromDB: CheckpointItemFromDB.Paginated = CheckpointItemFromDB.Paginated(
     idCheckpoint = checkpointV2DTO2.id,
     checkpointName = checkpointV2DTO2.name,
     author = checkpointV2DTO2.author,
@@ -401,41 +345,41 @@ trait TestData {
     measurementValue = checkpointV2DTO2.measurements.head.result.asJson,
     checkpointStartTime = checkpointV2DTO2.processStartTime,
     checkpointEndTime = checkpointV2DTO2.processEndTime,
-    hasMore = false
+    hasMore = true
   )
 
   protected val checkpointItemWithPartitioningFromDB1: CheckpointItemWithPartitioningFromDB =
     CheckpointItemWithPartitioningFromDB(
-      idCheckpoint = checkpointItemFromDB1.idCheckpoint,
-      checkpointName = checkpointItemFromDB1.checkpointName,
-      author = checkpointItemFromDB1.author,
-      measuredByAtumAgent = checkpointItemFromDB1.measuredByAtumAgent,
-      measureName = checkpointItemFromDB1.measureName,
-      measuredColumns = checkpointItemFromDB1.measuredColumns,
-      measurementValue = checkpointItemFromDB1.measurementValue,
-      checkpointStartTime = checkpointItemFromDB1.checkpointStartTime,
-      checkpointEndTime = checkpointItemFromDB1.checkpointEndTime,
+      idCheckpoint = checkpointItemPaginatedFromDB.idCheckpoint,
+      checkpointName = checkpointItemPaginatedFromDB.checkpointName,
+      author = checkpointItemPaginatedFromDB.author,
+      measuredByAtumAgent = checkpointItemPaginatedFromDB.measuredByAtumAgent,
+      measureName = checkpointItemPaginatedFromDB.measureName,
+      measuredColumns = checkpointItemPaginatedFromDB.measuredColumns,
+      measurementValue = checkpointItemPaginatedFromDB.measurementValue,
+      checkpointStartTime = checkpointItemPaginatedFromDB.checkpointStartTime,
+      checkpointEndTime = checkpointItemPaginatedFromDB.checkpointEndTime,
       idPartitioning = partitioningFromDB1.id,
       partitioning = partitioningFromDB1.partitioning,
       partitioningAuthor = partitioningFromDB1.author,
-      hasMore = checkpointItemFromDB1.hasMore
+      hasMore = checkpointItemPaginatedFromDB.hasMore
     )
 
   protected val checkpointItemWithPartitioningFromDB2: CheckpointItemWithPartitioningFromDB =
     CheckpointItemWithPartitioningFromDB(
-      idCheckpoint = checkpointItemFromDB2.idCheckpoint,
-      checkpointName = checkpointItemFromDB2.checkpointName,
-      author = checkpointItemFromDB2.author,
-      measuredByAtumAgent = checkpointItemFromDB2.measuredByAtumAgent,
-      measureName = checkpointItemFromDB2.measureName,
-      measuredColumns = checkpointItemFromDB2.measuredColumns,
-      measurementValue = checkpointItemFromDB2.measurementValue,
-      checkpointStartTime = checkpointItemFromDB2.checkpointStartTime,
-      checkpointEndTime = checkpointItemFromDB2.checkpointEndTime,
-      idPartitioning = partitioningFromDB1.id,
-      partitioning = partitioningFromDB1.partitioning,
-      partitioningAuthor = partitioningFromDB1.author,
-      hasMore = checkpointItemFromDB2.hasMore
+      idCheckpoint = checkpointItemPaginatedFromDB.idCheckpoint,
+      checkpointName = checkpointItemPaginatedFromDB.checkpointName,
+      author = checkpointItemPaginatedFromDB.author,
+      measuredByAtumAgent = checkpointItemPaginatedFromDB.measuredByAtumAgent,
+      measureName = checkpointItemPaginatedFromDB.measureName,
+      measuredColumns = checkpointItemPaginatedFromDB.measuredColumns,
+      measurementValue = checkpointItemPaginatedFromDB.measurementValue,
+      checkpointStartTime = checkpointItemPaginatedFromDB.checkpointStartTime,
+      checkpointEndTime = checkpointItemPaginatedFromDB.checkpointEndTime,
+      idPartitioning = partitioningFromDB2.id,
+      partitioning = partitioningFromDB2.partitioning,
+      partitioningAuthor = partitioningFromDB2.author,
+      hasMore = checkpointItemPaginatedFromDB.hasMore
     )
 
   protected val checkpointWithPartitioningDTO1: CheckpointWithPartitioningDTO =

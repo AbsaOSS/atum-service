@@ -34,8 +34,8 @@ import zio.test._
 
 object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
-  private val getCheckpointMockV2: GetPartitioningCheckpointV2 = mock(classOf[GetPartitioningCheckpointV2])
   private val writeCheckpointV2Mock: WriteCheckpointV2 = mock(classOf[WriteCheckpointV2])
+  private val getCheckpointMockV2: GetPartitioningCheckpointV2 = mock(classOf[GetPartitioningCheckpointV2])
   private val getPartitioningCheckpointsMock: GetPartitioningCheckpoints = mock(classOf[GetPartitioningCheckpoints])
 
   private val partitioningId = 1L
@@ -50,14 +50,14 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
 
   when(getCheckpointMockV2.apply(GetPartitioningCheckpointV2Args(partitioningId, checkpointV2DTO1.id)))
-    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(checkpointItemFromDB1)))))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(checkpointItemNotPaginatedFromDB)))))
   when(getCheckpointMockV2.apply(GetPartitioningCheckpointV2Args(partitioningId, checkpointV2DTO2.id)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
   when(getCheckpointMockV2.apply(GetPartitioningCheckpointV2Args(partitioningId, checkpointV2DTO3.id)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
   when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(0L, None, None, None)))
-    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "ok"), Some(checkpointItemFromDB1)))))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "ok"), Some(checkpointItemPaginatedFromDB)))))
   when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(1L, None, None, None)))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "ok"), None))))
   when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(3L, None, None, None)))
@@ -114,7 +114,7 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- CheckpointRepository.getPartitioningCheckpoints(0L, None, None, None)
           } yield assertTrue(
-            result.isInstanceOf[ResultHasMore[CheckpointV2DTO]] && result.data == Seq(checkpointV2DTO1)
+            result.isInstanceOf[ResultHasMore[CheckpointV2DTO]] && result.data == Seq(checkpointV2DTO2)
           )
         },
         test("Returns expected Seq.empty") {
