@@ -1,0 +1,1138 @@
+{
+	"info": {
+		"_postman_id": "60d803b8-e106-4eb1-bc1c-f884a4c758ba",
+		"name": "Atum-Service_1-Shot_test_flow",
+		"description": "This collection tests Atum Service basic flow - partitioning, checkpoints, and flows and all related metadata and objects along the way (such as Additional Data, measures, etc).\n\nNote: Since Atum Service doesn't offer deletion APIs / capabilities (for partitionings or checkpoints), we do not create a new partitioning and checkpoints on each test's run. But we want to create (not just always retrieve) these entities occasionally also, to test the creation itself. We chose a solution that is based on day-specific uniqueness, meaning that these tests will create partitioning and checkpoints only once a day, during the first run, and then the subsequent runs would be just retrieving those.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "26450104"
+	},
+	"item": [
+		{
+			"name": "Test: health endpoint",
+			"item": [
+				{
+					"name": "Act: health - 200",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedStatus = \"UP\";",
+									"    const expectedMessage = \"Atum server is up and running\";",
+									"",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData[\"status\"]).to.eql(expectedStatus);",
+									"    pm.expect(jsonData[\"message\"]).to.eql(expectedMessage);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{host}}/health"
+					},
+					"response": []
+				}
+			],
+			"description": "Covers endpoints:\n\n- GET:/health",
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Test: create and retrieve partitioning",
+			"item": [
+				{
+					"name": "Act: partitionings (create or retrieve) - 201 or 409",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 or 409\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    if (pm.response.code === 201) {",
+									"        pm.test(\"Response has id and status for 201\", function () {",
+									"            const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+									"            const expectedAuthor = pm.collectionVariables.get(\"partitioning_author\");",
+									"",
+									"            pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"            pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+									"        });",
+									"",
+									"    } else if (pm.response.code === 409) {",
+									"        pm.test(\"Response has error message for 409\", function () {",
+									"            const expectedMsg = ",
+									"                \"Failed to perform 'createPartitioning': \" +",
+									"                \"Exception caused by operation: 'createPartitioning': \" +",
+									"                \"(31) Partitioning already exists\";",
+									"            pm.expect(jsonData[\"message\"]).to.eql(expectedMsg);",
+									"        });",
+									"    };",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"author\": \"{{partitioning_author}}\",\n    \"partitioning\": [\n        {\"key\": \"partitionForAPITests1\", \"value\": \"firstValue\"},\n        {\"key\": \"partitionForAPITests2\", \"value\": \"{{partitioning_value__RUNTIME}}\"}\n    ]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{host}}/api/v2/partitionings"
+					},
+					"response": []
+				},
+				{
+					"name": "Act: partitionings (get) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+									"    const expectedAuthor = pm.collectionVariables.get(\"partitioning_author\");",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"    pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+									"",
+									"    pm.collectionVariables.set(\"partitioning_id\", jsonData[\"data\"][\"id\"]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings?partitioning={{partitioning_as_base64}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings"
+							],
+							"query": [
+								{
+									"key": "partitioning",
+									"value": "{{partitioning_as_base64}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: createPartitioning (retrieve) - 200",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    pm.expect(jsonData[\"partitioning\"]).to.eql(expectedPartitioning);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"authorIfNew\": \"{{partitioning_author}}\",\n    \"partitioning\": [\n        {\"key\": \"partitionForAPITests1\", \"value\": \"firstValue\"},\n        {\"key\": \"partitionForAPITests2\", \"value\": \"{{partitioning_value__RUNTIME}}\"}\n    ]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{host}}/api/v1/createPartitioning"
+					},
+					"response": []
+				}
+			],
+			"description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- POST:/api/v1/createPartitioning",
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"// Get date in format 2025-07-01 (10 chars) - so only once a day partitioning would be created, ",
+							"// otherwise just retrieved so that we don't overwhelm our DB; we don't have DELETE API endpoints.",
+							"const partitioningUniqueValue = \"api_tests_\" + new Date().toISOString().slice(0, 10);",
+							"console.log(`The partitioning unique value being used: ${partitioningUniqueValue}`);",
+							"",
+							"pm.collectionVariables.set(\"partitioning_value__RUNTIME\", partitioningUniqueValue);",
+							"",
+							"const partitioningToUse = [",
+							"    {",
+							"        \"key\": \"partitionForAPITests1\",",
+							"        \"value\": \"firstValue\"",
+							"    },",
+							"    {",
+							"        \"key\": \"partitionForAPITests2\",",
+							"        \"value\": partitioningUniqueValue",
+							"    }",
+							"];",
+							"pm.collectionVariables.set(\"partitioning_as_obj\", partitioningToUse);",
+							"",
+							"const partitioningAuthor = \"apiTest1ShotPartitioning\";",
+							"pm.collectionVariables.set(\"partitioning_author\", partitioningAuthor);",
+							"",
+							"const partitioningAsBase64 = btoa(JSON.stringify(partitioningToUse));",
+							"pm.collectionVariables.set(\"partitioning_as_base64\", partitioningAsBase64);",
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Test: create and retrieve partitioning's additional data",
+			"item": [
+				{
+					"name": "Act: partitionings / additional data (create) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedAD = pm.collectionVariables.get(\"retrieved_ad_as_obj\");",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    pm.expect(jsonData[\"data\"][\"data\"]).to.eql(expectedAD);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"byUser\": \"{{ad_author}}\",\n  \"data\": {\n    \"additionalData1\": \"firstItem\",\n    \"additionalData2\": \"secondItem\",\n    \"additionalData3\": \"thirdItem\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/additional-data"
+					},
+					"response": []
+				},
+				{
+					"name": "Act: partitionings / additional data (retrieve) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedAD = pm.collectionVariables.get(\"retrieved_ad_as_obj\");",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    pm.expect(jsonData[\"data\"][\"data\"]).to.eql(expectedAD);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/additional-data"
+					},
+					"response": []
+				}
+			],
+			"description": "Covers endpoints:\n\n- PATCH:/api/v2/partitionings/{partitioning_id}/additional-data\n    \n- GET:/api/v2/partitionings/{partitioning_id}/additional-data",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"const adAuthor = \"apiTest1ShotAD\";",
+							"pm.collectionVariables.set(\"ad_author\", adAuthor);",
+							"",
+							"const retrievedAD = {",
+							"    \"additionalData1\": {",
+							"        \"value\": \"firstItem\",",
+							"        \"author\": adAuthor",
+							"    },",
+							"    \"additionalData2\": {",
+							"        \"value\": \"secondItem\",",
+							"        \"author\": adAuthor",
+							"    },",
+							"    \"additionalData3\": {",
+							"        \"value\": \"thirdItem\",",
+							"        \"author\": adAuthor",
+							"    }",
+							"};",
+							"pm.collectionVariables.set(\"retrieved_ad_as_obj\", retrievedAD);",
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Test: create and retrieve checkpoints",
+			"item": [
+				{
+					"name": "Act: partitionings / checkpoints (create or retrieve) - 201 or 409",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 or 409\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+									"});",
+									"",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    if (pm.response.code === 201) {",
+									"        pm.test(\"Response has id and status for 201\", function () {",
+									"            const expectedCheckpointId = pm.collectionVariables.get(\"checkpoint_id\");",
+									"            const expectedAuthor = pm.collectionVariables.get(\"checkpoint_author\");",
+									"            const expectedMeasurements = pm.collectionVariables.get(\"measurements_as_obj\");",
+									"",
+									"            pm.expect(jsonData[\"data\"][\"id\"]).to.eql(expectedCheckpointId);",
+									"            pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+									"            pm.expect(jsonData[\"data\"][\"measurements\"]).to.eql(expectedMeasurements);",
+									"        });",
+									"",
+									"    } else if (pm.response.code === 409) {",
+									"        pm.test(\"Response has error message for 409\", function () {",
+									"            const expectedMsg = ",
+									"                \"Failed to perform 'saveCheckpoint': \" +",
+									"                \"Exception caused by operation: 'writeCheckpoint': \" +",
+									"                \"(31) Checkpoint already present\";",
+									"            pm.expect(jsonData[\"message\"]).to.eql(expectedMsg);",
+									"        });",
+									"    };",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"{{checkpoint_id}}\",\n  \"name\": \"CheckpointAPITest\",\n  \"author\": \"{{checkpoint_author}}\",\n  \"measuredByAtumAgent\": true,\n  \"processStartTime\": \"{{checkpoint_processStartTime}}\",\n  \"measurements\": [\n    {\n      \"measure\": {\n        \"measureName\": \"count\",\n        \"measuredColumns\": [\"*\"]\n      },\n      \"result\": {\n        \"mainValue\": {\n          \"value\": \"123\",\n          \"valueType\": \"Long\"\n        },\n        \"supportValues\": {}\n      }\n    }\n  ]\n}\n"
+						},
+						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints"
+					},
+					"response": []
+				},
+				{
+					"name": "Act: createCheckpoint (partitioning not exists) - 404",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									" pm.test(\"Response has error message for 404\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    const expectedMsg = ",
+									"        \"Failed to perform 'saveCheckpoint': \" +",
+									"        \"Exception caused by operation: 'writeCheckpoint': \" +",
+									"        \"(41) Partitioning not found\";",
+									"    pm.expect(jsonData[\"message\"]).to.eql(expectedMsg);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"{{checkpoint_id}}\",\n  \"name\": \"CheckpointAPITest\",\n  \"author\": \"{{checkpoint_author}}\",\n  \"measuredByAtumAgent\": true,\n  \"partitioning\": [\n    {\"key\": \"partitionNotExists\", \"value\": \"seriouslyMissing\"}\n  ],\n  \"processStartTime\": \"{{checkpoint_processStartTime}}\",\n  \"measurements\": [\n    {\n      \"measure\": {\n        \"measureName\": \"count\",\n        \"measuredColumns\": [\"*\"]\n      },\n      \"result\": {\n        \"mainValue\": {\n          \"value\": \"123\",\n          \"valueType\": \"Long\"\n        },\n        \"supportValues\": {}\n      }\n    }\n  ]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{host}}/api/v1/createCheckpoint"
+					},
+					"response": []
+				},
+				{
+					"name": "Act: partitionings / checkpoints (specific partitioning) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response has expected values\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const expectedCheckpointId = pm.collectionVariables.get(\"checkpoint_id\");",
+									"",
+									"    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1); // Assuming there's only one checkpoint",
+									"    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(expectedCheckpointId);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints?limit=10&offset=0",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioning_id}}",
+								"checkpoints"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: partitionings / checkpoints (specific checkpoint) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response has expected values\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const expectedCheckpointId = pm.collectionVariables.get(\"checkpoint_id\");",
+									"",
+									"    pm.expect(jsonData[\"data\"][\"id\"]).to.eql(expectedCheckpointId);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints/{{checkpoint_id}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Act: partitionings / measures (retrieve) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response has expected values\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const expectedMeasures = {",
+									"        \"measureName\": \"count\",",
+									"        \"measuredColumns\": [\"*\"]",
+									"    };",
+									"",
+									"    pm.expect(jsonData.data.length).to.eql(1);",
+									"    pm.expect(jsonData.data[0]).to.eql(expectedMeasures);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/measures"
+					},
+					"response": []
+				}
+			],
+			"description": "Covers endpoints:\n\n- POST:/api/v2/partitionings/{partitioning_id}/checkpoints\n    \n- POST:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/checkpoints/{checkpoint_id}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/measures",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"// Get date in format 2025-07-01 (10 chars) - so only once a day checkpoint would be created, ",
+							"// otherwise just retrieved so that we don't overwhelm our DB, so same principle as for partitioning.",
+							"const checkpointIdSeed = \"api_tests_\" + new Date().toISOString().slice(0, 10);",
+							"",
+							"// Create a simple hash-like string",
+							"const hash = CryptoJS.SHA256(checkpointIdSeed).toString().substring(0, 32);",
+							"",
+							"// Format as UUID-like string",
+							"const checkpointId = hash.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12}).*$/, '$1-$2-$3-$4-$5');",
+							"console.log(`The checkpoint ID being used: ${checkpointId}`);",
+							"",
+							"pm.collectionVariables.set(\"checkpoint_id\", checkpointId);",
+							"",
+							"const measurements = [",
+							"    {",
+							"        \"measure\": {",
+							"            \"measureName\": \"count\",",
+							"            \"measuredColumns\": [\"*\"]",
+							"        },",
+							"        \"result\": {",
+							"            \"mainValue\": {",
+							"                \"value\": \"123\",",
+							"                \"valueType\": \"Long\"",
+							"            },",
+							"            \"supportValues\": {}",
+							"        }",
+							"    }",
+							"];",
+							"pm.collectionVariables.set(\"measurements_as_obj\", measurements);",
+							"",
+							"const checkpointProcessStartTime = new Date().toISOString()",
+							"pm.collectionVariables.set(\"checkpoint_processStartTime\", checkpointProcessStartTime);",
+							"",
+							"const checkpointAuthor = \"apiTest1Shot\"; // todo add Checkpoint",
+							"pm.collectionVariables.set(\"checkpoint_author\", checkpointAuthor);",
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Test: retrieve flows related data",
+			"item": [
+				{
+					"name": "Act: partitionings / main flow - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    const flowId = jsonData[\"data\"][\"id\"];",
+									"    pm.collectionVariables.set(\"flow_id\", flowId);",
+									"",
+									"    pm.expect(jsonData[\"data\"][\"name\"]).to.eql(\"Custom flow #\" + flowId);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/main-flow"
+					},
+					"response": []
+				},
+				{
+					"name": "Act: flows / partitionings - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    const expectedPartitioningId = pm.collectionVariables.get(\"partitioning_id\");",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+									"    const expectedPartitioningAuthor = pm.collectionVariables.get(\"partitioning_author\");",
+									"",
+									"    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1); // Assuming there's only one partitioning",
+									"    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(expectedPartitioningId);",
+									"    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(expectedPartitioningAuthor);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/flows/{{flow_id}}/partitionings?limit=10&offset=0",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"flows",
+								"{{flow_id}}",
+								"partitionings"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: flows / checkpoints - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const jsonData = pm.response.json();",
+									"     pm.expect(jsonData[\"data\"]).to.have.lengthOf(1); // Assuming there's only one checkpoint",
+									"",
+									"    // Test checkpoint substructure",
+									"    const expectedCheckpointId = pm.collectionVariables.get(\"checkpoint_id\");",
+									"    const expectedCheckpointAuthor = pm.collectionVariables.get(\"checkpoint_author\");",
+									"   ",
+									"    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(expectedCheckpointId);",
+									"    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(expectedCheckpointAuthor);",
+									"    ",
+									"    // Test partitioning substructure",
+									"    const expectedPartitioningId = pm.collectionVariables.get(\"partitioning_id\");",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+									"    const expectedPartitioningAuthor = pm.collectionVariables.get(\"partitioning_author\");",
+									"",
+									"    pm.expect(jsonData[\"data\"][0][\"partitioning\"][\"id\"]).to.eql(expectedPartitioningId);",
+									"    pm.expect(jsonData[\"data\"][0][\"partitioning\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"    pm.expect(jsonData[\"data\"][0][\"partitioning\"][\"author\"]).to.eql(expectedPartitioningAuthor);",
+									"",
+									"    // Test measurements substructure",
+									"    const expectedMeasurements = pm.collectionVariables.get(\"measurements_as_obj\");",
+									"    pm.expect(jsonData[\"data\"][0][\"measurements\"]).to.eql(expectedMeasurements);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/flows/{{flow_id}}/checkpoints?limit=10&offset=0",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"flows",
+								"{{flow_id}}",
+								"checkpoints"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Covers endpoints:\n\n- GET:/api/v2/partitionings/{partitioning_id}/main-flow\n    \n- GET:/api/v2/flows/{flow_id}/partitionings\n    \n- GET:/api/v2/flows/{flow_id}/checkpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "partitioning_value__RUNTIME",
+			"value": ""
+		},
+		{
+			"key": "partitioning_as_base64",
+			"value": ""
+		},
+		{
+			"key": "partitioning_author",
+			"value": ""
+		},
+		{
+			"key": "partitioning_full",
+			"value": ""
+		},
+		{
+			"key": "partitioning_as_obj",
+			"value": ""
+		},
+		{
+			"key": "partitioning_id",
+			"value": ""
+		},
+		{
+			"key": "ad_author",
+			"value": ""
+		},
+		{
+			"key": "retrieved_ad_as_obj",
+			"value": ""
+		},
+		{
+			"key": "checkpoint_id",
+			"value": ""
+		},
+		{
+			"key": "measurements",
+			"value": ""
+		},
+		{
+			"key": "checkpoint_processStartTime",
+			"value": ""
+		},
+		{
+			"key": "checkpoint_author",
+			"value": ""
+		},
+		{
+			"key": "flow_id",
+			"value": ""
+		},
+		{
+			"key": "measurements_as_obj",
+			"value": ""
+		}
+	]
+}
