@@ -48,6 +48,7 @@ object JacocoSetup {
       "za.co.absa.atum.server.api.v2.repository.PartitioningRepository*",
       "**.controller.PartitioningController.class",
       "**.controller.PartitioningController\\$class.class",
+      "za/co/absa/atum/server/api/v2/controller/PartitioningController.class",
       "za.co.absa.atum.model.envelopes.Pagination",
       "za.co.absa.atum.model.dto.PartitioningParentPatchDTO*",
       "za.co.absa.atum.model.ApiPaths*",
