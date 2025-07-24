@@ -44,7 +44,7 @@ object JacocoSetup {
       "za.co.absa.atum.server.api.database.DoobieImplicits*",
       "za.co.absa.atum.server.api.database.TransactorProvider*",
       "za.co.absa.atum.server.api.common.http.Routes*",
-      "**.service.PartitioningService.scala",
+      "server/src/main/scala/za/co/absa/atum/server/api/v2/controller/PartitioningController.scala",
       "**.repository.PartitioningRepository.scala",
       "**.controller.PartitioningController.scala",
       "za.co.absa.atum.model.envelopes.Pagination",
