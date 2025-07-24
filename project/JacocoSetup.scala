@@ -49,7 +49,10 @@ object JacocoSetup {
       "za.co.absa.atum.model.ApiPaths*",
       "za.co.absa.atum.model.envelopes.ResponseEnvelope",
       "za.co.absa.atum.model.envelopes.StatusResponse",
-      "za.co.absa.atum.model.envelopes.SuccessResponse"
+      "za.co.absa.atum.model.envelopes.SuccessResponse",
+      "za.co.absa.atum.server.api.v2.service.PartitioningService.*",
+      "za.co.absa.atum.server.api.v2.repository.PartitioningRepository.*",
+      "za.co.absa.atum.server.api.v2.controller.PartitioningController.*"
     )
   }
 
