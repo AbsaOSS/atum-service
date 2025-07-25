@@ -56,6 +56,7 @@ object JacocoSetup {
       "za.co.absa.atum.model.envelopes.ResponseEnvelope",
       "za.co.absa.atum.model.envelopes.StatusResponse",
       "za.co.absa.atum.model.envelopes.SuccessResponse"
+
     )
   }
 
