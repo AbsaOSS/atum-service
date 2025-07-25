@@ -39,6 +39,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
     )
   }
+
   override def getPartitioningById(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
