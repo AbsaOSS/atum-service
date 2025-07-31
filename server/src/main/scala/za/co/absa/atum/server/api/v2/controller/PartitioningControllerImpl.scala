@@ -39,6 +39,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
     )
   }
+
   override def getPartitioningById(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
@@ -123,6 +124,15 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def patchPartitioningParent(
+    partitioningId: Long,
+    partitioningParentPatchDTO: PartitioningParentPatchDTO
+  ): IO[ErrorResponse, Unit] = {
+        serviceCall[Unit, Unit](
+          partitioningService.patchPartitioningParent(partitioningId, partitioningParentPatchDTO),
+          _ => ()
+      )
+  }
 }
 
 object PartitioningControllerImpl {
