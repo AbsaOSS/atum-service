@@ -22,6 +22,7 @@ import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.
 import za.co.absa.atum.server.api.database.flows.functions._
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
+import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
@@ -45,6 +46,8 @@ class PartitioningRepositoryImpl(
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
   getPartitioningFn: GetPartitioning,
   getFlowPartitioningsFn: GetFlowPartitionings,
+  getPartitioningMainFlowFn: GetPartitioningMainFlow,
+  updatePartitioningParentFn: UpdatePartitioningParent
   getPartitioningMainFlowFn: GetPartitioningMainFlow,
   getPartitioningAncestorsFn: GetPartitioningAncestors
 ) extends PartitioningRepository
@@ -159,11 +162,21 @@ class PartitioningRepositoryImpl(
     }
   }
 
+  override def updatePartitioningParent(
+    partitioningId: Long,
+    partitioningParentPatchDTO: PartitioningParentPatchDTO
+    ): IO[DatabaseError, Unit] = {
+    dbSingleResultCallWithStatus(
+      updatePartitioningParentFn(UpdatePartitioningParentArgs(partitioningId, partitioningParentPatchDTO)),
+      "updatePartitioningParent"
+    )
+  }
+
   override def getPartitioningAncestors(
-                                         partitioningId: Long,
-                                         limit: Option[Int],
-                                         offset: Option[Long]
-                                       ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+     partitioningId: Long,
+     limit: Option[Int],
+     offset: Option[Long]
+   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAncestorsFn(GetPartitioningAncestorsArgs(partitioningId, limit, offset)),
       "getPartitioningAncestors"
@@ -194,6 +207,8 @@ object PartitioningRepositoryImpl {
       with GetPartitioning
       with GetFlowPartitionings
       with GetPartitioningMainFlow
+      with UpdatePartitioningParent,
+      with GetPartitioningMainFlow
       with GetPartitioningAncestors,
     PartitioningRepository
   ] = ZLayer {
@@ -207,6 +222,7 @@ object PartitioningRepositoryImpl {
       getPartitioning <- ZIO.service[GetPartitioning]
       getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
+      updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
       getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
     } yield new PartitioningRepositoryImpl(
       createPartitioning,
@@ -217,6 +233,8 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasuresById,
       getPartitioning,
       getFlowPartitionings,
+      getPartitioningMainFlow,
+      updatePartitioningParent,
       getPartitioningMainFlow,
       getPartitioningAncestors
     )

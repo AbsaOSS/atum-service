@@ -265,6 +265,25 @@ trait TestData {
     checkpointName = None
   )
 
+  // PartitioningParentPatch DTO
+  protected val partitioningParentPatchDTO1: PartitioningParentPatchDTO = PartitioningParentPatchDTO(
+    parentPartitioningId = 1L,
+    author = "author"
+  )
+
+  protected val partitioningParentPatchDTO2: PartitioningParentPatchDTO = PartitioningParentPatchDTO(
+    parentPartitioningId = 2L,
+    author = "author2"
+  )
+
+  protected val partitioningParentPatchDTO3: PartitioningParentPatchDTO = partitioningParentPatchDTO1.copy(author = "differentAuthor")
+  protected val partitioningParentPatchDTO4: PartitioningParentPatchDTO = partitioningParentPatchDTO1.copy(author = "yetAnotherAuthor")
+
+  protected val partitioningParentPatchDTO5: PartitioningParentPatchDTO = PartitioningParentPatchDTO(
+    parentPartitioningId = 0L,
+    author = "NoParent"
+  )
+
   // Checkpoint DTO
   protected val checkpointDTO1: CheckpointDTO = CheckpointDTO(
     id = UUID.randomUUID(),

@@ -44,18 +44,21 @@ object JacocoSetup {
       "za.co.absa.atum.server.api.database.DoobieImplicits*",
       "za.co.absa.atum.server.api.database.TransactorProvider*",
       "za.co.absa.atum.server.api.common.http.Routes*",
-      "za.co.absa.atum.server.implicits.SeqImplicits*",
-      "za.co.absa.atum.model.envelopes.Pagination",
-      "za.co.absa.atum.model.ApiPaths*",
-      "za.co.absa.atum.model.envelopes.ResponseEnvelope",
-      "za.co.absa.atum.model.envelopes.StatusResponse",
-      "za.co.absa.atum.model.envelopes.SuccessResponse",
       "za.co.absa.atum.server.api.v2.repository.PartitioningRepository",
       "za.co.absa.atum.server.api.v2.repository.PartitioningRepository$",
       "za.co.absa.atum.server.api.v2.controller.PartitioningController",
       "za.co.absa.atum.server.api.v2.controller.PartitioningController$",
       "za.co.absa.atum.server.api.v2.service.PartitioningService",
-      "za.co.absa.atum.server.api.v2.service.PartitioningService$"
+      "za.co.absa.atum.server.api.v2.service.PartitioningService$",
+      "za.co.absa.atum.server.api.common.http.Routes*",
+      "za.co.absa.atum.server.implicits.SeqImplicits*",
+      "za.co.absa.atum.model.envelopes.Pagination",
+      "za.co.absa.atum.model.dto.PartitioningParentPatchDTO*",
+      "za.co.absa.atum.model.ApiPaths*",
+      "za.co.absa.atum.model.envelopes.ResponseEnvelope",
+      "za.co.absa.atum.model.envelopes.StatusResponse",
+      "za.co.absa.atum.model.envelopes.SuccessResponse"
+
     )
   }
 

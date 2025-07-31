@@ -56,9 +56,15 @@ trait PartitioningRepository {
 
   def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO]
 
+  def updatePartitioningParent(
+    partitioningId: Long,
+    partitioningParentPatchDTO: PartitioningParentPatchDTO
+  ): IO[DatabaseError, Unit]
+
   def getPartitioningAncestors(
-                                partitioningId: Long,
-                                limit: Option[Int],
-                                offset: Option[Long]
-                              ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
+
 }

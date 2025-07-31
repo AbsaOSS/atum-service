@@ -92,6 +92,14 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningMainFlow(3L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.updatePartitioningParent(1L, partitioningParentPatchDTO1)).thenReturn(ZIO.unit)
+  when(partitioningRepositoryMock.updatePartitioningParent(1L, partitioningParentPatchDTO5))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Parent Partitioning not found")))
+  when(partitioningRepositoryMock.updatePartitioningParent(0L, partitioningParentPatchDTO1))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Child Partitioning not found")))
+  when(partitioningRepositoryMock.updatePartitioningParent(2L, partitioningParentPatchDTO1))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
   when(partitioningRepositoryMock.getPartitioningAncestors(1111L, Some(1), Some(1L)))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
   when(partitioningRepositoryMock.getPartitioningAncestors(2222L, Some(1), Some(1L)))
@@ -287,6 +295,36 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected NotFoundServiceError when child partition does not exist") {
           assertZIO(PartitioningService.getPartitioningAncestors(9999L, Some(1), Some(1L)).exit)(
             failsWithA[NotFoundServiceError]
+          )
+        }
+      ),
+      suite("PatchPartitioningParentSuite")(
+        test("Returns expected Right with Unit") {
+          for {
+            result <- PartitioningService.patchPartitioningParent(1L, partitioningParentPatchDTO1)
+          } yield assertTrue(result == ())
+        },
+        test("Returns expected NotFoundServiceError") {
+          for {
+            result <- PartitioningService.patchPartitioningParent(1L, partitioningParentPatchDTO5).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              NotFoundServiceError("Failed to perform 'updatePartitioningParent': Parent Partitioning not found")
+            )
+          )
+        },
+        test("Returns expected NotFoundServiceError") {
+          for {
+            result <- PartitioningService.patchPartitioningParent(0L, partitioningParentPatchDTO1).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              NotFoundServiceError("Failed to perform 'updatePartitioningParent': Child Partitioning not found")
+            )
+          )
+        },
+        test("Returns expected GeneralServiceError") {
+          assertZIO(PartitioningService.patchPartitioningParent(2L, partitioningParentPatchDTO1).exit)(
+            failsWithA[GeneralServiceError]
           )
         }
       )

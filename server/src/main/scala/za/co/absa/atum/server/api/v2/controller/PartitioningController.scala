@@ -58,6 +58,12 @@ trait PartitioningController {
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[FlowDTO]]
 
+  def patchPartitioningParent(
+    partitioningId: Long,
+    partitioningParentPatchDTO: PartitioningParentPatchDTO
+  ): IO[ErrorResponse, Unit]
+
+
   def getPartitioningAncestors(
     partitioningId: Long,
     limit: Option[Int],

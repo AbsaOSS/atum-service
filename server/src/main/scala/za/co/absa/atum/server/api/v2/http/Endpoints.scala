@@ -23,7 +23,7 @@ import sttp.tapir.ztapir._
 import sttp.tapir.{PublicEndpoint, Validator}
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.dto._
-import za.co.absa.atum.model.envelopes.{ErrorResponse, StatusResponse}
+import za.co.absa.atum.model.envelopes.ErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse._
 import za.co.absa.atum.server.api.v2.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.common.http.{BaseEndpoints, HttpEnv}
@@ -169,6 +169,16 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(errorInDataOneOfVariant)
   }
 
+  val patchPartitioningParentEndpoint
+  : PublicEndpoint[(Long, PartitioningParentPatchDTO), ErrorResponse, Unit, Any] = {
+    apiV2.patch
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
+      .in(jsonBody[PartitioningParentPatchDTO])
+      .out(statusCode(StatusCode.NoContent))
+      .errorOutVariantPrepend(conflictErrorOneOfVariant)
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
   val getPartitioningAncestorsEndpoint
   : PublicEndpoint[(Long, Option[Int], Option[Long]), ErrorResponse, PaginatedResponse[
     PartitioningWithIdDTO
@@ -253,6 +263,17 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint[
+      (Long, PartitioningParentPatchDTO),
+      ErrorResponse,
+      Unit
+    ](
+      patchPartitioningParentEndpoint,
+      { case (partitioningId: Long, partitioningParentPatchDTO: PartitioningParentPatchDTO) =>
+        PartitioningController.patchPartitioningParent(partitioningId, partitioningParentPatchDTO)
+      }
+    ),
+    ),
+    createServerEndpoint[
       (Long, Option[Int], Option[Long]),
       ErrorResponse,
       PaginatedResponse[PartitioningWithIdDTO]
@@ -263,12 +284,5 @@ object Endpoints extends BaseEndpoints {
       }
     )
   )
-
-  protected val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
-    endpoint.get.in(ZioMetrics).out(stringBody)
-  }
-
-  protected val healthEndpoint: PublicEndpoint[Unit, Unit, StatusResponse, Any] =
-    endpoint.get.in(Health).out(jsonBody[StatusResponse].example(StatusResponse.up))
 
 }
