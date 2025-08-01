@@ -58,4 +58,10 @@ trait PartitioningService {
     partitioningId: Long,
     partitioningParentPatchDTO: PartitioningParentPatchDTO
   ): IO[ServiceError, Unit]
+
+  def getPartitioningAncestors(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
 }

@@ -107,6 +107,18 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
       "updatePartitioningParent"
     )
   }
+
+  override def getPartitioningAncestors(
+     partitioningId: Long,
+     limit: Option[Int],
+     offset: Option[Long]
+   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
+    repositoryCall(
+      partitioningRepository.getPartitioningAncestors(partitioningId, limit, offset),
+      "getPartitioningAncestors"
+    )
+  }
+
 }
 
 object PartitioningServiceImpl {

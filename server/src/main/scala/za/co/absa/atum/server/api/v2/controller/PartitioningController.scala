@@ -63,4 +63,11 @@ trait PartitioningController {
     partitioningParentPatchDTO: PartitioningParentPatchDTO
   ): IO[ErrorResponse, Unit]
 
+
+  def getPartitioningAncestors(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
+
 }

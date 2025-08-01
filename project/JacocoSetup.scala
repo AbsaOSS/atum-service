@@ -50,6 +50,8 @@ object JacocoSetup {
       "za.co.absa.atum.server.api.v2.controller.PartitioningController$",
       "za.co.absa.atum.server.api.v2.service.PartitioningService",
       "za.co.absa.atum.server.api.v2.service.PartitioningService$",
+      "za.co.absa.atum.server.api.common.http.Routes*",
+      "za.co.absa.atum.server.implicits.SeqImplicits*",
       "za.co.absa.atum.model.envelopes.Pagination",
       "za.co.absa.atum.model.dto.PartitioningParentPatchDTO*",
       "za.co.absa.atum.model.ApiPaths*",

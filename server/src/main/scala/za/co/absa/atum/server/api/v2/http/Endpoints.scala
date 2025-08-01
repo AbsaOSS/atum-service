@@ -179,6 +179,19 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  val getPartitioningAncestorsEndpoint
+  : PublicEndpoint[(Long, Option[Int], Option[Long]), ErrorResponse, PaginatedResponse[
+    PartitioningWithIdDTO
+  ], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
+      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
+      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
   val serverEndpoints: List[ZServerEndpoint[HttpEnv.Env, Any]] = List(
     createServerEndpoint[
       (Long, CheckpointV2DTO),
@@ -259,6 +272,16 @@ object Endpoints extends BaseEndpoints {
         PartitioningController.patchPartitioningParent(partitioningId, partitioningParentPatchDTO)
       }
     ),
+    createServerEndpoint[
+      (Long, Option[Int], Option[Long]),
+      ErrorResponse,
+      PaginatedResponse[PartitioningWithIdDTO]
+    ](
+      getPartitioningAncestorsEndpoint,
+      { case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
+        PartitioningController.getPartitioningAncestors(partitioningId, limit, offset)
+      }
+    )
   )
 
 }

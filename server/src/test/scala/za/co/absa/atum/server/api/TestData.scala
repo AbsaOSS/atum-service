@@ -23,6 +23,7 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
 import za.co.absa.atum.server.model.database._
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -84,6 +85,21 @@ trait TestData {
   )
 
   protected val getFlowPartitioningsResult2: GetFlowPartitioningsResult = GetFlowPartitioningsResult(
+    id = 1111L,
+    partitioningJson = partitioningAsJson,
+    author = "author",
+    hasMore = true
+  )
+
+  //Ancestor Partitionings
+  protected val getPartitioningAncestorsResult1: GetPartitioningAncestorsResult = GetPartitioningAncestorsResult(
+    id = 1L,
+    partitioningJson = partitioningAsJson,
+    author = "author",
+    hasMore = false
+  )
+
+  protected val getPartitioningAncestorsResult2: GetPartitioningAncestorsResult = GetPartitioningAncestorsResult(
     id = 1111L,
     partitioningJson = partitioningAsJson,
     author = "author",
