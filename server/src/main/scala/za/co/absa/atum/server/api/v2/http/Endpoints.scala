@@ -272,7 +272,6 @@ object Endpoints extends BaseEndpoints {
         PartitioningController.patchPartitioningParent(partitioningId, partitioningParentPatchDTO)
       }
     ),
-    ),
     createServerEndpoint[
       (Long, Option[Int], Option[Long]),
       ErrorResponse,

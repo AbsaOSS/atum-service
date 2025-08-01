@@ -429,7 +429,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     getFlowPartitioningsMockLayer,
     getPartitioningMainFlowMockLayer,
     updatePartitioningParentMockLayer,
-    getPartitioningMainFlowMockLayer,
     getPartitioningAncestorsMockLayer
   )
 

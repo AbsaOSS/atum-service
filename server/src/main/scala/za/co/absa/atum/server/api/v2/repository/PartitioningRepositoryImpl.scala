@@ -47,8 +47,7 @@ class PartitioningRepositoryImpl(
   getPartitioningFn: GetPartitioning,
   getFlowPartitioningsFn: GetFlowPartitionings,
   getPartitioningMainFlowFn: GetPartitioningMainFlow,
-  updatePartitioningParentFn: UpdatePartitioningParent
-  getPartitioningMainFlowFn: GetPartitioningMainFlow,
+  updatePartitioningParentFn: UpdatePartitioningParent,
   getPartitioningAncestorsFn: GetPartitioningAncestors
 ) extends PartitioningRepository
     with BaseRepository {
@@ -207,8 +206,7 @@ object PartitioningRepositoryImpl {
       with GetPartitioning
       with GetFlowPartitionings
       with GetPartitioningMainFlow
-      with UpdatePartitioningParent,
-      with GetPartitioningMainFlow
+      with UpdatePartitioningParent
       with GetPartitioningAncestors,
     PartitioningRepository
   ] = ZLayer {
@@ -235,7 +233,6 @@ object PartitioningRepositoryImpl {
       getFlowPartitionings,
       getPartitioningMainFlow,
       updatePartitioningParent,
-      getPartitioningMainFlow,
       getPartitioningAncestors
     )
   }
