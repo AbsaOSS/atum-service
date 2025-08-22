@@ -300,7 +300,82 @@
 								}
 							}
 						},
-						"url": "{{host}}/api/v1/createPartitioning"
+            "url": "{{host}}/api/v1/createPartitioning"
+          },
+          "response": []
+        },
+				{
+					"name": "Act: getPartitioningAncestors  (get) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Content-Type is application/json\", function () {\r",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has expected values\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"\r",
+									"    const expectedPartitioningId = pm.collectionVariables.get(\"partitioning_id\");\r",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");\r",
+									"    const expectedPartitioningAuthor = pm.collectionVariables.get(\"partitioning_author\");\r",
+									"\r",
+									"    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1); // Assuming there's only one partitioning\r",
+									"    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(expectedPartitioningId);\r",
+									"    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(expectedPartitioning);\r",
+									"    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(expectedPartitioningAuthor);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/ancestors?limit=10&offset=0",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioning_id}}",
+								"ancestors"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
 					},
 					"response": []
 				}
