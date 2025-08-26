@@ -1,10 +1,11 @@
 {
 	"info": {
-		"_postman_id": "60d803b8-e106-4eb1-bc1c-f884a4c758ba",
+		"_postman_id": "fab2bbda-6062-453f-ae21-4b0136a28ded",
 		"name": "Atum-Service_1-Shot_test_flow",
 		"description": "This collection tests Atum Service basic flow - partitioning, checkpoints, and flows and all related metadata and objects along the way (such as Additional Data, measures, etc).\n\nNote: Since Atum Service doesn't offer deletion APIs / capabilities (for partitionings or checkpoints), we do not create a new partitioning and checkpoints on each test's run. But we want to create (not just always retrieve) these entities occasionally also, to test the creation itself. We chose a solution that is based on day-specific uniqueness, meaning that these tests will create partitioning and checkpoints only once a day, during the first run, and then the subsequent runs would be just retrieving those.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
-		"_exporter_id": "26450104"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47792833",
+		"_collection_link": "https://abll526-8020154.postman.co/workspace/80b8ad24-aa80-4c06-87e2-b8626e085d89/collection/47792833-fab2bbda-6062-453f-ae21-4b0136a28ded?action=share&source=collection_link&creator=47792833"
 	},
 	"item": [
 		{
@@ -66,7 +67,15 @@
 								}
 							}
 						},
-						"url": "{{host}}/health"
+						"url": {
+							"raw": "{{host}}/health",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"health"
+							]
+						}
 					},
 					"response": []
 				}
@@ -167,7 +176,17 @@
 								}
 							}
 						},
-						"url": "{{host}}/api/v2/partitionings"
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings"
+							]
+						}
 					},
 					"response": []
 				},
@@ -300,80 +319,15 @@
 								}
 							}
 						},
-            "url": "{{host}}/api/v1/createPartitioning"
-          },
-          "response": []
-        },
-				{
-					"name": "Act: getPartitioningAncestors  (get) - 200",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {\r",
-									"    pm.response.to.have.status(200);\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Content-Type is application/json\", function () {\r",
-									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Response body has expected values\", function () {\r",
-									"    const jsonData = pm.response.json();\r",
-									"\r",
-									"    const expectedPartitioningId = pm.collectionVariables.get(\"partitioning_id\");\r",
-									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");\r",
-									"    const expectedPartitioningAuthor = pm.collectionVariables.get(\"partitioning_author\");\r",
-									"\r",
-									"    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1); // Assuming there's only one partitioning\r",
-									"    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(expectedPartitioningId);\r",
-									"    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(expectedPartitioning);\r",
-									"    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(expectedPartitioningAuthor);\r",
-									"});\r",
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
-							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/ancestors?limit=10&offset=0",
+							"raw": "{{host}}/api/v1/createPartitioning",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v2",
-								"partitionings",
-								"{{partitioning_id}}",
-								"ancestors"
-							],
-							"query": [
-								{
-									"key": "limit",
-									"value": "10"
-								},
-								{
-									"key": "offset",
-									"value": "0"
-								}
+								"v1",
+								"createPartitioning"
 							]
 						}
 					},
@@ -415,6 +369,356 @@
 							"",
 							"const partitioningAsBase64 = btoa(JSON.stringify(partitioningToUse));",
 							"pm.collectionVariables.set(\"partitioning_as_base64\", partitioningAsBase64);",
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Test: retrieve ancestors",
+			"item": [
+				{
+					"name": "Act: child partitionings (create or retrieve child) - 201 or 409",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 or 409\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    if (pm.response.code === 201) {",
+									"        pm.test(\"Response has id and status for 201\", function () {",
+									"            const expectedPartitioning = pm.collectionVariables.get(\"partitioningChild_as_obj\");",
+									"            const expectedAuthor = pm.collectionVariables.get(\"partitioningChild_author\");",
+									"",
+									"            pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"            pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+									"        });",
+									"",
+									"    } else if (pm.response.code === 409) {",
+									"        pm.test(\"Response has error message for 409\", function () {",
+									"            const expectedMsg = ",
+									"                \"Failed to perform 'createPartitioning': \" +",
+									"                \"Exception caused by operation: 'createPartitioning': \" +",
+									"                \"(31) Partitioning already exists\";",
+									"            pm.expect(jsonData[\"message\"]).to.eql(expectedMsg);",
+									"        });",
+									"    };",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"author\": \"{{partitioningChild_author}}\",\n    \"parentPartitioningId\": \"{{partitioning_id}}\",\n    \"partitioning\": [\n        {\"key\": \"partitionChildForAPITests1\", \"value\": \"firstValue\"},\n        {\"key\": \"partitionChildForAPITests2\", \"value\": \"{{partitioningChild_value__RUNTIME}}\"}\n    ]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: child partitionings (get child) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioningChild_as_obj\");",
+									"    const expectedAuthor = pm.collectionVariables.get(\"partitioningChild_author\");",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"    pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+									"",
+									"    pm.collectionVariables.set(\"partitioningChild_id\", jsonData[\"data\"][\"id\"]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings?partitioning={{partitioningChild_as_base64}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings"
+							],
+							"query": [
+								{
+									"key": "partitioning",
+									"value": "{{partitioningChild_as_base64}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: child createPartitioning (retrieve child) - 200",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioningChild_as_obj\");",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    pm.expect(jsonData[\"partitioning\"]).to.eql(expectedPartitioning);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"authorIfNew\": \"{{partitioningChild_author}}\",\n    \"parentPartitioning\": [\n        {\"key\": \"partitionForAPITests1\", \"value\": \"firstValue\"},\n        {\"key\": \"partitionForAPITests2\", \"value\": \"{{partitioning_value__RUNTIME}}\"}\n    ],\n    \"partitioning\": [\n        {\"key\": \"partitionChildForAPITests1\", \"value\": \"firstValue\"},\n        {\"key\": \"partitionChildForAPITests2\", \"value\": \"{{partitioningChild_value__RUNTIME}}\"}\n    ]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v1/createPartitioning",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"createPartitioning"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: get ancestor partitionings - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    const expectedPartitioningId = pm.collectionVariables.get(\"partitioning_id\");",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+									"    const expectedPartitioningAuthor = pm.collectionVariables.get(\"partitioning_author\");",
+									"",
+									"    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1); // Assuming there's only one partitioning",
+									"    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(expectedPartitioningId);",
+									"    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(expectedPartitioningAuthor);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/ancestors?limit=10&offset=0",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioningChild_id}}",
+								"ancestors"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioningChild_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/ancestors",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"// Get date in format 2025-07-01 (10 chars) - so only once a day partitioningChild would be created, ",
+							"// otherwise just retrieved so that we don't overwhelm our DB; we don't have DELETE API endpoints.",
+							"const partitioningChildUniqueValue = \"api_tests_Child\" + new Date().toISOString().slice(0, 10);",
+							"console.log(`The partitioningChild unique value being used: ${partitioningChildUniqueValue}`);",
+							"",
+							"pm.collectionVariables.set(\"partitioningChild_value__RUNTIME\", partitioningChildUniqueValue);",
+							"",
+							"const partitioningChildToUse = [",
+							"    {",
+							"        \"key\": \"partitionChildForAPITests1\",",
+							"        \"value\": \"firstValue\"",
+							"    },",
+							"    {",
+							"        \"key\": \"partitionChildForAPITests2\",",
+							"        \"value\": partitioningChildUniqueValue",
+							"    }",
+							"];",
+							"pm.collectionVariables.set(\"partitioningChild_as_obj\", partitioningChildToUse);",
+							"",
+							"const partitioningChildAuthor = \"apiTest1ShotpartitioningChild\";",
+							"pm.collectionVariables.set(\"partitioningChild_author\", partitioningChildAuthor);",
+							"",
+							"const partitioningChildAsBase64 = btoa(JSON.stringify(partitioningChildToUse));",
+							"pm.collectionVariables.set(\"partitioningChild_as_base64\", partitioningChildAsBase64);",
 							""
 						]
 					}
@@ -476,7 +780,19 @@
 								}
 							}
 						},
-						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/additional-data"
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/additional-data",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioning_id}}",
+								"additional-data"
+							]
+						}
 					},
 					"response": []
 				},
@@ -524,7 +840,19 @@
 								}
 							}
 						},
-						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/additional-data"
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/additional-data",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioning_id}}",
+								"additional-data"
+							]
+						}
 					},
 					"response": []
 				}
@@ -628,7 +956,19 @@
 							"mode": "raw",
 							"raw": "{\n  \"id\": \"{{checkpoint_id}}\",\n  \"name\": \"CheckpointAPITest\",\n  \"author\": \"{{checkpoint_author}}\",\n  \"measuredByAtumAgent\": true,\n  \"processStartTime\": \"{{checkpoint_processStartTime}}\",\n  \"measurements\": [\n    {\n      \"measure\": {\n        \"measureName\": \"count\",\n        \"measuredColumns\": [\"*\"]\n      },\n      \"result\": {\n        \"mainValue\": {\n          \"value\": \"123\",\n          \"valueType\": \"Long\"\n        },\n        \"supportValues\": {}\n      }\n    }\n  ]\n}\n"
 						},
-						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints"
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioning_id}}",
+								"checkpoints"
+							]
+						}
 					},
 					"response": []
 				},
@@ -685,7 +1025,17 @@
 								}
 							}
 						},
-						"url": "{{host}}/api/v1/createCheckpoint"
+						"url": {
+							"raw": "{{host}}/api/v1/createCheckpoint",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"createCheckpoint"
+							]
+						}
 					},
 					"response": []
 				},
@@ -802,7 +1152,20 @@
 							"mode": "raw",
 							"raw": ""
 						},
-						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints/{{checkpoint_id}}"
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints/{{checkpoint_id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioning_id}}",
+								"checkpoints",
+								"{{checkpoint_id}}"
+							]
+						}
 					},
 					"response": []
 				},
@@ -848,7 +1211,19 @@
 							"mode": "raw",
 							"raw": ""
 						},
-						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/measures"
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/measures",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioning_id}}",
+								"measures"
+							]
+						}
 					},
 					"response": []
 				}
@@ -913,6 +1288,196 @@
 			]
 		},
 		{
+			"name": "Test: patch ancestors",
+			"item": [
+				{
+					"name": "Act: patch partitionings / ancestor (patch) - 204",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"parentPartitioningId\": \"{{partitioning_id}}\",\n  \"author\": \"{{ad_author}}\",\n  \"copyMeasurements\": true,\n  \"copyAdditionalData\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/ancestors",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioningChild_id}}",
+								"ancestors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: child partitionings / measures (retrieve child) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response has expected values\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const expectedMeasures = {",
+									"        \"measureName\": \"count\",",
+									"        \"measuredColumns\": [\"*\"]",
+									"    };",
+									"",
+									"    pm.expect(jsonData.data.length).to.eql(1);",
+									"    pm.expect(jsonData.data[0]).to.eql(expectedMeasures);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/measures",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioningChild_id}}",
+								"measures"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: child partitionings / additional data (retrieve child) - 200",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedAD = pm.collectionVariables.get(\"retrieved_ad_as_obj\");",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    pm.expect(jsonData[\"data\"][\"data\"]).to.eql(expectedAD);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/additional-data",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioningChild_id}}",
+								"additional-data"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Covers endpoints:\n\n- PATCH:/api/v2/partitionings/{partitioningChild_id}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/measures\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/additional-data",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
 			"name": "Test: retrieve flows related data",
 			"item": [
 				{
@@ -960,7 +1525,19 @@
 								}
 							}
 						},
-						"url": "{{host}}/api/v2/partitionings/{{partitioning_id}}/main-flow"
+						"url": {
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/main-flow",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"partitionings",
+								"{{partitioning_id}}",
+								"main-flow"
+							]
+						}
 					},
 					"response": []
 				},
@@ -986,15 +1563,30 @@
 									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
 									"    const expectedPartitioningAuthor = pm.collectionVariables.get(\"partitioning_author\");",
 									"",
-									"    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1); // Assuming there's only one partitioning",
+									"    const expectedChildPartitioningId = pm.collectionVariables.get(\"partitioningChild_id\");",
+									"    const expectedChildPartitioning = pm.collectionVariables.get(\"partitioningChild_as_obj\");",
+									"    const expectedChildPartitioningAuthor = pm.collectionVariables.get(\"partitioningChild_author\");",
+									"",
+									"    pm.expect(jsonData[\"data\"]).to.have.lengthOf(2); // Assuming there's 2 partitionings",
 									"    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(expectedPartitioningId);",
 									"    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(expectedPartitioning);",
 									"    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(expectedPartitioningAuthor);",
+									"",
+									"    pm.expect(jsonData[\"data\"][1][\"id\"]).to.eql(expectedChildPartitioningId);",
+									"    pm.expect(jsonData[\"data\"][1][\"partitioning\"]).to.eql(expectedChildPartitioning);",
+									"    pm.expect(jsonData[\"data\"][1][\"author\"]).to.eql(expectedChildPartitioningAuthor);",
 									"});",
 									""
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"packages": {},
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -1207,6 +1799,26 @@
 		},
 		{
 			"key": "measurements_as_obj",
+			"value": ""
+		},
+		{
+			"key": "partitioningChild_value__RUNTIME",
+			"value": ""
+		},
+		{
+			"key": "partitioningChild_as_obj",
+			"value": ""
+		},
+		{
+			"key": "partitioningChild_author",
+			"value": ""
+		},
+		{
+			"key": "partitioningChild_as_base64",
+			"value": ""
+		},
+		{
+			"key": "partitioningChild_id",
 			"value": ""
 		}
 	]
