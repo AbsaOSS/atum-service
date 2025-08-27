@@ -9,7 +9,7 @@
 	},
 	"item": [
 		{
-			"name": "Test: health endpoint",
+			"name": "Test: health endpoints",
 			"item": [
 				{
 					"name": "Act: health - 200",
@@ -78,9 +78,147 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Act: health/readiness - 200",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedStatus = \"UP\";",
+									"    const expectedMessage = \"Atum server is up and running\";",
+									"",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData[\"status\"]).to.eql(expectedStatus);",
+									"    pm.expect(jsonData[\"message\"]).to.eql(expectedMessage);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/health/readiness",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"health",
+								"readiness"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Act: health/liveness - 200",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected values\", function () {",
+									"    const expectedStatus = \"UP\";",
+									"    const expectedMessage = \"Atum server is up and running\";",
+									"",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData[\"status\"]).to.eql(expectedStatus);",
+									"    pm.expect(jsonData[\"message\"]).to.eql(expectedMessage);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/health/liveness",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"health",
+								"liveness"
+							]
+						}
+					},
+					"response": []
 				}
 			],
-			"description": "Covers endpoints:\n\n- GET:/health",
+			"description": "Covers endpoints:\n\n- GET:/health\n    \n- GET:/readiness\n    \n- GET:/liveness",
 			"auth": {
 				"type": "noauth"
 			},
