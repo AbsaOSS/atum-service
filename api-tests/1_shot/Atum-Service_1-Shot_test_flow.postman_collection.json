@@ -218,7 +218,7 @@
 					"response": []
 				}
 			],
-			"description": "Covers endpoints:\n\n- GET:/health\n    \n- GET:/readiness\n    \n- GET:/liveness",
+			"description": "Covers endpoints:\n\n- GET:/health\n    \n- GET:/health/readiness\n    \n- GET:/health/liveness",
 			"auth": {
 				"type": "noauth"
 			},
