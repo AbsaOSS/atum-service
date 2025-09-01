@@ -81,7 +81,7 @@ jobs:
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
-            **/target/*${{ env.scalaShort }}*/jacoco/report/jacoco.filtered.xml
+            **/target/jacoco/report/jacoco.xml
           exclude-paths: |
             database/target/**
           sensitivity: "detail"
