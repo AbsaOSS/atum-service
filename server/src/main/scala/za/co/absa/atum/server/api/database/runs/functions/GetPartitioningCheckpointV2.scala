@@ -35,7 +35,7 @@ import java.util.UUID
 
 class GetPartitioningCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointV2Args, Option[
-      CheckpointItemFromDB
+      CheckpointItemFromDB.NotPaginated
     ], Task](input =>
       Seq(
         fr"${input.partitioningId}",

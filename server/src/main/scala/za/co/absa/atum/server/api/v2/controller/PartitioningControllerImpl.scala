@@ -39,6 +39,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
     )
   }
+
   override def getPartitioningById(
     partitioningId: Long
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]] = {
@@ -119,6 +120,30 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToSingleSuccessResponse(
       serviceCall[FlowDTO, FlowDTO](
         partitioningService.getPartitioningMainFlow(partitioningId)
+      )
+    )
+  }
+
+  override def patchPartitioningParent(
+    partitioningId: Long,
+    partitioningParentPatchDTO: PartitioningParentPatchDTO
+  ): IO[ErrorResponse, Unit] = {
+        serviceCall[Unit, Unit](
+          partitioningService.patchPartitioningParent(partitioningId, partitioningParentPatchDTO),
+          _ => ()
+      )
+  }
+
+  override def getPartitioningAncestors(
+    partitioningId: Long,
+    limit: Option[Int],
+    offset: Option[Long]
+   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit.get,
+      offset.get,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.getPartitioningAncestors(partitioningId, limit, offset)
       )
     )
   }

@@ -14,48 +14,46 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database.flows.functions
+package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import io.circe.{DecodingFailure, Json}
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
+import io.circe.Json
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.flows.Flows
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
-import za.co.absa.atum.server.model.database.PartitioningForDB
+import za.co.absa.atum.server.api.database.runs.Runs
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
+import za.co.absa.atum.server.model.PartitioningResult
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
-import za.co.absa.atum.server.model.PartitioningResult
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
-class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[GetFlowPartitioningsArgs, Option[
-      GetFlowPartitioningsResult
-    ], Task](args =>
-      Seq(
-        fr"${args.flowId}",
-        fr"${args.limit}",
-        fr"${args.offset}"
-      )
+class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
+  extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningAncestorsArgs, Option[
+    GetPartitioningAncestorsResult
+  ], Task](args =>
+    Seq(
+      fr"${args.partitioningId}",
+      fr"${args.limit}",
+      fr"${args.offset}"
     )
+  )
     with StandardStatusHandling
     with ByFirstErrorStatusAggregator {
 
-  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("id", "partitioning", "author", "has_more")
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("ancestor_id", "partitioning", "author", "has_more")
 }
 
-object GetFlowPartitionings {
-  case class GetFlowPartitioningsArgs(flowId: Long, limit: Option[Int], offset: Option[Long])
-  case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
+object GetPartitioningAncestors {
+  case class GetPartitioningAncestorsArgs(partitioningId: Long, limit: Option[Int], offset: Option[Long])
+  case class GetPartitioningAncestorsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
     extends PartitioningResult(id, partitioningJson, author)
 
-  val layer: URLayer[PostgresDatabaseProvider, GetFlowPartitionings] = ZLayer {
+  val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAncestors] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new GetFlowPartitionings()(Flows, dbProvider.dbEngine)
+    } yield new GetPartitioningAncestors()(Runs, dbProvider.dbEngine)
   }
 }

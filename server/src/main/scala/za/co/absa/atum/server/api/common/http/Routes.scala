@@ -56,6 +56,7 @@ object Routes extends ServerOptions with ServerUtils {
       api.v2.http.Endpoints.postPartitioningEndpoint,
       api.v2.http.Endpoints.getPartitioningAdditionalDataEndpoint,
       api.v2.http.Endpoints.patchPartitioningAdditionalDataEndpoint,
+      api.v2.http.Endpoints.patchPartitioningParentEndpoint,
       api.v2.http.Endpoints.getPartitioningCheckpointsEndpoint,
       api.v2.http.Endpoints.getPartitioningCheckpointEndpoint,
       api.v2.http.Endpoints.getPartitioningEndpoint,
@@ -63,6 +64,7 @@ object Routes extends ServerOptions with ServerUtils {
       api.v2.http.Endpoints.getPartitioningMainFlowEndpoint,
       api.v2.http.Endpoints.getFlowPartitioningsEndpoint,
       api.v2.http.Endpoints.getFlowCheckpointsEndpoint,
+      api.v2.http.Endpoints.getPartitioningAncestorsEndpoint,
       api.common.http.Endpoints.healthEndpoint
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))

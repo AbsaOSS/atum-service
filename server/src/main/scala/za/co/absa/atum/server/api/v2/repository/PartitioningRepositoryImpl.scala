@@ -20,7 +20,9 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.common.repository.BaseRepository
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
 import za.co.absa.atum.server.api.database.flows.functions._
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
+import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
@@ -44,7 +46,9 @@ class PartitioningRepositoryImpl(
   getPartitioningMeasuresByIdFn: GetPartitioningMeasuresById,
   getPartitioningFn: GetPartitioning,
   getFlowPartitioningsFn: GetFlowPartitionings,
-  getPartitioningMainFlowFn: GetPartitioningMainFlow
+  getPartitioningMainFlowFn: GetPartitioningMainFlow,
+  updatePartitioningParentFn: UpdatePartitioningParent,
+  getPartitioningAncestorsFn: GetPartitioningAncestors
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -136,7 +140,7 @@ class PartitioningRepositoryImpl(
     ).map(_.flatten)
       .flatMap { partitioningResults =>
         ZIO
-          .fromEither(GetFlowPartitioningsResult.resultsToPartitioningWithIdDTOs(partitioningResults, Seq.empty))
+          .fromEither(PartitioningResult.resultsToPartitioningWithIdDTOs(partitioningResults))
           .mapBoth(
             error => GeneralDatabaseError(error.getMessage),
             partitionings => {
@@ -157,6 +161,38 @@ class PartitioningRepositoryImpl(
     }
   }
 
+  override def updatePartitioningParent(
+    partitioningId: Long,
+    partitioningParentPatchDTO: PartitioningParentPatchDTO
+    ): IO[DatabaseError, Unit] = {
+    dbSingleResultCallWithStatus(
+      updatePartitioningParentFn(UpdatePartitioningParentArgs(partitioningId, partitioningParentPatchDTO)),
+      "updatePartitioningParent"
+    )
+  }
+
+  override def getPartitioningAncestors(
+     partitioningId: Long,
+     limit: Option[Int],
+     offset: Option[Long]
+   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getPartitioningAncestorsFn(GetPartitioningAncestorsArgs(partitioningId, limit, offset)),
+      "getPartitioningAncestors"
+    ).map(_.flatten)
+      .flatMap { partitioningResults =>
+        ZIO
+          .fromEither(PartitioningResult.resultsToPartitioningWithIdDTOs(partitioningResults))
+          .mapBoth(
+            error => GeneralDatabaseError(error.getMessage),
+            partitionings => {
+              if (partitioningResults.nonEmpty && partitioningResults.head.hasMore) ResultHasMore(partitionings)
+              else ResultNoMore(partitionings)
+            }
+          )
+      }
+  }
+
 }
 
 object PartitioningRepositoryImpl {
@@ -169,7 +205,9 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMeasuresById
       with GetPartitioning
       with GetFlowPartitionings
-      with GetPartitioningMainFlow,
+      with GetPartitioningMainFlow
+      with UpdatePartitioningParent
+      with GetPartitioningAncestors,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -182,6 +220,8 @@ object PartitioningRepositoryImpl {
       getPartitioning <- ZIO.service[GetPartitioning]
       getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
+      updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
+      getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
     } yield new PartitioningRepositoryImpl(
       createPartitioning,
       getPartitioningMeasures,
@@ -191,7 +231,9 @@ object PartitioningRepositoryImpl {
       getPartitioningMeasuresById,
       getPartitioning,
       getFlowPartitionings,
-      getPartitioningMainFlow
+      getPartitioningMainFlow,
+      updatePartitioningParent,
+      getPartitioningAncestors
     )
   }
 
