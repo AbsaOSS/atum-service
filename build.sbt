@@ -69,6 +69,7 @@ lazy val server = {
     )
     .enablePlugins(AssemblyPlugin)
     .enablePlugins(AutomateHeaderPlugin)
+    .enablePlugins(FilteredJacocoAgentPlugin)
     .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.serverDependencies)
     .dependsOn(model)
 
@@ -90,6 +91,7 @@ lazy val agent = (projectMatrix in file("agent"))
       javacOptions ++= Setup.clientJavacOptions
     ): _*
   )
+  .enablePlugins(FilteredJacocoAgentPlugin)
   .addSparkCrossBuild(SparkVersionAxis(spark3), Setup.clientSupportedScalaVersions, Dependencies.agentDependencies)
   .dependsOn(model)
 
@@ -104,6 +106,7 @@ lazy val model = (projectMatrix in file("model"))
       javacOptions ++= Setup.clientJavacOptions,
     ): _*
   )
+  .enablePlugins(FilteredJacocoAgentPlugin)
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.modelDependencies)
 
 /**
@@ -119,6 +122,7 @@ lazy val database = {
         publish / skip := true
       ): _*
     )
+    .enablePlugins(FilteredJacocoAgentPlugin)
     .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.databaseDependencies)
   if (limitedProject) {
     null // if value other then null is returned, the condition doesn't seem to work.
@@ -139,5 +143,6 @@ lazy val reader = (projectMatrix in file("reader"))
       javacOptions ++= Setup.clientJavacOptions
     ): _*
   )
+  .enablePlugins(FilteredJacocoAgentPlugin)
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
   .dependsOn(model)
