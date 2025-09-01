@@ -146,3 +146,8 @@ lazy val reader = (projectMatrix in file("reader"))
   .enablePlugins(FilteredJacocoAgentPlugin)
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
   .dependsOn(model)
+
+// Run activate jacoco + clean + test + per-module reports across the whole build + deactivate jacoco
+addCommandAlias("jacoco", "; jacocoOn; clean; test; jacocoReportAll; jacocoOff")
+addCommandAlias("jacocoOff",  "; set every jacocoPluginEnabled := false")
+addCommandAlias("jacocoOn",   "; set every jacocoPluginEnabled := true")

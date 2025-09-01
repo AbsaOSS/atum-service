@@ -17,10 +17,9 @@
 name: JaCoCo Report
 
 on:
-  workflow_dispatch:
-#  pull_request:
-#    branches: [ master ]
-#    types: [ opened, edited, synchronize, reopened ]
+  pull_request:
+    branches: [ master ]
+    types: [ opened, edited, synchronize, reopened ]
 
 env:
   scalaLong: 2.13.11
@@ -75,11 +74,6 @@ jobs:
         continue-on-error: true
         id: jacocorun
         run: sbt jacoco
-
-      - name: Filter jacoco xml files
-        continue-on-error: true
-        id: jacocofilter
-        run: sbt filterJacoco
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
