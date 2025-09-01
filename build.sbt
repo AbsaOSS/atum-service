@@ -122,7 +122,6 @@ lazy val database = {
         publish / skip := true
       ): _*
     )
-    .enablePlugins(FilteredJacocoAgentPlugin)
     .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.databaseDependencies)
   if (limitedProject) {
     null // if value other then null is returned, the condition doesn't seem to work.
