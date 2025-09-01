@@ -141,10 +141,3 @@ lazy val reader = (projectMatrix in file("reader"))
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
   .dependsOn(model)
-
-/**
- * Register a Jacoco filter task that runs the Jacoco-filter script on JaCoCo XML files.
- * This task expects a configuration file 'jacoco_filter.toml' to be present in the project root directory.
- */
-lazy val filterJacoco = taskKey[Unit]("Run jacoco-filter on JaCoCo XML files")
-filterJacoco := JacocoSetup.filterJacocoTask.value
