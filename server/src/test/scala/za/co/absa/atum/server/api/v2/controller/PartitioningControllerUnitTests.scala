@@ -100,6 +100,8 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
 
   when(partitioningServiceMock.getPartitioningAncestors(1111L, Some(1), Some(0)))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningServiceMock.getPartitioningAncestors(2222L, Some(1), Some(0)))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1))))
   when(partitioningServiceMock.getPartitioningAncestors(8888L, Some(1), Some(0)))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
   when(partitioningServiceMock.getPartitioningAncestors(9999L, Some(1), Some(0)))
@@ -278,6 +280,13 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningController.getPartitioningAncestors(1111L, Some(1), Some(0))
             expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = true), uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns expected PaginatedResponse[PartitioningWithIdDTO] with no more data available") {
+          for {
+            result <- PartitioningController.getPartitioningAncestors(2222L, Some(1), Some(0))
+            expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = false), uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
