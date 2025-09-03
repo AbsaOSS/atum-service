@@ -68,6 +68,8 @@ object FilteredJacocoAgentPlugin extends AutoPlugin {
     }
   }
 
+  lazy val Jmf = config("jmf").extend(Compile)
+
   // ---- commands
   private lazy val jacocoCleanAllCmd  = Command.command("jacocoCleanAll") { state =>
     val targets = enabledUnder(state)
@@ -75,10 +77,25 @@ object FilteredJacocoAgentPlugin extends AutoPlugin {
     else targets.foldLeft(state) { (st, ref) => Command.process(s"${ref.project}/jacocoClean", st) }
   }
 
-  private lazy val jacocoReportAllCmd = Command.command("jacocoReportAll") { state =>
-    val targets = enabledUnder(state)
-    if (targets.isEmpty) { println("[jacoco] nothing to report (no enabled modules under this aggregate)."); state }
-    else targets.foldLeft(state) { (st, ref) => Command.process(s"${ref.project}/jacocoReport", st) }
+  private lazy val jacocoReportAllCmd = Command.command("jacocoReportAll") { state0 =>
+    val e         = Project.extract(state0)
+    val current   = e.currentRef
+    // your existing helper (enabled projects under current aggregate)
+    val under     = enabledUnder(state0)
+
+    // Also include current project if enabled
+    val selfEnabled =
+      e.getOpt(current / jacocoPluginEnabled).getOrElse(false)
+
+    val targets = (if (selfEnabled) current +: under else under).distinct
+
+    if (targets.isEmpty) {
+      println("[jacoco] nothing to report (no enabled modules here)."); state0
+    } else {
+      targets.foldLeft(state0) { (st, ref) =>
+        Command.process(s"${ref.project}/jacocoReport", st)
+      }
+    }
   }
 
   // ---- global defaults so keys exist everywhere (safe no-ops on projects without the plugin)
@@ -119,7 +136,7 @@ object FilteredJacocoAgentPlugin extends AutoPlugin {
       // pull the agent with the runtime classifier (this is the actual -javaagent jar)
       ("org.jacoco" % "org.jacoco.agent" % jacocoVersion.value % Test).classifier("runtime"),
       ("org.jacoco" % "org.jacoco.cli"   % jacocoVersion.value % Test).classifier("nodeps"),
-      "io.github.moranaapps" % "jacoco-method-filter-core_2.12" % jmfCoreVersion.value % Jmf.name,
+      "io.github.moranaapps" %% "jacoco-method-filter-core" % jmfCoreVersion.value % Jmf.name,
     ),
     jacocoSetUserDirToBuildRoot := true,
 
@@ -147,15 +164,36 @@ object FilteredJacocoAgentPlugin extends AutoPlugin {
 
     // the rewrite task (your code, lightly cleaned)
     jmfRewrite := {
-      val log        = streams.value.log
-      val enabled    = jacocoPluginEnabled.value
-
+      // --- hoist all .value lookups BEFORE conditionals ---
       // ensure classes exist (safe to always do; test would compile anyway)
       val _          = (Compile / compile).value
 
-      val classesIn  = (Compile / classDirectory).value
       val rules      = jmfRulesFile.value
       val upd        = (Jmf / update).value   // hoisted
+      val log        = streams.value.log
+      val outRoot    = jmfOutDir.value
+      val mainCls    = jmfCliMain.value
+      val dryRun     = jmfDryRun.value
+      val workDir    = baseDirectory.value
+      val classesIn  = (Compile / classDirectory).value
+      val rulesFile  = jmfRulesFile.value
+      val enabled    = jacocoPluginEnabled.value
+
+      // Compile classpath (scala-stdlib, scopt, your module classes, etc.)
+      val compileCp: Seq[File] = Attributed.data((Compile / fullClasspath).value)
+
+      // Jmf-resolved jars (your jacoco-method-filter-core, etc.)
+      val jmfJars: Seq[File] = (Jmf / update).value.matching(artifactFilter(`type` = "jar")).distinct
+
+      // Final runtime CP
+      val cp: Seq[File] = (compileCp ++ jmfJars :+ (Compile / classDirectory).value).distinct
+      val cpStr = cp.distinct.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
+
+      val javaBin = {
+        val h = sys.props.get("java.home").getOrElse("")
+        if (h.nonEmpty) new java.io.File(new java.io.File(h, "bin"), "java").getAbsolutePath else "java"
+      }
+      // ----------------------------------------------------
 
       if (!enabled) classesIn
       else if (!classesIn.exists) {
@@ -168,18 +206,17 @@ object FilteredJacocoAgentPlugin extends AutoPlugin {
           val outDir   = jmfOutDir.value / "classes-filtered"
           IO.delete(outDir); IO.createDirectory(outDir)
 
-          val toolJars = upd.matching(artifactFilter(`type` = "jar")).distinct
-          log.info("[jmf] tool CP:\n" + toolJars.map(f => s"  - ${f.getAbsolutePath}").mkString("\n"))
+          log.info("[jmf] runtime CP:\n" + cp.map(f => s"  - ${f.getAbsolutePath}").mkString("\n"))
 
-          val cpStr = toolJars.mkString(java.io.File.pathSeparator)
-          val args  = Seq("java","-cp", cpStr, jmfCliMain.value,
-            "--in", classesIn.getAbsolutePath,
-            "--out", outDir.getAbsolutePath,
-            "--rules", rules.getAbsolutePath) ++
-            (if (jmfDryRun.value) Seq("--dry-run") else Seq())
+          val args = Seq(
+            javaBin, "-cp", cpStr, jmfCliMain.value,
+            "--in",   classesIn.getAbsolutePath,
+            "--out",  outDir.getAbsolutePath,
+            "--rules", rules.getAbsolutePath
+          ) ++ (if (jmfDryRun.value) Seq("--dry-run") else Seq())
 
           log.info(s"[jmf] rewrite: ${args.mkString(" ")}")
-          val code = scala.sys.process.Process(args, baseDirectory.value).!
+          val code = scala.sys.process.Process(args, workDir).!
           if (code != 0) sys.error(s"[jmf] rewriter failed ($code)")
           outDir
         }

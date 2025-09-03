@@ -73,7 +73,7 @@ jobs:
       - name: Build and run tests with test coverage
         continue-on-error: true
         id: jacocorun
-        run: sbt jacoco
+        run: sbt "project server" jacoco
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
@@ -81,7 +81,7 @@ jobs:
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
-            **/target/jacoco/report/jacoco.xml
+            **/target/**/jacoco/report/jacoco.xml
           exclude-paths: |
             database/target/**
           sensitivity: "detail"

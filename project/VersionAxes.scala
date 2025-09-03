@@ -16,8 +16,6 @@
 import sbt.{Def, ModuleID, VirtualAxis, *}
 import sbt.Keys.*
 import sbt.internal.ProjectMatrix
-//import JacocoSetup.jacocoSettings
-//import com.github.sbt.jacoco.JacocoKeys.jacocoReportSettings
 import za.co.absa.commons.version.Version
 
 
@@ -55,7 +53,6 @@ object VersionAxes {
             libraryDependencies ++= dependenciesFnc(sparkVersion, scalaVersion),
             printVersionInfo := streams.value.log.info(s"Building ${name.value} with Spark $sparkVersion, Scala ${scalaVersion.asString}"),
             (Compile / compile) := ((Compile / compile) dependsOn printVersionInfo).value,
-//            jacocoReportSettings := jacocoSettings(sparkVersion, scalaVersion, name.value),
           ).settings(settings *)
         )
       }
@@ -73,7 +70,6 @@ object VersionAxes {
             libraryDependencies ++= dependenciesFnc(scalaVersion),
             printVersionInfo := streams.value.log.info(s"Building ${name.value} with Scala ${scalaVersion.asString}"),
             (Compile / compile) := ((Compile / compile) dependsOn printVersionInfo).value,
-//            jacocoReportSettings := jacocoSettings(scalaVersion, name.value),
           ).settings(settings *)
         )
       )
@@ -90,7 +86,6 @@ object VersionAxes {
           scalacOptions ++= Setup.serverAndDbScalacOptions,
           printVersionInfo := streams.value.log.info(s"Building ${name.value} with Scala ${scalaVersion.asString}"),
           (Compile / compile) := ((Compile / compile) dependsOn printVersionInfo).value,
-//          jacocoReportSettings := jacocoSettings(scalaVersion, name.value),
         ).settings(settings *)
       )
     }

@@ -69,8 +69,8 @@ lazy val server = {
     )
     .enablePlugins(AssemblyPlugin)
     .enablePlugins(AutomateHeaderPlugin)
-    .enablePlugins(FilteredJacocoAgentPlugin)
     .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.serverDependencies)
+    .enablePlugins(FilteredJacocoAgentPlugin)
     .dependsOn(model)
 
   if (limitedProject) {
@@ -91,8 +91,8 @@ lazy val agent = (projectMatrix in file("agent"))
       javacOptions ++= Setup.clientJavacOptions
     ): _*
   )
-  .enablePlugins(FilteredJacocoAgentPlugin)
   .addSparkCrossBuild(SparkVersionAxis(spark3), Setup.clientSupportedScalaVersions, Dependencies.agentDependencies)
+  .enablePlugins(FilteredJacocoAgentPlugin)
   .dependsOn(model)
 
 /**
@@ -106,8 +106,8 @@ lazy val model = (projectMatrix in file("model"))
       javacOptions ++= Setup.clientJavacOptions,
     ): _*
   )
-  .enablePlugins(FilteredJacocoAgentPlugin)
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.modelDependencies)
+  .enablePlugins(FilteredJacocoAgentPlugin)
 
 /**
  * Module `database` is the source of database structures of the service
@@ -142,11 +142,6 @@ lazy val reader = (projectMatrix in file("reader"))
       javacOptions ++= Setup.clientJavacOptions
     ): _*
   )
-  .enablePlugins(FilteredJacocoAgentPlugin)
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
+    .enablePlugins(FilteredJacocoAgentPlugin)
   .dependsOn(model)
-
-// Run activate jacoco + clean + test + per-module reports across the whole build + deactivate jacoco
-addCommandAlias("jacoco", "; jacocoOn; clean; test; jacocoReportAll; jacocoOff")
-addCommandAlias("jacocoOff",  "; set every jacocoPluginEnabled := false")
-addCommandAlias("jacocoOn",   "; set every jacocoPluginEnabled := true")

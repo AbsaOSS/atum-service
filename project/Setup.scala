@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-//import com.github.sbt.jacoco.JacocoKeys.jacocoExcludes
 import sbt.*
 import sbt.Keys.*
 import sbtassembly.AssemblyKeys.assemblyMergeStrategy
@@ -37,7 +36,6 @@ object Setup {
   lazy val commonSettings: Seq[SettingsDefinition] = Seq(
     scalacOptions ++= Setup.commonScalacOptions,
     Test / parallelExecution := false,
-//    jacocoExcludes := JacocoSetup.jacocoProjectExcludes(),
     (assembly / test) := {},
     (publish / test) := { (Test / testOnly).toTask(" *UnitTests").value }
   )
