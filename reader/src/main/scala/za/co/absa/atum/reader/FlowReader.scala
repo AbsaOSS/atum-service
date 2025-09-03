@@ -62,8 +62,6 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
     } yield checkpointsOrError
   }
 
-
-
   /**
    *  Function to retrieve a page of checkpoints of the given name belonging to the flow.
    *  The checkpoints are ordered by their creation order.
