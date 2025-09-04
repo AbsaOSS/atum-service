@@ -100,6 +100,20 @@ jobs:
     name: JaCoCo Report Server
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: atum_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -110,6 +124,9 @@ jobs:
         uses: olafurpg/setup-scala@v14
         with:
           java-version: "adopt@1.11.0-11"
+
+      - name: Prepare testing database
+        run: sbt flywayMigrate
 
       - name: Build and run tests with test coverage
         continue-on-error: true
