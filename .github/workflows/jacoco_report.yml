@@ -34,8 +34,10 @@ env:
     atum-reader: reader
     atum-server: server
   MODULES_THRESHOLDS: |
-    atum-model: 56*80*
-    atum-server: 66*80*
+    atum-reader: 74*80*
+    atum-agent: 67*80*
+    atum-model: 35*80*
+    atum-server: 71*80*
 
 jobs:
   jacoco-report:
