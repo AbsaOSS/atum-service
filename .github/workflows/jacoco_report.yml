@@ -65,10 +65,49 @@ jobs:
       - name: Setup Scala
         uses: olafurpg/setup-scala@v14
         with:
-          java-version: "adopt@1.11.0-11"
+          java-version: 'adopt@1.8'
 
       - name: Prepare testing database
         run: sbt flywayMigrate
+
+      - name: Build and run tests with test coverage
+        continue-on-error: true
+        id: jacocorun
+        run: sbt jacoco
+
+      - name: Check coverage thresholds and add reports in PR comments
+        id: jacoco
+        uses: MoranaApps/jacoco-report@v2
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}'
+          paths: |
+            **/target/**/jacoco/report/jacoco.xml
+          exclude-paths: |
+            database/target/**
+          sensitivity: "detail"
+          comment-mode: 'multi'
+          min-coverage-overall: ${{ env.coverage-overall }}
+          min-coverage-changed-files: ${{ env.coverage-changed-files }}
+          min-coverage-per-changed-file: ${{ env.coverage-per-changed-file }}
+          skip-unchanged: false
+          modules: ${{ env.MODULES }}
+          modules-thresholds: ${{ env.MODULES_THRESHOLDS }}
+
+
+  jacoco-report-server:
+    name: JaCoCo Report Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: "adopt@1.11.0-11"
 
       - name: Build and run tests with test coverage
         continue-on-error: true
