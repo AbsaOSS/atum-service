@@ -1,4 +1,5 @@
-# jacoco-method-filter — Default Rules & HowTo (Scala + Java)
+# jacoco-method-filter — Default Rules & HowTo (Scala)
+# [jmf:1.0.0]
 #
 # This file defines which methods should be annotated as *Generated so JaCoCo ignores them.
 # One rule per line.

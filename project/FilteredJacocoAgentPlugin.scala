@@ -1,3 +1,5 @@
+// JacocoBaseKeysPlugin.scala | last modified in v1.0.0
+
 import JacocoBaseKeysPlugin.autoImport.*
 import sbt.*
 import sbt.Keys.*
@@ -131,7 +133,7 @@ object FilteredJacocoAgentPlugin extends AutoPlugin {
 
     // ---- coordinates
     jacocoVersion := "0.8.12",
-    jmfCoreVersion := "0.1.7",
+    jmfCoreVersion := "1.0.0",
     libraryDependencies ++= Seq(
       // pull the agent with the runtime classifier (this is the actual -javaagent jar)
       ("org.jacoco" % "org.jacoco.agent" % jacocoVersion.value % Test).classifier("runtime"),

@@ -143,5 +143,5 @@ lazy val reader = (projectMatrix in file("reader"))
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
-    .enablePlugins(FilteredJacocoAgentPlugin)
+  .enablePlugins(FilteredJacocoAgentPlugin)
   .dependsOn(model)
