@@ -24,7 +24,7 @@ addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.2")
 addSbtPlugin("io.github.davidmweber" % "flyway-sbt" % "7.4.0")
 
 // To add release plugin
-addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.12")
+addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.11.2")
 
 // Plugins to build the server module as a jar file
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.2.0")

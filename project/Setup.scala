@@ -32,7 +32,7 @@ object Setup {
   //possible supported Scala versions
   val scala211: Version = Version.asSemVer("2.11.12")
   val scala212: Version = Version.asSemVer("2.12.18")
-  val scala213: Version = Version.asSemVer("2.13.11")
+  val scala213: Version = Version.asSemVer("2.13.13")
 
   lazy val commonSettings: Seq[SettingsDefinition] = Seq(
     scalacOptions ++= Setup.commonScalacOptions,
