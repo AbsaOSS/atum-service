@@ -48,6 +48,8 @@ abstract class Reader[F[_]](implicit
     case Left(a) => me.unit(Left(a))
   }
 
+
+
   protected def getQuery[R: Decoder](
     endpointUri: String,
     params: Map[String, String] = Map.empty

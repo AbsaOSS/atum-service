@@ -33,6 +33,9 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
 
   val captureLimit: Int = config.getInt(CheckpointLimitKey)
 
+
+
+
   /**
    *  This method is used to clear all captured data.
    */
