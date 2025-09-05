@@ -129,9 +129,6 @@ object Main extends ZIOAppDefault {
 
   }
 
-
-
-
   override val bootstrap: ZLayer[Any, Config.Error, Unit] =
     Runtime.removeDefaultLoggers >>> SLF4J.slf4j >>> Runtime.setConfigProvider(configProvider)
 

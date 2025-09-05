@@ -25,9 +25,6 @@ object StatusResponse {
   implicit val encoder: io.circe.Encoder[StatusResponse] = deriveEncoder
   implicit val decoder: io.circe.Decoder[StatusResponse] = deriveDecoder
 
-
-
-
   lazy val up: StatusResponse = {
     StatusResponse(
       status = "UP",
