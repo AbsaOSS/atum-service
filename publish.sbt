@@ -15,7 +15,8 @@
  */
 
 ThisBuild / organization := "za.co.absa.atum-service"
-sonatypeProfileName := "za.co.absa"
+ThisBuild / organizationName := "ABSA Group Limited"
+ThisBuild / organizationHomepage := Some(url("https://www.absa.africa"))
 
 publish / skip := true //skipping publishing of the root of the project, publishing only some submodules
 
@@ -77,9 +78,6 @@ ThisBuild / developers := List(
     url = url("https://github.com/salamonpavel")
   )
 )
-
-ThisBuild / organizationName := "ABSA Group Limited"
-ThisBuild / organizationHomepage := Some(url("https://www.absa.africa"))
 
 ThisBuild / description := "Data completeness and accuracy application meant to be used for data processed by Apache Spark"
 ThisBuild / startYear := Some(2021)
