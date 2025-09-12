@@ -1,8 +1,9 @@
 # Atum Service
 
-[![Build](https://github.com/AbsaOSS/spark-commons/actions/workflows/build.yml/badge.svg)](https://github.com/AbsaOSS/spark-commons/actions/workflows/build.yml)
+[![Build](https://github.com/AbsaOSS/atum-service/actions/workflows/build.yml/badge.svg)](https://github.com/AbsaOSS/atum-service/actions/workflows/build.yml)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+![Java 11](https://img.shields.io/badge/Java_11-ED8B00?style=flat&logo=openjdk&logoColor=black)
 
 | Atum Server                                                                                                                                                                                                         | Atum Agent                                                                                                                                                                                                        | Atum Model | Atum Reader                                                                                                                                                                                                  |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
