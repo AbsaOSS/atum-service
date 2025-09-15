@@ -18,6 +18,10 @@ Steps to reproduce the behavior OR commands run:
 ## Expected behavior
 A clear and concise description of what you expected to happen.
 
+## Business Value
+The business value of the requested bugfix. 
+You can also refer to the reporting team to confirm that the issue has been fixed.
+
 ## Screenshots
 If applicable, add screenshots to help explain your problem.
 

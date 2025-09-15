@@ -16,8 +16,10 @@ Feel free to add information about why it's needed and what assumptions you have
 2.
 3.
 
-## Desired Outcome
+## Business Value
+The business value of the requested investigation.
 
+## Desired Outcome
 The list of desired outcomes of this spike ticket.
 
 ### Tasks
