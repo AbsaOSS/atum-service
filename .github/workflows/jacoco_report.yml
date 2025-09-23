@@ -55,9 +55,6 @@ jobs:
         with:
           java-version: 'adopt@1.8'
 
-      - name: Prepare testing database
-        run: sbt flywayMigrate
-
       - name: Build and run tests with test coverage
         continue-on-error: true
         id: jacocorun
