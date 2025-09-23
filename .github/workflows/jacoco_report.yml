@@ -44,20 +44,6 @@ jobs:
     name: JaCoCo Report on Agent, Reader and Model
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: atum_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -75,7 +61,7 @@ jobs:
       - name: Build and run tests with test coverage
         continue-on-error: true
         id: jacocorun
-        run: sbt jacoco
+        run: sbt "project agent" jacoco "project reader" jacoco "project model" jacoco
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
