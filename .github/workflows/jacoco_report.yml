@@ -34,12 +34,53 @@ env:
     atum-reader: reader
     atum-server: server
   MODULES_THRESHOLDS: |
-    atum-model: 56*80*
-    atum-server: 66*80*
+    atum-reader: 73*80*
+    atum-agent: 67*80*
+    atum-model: 35*80*
+    atum-server: 71*80*
 
 jobs:
-  jacoco-report:
-    name: JaCoCo Report
+  jacoco-report-agent-reader-and-model:
+    name: JaCoCo Report on Agent, Reader and Model
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: 'adopt@1.8'
+
+      - name: Build and run tests with test coverage
+        continue-on-error: true
+        id: jacocorun
+        run: sbt "project agent" jacoco "project reader" jacoco "project model" jacoco
+
+      - name: Check coverage thresholds and add reports in PR comments
+        id: jacoco
+        uses: MoranaApps/jacoco-report@v2
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}'
+          paths: |
+            **/target/**/jacoco/report/jacoco.xml
+          exclude-paths: |
+            database/target/**
+          sensitivity: "detail"
+          comment-mode: 'multi'
+          min-coverage-overall: ${{ env.coverage-overall }}
+          min-coverage-changed-files: ${{ env.coverage-changed-files }}
+          min-coverage-per-changed-file: ${{ env.coverage-per-changed-file }}
+          skip-unchanged: false
+          modules: ${{ env.MODULES }}
+          modules-thresholds: ${{ env.MODULES_THRESHOLDS }}
+
+
+  jacoco-report-server:
+    name: JaCoCo Report on Server
     runs-on: ubuntu-latest
 
     services:
@@ -73,11 +114,7 @@ jobs:
       - name: Build and run tests with test coverage
         continue-on-error: true
         id: jacocorun
-        run: sbt jacoco
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+        run: sbt "project server" jacoco
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
@@ -85,7 +122,7 @@ jobs:
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
-            **/target/*${{ env.scalaShort }}*/jacoco/report/jacoco.xml
+            **/target/**/jacoco/report/jacoco.xml
           exclude-paths: |
             database/target/**
           sensitivity: "detail"

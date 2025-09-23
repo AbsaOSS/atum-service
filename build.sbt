@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import sbt.Keys.name
 import sbt.*
+import sbt.Keys.*
 import Dependencies.*
 import Dependencies.Versions.spark3
 import VersionAxes.*
@@ -70,6 +70,7 @@ lazy val server = {
     .enablePlugins(AssemblyPlugin)
     .enablePlugins(AutomateHeaderPlugin)
     .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.serverDependencies)
+    .enablePlugins(FilteredJacocoAgentPlugin)
     .dependsOn(model)
 
   if (limitedProject) {
@@ -91,6 +92,7 @@ lazy val agent = (projectMatrix in file("agent"))
     ): _*
   )
   .addSparkCrossBuild(SparkVersionAxis(spark3), Setup.clientSupportedScalaVersions, Dependencies.agentDependencies)
+  .enablePlugins(FilteredJacocoAgentPlugin)
   .dependsOn(model)
 
 /**
@@ -105,6 +107,7 @@ lazy val model = (projectMatrix in file("model"))
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.modelDependencies)
+  .enablePlugins(FilteredJacocoAgentPlugin)
 
 /**
  * Module `database` is the source of database structures of the service
@@ -140,4 +143,5 @@ lazy val reader = (projectMatrix in file("reader"))
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
+  .enablePlugins(FilteredJacocoAgentPlugin)
   .dependsOn(model)

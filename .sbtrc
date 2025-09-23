@@ -33,3 +33,8 @@ alias testAll=; testOnly *
 
 # Run agent-server compatibility tests
 alias testCompatibility=; testOnly *CompatibilityTests
+
+# Jacoco Aliases
+alias jacoco=; jacocoOn; +clean; +test; jacocoReportAll; jacocoOff
+alias jacocoOff=; set every jacocoPluginEnabled := false
+alias jacocoOn=; set every jacocoPluginEnabled := true

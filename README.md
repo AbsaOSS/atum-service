@@ -233,14 +233,21 @@ represents all currently supported measurement types (aka measures):
 
 
 ## How to generate Code coverage report
+
+- Use java version 11.
+
 ```sbt
 sbt jacoco
 ```
 
-Code coverage wil be generated on path:
+The HTML and XML reports of coverage will be generated on the path:
+
 ```
-{project-root}/{module}/target/jvm-{scala_version}/jacoco/report/html
+{project-root}/{module}/target/**/jacoco/report/index.html
+{project-root}/{module}/target/**/jacoco/report/jacoco.xml
 ```
+
+> `**` - depends on the module setup
 
 ## How to Run in IntelliJ
 
