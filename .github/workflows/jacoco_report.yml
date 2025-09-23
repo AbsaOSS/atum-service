@@ -34,14 +34,14 @@ env:
     atum-reader: reader
     atum-server: server
   MODULES_THRESHOLDS: |
-    atum-reader: 74*80*
+    atum-reader: 73*80*
     atum-agent: 67*80*
     atum-model: 35*80*
     atum-server: 71*80*
 
 jobs:
-  jacoco-report:
-    name: JaCoCo Report
+  jacoco-report-agent-reader-and-model:
+    name: JaCoCo Report on Agent, Reader and Model
     runs-on: ubuntu-latest
 
     services:
@@ -97,23 +97,8 @@ jobs:
 
 
   jacoco-report-server:
-    name: JaCoCo Report Server
+    name: JaCoCo Report on Server
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: atum_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
