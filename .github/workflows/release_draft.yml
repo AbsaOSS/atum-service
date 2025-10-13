@@ -84,8 +84,8 @@ jobs:
           warnings: true
           skip-release-notes-labels: "no RN"
           print-empty-chapters: false
-          row-format-issue: '_{title}_ {developers} in #{number}'
-          row-format-pr: '_{title}_ {developers} in #{number}'
+          row-format-issue: '_{title}_ {developers} in {number}'
+          row-format-pr: '_{title}_ {developers} in {number}'
           row-format-link-pr: true
           hierarchy: true
 
