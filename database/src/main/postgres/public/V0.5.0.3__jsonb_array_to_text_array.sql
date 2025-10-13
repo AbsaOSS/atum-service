@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+DROP FUNCTION jsonb_array_to_text_array(jsonb);
+
 CREATE OR REPLACE FUNCTION public.jsonb_array_to_text_array(
     IN i_jsonb_array JSONB
 ) RETURNS  text[]
