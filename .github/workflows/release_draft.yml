@@ -60,7 +60,7 @@ jobs:
 
       - name: Generate release notes
         id: generate_release_notes
-        uses: AbsaOSS/generate-release-notes@feature/55-Chapter-line-formatting-authors
+        uses: AbsaOSS/generate-release-notes@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -82,12 +82,12 @@ jobs:
           duplicity-scope: 'service'
           duplicity-icon: '🔁'
           warnings: true
-          skip-release-notes-label: "no RN"
+          skip-release-notes-labels: "no RN"
           print-empty-chapters: false
-          chapters-to-pr-without-issue: true
-          row-format-issue: '_{title}_ {developed-by} {co-authored-by} in #{number}'
-          row-format-pr: '_{title}_ {developed-by} {co-authored-by} in #{number}'
+          row-format-issue: '_{title}_ {developers} in {number}'
+          row-format-pr: '_{title}_ {developers} in {number}'
           row-format-link-pr: true
+          hierarchy: true
 
       - name: Create and Push Tag
         uses: actions/github-script@v7
