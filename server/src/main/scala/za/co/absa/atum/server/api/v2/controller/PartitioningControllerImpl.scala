@@ -36,7 +36,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToSingleSuccessResponse(
       serviceCall[AdditionalDataDTO, AdditionalDataDTO](
         partitioningService.getPartitioningAdditionalData(partitioningId)
-      )
+      ).map(_.data)
     )
   }
 
@@ -70,7 +70,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToSingleSuccessResponse(
       serviceCall[AdditionalDataDTO, AdditionalDataDTO](
         partitioningService.patchAdditionalData(partitioningId, additionalDataPatchDTO)
-      )
+      ).map(_.data)
     )
   }
 
