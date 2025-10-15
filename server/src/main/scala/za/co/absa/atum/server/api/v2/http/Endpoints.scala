@@ -60,23 +60,23 @@ object Endpoints extends BaseEndpoints {
   }
 
   val getPartitioningAdditionalDataEndpoint
-    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
+    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+      .out(jsonBody[SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   val patchPartitioningAdditionalDataEndpoint
     : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
-      AdditionalDataDTO
+      Map[String,Option[AdditionalDataItemDTO]]
     ], Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .in(jsonBody[AdditionalDataPatchDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+      .out(jsonBody[SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
@@ -204,14 +204,14 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint(postPartitioningEndpoint, PartitioningController.postPartitioning),
-    createServerEndpoint(
+    createServerEndpoint[Long, ErrorResponse, SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]](
       getPartitioningAdditionalDataEndpoint,
       PartitioningController.getPartitioningAdditionalData
     ),
     createServerEndpoint[
       (Long, AdditionalDataPatchDTO),
       ErrorResponse,
-      SingleSuccessResponse[AdditionalDataDTO]
+      SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]
     ](
       patchPartitioningAdditionalDataEndpoint,
       { case (partitioningId: Long, additionalDataPatchDTO: AdditionalDataPatchDTO) =>
