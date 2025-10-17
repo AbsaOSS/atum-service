@@ -100,7 +100,6 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  /** 1 **/
   val getPartitioningCheckpointsEndpoint
     : PublicEndpoint[(Long, Int, Long, Option[String]), ErrorResponse, PaginatedResponse[
       CheckpointV2DTO
@@ -116,7 +115,6 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  /** 2 **/
   val getFlowCheckpointsEndpoint
     : PublicEndpoint[(Long, Int, Long, Option[String]), ErrorResponse, PaginatedResponse[
       CheckpointWithPartitioningDTO
@@ -149,7 +147,6 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  /** 3 **/
   val getFlowPartitioningsEndpoint
     : PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
       PartitioningWithIdDTO
@@ -183,7 +180,6 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  /** 4 **/
   val getPartitioningAncestorsEndpoint
   : PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
     PartitioningWithIdDTO
