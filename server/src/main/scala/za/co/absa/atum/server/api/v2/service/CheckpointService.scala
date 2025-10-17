@@ -33,8 +33,8 @@ trait CheckpointService {
 
   def getPartitioningCheckpoints(
     partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long],
+    limit: Int,
+    offset: Long,
     checkpointName: Option[String]
   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]]
 

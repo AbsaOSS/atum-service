@@ -100,28 +100,31 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  /** 1 **/
   val getPartitioningCheckpointsEndpoint
-    : PublicEndpoint[(Long, Option[Int], Option[Long], Option[String]), ErrorResponse, PaginatedResponse[
+    : PublicEndpoint[(Long, Int, Long, Option[String]), ErrorResponse, PaginatedResponse[
       CheckpointV2DTO
     ], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
-      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
-      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
+      // Tapir's .default works with non-optional types only
+      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
+      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
       .in(query[Option[String]]("checkpoint-name"))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  /** 2 **/
   val getFlowCheckpointsEndpoint
-    : PublicEndpoint[(Long, Option[Int], Option[Long], Option[String]), ErrorResponse, PaginatedResponse[
+    : PublicEndpoint[(Long, Int, Long, Option[String]), ErrorResponse, PaginatedResponse[
       CheckpointWithPartitioningDTO
     ], Any] = {
     apiV2.get
       .in(V2Paths.Flows / path[Long]("flowId") / V2Paths.Checkpoints)
-      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
-      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
+      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
+      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
       .in(query[Option[String]]("checkpoint-name"))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointWithPartitioningDTO]])
@@ -146,14 +149,15 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  /** 3 **/
   val getFlowPartitioningsEndpoint
-    : PublicEndpoint[(Long, Option[Int], Option[Long]), ErrorResponse, PaginatedResponse[
+    : PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
       PartitioningWithIdDTO
     ], Any] = {
     apiV2.get
       .in(V2Paths.Flows / path[Long]("flowId") / V2Paths.Partitionings)
-      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
-      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
+      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
+      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
@@ -179,14 +183,15 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  /** 4 **/
   val getPartitioningAncestorsEndpoint
-  : PublicEndpoint[(Long, Option[Int], Option[Long]), ErrorResponse, PaginatedResponse[
+  : PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
     PartitioningWithIdDTO
   ], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
-      .in(query[Option[Int]]("limit").default(Some(10)).validateOption(Validator.inRange(1, 1000)))
-      .in(query[Option[Long]]("offset").default(Some(0L)).validateOption(Validator.min(0L)))
+      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
+      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
@@ -230,22 +235,22 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint[
-      (Long, Option[Int], Option[Long], Option[String]),
+      (Long, Int, Long, Option[String]),
       ErrorResponse,
       PaginatedResponse[CheckpointV2DTO]
     ](
       getPartitioningCheckpointsEndpoint,
-      { case (partitioningId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
+      { case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String]) =>
         CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName)
       }
     ),
     createServerEndpoint[
-      (Long, Option[Int], Option[Long], Option[String]),
+      (Long, Int, Long, Option[String]),
       ErrorResponse,
       PaginatedResponse[CheckpointWithPartitioningDTO]
     ](
       getFlowCheckpointsEndpoint,
-      { case (flowId: Long, limit: Option[Int], offset: Option[Long], checkpointName: Option[String]) =>
+      { case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String]) =>
         FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
       }
     ),
@@ -253,12 +258,12 @@ object Endpoints extends BaseEndpoints {
     createServerEndpoint(getPartitioningMeasuresEndpoint, PartitioningController.getPartitioningMeasures),
     createServerEndpoint(getPartitioningMainFlowEndpoint, PartitioningController.getPartitioningMainFlow),
     createServerEndpoint[
-      (Long, Option[Int], Option[Long]),
+      (Long, Int, Long),
       ErrorResponse,
       PaginatedResponse[PartitioningWithIdDTO]
     ](
       getFlowPartitioningsEndpoint,
-      { case (flowId: Long, limit: Option[Int], offset: Option[Long]) =>
+      { case (flowId: Long, limit: Int, offset: Long) =>
         PartitioningController.getFlowPartitionings(flowId, limit, offset)
       }
     ),
@@ -273,12 +278,12 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint[
-      (Long, Option[Int], Option[Long]),
+      (Long, Int, Long),
       ErrorResponse,
       PaginatedResponse[PartitioningWithIdDTO]
     ](
       getPartitioningAncestorsEndpoint,
-      { case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
+      { case (partitioningId: Long, limit: Int, offset: Long) =>
         PartitioningController.getPartitioningAncestors(partitioningId, limit, offset)
       }
     )

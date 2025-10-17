@@ -131,8 +131,8 @@ class PartitioningRepositoryImpl(
   }
   override def getFlowPartitionings(
     flowId: Long,
-    limit: Option[Int],
-    offset: Option[Long]
+    limit: Int,
+    offset: Long
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getFlowPartitioningsFn(GetFlowPartitioningsArgs(flowId, limit, offset)),
@@ -173,8 +173,8 @@ class PartitioningRepositoryImpl(
 
   override def getPartitioningAncestors(
      partitioningId: Long,
-     limit: Option[Int],
-     offset: Option[Long]
+     limit: Int,
+     offset: Long
    ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAncestorsFn(GetPartitioningAncestorsArgs(partitioningId, limit, offset)),

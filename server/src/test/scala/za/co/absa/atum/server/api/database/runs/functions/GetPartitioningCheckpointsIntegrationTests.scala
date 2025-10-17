@@ -33,7 +33,7 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
       test("Returns expected sequence of Checkpoints with non-existing partitioning id") {
         for {
           getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
-          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, None, None, None))
+          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, None))
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
