@@ -49,7 +49,7 @@ class GetFlowPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Tas
 }
 
 object GetFlowPartitionings {
-  case class GetFlowPartitioningsArgs(flowId: Long, limit: Option[Int], offset: Option[Long])
+  case class GetFlowPartitioningsArgs(flowId: Long, limit: Int, offset: Long)
   case class GetFlowPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
     extends PartitioningResult(id, partitioningJson, author)
 

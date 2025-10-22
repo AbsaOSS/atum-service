@@ -34,7 +34,7 @@ object GetPartitioningAncestorsIntegrationTests extends ConfigProviderTest {
         val partitioningID: Long = 1111L
         for {
           getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
-          result <- getPartitioningAncestors(GetPartitioningAncestorsArgs(partitioningID, None, None))
+          result <- getPartitioningAncestors(GetPartitioningAncestorsArgs(partitioningID, 10, 0L))
 
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }

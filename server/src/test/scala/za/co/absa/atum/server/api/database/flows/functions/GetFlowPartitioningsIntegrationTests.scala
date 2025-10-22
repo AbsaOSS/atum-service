@@ -33,7 +33,7 @@ object GetFlowPartitioningsIntegrationTests extends ConfigProviderTest {
       test("Returns expected DataNotFoundException when flow not found") {
         for {
           getFlowPartitionings <- ZIO.service[GetFlowPartitionings]
-          result <- getFlowPartitionings(GetFlowPartitioningsArgs(0L, None, None))
+          result <- getFlowPartitionings(GetFlowPartitioningsArgs(0L, 1, 1L))
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Flow not found"))))
       }
     )

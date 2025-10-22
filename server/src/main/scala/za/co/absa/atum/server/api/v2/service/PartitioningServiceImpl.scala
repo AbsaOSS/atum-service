@@ -73,8 +73,8 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
 
   override def getFlowPartitionings(
     flowId: Long,
-    limit: Option[Int],
-    offset: Option[Long]
+    limit: Int,
+    offset: Long
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
     repositoryCall(
       partitioningRepository.getFlowPartitionings(flowId, limit, offset),
@@ -110,8 +110,8 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
 
   override def getPartitioningAncestors(
      partitioningId: Long,
-     limit: Option[Int],
-     offset: Option[Long]
+     limit: Int,
+     offset: Long
    ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
     repositoryCall(
       partitioningRepository.getPartitioningAncestors(partitioningId, limit, offset),

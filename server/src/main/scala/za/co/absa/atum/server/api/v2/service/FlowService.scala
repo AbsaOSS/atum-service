@@ -27,8 +27,8 @@ trait FlowService {
 
   def getFlowCheckpoints(
     flowId: Long,
-    limit: Option[Int],
-    offset: Option[Long],
+    limit: Int,
+    offset: Long,
     checkpointName: Option[String]
   ): IO[ServiceError, PaginatedResult[CheckpointWithPartitioningDTO]]
 
