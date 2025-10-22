@@ -47,7 +47,7 @@ class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine
 }
 
 object GetPartitioningAncestors {
-  case class GetPartitioningAncestorsArgs(partitioningId: Long, limit: Option[Int], offset: Option[Long])
+  case class GetPartitioningAncestorsArgs(partitioningId: Long, limit: Int, offset: Long)
   case class GetPartitioningAncestorsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
     extends PartitioningResult(id, partitioningJson, author)
 

@@ -36,19 +36,19 @@ object GetFlowPartitioningsEndpointUnitTests extends ZIOSpecDefault with TestDat
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.getFlowPartitionings(1L, Some(1), Some(0)))
+  when(partitioningControllerMock.getFlowPartitionings(1L,  1, 0L))
     .thenReturn(
       ZIO.succeed(
         PaginatedResponse(Seq.empty, Pagination(1, 0, hasMore = true), uuid1)
       )
     )
-  when(partitioningControllerMock.getFlowPartitionings(2L, Some(1), Some(0)))
+  when(partitioningControllerMock.getFlowPartitionings(2L,  1, 0L))
     .thenReturn(
       ZIO.fail(
         NotFoundErrorResponse("flow not found")
       )
     )
-  when(partitioningControllerMock.getFlowPartitionings(3L, None, None))
+  when(partitioningControllerMock.getFlowPartitionings(3L, 10, 0L))
     .thenReturn(
       ZIO.fail(
         InternalServerErrorResponse("internal server error")
@@ -58,7 +58,7 @@ object GetFlowPartitioningsEndpointUnitTests extends ZIOSpecDefault with TestDat
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getFlowPartitioningsServerEndpoint =
-    Endpoints.getFlowPartitioningsEndpoint.zServerLogic({ case (flowId: Long, limit: Option[Int], offset: Option[Long]) =>
+    Endpoints.getFlowPartitioningsEndpoint.zServerLogic({ case (flowId: Long, limit: Int, offset: Long) =>
       PartitioningController.getFlowPartitionings(flowId, limit, offset)
     })
 

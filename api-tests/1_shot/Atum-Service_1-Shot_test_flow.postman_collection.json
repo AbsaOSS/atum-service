@@ -1449,7 +1449,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"parentPartitioningId\": \"{{partitioning_id}}\",\n  \"author\": \"{{ad_author}}\",\n  \"copyMeasurements\": true,\n  \"copyAdditionalData\": true\n}",
+							"raw": "{\n  \"parentPartitioningId\": \"{{partitioning_id}}\",\n  \"author\": \"{{ad_author}}\",\n  \"copyMeasurements\": false,\n  \"copyAdditionalData\": true\n}",
 							"options": {
 								"raw": {
 									"language": "json"

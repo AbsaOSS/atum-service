@@ -30,8 +30,8 @@ trait CheckpointRepository {
   def getCheckpoint(partitioningId: Long, checkpointId: UUID): IO[DatabaseError, CheckpointV2DTO]
   def getPartitioningCheckpoints(
     partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long],
+    limit: Int,
+    offset: Long,
     checkpointName: Option[String]
   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]]
 }
