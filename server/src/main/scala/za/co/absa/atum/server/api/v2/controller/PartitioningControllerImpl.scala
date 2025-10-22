@@ -86,12 +86,12 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
   override def getFlowPartitionings(
     flowId: Long,
-    limit: Option[Int],
-    offset: Option[Long]
+    limit: Int,
+    offset: Long
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
     mapToPaginatedResponse(
-      limit.get,
-      offset.get,
+      limit,
+      offset,
       serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
         partitioningService.getFlowPartitionings(flowId, limit, offset)
       )
@@ -136,12 +136,12 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
   override def getPartitioningAncestors(
     partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long]
+    limit: Int,
+    offset: Long
    ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
     mapToPaginatedResponse(
-      limit.get,
-      offset.get,
+      limit,
+      offset,
       serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
         partitioningService.getPartitioningAncestors(partitioningId, limit, offset)
       )

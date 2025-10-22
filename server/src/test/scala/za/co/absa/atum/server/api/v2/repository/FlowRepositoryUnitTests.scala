@@ -34,7 +34,7 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getFlowCheckpointsV2Mock = mock(classOf[GetFlowCheckpoints])
 
-  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(1, Some(1), Some(1), None)))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(1, 1, 1L, None)))
     .thenReturn(
       ZIO.right(
         Seq(
@@ -42,9 +42,9 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
         )
       )
     )
-  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(2, Some(1), Some(1), None)))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(2, 1, 1L, None)))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "success"), None))))
-  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(3, None, None, None)))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(3, 1, 1L, None)))
     .thenReturn(ZIO.fail(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
 
   private val getFlowCheckpointsV2MockLayer = ZLayer.succeed(getFlowCheckpointsV2Mock)
@@ -55,16 +55,16 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("GetFlowCheckpointsV2Suite")(
         test("Returns expected Right with CheckpointV2DTO") {
           for {
-            result <- FlowRepository.getFlowCheckpoints(1, Some(1), Some(1), None)
+            result <- FlowRepository.getFlowCheckpoints(1, 1, 1L, None)
           } yield assertTrue(result == ResultHasMore(Seq(checkpointWithPartitioningDTO1)))
         },
         test("Returns expected Right with CheckpointV2DTO") {
           for {
-            result <- FlowRepository.getFlowCheckpoints(2, Some(1), Some(1), None)
+            result <- FlowRepository.getFlowCheckpoints(2, 1, 1L, None)
           } yield assertTrue(result == ResultNoMore(Seq.empty[CheckpointWithPartitioningDTO]))
         },
         test("Returns expected DatabaseError") {
-          assertZIO(FlowRepository.getFlowCheckpoints(3, None, None, None).exit)(
+          assertZIO(FlowRepository.getFlowCheckpoints(3, 1, 1L, None).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         }

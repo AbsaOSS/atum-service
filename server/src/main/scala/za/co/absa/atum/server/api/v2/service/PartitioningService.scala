@@ -48,8 +48,8 @@ trait PartitioningService {
 
   def getFlowPartitionings(
     flowId: Long,
-    limit: Option[Int],
-    offset: Option[Long]
+    limit: Int,
+    offset: Long
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
 
   def getPartitioningMainFlow(partitioningId: Long): IO[ServiceError, FlowDTO]
@@ -61,7 +61,7 @@ trait PartitioningService {
 
   def getPartitioningAncestors(
     partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long]
+    limit: Int,
+    offset: Long
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
 }

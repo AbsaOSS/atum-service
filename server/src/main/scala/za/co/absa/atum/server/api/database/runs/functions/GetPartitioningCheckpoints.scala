@@ -62,8 +62,8 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
 object GetPartitioningCheckpoints {
   case class GetPartitioningCheckpointsArgs(
     partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long],
+    limit: Int,
+    offset: Long,
     checkpointName: Option[String]
   )
 
