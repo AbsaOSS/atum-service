@@ -37,19 +37,19 @@ object GetPartitioningAncestorsEndpointUnitTests extends ZIOSpecDefault with Tes
 
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
-  when(partitioningControllerMock.getPartitioningAncestors(1111L, Some(1), Some(0)))
+  when(partitioningControllerMock.getPartitioningAncestors(1111L, 1, 0L))
     .thenReturn(
       ZIO.succeed(
         PaginatedResponse(Seq.empty, Pagination(1, 0, hasMore = true), uuid1)
       )
     )
-  when(partitioningControllerMock.getPartitioningAncestors(8888L, Some(1), Some(0)))
+  when(partitioningControllerMock.getPartitioningAncestors(8888L, 1, 0L))
     .thenReturn(
       ZIO.fail(
         NotFoundErrorResponse("Partitioning not found")
       )
     )
-  when(partitioningControllerMock.getPartitioningAncestors(9999L, Some(1), Some(0)))
+  when(partitioningControllerMock.getPartitioningAncestors(9999L, 1, 0L))
     .thenReturn(
       ZIO.fail(
         InternalServerErrorResponse("internal server error")
@@ -59,8 +59,8 @@ object GetPartitioningAncestorsEndpointUnitTests extends ZIOSpecDefault with Tes
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val getPartitioningAncestorsServerEndpoint =
-    getPartitioningAncestorsEndpoint.zServerLogic({ case (partitioningId: Long, limit: Option[Int], offset: Option[Long]) =>
-      PartitioningController.getPartitioningAncestors(partitioningId, limit: Option[Int], offset: Option[Long])
+    getPartitioningAncestorsEndpoint.zServerLogic({ case (partitioningId: Long, limit: Int, offset: Long) =>
+      PartitioningController.getPartitioningAncestors(partitioningId, limit: Int, offset: Long)
     })
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {

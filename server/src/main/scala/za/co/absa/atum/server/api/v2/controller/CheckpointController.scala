@@ -39,8 +39,8 @@ trait CheckpointController {
 
   def getPartitioningCheckpoints(
     partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long],
+    limit: Int,
+    offset: Long,
     checkpointName: Option[String] = None,
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]]
 

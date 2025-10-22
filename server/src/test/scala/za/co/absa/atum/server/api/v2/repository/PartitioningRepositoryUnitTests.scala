@@ -137,13 +137,13 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getFlowPartitioningsMock = mock(classOf[GetFlowPartitionings])
 
-  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(1L, Some(10), Some(0)))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(1L, 10, 0L))
     ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult1)))))
-  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(2L, Some(10), Some(0)))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(2L, 10, 0L))
   ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult2)))))
-  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(0L, None, None)))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(0L, 10, 0L)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Flow not found"))))
-  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(3L, Some(10), Some(0)))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(3L, 10, 0L))
     ).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getFlowPartitioningsMockLayer = ZLayer.succeed(getFlowPartitioningsMock)
@@ -178,13 +178,13 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   // Get Ancestors By Id Mocks
   private val getPartitioningAncestorsMock = mock(classOf[GetPartitioningAncestors])
 
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1L, Some(10), Some(0)))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1L, 10, 0L))
   ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult1)))))
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1111L, Some(10), Some(0)))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1111L, 10, 0L))
   ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult2)))))
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(9999L, Some(10), Some(0)))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(9999L, 10, 0L))
   ).thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(8888L, Some(10), Some(0)))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(8888L, 10, 0L))
   ).thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getPartitioningAncestorsMockLayer = ZLayer.succeed(getPartitioningAncestorsMock)
@@ -337,21 +337,21 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("GetFlowPartitioningsSuite")(
         test("Returns expected ResultNoMore[PartitioningWithIdDTO]") {
           for {
-            result <- PartitioningRepository.getFlowPartitionings(1L, Some(10), Some(0))
+            result <- PartitioningRepository.getFlowPartitionings(1L, 10, 0L)
           } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
         },
         test("Returns expected ResultHasMore[PartitioningWithIdDTO]") {
           for {
-            result <- PartitioningRepository.getFlowPartitionings(2L, Some(10), Some(0))
+            result <- PartitioningRepository.getFlowPartitionings(2L, 10, 0L)
           } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO2)))
         },
         test("Returns expected NotFoundDatabaseError") {
-          assertZIO(PartitioningRepository.getFlowPartitionings(0L, None, None).exit)(
+          assertZIO(PartitioningRepository.getFlowPartitionings(0L, 10, 0L).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         },
         test("Returns expected GeneralDatabaseError") {
-          assertZIO(PartitioningRepository.getFlowPartitionings(3L, Some(10), Some(0)).exit)(
+          assertZIO(PartitioningRepository.getFlowPartitionings(3L, 10, 0L).exit)(
             failsWithA[GeneralDatabaseError]
           )
         }
@@ -397,21 +397,21 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("GetPartitioningAncestorsSuite")(
         test("Returns expected ResultNoMore[PartitioningWithIdDTO]") {
           for {
-            result <- PartitioningRepository.getPartitioningAncestors(1L, Some(10), Some(0))
+            result <- PartitioningRepository.getPartitioningAncestors(1L, 10, 0L)
           } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
         },
         test("Returns expected ResultHasMore[PartitioningWithIdDTO]") {
           for {
-            result <- PartitioningRepository.getPartitioningAncestors(1111L, Some(10), Some(0))
+            result <- PartitioningRepository.getPartitioningAncestors(1111L, 10, 0L)
           } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO2)))
         },
         test("Returns expected NotFoundDatabaseError") {
-          assertZIO(PartitioningRepository.getPartitioningAncestors(9999L, Some(10), Some(0)).exit)(
+          assertZIO(PartitioningRepository.getPartitioningAncestors(9999L, 10, 0L).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         },
         test("Returns expected GeneralDatabaseError") {
-          assertZIO(PartitioningRepository.getPartitioningAncestors(8888L, Some(10), Some(0)).exit)(
+          assertZIO(PartitioningRepository.getPartitioningAncestors(8888L, 10, 0L).exit)(
             failsWithA[GeneralDatabaseError]
           )
         }
