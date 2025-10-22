@@ -56,11 +56,11 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getCheckpointMockV2.apply(GetPartitioningCheckpointV2Args(partitioningId, checkpointV2DTO3.id)))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
-  when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(0L, None, None, None)))
+  when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(0L, 10, 0L, None)))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "ok"), Some(checkpointItemPaginatedFromDB)))))
-  when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(1L, None, None, None)))
+  when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(1L, 10, 0L, None)))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "ok"), None))))
-  when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(3L, None, None, None)))
+  when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(3L, 10, 0L, None)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
 
   private val getCheckpointV2MockLayer = ZLayer.succeed(getCheckpointMockV2)
@@ -112,20 +112,20 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("GetPartitioningCheckpointsSuite")(
         test("Returns expected Seq") {
           for {
-            result <- CheckpointRepository.getPartitioningCheckpoints(0L, None, None, None)
+            result <- CheckpointRepository.getPartitioningCheckpoints(0L, 10, 0L, None)
           } yield assertTrue(
             result.isInstanceOf[ResultHasMore[CheckpointV2DTO]] && result.data == Seq(checkpointV2DTO2)
           )
         },
         test("Returns expected Seq.empty") {
           for {
-            result <- CheckpointRepository.getPartitioningCheckpoints(1L, None, None, None)
+            result <- CheckpointRepository.getPartitioningCheckpoints(1L, 10, 0L, None)
           } yield assertTrue(
             result.isInstanceOf[ResultNoMore[CheckpointV2DTO]] && result.data == Seq.empty[CheckpointV2DTO]
           )
         },
         test("Returns expected NotFoundDatabaseError") {
-          assertZIO(CheckpointRepository.getPartitioningCheckpoints(3L, None, None, None).exit)(
+          assertZIO(CheckpointRepository.getPartitioningCheckpoints(3L, 10, 0L, None).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         }

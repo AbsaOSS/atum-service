@@ -50,8 +50,8 @@ trait PartitioningController {
 
   def getFlowPartitionings(
     flowId: Long,
-    limit: Option[Int],
-    offset: Option[Long]
+    limit: Int,
+    offset: Long
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
 
   def getPartitioningMainFlow(
@@ -66,8 +66,8 @@ trait PartitioningController {
 
   def getPartitioningAncestors(
     partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long]
+    limit: Int,
+    offset: Long
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
 
 }

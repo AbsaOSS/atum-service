@@ -65,8 +65,8 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
 object GetFlowCheckpoints {
   case class GetFlowCheckpointsArgs(
     flowId: Long,
-    limit: Option[Int],
-    offset: Option[Long],
+    limit: Int,
+    offset: Long,
     checkpointName: Option[String]
   )
 

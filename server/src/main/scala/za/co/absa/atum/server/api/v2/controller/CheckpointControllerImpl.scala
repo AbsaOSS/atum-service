@@ -60,13 +60,13 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
 
   override def getPartitioningCheckpoints(
     partitioningId: Long,
-    limit: Option[Int],
-    offset: Option[Long],
+    limit: Int,
+    offset: Long,
     checkpointName: Option[String] = None
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
     mapToPaginatedResponse(
-      limit.get,
-      offset.get,
+      limit,
+      offset,
       serviceCall[PaginatedResult[CheckpointV2DTO], PaginatedResult[CheckpointV2DTO]](
         checkpointService.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName)
       )
