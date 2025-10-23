@@ -19,8 +19,7 @@ import za.co.absa.commons.version.{Component, Version}
 object Dependencies {
 
   object Versions {
-    val spark2 = "2.4.7"
-    val spark3 = "3.3.2"
+    val spark3 = "3.5.5"
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
@@ -36,7 +35,7 @@ object Dependencies {
 
     val springfox = "3.0.0"
 
-    val sparkCommons = "0.6.1"
+    val sparkCommons = "0.6.3"
 
     val sttpClient = "3.5.2" //last supported version for Java 8
     val sttpCirceJson = "3.9.7"
