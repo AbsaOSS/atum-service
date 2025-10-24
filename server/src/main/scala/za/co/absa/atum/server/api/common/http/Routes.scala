@@ -65,7 +65,9 @@ object Routes extends ServerOptions with ServerUtils {
       api.v2.http.Endpoints.getFlowPartitioningsEndpoint,
       api.v2.http.Endpoints.getFlowCheckpointsEndpoint,
       api.v2.http.Endpoints.getPartitioningAncestorsEndpoint,
-      api.common.http.Endpoints.healthEndpoint
+      api.common.http.Endpoints.healthEndpoint,
+      api.common.http.Endpoints.readinessEndpoint,
+      api.common.http.Endpoints.livenessEndpoint
     )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
       .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, "Atum API", "1.0"))
