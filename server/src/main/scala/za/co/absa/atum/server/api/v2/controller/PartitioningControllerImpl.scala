@@ -32,10 +32,11 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
   override def getPartitioningAdditionalData(
     partitioningId: Long
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
+  ): IO[ErrorResponse, SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]] = {
     mapToSingleSuccessResponse(
-      serviceCall[AdditionalDataDTO, AdditionalDataDTO](
-        partitioningService.getPartitioningAdditionalData(partitioningId)
+      serviceCall[AdditionalDataDTO, Map[String,Option[AdditionalDataItemDTO]]](
+        partitioningService.getPartitioningAdditionalData(partitioningId),
+        _.data
       )
     )
   }
@@ -66,10 +67,11 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   override def patchPartitioningAdditionalData(
     partitioningId: Long,
     additionalDataPatchDTO: AdditionalDataPatchDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO]] = {
+  ): IO[ErrorResponse, SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]] = {
     mapToSingleSuccessResponse(
-      serviceCall[AdditionalDataDTO, AdditionalDataDTO](
-        partitioningService.patchAdditionalData(partitioningId, additionalDataPatchDTO)
+      serviceCall[AdditionalDataDTO, Map[String,Option[AdditionalDataItemDTO]]](
+        partitioningService.patchAdditionalData(partitioningId, additionalDataPatchDTO),
+        _.data
       )
     )
   }
