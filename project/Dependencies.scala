@@ -29,12 +29,6 @@ object Dependencies {
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
 
-    val spring = "2.6.15"
-
-    val javaxServlet = "4.0.1"
-
-    val springfox = "3.0.0"
-
     val sparkCommons = "0.6.3"
 
     val sttpClient = "3.5.2" //last supported version for Java 8
@@ -57,13 +51,13 @@ object Dependencies {
     val http4sPrometheus = "0.23.6"
     val circeJson = "0.14.7"
 
-    val awssdk = "2.23.15"
+    val awssdk = "2.31.48"
 
     val scalaNameof = "4.0.0"
 
     val absaCommons = "2.0.0"
 
-    val catsEffect = "3.3.14"
+    val catsEffect = "3.4.11"
 
     def truncateVersion(version: String, parts: Int): String = {
       version.split("\\.").take(parts).mkString(".")
