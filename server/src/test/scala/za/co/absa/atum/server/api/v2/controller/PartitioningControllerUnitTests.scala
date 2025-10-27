@@ -136,7 +136,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected AdditionalDataSubmitDTO") {
           for {
             result <- PartitioningController.patchPartitioningAdditionalData(1L, additionalDataPatchDTO1)
-            expected = SingleSuccessResponse(additionalDataDTO1, uuid1)
+            expected = SingleSuccessResponse(additionalDataDTO1.data, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
@@ -196,7 +196,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected AdditionalDataDTO") {
           for {
             result <- PartitioningController.getPartitioningAdditionalData(1L)
-            expected = SingleSuccessResponse(additionalDataDTO1, uuid1)
+            expected = SingleSuccessResponse(additionalDataDTO1.data, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
