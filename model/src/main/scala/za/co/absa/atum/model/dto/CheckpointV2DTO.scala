@@ -29,7 +29,8 @@ case class CheckpointV2DTO(
   measuredByAtumAgent: Boolean = false,
   processStartTime: ZonedDateTime,
   processEndTime: Option[ZonedDateTime],
-  measurements: Set[MeasurementDTO]
+  measurements: Set[MeasurementDTO],
+  properties: Option[Map[String, String]] = None
 )
 
 object CheckpointV2DTO {

@@ -73,6 +73,7 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       .setParam("i_measurements", CustomDBType("{}", "JSONB[]"))
       .setParam("i_measured_by_atum_agent", true)
       .setParam("i_by_user", "J. Robert Oppenheimer")
+      .setParamNull("i_checkpoint_properties")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -161,6 +162,7 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       .setParam("i_measurements", CustomDBType(measurements, "JSONB[]"))
       .setParam("i_measured_by_atum_agent", false)
       .setParam("i_by_user", user)
+      .setParamNull("i_checkpoint_properties")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -216,6 +218,8 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       assert(row3.getLong("fk_measure_definition").contains(measureDefinitionIds(2)))
       assert(row3.getJsonB("measurement_value").contains(JsonBString("""{"type": "double", "value": "2.71"}""")))
     }
+
+    assert(table("runs.checkpoint_properties").count(add("fk_checkpoint", uuid)) == 0)
   }
 
   test("Checkpoint already exists") {
@@ -248,6 +252,7 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       .setParamNull("i_measurements")
       .setParam("i_measured_by_atum_agent", true)
       .setParam("i_by_user", "J. Robert Oppenheimer")
+      .setParamNull("i_checkpoint_properties")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -275,6 +280,7 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       .setParamNull("i_measurements")
       .setParam("i_measured_by_atum_agent", true)
       .setParam("i_by_user", "J. Robert Oppenheimer")
+      .setParamNull("i_checkpoint_properties")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -283,4 +289,59 @@ class WriteCheckpointIntegrationTests extends DBTestSuite {
       }
     assert(table("runs.checkpoints").count() == count)
   }
+
+  test("Write new checkpoint with properties") {
+    val uuid = UUID.randomUUID
+    val user = "Grace Hopper"
+    val startTime = OffsetDateTime.parse("1992-08-03T10:00:00Z")
+    val endTime = OffsetDateTime.parse("2022-11-05T08:00:00Z")
+    val properties = Map("foo" -> "bar", "baz" -> "qux")
+    val hstoreProps = CustomDBType(
+      properties.map { case (k, v) => s""""$k"=>"$v"""" }.mkString(","),
+      "HSTORE"
+    )
+
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning)
+        .add("created_by", user)
+    )
+    val fkPartitioning: Long = table("runs.partitionings").fieldValue("partitioning", partitioning, "id_partitioning").get.get
+
+    table("runs.measure_definitions").insert(
+      add("fk_partitioning", fkPartitioning)
+        .add("measure_name", "avg")
+        .add("measured_columns", CustomDBType("""{"col1"}""", "TEXT[]"))
+        .add("created_by", "Aristoteles")
+    )
+
+    function(fnWriteCheckpoint)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_id_checkpoint", uuid)
+      .setParam("i_checkpoint_name", "With properties")
+      .setParam("i_process_start_time", startTime)
+      .setParam("i_process_end_time", endTime)
+      .setParam("i_measurements", CustomDBType("{}", "JSONB[]"))
+      .setParam("i_measured_by_atum_agent", true)
+      .setParam("i_by_user", user)
+      .setParam("i_checkpoint_properties", hstoreProps)
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getString("status_text").contains("Checkpoint created"))
+      }
+
+    // Assert properties were written
+    val props = table("runs.checkpoint_properties")
+      .where(add("fk_checkpoint", uuid)) { rs =>
+        val buf = scala.collection.mutable.Map.empty[String, String]
+        while (rs.hasNext) {
+          val row = rs.next()
+          buf += row.getString("property_name").get -> row.getString("property_value").get
+        }
+        buf.toMap
+      }
+    assert(props == properties)
+  }
+
 }
