@@ -109,6 +109,7 @@ class WriteCheckpointOverloadedIntegrationTests extends DBTestSuite {
       .setParam("i_measurements", CustomDBType("{}", "JSONB[]"))
       .setParam("i_measured_by_atum_agent", true)
       .setParam("i_by_user", "J. Robert Oppenheimer")
+      .setParamNull("i_checkpoint_properties")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -163,6 +164,7 @@ class WriteCheckpointOverloadedIntegrationTests extends DBTestSuite {
       .setParam("i_measurements", CustomDBType(measurements, "JSONB[]"))
       .setParam("i_measured_by_atum_agent", false)
       .setParam("i_by_user", user)
+      .setParamNull("i_checkpoint_properties")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -250,6 +252,7 @@ class WriteCheckpointOverloadedIntegrationTests extends DBTestSuite {
       .setParamNull("i_measurements")
       .setParam("i_measured_by_atum_agent", true)
       .setParam("i_by_user", "J. Robert Oppenheimer")
+      .setParamNull("i_checkpoint_properties")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -277,6 +280,7 @@ class WriteCheckpointOverloadedIntegrationTests extends DBTestSuite {
       .setParamNull("i_measurements")
       .setParam("i_measured_by_atum_agent", true)
       .setParam("i_by_user", "J. Robert Oppenheimer")
+      .setParamNull("i_checkpoint_properties")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
