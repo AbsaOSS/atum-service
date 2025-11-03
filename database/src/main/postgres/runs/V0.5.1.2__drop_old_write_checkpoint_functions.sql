@@ -13,14 +13,6 @@
  * limitations under the License.
  */
 
-CREATE TABLE runs.checkpoint_properties
-(
-  id_checkpoint_property BIGINT NOT NULL DEFAULT global_id(),
-  fk_checkpoint          UUID   NOT NULL,
-  property_name          TEXT   NOT NULL,
-  property_value         TEXT,
-  CONSTRAINT checkpoint_properties_pk PRIMARY KEY (id_checkpoint_property)
-);
-
-CREATE INDEX idx_checkpoint_properties_name_value ON runs.checkpoint_properties (property_name, property_value);
-ALTER TABLE runs.checkpoint_properties OWNER to atum_owner;
+-- dropping old versions of the runs.write_checkpoint functions
+DROP FUNCTION IF EXISTS runs.write_checkpoint(JSONB, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT);
+DROP FUNCTION IF EXISTS runs.write_checkpoint(BIGINT, UUID, TEXT, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, JSONB[], BOOLEAN, TEXT);

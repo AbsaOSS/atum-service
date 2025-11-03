@@ -49,8 +49,6 @@ BEGIN
   IF NOT FOUND THEN
     status := 42;
     status_text := 'Checkpoint not found';
-    property_name := NULL;
-    property_value := NULL;
     RETURN NEXT;
     RETURN;
   END IF;
@@ -67,9 +65,8 @@ BEGIN
   IF NOT FOUND THEN
     status := 11;
     status_text := 'OK';
-    property_name := NULL;
-    property_value := NULL;
     RETURN NEXT;
+    RETURN;
   END IF;
 
 END;
@@ -77,4 +74,4 @@ $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 ALTER FUNCTION runs.get_checkpoint_properties(UUID) OWNER TO atum_owner;
-GRANT EXECUTE on FUNCTION runs.get_checkpoint_properties(UUID) TO atum_user;
+GRANT EXECUTE ON FUNCTION runs.get_checkpoint_properties(UUID) TO atum_user;
