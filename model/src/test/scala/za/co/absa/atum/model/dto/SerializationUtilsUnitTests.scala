@@ -25,6 +25,9 @@ import za.co.absa.atum.testing.implicits.StringImplicits.StringLinearization
 import java.time.{ZoneId, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
+import io.circe.parser._
+import io.circe.syntax._
+
 class SerializationUtilsUnitTests extends AnyFlatSpecLike {
 
   // AdditionalDataDTO
@@ -180,12 +183,64 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
          |"processStartTime":"2023-10-24T10:20:59.005+02:00[CET]",
          |"processEndTime":"2023-10-24T10:20:59.005+02:00[CET]",
          |"measurements":[{"measure":{"measureName":"count","measuredColumns":["col"]},
-         |"result":{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}}]
+         |"result":{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}}],
+         |"properties": null
          |}
          |""".linearize
     val actualCheckpointDTOJson = checkpointDTO.asJsonString
 
-    assert(actualCheckpointDTOJson == expectedCheckpointDTOJson)
+    assert(parse(actualCheckpointDTOJson) == parse(expectedCheckpointDTOJson))
+  }
+
+  "asJsonString" should "serialize CheckpointDTO with properties into json string" in {
+    val uuid = UUID.randomUUID()
+    val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
+    val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneId.of("CET"))
+
+    val setMeasurementDTO = Set(
+      MeasurementDTO(
+        measure = MeasureDTO("count", Seq("col")),
+        result = MeasureResultDTO(
+          mainValue = TypedValue("1", ResultValueType.LongValue)
+        )
+      )
+    )
+
+    val properties = Some(Map("propKey1" -> "propVal1", "propKey2" -> "propVal2"))
+
+    val checkpointDTO = CheckpointDTO(
+      id = uuid,
+      name = "checkpoint",
+      author = "author",
+      measuredByAtumAgent = true,
+      partitioning = seqPartitionDTO,
+      processStartTime = timeWithZone,
+      processEndTime = Some(timeWithZone),
+      measurements = setMeasurementDTO,
+      properties = properties
+    )
+
+    val expectedCheckpointDTOJson =
+      s"""
+         |{
+         |"id":"$uuid",
+         |"name":"checkpoint",
+         |"author":"author",
+         |"measuredByAtumAgent":true,
+         |"partitioning":[{"key":"key","value":"val"}],
+         |"processStartTime":"2023-10-24T10:20:59.005+02:00[CET]",
+         |"processEndTime":"2023-10-24T10:20:59.005+02:00[CET]",
+         |"measurements":[{"measure":{"measureName":"count","measuredColumns":["col"]},
+         |"result":{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}}],
+         |"properties": {
+         |    "propKey1" : "propVal1",
+         |    "propKey2" : "propVal2"
+         |  }
+         |}
+         |""".linearize
+    val actualCheckpointDTOJson = checkpointDTO.asJsonString
+
+    assert(parse(actualCheckpointDTOJson) == parse(expectedCheckpointDTOJson))
   }
 
   "fromJson" should "deserialize CheckpointDTO from json string" in {
@@ -226,6 +281,58 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       processStartTime = timeWithZone,
       processEndTime = Some(timeWithZone),
       measurements = setMeasurementDTO
+    )
+
+    val actualCheckpointDTO = checkpointDTOJson.as[CheckpointDTO]
+
+    assert(actualCheckpointDTO == expectedCheckpointDTO)
+  }
+
+  "fromJson" should "deserialize CheckpointDTO with properties from json string" in {
+    val uuid = UUID.randomUUID()
+    val seqPartitionDTO = Seq(PartitionDTO("key", "val"))
+    val timeWithZone = ZonedDateTime.of(2023, 10, 24, 10, 20, 59, 5000000, ZoneOffset.ofHours(2))
+
+    val checkpointDTOJson =
+      s"""
+         |{
+         |"id":"$uuid",
+         |"name":"checkpoint",
+         |"author":"author",
+         |"measuredByAtumAgent":true,
+         |"partitioning":[{"key":"key","value":"val"}],
+         |"processStartTime":"2023-10-24T10:20:59.005+02:00",
+         |"processEndTime":"2023-10-24T10:20:59.005+02:00",
+         |"measurements":[{"measure":{"measureName":"count","measuredColumns":["col"]},
+         |"result":{"mainValue":{"value":"1","valueType":"Long"},"supportValues":{}}}],
+         |"properties": {
+         |    "propKey1" : "propVal1",
+         |    "propKey2" : "propVal2"
+         |  }
+         |}
+         |""".stripMargin
+
+    val setMeasurementDTO = Set(
+      MeasurementDTO(
+        measure = MeasureDTO("count", Seq("col")),
+        result = MeasureResultDTO(
+          mainValue = TypedValue("1", ResultValueType.LongValue)
+        )
+      )
+    )
+
+    val properties = Some(Map("propKey1" -> "propVal1", "propKey2" -> "propVal2"))
+
+    val expectedCheckpointDTO = CheckpointDTO(
+      id = uuid,
+      name = "checkpoint",
+      author = "author",
+      measuredByAtumAgent = true,
+      partitioning = seqPartitionDTO,
+      processStartTime = timeWithZone,
+      processEndTime = Some(timeWithZone),
+      measurements = setMeasurementDTO,
+      properties = properties
     )
 
     val actualCheckpointDTO = checkpointDTOJson.as[CheckpointDTO]
