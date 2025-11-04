@@ -30,7 +30,8 @@ case class CheckpointDTO(
   partitioning: PartitioningDTO,
   processStartTime: ZonedDateTime,
   processEndTime: Option[ZonedDateTime],
-  measurements: Set[MeasurementDTO]
+  measurements: Set[MeasurementDTO],
+  properties: Option[Map[String, String]] = None
 )
 
 object CheckpointDTO {

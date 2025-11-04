@@ -40,7 +40,8 @@ class WriteCheckpointV2(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
         fr"${args.checkpointV2DTO.processEndTime}",
         fr"${args.checkpointV2DTO.measurements.toList.map(_.asJson)}",
         fr"${args.checkpointV2DTO.measuredByAtumAgent}",
-        fr"${args.checkpointV2DTO.author}"
+        fr"${args.checkpointV2DTO.author}",
+        fr"${args.checkpointV2DTO.properties}"
       ),
       Some("write_checkpoint")
     )
