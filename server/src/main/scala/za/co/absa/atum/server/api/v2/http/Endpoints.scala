@@ -91,17 +91,20 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  //** 1 **//
   val getPartitioningCheckpointEndpoint
-    : PublicEndpoint[(Long, UUID), ErrorResponse, SingleSuccessResponse[CheckpointV2DTO], Any] = {
+    : PublicEndpoint[(Long, UUID, Boolean), ErrorResponse, SingleSuccessResponse[CheckpointV2DTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints / path[UUID]("checkpointId"))
+      .in(query[Boolean]("include-properties").default(false))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[CheckpointV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  //** 2 **//
   val getPartitioningCheckpointsEndpoint
-    : PublicEndpoint[(Long, Int, Long, Option[String]), ErrorResponse, PaginatedResponse[
+    : PublicEndpoint[(Long, Int, Long, Option[String], Boolean), ErrorResponse, PaginatedResponse[
       CheckpointV2DTO
     ], Any] = {
     apiV2.get
@@ -110,13 +113,15 @@ object Endpoints extends BaseEndpoints {
       .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
       .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
       .in(query[Option[String]]("checkpoint-name"))
+      .in(query[Boolean]("include-properties").default(false))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  //** 3 **//
   val getFlowCheckpointsEndpoint
-    : PublicEndpoint[(Long, Int, Long, Option[String]), ErrorResponse, PaginatedResponse[
+    : PublicEndpoint[(Long, Int, Long, Option[String], Boolean), ErrorResponse, PaginatedResponse[
       CheckpointWithPartitioningDTO
     ], Any] = {
     apiV2.get
@@ -124,6 +129,7 @@ object Endpoints extends BaseEndpoints {
       .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
       .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
       .in(query[Option[String]]("checkpoint-name"))
+      .in(query[Boolean]("include-properties").default(false))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointWithPartitioningDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
@@ -221,33 +227,33 @@ object Endpoints extends BaseEndpoints {
     ),
     createServerEndpoint(getPartitioningEndpoint, PartitioningController.getPartitioning),
     createServerEndpoint[
-      (Long, UUID),
+      (Long, UUID, Boolean),
       ErrorResponse,
       SingleSuccessResponse[CheckpointV2DTO]
     ](
       getPartitioningCheckpointEndpoint,
-      { case (partitioningId: Long, checkpointId: UUID) =>
-        CheckpointController.getPartitioningCheckpoint(partitioningId, checkpointId)
+      { case (partitioningId: Long, checkpointId: UUID, includeProperties: Boolean) =>
+        CheckpointController.getPartitioningCheckpoint(partitioningId, checkpointId, includeProperties)
       }
     ),
     createServerEndpoint[
-      (Long, Int, Long, Option[String]),
+      (Long, Int, Long, Option[String], Boolean),
       ErrorResponse,
       PaginatedResponse[CheckpointV2DTO]
     ](
       getPartitioningCheckpointsEndpoint,
-      { case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String]) =>
-        CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName)
+      { case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String], includeProperties: Boolean) =>
+        CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, includeProperties)
       }
     ),
     createServerEndpoint[
-      (Long, Int, Long, Option[String]),
+      (Long, Int, Long, Option[String], Boolean),
       ErrorResponse,
       PaginatedResponse[CheckpointWithPartitioningDTO]
     ](
       getFlowCheckpointsEndpoint,
-      { case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String]) =>
-        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+      { case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], includeProperties: Boolean) =>
+        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, includeProperties)
       }
     ),
     createServerEndpoint(getPartitioningByIdEndpoint, PartitioningController.getPartitioningById),

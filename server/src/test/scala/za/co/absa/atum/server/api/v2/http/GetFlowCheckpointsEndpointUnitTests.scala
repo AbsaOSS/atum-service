@@ -38,22 +38,32 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   private val flowControllerMockV2 = mock(classOf[FlowController])
   private val uuid = UUID.randomUUID()
 
-  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None))
+  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, includeProperties = false))
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
     )
-  when(flowControllerMockV2.getFlowCheckpoints(2L, 5, 0L, None))
+  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, includeProperties = true))
+    .thenReturn(
+      ZIO.succeed(
+        PaginatedResponse(
+          Seq(checkpointWithPartitioningDTO1.copy(properties = Some(Map("propName1" -> "propValue1")))),
+          Pagination(5, 0, hasMore = true),
+          uuid
+        )
+      )
+    )
+  when(flowControllerMockV2.getFlowCheckpoints(2L, 5, 0L, None, includeProperties = false))
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO2), Pagination(5, 0, hasMore = false), uuid))
     )
-  when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None))
+  when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
 
   private val flowControllerMockLayerV2 = ZLayer.succeed(flowControllerMockV2)
 
   private val getFlowCheckpointServerEndpoint = Endpoints.getFlowCheckpointsEndpoint.zServerLogic({
-    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String]) =>
-      FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], includeProperties: Boolean) =>
+      FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, includeProperties)
   })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -76,6 +86,29 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
         assertZIO(body <&> statusCode)(
           equalTo(
             Right(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid)),
+            StatusCode.Ok
+          )
+        )
+      },
+      test("Returns an expected PaginatedResponse[CheckpointV2DTO] with more data available and with properties") {
+        val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&include-properties=true"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
+          .send(backendStub)
+
+        val body = response.map(_.body)
+        val statusCode = response.map(_.code)
+
+        assertZIO(body <&> statusCode)(
+          equalTo(
+            Right(
+              PaginatedResponse(
+                Seq(checkpointWithPartitioningDTO1.copy(properties = Some(Map("propName1" -> "propValue1")))),
+                Pagination(5, 0, hasMore = true),
+                uuid
+              )
+            ),
             StatusCode.Ok
           )
         )

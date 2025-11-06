@@ -30,8 +30,13 @@ case class CheckpointWithPartitioningDTO(
   processStartTime: ZonedDateTime,
   processEndTime: Option[ZonedDateTime],
   measurements: Set[MeasurementDTO],
-  partitioning: PartitioningWithIdDTO
-)
+  partitioning: PartitioningWithIdDTO,
+  properties: Option[Map[String, String]] = None
+) extends CheckpointWithProperties[CheckpointWithPartitioningDTO] {
+  override def withProperties(properties: Option[Map[String, String]]): CheckpointWithPartitioningDTO = {
+    this.copy(properties = properties)
+  }
+}
 
 object CheckpointWithPartitioningDTO {
 

@@ -19,6 +19,10 @@ package za.co.absa.atum.server.api.v2.repository
 import org.mockito.Mockito.{mock, when}
 import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.database.runs.functions.GetCheckpointProperties.{
+  GetCheckpointPropertiesArgs,
+  GetCheckpointPropertiesResult
+}
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpointV2.GetPartitioningCheckpointV2Args
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
@@ -26,6 +30,7 @@ import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
+import za.co.absa.db.fadb.status
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
@@ -37,6 +42,7 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val writeCheckpointV2Mock: WriteCheckpointV2 = mock(classOf[WriteCheckpointV2])
   private val getCheckpointMockV2: GetPartitioningCheckpointV2 = mock(classOf[GetPartitioningCheckpointV2])
   private val getPartitioningCheckpointsMock: GetPartitioningCheckpoints = mock(classOf[GetPartitioningCheckpoints])
+  private val getCheckpointPropertiesMock: GetCheckpointProperties = mock(classOf[GetCheckpointProperties])
 
   private val partitioningId = 1L
 
@@ -63,9 +69,19 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningCheckpointsMock.apply(GetPartitioningCheckpointsArgs(3L, 10, 0L, None)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
 
+  when(getCheckpointPropertiesMock.apply(GetCheckpointPropertiesArgs(checkpointV2DTO1.id)))
+    .thenReturn(
+      ZIO.right(Seq(status.Row(FunctionStatus(11, "OK"), GetCheckpointPropertiesResult("propName1", "propValue1"))))
+    )
+  when(getCheckpointPropertiesMock.apply(GetCheckpointPropertiesArgs(checkpointItemPaginatedFromDB.idCheckpoint)))
+    .thenReturn(
+      ZIO.right(Seq(status.Row(FunctionStatus(11, "OK"), GetCheckpointPropertiesResult("propName1", "propValue1"))))
+    )
+
   private val getCheckpointV2MockLayer = ZLayer.succeed(getCheckpointMockV2)
   private val writeCheckpointV2MockLayer = ZLayer.succeed(writeCheckpointV2Mock)
   private val getPartitioningCheckpointsMockLayer = ZLayer.succeed(getPartitioningCheckpointsMock)
+  private val getCheckpointPropertiesMockLayer = ZLayer.succeed(getCheckpointPropertiesMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -93,39 +109,57 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
         }
       ),
       suite("GetCheckpointV2Suite")(
-        test("Returns an expected Right with CheckpointV2DTO") {
+        test("Returns an expected Right with CheckpointV2DTO without properties") {
           for {
-            result <- CheckpointRepository.getCheckpoint(partitioningId, checkpointV2DTO1.id)
+            result <- CheckpointRepository.getCheckpoint(partitioningId, checkpointV2DTO1.id, includeProperties = true)
+          } yield assertTrue(result == checkpointV2DTO1.copy(properties = Some(Map("propName1" -> "propValue1"))))
+        },
+        test("Returns an expected Right with CheckpointV2DTO with properties") {
+          for {
+            result <- CheckpointRepository.getCheckpoint(partitioningId, checkpointV2DTO1.id, includeProperties = false)
           } yield assertTrue(result == checkpointV2DTO1)
         },
         test("Fails with an expected NotFoundDatabaseError") {
-          assertZIO(CheckpointRepository.getCheckpoint(partitioningId, checkpointV2DTO2.id).exit)(
+          assertZIO(
+            CheckpointRepository.getCheckpoint(partitioningId, checkpointV2DTO2.id, includeProperties = false).exit
+          )(
             failsWithA[NotFoundDatabaseError]
           )
         },
         test("Returns an expected DatabaseError") {
-          assertZIO(CheckpointRepository.getCheckpoint(partitioningId, checkpointV2DTO3.id).exit)(
+          assertZIO(
+            CheckpointRepository.getCheckpoint(partitioningId, checkpointV2DTO3.id, includeProperties = false).exit
+          )(
             failsWithA[GeneralDatabaseError]
           )
         }
       ),
       suite("GetPartitioningCheckpointsSuite")(
-        test("Returns expected Seq") {
+        test("Returns expected Seq without properties") {
           for {
-            result <- CheckpointRepository.getPartitioningCheckpoints(0L, 10, 0L, None)
+            result <- CheckpointRepository.getPartitioningCheckpoints(0L, 10, 0L, None, includeProperties = false)
           } yield assertTrue(
             result.isInstanceOf[ResultHasMore[CheckpointV2DTO]] && result.data == Seq(checkpointV2DTO2)
           )
         },
+        test("Returns expected Seq with properties") {
+          for {
+            result <- CheckpointRepository.getPartitioningCheckpoints(0L, 10, 0L, None, includeProperties = true)
+          } yield assertTrue(
+            result.isInstanceOf[ResultHasMore[CheckpointV2DTO]] && result.data == Seq(
+              checkpointV2DTO2.copy(properties = Some(Map("propName1" -> "propValue1")))
+            )
+          )
+        },
         test("Returns expected Seq.empty") {
           for {
-            result <- CheckpointRepository.getPartitioningCheckpoints(1L, 10, 0L, None)
+            result <- CheckpointRepository.getPartitioningCheckpoints(1L, 10, 0L, None, includeProperties = false)
           } yield assertTrue(
             result.isInstanceOf[ResultNoMore[CheckpointV2DTO]] && result.data == Seq.empty[CheckpointV2DTO]
           )
         },
         test("Returns expected NotFoundDatabaseError") {
-          assertZIO(CheckpointRepository.getPartitioningCheckpoints(3L, 10, 0L, None).exit)(
+          assertZIO(CheckpointRepository.getPartitioningCheckpoints(3L, 10, 0L, None, includeProperties = false).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         }
@@ -134,7 +168,8 @@ object CheckpointRepositoryUnitTests extends ZIOSpecDefault with TestData {
       CheckpointRepositoryImpl.layer,
       writeCheckpointV2MockLayer,
       getCheckpointV2MockLayer,
-      getPartitioningCheckpointsMockLayer
+      getPartitioningCheckpointsMockLayer,
+      getCheckpointPropertiesMockLayer
     )
 
   }

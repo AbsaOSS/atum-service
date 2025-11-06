@@ -31,11 +31,12 @@ class FlowControllerImpl(flowService: FlowService) extends FlowController with B
     flowId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointWithPartitioningDTO]] = {
     val flowData =
       serviceCall[PaginatedResult[CheckpointWithPartitioningDTO], PaginatedResult[CheckpointWithPartitioningDTO]](
-        flowService.getFlowCheckpoints(flowId, limit, offset, checkpointName)
+        flowService.getFlowCheckpoints(flowId, limit, offset, checkpointName, includeProperties)
       )
     mapToPaginatedResponse(limit, offset, flowData)
   }

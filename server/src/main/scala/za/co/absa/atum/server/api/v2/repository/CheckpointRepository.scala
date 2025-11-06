@@ -27,11 +27,16 @@ import java.util.UUID
 @accessible
 trait CheckpointRepository {
   def writeCheckpoint(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[DatabaseError, Unit]
-  def getCheckpoint(partitioningId: Long, checkpointId: UUID): IO[DatabaseError, CheckpointV2DTO]
+  def getCheckpoint(
+    partitioningId: Long,
+    checkpointId: UUID,
+    includeProperties: Boolean
+  ): IO[DatabaseError, CheckpointV2DTO]
   def getPartitioningCheckpoints(
     partitioningId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]]
 }

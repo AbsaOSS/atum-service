@@ -21,9 +21,12 @@ import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
+import za.co.absa.atum.server.api.database.runs.functions.GetCheckpointProperties
+import za.co.absa.atum.server.api.database.runs.functions.GetCheckpointProperties._
 import za.co.absa.atum.server.api.exception.DatabaseError.NotFoundDatabaseError
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import za.co.absa.db.fadb.status
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
@@ -33,6 +36,7 @@ import zio.test._
 object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getFlowCheckpointsV2Mock = mock(classOf[GetFlowCheckpoints])
+  private val getCheckpointPropertiesMock: GetCheckpointProperties = mock(classOf[GetCheckpointProperties])
 
   when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(1, 1, 1L, None)))
     .thenReturn(
@@ -47,31 +51,49 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(3, 1, 1L, None)))
     .thenReturn(ZIO.fail(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
 
+  when(
+    getCheckpointPropertiesMock.apply(GetCheckpointPropertiesArgs(checkpointItemWithPartitioningFromDB1.idCheckpoint))
+  )
+    .thenReturn(
+      ZIO.right(Seq(status.Row(FunctionStatus(11, "OK"), GetCheckpointPropertiesResult("propName1", "propValue1"))))
+    )
+
   private val getFlowCheckpointsV2MockLayer = ZLayer.succeed(getFlowCheckpointsV2Mock)
+  private val getCheckpointPropertiesMockLayer = ZLayer.succeed(getCheckpointPropertiesMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("FlowRepositoryIntegrationSuite")(
       suite("GetFlowCheckpointsV2Suite")(
-        test("Returns expected Right with CheckpointV2DTO") {
+        test("Returns expected Right with CheckpointV2DTO without properties") {
           for {
-            result <- FlowRepository.getFlowCheckpoints(1, 1, 1L, None)
+            result <- FlowRepository.getFlowCheckpoints(1, 1, 1L, None, includeProperties = false)
           } yield assertTrue(result == ResultHasMore(Seq(checkpointWithPartitioningDTO1)))
+        },
+        test("Returns expected Right with CheckpointV2DTO with properties") {
+          for {
+            result <- FlowRepository.getFlowCheckpoints(1, 1, 1L, None, includeProperties = true)
+          } yield assertTrue(
+            result == ResultHasMore(
+              Seq(checkpointWithPartitioningDTO1.copy(properties = Some(Map("propName1" -> "propValue1"))))
+            )
+          )
         },
         test("Returns expected Right with CheckpointV2DTO") {
           for {
-            result <- FlowRepository.getFlowCheckpoints(2, 1, 1L, None)
+            result <- FlowRepository.getFlowCheckpoints(2, 1, 1L, None, includeProperties = false)
           } yield assertTrue(result == ResultNoMore(Seq.empty[CheckpointWithPartitioningDTO]))
         },
         test("Returns expected DatabaseError") {
-          assertZIO(FlowRepository.getFlowCheckpoints(3, 1, 1L, None).exit)(
+          assertZIO(FlowRepository.getFlowCheckpoints(3, 1, 1L, None, includeProperties = false).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         }
       )
     ).provide(
       FlowRepositoryImpl.layer,
-      getFlowCheckpointsV2MockLayer
+      getFlowCheckpointsV2MockLayer,
+      getCheckpointPropertiesMockLayer
     )
 
   }

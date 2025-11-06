@@ -29,11 +29,11 @@ import zio.test._
 object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
   private val flowServiceMock = mock(classOf[FlowService])
 
-  when(flowServiceMock.getFlowCheckpoints(1L, 5, 2L, None))
+  when(flowServiceMock.getFlowCheckpoints(1L, 5, 2L, None, includeProperties = false))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointWithPartitioningDTO1))))
-  when(flowServiceMock.getFlowCheckpoints(2L, 5, 0L, None))
+  when(flowServiceMock.getFlowCheckpoints(2L, 5, 0L, None, includeProperties = false))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq(checkpointWithPartitioningDTO2))))
-  when(flowServiceMock.getFlowCheckpoints(3L, 5, 0L, None))
+  when(flowServiceMock.getFlowCheckpoints(3L, 5, 0L, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundServiceError("Flow not found")))
 
   private val flowServiceMockLayer = ZLayer.succeed(flowServiceMock)
@@ -43,20 +43,20 @@ object FlowControllerUnitTests extends ZIOSpecDefault with TestData {
       suite("GetFlowCheckpointsV2Suite")(
         test("Returns expected Seq[CheckpointV2DTO] with Pagination indicating there is more data available") {
           for {
-            result <- FlowController.getFlowCheckpoints(1L, 5, 2L, None)
+            result <- FlowController.getFlowCheckpoints(1L, 5, 2L, None, includeProperties = false)
           } yield assertTrue(
             result.data == Seq(checkpointWithPartitioningDTO1) && result.pagination == Pagination(5, 2, hasMore = true)
           )
         },
         test("Returns expected Seq[CheckpointV2DTO] with Pagination indicating there is no more data available") {
           for {
-            result <- FlowController.getFlowCheckpoints(2L, 5, 0L, None)
+            result <- FlowController.getFlowCheckpoints(2L, 5, 0L, None, includeProperties = false)
           } yield assertTrue(
             result.data == Seq(checkpointWithPartitioningDTO2) && result.pagination == Pagination(5, 0, hasMore = false)
           )
         },
         test("Returns expected NotFoundServiceError when service returns NotFoundServiceError") {
-          assertZIO(FlowController.getFlowCheckpoints(3L, 5, 0L, None).exit)(
+          assertZIO(FlowController.getFlowCheckpoints(3L, 5, 0L, None, includeProperties = false).exit)(
             failsWithA[NotFoundErrorResponse]
           )
         }

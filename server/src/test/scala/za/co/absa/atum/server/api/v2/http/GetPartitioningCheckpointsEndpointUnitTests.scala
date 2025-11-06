@@ -40,21 +40,43 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
 
   private val uuid = UUID.randomUUID()
 
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 20, 0L, None))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, includeProperties = true))
+    .thenReturn(
+      ZIO.succeed(
+        PaginatedResponse(
+          Seq(checkpointV2DTO1.copy(properties = Some(Map("propName1" -> "propValue1")))),
+          Pagination(10, 0, hasMore = true),
+          uuid
+        )
+      )
+    )
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 20, 0L, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(20, 0, hasMore = false), uuid)))
-  when(checkpointControllerMock.getPartitioningCheckpoints(2L, 10, 0L, None))
+  when(checkpointControllerMock.getPartitioningCheckpoints(2L, 10, 0L, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("partitioning not found")))
-  when(checkpointControllerMock.getPartitioningCheckpoints(3L, 10, 0L, None))
+  when(checkpointControllerMock.getPartitioningCheckpoints(3L, 10, 0L, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
   private val getPartitioningCheckpointServerEndpointV2 = Endpoints.getPartitioningCheckpointsEndpoint
     .zServerLogic({
-      case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String]) =>
-        CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName)
+      case (
+            partitioningId: Long,
+            limit: Int,
+            offset: Long,
+            checkpointName: Option[String],
+            includeProperties: Boolean
+          ) =>
+        CheckpointController.getPartitioningCheckpoints(
+          partitioningId,
+          limit,
+          offset,
+          checkpointName,
+          includeProperties
+        )
     })
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -79,6 +101,30 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
         assertZIO(body <&> statusCode)(
           equalTo(
             Right(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)),
+            StatusCode.Ok
+          )
+        )
+      },
+      test("Returns an expected PaginatedResponse[CheckpointV2DTO] with more data available with properties") {
+        val request = basicRequest
+          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=0&include-properties=true")
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+
+        val response = request
+          .send(backendStub)
+
+        val body = response.map(_.body)
+        val statusCode = response.map(_.code)
+
+        assertZIO(body <&> statusCode)(
+          equalTo(
+            Right(
+              PaginatedResponse(
+                Seq(checkpointV2DTO1.copy(properties = Some(Map("propName1" -> "propValue1")))),
+                Pagination(10, 0, hasMore = true),
+                uuid
+              )
+            ),
             StatusCode.Ok
           )
         )
@@ -137,8 +183,10 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
 
         assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       },
-      test("Returns an expected PaginatedResponse[CheckpointV2DTO] with more data available " +
-        "(call without optional params)") {
+      test(
+        "Returns an expected PaginatedResponse[CheckpointV2DTO] with more data available " +
+          "(call without optional params)"
+      ) {
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/3/checkpoints")
           .response(asJson[PaginatedResponse[CheckpointV2DTO]])

@@ -29,7 +29,8 @@ trait FlowService {
     flowId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    includeProperties: Boolean
   ): IO[ServiceError, PaginatedResult[CheckpointWithPartitioningDTO]]
 
 }

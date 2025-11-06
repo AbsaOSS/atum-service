@@ -27,7 +27,11 @@ import java.util.UUID
 @accessible
 trait CheckpointService {
 
-  def getCheckpoint(partitioningId: Long, checkpointId: UUID): IO[ServiceError, CheckpointV2DTO]
+  def getCheckpoint(
+    partitioningId: Long,
+    checkpointId: UUID,
+    includeProperties: Boolean
+  ): IO[ServiceError, CheckpointV2DTO]
 
   def saveCheckpoint(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[ServiceError, Unit]
 
@@ -35,7 +39,8 @@ trait CheckpointService {
     partitioningId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    includeProperties: Boolean
   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]]
 
 }
