@@ -29,10 +29,11 @@ class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with B
      flowId: Long,
      limit: Int,
      offset: Long,
-     checkpointName: Option[String]
+     checkpointName: Option[String],
+     includeProperties: Boolean
    ): IO[ServiceError, PaginatedResult[CheckpointWithPartitioningDTO]] = {
     repositoryCall(
-      flowRepository.getFlowCheckpoints(flowId, limit, offset, checkpointName),
+      flowRepository.getFlowCheckpoints(flowId, limit, offset, checkpointName, includeProperties),
       "getFlowCheckpoints"
     )
   }

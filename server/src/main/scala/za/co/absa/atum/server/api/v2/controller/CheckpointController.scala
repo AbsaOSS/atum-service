@@ -34,7 +34,8 @@ trait CheckpointController {
 
   def getPartitioningCheckpoint(
     partitioningId: Long,
-    checkpointId: UUID
+    checkpointId: UUID,
+    includeProperties: Boolean
   ): IO[ErrorResponse, SingleSuccessResponse[CheckpointV2DTO]]
 
   def getPartitioningCheckpoints(
@@ -42,6 +43,7 @@ trait CheckpointController {
     limit: Int,
     offset: Long,
     checkpointName: Option[String] = None,
+    includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]]
 
 }

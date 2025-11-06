@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.v2.repository
+package za.co.absa.atum.model.dto
 
-import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
-import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.model.PaginatedResult
-import zio._
-import zio.macros.accessible
+import java.util.UUID
 
-@accessible
-trait FlowRepository {
-
-  def getFlowCheckpoints(
-    partitioningId: Long,
-    limit: Int,
-    offset: Long,
-    checkpointName: Option[String],
-    includeProperties: Boolean
-  ): IO[DatabaseError, PaginatedResult[CheckpointWithPartitioningDTO]]
-
+trait CheckpointWithProperties[T] {
+  def id: UUID
+  def properties: Option[Map[String, String]]
+  def withProperties(properties: Option[Map[String, String]] = None): T
 }

@@ -30,6 +30,7 @@ trait FlowController {
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
+    includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointWithPartitioningDTO]]
 
 }
