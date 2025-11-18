@@ -94,11 +94,11 @@ object PatchAdditionalDataEndpointUnitTests extends ZIOSpecDefault with TestData
 
   private def patchRequestForId(id: Long): RequestT[Identity, Either[
     ResponseException[String, circe.Error],
-    SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]
+    SingleSuccessResponse[AdditionalDataDTO.Data]
   ], Any] = {
     basicRequest
       .patch(uri"https://test.com/api/v2/partitionings/$id/additional-data")
-      .response(asJson[SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]])
+      .response(asJson[SingleSuccessResponse[AdditionalDataDTO.Data]])
   }
 
 }
