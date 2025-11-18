@@ -108,6 +108,7 @@ object Main extends ZIOAppDefault {
           GetPartitioningMainFlow.layer,
           UpdatePartitioningParent.layer,
           GetPartitioningAncestors.layer,
+          GetCheckpointProperties.layer,
           PostgresDatabaseProvider.layer,
           TransactorProvider.layer,
           // aws

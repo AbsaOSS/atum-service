@@ -34,9 +34,13 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
     )
   }
 
-  override def getCheckpoint(partitioningId: Long, checkpointId: UUID): IO[ServiceError, CheckpointV2DTO] = {
+  override def getCheckpoint(
+    partitioningId: Long,
+    checkpointId: UUID,
+    includeProperties: Boolean
+  ): IO[ServiceError, CheckpointV2DTO] = {
     repositoryCall(
-      checkpointRepository.getCheckpoint(partitioningId, checkpointId),
+      checkpointRepository.getCheckpoint(partitioningId, checkpointId, includeProperties),
       "getCheckpoint"
     )
   }
@@ -45,10 +49,11 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
     partitioningId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    includeProperties: Boolean
   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]] = {
     repositoryCall(
-      checkpointRepository.getPartitioningCheckpoints(partitioningId,  limit, offset, checkpointName),
+      checkpointRepository.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, includeProperties),
       "getPartitioningCheckpoints"
     )
   }

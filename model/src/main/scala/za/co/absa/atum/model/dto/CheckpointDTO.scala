@@ -32,7 +32,11 @@ case class CheckpointDTO(
   processEndTime: Option[ZonedDateTime],
   measurements: Set[MeasurementDTO],
   properties: Option[Map[String, String]] = None
-)
+) extends CheckpointWithProperties[CheckpointDTO] {
+    override def withProperties(properties: Option[Map[String, String]]): CheckpointDTO = {
+      this.copy(properties = properties)
+    }
+}
 
 object CheckpointDTO {
   implicit val decodeCheckpointDTO: Decoder[CheckpointDTO] = deriveDecoder

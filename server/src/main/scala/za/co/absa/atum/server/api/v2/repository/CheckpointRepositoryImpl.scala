@@ -17,10 +17,11 @@
 package za.co.absa.atum.server.api.v2.repository
 
 import za.co.absa.atum.model.dto.CheckpointV2DTO
-import za.co.absa.atum.server.api.common.repository.BaseRepository
+import za.co.absa.atum.server.api.common.repository.{BaseRepository, CheckpointPropertiesEnricher}
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpointV2.GetPartitioningCheckpointV2Args
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
+import za.co.absa.atum.server.api.database.runs.functions.GetCheckpointProperties
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
@@ -35,9 +36,9 @@ import java.util.UUID
 class CheckpointRepositoryImpl(
   writeCheckpointV2Fn: WriteCheckpointV2,
   getCheckpointV2Fn: GetPartitioningCheckpointV2,
-  getPartitioningCheckpoints: GetPartitioningCheckpoints
-) extends CheckpointRepository
-    with BaseRepository {
+  getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
+  override val getCheckpointPropertiesFn: GetCheckpointProperties
+) extends CheckpointRepository with BaseRepository with CheckpointPropertiesEnricher {
 
   override def writeCheckpoint(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[DatabaseError, Unit] = {
     dbSingleResultCallWithStatus(
@@ -46,7 +47,11 @@ class CheckpointRepositoryImpl(
     )
   }
 
-  override def getCheckpoint(partitioningId: Long, checkpointId: UUID): IO[DatabaseError, CheckpointV2DTO] = {
+  override def getCheckpoint(
+    partitioningId: Long,
+    checkpointId: UUID,
+    includeProperties: Boolean
+  ): IO[DatabaseError, CheckpointV2DTO] = {
     dbMultipleResultCallWithAggregatedStatus(
       getCheckpointV2Fn(GetPartitioningCheckpointV2Args(partitioningId, checkpointId)),
       "getCheckpoint"
@@ -57,28 +62,38 @@ class CheckpointRepositoryImpl(
           .fromEither(CheckpointItemFromDB.fromItemsToCheckpointV2DTO(checkpointItems))
           .mapError(error => GeneralDatabaseError(error.getMessage))
       }
+      .flatMap { checkpoint =>
+        if (includeProperties) enrichWithProperties(checkpoint)
+        else ZIO.succeed(checkpoint)
+      }
   }
 
   override def getPartitioningCheckpoints(
     partitioningId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
-      getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(partitioningId, limit, offset, checkpointName)),
+      getPartitioningCheckpointsFn(GetPartitioningCheckpointsArgs(partitioningId, limit, offset, checkpointName)),
       "getPartitioningCheckpoints"
     )
       .map(_.flatten)
       .flatMap { checkpointItems =>
         ZIO
           .fromEither(CheckpointItemFromDB.groupAndConvertItemsToCheckpointV2DTOs(checkpointItems))
-          .mapBoth(
-            error => GeneralDatabaseError(error.getMessage),
-            checkpoints =>
-              if (checkpointItems.nonEmpty && checkpointItems.head.hasMore) ResultHasMore(checkpoints)
-              else ResultNoMore(checkpoints)
-          )
+          .mapError(error => GeneralDatabaseError(error.getMessage))
+          .flatMap { checkpoints =>
+            val checkpointsF =
+              if (includeProperties) ZIO.foreachPar(checkpoints)(enrichWithProperties)
+              else ZIO.succeed(checkpoints)
+            val resultCtor: Seq[CheckpointV2DTO] => PaginatedResult[CheckpointV2DTO] =
+              if (checkpointItems.nonEmpty && checkpointItems.head.hasMore)
+                ResultHasMore.apply[CheckpointV2DTO]
+              else ResultNoMore.apply[CheckpointV2DTO]
+            checkpointsF.map(resultCtor)
+          }
       }
   }
 
@@ -86,7 +101,7 @@ class CheckpointRepositoryImpl(
 
 object CheckpointRepositoryImpl {
   val layer: URLayer[
-    WriteCheckpointV2 with GetPartitioningCheckpointV2 with GetPartitioningCheckpoints,
+    WriteCheckpointV2 with GetPartitioningCheckpointV2 with GetPartitioningCheckpoints with GetCheckpointProperties,
     CheckpointRepository
   ] =
     ZLayer {
@@ -94,10 +109,12 @@ object CheckpointRepositoryImpl {
         writeCheckpointV2 <- ZIO.service[WriteCheckpointV2]
         getCheckpointV2 <- ZIO.service[GetPartitioningCheckpointV2]
         getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
+        getCheckpointProperties <- ZIO.service[GetCheckpointProperties]
       } yield new CheckpointRepositoryImpl(
         writeCheckpointV2,
         getCheckpointV2,
-        getPartitioningCheckpoints
+        getPartitioningCheckpoints,
+        getCheckpointProperties
       )
     }
 }

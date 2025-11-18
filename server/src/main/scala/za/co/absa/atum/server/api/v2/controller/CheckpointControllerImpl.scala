@@ -49,11 +49,12 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
 
   override def getPartitioningCheckpoint(
     partitioningId: Long,
-    checkpointId: UUID
+    checkpointId: UUID,
+    includeProperties: Boolean
   ): IO[ErrorResponse, SingleSuccessResponse[CheckpointV2DTO]] = {
     mapToSingleSuccessResponse(
       serviceCall[CheckpointV2DTO, CheckpointV2DTO](
-        checkpointService.getCheckpoint(partitioningId, checkpointId)
+        checkpointService.getCheckpoint(partitioningId, checkpointId, includeProperties)
       )
     )
   }
@@ -62,13 +63,14 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
     partitioningId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String] = None
+    checkpointName: Option[String] = None,
+    includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
     mapToPaginatedResponse(
       limit,
       offset,
       serviceCall[PaginatedResult[CheckpointV2DTO], PaginatedResult[CheckpointV2DTO]](
-        checkpointService.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName)
+        checkpointService.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, includeProperties)
       )
     )
   }

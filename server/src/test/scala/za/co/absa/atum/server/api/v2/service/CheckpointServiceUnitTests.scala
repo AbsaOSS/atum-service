@@ -40,14 +40,14 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
   when(checkpointRepositoryMock.writeCheckpoint(0L, checkpointV2DTO3))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
-  when(checkpointRepositoryMock.getCheckpoint(partitioningId, checkpointV2DTO1.id))
+  when(checkpointRepositoryMock.getCheckpoint(partitioningId, checkpointV2DTO1.id, includeProperties = false))
     .thenReturn(ZIO.succeed(checkpointV2DTO1))
-  when(checkpointRepositoryMock.getCheckpoint(partitioningId, checkpointV2DTO2.id))
+  when(checkpointRepositoryMock.getCheckpoint(partitioningId, checkpointV2DTO2.id, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("not found")))
 
-  when(checkpointRepositoryMock.getPartitioningCheckpoints(1L, 10, 0L, None))
+  when(checkpointRepositoryMock.getPartitioningCheckpoints(1L, 10, 0L, None, includeProperties = false))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
-    when(checkpointRepositoryMock.getPartitioningCheckpoints(0L, 10, 0L, None))
+    when(checkpointRepositoryMock.getPartitioningCheckpoints(0L, 10, 0L, None, includeProperties = false))
       .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   private val checkpointRepositoryMockLayer = ZLayer.succeed(checkpointRepositoryMock)
@@ -80,11 +80,11 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
       suite("GetCheckpointV2Suite")(
         test("Returns an expected CheckpointV2DTO") {
           for {
-            result <- CheckpointService.getCheckpoint(partitioningId, checkpointV2DTO1.id)
+            result <- CheckpointService.getCheckpoint(partitioningId, checkpointV2DTO1.id, includeProperties = false)
           } yield assertTrue(result == checkpointV2DTO1)
         },
         test("Fails with an expected NotFoundServiceError") {
-          assertZIO(CheckpointService.getCheckpoint(partitioningId, checkpointV2DTO2.id).exit)(
+          assertZIO(CheckpointService.getCheckpoint(partitioningId, checkpointV2DTO2.id, includeProperties = false).exit)(
             failsWithA[NotFoundServiceError]
           )
         }
@@ -92,13 +92,13 @@ object CheckpointServiceUnitTests extends ZIOSpecDefault with TestData {
       suite("GetPartitioningCheckpointsSuite")(
         test("Returns expected Right with Seq[CheckpointDTO]") {
           for {
-            result <- CheckpointService.getPartitioningCheckpoints(1L, 10, 0L, None)
+            result <- CheckpointService.getPartitioningCheckpoints(1L, 10, 0L, None, includeProperties = false)
           } yield assertTrue {
             result == ResultHasMore(Seq(checkpointV2DTO1))
           }
         },
         test("Returns expected NotFoundServiceError") {
-          assertZIO(CheckpointService.getPartitioningCheckpoints(0L, 10, 0L, None).exit)(
+          assertZIO(CheckpointService.getPartitioningCheckpoints(0L, 10, 0L, None, includeProperties = false).exit)(
             failsWithA[NotFoundServiceError]
           )
         }
