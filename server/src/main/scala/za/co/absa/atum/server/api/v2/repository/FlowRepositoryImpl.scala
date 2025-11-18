@@ -17,9 +17,10 @@
 package za.co.absa.atum.server.api.v2.repository
 
 import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
-import za.co.absa.atum.server.api.common.repository.BaseRepository
+import za.co.absa.atum.server.api.common.repository.{BaseRepository, CheckpointPropertiesEnricher}
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
+import za.co.absa.atum.server.api.database.runs.functions.GetCheckpointProperties
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
 import za.co.absa.atum.server.model.PaginatedResult
@@ -28,13 +29,17 @@ import za.co.absa.atum.server.model.database.CheckpointItemWithPartitioningFromD
 import zio._
 import zio.interop.catz.asyncInstance
 
-class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints) extends FlowRepository with BaseRepository {
+class FlowRepositoryImpl(
+  getFlowCheckpointsFn: GetFlowCheckpoints,
+  override val getCheckpointPropertiesFn: GetCheckpointProperties
+) extends FlowRepository with BaseRepository with CheckpointPropertiesEnricher {
 
   override def getFlowCheckpoints(
     flowId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointWithPartitioningDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getFlowCheckpointsFn(GetFlowCheckpointsArgs(flowId, limit, offset, checkpointName)),
@@ -46,21 +51,27 @@ class FlowRepositoryImpl(getFlowCheckpointsFn: GetFlowCheckpoints) extends FlowR
           .fromEither(
             CheckpointItemWithPartitioningFromDB.groupAndConvertItemsToCheckpointWithPartitioningDTOs(checkpointItems)
           )
-          .mapBoth(
-            error => GeneralDatabaseError(error.getMessage),
-            checkpoints =>
-              if (checkpointItems.nonEmpty && checkpointItems.head.hasMore) ResultHasMore(checkpoints)
-              else ResultNoMore(checkpoints)
-          )
+          .mapError(error => GeneralDatabaseError(error.getMessage))
+          .flatMap { checkpoints =>
+            val checkpointsF =
+              if (includeProperties) ZIO.foreachPar(checkpoints)(enrichWithProperties)
+              else ZIO.succeed(checkpoints)
+            val resultCtor: Seq[CheckpointWithPartitioningDTO] => PaginatedResult[CheckpointWithPartitioningDTO] =
+              if (checkpointItems.nonEmpty && checkpointItems.head.hasMore)
+                ResultHasMore.apply[CheckpointWithPartitioningDTO]
+              else ResultNoMore.apply[CheckpointWithPartitioningDTO]
+            checkpointsF.map(resultCtor)
+          }
       }
   }
 
 }
 
 object FlowRepositoryImpl {
-  val layer: URLayer[GetFlowCheckpoints, FlowRepository] = ZLayer {
+  val layer: URLayer[GetCheckpointProperties with GetFlowCheckpoints, FlowRepositoryImpl] = ZLayer {
     for {
       getFlowCheckpointsV2 <- ZIO.service[GetFlowCheckpoints]
-    } yield new FlowRepositoryImpl(getFlowCheckpointsV2)
+      getCheckpointProperties <- ZIO.service[GetCheckpointProperties]
+    } yield new FlowRepositoryImpl(getFlowCheckpointsV2, getCheckpointProperties)
   }
 }

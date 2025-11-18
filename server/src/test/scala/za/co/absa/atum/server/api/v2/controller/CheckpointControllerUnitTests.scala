@@ -44,18 +44,18 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
   when(checkpointServiceMock.saveCheckpoint(0L, checkpointV2DTO3))
     .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
 
-  when(checkpointServiceMock.getCheckpoint(partitioningId1, checkpointV2DTO1.id))
+  when(checkpointServiceMock.getCheckpoint(partitioningId1, checkpointV2DTO1.id, includeProperties = false))
     .thenReturn(ZIO.succeed(checkpointV2DTO1))
-  when(checkpointServiceMock.getCheckpoint(partitioningId1, checkpointV2DTO2.id))
+  when(checkpointServiceMock.getCheckpoint(partitioningId1, checkpointV2DTO2.id, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundServiceError("not found")))
-  when(checkpointServiceMock.getCheckpoint(partitioningId1, checkpointV2DTO3.id))
+  when(checkpointServiceMock.getCheckpoint(partitioningId1, checkpointV2DTO3.id, includeProperties = false))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
-  when(checkpointServiceMock.getPartitioningCheckpoints(partitioningId1, 10, 0L, None))
+  when(checkpointServiceMock.getPartitioningCheckpoints(partitioningId1, 10, 0L, None, includeProperties = false))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
-  when(checkpointServiceMock.getPartitioningCheckpoints(partitioningId2, 10, 0L, None))
+  when(checkpointServiceMock.getPartitioningCheckpoints(partitioningId2, 10, 0L, None, includeProperties = false))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq(checkpointV2DTO1))))
-  when(checkpointServiceMock.getPartitioningCheckpoints(0L, 10, 0L, None))
+  when(checkpointServiceMock.getPartitioningCheckpoints(0L, 10, 0L, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
 
   private val checkpointServiceMockLayer = ZLayer.succeed(checkpointServiceMock)
@@ -92,16 +92,16 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
       suite("GetPartitioningCheckpointV2Suite")(
         test("Returns expected CheckpointDTO") {
           for {
-            result <- CheckpointController.getPartitioningCheckpoint(partitioningId1, checkpointV2DTO1.id)
+            result <- CheckpointController.getPartitioningCheckpoint(partitioningId1, checkpointV2DTO1.id, includeProperties = false)
           } yield assertTrue(result.data == checkpointV2DTO1)
         },
         test("Returns expected NotFoundErrorResponse") {
-          assertZIO(CheckpointController.getPartitioningCheckpoint(partitioningId1, checkpointV2DTO2.id).exit)(
+          assertZIO(CheckpointController.getPartitioningCheckpoint(partitioningId1, checkpointV2DTO2.id, includeProperties = false).exit)(
             failsWithA[NotFoundErrorResponse]
           )
         },
         test("Returns expected InternalServerErrorResponse") {
-          assertZIO(CheckpointController.getPartitioningCheckpoint(partitioningId1, checkpointV2DTO3.id).exit)(
+          assertZIO(CheckpointController.getPartitioningCheckpoint(partitioningId1, checkpointV2DTO3.id, includeProperties = false).exit)(
             failsWithA[InternalServerErrorResponse]
           )
         }
@@ -112,7 +112,8 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
             result <- CheckpointController.getPartitioningCheckpoints(
               partitioningId1,
               limit = 10,
-              offset = 0L
+              offset = 0L,
+              includeProperties = false
             )
           } yield assertTrue(
             result.data == Seq(checkpointV2DTO1) && result.pagination == Pagination(10, 0, hasMore = true)
@@ -123,14 +124,15 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
             result <- CheckpointController.getPartitioningCheckpoints(
               partitioningId2,
               limit = 10,
-              offset = 0L
+              offset = 0L,
+              includeProperties = false
             )
           } yield assertTrue(
             result.data == Seq(checkpointV2DTO1) && result.pagination == Pagination(10, 0, hasMore = false)
           )
         },
         test("Returns expected NotFoundErrorResponse when service returns NotFoundServiceError") {
-          assertZIO(CheckpointController.getPartitioningCheckpoints(0L, 10, 0L).exit)(
+          assertZIO(CheckpointController.getPartitioningCheckpoints(0L, 10, 0L, includeProperties = false).exit)(
             failsWithA[NotFoundErrorResponse]
           )
         }
