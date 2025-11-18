@@ -59,7 +59,7 @@ object GetPartitioningAdditionalDataEndpointUnitTests extends ZIOSpecDefault wit
       test("Returns an expected AdditionalDataDTO") {
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/1/additional-data")
-          .response(asJson[SingleSuccessResponse[Map[String, Option[AdditionalDataItemDTO]]]])
+          .response(asJson[SingleSuccessResponse[AdditionalDataDTO.Data]])
 
         val response = request
           .send(backendStub)

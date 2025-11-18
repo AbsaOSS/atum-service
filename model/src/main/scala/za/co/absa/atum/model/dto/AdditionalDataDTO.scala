@@ -20,10 +20,12 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 
 case class AdditionalDataDTO(
-  data: Map[String, Option[AdditionalDataItemDTO]]
+  data: AdditionalDataDTO.Data
 )
 
 object AdditionalDataDTO {
+  type Data = Map[String, Option[AdditionalDataItemDTO]]
+
   implicit val encodeAdditionalDataDTO: Encoder[AdditionalDataDTO] = deriveEncoder
   implicit val decodeAdditionalDataDTO: Decoder[AdditionalDataDTO] = deriveDecoder
 }
