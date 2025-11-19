@@ -70,7 +70,7 @@ object Endpoints extends BaseEndpoints {
 
   val patchPartitioningAdditionalDataEndpoint
     : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
-      Map[String,Option[AdditionalDataItemDTO]]
+      AdditionalDataDTO.Data
     ], Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
@@ -211,7 +211,7 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint(postPartitioningEndpoint, PartitioningController.postPartitioning),
-    createServerEndpoint[Long, ErrorResponse, SingleSuccessResponse[Map[String,Option[AdditionalDataItemDTO]]]](
+    createServerEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data]](
       getPartitioningAdditionalDataEndpoint,
       PartitioningController.getPartitioningAdditionalData
     ),
