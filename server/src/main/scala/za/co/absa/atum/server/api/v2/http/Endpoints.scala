@@ -60,23 +60,23 @@ object Endpoints extends BaseEndpoints {
   }
 
   val getPartitioningAdditionalDataEndpoint
-    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO], Any] = {
+    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO.Data]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   val patchPartitioningAdditionalDataEndpoint
     : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
-      AdditionalDataDTO
+      AdditionalDataDTO.Data
     ], Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .in(jsonBody[AdditionalDataPatchDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO]])
+      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO.Data]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
@@ -211,14 +211,14 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint(postPartitioningEndpoint, PartitioningController.postPartitioning),
-    createServerEndpoint(
+    createServerEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data]](
       getPartitioningAdditionalDataEndpoint,
       PartitioningController.getPartitioningAdditionalData
     ),
     createServerEndpoint[
       (Long, AdditionalDataPatchDTO),
       ErrorResponse,
-      SingleSuccessResponse[AdditionalDataDTO]
+      SingleSuccessResponse[AdditionalDataDTO.Data]
     ](
       patchPartitioningAdditionalDataEndpoint,
       { case (partitioningId: Long, additionalDataPatchDTO: AdditionalDataPatchDTO) =>
