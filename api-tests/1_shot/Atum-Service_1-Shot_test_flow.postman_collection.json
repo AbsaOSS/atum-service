@@ -1,10 +1,10 @@
 {
 	"info": {
-		"_postman_id": "999e0649-a260-41f1-b39d-227cff60cef4",
+		"_postman_id": "1042c76d-f906-4991-a7e3-6093c905f998",
 		"name": "Atum-Service_1-Shot_test_flow",
 		"description": "This collection tests Atum Service basic flow - partitioning, checkpoints, and flows and all related metadata and objects along the way (such as Additional Data, measures, etc).\n\nNote: Since Atum Service doesn't offer deletion APIs / capabilities (for partitionings or checkpoints), we do not create a new partitioning and checkpoints on each test's run. But we want to create (not just always retrieve) these entities occasionally also, to test the creation itself. We chose a solution that is based on day-specific uniqueness, meaning that these tests will create partitioning and checkpoints only once a day, during the first run, and then the subsequent runs would be just retrieving those.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "26450104"
+		"_exporter_id": "43677633"
 	},
 	"item": [
 		{
@@ -248,7 +248,7 @@
 			"name": "Test: create and retrieve partitioning",
 			"item": [
 				{
-					"name": "Act: partitionings (create or retrieve) - 201 or 409",
+					"name": "Act: partitionings (create or retrieve) - 201",
 					"event": [
 						{
 							"listen": "prerequest",
@@ -257,15 +257,16 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						},
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 201 or 409\", function () {",
-									"    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
 									"});",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
@@ -274,30 +275,18 @@
 									"",
 									"pm.test(\"Response body has expected values\", function () {",
 									"    const jsonData = pm.response.json();",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+									"    const expectedAuthor = pm.collectionVariables.get(\"partitioning_author\");",
 									"",
-									"    if (pm.response.code === 201) {",
-									"        pm.test(\"Response has id and status for 201\", function () {",
-									"            const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
-									"            const expectedAuthor = pm.collectionVariables.get(\"partitioning_author\");",
+									"    pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"    pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
 									"",
-									"            pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
-									"            pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
-									"        });",
-									"",
-									"    } else if (pm.response.code === 409) {",
-									"        pm.test(\"Response has error message for 409\", function () {",
-									"            const expectedMsg = ",
-									"                \"Failed to perform 'createPartitioning': \" +",
-									"                \"Exception caused by operation: 'createPartitioning': \" +",
-									"                \"(31) Partitioning already exists\";",
-									"            pm.expect(jsonData[\"message\"]).to.eql(expectedMsg);",
-									"        });",
-									"    };",
 									"});",
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -356,7 +345,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						},
 						{
@@ -366,7 +356,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -481,31 +472,8 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"requests": {},
 						"exec": [
-							"// Get date in format 2025-07-01 (10 chars) - so only once a day partitioning would be created, ",
-							"// otherwise just retrieved so that we don't overwhelm our DB; we don't have DELETE API endpoints.",
-							"const partitioningUniqueValue = \"api_tests_\" + new Date().toISOString().slice(0, 10);",
-							"console.log(`The partitioning unique value being used: ${partitioningUniqueValue}`);",
-							"",
-							"pm.collectionVariables.set(\"partitioning_value__RUNTIME\", partitioningUniqueValue);",
-							"",
-							"const partitioningToUse = [",
-							"    {",
-							"        \"key\": \"partitionForAPITests1\",",
-							"        \"value\": \"firstValue\"",
-							"    },",
-							"    {",
-							"        \"key\": \"partitionForAPITests2\",",
-							"        \"value\": partitioningUniqueValue",
-							"    }",
-							"];",
-							"pm.collectionVariables.set(\"partitioning_as_obj\", partitioningToUse);",
-							"",
-							"const partitioningAuthor = \"apiTest1ShotPartitioning\";",
-							"pm.collectionVariables.set(\"partitioning_author\", partitioningAuthor);",
-							"",
-							"const partitioningAsBase64 = btoa(JSON.stringify(partitioningToUse));",
-							"pm.collectionVariables.set(\"partitioning_as_base64\", partitioningAsBase64);",
 							""
 						]
 					}
@@ -515,6 +483,7 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"requests": {},
 						"exec": [
 							""
 						]
@@ -526,7 +495,7 @@
 			"name": "Test: retrieve ancestors",
 			"item": [
 				{
-					"name": "Act: child partitionings (create or retrieve child) - 201 or 409",
+					"name": "Act: child partitionings (create or retrieve child) - 201",
 					"event": [
 						{
 							"listen": "prerequest",
@@ -535,15 +504,16 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						},
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 201 or 409\", function () {",
-									"    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
 									"});",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
@@ -553,29 +523,18 @@
 									"pm.test(\"Response body has expected values\", function () {",
 									"    const jsonData = pm.response.json();",
 									"",
-									"    if (pm.response.code === 201) {",
-									"        pm.test(\"Response has id and status for 201\", function () {",
-									"            const expectedPartitioning = pm.collectionVariables.get(\"partitioningChild_as_obj\");",
-									"            const expectedAuthor = pm.collectionVariables.get(\"partitioningChild_author\");",
+									"    const expectedPartitioning = pm.collectionVariables.get(\"partitioningChild_as_obj\");",
+									"    const expectedAuthor = pm.collectionVariables.get(\"partitioningChild_author\");",
 									"",
-									"            pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
-									"            pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
-									"        });",
-									"",
-									"    } else if (pm.response.code === 409) {",
-									"        pm.test(\"Response has error message for 409\", function () {",
-									"            const expectedMsg = ",
-									"                \"Failed to perform 'createPartitioning': \" +",
-									"                \"Exception caused by operation: 'createPartitioning': \" +",
-									"                \"(31) Partitioning already exists\";",
-									"            pm.expect(jsonData[\"message\"]).to.eql(expectedMsg);",
-									"        });",
-									"    };",
+									"    pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+									"    pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+									"    ",
 									"});",
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -778,7 +737,15 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"packages": {},
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -831,31 +798,8 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"requests": {},
 						"exec": [
-							"// Get date in format 2025-07-01 (10 chars) - so only once a day partitioningChild would be created, ",
-							"// otherwise just retrieved so that we don't overwhelm our DB; we don't have DELETE API endpoints.",
-							"const partitioningChildUniqueValue = \"api_tests_Child\" + new Date().toISOString().slice(0, 10);",
-							"console.log(`The partitioningChild unique value being used: ${partitioningChildUniqueValue}`);",
-							"",
-							"pm.collectionVariables.set(\"partitioningChild_value__RUNTIME\", partitioningChildUniqueValue);",
-							"",
-							"const partitioningChildToUse = [",
-							"    {",
-							"        \"key\": \"partitionChildForAPITests1\",",
-							"        \"value\": \"firstValue\"",
-							"    },",
-							"    {",
-							"        \"key\": \"partitionChildForAPITests2\",",
-							"        \"value\": partitioningChildUniqueValue",
-							"    }",
-							"];",
-							"pm.collectionVariables.set(\"partitioningChild_as_obj\", partitioningChildToUse);",
-							"",
-							"const partitioningChildAuthor = \"apiTest1ShotpartitioningChild\";",
-							"pm.collectionVariables.set(\"partitioningChild_author\", partitioningChildAuthor);",
-							"",
-							"const partitioningChildAsBase64 = btoa(JSON.stringify(partitioningChildToUse));",
-							"pm.collectionVariables.set(\"partitioningChild_as_base64\", partitioningChildAsBase64);",
 							""
 						]
 					}
@@ -865,6 +809,7 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"requests": {},
 						"exec": [
 							""
 						]
@@ -895,13 +840,21 @@
 									"",
 									"    const jsonData = pm.response.json();",
 									"",
-									"    pm.expect(jsonData[\"data\"][\"data\"]).to.eql(expectedAD);",
+									"    pm.expect(jsonData[\"data\"]).to.eql(expectedAD);",
 									"});",
 									"",
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"packages": {},
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -953,12 +906,13 @@
 									"",
 									"    const jsonData = pm.response.json();",
 									"",
-									"    pm.expect(jsonData[\"data\"][\"data\"]).to.eql(expectedAD);",
+									"    pm.expect(jsonData[\"data\"]).to.eql(expectedAD);",
 									"});",
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -1040,16 +994,15 @@
 			"name": "Test: create and retrieve checkpoints",
 			"item": [
 				{
-					"name": "Act: partitionings / checkpoints (create or retrieve) - 201 or 409",
+					"name": "Act: partitionings / checkpoints (create or retrieve) - 201",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 201 or 409\", function () {",
-									"    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
 									"});",
-									"",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
 									"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
@@ -1058,31 +1011,21 @@
 									"pm.test(\"Response body has expected values\", function () {",
 									"    const jsonData = pm.response.json();",
 									"",
-									"    if (pm.response.code === 201) {",
-									"        pm.test(\"Response has id and status for 201\", function () {",
-									"            const expectedCheckpointId = pm.collectionVariables.get(\"checkpoint_id\");",
-									"            const expectedAuthor = pm.collectionVariables.get(\"checkpoint_author\");",
-									"            const expectedMeasurements = pm.collectionVariables.get(\"measurements_as_obj\");",
+									"    const expectedCheckpointId = pm.collectionVariables.get(\"checkpoint_id\");",
+									"    const expectedAuthor = pm.collectionVariables.get(\"checkpoint_author\");",
+									"    const expectedMeasurements = pm.collectionVariables.get(\"measurements_as_obj\");",
 									"",
-									"            pm.expect(jsonData[\"data\"][\"id\"]).to.eql(expectedCheckpointId);",
-									"            pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
-									"            pm.expect(jsonData[\"data\"][\"measurements\"]).to.eql(expectedMeasurements);",
-									"        });",
-									"",
-									"    } else if (pm.response.code === 409) {",
-									"        pm.test(\"Response has error message for 409\", function () {",
-									"            const expectedMsg = ",
-									"                \"Failed to perform 'saveCheckpoint': \" +",
-									"                \"Exception caused by operation: 'writeCheckpoint': \" +",
-									"                \"(31) Checkpoint already present\";",
-									"            pm.expect(jsonData[\"message\"]).to.eql(expectedMsg);",
-									"        });",
-									"    };",
+									"    pm.expect(jsonData[\"data\"][\"id\"]).to.eql(expectedCheckpointId);",
+									"    pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+									"    pm.expect(jsonData[\"data\"][\"measurements\"]).to.eql(expectedMeasurements);",
+									"    pm.expect(jsonData[\"data\"][\"properties\"][\"prop1\"]).to.eql(\"propVal1\");",
+									"    ",
 									"});",
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -1091,7 +1034,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"id\": \"{{checkpoint_id}}\",\n  \"name\": \"CheckpointAPITest\",\n  \"author\": \"{{checkpoint_author}}\",\n  \"measuredByAtumAgent\": true,\n  \"processStartTime\": \"{{checkpoint_processStartTime}}\",\n  \"measurements\": [\n    {\n      \"measure\": {\n        \"measureName\": \"count\",\n        \"measuredColumns\": [\"*\"]\n      },\n      \"result\": {\n        \"mainValue\": {\n          \"value\": \"123\",\n          \"valueType\": \"Long\"\n        },\n        \"supportValues\": {}\n      }\n    }\n  ]\n}\n"
+							"raw": "{\n  \"id\": \"{{checkpoint_id}}\",\n  \"name\": \"CheckpointAPITest\",\n  \"author\": \"{{checkpoint_author}}\",\n  \"measuredByAtumAgent\": true,\n  \"processStartTime\": \"{{checkpoint_processStartTime}}\",\n  \"measurements\": [\n    {\n      \"measure\": {\n        \"measureName\": \"count\",\n        \"measuredColumns\": [\"*\"]\n      },\n      \"result\": {\n        \"mainValue\": {\n          \"value\": \"123\",\n          \"valueType\": \"Long\"\n        },\n        \"supportValues\": {}\n      }\n    }\n  ],\n  \"properties\": {\n    \"prop1\": \"propVal1\"\n  }\n}\n"
 						},
 						"url": {
 							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints",
@@ -1201,7 +1144,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						},
 						{
@@ -1211,7 +1155,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -1252,7 +1197,7 @@
 					"response": []
 				},
 				{
-					"name": "Act: partitionings / checkpoints (specific checkpoint) - 200",
+					"name": "Act: partitionings / checkpoints (specific checkpoint with properties) - 200",
 					"event": [
 						{
 							"listen": "test",
@@ -1275,7 +1220,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -1290,7 +1236,7 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints/{{checkpoint_id}}",
+							"raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/checkpoints/{{checkpoint_id}}?include-properties=true",
 							"host": [
 								"{{host}}"
 							],
@@ -1301,6 +1247,12 @@
 								"{{partitioning_id}}",
 								"checkpoints",
 								"{{checkpoint_id}}"
+							],
+							"query": [
+								{
+									"key": "include-properties",
+									"value": "true"
+								}
 							]
 						}
 					},
@@ -1372,42 +1324,8 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"requests": {},
 						"exec": [
-							"// Get date in format 2025-07-01 (10 chars) - so only once a day checkpoint would be created, ",
-							"// otherwise just retrieved so that we don't overwhelm our DB, so same principle as for partitioning.",
-							"const checkpointIdSeed = \"api_tests_\" + new Date().toISOString().slice(0, 10);",
-							"",
-							"// Create a simple hash-like string",
-							"const hash = CryptoJS.SHA256(checkpointIdSeed).toString().substring(0, 32);",
-							"",
-							"// Format as UUID-like string",
-							"const checkpointId = hash.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12}).*$/, '$1-$2-$3-$4-$5');",
-							"console.log(`The checkpoint ID being used: ${checkpointId}`);",
-							"",
-							"pm.collectionVariables.set(\"checkpoint_id\", checkpointId);",
-							"",
-							"const measurements = [",
-							"    {",
-							"        \"measure\": {",
-							"            \"measureName\": \"count\",",
-							"            \"measuredColumns\": [\"*\"]",
-							"        },",
-							"        \"result\": {",
-							"            \"mainValue\": {",
-							"                \"value\": \"123\",",
-							"                \"valueType\": \"Long\"",
-							"            },",
-							"            \"supportValues\": {}",
-							"        }",
-							"    }",
-							"];",
-							"pm.collectionVariables.set(\"measurements_as_obj\", measurements);",
-							"",
-							"const checkpointProcessStartTime = new Date().toISOString()",
-							"pm.collectionVariables.set(\"checkpoint_processStartTime\", checkpointProcessStartTime);",
-							"",
-							"const checkpointAuthor = \"apiTest1Shot\"; // todo add Checkpoint",
-							"pm.collectionVariables.set(\"checkpoint_author\", checkpointAuthor);",
 							""
 						]
 					}
@@ -1417,6 +1335,7 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"requests": {},
 						"exec": [
 							""
 						]
@@ -1434,23 +1353,14 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Response Status Code is expected\", function () {",
-									"    if (pm.response.code === 204) {",
-									"        pm.expect(true).to.be.true;",
-									"    } else if (pm.response.code === 500) {",
-									"        pm.test(\"Response has error message for 500, because measure definitions already exist\", function () {",
-									"            const expectedMsg = ",
-									"                \"Failed to perform 'updatePartitioningParent': Operation 'updatePartitioningParent' failed \"",
-									"                \"with unexpected error: ERROR: duplicate key value violates unique constraint \"",
-									"                \"\\\"measure_definitions_unq\\\"\\n  Detail: Key (fk_partitioning, measure_name, measured_columns)\";",
-									"            pm.expect(pm.response.json()[\"message\"]).to.include(expectedMsg);",
-									"        });",
-									"    };",
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
 									"});",
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -1499,6 +1409,7 @@
 									"",
 									"pm.test(\"Response has expected values\", function () {",
 									"    var jsonData = pm.response.json();",
+									"",
 									"    const expectedMeasures = {",
 									"        \"measureName\": \"count\",",
 									"        \"measuredColumns\": [\"*\"]",
@@ -1510,7 +1421,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -1560,12 +1472,13 @@
 									"",
 									"    const jsonData = pm.response.json();",
 									"",
-									"    pm.expect(jsonData[\"data\"][\"data\"]).to.eql(expectedAD);",
+									"    pm.expect(jsonData[\"data\"]).to.eql(expectedAD);",
 									"});",
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -1876,7 +1789,86 @@
 			"script": {
 				"type": "text/javascript",
 				"packages": {},
+				"requests": {},
 				"exec": [
+					"if (!pm.collectionVariables.get(\"partitioning_value__RUNTIME\")) {",
+					"    const partitioningUniqueValue = \"api_tests_\" + Date.now();",
+					"    pm.collectionVariables.set(\"partitioning_value__RUNTIME\", partitioningUniqueValue);",
+					"",
+					"    const partitioningToUse = [",
+					"        { \"key\": \"partitionForAPITests1\", \"value\": \"firstValue\" },",
+					"        { \"key\": \"partitionForAPITests2\", \"value\": partitioningUniqueValue }",
+					"    ];",
+					"    pm.collectionVariables.set(\"partitioning_as_obj\", partitioningToUse);",
+					"",
+					"    const partitioningAuthor = \"apiTest1ShotPartitioning\";",
+					"    pm.collectionVariables.set(\"partitioning_author\", partitioningAuthor);",
+					"",
+					"    const partitioningAsBase64 = btoa(JSON.stringify(partitioningToUse));",
+					"    pm.collectionVariables.set(\"partitioning_as_base64\", partitioningAsBase64);",
+					"}",
+					"",
+					"",
+					"if (!pm.collectionVariables.get(\"partitioningChild_value__RUNTIME\")) {",
+					"  const partitioningChildUniqueValue = \"api_tests_Child\" + Date.now();",
+					"  console.log(`The partitioningChild unique value being used: ${partitioningChildUniqueValue}`);",
+					"",
+					"  pm.collectionVariables.set(\"partitioningChild_value__RUNTIME\", partitioningChildUniqueValue);",
+					"",
+					"  const partitioningChildToUse = [",
+					"    {",
+					"        \"key\": \"partitionChildForAPITests1\",",
+					"        \"value\": \"firstValue\"",
+					"    },",
+					"    {",
+					"        \"key\": \"partitionChildForAPITests2\",",
+					"        \"value\": partitioningChildUniqueValue",
+					"    }",
+					"  ];",
+					"  pm.collectionVariables.set(\"partitioningChild_as_obj\", partitioningChildToUse);",
+					"",
+					"  const partitioningChildAuthor = \"apiTest1ShotpartitioningChild\";",
+					"  pm.collectionVariables.set(\"partitioningChild_author\", partitioningChildAuthor);",
+					"",
+					"  const partitioningChildAsBase64 = btoa(JSON.stringify(partitioningChildToUse));",
+					"  pm.collectionVariables.set(\"partitioningChild_as_base64\", partitioningChildAsBase64);",
+					"}",
+					"",
+					"if (!pm.collectionVariables.get(\"checkpoint_id\")) {",
+					"  const checkpointIdSeed = \"api_tests_\" + Date.now();",
+					"",
+					"  // Create a simple hash-like string",
+					"  const hash = CryptoJS.SHA256(checkpointIdSeed).toString().substring(0, 32);",
+					"",
+					"  // Format as UUID-like string",
+					"  const checkpointId = hash.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12}).*$/, '$1-$2-$3-$4-$5');",
+					"  console.log(`The checkpoint ID being used: ${checkpointId}`);",
+					"",
+					"  pm.collectionVariables.set(\"checkpoint_id\", checkpointId);",
+					"",
+					"  const measurements = [",
+					"    {",
+					"        \"measure\": {",
+					"            \"measureName\": \"count\",",
+					"            \"measuredColumns\": [\"*\"]",
+					"        },",
+					"        \"result\": {",
+					"            \"mainValue\": {",
+					"                \"value\": \"123\",",
+					"                \"valueType\": \"Long\"",
+					"            },",
+					"            \"supportValues\": {}",
+					"        }",
+					"    }",
+					"  ];",
+					"  pm.collectionVariables.set(\"measurements_as_obj\", measurements);",
+					"",
+					"  const checkpointProcessStartTime = new Date().toISOString()",
+					"  pm.collectionVariables.set(\"checkpoint_processStartTime\", checkpointProcessStartTime);",
+					"",
+					"  const checkpointAuthor = \"apiTest1Shot\"; // todo add Checkpoint",
+					"  pm.collectionVariables.set(\"checkpoint_author\", checkpointAuthor);",
+					"}",
 					""
 				]
 			}
@@ -1886,6 +1878,7 @@
 			"script": {
 				"type": "text/javascript",
 				"packages": {},
+				"requests": {},
 				"exec": [
 					""
 				]

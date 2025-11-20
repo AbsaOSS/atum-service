@@ -32,7 +32,10 @@ import zio._
 class GetCheckpointProperties(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
   extends DoobieMultipleResultFunctionWithAggStatus[GetCheckpointPropertiesArgs, GetCheckpointPropertiesResult, Task](
     args => Seq(fr"${args.checkpointId}")
-  ) with StandardStatusHandling with ByFirstRowStatusAggregator
+  ) with StandardStatusHandling with ByFirstRowStatusAggregator {
+
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("property_name", "property_value")
+}
 
 object GetCheckpointProperties {
   case class GetCheckpointPropertiesArgs(checkpointId: UUID)
