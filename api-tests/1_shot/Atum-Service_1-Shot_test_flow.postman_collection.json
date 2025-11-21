@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "1042c76d-f906-4991-a7e3-6093c905f998",
 		"name": "Atum-Service_1-Shot_test_flow",
-		"description": "This collection tests Atum Service basic flow - partitioning, checkpoints, and flows and all related metadata and objects along the way (such as Additional Data, measures, etc).\n\nNote: Since Atum Service doesn't offer deletion APIs / capabilities (for partitionings or checkpoints), we do not create a new partitioning and checkpoints on each test's run. But we want to create (not just always retrieve) these entities occasionally also, to test the creation itself. We chose a solution that is based on day-specific uniqueness, meaning that these tests will create partitioning and checkpoints only once a day, during the first run, and then the subsequent runs would be just retrieving those.",
+		"description": "This collection tests Atum Service basic flow - partitioning, checkpoints, and flows and all related metadata and objects along the way (such as Additional Data, measures, etc).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "43677633"
 	},
