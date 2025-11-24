@@ -15,7 +15,7 @@
 - Newman >= v6 (used for running Postman collections in CLI)
 
 ## Setup
-- Import the Postman collection `Atum-Service_DEV_env.postman_environment.json` into Postman. 
+- Import the Postman collection `Atum-Service_LOCAL_env.postman_environment.json` into Postman. 
   - This file will set up env variables.
 - Import the Postman collections for `1-shot` test:
   - `1_shot/Atum-Service_1-Shot_test_isolated_calls.postman_collection.json`
