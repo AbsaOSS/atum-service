@@ -40,16 +40,16 @@ class AtumContext private[agent] (
 ) {
 
   /**
-   * Returns the current set of measures in the AtumContext.
+   *  Returns the current set of measures in the AtumContext.
    *
-   * @return the current set of measures
+   *  @return the current set of measures
    */
   def currentMeasures: Set[AtumMeasure] = measures
 
   /**
-   * Returns the sub-partition context in the AtumContext.
+   *  Returns the sub-partition context in the AtumContext.
    *
-   * @return the sub-partition context
+   *  @return the sub-partition context
    */
   def subPartitionContext(subPartitions: AtumPartitions): AtumContext = {
     val overlap = atumPartitions.keys.toSet.intersect(subPartitions.keys.toSet)
@@ -68,19 +68,25 @@ class AtumContext private[agent] (
   }
 
   /**
-   * Creates a checkpoint in the AtumContext.
+   *  Creates a checkpoint in the AtumContext.
    *
-   * This method is used to mark a specific point in the data processing pipeline where measurements of data
-   * completeness are taken.
-   * The checkpoint is identified by a name, which can be used later to retrieve the measurements taken at this point.
-   * After the checkpoint is created, the method returns the AtumContext for further operations.
+   *  This method is used to mark a specific point in the data processing pipeline where measurements of data
+   *  completeness are taken.
+   *  The checkpoint is identified by a name, which can be used later to retrieve the measurements taken at this point.
+   *  After the checkpoint is created, the method returns the AtumContext for further operations.
    *
-   * @param checkpointName the name of the checkpoint to be created. This name should be descriptive of the point in
+   *  @param checkpointName the name of the checkpoint to be created. This name should be descriptive of the point in
    *                       the data processing pipeline where the checkpoint is created.
-   * @return the AtumContext after the checkpoint has been created.
+   *  @param dataToMeasure the DataFrame containing the data to be measured at this checkpoint.
+   *  @param properties optional properties to be included in the checkpoint
+   *  @return the AtumContext after the checkpoint has been created.
    *         This allows for method chaining in the data processing pipeline.
    */
-  def createCheckpoint(checkpointName: String, dataToMeasure: DataFrame): AtumContext = {
+  def createCheckpoint(
+    checkpointName: String,
+    dataToMeasure: DataFrame,
+    properties: Option[Map[String, String]] = None
+  ): AtumContext = {
     val startTime = ZonedDateTime.now()
     val measurementDTOs = takeMeasurements(dataToMeasure)
     val endTime = ZonedDateTime.now()
@@ -93,7 +99,8 @@ class AtumContext private[agent] (
       partitioning = atumPartitions.toPartitioningDTO,
       processStartTime = startTime,
       processEndTime = Some(endTime),
-      measurements = measurementDTOs
+      measurements = measurementDTOs,
+      properties = properties
     )
 
     agent.saveCheckpoint(checkpointDTO)
@@ -101,13 +108,18 @@ class AtumContext private[agent] (
   }
 
   /**
-   * Creates a checkpoint with the specified name and provided measurements.
+   *  Creates a checkpoint with the specified name and provided measurements.
    *
-   * @param checkpointName the name of the checkpoint to be created
-   * @param measurements   the measurements to be included in the checkpoint
-   * @return the AtumContext after the checkpoint has been created
+   *  @param checkpointName the name of the checkpoint to be created
+   *  @param measurements   the measurements to be included in the checkpoint
+   *  @param properties     optional properties to be included in the checkpoint
+   *  @return the AtumContext after the checkpoint has been created
    */
-  def createCheckpointOnProvidedData(checkpointName: String, measurements: Map[Measure, MeasureResult]): AtumContext = {
+  def createCheckpointOnProvidedData(
+    checkpointName: String,
+    measurements: Map[Measure, MeasureResult],
+    properties: Option[Map[String, String]] = None
+  ): AtumContext = {
     val dateTimeNow = ZonedDateTime.now()
 
     val checkpointDTO = CheckpointDTO(
@@ -117,7 +129,8 @@ class AtumContext private[agent] (
       partitioning = atumPartitions.toPartitioningDTO,
       processStartTime = dateTimeNow,
       processEndTime = Some(dateTimeNow),
-      measurements = MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements)
+      measurements = MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements),
+      properties = properties
     )
 
     agent.saveCheckpoint(checkpointDTO)
@@ -125,49 +138,49 @@ class AtumContext private[agent] (
   }
 
   /**
-   * Adds additional data to the AtumContext.
+   *  Adds additional data to the AtumContext.
    *
-   * @param key   the key of the additional data
-   * @param value the value of the additional data
+   *  @param key   the key of the additional data
+   *  @param value the value of the additional data
    *
-   * @return the AtumContext after the AD has been dispatched and added
+   *  @return the AtumContext after the AD has been dispatched and added
    */
   def addAdditionalData(key: String, value: String): AtumContext = {
     addAdditionalData(Map(key -> value))
   }
 
   /**
-   * This method creates Additional Data in the agentService and dispatches them into the data store.
+   *  This method creates Additional Data in the agentService and dispatches them into the data store.
    *
-   * @param newAdditionalDataToAdd additional data that will be added into the data store
+   *  @param newAdditionalDataToAdd additional data that will be added into the data store
    *
-   * @return the AtumContext after the AD has been dispatched and added
+   *  @return the AtumContext after the AD has been dispatched and added
    */
   def addAdditionalData(newAdditionalDataToAdd: Map[String, String]): AtumContext = {
     val currAdditionalDataSubmit = AdditionalDataPatchDTO(
       agent.currentUser,
-      newAdditionalDataToAdd,
+      newAdditionalDataToAdd
     )
     val retrievedAD = agent.updateAdditionalData(this.atumPartitions, currAdditionalDataSubmit)
 
     // Could be different from the one that was submitted. Replacing, just to have the most fresh copy possible.
-    this.additionalData = retrievedAD.data.map{ case (k, v) => (k, v.map(_.value)) }
+    this.additionalData = retrievedAD.data.map { case (k, v) => (k, v.map(_.value)) }
     this
   }
 
   /**
-   * Returns the current additional data in the AtumContext.
+   *  Returns the current additional data in the AtumContext.
    *
-   * @return the current additional data
+   *  @return the current additional data
    */
   def currentAdditionalData: AdditionalData = {
     additionalData
   }
 
   /**
-   * Adds a measure to the AtumContext.
+   *  Adds a measure to the AtumContext.
    *
-   * @param newMeasure the measure to be added
+   *  @param newMeasure the measure to be added
    */
   def addMeasure(newMeasure: AtumMeasure): AtumContext = {
     measures = measures + newMeasure
@@ -175,9 +188,9 @@ class AtumContext private[agent] (
   }
 
   /**
-   * Adds multiple measures to the AtumContext.
+   *  Adds multiple measures to the AtumContext.
    *
-   * @param newMeasures set sequence of measures to be added
+   *  @param newMeasures set sequence of measures to be added
    */
   def addMeasures(newMeasures: Set[AtumMeasure]): AtumContext = {
     measures = measures ++ newMeasures
@@ -185,9 +198,9 @@ class AtumContext private[agent] (
   }
 
   /**
-   * Removes a measure from the AtumContext.
+   *  Removes a measure from the AtumContext.
    *
-   * @param measureToRemove the measure to be removed
+   *  @param measureToRemove the measure to be removed
    */
   def removeMeasure(measureToRemove: AtumMeasure): AtumContext = {
     measures = measures - measureToRemove
@@ -216,7 +229,7 @@ object AtumContext {
   }
 
   /**
-   * Implicit class to add a method to DataFrame to create a checkpoint.
+   *  Implicit class to add a method to DataFrame to create a checkpoint.
    */
   implicit class DatasetWrapper(df: DataFrame) {
 

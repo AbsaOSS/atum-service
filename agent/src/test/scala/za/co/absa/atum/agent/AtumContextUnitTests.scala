@@ -61,8 +61,10 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(atumContextRemoved.currentMeasures.isEmpty)
   }
 
-  "createCheckpoint" should "take measurements and create a Checkpoint" in {
+  "createCheckpoint" should "take measurements and create a Checkpoint; including it's properties" in {
     val mockAgent = mock(classOf[AtumAgent])
+
+    val checkpointProperties = Some(Map("prop1" -> "val1", "prop2" -> "val2"))
 
     val authorTest = "authorTest"
     when(mockAgent.currentUser).thenReturn(authorTest)
@@ -83,7 +85,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     val rdd = spark.sparkContext.parallelize(Seq("A", "B", "C"))
     val df = rdd.toDF("letter")
 
-    atumContext.createCheckpoint("testCheckpoint", df)
+    atumContext.createCheckpoint("testCheckpoint", df, checkpointProperties)
 
     val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
@@ -93,10 +95,13 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(value.partitioning == atumPartitions.toPartitioningDTO)
     assert(value.measurements.head.result.mainValue.value == "3")
     assert(value.measurements.head.result.mainValue.valueType == ResultValueType.LongValue)
+    assert(value.properties == checkpointProperties)
   }
 
-  "createCheckpointOnProvidedData" should "create a Checkpoint on provided data" in {
+  "createCheckpointOnProvidedData" should "create a Checkpoint on provided data; including it's properties" in {
     val mockAgent = mock(classOf[AtumAgent])
+
+    val checkpointProperties = Some(Map("prop1" -> "val1", "prop2" -> "val2"))
 
     val authorTest = "authorTest"
     when(mockAgent.currentUser).thenReturn(authorTest)
@@ -111,7 +116,8 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     )
 
     atumContext.createCheckpointOnProvidedData(
-      checkpointName = "name", measurements = measurements)
+      checkpointName = "name", measurements = measurements, properties = checkpointProperties
+    )
 
     val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
     verify(mockAgent).saveCheckpoint(argument.capture())
@@ -123,6 +129,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     assert(value.partitioning == atumPartitions.toPartitioningDTO)
     assert(value.processStartTime == value.processEndTime.get)
     assert(value.measurements == MeasurementBuilder.buildAndValidateMeasurementsDTO(measurements))
+    assert(value.properties == checkpointProperties)
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
