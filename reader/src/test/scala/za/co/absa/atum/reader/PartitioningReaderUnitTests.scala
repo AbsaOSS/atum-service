@@ -102,6 +102,74 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
     assert(result == Right(expected))
   }
 
+  test("The partitioning checkpoints are properly queried and delivered as DTO, including properties") {
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings)) =>
+          assert(r.uri.querySegments.contains(KeyValue("partitioning", partitioningEncoded)))
+          Response.ok(partitioningResponse)
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings, "7", V2Paths.Checkpoints)) =>
+          assert(r.uri.querySegments.contains(KeyValue("offset", "0")))
+          assert(r.uri.querySegments.contains(KeyValue("limit", "10")))
+          assert(r.uri.querySegments.contains(KeyValue("include-properties", "true")))
+          Response.ok(checkpointsResponseWithProperties)
+      }
+
+    val atumPartitions: AtumPartitions = AtumPartitions(List(
+      "a" -> "b",
+      "c" -> "d"
+    ))
+    val expected: PaginatedResponse[CheckpointV2DTO] = PaginatedResponse(
+      data = Seq(
+        CheckpointV2DTO(
+          id = UUID.fromString("51ee4257-0842-4d28-8779-8ecb19ae7bf0"),
+          name = "Test checkpoints 1",
+          author = "Jason Bourne",
+          measuredByAtumAgent = true,
+          processStartTime = ZonedDateTime.parse("2024-12-30T16:01:36.5042011+01:00[Europe/Budapest]"),
+          processEndTime = Some(ZonedDateTime.parse("2024-12-30T16:01:36.5052109+01:00[Europe/Budapest]")),
+          measurements = Set(
+            MeasurementDTO(
+              measure = MeasureDTO(
+                measureName = "Fictional",
+                measuredColumns = Seq("x", "y", "z")
+              ),
+              result = MeasureResultDTO(
+                mainValue = TypedValue("1", ResultValueType.LongValue),
+              )
+            )
+          ),
+          properties = Some(Map(
+            "prop1" -> "value1",
+            "prop2" -> "value2"
+          ))
+        ),
+        CheckpointV2DTO(
+          id = UUID.fromString("8b7f603e-3fc3-474f-aced-a7af054589a2"),
+          name = "Test checkpoints 2",
+          author = "John McClane",
+          measuredByAtumAgent = true,
+          processStartTime = ZonedDateTime.parse("2024-12-30T16:02:36.5042011+01:00[Europe/Budapest]"),
+          processEndTime = None,
+          measurements = Set(),
+          properties = Some(Map(
+            "prop1" -> "value3"
+          ))
+        )
+      ),
+      pagination = Pagination(
+        limit = 10,
+        offset = 0,
+        hasMore = false
+      ),
+      requestId = UUID.fromString("29ce91a7-b668-41d2-a160-26402551fb0b")
+    )
+
+    val reader = PartitioningReader(atumPartitions)
+    val result = reader.getCheckpointsPage(includeProperties = true)
+    assert(result == Right(expected))
+  }
+
   test("The partitioning checkpoints are properly queried including name and delivered as DTO") {
     implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
       .whenRequestMatchesPartial {
@@ -267,6 +335,65 @@ object PartitioningReaderUnitTests {
       |  "requestId" : "29ce91a7-b668-41d2-a160-26402551fb0b"
       |}
       |
+      |""".stripMargin
+
+  private val checkpointsResponseWithProperties =
+    """
+      |{
+      |  "data" : [
+      |    {
+      |      "id" : "51ee4257-0842-4d28-8779-8ecb19ae7bf0",
+      |      "name" : "Test checkpoints 1",
+      |      "author" : "Jason Bourne",
+      |      "measuredByAtumAgent" : true,
+      |      "processStartTime" : "2024-12-30T16:01:36.5042011+01:00[Europe/Budapest]",
+      |      "processEndTime" : "2024-12-30T16:01:36.5052109+01:00[Europe/Budapest]",
+      |      "measurements" : [
+      |        {
+      |          "measure" : {
+      |            "measureName" : "Fictional",
+      |            "measuredColumns" : [
+      |              "x",
+      |              "y",
+      |              "z"
+      |            ]
+      |          },
+      |          "result" : {
+      |            "mainValue" : {
+      |              "value" : "1",
+      |              "valueType" : "Long"
+      |            },
+      |            "supportValues" : {
+      |            }
+      |          }
+      |        }
+      |      ],
+      |      "properties": {
+      |        "prop1": "value1",
+      |        "prop2": "value2"
+      |      }
+      |    },
+      |    {
+      |      "id" : "8b7f603e-3fc3-474f-aced-a7af054589a2",
+      |      "name" : "Test checkpoints 2",
+      |      "author" : "John McClane",
+      |      "measuredByAtumAgent" : true,
+      |      "processStartTime" : "2024-12-30T16:02:36.5042011+01:00[Europe/Budapest]",
+      |      "processEndTime" : null,
+      |      "measurements" : [
+      |      ],
+      |      "properties": {
+      |        "prop1": "value3"
+      |      }
+      |    }
+      |  ],
+      |  "pagination" : {
+      |    "limit" : 10,
+      |    "offset" : 0,
+      |    "hasMore" : false
+      |  },
+      |  "requestId" : "29ce91a7-b668-41d2-a160-26402551fb0b"
+      |}
       |""".stripMargin
 
   private val additionalDataResponse =

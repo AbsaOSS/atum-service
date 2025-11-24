@@ -30,6 +30,7 @@ import za.co.absa.atum.model.envelopes.Pagination
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 import za.co.absa.atum.reader.FlowReaderUnitTests._
+import za.co.absa.atum.reader.PartitioningReaderUnitTests.checkpointsResponseWithProperties
 import za.co.absa.atum.reader.server.ServerConfig
 
 import java.time.ZonedDateTime
@@ -195,6 +196,87 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     assert(result == Right(expectedData))
   }
 
+  test("The flow checkpoints are properly queried with name and delivered as DTO, including properties") {
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List("partitionings")) =>
+          assert(r.uri.querySegments.contains(KeyValue("partitioning", partitioningEncoded)))
+          Response.ok(partitioningResponse)
+        case r if r.uri.path.endsWith(List("partitionings", "7", "main-flow")) =>
+          Response.ok(flowResponse)
+        case r if r.uri.path.endsWith(List("checkpoints")) =>
+          assert(r.uri.querySegments.contains(KeyValue("offset", "0")))
+          assert(r.uri.querySegments.contains(KeyValue("limit", "10")))
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-name", "Test checkpoints 1")))
+          assert(r.uri.querySegments.contains(KeyValue("include-properties", "true")))
+          Response.ok(checkpointsResponseWithProperties)
+      }
+
+    val atumPartitions: AtumPartitions = AtumPartitions(List(
+      "a" -> "b",
+      "c" -> "d"
+    ))
+    val expectedData: PaginatedResponse[CheckpointWithPartitioningDTO] = PaginatedResponse(
+      data = Seq(
+        CheckpointWithPartitioningDTO(
+          id = UUID.fromString("51ee4257-0842-4d28-8779-8ecb19ae7bf0"),
+          name = "Test checkpoints 1",
+          author = "Jason Bourne",
+          measuredByAtumAgent = true,
+          processStartTime = ZonedDateTime.parse("2024-12-30T16:01:36.5042011+01:00[Europe/Budapest]"),
+          processEndTime = Some(ZonedDateTime.parse("2024-12-30T16:01:36.5052109+01:00[Europe/Budapest]")),
+          measurements = Set(
+            MeasurementDTO(
+              measure = MeasureDTO(
+                measureName = "Fictional",
+                measuredColumns = Seq("x", "y", "z")
+              ),
+              result = MeasureResultDTO(
+                mainValue = TypedValue("1", ResultValueType.LongValue),
+              )
+            )
+          ),
+          partitioning = PartitioningWithIdDTO(
+            id = 7,
+            atumPartitions.toPartitioningDTO,
+            author = "James Bond"
+          ),
+          properties = Some(Map(
+            "prop1" -> "value1",
+            "prop2" -> "value2"
+          ))
+        ),
+        CheckpointWithPartitioningDTO(
+          id = UUID.fromString("8b7f603e-3fc3-474f-aced-a7af054589a2"),
+          name = "Test checkpoints 2",
+          author = "John McClane",
+          measuredByAtumAgent = true,
+          processStartTime = ZonedDateTime.parse("2024-12-30T16:02:36.5042011+01:00[Europe/Budapest]"),
+          processEndTime = None,
+          measurements = Set(),
+          partitioning = PartitioningWithIdDTO(
+            id = 7,
+            atumPartitions.toPartitioningDTO,
+            author = "James Bond"
+          ),
+          properties = Some(Map(
+            "prop1" -> "value3"
+          ))
+        )
+      ),
+      pagination = Pagination(
+        limit = 10,
+        offset = 0,
+        hasMore = false
+      ),
+      requestId = UUID.fromString("29ce91a7-b668-41d2-a160-26402551fb0b")
+    )
+
+    val reader = FlowReader(atumPartitions)
+    val result = reader.getCheckpointsOfNamePage("Test checkpoints 1", includeProperties = true)
+    assert(result == Right(expectedData))
+  }
+
   test("Instantiate FlowReader with implicit arguments passed explicitly") {
     val atumPartitions: AtumPartitions = AtumPartitions(List(
       "a" -> "b",
@@ -326,4 +408,90 @@ object FlowReaderUnitTests {
       |  "requestId" : "29ce91a7-b668-41d2-a160-26402551fb0b"
       |}
       |""".stripMargin
+
+  private val checkpointsResponseWithProperties =
+    """
+      |{
+      |  "data" : [
+      |    {
+      |      "id" : "51ee4257-0842-4d28-8779-8ecb19ae7bf0",
+      |      "name" : "Test checkpoints 1",
+      |      "author" : "Jason Bourne",
+      |      "measuredByAtumAgent" : true,
+      |      "processStartTime" : "2024-12-30T16:01:36.5042011+01:00[Europe/Budapest]",
+      |      "processEndTime" : "2024-12-30T16:01:36.5052109+01:00[Europe/Budapest]",
+      |      "measurements" : [
+      |        {
+      |          "measure" : {
+      |            "measureName" : "Fictional",
+      |            "measuredColumns" : [
+      |              "x",
+      |              "y",
+      |              "z"
+      |            ]
+      |          },
+      |          "result" : {
+      |            "mainValue" : {
+      |              "value" : "1",
+      |              "valueType" : "Long"
+      |            },
+      |            "supportValues" : { }
+      |          }
+      |        }
+      |      ],
+      |      "properties": {
+      |        "prop1": "value1",
+      |        "prop2": "value2"
+      |      },
+      |      "partitioning" : {
+      |        "id" : 7,
+      |        "partitioning" : [
+      |          {
+      |            "key" : "a",
+      |            "value" : "b"
+      |          },
+      |          {
+      |            "key" : "c",
+      |            "value" : "d"
+      |          }
+      |        ],
+      |        "author" : "James Bond"
+      |      }
+      |    },
+      |    {
+      |      "id" : "8b7f603e-3fc3-474f-aced-a7af054589a2",
+      |      "name" : "Test checkpoints 2",
+      |      "author" : "John McClane",
+      |      "measuredByAtumAgent" : true,
+      |      "processStartTime" : "2024-12-30T16:02:36.5042011+01:00[Europe/Budapest]",
+      |      "processEndTime" : null,
+      |      "measurements" : [ ],
+      |      "properties": {
+      |        "prop1": "value3"
+      |      },
+      |      "partitioning" : {
+      |        "id" : 7,
+      |        "partitioning" : [
+      |          {
+      |            "key" : "a",
+      |            "value" : "b"
+      |          },
+      |          {
+      |            "key" : "c",
+      |            "value" : "d"
+      |          }
+      |        ],
+      |        "author" : "James Bond"
+      |      }
+      |    }
+      |  ],
+      |  "pagination" : {
+      |    "limit" : 10,
+      |    "offset" : 0,
+      |    "hasMore" : false
+      |  },
+      |  "requestId" : "29ce91a7-b668-41d2-a160-26402551fb0b"
+      |}
+      |""".stripMargin
+
 }
