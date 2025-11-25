@@ -203,4 +203,36 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     assert(atumContext.currentAdditionalData == expectedAdditionalData)
   }
+
+  "DatasetWrapper.createCheckpoint" should "create a checkpoint with properties" in {
+    val spark = SparkSession.builder().master("local").appName("test").getOrCreate()
+    import spark.implicits._
+
+    val df = Seq((1, "a"), (2, "b")).toDF("id", "value")
+    var capturedCheckpoint: Option[CheckpointDTO] = None
+
+    // Mock AtumAgent to capture the checkpoint
+    val mockAgent = new za.co.absa.atum.agent.AtumAgent {
+      override val dispatcher = null
+      override private[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
+        capturedCheckpoint = Some(checkpoint)
+      }
+    }
+
+    val atumPartitions = AtumPartitions("key" -> "val")
+
+    implicit val atumContext: AtumContext = new AtumContext(
+      atumPartitions = atumPartitions,
+      agent = mockAgent
+    )
+
+    val properties = Some(Map("prop1" -> "value1", "prop2" -> "value2"))
+
+    import AtumContext._
+    df.createCheckpoint("testCheckpoint", properties)
+
+    capturedCheckpoint should not be empty
+    capturedCheckpoint.get.name shouldBe "testCheckpoint"
+    capturedCheckpoint.get.properties shouldBe properties
+  }
 }
