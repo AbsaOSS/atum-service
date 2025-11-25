@@ -236,11 +236,14 @@ object AtumContext {
     /**
      *  Set a point in the pipeline to execute calculation and store it.
      *  @param checkpointName The key assigned to this checkpoint
+     *  @param properties optional properties to be included in the checkpoint
      *  @param atumContext Contains the calculations to be done and publish the result
      *  @return
      */
-    def createCheckpoint(checkpointName: String)(implicit atumContext: AtumContext): DataFrame = {
-      atumContext.createCheckpoint(checkpointName, df)
+    def createCheckpoint(checkpointName: String, properties: Option[Map[String, String]] = None)(
+      implicit atumContext: AtumContext
+    ): DataFrame = {
+      atumContext.createCheckpoint(checkpointName, df, properties)
       df
     }
 
