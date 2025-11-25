@@ -20,4 +20,5 @@ object QueryParamNames {
   final val Limit = "limit"
   final val Offset = "offset"
   final val CheckpointName = "checkpoint-name"
+  final val IncludeProperties = "include-properties"
 }
