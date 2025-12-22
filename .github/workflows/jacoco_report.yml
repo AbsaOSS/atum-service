@@ -46,12 +46,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           persist-credentials: false
 
       - name: Setup Scala
-        uses: olafurpg/setup-scala@v14
+        uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
         with:
           java-version: 'adopt@1.8'
 
@@ -62,7 +62,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@v2
+        uses: MoranaApps/jacoco-report@54bfe284d1119dc917dddba80517c54c5bcf3627
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
@@ -99,12 +99,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           persist-credentials: false
 
       - name: Setup Scala
-        uses: olafurpg/setup-scala@v14
+        uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
         with:
           java-version: "adopt@1.11.0-11"
 
@@ -118,7 +118,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@v2
+        uses: MoranaApps/jacoco-report@54bfe284d1119dc917dddba80517c54c5bcf3627
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
