@@ -27,13 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           persist-credentials: false
 
       - name: Filename Inspector
         id: scan-test-files
-        uses: AbsaOSS/filename-inspector@v0.1.0
+        uses: AbsaOSS/filename-inspector@355108975e656fac9faaa04209b6df3f9997c8fa
         with:
           name-patterns: '*UnitTests.*,*IntegrationTests.*,*CompatibilityTests.*'
           paths: '**/src/test/scala/**'

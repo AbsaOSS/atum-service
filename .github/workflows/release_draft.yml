@@ -29,18 +29,19 @@ jobs:
   release-draft:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-python@v5.1.1
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: '3.11'
 
       - name: Check format of received tag
         id: check-version-tag
-        uses: AbsaOSS/version-tag-check@v0.3.0
+        uses: AbsaOSS/version-tag-check@36496be76eab24e1f14d45d3b8292311a2aebaaa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -50,7 +51,7 @@ jobs:
       - name: Check format of received from tag
         if: ${{ github.event.inputs.from-tag-name }}
         id: check-version-from-tag
-        uses: AbsaOSS/version-tag-check@v0.3.0
+        uses: AbsaOSS/version-tag-check@36496be76eab24e1f14d45d3b8292311a2aebaaa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -60,7 +61,7 @@ jobs:
 
       - name: Generate release notes
         id: generate_release_notes
-        uses: AbsaOSS/generate-release-notes@v1
+        uses: AbsaOSS/generate-release-notes@b90223510d1704301a36a36f0d86a72a0e72f0cf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -90,7 +91,7 @@ jobs:
           hierarchy: true
 
       - name: Create and Push Tag
-        uses: actions/github-script@v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const tag = core.getInput('tag-name')
@@ -109,7 +110,7 @@ jobs:
           tag-name: ${{ github.event.inputs.tag-name }}
 
       - name: Create draft release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
