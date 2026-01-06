@@ -41,17 +41,6 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.Checkpoints}")
 
   private val getPartitioningIdEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
-  private def createAdditionalDataEndpoint(partitioningId: Long): Uri =
-    Uri.unsafeParse(
-      s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.AdditionalData}"
-    )
-  private val postPartitioningEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
-  private def createGetPartitioningMeasuresEndpoint(partitioningId: Long) = Uri.unsafeParse(
-    s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.Measures}"
-  )
-  private def createGetPartitioningAdditionalDataEndpoint(partitioningId: Long) = Uri.unsafeParse(
-    s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.AdditionalData}"
-  )
 
   private val commonAtumRequest = basicRequest
     .header("Content-Type", "application/json")
@@ -59,25 +48,18 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
   private[dispatcher] val backend: SttpBackend[Identity, capabilities.WebSockets] = OkHttpSyncBackend()
 
-  logInfo("using http dispatcher")
-  logInfo(s"serverUrl $serverUrl")
-
   /**
    *  This method is used to get the partitioning ID from the server.
    *  @param partitioning: Partitioning to obtain ID for.
-   *  @return Option[Long] ID of the partitioning.
+   *  @return Long ID of the partitioning.
    */
-  private[dispatcher] def getPartitioningId(partitioning: PartitioningDTO): Option[Long] = {
+  private[dispatcher] def getPartitioningId(partitioning: PartitioningDTO): Long = {
     val encodedPartitioning = partitioning.asBase64EncodedJsonString
     val request = commonAtumRequest.get(getPartitioningIdEndpoint.addParam("partitioning", encodedPartitioning))
 
     val response = backend.send(request)
 
-    response.code.code match {
-      case 404 => None
-      case _ =>
-        Some(handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data.id)
-    }
+    handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data.id
   }
 
   private[dispatcher] def getPartitioning(partitioning: PartitioningDTO): Option[PartitioningWithIdDTO] = {
@@ -92,14 +74,14 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     }
   }
 
-  // should be probably renamed, suggestions welcomed :)
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    val parentPartitioningIdOpt = partitioning.parentPartitioning.flatMap(getPartitioningId)
+    val parentPartitioningIdOpt = partitioning.parentPartitioning.map(getPartitioningId)
     val partitioningWithIdOpt = getPartitioning(partitioning.partitioning)
 
     val newPartitioningWithIdDTO = partitioningWithIdOpt.getOrElse {
+      val endpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
       val request = commonAtumRequest
-        .post(postPartitioningEndpoint)
+        .post(endpoint)
         .body(
           PartitioningSubmitV2DTO(
             partitioning.partitioning,
@@ -112,13 +94,19 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     }
 
     val measures = {
-      val req = commonAtumRequest.get(createGetPartitioningMeasuresEndpoint(newPartitioningWithIdDTO.id))
+      val endpoint = Uri.unsafeParse(
+        s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/${newPartitioningWithIdDTO.id}/${ApiPaths.V2Paths.Measures}"
+      )
+      val req = commonAtumRequest.get(endpoint)
       val resp = backend.send(req)
       handleResponseBody(resp).as[MultiSuccessResponse[MeasureDTO]].data.toSet
     }
 
     val additionalData = {
-      val req = commonAtumRequest.get(createGetPartitioningAdditionalDataEndpoint(newPartitioningWithIdDTO.id))
+      val endpoint = Uri.unsafeParse(
+        s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/${newPartitioningWithIdDTO.id}/${ApiPaths.V2Paths.AdditionalData}"
+      )
+      val req = commonAtumRequest.get(endpoint)
       val resp = backend.send(req)
       handleResponseBody(resp)
         .as[SingleSuccessResponse[AdditionalDataDTO.Data]]
@@ -156,8 +144,12 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     val partitioningId = getPartitioningId(partitioning)
     log.debug(s"Got partitioning ID: '$partitioningId'")
 
+    val endpoint = Uri.unsafeParse(
+      s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.AdditionalData}"
+    )
+
     val request = commonAtumRequest
-      .patch(createAdditionalDataEndpoint(partitioningId.get))
+      .patch(endpoint)
       .body(additionalDataPatchDTO.asJsonString)
 
     val response = backend.send(request)
