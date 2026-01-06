@@ -36,7 +36,9 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   private val apiV1 = s"/${ApiPaths.Api}/${ApiPaths.V1}"
   private val apiV2 = s"/${ApiPaths.Api}/${ApiPaths.V2}"
 
-  private val createCheckpointEndpoint = Uri.unsafeParse(s"$serverUrl$apiV1/${ApiPaths.V1Paths.CreateCheckpoint}")
+  private val createCheckpointEndpointV1 = Uri.unsafeParse(s"$serverUrl$apiV1/${ApiPaths.V1Paths.CreateCheckpoint}")
+  private def createCheckpointEndpointV2(partitioningId: Long) =
+    Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.Checkpoints}")
 
   private val getPartitioningIdEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
   private def createAdditionalDataEndpoint(partitioningId: Long): Uri =
@@ -132,13 +134,19 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   }
 
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    val request = commonAtumRequest
-      .post(createCheckpointEndpoint)
-      .body(checkpoint.asJsonString)
+    getPartitioningId(checkpoint.partitioning).fold {
+      throw HttpException(
+        400,
+        s"Bad request: Related partitioning was not found for checkpoint: ${checkpoint.partitioning.asJsonString}"
+      )
+    } { id =>
+      val request = commonAtumRequest
+        .post(createCheckpointEndpointV2(id))
+        .body(checkpoint.asJsonString)
 
-    val response = backend.send(request)
-
-    handleResponseBody(response)
+      val response = backend.send(request)
+      handleResponseBody(response)
+    }
   }
 
   override protected[agent] def updateAdditionalData(
