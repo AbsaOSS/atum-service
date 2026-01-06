@@ -22,6 +22,7 @@ import sttp.capabilities
 import sttp.client3._
 import sttp.model.Uri
 import sttp.client3.okhttp.OkHttpSyncBackend
+import sttp.model.StatusCode
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.ApiPaths
 import za.co.absa.atum.model.dto._
@@ -33,12 +34,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
   private val serverUrl: String = config.getString(UrlKey)
 
-  private val apiV1 = s"/${ApiPaths.Api}/${ApiPaths.V1}"
   private val apiV2 = s"/${ApiPaths.Api}/${ApiPaths.V2}"
-
-  private val createCheckpointEndpointV1 = Uri.unsafeParse(s"$serverUrl$apiV1/${ApiPaths.V1Paths.CreateCheckpoint}")
-  private def createCheckpointEndpointV2(partitioningId: Long) =
-    Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.Checkpoints}")
 
   private val getPartitioningIdEndpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
 
@@ -68,8 +64,8 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
     val response = backend.send(request)
 
-    response.code.code match {
-      case 404 => None
+    response.code match {
+      case StatusCode.NotFound => None
       case _ => Some(handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data)
     }
   }
@@ -122,19 +118,28 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   }
 
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
-    getPartitioningId(checkpoint.partitioning).fold {
-      throw HttpException(
-        400,
-        s"Bad request: Related partitioning was not found for checkpoint: ${checkpoint.partitioning.asJsonString}"
-      )
-    } { id =>
-      val request = commonAtumRequest
-        .post(createCheckpointEndpointV2(id))
-        .body(checkpoint.asJsonString)
+    val partitioningId = getPartitioningId(checkpoint.partitioning)
 
-      val response = backend.send(request)
-      handleResponseBody(response)
-    }
+    val checkpointV2DTO = CheckpointV2DTO(
+      id = checkpoint.id,
+      name = checkpoint.name,
+      author = checkpoint.author,
+      measuredByAtumAgent = checkpoint.measuredByAtumAgent,
+      processStartTime = checkpoint.processStartTime,
+      processEndTime = checkpoint.processEndTime,
+      measurements = checkpoint.measurements,
+      properties = checkpoint.properties
+    )
+
+    val endpoint = Uri.unsafeParse(
+      s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$partitioningId/${ApiPaths.V2Paths.Checkpoints}"
+    )
+    val request = commonAtumRequest
+      .post(endpoint)
+      .body(checkpointV2DTO.asJsonString)
+
+    val response = backend.send(request)
+    handleResponseBody(response)
   }
 
   override protected[agent] def updateAdditionalData(
