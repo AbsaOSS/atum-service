@@ -47,7 +47,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   /**
    *  This method is used to get the partitioning ID from the server.
    *  @param partitioning: Partitioning to obtain ID for.
-   *  @return Option[Long] ID of the partitioning.
+   *  @return Long ID of the partitioning.
    */
   private[dispatcher] def getPartitioningId(partitioning: PartitioningDTO): Long = {
     val encodedPartitioning = partitioning.asBase64EncodedJsonString
