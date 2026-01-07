@@ -56,14 +56,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(1L, additionalDataPatchDTO1)))
     .thenReturn(
-      ZIO.right(
-        Seq(
-          Row(
-            FunctionStatus(11, "Additional data have been updated, added or both"),
-            Option.empty[AdditionalDataItemFromDB]
-          )
-        )
-      )
+      ZIO.right(Seq.empty)
     )
   when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(0L, additionalDataPatchDTO1)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
@@ -101,7 +94,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
 
   when(getPartitioningAdditionalDataMock.apply(1L)).thenReturn(
-    ZIO.right(Seq(Row(FunctionStatus(0, "success"), Some(AdditionalDataItemFromDB("key", Some("value"), "author")))))
+    ZIO.right(Seq(Row(FunctionStatus(0, "success"), AdditionalDataItemFromDB("key", Some("value"), "author"))))
   )
   when(getPartitioningAdditionalDataMock.apply(2L)).thenReturn(ZIO.fail(new Exception("boom!")))
   when(getPartitioningAdditionalDataMock.apply(3L)).thenReturn(

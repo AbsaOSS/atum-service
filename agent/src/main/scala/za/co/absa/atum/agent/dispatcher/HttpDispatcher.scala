@@ -74,7 +74,10 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     val parentPartitioningIdOpt = partitioning.parentPartitioning.map(getPartitioningId)
     val partitioningWithIdOpt = getPartitioning(partitioning.partitioning)
 
+
+
     val newPartitioningWithIdDTO = partitioningWithIdOpt.getOrElse {
+      println("inside creating new partitioning")
       val endpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
       val request = commonAtumRequest
         .post(endpoint)
@@ -104,16 +107,19 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       )
       val req = commonAtumRequest.get(endpoint)
       val resp = backend.send(req)
+
+      println(s"additional-data: ${resp.body}") // Getting Left(Internal Server Error) here - need to debug on server side
+
       handleResponseBody(resp)
-        .as[SingleSuccessResponse[AdditionalDataDTO.Data]]
-        .data
-        .map(item => item._1 -> item._2.map(_.value))
+        .as[MultiSuccessResponse[AdditionalDataItemV2DTO]]
+//        .data
+//        .map(item => item._1 -> item._2.map(_.value))
     }
 
     AtumContextDTO(
       partitioning = newPartitioningWithIdDTO.partitioning,
       measures = measures,
-      additionalData = additionalData
+      additionalData = additionalData.data.map(item => item.key -> item.value).toMap
     )
   }
 
@@ -159,7 +165,14 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
     val response = backend.send(request)
 
-    handleResponseBody(response).as[SingleSuccessResponse[AdditionalDataDTO]].data
+    val data: AdditionalDataDTO.Data = handleResponseBody(response).as[MultiSuccessResponse[AdditionalDataItemV2DTO]]
+      .data
+      .map( item => item.value match {
+        case Some(_) => item.key -> Some(AdditionalDataItemDTO(item.value.get, item.author))
+        case None => item.key -> None
+      })
+
+    AdditionalDataDTO(data)
   }
 
   private def handleResponseBody(response: Response[Either[String, String]]): String = {

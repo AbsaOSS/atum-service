@@ -126,7 +126,7 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
     val result = AdditionalDataDTO(
       additionalDataPatchDTO.data.map { case (key, value) =>
         key -> Some(AdditionalDataItemDTO(value, additionalDataPatchDTO.byUser))
-      }
+      }.toSeq
     )
 
     captureFunctionCall((partitioning, additionalDataPatchDTO), result)

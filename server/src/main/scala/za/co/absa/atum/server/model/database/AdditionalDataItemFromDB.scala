@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.model.database
 
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO}
 
 case class AdditionalDataItemFromDB(
   adName: String,
@@ -25,16 +25,26 @@ case class AdditionalDataItemFromDB(
 )
 
 object AdditionalDataItemFromDB {
-  def additionalDataFromDBItems(dbItems: Seq[Option[AdditionalDataItemFromDB]]): AdditionalDataDTO = {
-    AdditionalDataDTO(
-      dbItems.flatten
-        .map(item =>
-          item.adValue match {
-            case Some(value) => item.adName -> Some(AdditionalDataItemDTO(value, item.author))
-            case None => item.adName -> None
-          }
-        )
-        .toMap
+//  def additionalDataFromDBItems(dbItems: Seq[AdditionalDataItemFromDB]): AdditionalDataDTO = {
+//    AdditionalDataDTO(
+//      dbItems
+//        .map(item =>
+//          item.adValue match {
+//            case Some(value) => item.adName -> Some(AdditionalDataItemDTO(value, item.author))
+//            case None => item.adName -> None
+//          }
+//        )
+////        .toMap
+//    )
+//  }
+
+  def toSeqAdditionalDataItemV2DTO(dbItems: Seq[AdditionalDataItemFromDB]): Seq[AdditionalDataItemV2DTO] = {
+    dbItems.map(item =>
+      AdditionalDataItemV2DTO(
+        key = item.adName,
+        value = item.adValue,
+        author = item.author
+      )
     )
   }
 }
