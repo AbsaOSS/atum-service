@@ -46,7 +46,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMockV2.getPartitioningAdditionalData(1L))
-    .thenReturn(ZIO.succeed(additionalDataDTO1))
+    .thenReturn(ZIO.succeed(_additionalDataDTO1))
   when(partitioningServiceMockV2.getPartitioningAdditionalData(2L))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
   when(partitioningServiceMockV2.getPartitioningAdditionalData(3L))

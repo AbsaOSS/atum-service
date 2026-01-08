@@ -21,7 +21,7 @@ import io.circe.{Decoder, Encoder}
 
 case class AdditionalDataItemDTO(
   value: String,
-  author: String
+  author: Option[String]
 )
 
 object AdditionalDataItemDTO {

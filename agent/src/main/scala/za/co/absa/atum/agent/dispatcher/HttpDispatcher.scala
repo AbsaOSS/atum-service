@@ -77,7 +77,6 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
 
     val newPartitioningWithIdDTO = partitioningWithIdOpt.getOrElse {
-      println("inside creating new partitioning")
       val endpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
       val request = commonAtumRequest
         .post(endpoint)
@@ -108,12 +107,8 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       val req = commonAtumRequest.get(endpoint)
       val resp = backend.send(req)
 
-      println(s"additional-data: ${resp.body}") // Getting Left(Internal Server Error) here - need to debug on server side
 
-      handleResponseBody(resp)
-        .as[MultiSuccessResponse[AdditionalDataItemV2DTO]]
-//        .data
-//        .map(item => item._1 -> item._2.map(_.value))
+      handleResponseBody(resp).as[MultiSuccessResponse[AdditionalDataItemV2DTO]]
     }
 
     AtumContextDTO(

@@ -44,7 +44,7 @@ class ConsoleDispatcher(config: Config) extends Dispatcher(config) with Logging 
 
     AdditionalDataDTO(
       additionalDataPatchDTO.data.map { case (key, value) =>
-        key -> Some(AdditionalDataItemDTO(value, additionalDataPatchDTO.byUser))
+        key -> Some(AdditionalDataItemDTO(value, Option(additionalDataPatchDTO.byUser)))
       }.toSeq
     )
   }

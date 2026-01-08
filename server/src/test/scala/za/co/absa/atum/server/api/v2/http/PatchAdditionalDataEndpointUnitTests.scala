@@ -24,8 +24,8 @@ import sttp.client3.{Identity, RequestT, ResponseException, UriContext, basicReq
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataPatchDTO}
-import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO, AdditionalDataPatchDTO}
+import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.envelopes.{InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.v2.controller.PartitioningController
@@ -38,7 +38,8 @@ object PatchAdditionalDataEndpointUnitTests extends ZIOSpecDefault with TestData
   private val partitioningControllerMock: PartitioningController = mock(classOf[PartitioningController])
 
   when(partitioningControllerMock.patchPartitioningAdditionalData(1L, additionalDataPatchDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(additionalDataDTO1.data, uuid1)))
+//    .thenReturn(ZIO.succeed(SingleSuccessResponse(additionalDataDTO1.data, uuid1)))
+    .thenReturn(ZIO.succeed(MultiSuccessResponse(_additionalDataDTO1, uuid1)))
   when(partitioningControllerMock.patchPartitioningAdditionalData(0L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("error")))
   when(partitioningControllerMock.patchPartitioningAdditionalData(2L, additionalDataPatchDTO1))
@@ -67,7 +68,7 @@ object PatchAdditionalDataEndpointUnitTests extends ZIOSpecDefault with TestData
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(
-          equalTo(Right(SingleSuccessResponse(additionalDataDTO1.data, uuid1)), StatusCode.Ok)
+          equalTo(Right(MultiSuccessResponse(_additionalDataDTO1, uuid1)), StatusCode.Ok)
         )
       },
       test("Returns NotFoundErrorResponse") {
@@ -94,11 +95,11 @@ object PatchAdditionalDataEndpointUnitTests extends ZIOSpecDefault with TestData
 
   private def patchRequestForId(id: Long): RequestT[Identity, Either[
     ResponseException[String, circe.Error],
-    SingleSuccessResponse[AdditionalDataDTO.Data]
+    MultiSuccessResponse[AdditionalDataItemV2DTO]
   ], Any] = {
     basicRequest
       .patch(uri"https://test.com/api/v2/partitionings/$id/additional-data")
-      .response(asJson[SingleSuccessResponse[AdditionalDataDTO.Data]])
+      .response(asJson[MultiSuccessResponse[AdditionalDataItemV2DTO]])
   }
 
 }

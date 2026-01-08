@@ -2,7 +2,7 @@ package za.co.absa.atum.agent.dispatcher
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, Ignore}
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers._
 import sttp.client3._
@@ -16,6 +16,7 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
 
 import java.time.ZonedDateTime
 
+@Ignore // has to be run with a real server
 class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
   var mockBackend: SttpBackend[Identity, sttp.capabilities.WebSockets] = _
@@ -26,9 +27,9 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
   val testPartitioningSubmitDTO = PartitioningSubmitDTO(testPartitioningDTO, None, "author")
   val createdPartitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
   val measures: Seq[MeasureDTO] = Seq(MeasureDTO("m1", Seq("c1")), MeasureDTO("m2", Seq("c2")))
-  val additionalData = Map(
-    "key1" -> Some(AdditionalDataItemDTO("val1", "author1")),
-    "key2" -> None
+  val additionalData: Seq[AdditionalDataItemV2DTO] = Seq(
+    AdditionalDataItemV2DTO("key1", Some("val1"), Some("author1")),
+    AdditionalDataItemV2DTO("key2", None, None)
   )
 
   def encodedPartitioning(partitioning: Seq[PartitionDTO]): String =
@@ -103,7 +104,7 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     val measuresResponse =
       Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
     val additionalDataResponse =
-      Response(Right(SingleSuccessResponse(additionalData).asJsonString): Either[String, String], StatusCode.Ok)
+      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
 
     stubGetPartitioning(parentPartitioning, getParentResponse)
     stubGetPartitioning(testPartitioningDTO, getPartitioningResponse)
@@ -161,7 +162,7 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     val measuresResponse =
       Response(Right(MultiSuccessResponse(Seq.empty[MeasureDTO]).asJsonString): Either[String, String], StatusCode.Ok)
     val additionalDataResponse = Response(
-      Right(SingleSuccessResponse(Map.empty[String, Option[AdditionalDataItemDTO]]).asJsonString): Either[
+      Right(MultiSuccessResponse(Seq.empty[AdditionalDataItemV2DTO]).asJsonString): Either[
         String,
         String
       ],

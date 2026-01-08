@@ -43,7 +43,7 @@ object AdditionalDataItemFromDB {
       AdditionalDataItemV2DTO(
         key = item.adName,
         value = item.adValue,
-        author = item.author
+        author = Option(item.author)
       )
     )
   }

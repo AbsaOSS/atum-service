@@ -33,7 +33,7 @@ object AdditionalDataDTO {
 case class AdditionalDataItemV2DTO(
   key: String,
   value: Option[String],
-  author: String
+  author: Option[String]
 )
 
 object AdditionalDataItemV2DTO {

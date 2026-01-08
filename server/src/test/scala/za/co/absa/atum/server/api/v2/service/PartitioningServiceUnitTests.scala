@@ -40,7 +40,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1))
-    .thenReturn(ZIO.succeed(additionalDataDTO1))
+    .thenReturn(ZIO.succeed(_additionalDataDTO1))
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(0L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(2L, additionalDataPatchDTO1))
@@ -52,7 +52,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningAdditionalData(1L))
-    .thenReturn(ZIO.succeed(additionalDataDTO1))
+    .thenReturn(ZIO.succeed(_additionalDataDTO1))
   when(partitioningRepositoryMock.getPartitioningAdditionalData(2L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
@@ -139,7 +139,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- PartitioningService.patchAdditionalData(1L, additionalDataPatchDTO1)
-          } yield assertTrue(result == additionalDataDTO1)
+          } yield assertTrue(result == _additionalDataDTO1)
         },
         test("Returns expected NotFoundServiceError") {
           for {
@@ -174,7 +174,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with AdditionalDataDTO") {
           for {
             result <- PartitioningService.getPartitioningAdditionalData(1L)
-          } yield assertTrue(result == additionalDataDTO1)
+          } yield assertTrue(result == _additionalDataDTO1)
         },
         test("Returns expected ServiceError") {
           assertZIO(PartitioningService.getPartitioningAdditionalData(2L).exit)(
