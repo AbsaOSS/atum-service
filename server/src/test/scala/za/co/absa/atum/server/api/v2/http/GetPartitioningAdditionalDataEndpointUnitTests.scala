@@ -37,8 +37,7 @@ object GetPartitioningAdditionalDataEndpointUnitTests extends ZIOSpecDefault wit
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
   when(partitioningControllerMock.getPartitioningAdditionalData(1L))
-//    .thenReturn(ZIO.succeed(SingleSuccessResponse(additionalDataDTO1.data, uuid1)))
-    .thenReturn(ZIO.succeed(MultiSuccessResponse(_additionalDataDTO1, uuid1)))
+    .thenReturn(ZIO.succeed(MultiSuccessResponse(additionalDataDTO1, uuid1)))
   when(partitioningControllerMock.getPartitioningAdditionalData(2L))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("partitioning not found")))
 
@@ -69,7 +68,7 @@ object GetPartitioningAdditionalDataEndpointUnitTests extends ZIOSpecDefault wit
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(
-          equalTo(Right(MultiSuccessResponse(_additionalDataDTO1, uuid1)), StatusCode.Ok)
+          equalTo(Right(MultiSuccessResponse(additionalDataDTO1, uuid1)), StatusCode.Ok)
         )
       },
       test("Returns expected 404 when partitioning not found for a given id") {

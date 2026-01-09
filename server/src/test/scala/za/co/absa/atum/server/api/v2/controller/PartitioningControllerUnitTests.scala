@@ -42,14 +42,14 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
 
   when(partitioningServiceMock.patchAdditionalData(1L, additionalDataPatchDTO1))
-    .thenReturn(ZIO.succeed(_additionalDataDTO1))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningServiceMock.patchAdditionalData(0L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
   when(partitioningServiceMock.patchAdditionalData(2L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMock.getPartitioningAdditionalData(1L))
-    .thenReturn(ZIO.succeed(_additionalDataDTO1))
+    .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningServiceMock.getPartitioningAdditionalData(2L))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
   when(partitioningServiceMock.getPartitioningAdditionalData(3L))
@@ -136,8 +136,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected AdditionalDataSubmitDTO") {
           for {
             result <- PartitioningController.patchPartitioningAdditionalData(1L, additionalDataPatchDTO1)
-//            expected = SingleSuccessResponse(additionalDataDTO1.data, uuid1)
-            expected = MultiSuccessResponse(_additionalDataDTO1, uuid1)
+            expected = MultiSuccessResponse(additionalDataDTO1, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },
@@ -197,8 +196,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected AdditionalDataDTO") {
           for {
             result <- PartitioningController.getPartitioningAdditionalData(1L)
-//            expected = SingleSuccessResponse(additionalDataDTO1.data, uuid1)
-            expected = MultiSuccessResponse(_additionalDataDTO1, uuid1)
+            expected = MultiSuccessResponse(additionalDataDTO1, uuid1)
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },

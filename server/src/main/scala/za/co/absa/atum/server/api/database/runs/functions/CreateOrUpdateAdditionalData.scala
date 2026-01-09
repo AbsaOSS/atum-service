@@ -33,7 +33,7 @@ import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAgg
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[CreateOrUpdateAdditionalDataArgs,
-      AdditionalDataItemFromDB // here we say we might have the value null/missing though author is always there
+      AdditionalDataItemFromDB
     , Task](args =>
       Seq(
         fr"${args.partitioningId}",

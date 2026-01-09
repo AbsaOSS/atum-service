@@ -38,8 +38,7 @@ object PatchAdditionalDataEndpointUnitTests extends ZIOSpecDefault with TestData
   private val partitioningControllerMock: PartitioningController = mock(classOf[PartitioningController])
 
   when(partitioningControllerMock.patchPartitioningAdditionalData(1L, additionalDataPatchDTO1))
-//    .thenReturn(ZIO.succeed(SingleSuccessResponse(additionalDataDTO1.data, uuid1)))
-    .thenReturn(ZIO.succeed(MultiSuccessResponse(_additionalDataDTO1, uuid1)))
+    .thenReturn(ZIO.succeed(MultiSuccessResponse(additionalDataDTO1, uuid1)))
   when(partitioningControllerMock.patchPartitioningAdditionalData(0L, additionalDataPatchDTO1))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("error")))
   when(partitioningControllerMock.patchPartitioningAdditionalData(2L, additionalDataPatchDTO1))
@@ -68,7 +67,7 @@ object PatchAdditionalDataEndpointUnitTests extends ZIOSpecDefault with TestData
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(
-          equalTo(Right(MultiSuccessResponse(_additionalDataDTO1, uuid1)), StatusCode.Ok)
+          equalTo(Right(MultiSuccessResponse(additionalDataDTO1, uuid1)), StatusCode.Ok)
         )
       },
       test("Returns NotFoundErrorResponse") {

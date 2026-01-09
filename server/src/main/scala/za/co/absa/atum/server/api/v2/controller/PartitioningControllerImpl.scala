@@ -30,17 +30,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     extends PartitioningController
     with BaseController {
 
-//  override def getPartitioningAdditionalData(
-//    partitioningId: Long
-//  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data]] = {
-//    mapToSingleSuccessResponse(
-//      serviceCall[AdditionalDataDTO, AdditionalDataDTO.Data](
-//        partitioningService.getPartitioningAdditionalData(partitioningId),
-//        _.data
-//      )
-//    )
-//  }
-
   override def getPartitioningAdditionalData(
     partitioningId: Long
   ): IO[ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO]] = {

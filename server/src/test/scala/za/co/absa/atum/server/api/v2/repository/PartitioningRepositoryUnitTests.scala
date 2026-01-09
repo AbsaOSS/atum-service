@@ -248,7 +248,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(1L)
           } yield assertTrue(
-//            result == AdditionalDataDTO(Map.from(Seq("key" -> Some(AdditionalDataItemDTO("value", "author")))))
             result == Seq(AdditionalDataItemV2DTO("key", Some("value"), "author"))
           )
         },
