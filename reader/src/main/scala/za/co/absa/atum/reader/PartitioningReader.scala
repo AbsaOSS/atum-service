@@ -97,22 +97,19 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
    *  @return - the additional data as they were save for the partitioning
    */
   def getAdditionalData: F[RequestResult[AdditionalDataDTO]] = {
-//  def getAdditionalData: F[RequestResult[Seq[AdditionalDataItemV2DTO]]] = {
     for {
       partitioningIdOrError <- partitioningId(partitioning)
       additionalDataOrError <- mapRequestResultF(partitioningIdOrError, queryAdditionalData)
-    } yield additionalDataOrError//.map(_.data)
+    } yield additionalDataOrError
       .map { multiSuccessResponse =>
-      val ad = AdditionalDataDTO(
+      AdditionalDataDTO(
         multiSuccessResponse.data.map { itemV2DTO =>
           itemV2DTO.value match {
             case Some(value) => (itemV2DTO.key, Some(AdditionalDataItemDTO(value, itemV2DTO.author)))
             case None => (itemV2DTO.key, None)
           }
-        }
+        }.toMap
       )
-      println(ad)
-      ad
     }
   }
 

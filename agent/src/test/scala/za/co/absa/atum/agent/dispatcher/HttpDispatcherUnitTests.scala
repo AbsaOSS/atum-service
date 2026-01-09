@@ -28,8 +28,8 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
   val createdPartitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
   val measures: Seq[MeasureDTO] = Seq(MeasureDTO("m1", Seq("c1")), MeasureDTO("m2", Seq("c2")))
   val additionalData: Seq[AdditionalDataItemV2DTO] = Seq(
-    AdditionalDataItemV2DTO("key1", Some("val1"), Some("author1")),
-    AdditionalDataItemV2DTO("key2", None, None)
+    AdditionalDataItemV2DTO("key1", Some("val1"), "author1"),
+    AdditionalDataItemV2DTO("key2", None, "author2")
   )
 
   def encodedPartitioning(partitioning: Seq[PartitionDTO]): String =

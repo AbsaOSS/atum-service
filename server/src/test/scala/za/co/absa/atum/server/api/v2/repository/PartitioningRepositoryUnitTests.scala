@@ -249,7 +249,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningRepository.getPartitioningAdditionalData(1L)
           } yield assertTrue(
 //            result == AdditionalDataDTO(Map.from(Seq("key" -> Some(AdditionalDataItemDTO("value", "author")))))
-            result == Seq(AdditionalDataItemV2DTO("key", Some("value"), Some("author")))
+            result == Seq(AdditionalDataItemV2DTO("key", Some("value"), "author"))
           )
         },
         test("Returns expected DatabaseError") {

@@ -24,19 +24,8 @@ case class AdditionalDataDTO(
 )
 
 object AdditionalDataDTO {
-  type Data = Seq[(String, Option[AdditionalDataItemDTO])]
+  type Data = Map[String, Option[AdditionalDataItemDTO]]
 
   implicit val encodeAdditionalDataDTO: Encoder[AdditionalDataDTO] = deriveEncoder
   implicit val decodeAdditionalDataDTO: Decoder[AdditionalDataDTO] = deriveDecoder
-}
-
-case class AdditionalDataItemV2DTO(
-  key: String,
-  value: Option[String],
-  author: Option[String]
-)
-
-object AdditionalDataItemV2DTO {
-  implicit val encodeAdditionalDataItemV2DTO: Encoder[AdditionalDataItemV2DTO] = deriveEncoder
-  implicit val decodeAdditionalDataItemV2DTO: Decoder[AdditionalDataItemV2DTO] = deriveDecoder
 }

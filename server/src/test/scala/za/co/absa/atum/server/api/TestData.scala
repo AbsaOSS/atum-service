@@ -161,34 +161,34 @@ trait TestData {
 
   // Initial Additional Data
   protected val additionalDataDTO1: AdditionalDataDTO = AdditionalDataDTO(
-    Seq(
-      "key1" -> Some(AdditionalDataItemDTO("value1", Some("author"))),
+    Map(
+      "key1" -> Some(AdditionalDataItemDTO("value1", "author")),
       "key2" -> None,
-      "key3" -> Some(AdditionalDataItemDTO("value3", Some("author")))
+      "key3" -> Some(AdditionalDataItemDTO("value3", "author"))
     )
   )
   protected val _additionalDataDTO1: Seq[AdditionalDataItemV2DTO] = Seq(
-      AdditionalDataItemV2DTO("key1", Some("value1"), Some("author")),
-      AdditionalDataItemV2DTO("key2", None, None),
-      AdditionalDataItemV2DTO("key3", Some("value3"), Some("author"))
+      AdditionalDataItemV2DTO("key1", Some("value1"), "author"),
+      AdditionalDataItemV2DTO("key2", None, "author"),
+      AdditionalDataItemV2DTO("key3", Some("value3"), "author")
     )
 
 
   protected val additionalDataDTO2: AdditionalDataDTO = AdditionalDataDTO(
-    Seq(
-      "key1" -> Some(AdditionalDataItemDTO("value1", Some("author"))),
-      "key2" -> Some(AdditionalDataItemDTO("value2", Some("author"))),
-      "key3" -> Some(AdditionalDataItemDTO("value3", Some("author")))
+    Map(
+      "key1" -> Some(AdditionalDataItemDTO("value1", "author")),
+      "key2" -> Some(AdditionalDataItemDTO("value2", "author")),
+      "key3" -> Some(AdditionalDataItemDTO("value3", "author"))
     )
   )
 
   private val _additionalDataDTO2: Seq[AdditionalDataItemV2DTO] = Seq(
-      AdditionalDataItemV2DTO("key1", Some("value1"), Some("author")),
-      AdditionalDataItemV2DTO("key2", Some("value2"), Some("author")),
-      AdditionalDataItemV2DTO("key3", Some("value3"), Some("author"))
+      AdditionalDataItemV2DTO("key1", Some("value1"), "author"),
+      AdditionalDataItemV2DTO("key2", Some("value2"), "author"),
+      AdditionalDataItemV2DTO("key3", Some("value3"), "author")
     )
 
-  protected val additionalDataDTO3: AdditionalDataDTO = AdditionalDataDTO(Seq.empty)
+  protected val additionalDataDTO3: AdditionalDataDTO = AdditionalDataDTO(Map.empty)
   protected val _additionalDataDTO3: Seq[AdditionalDataItemV2DTO] = Seq.empty
 
   protected val additionalDataPatchDTO1: AdditionalDataPatchDTO = AdditionalDataPatchDTO(

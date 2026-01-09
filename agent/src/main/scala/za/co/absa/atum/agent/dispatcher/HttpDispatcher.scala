@@ -165,7 +165,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       .map( item => item.value match {
         case Some(_) => item.key -> Some(AdditionalDataItemDTO(item.value.get, item.author))
         case None => item.key -> None
-      })
+      }).toMap
 
     AdditionalDataDTO(data)
   }

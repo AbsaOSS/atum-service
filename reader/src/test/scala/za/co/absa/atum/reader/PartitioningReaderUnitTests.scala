@@ -30,7 +30,6 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto.{
   AdditionalDataDTO,
   AdditionalDataItemDTO,
-  AdditionalDataItemV2DTO,
   CheckpointV2DTO,
   MeasureDTO,
   MeasureResultDTO,
@@ -265,17 +264,13 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
       }
 
     val expected = AdditionalDataDTO(data =
-      Seq(
-        "key1" -> Some(AdditionalDataItemDTO("value1", Some("Luke Skywalker"))),
+      Map(
+        "key1" -> Some(AdditionalDataItemDTO("value1", "Luke Skywalker")),
         "key2" -> None,
-        "key3" -> Some(AdditionalDataItemDTO("value3", Some("Han Solo")))
+        "key3" -> Some(AdditionalDataItemDTO("value3", "Han Solo"))
       )
     )
-    val _expected = Seq(
-      AdditionalDataItemV2DTO("key1", Some("value1"), Some("Luke Skywalker")),
-      AdditionalDataItemV2DTO("key2", None, None),
-      AdditionalDataItemV2DTO("key3", Some("value3"), Some("Han Solo"))
-    )
+
     val reader = PartitioningReader[Identity](atumPartitions)
     val result = reader.getAdditionalData
     assert(result == Right(expected))
@@ -431,7 +426,7 @@ object PartitioningReaderUnitTests {
       |      {
       |      "key" : "key2",
       |      "value": null,
-      |      "author": null
+      |      "author": "Some Author"
       |      },
       |      {
       |        "key": "key3",
