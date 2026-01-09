@@ -91,7 +91,6 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  //** 1 **//
   val getPartitioningCheckpointEndpoint
     : PublicEndpoint[(Long, UUID, Boolean), ErrorResponse, SingleSuccessResponse[CheckpointV2DTO], Any] = {
     apiV2.get
@@ -102,7 +101,6 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  //** 2 **//
   val getPartitioningCheckpointsEndpoint
     : PublicEndpoint[(Long, Int, Long, Option[String], Boolean), ErrorResponse, PaginatedResponse[
       CheckpointV2DTO
@@ -119,7 +117,6 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  //** 3 **//
   val getFlowCheckpointsEndpoint
     : PublicEndpoint[(Long, Int, Long, Option[String], Boolean), ErrorResponse, PaginatedResponse[
       CheckpointWithPartitioningDTO

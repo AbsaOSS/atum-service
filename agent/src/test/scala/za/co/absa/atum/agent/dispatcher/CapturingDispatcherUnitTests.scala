@@ -50,7 +50,10 @@ class CapturingDispatcherUnitTests extends AnyWordSpec with Matchers {
     kvs.map { case (k, v) => PartitionDTO(k, v) }
   }
 
-  private def createPartitionSubmit(partition: PartitioningDTO, parent: Option[PartitioningDTO] = None): PartitioningSubmitDTO = {
+  private def createPartitionSubmit(
+    partition: PartitioningDTO,
+    parent: Option[PartitioningDTO] = None
+  ): PartitioningSubmitDTO = {
     PartitioningSubmitDTO(
       partitioning = partition,
       parentPartitioning = parent,
