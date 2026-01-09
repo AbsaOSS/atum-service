@@ -17,14 +17,7 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
-import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO,
-  AdditionalDataPatchDTO,
-  AtumContextDTO,
-  CheckpointDTO,
-  PartitioningDTO,
-  PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto._
 
 /**
  *  This class provides a contract for different dispatchers. It has a constructor foe eventual creation via reflection.

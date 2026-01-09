@@ -61,28 +61,28 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     val rdd = spark.sparkContext.parallelize(testDataForRDD)
     val df = spark.createDataFrame(rdd, testDataSchema)
 
-    // Atum Agent preparation - Agent configured to work with HTTP Dispatcher and service on localhost
-    val agent: AtumAgent = new AtumAgent {
-      override val dispatcher: HttpDispatcher = new HttpDispatcher(
-        ConfigFactory
-          .empty()
-          .withValue("atum.dispatcher.type", ConfigValueFactory.fromAnyRef("http"))
-          .withValue("atum.dispatcher.http.url", ConfigValueFactory.fromAnyRef("http://localhost:8080"))
-      )
-    }
+     // Atum Agent preparation - Agent configured to work with HTTP Dispatcher and service on localhost
+     val agent: AtumAgent = new AtumAgent {
+       override val dispatcher: HttpDispatcher = new HttpDispatcher(
+         ConfigFactory
+           .empty()
+           .withValue("atum.dispatcher.type", ConfigValueFactory.fromAnyRef("http"))
+           .withValue("atum.dispatcher.http.url", ConfigValueFactory.fromAnyRef("http://localhost:8080"))
+       )
+     }
 
-    // Atum Context stuff preparation - Partitioning, Measures, Additional Data, Checkpoint
-    val domainAtumPartitioning = ListMap(
-      "partition1" -> "valueFromTest1",
-      "partition2" -> "valueFromTest2"
-    )
-    val domainAtumContext = agent.getOrCreateAtumContext(domainAtumPartitioning)
+     // Atum Context stuff preparation - Partitioning, Measures, Additional Data, Checkpoint
+     val domainAtumPartitioning = ListMap(
+       "partition1" -> "valueFromTest1",
+       "partition2" -> "valueFromTest2"
+     )
+     val domainAtumContext = agent.getOrCreateAtumContext(domainAtumPartitioning)
 
-    domainAtumContext.addMeasure(RecordCount())
-    domainAtumContext.addAdditionalData("author", "Laco")
-    domainAtumContext.addAdditionalData(Map("author" -> "LacoNew", "version" -> "1.0"))
+     domainAtumContext.addMeasure(RecordCount())
+     domainAtumContext.addAdditionalData("author", "Laco")
+     domainAtumContext.addAdditionalData(Map("author" -> "LacoNew", "version" -> "1.0"))
 
-    domainAtumContext.createCheckpoint("checkPointNameCount", df)
+     domainAtumContext.createCheckpoint("checkPointNameCount", df)
 
     // DB Check, data should be written in the DB
     table("runs.partitionings").all() { partitioningsResult =>
@@ -94,35 +94,45 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     }
 
     table("runs.additional_data").all() { adResult =>
+      val expectedMap = Map(
+        "author" -> "LacoNew",
+        "version" -> "1.0"
+      )
+
       assert(adResult.hasNext)
       val row = adResult.next()
 
-      assert(row.getString("ad_name").contains("author"))
-      assert(row.getString("ad_value").contains("LacoNew"))
+      val adName1 = row.getString("ad_name").get
+      val adValue1 = row.getString("ad_value").get
+
+      assert(expectedMap(adName1) == adValue1)
 
       assert(adResult.hasNext)
       val row2 = adResult.next()
 
-      assert(row2.getString("ad_name").contains("version"))
-      assert(row2.getString("ad_value").contains("1.0"))
+      val adName2 = row2.getString("ad_name").get
+      val adValue2 = row2.getString("ad_value").get
+
+      assert(expectedMap(adName2) == adValue2)
+
       assert(!adResult.hasNext)
     }
 
-    table("runs.additional_data_history").all() { adHistResult =>
+  table("runs.additional_data_history").all() { adHistResult =>
       assert(adHistResult.hasNext)
       val row = adHistResult.next()
 
       assert(row.getString("ad_name").contains("author"))
       assert(row.getString("ad_value").contains("Laco"))
 
-      assert(!adHistResult.hasNext)
+      assert(!adHistResult.hasNext) // failing when executed multiple times
     }
 
     table("runs.measure_definitions").all() { measureDefResult =>
       assert(measureDefResult.hasNext)
       val row = measureDefResult.next()
 
-      assert(row.getString("measure_name").contains("*"))
+      assert(row.getString("measure_name").contains("count"))
       assert(row.getString("measured_columns").contains("{}"))
 
       assert(!measureDefResult.hasNext)
@@ -135,7 +145,5 @@ class AgentServerCompatibilityTests extends DBTestSuite {
       assert(row.getJsonB("measurement_value").contains(expectedMeasurement))
       assert(!measurementsResult.hasNext)
     }
-
-    // TODO Truncate data potentially, Balta might support this in the near future
   }
 }

@@ -60,23 +60,21 @@ object Endpoints extends BaseEndpoints {
   }
 
   val getPartitioningAdditionalDataEndpoint
-    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data], Any] = {
+    : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO.Data]])
+      .out(jsonBody[MultiSuccessResponse[AdditionalDataItemV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   val patchPartitioningAdditionalDataEndpoint
-    : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, SingleSuccessResponse[
-      AdditionalDataDTO.Data
-    ], Any] = {
+    : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO], Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .in(jsonBody[AdditionalDataPatchDTO])
       .out(statusCode(StatusCode.Ok))
-      .out(jsonBody[SingleSuccessResponse[AdditionalDataDTO.Data]])
+      .out(jsonBody[MultiSuccessResponse[AdditionalDataItemV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
@@ -208,14 +206,14 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint(postPartitioningEndpoint, PartitioningController.postPartitioning),
-    createServerEndpoint[Long, ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data]](
+    createServerEndpoint[Long, ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO]](
       getPartitioningAdditionalDataEndpoint,
       PartitioningController.getPartitioningAdditionalData
     ),
     createServerEndpoint[
       (Long, AdditionalDataPatchDTO),
       ErrorResponse,
-      SingleSuccessResponse[AdditionalDataDTO.Data]
+      MultiSuccessResponse[AdditionalDataItemV2DTO]
     ](
       patchPartitioningAdditionalDataEndpoint,
       { case (partitioningId: Long, additionalDataPatchDTO: AdditionalDataPatchDTO) =>

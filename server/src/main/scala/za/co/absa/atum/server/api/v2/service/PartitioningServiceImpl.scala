@@ -43,7 +43,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
-  override def getPartitioningAdditionalData(partitioningId: Long): IO[ServiceError, AdditionalDataDTO] = {
+  override def getPartitioningAdditionalData(partitioningId: Long): IO[ServiceError, Seq[AdditionalDataItemV2DTO]] = {
     repositoryCall(
       partitioningRepository.getPartitioningAdditionalData(partitioningId),
       "getPartitioningAdditionalData"
@@ -53,7 +53,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   override def patchAdditionalData(
     partitioningId: Long,
     additionalData: AdditionalDataPatchDTO
-  ): IO[ServiceError, AdditionalDataDTO] = {
+  ): IO[ServiceError, Seq[AdditionalDataItemV2DTO]] = {
     repositoryCall(
       partitioningRepository.createOrUpdateAdditionalData(partitioningId, additionalData),
       "createOrUpdateAdditionalData"

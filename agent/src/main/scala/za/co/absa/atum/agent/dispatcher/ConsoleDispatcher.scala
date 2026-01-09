@@ -18,15 +18,7 @@ package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
 import org.apache.spark.internal.Logging
-import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO,
-  AdditionalDataItemDTO,
-  AdditionalDataPatchDTO,
-  AtumContextDTO,
-  CheckpointDTO,
-  PartitioningDTO,
-  PartitioningSubmitDTO
-}
+import za.co.absa.atum.model.dto._
 
 /**
  *  dispatcher useful for development, testing and debugging

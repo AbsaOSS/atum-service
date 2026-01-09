@@ -57,12 +57,10 @@ class PartitioningControllerImpl(
         }
 
       additionalDataForContext <- ZIO.succeed {
-        additionalData.data.map { case (key, value) =>
-          key -> value.map(_.value)
-        }
+        additionalData.map { item => item.key -> item.value}
       }
 
-    } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalDataForContext)
+    } yield AtumContextDTO(partitioningSubmitDTO.partitioning, measures.toSet, additionalDataForContext.toMap)
   }
 
 }

@@ -32,9 +32,9 @@ import za.co.absa.atum.server.model.database.AdditionalDataItemFromDB
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 
 class CreateOrUpdateAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[CreateOrUpdateAdditionalDataArgs, Option[
+    extends DoobieMultipleResultFunctionWithAggStatus[CreateOrUpdateAdditionalDataArgs,
       AdditionalDataItemFromDB
-    ], Task](args =>
+    , Task](args =>
       Seq(
         fr"${args.partitioningId}",
         fr"${args.additionalData.data}",

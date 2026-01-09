@@ -31,12 +31,12 @@ trait PartitioningController {
 
   def getPartitioningAdditionalData(
     partitioningId: Long
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data]]
+  ): IO[ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO]]
 
   def patchPartitioningAdditionalData(
     partitioningId: Long,
     additionalDataPatchDTO: AdditionalDataPatchDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data]]
+  ): IO[ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO]]
 
   def getPartitioningById(partitioningId: Long): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]]
 

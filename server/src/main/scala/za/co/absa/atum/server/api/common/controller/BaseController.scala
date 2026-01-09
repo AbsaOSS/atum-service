@@ -41,6 +41,7 @@ trait BaseController {
       }
       .flatMap { result =>
         ZIO.succeed(onSuccessFnc(result))
+          .tap(res => ZIO.succeed(println(res)))
       }
 
   }

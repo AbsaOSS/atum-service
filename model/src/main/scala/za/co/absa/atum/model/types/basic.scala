@@ -25,7 +25,7 @@ object basic {
    * Type alias for Atum partitions.
    */
   type AtumPartitions = ListMap[String, String]
-  type AdditionalData = Map[String, Option[String]]
+  type AdditionalData = Map[String, Option[String]] // why did we decide for the optionality of the value here?
 
   /**
    * Object contains helper methods to work with Atum partitions.

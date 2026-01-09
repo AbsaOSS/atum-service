@@ -63,7 +63,8 @@ trait TestData {
         |  }
         |}
         |""".stripMargin
-    ).getOrElse(throw new Exception("Failed to parse JSON"))
+    )
+    .getOrElse(throw new Exception("Failed to parse JSON"))
 
   // Partitioning from the DB
   protected val partitioningFromDB1: PartitioningFromDB = PartitioningFromDB(
@@ -91,7 +92,7 @@ trait TestData {
     hasMore = true
   )
 
-  //Ancestor Partitionings
+  // Ancestor Partitionings
   protected val getPartitioningAncestorsResult1: GetPartitioningAncestorsResult = GetPartitioningAncestorsResult(
     id = 1L,
     partitioningJson = partitioningAsJson,
@@ -160,23 +161,19 @@ trait TestData {
   protected val measureFromDB2: MeasureFromDB = MeasureFromDB(Some("count2"), Some(Seq("col_A2", "col_B2")))
 
   // Initial Additional Data
-  protected val additionalDataDTO1: AdditionalDataDTO = AdditionalDataDTO(
-    Map(
-      "key1" -> Some(AdditionalDataItemDTO("value1", "author")),
-      "key2" -> None,
-      "key3" -> Some(AdditionalDataItemDTO("value3", "author"))
-    )
+  protected val additionalDataDTO1: Seq[AdditionalDataItemV2DTO] = Seq(
+    AdditionalDataItemV2DTO("key1", Some("value1"), "author"),
+    AdditionalDataItemV2DTO("key2", None, "author"),
+    AdditionalDataItemV2DTO("key3", Some("value3"), "author")
   )
 
-  protected val additionalDataDTO2: AdditionalDataDTO = AdditionalDataDTO(
-    Map(
-      "key1" -> Some(AdditionalDataItemDTO("value1", "author")),
-      "key2" -> Some(AdditionalDataItemDTO("value2", "author")),
-      "key3" -> Some(AdditionalDataItemDTO("value3", "author"))
-    )
+  private val additionalDataDTO2: Seq[AdditionalDataItemV2DTO] = Seq(
+    AdditionalDataItemV2DTO("key1", Some("value1"), "author"),
+    AdditionalDataItemV2DTO("key2", Some("value2"), "author"),
+    AdditionalDataItemV2DTO("key3", Some("value3"), "author")
   )
 
-  protected val additionalDataDTO3: AdditionalDataDTO = AdditionalDataDTO(Map.empty)
+  protected val additionalDataDTO3: Seq[AdditionalDataItemV2DTO] = Seq.empty
 
   protected val additionalDataPatchDTO1: AdditionalDataPatchDTO = AdditionalDataPatchDTO(
     byUser = "author",
@@ -276,8 +273,10 @@ trait TestData {
     author = "author2"
   )
 
-  protected val partitioningParentPatchDTO3: PartitioningParentPatchDTO = partitioningParentPatchDTO1.copy(author = "differentAuthor")
-  protected val partitioningParentPatchDTO4: PartitioningParentPatchDTO = partitioningParentPatchDTO1.copy(author = "yetAnotherAuthor")
+  protected val partitioningParentPatchDTO3: PartitioningParentPatchDTO =
+    partitioningParentPatchDTO1.copy(author = "differentAuthor")
+  protected val partitioningParentPatchDTO4: PartitioningParentPatchDTO =
+    partitioningParentPatchDTO1.copy(author = "yetAnotherAuthor")
 
   protected val partitioningParentPatchDTO5: PartitioningParentPatchDTO = PartitioningParentPatchDTO(
     parentPartitioningId = 0L,
@@ -355,7 +354,9 @@ trait TestData {
           |  }
           |}
           |""".stripMargin
-      ).toOption.get
+      )
+      .toOption
+      .get
 
   // Checkpoint From DB
   protected val checkpointItemNotPaginatedFromDB: CheckpointItemFromDB.NotPaginated = CheckpointItemFromDB.NotPaginated(
@@ -431,9 +432,11 @@ trait TestData {
             measureName = checkpointItemWithPartitioningFromDB1.measureName,
             measuredColumns = checkpointItemWithPartitioningFromDB1.measuredColumns
           ),
-          result = checkpointItemWithPartitioningFromDB1.measurementValue.as[MeasureResultDTO].getOrElse(
-            throw new Exception("Failed to parse JSON")
-          )
+          result = checkpointItemWithPartitioningFromDB1.measurementValue
+            .as[MeasureResultDTO]
+            .getOrElse(
+              throw new Exception("Failed to parse JSON")
+            )
         )
       ).toSet,
       partitioning = partitioningWithIdDTO1
@@ -453,9 +456,11 @@ trait TestData {
             measureName = checkpointItemWithPartitioningFromDB2.measureName,
             measuredColumns = checkpointItemWithPartitioningFromDB2.measuredColumns
           ),
-          result = checkpointItemWithPartitioningFromDB2.measurementValue.as[MeasureResultDTO].getOrElse(
-            throw new Exception("Failed to parse JSON")
-          )
+          result = checkpointItemWithPartitioningFromDB2.measurementValue
+            .as[MeasureResultDTO]
+            .getOrElse(
+              throw new Exception("Failed to parse JSON")
+            )
         )
       ).toSet,
       partitioning = partitioningWithIdDTO1
