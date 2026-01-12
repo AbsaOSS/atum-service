@@ -16,7 +16,6 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
 
 import java.time.ZonedDateTime
 
-@Ignore // has to be run with a real server
 class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
   var mockBackend: SttpBackend[Identity, sttp.capabilities.WebSockets] = _

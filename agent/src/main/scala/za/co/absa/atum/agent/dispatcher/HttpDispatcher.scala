@@ -74,8 +74,6 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     val parentPartitioningIdOpt = partitioning.parentPartitioning.map(getPartitioningId)
     val partitioningWithIdOpt = getPartitioning(partitioning.partitioning)
 
-
-
     val newPartitioningWithIdDTO = partitioningWithIdOpt.getOrElse {
       val endpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
       val request = commonAtumRequest
@@ -106,8 +104,6 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       )
       val req = commonAtumRequest.get(endpoint)
       val resp = backend.send(req)
-
-
       handleResponseBody(resp).as[MultiSuccessResponse[AdditionalDataItemV2DTO]]
     }
 
