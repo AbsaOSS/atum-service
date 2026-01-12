@@ -31,7 +31,7 @@ import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusA
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
 class GetPartitioningAdditionalData(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[Long, Option[AdditionalDataItemFromDB], Task](input =>
+  extends DoobieMultipleResultFunctionWithAggStatus[Long, AdditionalDataItemFromDB, Task](input =>
     Seq(fr"$input"), Some("get_partitioning_additional_data")
   )
     with StandardStatusHandling

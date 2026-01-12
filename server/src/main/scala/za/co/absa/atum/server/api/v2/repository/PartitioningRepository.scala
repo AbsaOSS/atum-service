@@ -33,12 +33,12 @@ trait PartitioningRepository {
 
   def getPartitioningAdditionalData(
     partitioningId: Long
-  ): IO[DatabaseError, AdditionalDataDTO]
+  ): IO[DatabaseError, Seq[AdditionalDataItemV2DTO]]
 
   def createOrUpdateAdditionalData(
     partitioningId: Long,
     additionalData: AdditionalDataPatchDTO
-  ): IO[DatabaseError, AdditionalDataDTO]
+  ): IO[DatabaseError, Seq[AdditionalDataItemV2DTO]]
 
   def getPartitioningById(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO]
 

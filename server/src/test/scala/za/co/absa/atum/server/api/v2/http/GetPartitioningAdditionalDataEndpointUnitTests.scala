@@ -23,9 +23,9 @@ import sttp.client3.testing.SttpBackendStub
 import sttp.model.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO}
 import za.co.absa.atum.model.envelopes.NotFoundErrorResponse
-import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
+import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.v2.controller.PartitioningController
 import zio._
@@ -37,7 +37,7 @@ object GetPartitioningAdditionalDataEndpointUnitTests extends ZIOSpecDefault wit
   private val partitioningControllerMock = mock(classOf[PartitioningController])
 
   when(partitioningControllerMock.getPartitioningAdditionalData(1L))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(additionalDataDTO1.data, uuid1)))
+    .thenReturn(ZIO.succeed(MultiSuccessResponse(additionalDataDTO1, uuid1)))
   when(partitioningControllerMock.getPartitioningAdditionalData(2L))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("partitioning not found")))
 
@@ -59,7 +59,7 @@ object GetPartitioningAdditionalDataEndpointUnitTests extends ZIOSpecDefault wit
       test("Returns an expected AdditionalDataDTO") {
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/1/additional-data")
-          .response(asJson[SingleSuccessResponse[AdditionalDataDTO.Data]])
+          .response(asJson[MultiSuccessResponse[AdditionalDataItemV2DTO]])
 
         val response = request
           .send(backendStub)
@@ -68,7 +68,7 @@ object GetPartitioningAdditionalDataEndpointUnitTests extends ZIOSpecDefault wit
         val statusCode = response.map(_.code)
 
         assertZIO(body <&> statusCode)(
-          equalTo(Right(SingleSuccessResponse(additionalDataDTO1.data, uuid1)), StatusCode.Ok)
+          equalTo(Right(MultiSuccessResponse(additionalDataDTO1, uuid1)), StatusCode.Ok)
         )
       },
       test("Returns expected 404 when partitioning not found for a given id") {

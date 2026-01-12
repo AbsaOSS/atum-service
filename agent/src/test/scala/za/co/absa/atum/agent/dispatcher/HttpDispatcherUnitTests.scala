@@ -2,16 +2,19 @@ package za.co.absa.atum.agent.dispatcher
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, Ignore}
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers._
 import sttp.client3._
 import sttp.model.StatusCode
 import com.typesafe.config.Config
 import sttp.capabilities
+import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
+
+import java.time.ZonedDateTime
 
 class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
@@ -23,9 +26,9 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
   val testPartitioningSubmitDTO = PartitioningSubmitDTO(testPartitioningDTO, None, "author")
   val createdPartitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
   val measures: Seq[MeasureDTO] = Seq(MeasureDTO("m1", Seq("c1")), MeasureDTO("m2", Seq("c2")))
-  val additionalData: Map[String, Option[AdditionalDataItemDTO]] = Map(
-    "key1" -> Some(AdditionalDataItemDTO("val1", "author1")),
-    "key2" -> None
+  val additionalData: Seq[AdditionalDataItemV2DTO] = Seq(
+    AdditionalDataItemV2DTO("key1", Some("val1"), "author1"),
+    AdditionalDataItemV2DTO("key2", None, "author2")
   )
 
   def encodedPartitioning(partitioning: Seq[PartitionDTO]): String =
@@ -100,7 +103,7 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     val measuresResponse =
       Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
     val additionalDataResponse =
-      Response(Right(SingleSuccessResponse(additionalData).asJsonString): Either[String, String], StatusCode.Ok)
+      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
 
     stubGetPartitioning(parentPartitioning, getParentResponse)
     stubGetPartitioning(testPartitioningDTO, getPartitioningResponse)
@@ -158,7 +161,7 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     val measuresResponse =
       Response(Right(MultiSuccessResponse(Seq.empty[MeasureDTO]).asJsonString): Either[String, String], StatusCode.Ok)
     val additionalDataResponse = Response(
-      Right(SingleSuccessResponse(Map.empty[String, Option[AdditionalDataItemDTO]]).asJsonString): Either[
+      Right(MultiSuccessResponse(Seq.empty[AdditionalDataItemV2DTO]).asJsonString): Either[
         String,
         String
       ],
@@ -177,4 +180,83 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     result.measures shouldBe empty
     result.additionalData shouldBe empty
   }
+
+  "saveCheckpoint" should "successfully save a checkpoint when partitioning exists" in {
+    val checkpoint = CheckpointDTO(
+      id = java.util.UUID.randomUUID(),
+      name = "cp",
+      author = "author",
+      measuredByAtumAgent = true,
+      processStartTime = ZonedDateTime.now(),
+      processEndTime = Some(ZonedDateTime.now()),
+      measurements = Set.empty,
+      partitioning = testPartitioningDTO
+    )
+    val partitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
+    val getPartitioningResponse = Response(
+      Right(SingleSuccessResponse(partitioningWithId).asJsonString): Either[String, String],
+      StatusCode.Ok
+    )
+    val postCheckpointResponse = Response(Right("{}"): Either[String, String], StatusCode.Created)
+
+    stubGetPartitioning(testPartitioningDTO, getPartitioningResponse)
+    when(
+      mockBackend.send(
+        argThat[Request[Either[String, String], capabilities.WebSockets]](
+          req => req.method.method == "POST" && req.uri.path.mkString.contains("checkpoints")
+        )
+      )
+    ).thenReturn(postCheckpointResponse)
+
+    noException should be thrownBy dispatcher.saveCheckpoint(checkpoint)
+  }
+
+  it should "throw HttpException if partitioning is not found" in {
+    val checkpoint = CheckpointDTO(
+      id = java.util.UUID.randomUUID(),
+      name = "cp",
+      author = "author",
+      measuredByAtumAgent = true,
+      processStartTime = ZonedDateTime.now(),
+      processEndTime = Some(ZonedDateTime.now()),
+      measurements = Set.empty,
+      partitioning = testPartitioningDTO
+    )
+    val notFoundResponse = Response(Left("Not found"): Either[String, String], StatusCode.NotFound)
+
+    stubGetPartitioning(testPartitioningDTO, notFoundResponse)
+
+    an[HttpException] should be thrownBy dispatcher.saveCheckpoint(checkpoint)
+  }
+
+  it should "throw HttpException if server returns error on checkpoint save" in {
+    val checkpoint = CheckpointDTO(
+      id = java.util.UUID.randomUUID(),
+      name = "cp",
+      author = "author",
+      measuredByAtumAgent = true,
+      processStartTime = ZonedDateTime.now(),
+      processEndTime = Some(ZonedDateTime.now()),
+      measurements = Set.empty,
+      partitioning = testPartitioningDTO
+    )
+    val partitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
+    val getPartitioningResponse = Response(
+      Right(SingleSuccessResponse(partitioningWithId).asJsonString): Either[String, String],
+      StatusCode.Ok
+    )
+    val badRequestResponse = Response(Left("Bad request"): Either[String, String], StatusCode.BadRequest)
+
+    stubGetPartitioning(testPartitioningDTO, getPartitioningResponse)
+    when(
+      mockBackend.send(
+        argThat[Request[Either[String, String], capabilities.WebSockets]](
+          req => req.method.method == "POST" && req.uri.path.mkString.contains("checkpoints")
+        )
+      )
+    ).thenReturn(badRequestResponse)
+
+    an[HttpException] should be thrownBy dispatcher.saveCheckpoint(checkpoint)
+  }
+
 }

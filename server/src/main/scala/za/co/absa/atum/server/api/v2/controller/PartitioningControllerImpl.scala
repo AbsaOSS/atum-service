@@ -32,11 +32,10 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
   override def getPartitioningAdditionalData(
     partitioningId: Long
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data]] = {
-    mapToSingleSuccessResponse(
-      serviceCall[AdditionalDataDTO, AdditionalDataDTO.Data](
-        partitioningService.getPartitioningAdditionalData(partitioningId),
-        _.data
+  ): IO[ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[AdditionalDataItemV2DTO], Seq[AdditionalDataItemV2DTO]](
+        partitioningService.getPartitioningAdditionalData(partitioningId)
       )
     )
   }
@@ -67,11 +66,10 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   override def patchPartitioningAdditionalData(
     partitioningId: Long,
     additionalDataPatchDTO: AdditionalDataPatchDTO
-  ): IO[ErrorResponse, SingleSuccessResponse[AdditionalDataDTO.Data]] = {
-    mapToSingleSuccessResponse(
-      serviceCall[AdditionalDataDTO, AdditionalDataDTO.Data](
-        partitioningService.patchAdditionalData(partitioningId, additionalDataPatchDTO),
-        _.data
+  ): IO[ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[AdditionalDataItemV2DTO], Seq[AdditionalDataItemV2DTO]](
+        partitioningService.patchAdditionalData(partitioningId, additionalDataPatchDTO)
       )
     )
   }
@@ -130,17 +128,17 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     partitioningId: Long,
     partitioningParentPatchDTO: PartitioningParentPatchDTO
   ): IO[ErrorResponse, Unit] = {
-        serviceCall[Unit, Unit](
-          partitioningService.patchPartitioningParent(partitioningId, partitioningParentPatchDTO),
-          _ => ()
-      )
+    serviceCall[Unit, Unit](
+      partitioningService.patchPartitioningParent(partitioningId, partitioningParentPatchDTO),
+      _ => ()
+    )
   }
 
   override def getPartitioningAncestors(
     partitioningId: Long,
     limit: Int,
     offset: Long
-   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
     mapToPaginatedResponse(
       limit,
       offset,
