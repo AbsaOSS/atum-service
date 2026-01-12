@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.v2.repository
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
@@ -56,14 +56,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(1L, additionalDataPatchDTO1)))
     .thenReturn(
-      ZIO.right(
-        Seq(
-          Row(
-            FunctionStatus(11, "Additional data have been updated, added or both"),
-            Option.empty[AdditionalDataItemFromDB]
-          )
-        )
-      )
+      ZIO.right(Seq.empty)
     )
   when(createOrUpdateAdditionalDataMock.apply(CreateOrUpdateAdditionalDataArgs(0L, additionalDataPatchDTO1)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
@@ -101,7 +94,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningAdditionalDataMock = mock(classOf[GetPartitioningAdditionalData])
 
   when(getPartitioningAdditionalDataMock.apply(1L)).thenReturn(
-    ZIO.right(Seq(Row(FunctionStatus(0, "success"), Some(AdditionalDataItemFromDB("key", Some("value"), "author")))))
+    ZIO.right(Seq(Row(FunctionStatus(0, "success"), AdditionalDataItemFromDB("key", Some("value"), "author"))))
   )
   when(getPartitioningAdditionalDataMock.apply(2L)).thenReturn(ZIO.fail(new Exception("boom!")))
   when(getPartitioningAdditionalDataMock.apply(3L)).thenReturn(
@@ -219,7 +212,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected Right with Unit") {
           for {
             result <- PartitioningRepository.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1)
-          } yield assertTrue(result.isInstanceOf[AdditionalDataDTO])
+          } yield assertTrue(result.isInstanceOf[Seq[AdditionalDataItemV2DTO]])
         },
         test("Returns expected Left with StatusException") {
           for {
@@ -255,7 +248,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningRepository.getPartitioningAdditionalData(1L)
           } yield assertTrue(
-            result == AdditionalDataDTO(Map.from(Seq("key" -> Some(AdditionalDataItemDTO("value", "author")))))
+            result == Seq(AdditionalDataItemV2DTO("key", Some("value"), "author"))
           )
         },
         test("Returns expected DatabaseError") {

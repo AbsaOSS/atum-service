@@ -27,7 +27,14 @@ import sttp.monad.MonadError
 import za.co.absa.atum.model.ApiPaths.V2Paths
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, CheckpointV2DTO, MeasureDTO, MeasureResultDTO, MeasurementDTO}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO,
+  AdditionalDataItemDTO,
+  CheckpointV2DTO,
+  MeasureDTO,
+  MeasureResultDTO,
+  MeasurementDTO
+}
 import za.co.absa.atum.model.envelopes.Pagination
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.model.types.basic.AtumPartitions
@@ -36,7 +43,6 @@ import za.co.absa.atum.reader.server.ServerConfig
 
 import java.time.ZonedDateTime
 import java.util.UUID
-
 
 class PartitioningReaderUnitTests extends AnyFunSuiteLike {
   private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
@@ -54,10 +60,12 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
           Response.ok(checkpointsResponse)
       }
 
-    val atumPartitions: AtumPartitions = AtumPartitions(List(
-      "a" -> "b",
-      "c" -> "d"
-    ))
+    val atumPartitions: AtumPartitions = AtumPartitions(
+      List(
+        "a" -> "b",
+        "c" -> "d"
+      )
+    )
     val expected: PaginatedResponse[CheckpointV2DTO] = PaginatedResponse(
       data = Seq(
         CheckpointV2DTO(
@@ -74,7 +82,7 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
                 measuredColumns = Seq("x", "y", "z")
               ),
               result = MeasureResultDTO(
-                mainValue = TypedValue("1", ResultValueType.LongValue),
+                mainValue = TypedValue("1", ResultValueType.LongValue)
               )
             )
           )
@@ -115,10 +123,12 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
           Response.ok(checkpointsResponseWithProperties)
       }
 
-    val atumPartitions: AtumPartitions = AtumPartitions(List(
-      "a" -> "b",
-      "c" -> "d"
-    ))
+    val atumPartitions: AtumPartitions = AtumPartitions(
+      List(
+        "a" -> "b",
+        "c" -> "d"
+      )
+    )
     val expected: PaginatedResponse[CheckpointV2DTO] = PaginatedResponse(
       data = Seq(
         CheckpointV2DTO(
@@ -135,14 +145,16 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
                 measuredColumns = Seq("x", "y", "z")
               ),
               result = MeasureResultDTO(
-                mainValue = TypedValue("1", ResultValueType.LongValue),
+                mainValue = TypedValue("1", ResultValueType.LongValue)
               )
             )
           ),
-          properties = Some(Map(
-            "prop1" -> "value1",
-            "prop2" -> "value2"
-          ))
+          properties = Some(
+            Map(
+              "prop1" -> "value1",
+              "prop2" -> "value2"
+            )
+          )
         ),
         CheckpointV2DTO(
           id = UUID.fromString("8b7f603e-3fc3-474f-aced-a7af054589a2"),
@@ -152,9 +164,11 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
           processStartTime = ZonedDateTime.parse("2024-12-30T16:02:36.5042011+01:00[Europe/Budapest]"),
           processEndTime = None,
           measurements = Set(),
-          properties = Some(Map(
-            "prop1" -> "value3"
-          ))
+          properties = Some(
+            Map(
+              "prop1" -> "value3"
+            )
+          )
         )
       ),
       pagination = Pagination(
@@ -183,10 +197,12 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
           Response.ok(checkpointsResponse)
       }
 
-    val atumPartitions: AtumPartitions = AtumPartitions(List(
-      "a" -> "b",
-      "c" -> "d"
-    ))
+    val atumPartitions: AtumPartitions = AtumPartitions(
+      List(
+        "a" -> "b",
+        "c" -> "d"
+      )
+    )
     val expected: PaginatedResponse[CheckpointV2DTO] = PaginatedResponse(
       data = Seq(
         CheckpointV2DTO(
@@ -203,7 +219,7 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
                 measuredColumns = Seq("x", "y", "z")
               ),
               result = MeasureResultDTO(
-                mainValue = TypedValue("1", ResultValueType.LongValue),
+                mainValue = TypedValue("1", ResultValueType.LongValue)
               )
             )
           )
@@ -232,10 +248,12 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
   }
 
   test("The partitioning additional data are properly queried and delivered as DTO") {
-    val atumPartitions: AtumPartitions = AtumPartitions(List(
-      "a" -> "b",
-      "c" -> "d"
-    ))
+    val atumPartitions: AtumPartitions = AtumPartitions(
+      List(
+        "a" -> "b",
+        "c" -> "d"
+      )
+    )
     implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
       .whenRequestMatchesPartial {
         case r if r.uri.path.endsWith(List("partitionings")) =>
@@ -252,6 +270,7 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
         "key3" -> Some(AdditionalDataItemDTO("value3", "Han Solo"))
       )
     )
+
     val reader = PartitioningReader[Identity](atumPartitions)
     val result = reader.getAdditionalData
     assert(result == Right(expected))
@@ -260,7 +279,6 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
 
 object PartitioningReaderUnitTests {
   private val partitioningEncoded = "W3sia2V5IjoiYSIsInZhbHVlIjoiYiJ9LHsia2V5IjoiYyIsInZhbHVlIjoiZCJ9XQ=="
-
 
   private val partitioningResponse =
     """
@@ -399,19 +417,23 @@ object PartitioningReaderUnitTests {
   private val additionalDataResponse =
     """
       |{
-      |  "data" : {
-      |    "data" : {
-      |      "key1" : {
-      |        "value" : "value1",
-      |        "author" : "Luke Skywalker"
+      |  "data" : [
+      |      {
+      |       "key" : "key1",
+      |       "value" : "value1",
+      |       "author" : "Luke Skywalker"
       |      },
-      |      "key2" : null,
-      |      "key3" : {
+      |      {
+      |      "key" : "key2",
+      |      "value": null,
+      |      "author": "Some Author"
+      |      },
+      |      {
+      |        "key": "key3",
       |        "value" : "value3",
       |        "author" : "Han Solo"
       |      }
-      |    }
-      |  },
+      |  ],
       |  "requestId" : "0fec02e3-9a69-4a90-a14c-5ad9666d7dd7"
       |}
       |""".stripMargin

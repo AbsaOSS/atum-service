@@ -20,8 +20,8 @@ import sttp.client3.SttpBackend
 import sttp.monad.MonadError
 import sttp.monad.syntax._
 import za.co.absa.atum.model.ApiPaths.{Api, V2, V2Paths}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, CheckpointV2DTO}
-import za.co.absa.atum.model.envelopes.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO, CheckpointV2DTO}
+import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.atum.reader.core.RequestResult.RequestResult
 import za.co.absa.atum.reader.core.{PartitioningIdProvider, Reader}
@@ -100,7 +100,17 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
     for {
       partitioningIdOrError <- partitioningId(partitioning)
       additionalDataOrError <- mapRequestResultF(partitioningIdOrError, queryAdditionalData)
-    } yield additionalDataOrError.map(_.data)
+    } yield additionalDataOrError
+      .map { multiSuccessResponse =>
+      AdditionalDataDTO(
+        multiSuccessResponse.data.map { itemV2DTO =>
+          itemV2DTO.value match {
+            case Some(value) => (itemV2DTO.key, Some(AdditionalDataItemDTO(value, itemV2DTO.author)))
+            case None => (itemV2DTO.key, None)
+          }
+        }.toMap
+      )
+    }
   }
 
   private def queryCheckpoints(
@@ -119,7 +129,7 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
     getQuery(endpoint, params)
   }
 
-  private def queryAdditionalData(partitioningId: Long): F[RequestResult[SingleSuccessResponse[AdditionalDataDTO]]] = {
+  private def queryAdditionalData(partitioningId: Long): F[RequestResult[MultiSuccessResponse[AdditionalDataItemV2DTO]]] = {
     val endpoint = s"$Api/$V2/${V2Paths.Partitionings}/$partitioningId/${V2Paths.AdditionalData}"
     getQuery(endpoint)
   }

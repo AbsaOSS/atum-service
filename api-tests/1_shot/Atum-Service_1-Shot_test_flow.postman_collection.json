@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "1042c76d-f906-4991-a7e3-6093c905f998",
+		"_postman_id": "8e4dd4d8-132c-46f4-9e25-48f5f8445e13",
 		"name": "Atum-Service_1-Shot_test_flow",
 		"description": "This collection tests Atum Service basic flow - partitioning, checkpoints, and flows and all related metadata and objects along the way (such as Additional Data, measures, etc).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -955,24 +955,28 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"requests": {},
 						"exec": [
 							"const adAuthor = \"apiTest1ShotAD\";",
 							"pm.collectionVariables.set(\"ad_author\", adAuthor);",
 							"",
-							"const retrievedAD = {",
-							"    \"additionalData1\": {",
+							"const retrievedAD = [",
+							"    {",
+							"        \"key\": \"additionalData1\",",
 							"        \"value\": \"firstItem\",",
 							"        \"author\": adAuthor",
 							"    },",
-							"    \"additionalData2\": {",
+							"    {",
+							"        \"key\": \"additionalData2\",",
 							"        \"value\": \"secondItem\",",
 							"        \"author\": adAuthor",
 							"    },",
-							"    \"additionalData3\": {",
+							"    {",
+							"        \"key\": \"additionalData3\",",
 							"        \"value\": \"thirdItem\",",
 							"        \"author\": adAuthor",
 							"    }",
-							"};",
+							"];",
 							"pm.collectionVariables.set(\"retrieved_ad_as_obj\", retrievedAD);",
 							""
 						]
@@ -983,6 +987,7 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"requests": {},
 						"exec": [
 							""
 						]

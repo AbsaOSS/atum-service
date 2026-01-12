@@ -175,9 +175,6 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     function(fncGetPartitioningAdditionalData)
       .setParam("i_partitioning_id", childPartitioningIDTest)
       .execute { queryResult =>
-        val result = queryResult.next()
-        assert(result.getInt("status").contains(16))
-        assert(result.getString("status_text").contains("No additional data found"))
         assert(!queryResult.hasNext)
       }
 

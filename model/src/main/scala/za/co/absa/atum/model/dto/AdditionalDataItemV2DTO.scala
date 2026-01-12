@@ -14,24 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.model.database
+package za.co.absa.atum.model.dto
 
-import za.co.absa.atum.model.dto.AdditionalDataItemV2DTO
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
-case class AdditionalDataItemFromDB(
-  adName: String,
-  adValue: Option[String],
+case class AdditionalDataItemV2DTO(
+  key: String,
+  value: Option[String],
   author: String
 )
 
-object AdditionalDataItemFromDB {
-  def toSeqAdditionalDataItemV2DTO(dbItems: Seq[AdditionalDataItemFromDB]): Seq[AdditionalDataItemV2DTO] = {
-    dbItems.map(item =>
-      AdditionalDataItemV2DTO(
-        key = item.adName,
-        value = item.adValue,
-        author = item.author
-      )
-    )
-  }
+object AdditionalDataItemV2DTO {
+  implicit val encodeAdditionalDataItemV2DTO: Encoder[AdditionalDataItemV2DTO] = deriveEncoder
+  implicit val decodeAdditionalDataItemV2DTO: Decoder[AdditionalDataItemV2DTO] = deriveDecoder
 }

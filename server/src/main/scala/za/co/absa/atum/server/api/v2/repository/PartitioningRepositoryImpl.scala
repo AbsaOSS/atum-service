@@ -66,11 +66,11 @@ class PartitioningRepositoryImpl(
   override def createOrUpdateAdditionalData(
     partitioningId: Long,
     additionalData: AdditionalDataPatchDTO
-  ): IO[DatabaseError, AdditionalDataDTO] = {
+  ): IO[DatabaseError, Seq[AdditionalDataItemV2DTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       createOrUpdateAdditionalDataFn(CreateOrUpdateAdditionalDataArgs(partitioningId, additionalData)),
       "createOrUpdateAdditionalData"
-    ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
+    ).map(AdditionalDataItemFromDB.toSeqAdditionalDataItemV2DTO)
   }
 
   override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] = {
@@ -80,11 +80,11 @@ class PartitioningRepositoryImpl(
       })
   }
 
-  override def getPartitioningAdditionalData(partitioningId: Long): IO[DatabaseError, AdditionalDataDTO] = {
+  override def getPartitioningAdditionalData(partitioningId: Long): IO[DatabaseError, Seq[AdditionalDataItemV2DTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningAdditionalDataFn(partitioningId),
       "getPartitioningAdditionalData"
-    ).map(AdditionalDataItemFromDB.additionalDataFromDBItems)
+    ).map(AdditionalDataItemFromDB.toSeqAdditionalDataItemV2DTO)
   }
 
   override def getPartitioningById(partitioningId: Long): IO[DatabaseError, PartitioningWithIdDTO] = {
