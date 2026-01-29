@@ -21,21 +21,21 @@ import org.slf4j.LoggerFactory
  */
 class PostgresDataSourceWithPasswordFromSecretsManager extends PGSimpleDataSource {
 
-  protected val logger: Logger = LoggerFactory.getLogger(this.getClass())
+  protected val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   private var password: String = _
   private var passwordSecretId: String = _
 
-  override def getConnection(): Connection = {
+  override def getConnection: Connection = {
     if (Option(password).isEmpty) {
-      val pw = getPasswordFromSecretsManagerOrConfig()
+      val pw = getPasswordFromSecretsManagerOrConfig
       setInternalPassword(pw)
     }
 
     val connectionTry = Try(baseGetConnection(user, password)).recoverWith { case _: SQLException =>
       logger.info("Failed to create Postgres connection, attempting to refresh the password and try again...")
       for {
-        passwordFromSecretsManager <- getPasswordFromSecretsManager()
+        passwordFromSecretsManager <- getPasswordFromSecretsManager
         connection <- Try(baseGetConnection(user, passwordFromSecretsManager)).recoverWith { case e =>
           logger.error("Failed to create Postgres connection even after password refresh")
           Failure(e)
@@ -50,7 +50,7 @@ class PostgresDataSourceWithPasswordFromSecretsManager extends PGSimpleDataSourc
   }
 
   // getter and setter for passwordSecretId are needed as this class is usually constructed by reflection
-  def getPasswordSecretId(): String = passwordSecretId
+  def getPasswordSecretId: String = passwordSecretId
 
   def setPasswordSecretId(passwordSecretId: String): Unit = {
     this.passwordSecretId = passwordSecretId
@@ -72,8 +72,8 @@ class PostgresDataSourceWithPasswordFromSecretsManager extends PGSimpleDataSourc
     this.password = password
   }
 
-  private def getPasswordFromSecretsManager(): Try[String] = {
-    val secretID = getPasswordSecretId()
+  private def getPasswordFromSecretsManager: Try[String] = {
+    val secretID = getPasswordSecretId
 
     val secretValueTry = Try {
       logger.info(s"Fetching password for Postgres from Secrets Manager (secret id: $secretID)")
@@ -92,10 +92,10 @@ class PostgresDataSourceWithPasswordFromSecretsManager extends PGSimpleDataSourc
     }
   }
 
-  private def getPasswordFromSecretsManagerOrConfig(): String = {
-    getPasswordFromSecretsManager().getOrElse {
+  private def getPasswordFromSecretsManagerOrConfig: String = {
+    getPasswordFromSecretsManager.getOrElse {
       logger.error(
-        s"Failed to fetch password from Secrets Manager (secret id: ${getPasswordSecretId()}). " +
+        s"Failed to fetch password from Secrets Manager (secret id: ${getPasswordSecretId}). " +
           s"Falling back to config value."
       )
       val configPassword = ConfigFactory.load().getConfig("postgres").getString("password")
