@@ -53,8 +53,6 @@ import za.co.absa.atum.server.api.v2.repository.{
 import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowPartitionings}
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
-
-import za.co.absa.atum.server.aws.AwsSecretsProviderImpl
 import za.co.absa.atum.server.config.JvmMonitoringConfig
 import zio._
 import zio.config.typesafe.TypesafeConfigProvider
@@ -111,8 +109,6 @@ object Main extends ZIOAppDefault {
           GetCheckpointProperties.layer,
           PostgresDatabaseProvider.layer,
           TransactorProvider.layer,
-          // aws
-          AwsSecretsProviderImpl.layer,
           // scope
           zio.Scope.default,
           // prometheus

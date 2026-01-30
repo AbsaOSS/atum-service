@@ -26,7 +26,8 @@ case class PostgresConfig(
   databaseName: String,
   user: String,
   password: String,
-  maxPoolSize: Int
+  maxPoolSize: Int,
+  passwordSecretId: String
 )
 
 object PostgresConfig {
