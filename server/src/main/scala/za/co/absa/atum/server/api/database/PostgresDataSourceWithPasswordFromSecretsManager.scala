@@ -76,7 +76,7 @@ class PostgresDataSourceWithPasswordFromSecretsManager extends PGSimpleDataSourc
     val secretID = getPasswordSecretId
 
     val secretValueTry = Try {
-      logger.info(s"Fetching password for Postgres from Secrets Manager (secret id: $secretID)")
+      logger.info(s"Fetching password for Postgres from Secrets Manager for user ${this.user} (secret id: $secretID)")
       val response = secretsManagerClient.getSecretValue(
         GetSecretValueRequest.builder
           .secretId(secretID)
