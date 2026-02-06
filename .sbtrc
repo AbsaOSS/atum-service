@@ -17,25 +17,23 @@
 # Aliases in this file expected usage of test file naming conventions:
 #   - "UnitTests" suffix for test files and Suites which define unit tests
 #   - "IntegrationTests" suffix for test files and Suites which define integration tests
+#   - "CompatibilityTests" suffix for test files and Suites which define Agent <-> Server compatibility tests
 
 # CPS QA types aliases
-# * Unit tests
+# Run unit tests
 alias test=; testOnly *UnitTests
 
-# * Integration tests
+# Run integration tests
 alias testIT=; testOnly *IntegrationTests
 
-# Project specific aliases
+# Run all standard tests (all except the special ones below)
+alias testAllStandard=; test; testIT
+
+# Run specific: database tests using Balta
 alias testDB=; project database; testOnly *
 
-# Run agent-server compatibility tests
+# Run specific: agent-server compatibility tests
 alias testCompatibility=; testOnly *CompatibilityTests
-
-# Run all tests except compatibility tests (requires actual server running)
-alias testAllButCompatibility=; test; testIT; testDB
-
-# Run all tests
-alias testAll=; testOnly *
 
 # Jacoco Aliases
 alias jacoco=; jacocoOn; +clean; +test; jacocoReportAll; jacocoOff
