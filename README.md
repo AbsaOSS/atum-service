@@ -274,18 +274,31 @@ Use the `testIT` command to execute all Integration tests, skipping all other te
 sbt testIT
 ```
 
+### Run All Standard Tests
+
+Use the `testAllStandard` command to execute all unit and integration tests except for the special ones mentioned below.
+These still won't require any real DB or service to be present.
+```sbt
+sbt testAllStandard
+```
+
+### Run Special Tests 
+
+These usually have dependency on some system or service being present on the machine where the tests are being executed.
+These also can be performance or penetration tests. Basically the point is that these tests require special
+setup and are usually slower to execute.
+
 Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules.
-- Hint: project custom command
+- Hint: project custom command, requiring a real DB to be present and configured
 ```sbt
 sbt testDB
 ```
 
-If you want to run all tests, use the following command.
-- Hint: project custom command
+If you want to run all Agent <-> Server compatibility tests, use the following command.
+- Hint: project custom command, requiring a real DB and service to be present and configured on the system
 ```sbt
-sbt testAll
+sbt testCompatibility
 ```
-
 
 ## How to Release
 
