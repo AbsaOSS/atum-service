@@ -40,7 +40,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     .add(StructField("columnForSum", DoubleType))
 
   // Need to add service & pg run in CI
-  ignore("Agent should be compatible with server") {
+  test("Agent should be compatible with server") {
 
     val expectedMeasurement = JsonBString(
       """{"mainValue": {"value": "4", "valueType": "Long"}, "supportValues": {}}""".stripMargin

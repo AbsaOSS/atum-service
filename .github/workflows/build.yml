@@ -40,7 +40,7 @@ jobs:
           java-version: "adopt@1.8"
 
       - name: Build and run tests
-        run: sbt testAll
+        run: sbt testAllStandard
 
       - name: Generate documenation
         run: sbt doc
