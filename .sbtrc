@@ -32,7 +32,7 @@ alias testDB=; project database; testOnly *
 alias testCompatibility=; testOnly *CompatibilityTests
 
 # Run all tests except compatibility tests (requires actual server running)
-alias testAllButCompatibility=; testOnly * -- -z -AgentServerCompatibilityTests
+alias testAllButCompatibility=; test; testIT; testDB
 
 # Run all tests
 alias testAll=; testOnly *
