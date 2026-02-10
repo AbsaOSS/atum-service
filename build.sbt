@@ -67,9 +67,8 @@ lazy val server = {
         testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
         Setup.serverMergeStrategy,
         publish / skip := true,
-        version := git.gitDescribedVersion.value.map(_.takeWhile(_ != '-')).getOrElse("unknown")
         buildInfoKeys := Seq[BuildInfoKey](
-          version,
+          "version" -> git.gitDescribedVersion.value.map(_.takeWhile(_ != '-')).getOrElse("unknown"),
           "fullVersion" -> git.gitDescribedVersion.value.getOrElse("unknown")
         ), // version field will be included in generated BuildInfo object
         buildInfoPackage := "za.co.absa.atum.server.api.common.http", // BuildInfo object package location
