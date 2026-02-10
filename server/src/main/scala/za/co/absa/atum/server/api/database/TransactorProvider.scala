@@ -17,7 +17,9 @@
 package za.co.absa.atum.server.api.database
 
 import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import doobie.hikari.HikariTransactor
+import io.prometheus.client.CollectorRegistry
 import za.co.absa.atum.server.config.PostgresConfig
 import zio.Runtime.defaultBlockingExecutor
 import zio._
@@ -40,8 +42,24 @@ object TransactorProvider {
         val config = new HikariConfig()
         config.setDataSourceClassName(postgresConfig.dataSourceClass)
         config.setDataSourceProperties(dataSourceProperties)
-        config.setMaximumPoolSize(postgresConfig.maxPoolSize)
+
+        // Pool settings, especially sizing
         config.setPoolName("DoobiePostgresHikariPool")
+        config.setMinimumIdle(postgresConfig.minimumIdle)
+        config.setMaximumPoolSize(postgresConfig.maxPoolSize)
+
+        // Connection lifecycle settings
+        config.setIdleTimeout(postgresConfig.idleTimeout)
+        config.setKeepaliveTime(postgresConfig.keepaliveTime)
+        config.setMaxLifetime(postgresConfig.maxLifetime)
+
+        // Misc DB settings
+        config.setLeakDetectionThreshold(postgresConfig.leakDetectionThreshold)
+
+        // Prometheus metrics integration
+        if (postgresConfig.prometheusMetricsEnabled)
+          config.setMetricsTrackerFactory(new PrometheusMetricsTrackerFactory(CollectorRegistry.defaultRegistry))
+
         config
       }
 

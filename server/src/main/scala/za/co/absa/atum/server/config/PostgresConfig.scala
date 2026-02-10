@@ -26,8 +26,14 @@ case class PostgresConfig(
   databaseName: String,
   user: String,
   password: String,
+  passwordSecretId: String,
+  minimumIdle: Int,
   maxPoolSize: Int,
-  passwordSecretId: String
+  idleTimeout: Int,
+  keepaliveTime: Int,
+  maxLifetime: Int,
+  leakDetectionThreshold: Int,
+  prometheusMetricsEnabled: Boolean
 )
 
 object PostgresConfig {
