@@ -55,6 +55,8 @@ libraryDependencies ++= flywayDependencies
  */
 lazy val server = {
   val server = (projectMatrix in file("server"))
+    .enablePlugins(GitVersioning)
+    .enablePlugins(BuildInfoPlugin)
     .settings(
       Setup.commonSettings ++ Seq(
         name := "atum-server",
@@ -64,7 +66,13 @@ lazy val server = {
         artifactPath / (Compile / packageBin) := baseDirectory.value / s"target/${name.value}-${version.value}.jar",
         testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
         Setup.serverMergeStrategy,
-        publish / skip := true
+        publish / skip := true,
+        version := git.gitDescribedVersion.value.map(_.takeWhile(_ != '-')).getOrElse("unknown")
+        buildInfoKeys := Seq[BuildInfoKey](
+          version,
+          "fullVersion" -> git.gitDescribedVersion.value.getOrElse("unknown")
+        ), // version field will be included in generated BuildInfo object
+        buildInfoPackage := "za.co.absa.atum.server.api.common.http", // BuildInfo object package location
       ): _*
     )
     .enablePlugins(AssemblyPlugin)
