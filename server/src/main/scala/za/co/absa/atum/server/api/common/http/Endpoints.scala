@@ -21,6 +21,7 @@ import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
 import sttp.tapir.{PublicEndpoint, endpoint}
 import za.co.absa.atum.model.ApiPaths._
+import za.co.absa.atum.model.dto.BuildInfoDTO
 import za.co.absa.atum.model.envelopes.StatusResponse
 import zio.ZIO
 
@@ -39,12 +40,23 @@ object Endpoints extends BaseEndpoints {
   val livenessEndpoint: PublicEndpoint[Unit, Unit, StatusResponse, Any] =
     endpoint.get.in(Health/Liveness).out(jsonBody[StatusResponse])
 
+  val buildInfoEndpoint: PublicEndpoint[Unit, Unit, BuildInfoDTO, Any] =
+    endpoint.get.in(BuildInfo).out(jsonBody[BuildInfoDTO])
+
   private final val healthLogic = (_: Unit) => ZIO.succeed(StatusResponse.up)
+
+  private final val buildInfoLogic = (_: Unit) => ZIO.succeed(
+    BuildInfoDTO(
+      version = za.co.absa.atum.server.api.common.http.BuildInfo.version,
+      fullVersion = za.co.absa.atum.server.api.common.http.BuildInfo.fullVersion
+    )
+  )
 
   val serverEndpoints: List[ZServerEndpoint[HttpEnv.Env, Any]] = List(
     createServerEndpoint(healthEndpoint, healthLogic),
     createServerEndpoint(readinessEndpoint, healthLogic),
     createServerEndpoint(livenessEndpoint, healthLogic),
+    createServerEndpoint(buildInfoEndpoint, buildInfoLogic),
   )
 
 }
