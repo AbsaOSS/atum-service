@@ -19,8 +19,9 @@ package za.co.absa.atum.server.api.database
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import doobie.hikari.HikariTransactor
-import io.prometheus.client.CollectorRegistry
+import za.co.absa.atum.server.api.common.http.HikariMetrics
 import za.co.absa.atum.server.config.PostgresConfig
+import za.co.absa.atum.server.config.HikariMonitoringConfig
 import zio.Runtime.defaultBlockingExecutor
 import zio._
 import zio.interop.catz._
@@ -30,6 +31,7 @@ object TransactorProvider {
   val layer: ZLayer[Any with Scope, Throwable, HikariTransactor[Task]] = ZLayer {
     for {
       postgresConfig <- ZIO.config[PostgresConfig](PostgresConfig.config)
+      hikariMonitoringConfig <- ZIO.config[HikariMonitoringConfig](HikariMonitoringConfig.config)
 
       hikariConfig = {
         val dataSourceProperties = new java.util.Properties()
@@ -57,8 +59,8 @@ object TransactorProvider {
         config.setLeakDetectionThreshold(postgresConfig.leakDetectionThreshold)
 
         // Prometheus metrics integration
-        if (postgresConfig.prometheusMetricsEnabled)
-          config.setMetricsTrackerFactory(new PrometheusMetricsTrackerFactory(CollectorRegistry.defaultRegistry))
+        if (hikariMonitoringConfig.enabled)
+          config.setMetricsTrackerFactory(new PrometheusMetricsTrackerFactory(HikariMetrics.hikariRegistry))
 
         config
       }

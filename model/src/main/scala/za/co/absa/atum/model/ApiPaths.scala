@@ -26,6 +26,7 @@ object ApiPaths {
   final val Readiness = "readiness"
   final val Liveness = "liveness"
   final val ZioMetrics = "zio-metrics"
+  final val HikariMetrics = "hikari-metrics"
   final val BuildInfo = "build-info"
 
   object V1Paths {

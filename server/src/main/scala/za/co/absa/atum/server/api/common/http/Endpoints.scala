@@ -27,9 +27,11 @@ import zio.ZIO
 
 object Endpoints extends BaseEndpoints {
 
-  val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] = {
+  val zioMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] =
     endpoint.get.in(ZioMetrics).out(stringBody)
-  }
+
+  val hikariMetricsEndpoint: PublicEndpoint[Unit, Unit, String, Any] =
+    endpoint.get.in(HikariMetrics).out(stringBody)
 
   val healthEndpoint: PublicEndpoint[Unit, Unit, StatusResponse, Any] =
     endpoint.get.in(Health).out(jsonBody[StatusResponse].example(StatusResponse.up))

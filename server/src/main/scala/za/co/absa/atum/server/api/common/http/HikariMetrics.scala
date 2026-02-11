@@ -14,27 +14,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.config
+package za.co.absa.atum.server.api.common.http
 
-import zio.Config
-import zio.config.magnolia.deriveConfig
+import io.prometheus.client.CollectorRegistry
+import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
 
-case class PostgresConfig(
-  dataSourceClass: String,
-  serverName: String,
-  portNumber: Int,
-  databaseName: String,
-  user: String,
-  password: String,
-  passwordSecretId: String,
-  minimumIdle: Int,
-  maxPoolSize: Int,
-  idleTimeout: Int,
-  keepaliveTime: Int,
-  maxLifetime: Int,
-  leakDetectionThreshold: Int
-)
+object HikariMetrics {
 
-object PostgresConfig {
-  val config: Config[PostgresConfig] = deriveConfig[PostgresConfig].nested("postgres")
+  val hikariRegistry: CollectorRegistry = new CollectorRegistry()
+
+  val prometheusMetrics: PrometheusMetrics[HttpEnv.F] = PrometheusMetrics[HttpEnv.F]("hikari")
+    .addRequestsTotal()
+    .addRequestsActive()
+    .addRequestsDuration()
+
 }
