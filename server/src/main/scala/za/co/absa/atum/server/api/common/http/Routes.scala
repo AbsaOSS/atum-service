@@ -45,9 +45,6 @@ object Routes extends ServerOptions with ServerUtils {
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
   }
 
-  private val http4sMetricsRoutes =
-    Http4sServerInterpreter[HttpEnv.F]().toRoutes(HttpMetrics.prometheusMetrics.metricsEndpoint)
-
   private def createSwaggerRoutes: HttpRoutes[HttpEnv.F] = {
     val endpoints = List(
       api.v1.http.Endpoints.createCheckpointEndpoint,
@@ -75,6 +72,12 @@ object Routes extends ServerOptions with ServerUtils {
       .toRoutes
   }
 
+  private def http4sMetricsRoutes(httpMonitoringConfig: HttpMonitoringConfig): HttpRoutes[HttpEnv.F] = {
+    if (httpMonitoringConfig.enabled) {
+      Http4sServerInterpreter[HttpEnv.F]().toRoutes(HttpMetrics.prometheusMetrics.metricsEndpoint)
+    } else HttpRoutes.empty[HttpEnv.F]
+  }
+
   private def zioMetricsRoutes(jvmMonitoringConfig: JvmMonitoringConfig): HttpRoutes[HttpEnv.F] = {
     val endpointsList = if (jvmMonitoringConfig.enabled) {
       List(
@@ -87,24 +90,17 @@ object Routes extends ServerOptions with ServerUtils {
     ZHttp4sServerInterpreter[HttpEnv.Env]().from(endpointsList).toRoutes
   }
 
-  private def hikariMetricsRoutes: HttpRoutes[HttpEnv.F] = {
-    val endpointsList = List(
-      createServerEndpoint(
-        api.common.http.Endpoints.hikariMetricsEndpoint,
-        (_: Unit) => ZIO.serviceWithZIO[PrometheusPublisher](_.get)
+  private def hikariMetricsRoutes(hikariMonitoringConfig: HikariMonitoringConfig): HttpRoutes[HttpEnv.F] = {
+    val endpointsList = if (hikariMonitoringConfig.enabled) {
+      List(
+        createServerEndpoint(
+          api.common.http.Endpoints.hikariMetricsEndpoint,
+          api.common.http.Endpoints.hikariMetricsLogic
+        )
       )
-    )
+    } else Nil
     ZHttp4sServerInterpreter[HttpEnv.Env]().from(endpointsList).toRoutes
   }
-
-//  private val hikariMetricsServerEndpoint = api.common.http.Endpoints.hikariMetricsEndpoint.zServerLogic[HttpEnv.Env] {
-//    _ =>
-//      ZIO.attempt {
-//        val writer = new StringWriter()
-//        TextFormat.write004(writer, hikariRegistry.metricFamilySamples())
-//        writer.toString
-//      }.orDie
-//  }
 
   def allRoutes(
     httpMonitoringConfig: HttpMonitoringConfig,
@@ -113,8 +109,8 @@ object Routes extends ServerOptions with ServerUtils {
   ): HttpRoutes[HttpEnv.F] = {
     createAllServerRoutes(httpMonitoringConfig) <+>
       createSwaggerRoutes <+>
-      (if (httpMonitoringConfig.enabled) http4sMetricsRoutes else HttpRoutes.empty[HttpEnv.F]) <+>
-      (if (hikariMonitoringConfig.enabled) hikariMetricsRoutes else HttpRoutes.empty[HttpEnv.F]) <+>
+      http4sMetricsRoutes(httpMonitoringConfig) <+>
+      hikariMetricsRoutes(hikariMonitoringConfig) <+>
       zioMetricsRoutes(jvmMonitoringConfig)
   }
 

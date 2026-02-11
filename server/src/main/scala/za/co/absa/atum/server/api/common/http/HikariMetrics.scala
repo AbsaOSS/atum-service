@@ -17,15 +17,22 @@
 package za.co.absa.atum.server.api.common.http
 
 import io.prometheus.client.CollectorRegistry
-import sttp.tapir.server.metrics.prometheus.PrometheusMetrics
+import io.prometheus.client.exporter.common.TextFormat
+import zio.ZIO
+
+import java.io.StringWriter
 
 object HikariMetrics {
 
+  // Separate registry for Hikari. It uses old Prometheus client under the hood - that's
+  // why this need to be a separated endpoint, not shared with http4s metrics)
   val hikariRegistry: CollectorRegistry = new CollectorRegistry()
 
-  val prometheusMetrics: PrometheusMetrics[HttpEnv.F] = PrometheusMetrics[HttpEnv.F]("hikari")
-    .addRequestsTotal()
-    .addRequestsActive()
-    .addRequestsDuration()
+  // Logic to export metrics from the Hikari registry
+  val getMetrics: ZIO[Any, Throwable, String] = ZIO.attempt {
+    val writer = new StringWriter()
+    TextFormat.write004(writer, hikariRegistry.metricFamilySamples())
+    writer.toString
+  }
 
 }

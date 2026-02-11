@@ -23,6 +23,7 @@ import sttp.tapir.{PublicEndpoint, endpoint}
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.dto.BuildInfoDTO
 import za.co.absa.atum.model.envelopes.StatusResponse
+import za.co.absa.atum.server.api.common.{http => commonHttp}
 import zio.ZIO
 
 object Endpoints extends BaseEndpoints {
@@ -53,6 +54,12 @@ object Endpoints extends BaseEndpoints {
       fullVersion = za.co.absa.atum.server.api.common.http.BuildInfo.fullVersion
     )
   )
+
+  // Logic for hikariMetrics - catches errors and converts to string response
+  val hikariMetricsLogic: Unit => ZIO[Any, Unit, String] = (_: Unit) =>
+    commonHttp.HikariMetrics.getMetrics.catchAll(error =>
+      ZIO.succeed(s"Error fetching Hikari metrics: ${error.getMessage}")
+    )
 
   val serverEndpoints: List[ZServerEndpoint[HttpEnv.Env, Any]] = List(
     createServerEndpoint(healthEndpoint, healthLogic),
