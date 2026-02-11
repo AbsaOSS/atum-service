@@ -115,7 +115,7 @@ class PostgresDataSourceWithPasswordFromSecretsManager extends PGSimpleDataSourc
           s"Falling back to config value."
       )
       val configPassword = ConfigFactory.load().getConfig("postgres").getString("password")
-      logger.info(s"Successfully fetched password for Postgres from config: '${configPassword}' and now it will connect to ${this.getUrl}")
+      logger.info(s"Successfully fetched password for Postgres from config")
       configPassword
     }
   }
