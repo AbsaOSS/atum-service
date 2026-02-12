@@ -23,7 +23,7 @@ import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir._
-import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig}
+import za.co.absa.atum.server.config.{HikariMonitoringConfig, HttpMonitoringConfig, JvmMonitoringConfig}
 import zio._
 import zio.interop.catz._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
@@ -44,9 +44,6 @@ object Routes extends ServerOptions with ServerUtils {
 
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
   }
-
-  private val http4sMetricsRoutes =
-    Http4sServerInterpreter[HttpEnv.F]().toRoutes(HttpMetrics.prometheusMetrics.metricsEndpoint)
 
   private def createSwaggerRoutes: HttpRoutes[HttpEnv.F] = {
     val endpoints = List(
@@ -75,6 +72,12 @@ object Routes extends ServerOptions with ServerUtils {
       .toRoutes
   }
 
+  private def http4sMetricsRoutes(httpMonitoringConfig: HttpMonitoringConfig): HttpRoutes[HttpEnv.F] = {
+    if (httpMonitoringConfig.enabled) {
+      Http4sServerInterpreter[HttpEnv.F]().toRoutes(HttpMetrics.prometheusMetrics.metricsEndpoint)
+    } else HttpRoutes.empty[HttpEnv.F]
+  }
+
   private def zioMetricsRoutes(jvmMonitoringConfig: JvmMonitoringConfig): HttpRoutes[HttpEnv.F] = {
     val endpointsList = if (jvmMonitoringConfig.enabled) {
       List(
@@ -87,13 +90,27 @@ object Routes extends ServerOptions with ServerUtils {
     ZHttp4sServerInterpreter[HttpEnv.Env]().from(endpointsList).toRoutes
   }
 
+  private def hikariMetricsRoutes(hikariMonitoringConfig: HikariMonitoringConfig): HttpRoutes[HttpEnv.F] = {
+    val endpointsList = if (hikariMonitoringConfig.enabled) {
+      List(
+        createServerEndpoint(
+          api.common.http.Endpoints.hikariMetricsEndpoint,
+          api.common.http.Endpoints.hikariMetricsLogic
+        )
+      )
+    } else Nil
+    ZHttp4sServerInterpreter[HttpEnv.Env]().from(endpointsList).toRoutes
+  }
+
   def allRoutes(
     httpMonitoringConfig: HttpMonitoringConfig,
+    hikariMonitoringConfig: HikariMonitoringConfig,
     jvmMonitoringConfig: JvmMonitoringConfig
   ): HttpRoutes[HttpEnv.F] = {
     createAllServerRoutes(httpMonitoringConfig) <+>
       createSwaggerRoutes <+>
-      (if (httpMonitoringConfig.enabled) http4sMetricsRoutes else HttpRoutes.empty[HttpEnv.F]) <+>
+      http4sMetricsRoutes(httpMonitoringConfig) <+>
+      hikariMetricsRoutes(hikariMonitoringConfig) <+>
       zioMetricsRoutes(jvmMonitoringConfig)
   }
 
