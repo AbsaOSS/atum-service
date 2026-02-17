@@ -17,8 +17,11 @@
 package za.co.absa.atum.server.api.database
 
 import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import doobie.hikari.HikariTransactor
+import za.co.absa.atum.server.api.common.http.HikariMetrics
 import za.co.absa.atum.server.config.PostgresConfig
+import za.co.absa.atum.server.config.HikariMonitoringConfig
 import zio.Runtime.defaultBlockingExecutor
 import zio._
 import zio.interop.catz._
@@ -28,6 +31,7 @@ object TransactorProvider {
   val layer: ZLayer[Any with Scope, Throwable, HikariTransactor[Task]] = ZLayer {
     for {
       postgresConfig <- ZIO.config[PostgresConfig](PostgresConfig.config)
+      hikariMonitoringConfig <- ZIO.config[HikariMonitoringConfig](HikariMonitoringConfig.config)
 
       hikariConfig = {
         val dataSourceProperties = new java.util.Properties()
@@ -40,8 +44,24 @@ object TransactorProvider {
         val config = new HikariConfig()
         config.setDataSourceClassName(postgresConfig.dataSourceClass)
         config.setDataSourceProperties(dataSourceProperties)
-        config.setMaximumPoolSize(postgresConfig.maxPoolSize)
+
+        // Pool settings, especially sizing
         config.setPoolName("DoobiePostgresHikariPool")
+        config.setMinimumIdle(postgresConfig.minimumIdle)
+        config.setMaximumPoolSize(postgresConfig.maxPoolSize)
+
+        // Connection lifecycle settings
+        config.setIdleTimeout(postgresConfig.idleTimeout)
+        config.setKeepaliveTime(postgresConfig.keepaliveTime)
+        config.setMaxLifetime(postgresConfig.maxLifetime)
+
+        // Misc DB settings
+        config.setLeakDetectionThreshold(postgresConfig.leakDetectionThreshold)
+
+        // Prometheus metrics integration
+        if (hikariMonitoringConfig.enabled)
+          config.setMetricsTrackerFactory(new PrometheusMetricsTrackerFactory(HikariMetrics.hikariRegistry))
+
         config
       }
 

@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.common.http
 
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.Router
-import za.co.absa.atum.server.config.{HttpMonitoringConfig, JvmMonitoringConfig, SslConfig}
+import za.co.absa.atum.server.config.{HikariMonitoringConfig, HttpMonitoringConfig, JvmMonitoringConfig, SslConfig}
 import zio._
 import zio.interop.catz._
 
@@ -30,11 +30,12 @@ object Server {
     for {
       executor <- ZIO.executor
       httpMonitoringConfig <- ZIO.config[HttpMonitoringConfig](HttpMonitoringConfig.config)
+      hikariMonitoringConfig <- ZIO.config[HikariMonitoringConfig](HikariMonitoringConfig.config)
       jvmMonitoringConfig <- ZIO.config[JvmMonitoringConfig](JvmMonitoringConfig.config)
       builder = BlazeServerBuilder[HttpEnv.F]
         .bindHttp(port, "0.0.0.0")
         .withExecutionContext(executor.asExecutionContext)
-        .withHttpApp(Router("/" -> Routes.allRoutes(httpMonitoringConfig, jvmMonitoringConfig)).orNotFound)
+        .withHttpApp(Router("/" -> Routes.allRoutes(httpMonitoringConfig, hikariMonitoringConfig, jvmMonitoringConfig)).orNotFound)
       builderWithSsl = sslContext.fold(builder)(ctx => builder.withSslContext(ctx))
       _ <- builderWithSsl.serve.compile.drain
     } yield ()
