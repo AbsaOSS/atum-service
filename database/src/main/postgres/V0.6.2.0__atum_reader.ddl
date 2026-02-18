@@ -37,10 +37,8 @@ $do$
 $do$;
 
 -- Read-only user, direct access to tables with data, SELECT statements only.
-GRANT USAGE ON SCHEMA flow_patterns TO atum_reader;
 GRANT USAGE ON SCHEMA flows TO atum_reader;
 GRANT USAGE ON SCHEMA runs TO atum_reader;
 
-GRANT SELECT ON ALL TABLES IN SCHEMA flow_patterns TO atum_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA flows TO atum_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA runs TO atum_reader;
