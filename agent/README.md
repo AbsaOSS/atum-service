@@ -21,7 +21,7 @@ val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
 ### Option 2
 Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAgent`.
 ```scala
-    val atumContext1 = AtumAgent.createAtumContext(atumPartition)
+    val atumContext1 = AtumAgent.getOrCreateAtumContext(atumPartitions)
 ```
 
 ### Option 3
