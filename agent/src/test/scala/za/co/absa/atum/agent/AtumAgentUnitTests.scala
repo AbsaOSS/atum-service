@@ -93,4 +93,16 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
 
   }
 
+  test("AtumAgent can create a config-backed agent instance") {
+    val config = ConfigFactory.empty()
+      .withValue("atum.dispatcher.type", ConfigValueFactory.fromAnyRef("http"))
+      .withValue("atum.dispatcher.http.url", ConfigValueFactory.fromAnyRef("http://localhost:8080"))
+
+    val agent = AtumAgent.fromConfig(config)
+
+    agent.dispatcher match {
+      case _: HttpDispatcher  => succeed
+      case _                  => fail("Expected HttpDispatcher")
+    }
+  }
 }

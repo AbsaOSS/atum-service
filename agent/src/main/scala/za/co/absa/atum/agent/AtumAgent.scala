@@ -131,4 +131,7 @@ object AtumAgent extends AtumAgent {
     }
   }
 
+  def fromConfig(config: Config): AtumAgent = new AtumAgent {
+    override val dispatcher: Dispatcher = dispatcherFromConfig(config)
+  }
 }

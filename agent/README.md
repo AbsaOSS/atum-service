@@ -24,6 +24,17 @@ Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAge
     val atumContext1 = AtumAgent.createAtumContext(atumPartition)
 ```
 
+### Option 3
+Create a dedicated agent instance from a custom Typesafe config.
+
+```scala
+import com.typesafe.config.ConfigFactory
+import za.co.absa.atum.agent.AtumAgent
+
+val config = ConfigFactory.load()
+val customAgent = AtumAgent.fromConfig(config)
+```
+
 #### AtumPartitions
 A list of key values that maintains the order of arrival of the items, the `AtumService`
 is able to deliver the correct `AtumContext` according to the `AtumPartitions` we give it.
