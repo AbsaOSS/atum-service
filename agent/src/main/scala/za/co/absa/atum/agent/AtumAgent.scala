@@ -120,7 +120,7 @@ trait AtumAgent {
 
 object AtumAgent extends AtumAgent {
 
-  override val dispatcher: Dispatcher = dispatcherFromConfig()
+  override lazy val dispatcher: Dispatcher = dispatcherFromConfig()
 
   def dispatcherFromConfig(config: Config = ConfigFactory.load()): Dispatcher = {
     config.getString("atum.dispatcher.type") match {
@@ -132,6 +132,6 @@ object AtumAgent extends AtumAgent {
   }
 
   def fromConfig(config: Config): AtumAgent = new AtumAgent {
-    override val dispatcher: Dispatcher = dispatcherFromConfig(config)
+    override lazy val dispatcher: Dispatcher = dispatcherFromConfig(config)
   }
 }

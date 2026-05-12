@@ -50,14 +50,6 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       emptyConfig.withValue("atum.dispatcher.type", value)
     }
 
-    def configOf(configValues: Map[String, Any]): Config = {
-      val emptyConfig = ConfigFactory.empty()
-      configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
-        val configValue = ConfigValueFactory.fromAnyRef(value)
-        acc.withValue(configKey, configValue)
-      }
-    }
-
     AtumAgent.dispatcherFromConfig(configOf(Map(
       "atum.dispatcher.type" -> "http",
       "atum.dispatcher.http.url" -> "http://localhost:8080"
@@ -94,15 +86,24 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
   }
 
   test("AtumAgent can create a config-backed agent instance") {
-    val config = ConfigFactory.empty()
-      .withValue("atum.dispatcher.type", ConfigValueFactory.fromAnyRef("http"))
-      .withValue("atum.dispatcher.http.url", ConfigValueFactory.fromAnyRef("http://localhost:8080"))
-
-    val agent = AtumAgent.fromConfig(config)
+    val agent = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "http",
+      "atum.dispatcher.http.url" -> "http://localhost:8080"
+    )))
 
     agent.dispatcher match {
       case _: HttpDispatcher  => succeed
       case _                  => fail("Expected HttpDispatcher")
     }
   }
+
+  //Small Helper
+  def configOf(configValues: Map[String, Any]): Config = {
+    val emptyConfig = ConfigFactory.empty()
+    configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
+      val configValue = ConfigValueFactory.fromAnyRef(value)
+      acc.withValue(configKey, configValue)
+    }
+  }
+
 }
