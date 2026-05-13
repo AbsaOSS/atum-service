@@ -44,11 +44,6 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
   }
 
   test("AtumAgent creates dispatcher per configuration") {
-    def configForDispatcher(dispatcherType: String): Config = {
-      val emptyConfig = ConfigFactory.empty()
-      val value = ConfigValueFactory.fromAnyRef(dispatcherType)
-      emptyConfig.withValue("atum.dispatcher.type", value)
-    }
 
     AtumAgent.dispatcherFromConfig(configOf(Map(
       "atum.dispatcher.type" -> "http",
