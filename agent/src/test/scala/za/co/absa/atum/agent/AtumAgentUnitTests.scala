@@ -97,8 +97,8 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     }
   }
 
-  //Small Helper
-  def configOf(configValues: Map[String, Any]): Config = {
+  // Small helper
+  private def configOf(configValues: Map[String, Any]): Config = {
     val emptyConfig = ConfigFactory.empty()
     configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
       val configValue = ConfigValueFactory.fromAnyRef(value)
