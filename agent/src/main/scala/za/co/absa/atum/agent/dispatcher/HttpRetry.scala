@@ -44,10 +44,10 @@ case class HttpRetry(
   private val JitterFraction = 0.1
 
   /**
-   * Computes the backoff delay for a given attempt using exponential backoff with jitter.
+   *  Computes the backoff delay for a given attempt using exponential backoff with jitter.
    *
-   * @param attempt Zero-based attempt index (0 = first retry delay, 1 = second, ...).
-   * @return Delay in milliseconds to sleep before the next attempt.
+   *  @param attempt Zero-based attempt index (0 = first retry delay, 1 = second, ...).
+   *  @return Delay in milliseconds to sleep before the next attempt.
    */
   private[dispatcher] def computeDelay(attempt: Int): Long = {
     val exponential = initialDelay * math.pow(2, math.min(attempt, MaxExponent)).toLong
@@ -122,7 +122,7 @@ object HttpRetry {
   )
 
   /**
-   *  Reads retry configuration from a Typesafe [[Config]] instance.
+   *  Reads retry configuration from a Typesafe Config instance.
    *
    *  Each key is optional: if absent, the corresponding [[Default]] value is used.
    *  This design ensures backward-compatibility — existing configs that omit the
