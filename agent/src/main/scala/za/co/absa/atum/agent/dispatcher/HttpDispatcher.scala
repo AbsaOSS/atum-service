@@ -153,7 +153,11 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       .body(checkpointV2DTO.asJsonString)
 
     val response = withRetry(request)
-    handleResponseBody(response)
+    // 409 Conflict means the checkpoint was already saved (e.g. prior attempt succeeded but response was lost).
+    // This is expected on retry and should not be treated as an error.
+    if (response.code != StatusCode.Conflict) {
+      handleResponseBody(response)
+    }
   }
 
   override protected[agent] def updateAdditionalData(
