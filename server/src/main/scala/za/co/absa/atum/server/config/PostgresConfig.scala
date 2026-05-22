@@ -32,7 +32,8 @@ case class PostgresConfig(
   idleTimeout: Int,
   keepaliveTime: Int,
   maxLifetime: Int,
-  leakDetectionThreshold: Int
+  leakDetectionThreshold: Int,
+  connectionTimeout: Long
 )
 
 object PostgresConfig {
