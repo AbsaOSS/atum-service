@@ -19,6 +19,7 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
 import org.scalatest.funsuite.AnyFunSuiteLike
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.model.types.basic.AtumPartitions
 
 class AtumAgentUnitTests extends AnyFunSuiteLike {
@@ -92,7 +93,43 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     }
   }
 
-  // Small helper
+  test("config-backed agents are independent and use their own currentUser resolution") {
+    val partitioning1 = AtumPartitions("domain" -> "one")
+    val partitioning2 = AtumPartitions("domain" -> "two")
+
+    final class RecordingAgent(userName: String) extends AtumAgent {
+      private var recordedAuthorsInternal: Vector[String] = Vector.empty
+
+      override val dispatcher: CapturingDispatcher =
+        AtumAgent.dispatcherFromConfig(configOf(Map(
+          "atum.dispatcher.type" -> "capture",
+          "atum.dispatcher.capture.capture-limit" -> 10
+        ))).asInstanceOf[CapturingDispatcher]
+
+      override private[agent] def currentUser: String = userName
+
+      override def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
+        recordedAuthorsInternal = recordedAuthorsInternal :+ this.currentUser
+        super.getOrCreateAtumContext(atumPartitions)
+      }
+
+      def recordedAuthors: Seq[String] = recordedAuthorsInternal
+    }
+
+    val agentA = new RecordingAgent("alice")
+    val agentB = new RecordingAgent("bob")
+
+    val contextA = agentA.getOrCreateAtumContext(partitioning1)
+    val contextB = agentB.getOrCreateAtumContext(partitioning2)
+
+    assert(contextA.agent == agentA)
+    assert(contextB.agent == agentB)
+    assert(agentA.recordedAuthors == Seq("alice"))
+    assert(agentB.recordedAuthors == Seq("bob"))
+    assert(agentA.getOrCreateAtumContext(partitioning1) == contextA)
+    assert(agentB.getOrCreateAtumContext(partitioning2) == contextB)
+  }
+
   private def configOf(configValues: Map[String, Any]): Config = {
     val emptyConfig = ConfigFactory.empty()
     configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
