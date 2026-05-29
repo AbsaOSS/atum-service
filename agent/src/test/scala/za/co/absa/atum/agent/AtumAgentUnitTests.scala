@@ -134,6 +134,35 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     assert(agentB.recordedAuthors == Seq("bob", "bob"))
   }
 
+  test("AtumAgent.fromConfig creates independent agent instances with separate context stores") {
+    val sharedPartitioning = AtumPartitions("domain" -> "one")
+
+    val configA = configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    ))
+    val configB = configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    ))
+
+    val agentA = AtumAgent.fromConfig(configA)
+    val agentB = AtumAgent.fromConfig(configB)
+
+    val contextA1 = agentA.getOrCreateAtumContext(sharedPartitioning)
+    val contextA2 = agentA.getOrCreateAtumContext(sharedPartitioning)
+    val contextB1 = agentB.getOrCreateAtumContext(sharedPartitioning)
+    val contextB2 = agentB.getOrCreateAtumContext(sharedPartitioning)
+
+    assert(contextA1 eq contextA2)
+    assert(contextB1 eq contextB2)
+    assert(contextA1 ne contextB1)
+
+    assert(contextA1.agent == agentA)
+    assert(contextB1.agent == agentB)
+    assert(agentA.dispatcher ne agentB.dispatcher)
+  }
+
   private def configOf(configValues: Map[String, Any]): Config = {
     val emptyConfig = ConfigFactory.empty()
     configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
