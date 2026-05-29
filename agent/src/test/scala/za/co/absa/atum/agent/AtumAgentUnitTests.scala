@@ -94,8 +94,7 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
   }
 
   test("config-backed agents are independent and use their own currentUser resolution") {
-    val partitioning1 = AtumPartitions("domain" -> "one")
-    val partitioning2 = AtumPartitions("domain" -> "two")
+    val sharedPartitioning = AtumPartitions("domain" -> "one")
 
     final class RecordingAgent(userName: String) extends AtumAgent {
       private var recordedAuthorsInternal: Vector[String] = Vector.empty
@@ -119,15 +118,20 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     val agentA = new RecordingAgent("alice")
     val agentB = new RecordingAgent("bob")
 
-    val contextA = agentA.getOrCreateAtumContext(partitioning1)
-    val contextB = agentB.getOrCreateAtumContext(partitioning2)
+    val contextA1 = agentA.getOrCreateAtumContext(sharedPartitioning)
+    val contextA2 = agentA.getOrCreateAtumContext(sharedPartitioning)
+    val contextB1 = agentB.getOrCreateAtumContext(sharedPartitioning)
+    val contextB2 = agentB.getOrCreateAtumContext(sharedPartitioning)
 
-    assert(contextA.agent == agentA)
-    assert(contextB.agent == agentB)
-    assert(agentA.recordedAuthors == Seq("alice"))
-    assert(agentB.recordedAuthors == Seq("bob"))
-    assert(agentA.getOrCreateAtumContext(partitioning1) == contextA)
-    assert(agentB.getOrCreateAtumContext(partitioning2) == contextB)
+    assert(contextA1 eq contextA2)
+    assert(contextB1 eq contextB2)
+    assert(contextA1 ne contextB1)
+
+    assert(contextA1.agent == agentA)
+    assert(contextB1.agent == agentB)
+
+    assert(agentA.recordedAuthors == Seq("alice", "alice"))
+    assert(agentB.recordedAuthors == Seq("bob", "bob"))
   }
 
   private def configOf(configValues: Map[String, Any]): Config = {
