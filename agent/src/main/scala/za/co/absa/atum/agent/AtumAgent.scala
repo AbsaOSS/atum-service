@@ -66,7 +66,7 @@ trait AtumAgent {
    *  Provides an AtumContext given a `AtumPartitions` instance. Retrieves the data from AtumService API.
    *
    *  Note: if partitioning doesn't exist in the store yet, a new one will be created with the author stored in
-   *    `AtumAgent.currentUser`. If partitioning already exists, this attribute will be ignored because there
+   *    `currentUser`. If partitioning already exists, this attribute will be ignored because there
    *    already is an author who previously created the partitioning in the data store. Each Atum Context thus
    *    can have different author potentially.
    *
@@ -75,7 +75,7 @@ trait AtumAgent {
    *          partitioning already existed.
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
-    val authorIfNew = AtumAgent.currentUser
+    val authorIfNew = this.currentUser
     val partitioningDTO = PartitioningSubmitDTO(atumPartitions.toPartitioningDTO, None, authorIfNew)
 
     val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
@@ -92,7 +92,7 @@ trait AtumAgent {
    *  @return Atum context object
    */
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
-    val authorIfNew = AtumAgent.currentUser
+    val authorIfNew = this.currentUser
     val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
 
     val newPartitionsDTO = newPartitions.toPartitioningDTO
@@ -122,7 +122,7 @@ object AtumAgent extends AtumAgent {
 
   override val dispatcher: Dispatcher = dispatcherFromConfig()
 
-  def dispatcherFromConfig(config: Config = ConfigFactory.load()): Dispatcher = {
+  private[agent] def dispatcherFromConfig(config: Config = ConfigFactory.load()): Dispatcher = {
     config.getString("atum.dispatcher.type") match {
       case "http" => new HttpDispatcher(config)
       case "console" => new ConsoleDispatcher(config)
@@ -131,4 +131,7 @@ object AtumAgent extends AtumAgent {
     }
   }
 
+  def fromConfig(config: Config): AtumAgent = new AtumAgent {
+    override val dispatcher: Dispatcher = dispatcherFromConfig(config)
+  }
 }

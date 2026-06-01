@@ -19,6 +19,7 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
 import org.scalatest.funsuite.AnyFunSuiteLike
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.model.types.basic.AtumPartitions
 
 class AtumAgentUnitTests extends AnyFunSuiteLike {
@@ -44,19 +45,6 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
   }
 
   test("AtumAgent creates dispatcher per configuration") {
-    def configForDispatcher(dispatcherType: String): Config = {
-      val emptyConfig = ConfigFactory.empty()
-      val value = ConfigValueFactory.fromAnyRef(dispatcherType)
-      emptyConfig.withValue("atum.dispatcher.type", value)
-    }
-
-    def configOf(configValues: Map[String, Any]): Config = {
-      val emptyConfig = ConfigFactory.empty()
-      configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
-        val configValue = ConfigValueFactory.fromAnyRef(value)
-        acc.withValue(configKey, configValue)
-      }
-    }
 
     AtumAgent.dispatcherFromConfig(configOf(Map(
       "atum.dispatcher.type" -> "http",
@@ -91,6 +79,96 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     assert(eNoConfig.getMessage.contains("No configuration setting found for key"))
     info("missing dispatcher configuration throws exception as expected")
 
+  }
+
+  test("AtumAgent can create a config-backed agent instance") {
+    val agent = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "http",
+      "atum.dispatcher.http.url" -> "http://localhost:8080"
+    )))
+
+    agent.dispatcher match {
+      case _: HttpDispatcher  => succeed
+      case _                  => fail("Expected HttpDispatcher")
+    }
+  }
+
+  test("config-backed agents are independent and use their own currentUser resolution") {
+    val sharedPartitioning = AtumPartitions("domain" -> "one")
+
+    final class RecordingAgent(userName: String) extends AtumAgent {
+      private var recordedAuthorsInternal: Vector[String] = Vector.empty
+
+      override val dispatcher: CapturingDispatcher =
+        AtumAgent.dispatcherFromConfig(configOf(Map(
+          "atum.dispatcher.type" -> "capture",
+          "atum.dispatcher.capture.capture-limit" -> 10
+        ))).asInstanceOf[CapturingDispatcher]
+
+      override private[agent] def currentUser: String = userName
+
+      override def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
+        recordedAuthorsInternal = recordedAuthorsInternal :+ this.currentUser
+        super.getOrCreateAtumContext(atumPartitions)
+      }
+
+      def recordedAuthors: Seq[String] = recordedAuthorsInternal
+    }
+
+    val agentA = new RecordingAgent("alice")
+    val agentB = new RecordingAgent("bob")
+
+    val contextA1 = agentA.getOrCreateAtumContext(sharedPartitioning)
+    val contextA2 = agentA.getOrCreateAtumContext(sharedPartitioning)
+    val contextB1 = agentB.getOrCreateAtumContext(sharedPartitioning)
+    val contextB2 = agentB.getOrCreateAtumContext(sharedPartitioning)
+
+    assert(contextA1 eq contextA2)
+    assert(contextB1 eq contextB2)
+    assert(contextA1 ne contextB1)
+
+    assert(contextA1.agent == agentA)
+    assert(contextB1.agent == agentB)
+
+    assert(agentA.recordedAuthors == Seq("alice", "alice"))
+    assert(agentB.recordedAuthors == Seq("bob", "bob"))
+  }
+
+  test("AtumAgent.fromConfig creates independent agent instances with separate context stores") {
+    val sharedPartitioning = AtumPartitions("domain" -> "one")
+
+    val configA = configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    ))
+    val configB = configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    ))
+
+    val agentA = AtumAgent.fromConfig(configA)
+    val agentB = AtumAgent.fromConfig(configB)
+
+    val contextA1 = agentA.getOrCreateAtumContext(sharedPartitioning)
+    val contextA2 = agentA.getOrCreateAtumContext(sharedPartitioning)
+    val contextB1 = agentB.getOrCreateAtumContext(sharedPartitioning)
+    val contextB2 = agentB.getOrCreateAtumContext(sharedPartitioning)
+
+    assert(contextA1 eq contextA2)
+    assert(contextB1 eq contextB2)
+    assert(contextA1 ne contextB1)
+
+    assert(contextA1.agent == agentA)
+    assert(contextB1.agent == agentB)
+    assert(agentA.dispatcher ne agentB.dispatcher)
+  }
+
+  private def configOf(configValues: Map[String, Any]): Config = {
+    val emptyConfig = ConfigFactory.empty()
+    configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
+      val configValue = ConfigValueFactory.fromAnyRef(value)
+      acc.withValue(configKey, configValue)
+    }
   }
 
 }

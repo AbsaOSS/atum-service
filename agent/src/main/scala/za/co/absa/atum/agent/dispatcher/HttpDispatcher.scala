@@ -17,6 +17,7 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
+import okhttp3.OkHttpClient
 import org.apache.spark.internal.Logging
 import sttp.capabilities
 import sttp.client3._
@@ -28,6 +29,8 @@ import za.co.absa.atum.model.ApiPaths
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
+
+import java.util.concurrent.TimeUnit
 
 class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   import HttpDispatcher._
@@ -42,7 +45,21 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     .header("Content-Type", "application/json")
     .response(asString)
 
-  private[dispatcher] val backend: SttpBackend[Identity, capabilities.WebSockets] = OkHttpSyncBackend()
+  private[dispatcher] val backend: SttpBackend[Identity, capabilities.WebSockets] = {
+    val connectTimeoutMs = optionalLong(ConnectTimeoutKey).getOrElse(DefaultConnectTimeoutMs)
+    val readTimeoutMs = optionalLong(ReadTimeoutKey).getOrElse(DefaultReadTimeoutMs)
+    val writeTimeoutMs = optionalLong(WriteTimeoutKey).getOrElse(DefaultWriteTimeoutMs)
+
+    val okHttpClient = new OkHttpClient.Builder()
+      .connectTimeout(connectTimeoutMs, TimeUnit.MILLISECONDS)
+      .readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS)
+      .writeTimeout(writeTimeoutMs, TimeUnit.MILLISECONDS)
+      .build()
+
+    OkHttpSyncBackend.usingClient(okHttpClient)
+  }
+
+  private val httpRetry: HttpRetry = HttpRetry.fromConfig(config)
 
   /**
    *  This method is used to get the partitioning ID from the server.
@@ -53,7 +70,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     val encodedPartitioning = partitioning.asBase64EncodedJsonString
     val request = commonAtumRequest.get(getPartitioningIdEndpoint.addParam("partitioning", encodedPartitioning))
 
-    val response = backend.send(request)
+    val response = withRetry(request)
 
     handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data.id
   }
@@ -62,7 +79,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     val encodedPartitioning = partitioning.asBase64EncodedJsonString
     val request = commonAtumRequest.get(getPartitioningIdEndpoint.addParam("partitioning", encodedPartitioning))
 
-    val response = backend.send(request)
+    val response = withRetry(request)
 
     response.code match {
       case StatusCode.NotFound => None
@@ -85,7 +102,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
             partitioning.authorIfNew
           ).asJsonString
         )
-      val response = backend.send(request)
+      val response = withRetry(request)
       handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data
     }
 
@@ -94,7 +111,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
         s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/${newPartitioningWithIdDTO.id}/${ApiPaths.V2Paths.Measures}"
       )
       val req = commonAtumRequest.get(endpoint)
-      val resp = backend.send(req)
+      val resp = withRetry(req)
       handleResponseBody(resp).as[MultiSuccessResponse[MeasureDTO]].data.toSet
     }
 
@@ -103,7 +120,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
         s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/${newPartitioningWithIdDTO.id}/${ApiPaths.V2Paths.AdditionalData}"
       )
       val req = commonAtumRequest.get(endpoint)
-      val resp = backend.send(req)
+      val resp = withRetry(req)
       handleResponseBody(resp).as[MultiSuccessResponse[AdditionalDataItemV2DTO]]
     }
 
@@ -135,8 +152,12 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       .post(endpoint)
       .body(checkpointV2DTO.asJsonString)
 
-    val response = backend.send(request)
-    handleResponseBody(response)
+    val response = withRetry(request)
+    // 409 Conflict means the checkpoint was already saved (e.g. prior attempt succeeded but response was lost).
+    // This is expected on retry and should not be treated as an error.
+    if (response.code != StatusCode.Conflict) {
+      handleResponseBody(response)
+    }
   }
 
   override protected[agent] def updateAdditionalData(
@@ -154,16 +175,34 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       .patch(endpoint)
       .body(additionalDataPatchDTO.asJsonString)
 
-    val response = backend.send(request)
+    val response = withRetry(request)
 
-    val data: AdditionalDataDTO.Data = handleResponseBody(response).as[MultiSuccessResponse[AdditionalDataItemV2DTO]]
+    val data: AdditionalDataDTO.Data = handleResponseBody(response)
+      .as[MultiSuccessResponse[AdditionalDataItemV2DTO]]
       .data
-      .map( item => item.value match {
-        case Some(_) => item.key -> Some(AdditionalDataItemDTO(item.value.get, item.author))
-        case None => item.key -> None
-      }).toMap
+      .map(item =>
+        item.value match {
+          case Some(_) => item.key -> Some(AdditionalDataItemDTO(item.value.get, item.author))
+          case None => item.key -> None
+        }
+      )
+      .toMap
 
     AdditionalDataDTO(data)
+  }
+
+  /**
+   * Sends `request` via the sttp backend, retrying on transient failures with exponential backoff.
+   * Retries on HTTP 5xx (server errors) and IOException (covers network failures,
+   * connection resets, and SocketTimeoutException which OkHttp throws on read/connect timeout).
+   */
+  private def withRetry(
+    request: Request[Either[String, String], capabilities.WebSockets]
+  ): Response[Either[String, String]] = {
+    httpRetry.retry(backend.send(request))(_.code.code >= StatusCode.InternalServerError.code) {
+      (attempt, total, delay, reason) =>
+        log.warn(s"Atum agent: $reason on attempt $attempt/$total, retrying in ${delay}ms")
+    }
   }
 
   private def handleResponseBody(response: Response[Either[String, String]]): String = {
@@ -173,8 +212,19 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     }
   }
 
+  private def optionalLong(key: String): Option[Long] =
+    if (config.hasPath(key)) Some(config.getLong(key)) else None
+
 }
 
 object HttpDispatcher {
   private val UrlKey = "atum.dispatcher.http.url"
+  private val ConnectTimeoutKey = "atum.dispatcher.http.timeout.connect-ms"
+  private val ReadTimeoutKey = "atum.dispatcher.http.timeout.read-ms"
+  private val WriteTimeoutKey = "atum.dispatcher.http.timeout.write-ms"
+
+  // OkHttp defaults are 10s each; 30s read gives more headroom for slow DB queries under burst load
+  private val DefaultConnectTimeoutMs = 10000L
+  private val DefaultReadTimeoutMs = 30000L
+  private val DefaultWriteTimeoutMs = 10000L
 }
