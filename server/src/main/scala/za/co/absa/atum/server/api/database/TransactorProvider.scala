@@ -52,6 +52,11 @@ object TransactorProvider {
 
         // Connection lifecycle settings
         config.setIdleTimeout(postgresConfig.idleTimeout)
+        require(
+          postgresConfig.connectionTimeout >= 250L,
+          s"postgres.connectionTimeout must be >= 250 ms (HikariCP minimum), got ${postgresConfig.connectionTimeout} ms"
+        )
+        config.setConnectionTimeout(postgresConfig.connectionTimeout)
         config.setKeepaliveTime(postgresConfig.keepaliveTime)
         config.setMaxLifetime(postgresConfig.maxLifetime)
 
