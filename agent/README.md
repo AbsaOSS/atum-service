@@ -20,8 +20,33 @@ val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
 
 ### Option 2
 Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAgent`.
+
 ```scala
-    val atumContext1 = AtumAgent.createAtumContext(atumPartition)
+import za.co.absa.atum.agent.AtumAgent
+import za.co.absa.atum.model.types.basic.AtumPartitions
+
+val atumPartitions = AtumPartitions("country" -> "za", "dataset" -> "customers")
+val atumContext1 = AtumAgent.getOrCreateAtumContext(atumPartitions)
+```
+
+### Option 3
+Create a dedicated agent instance from a custom Typesafe config.
+
+```scala
+import com.typesafe.config.ConfigFactory
+import za.co.absa.atum.agent.AtumAgent
+import za.co.absa.atum.model.types.basic.AtumPartitions
+
+val config = ConfigFactory.parseString(
+  """
+    |atum.dispatcher.type = "http"
+    |atum.dispatcher.http.url = "http://localhost:8080"
+    |""".stripMargin
+)
+
+val customAgent = AtumAgent.fromConfig(config)
+val atumPartitions = AtumPartitions("country" -> "za", "dataset" -> "customers")
+val atumContext = customAgent.getOrCreateAtumContext(atumPartitions)
 ```
 
 #### AtumPartitions
