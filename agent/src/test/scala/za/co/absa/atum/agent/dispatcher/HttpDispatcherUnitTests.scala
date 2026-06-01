@@ -259,4 +259,35 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     an[HttpException] should be thrownBy dispatcher.saveCheckpoint(checkpoint)
   }
 
+  it should "treat HTTP 409 Conflict as success (checkpoint already saved on prior attempt)" in {
+    val checkpoint = CheckpointDTO(
+      id = java.util.UUID.randomUUID(),
+      name = "cp",
+      author = "author",
+      measuredByAtumAgent = true,
+      processStartTime = ZonedDateTime.now(),
+      processEndTime = Some(ZonedDateTime.now()),
+      measurements = Set.empty,
+      partitioning = testPartitioningDTO
+    )
+    val partitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
+    val getPartitioningResponse = Response(
+      Right(SingleSuccessResponse(partitioningWithId).asJsonString): Either[String, String],
+      StatusCode.Ok
+    )
+    val conflictResponse = Response(Left("Checkpoint already present"): Either[String, String], StatusCode.Conflict)
+
+    stubGetPartitioning(testPartitioningDTO, getPartitioningResponse)
+    when(
+      mockBackend.send(
+        argThat[Request[Either[String, String], capabilities.WebSockets]](
+          req => req.method.method == "POST" && req.uri.path.mkString.contains("checkpoints")
+        )
+      )
+    ).thenReturn(conflictResponse)
+
+    // Should NOT throw — 409 means the checkpoint was already saved
+    noException should be thrownBy dispatcher.saveCheckpoint(checkpoint)
+  }
+
 }
