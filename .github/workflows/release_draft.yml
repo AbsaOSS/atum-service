@@ -76,8 +76,8 @@ jobs:
           from-tag-name: ${{ github.event.inputs.from-tag-name }}
           chapters: |
             - { title: Breaking Changes 💥, label: breaking change, order: 10 }
-            - { title: Epics 🎉, label: epic, order: 20 }
-            - { title: New Features 🎉, label: feature, order: 30 }
+            - { title: Epics 🚀, label: epic, order: 20 }
+            - { title: New Features 🎉, label: enhancement, order: 30 }
             - { title: Bugfixes 🛠, label: bug, order: 40 }
             - { title: Infrastructure ⚙️, label: infrastructure, order: 50 }
             - { title: Spikes 💡, label: spike, order: 60 }
