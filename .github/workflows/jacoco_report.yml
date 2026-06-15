@@ -14,12 +14,17 @@
 # limitations under the License.
 #
 
-name: JaCoCo Report
+name: CI Run build and verify test coverage
 
 on:
   pull_request:
     branches: [ master ]
     types: [ opened, edited, synchronize, reopened ]
+
+# Cancel superseded runs on the same ref to save runner minutes.
+concurrency:
+  group: jacoco-report-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   scalaLong: 2.13.11
@@ -40,8 +45,30 @@ env:
     atum-server: 71*80*
 
 jobs:
+  detect:
+    name: Detect Changed Files
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      scala_changed: ${{ steps.filter.outputs.scala }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d
+        id: filter
+        with:
+          token: ""
+          filters: |
+            scala:
+              - '**/*.scala'
+              - '!project/**'
+
   jacoco-report-agent-reader-and-model:
     name: JaCoCo Report on Agent, Reader and Model
+    needs: detect
+    if: needs.detect.outputs.scala_changed == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -62,7 +89,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@54bfe284d1119dc917dddba80517c54c5bcf3627
+        uses: MoranaApps/jacoco-report@69351d88d18f7697c416e1bc2020ed05606d8120
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
@@ -81,6 +108,8 @@ jobs:
 
   jacoco-report-server:
     name: JaCoCo Report on Server
+    needs: detect
+    if: needs.detect.outputs.scala_changed == 'true'
     runs-on: ubuntu-latest
 
     services:
@@ -118,7 +147,7 @@ jobs:
 
       - name: Check coverage thresholds and add reports in PR comments
         id: jacoco
-        uses: MoranaApps/jacoco-report@54bfe284d1119dc917dddba80517c54c5bcf3627
+        uses: MoranaApps/jacoco-report@69351d88d18f7697c416e1bc2020ed05606d8120
         with:
           token: '${{ secrets.GITHUB_TOKEN }}'
           paths: |
@@ -133,3 +162,11 @@ jobs:
           skip-unchanged: false
           modules: ${{ env.MODULES }}
           modules-thresholds: ${{ env.MODULES_THRESHOLDS }}
+
+  noop:
+    name: No Operation
+    needs: detect
+    if: needs.detect.outputs.scala_changed != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No changes in src/**/*.scala — passing."
