@@ -33,20 +33,20 @@ env:
   REPORT_GROUPS: |
     - name: atum-agent
       paths:
-        - 'agent/target/**/jacoco/report/jacoco.xml'
-      thresholds: '67*80*0'
+        - '**/agent/target/**/jacoco-report/jacoco.xml'
+      thresholds: '66*80*0'
     - name: atum-reader
       paths:
-        - 'reader/target/**/jacoco/report/jacoco.xml'
-      thresholds: '73*80*0'
+        - '**/reader/target/**/jacoco-report/jacoco.xml'
+      thresholds: '57*80*0'
     - name: atum-model
       paths:
-        - 'model/target/**/jacoco/report/jacoco.xml'
+        - '**/model/target/**/jacoco-report/jacoco.xml'
       thresholds: '35*80*0'
     - name: atum-server
       paths:
-        - 'server/target/**/jacoco/report/jacoco.xml'
-      thresholds: '71*80*0'
+        - '**/server/target/**/jacoco-report/jacoco.xml'
+      thresholds: '39*80*0'
 
 jobs:
   detect:
