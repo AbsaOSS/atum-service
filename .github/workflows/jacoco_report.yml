@@ -34,11 +34,11 @@ env:
     - name: atum-agent
       paths:
         - '**/agent/target/**/jacoco-report/jacoco.xml'
-      thresholds: '66*80*0'
+      thresholds: '78*80*0'
     - name: atum-reader
       paths:
         - '**/reader/target/**/jacoco-report/jacoco.xml'
-      thresholds: '57*80*0'
+      thresholds: '74*80*0'
     - name: atum-model
       paths:
         - '**/model/target/**/jacoco-report/jacoco.xml'
