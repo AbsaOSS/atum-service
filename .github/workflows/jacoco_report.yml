@@ -14,12 +14,16 @@
 # limitations under the License.
 #
 
-name: CI Run build and verify test coverage
+name: CI JaCoCo Report
 
 on:
   pull_request:
     branches: [ master ]
-    types: [ opened, edited, synchronize, reopened ]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 # Cancel superseded runs on the same ref to save runner minutes.
 concurrency:
@@ -27,22 +31,24 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  scalaLong: 2.13.11
-  scalaShort: "2.13"
-  coverage-overall: 80.0
-  coverage-changed-files: 80.0
-  coverage-per-changed-file: 0.0
-  check-overall-coverages: true
-  MODULES: |
-    atum-agent: agent
-    atum-model: model
-    atum-reader: reader
-    atum-server: server
-  MODULES_THRESHOLDS: |
-    atum-reader: 73*80*
-    atum-agent: 67*80*
-    atum-model: 35*80*
-    atum-server: 71*80*
+  # hint: "group thresholds" are in format: 'overall*changed-files-average*per-changed-file'
+  REPORT_GROUPS: |
+    - name: atum-agent
+      paths:
+        - agent/**/target/**/jacoco/report/jacoco.xml
+      thresholds: '67*80*0'
+    - name: atum-reader
+      paths:
+        - reader/**/target/**/jacoco/report/jacoco.xml
+      thresholds: '73*80*0'
+    - name: atum-model
+      paths:
+        - model/**/target/**/jacoco/report/jacoco.xml
+      thresholds: '35*80*0'
+    - name: atum-server
+      paths:
+        - server/**/target/**/jacoco/report/jacoco.xml
+      thresholds: '71*80*0'
 
 jobs:
   detect:
@@ -65,49 +71,8 @@ jobs:
               - '**/*.scala'
               - '!project/**'
 
-  jacoco-report-agent-reader-and-model:
-    name: JaCoCo Report on Agent, Reader and Model
-    needs: detect
-    if: needs.detect.outputs.scala_changed == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
-        with:
-          persist-credentials: false
-
-      - name: Setup Scala
-        uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
-        with:
-          java-version: 'adopt@1.8'
-
-      - name: Build and run tests with test coverage
-        continue-on-error: true
-        id: jacocorun
-        run: sbt "project agent" jacoco "project reader" jacoco "project model" jacoco
-
-      - name: Check coverage thresholds and add reports in PR comments
-        id: jacoco
-        uses: MoranaApps/jacoco-report@69351d88d18f7697c416e1bc2020ed05606d8120
-        with:
-          token: '${{ secrets.GITHUB_TOKEN }}'
-          paths: |
-            **/target/**/jacoco/report/jacoco.xml
-          exclude-paths: |
-            database/target/**
-          sensitivity: "detail"
-          comment-mode: 'multi'
-          min-coverage-overall: ${{ env.coverage-overall }}
-          min-coverage-changed-files: ${{ env.coverage-changed-files }}
-          min-coverage-per-changed-file: ${{ env.coverage-per-changed-file }}
-          skip-unchanged: false
-          modules: ${{ env.MODULES }}
-          modules-thresholds: ${{ env.MODULES_THRESHOLDS }}
-
-
-  jacoco-report-server:
-    name: JaCoCo Report on Server
+  jacoco-report:
+    name: JaCoCo Report
     needs: detect
     if: needs.detect.outputs.scala_changed == 'true'
     runs-on: ubuntu-latest
@@ -131,6 +96,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Setup Scala
         uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
@@ -140,28 +106,19 @@ jobs:
       - name: Prepare testing database
         run: sbt flywayMigrate
 
-      - name: Build and run tests with test coverage
+      - name: Build and run tests with coverage
         continue-on-error: true
-        id: jacocorun
-        run: sbt "project server" jacoco
+        run: sbt "project agent" jacoco "project reader" jacoco "project model" jacoco "project server" jacoco
 
-      - name: Check coverage thresholds and add reports in PR comments
-        id: jacoco
+      - name: Add JaCoCo Report in PR comments
         uses: MoranaApps/jacoco-report@69351d88d18f7697c416e1bc2020ed05606d8120
         with:
-          token: '${{ secrets.GITHUB_TOKEN }}'
-          paths: |
-            **/target/**/jacoco/report/jacoco.xml
-          exclude-paths: |
-            database/target/**
-          sensitivity: "detail"
-          comment-mode: 'multi'
-          min-coverage-overall: ${{ env.coverage-overall }}
-          min-coverage-changed-files: ${{ env.coverage-changed-files }}
-          min-coverage-per-changed-file: ${{ env.coverage-per-changed-file }}
-          skip-unchanged: false
-          modules: ${{ env.MODULES }}
-          modules-thresholds: ${{ env.MODULES_THRESHOLDS }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          global-thresholds: '0*80'
+          report-thresholds-default: '0*0*0'
+          skip-unchanged: 'true'
+          evaluate-unchanged: 'false'
+          report-groups: ${{ env.REPORT_GROUPS }}
 
   noop:
     name: No Operation
@@ -169,4 +126,4 @@ jobs:
     if: needs.detect.outputs.scala_changed != 'true'
     runs-on: ubuntu-latest
     steps:
-      - run: echo "No changes in src/**/*.scala — passing."
+      - run: echo "No changes in Scala related files — passing."
