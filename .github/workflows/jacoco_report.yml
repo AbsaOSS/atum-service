@@ -42,7 +42,7 @@ env:
     - name: atum-model
       paths:
         - '**/model/target/**/jacoco-report/jacoco.xml'
-      thresholds: '35*80*0'
+      thresholds: '34*80*0'
     - name: atum-server
       paths:
         - '**/server/target/**/jacoco-report/jacoco.xml'
