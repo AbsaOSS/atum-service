@@ -22,8 +22,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
 
 # Cancel superseded runs on the same ref to save runner minutes.
 concurrency:
@@ -76,6 +74,10 @@ jobs:
     needs: detect
     if: needs.detect.outputs.scala_changed == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     services:
       postgres:
@@ -108,7 +110,7 @@ jobs:
 
       - name: Build and run tests with coverage
         continue-on-error: true
-        run: sbt "project agent" jacoco "project reader" jacoco "project model" jacoco "project server" jacoco
+        run: sbt jacoco
 
       - name: Add JaCoCo Report in PR comments
         uses: MoranaApps/jacoco-report@69351d88d18f7697c416e1bc2020ed05606d8120
