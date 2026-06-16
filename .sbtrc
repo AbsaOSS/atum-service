@@ -36,6 +36,6 @@ alias testDB=; project database; testOnly *
 alias testCompatibility=; testOnly *CompatibilityTests
 
 # Jacoco Aliases
-alias jacoco=; jacocoOn; +clean; +test; jacocoReportAll; jacocoOff
+alias jacoco=; jacocoOn; +clean; +testOnly *UnitTests; jacocoReportAll; jacocoOff
 alias jacocoOff=; set every jacocoPluginEnabled := false
 alias jacocoOn=; set every jacocoPluginEnabled := true
