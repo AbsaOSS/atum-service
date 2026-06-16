@@ -112,6 +112,11 @@ jobs:
         continue-on-error: true
         run: sbt jacoco
 
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.14'
+
       - name: Add JaCoCo Report in PR comments
         uses: MoranaApps/jacoco-report@69351d88d18f7697c416e1bc2020ed05606d8120
         with:
