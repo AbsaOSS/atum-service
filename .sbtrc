@@ -36,7 +36,7 @@ alias testDB=; project database; testOnly *
 alias testCompatibility=; testOnly *CompatibilityTests
 
 # Jacoco Aliases
-alias jacoco=; jacocoOn; jacocoAgent; jacocoReader; jacocoModel; jacocoServer; jacocoOff; project atum-service
+alias jacoco=; jacocoOn; jacocoAgent; jacocoReader; jacocoModel; jacocoServer; jacocoOff
 
 alias jacocoOn=; set every jacocoPluginEnabled := true
 alias jacocoOff=; set every jacocoPluginEnabled := false
