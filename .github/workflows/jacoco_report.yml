@@ -121,10 +121,10 @@ jobs:
         uses: MoranaApps/jacoco-report@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          global-thresholds: '0*80'
+          global-thresholds: '64*80'
           report-thresholds-default: '34*80*60'
-          # skip-unchanged: 'true'
-          # evaluate-unchanged: 'false'
+          skip-unchanged: 'true'
+          evaluate-unchanged: 'false'
           report-groups: ${{ env.REPORT_GROUPS }}
 
   noop:
