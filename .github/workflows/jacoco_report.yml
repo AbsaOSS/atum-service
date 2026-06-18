@@ -118,7 +118,7 @@ jobs:
           python-version: '3.14'
 
       - name: Add JaCoCo Report in PR comments
-        uses: MoranaApps/jacoco-report@master
+        uses: MoranaApps/jacoco-report@48921080d110bb49247b55a5d23f79e688577ef0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           global-thresholds: '64*80'
