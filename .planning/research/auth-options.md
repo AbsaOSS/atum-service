@@ -7,6 +7,14 @@
 
 ---
 
+## TL;DR — Recommended Path
+
+> ⭐ **Option 0: AbsaOSS login-service** is the recommended path.  
+> It is an internal AbsaOSS JWT gateway with direct LDAP/AD group integration that already exists in your organisation. Its JWKS endpoint enables offline JWT validation on atum-service — same pattern as industry-standard OIDC, no Azure AD dependency, no self-hosted Keycloak needed.  
+> The login-service README even references atum-service as prior art.
+
+---
+
 ## Current State
 
 | Component | Auth Status |
@@ -42,6 +50,176 @@ Regardless of which authentication mechanism is chosen, the access model is:
 - `GET /health`, `GET /health/readiness`, `GET /health/liveness`
 - `GET /buildinfo`, `GET /metrics/*`
 - Swagger UI
+
+---
+
+---
+
+## Option 0 — AbsaOSS login-service (Internal JWT Gateway) ⭐ RECOMMENDED
+
+> **Best for:** atum-service specifically. This is an **internal AbsaOSS service** ([github.com/AbsaOSS/login-service](https://github.com/AbsaOSS/login-service)) already built for this organisation, with direct LDAP/AD integration, JWT issuance, and a JWKS endpoint. The login-service README explicitly references atum-service as prior art.
+
+### What it is
+
+login-service is a self-contained Spring Boot JWT gateway that:
+- Authenticates users against **your company's LDAP/AD directly** (no Azure AD required)
+- Issues **RS256-signed JWTs** containing the user's LDAP group memberships as claims
+- Exposes a **JWKS endpoint** (`/token/public-key-jwks`) so that downstream services can validate tokens offline
+- Supports **key rotation** with layover periods, keys optionally stored in **AWS Secrets Manager**
+- Also supports **MS Entra (Azure AD)** as an authentication provider (for SSO scenarios)
+- Supports **Kerberos/SPNEGO** for transparent SSO on Windows domain-joined machines
+
+### Token endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /token/generate` | Authenticate (username + password → access + refresh token) |
+| `POST /token/refresh` | Get new access token using a valid refresh token |
+| `GET /token/public-key` | Current signing public key (PEM) |
+| `GET /token/public-keys` | All current and recently-rotated public keys |
+| `GET /token/public-key-jwks` | JWKS format — use this for JWT validation in atum-service |
+
+### Request flow
+
+```
+Agent (Aqueduct job)
+  │
+  ├─► POST login-service/token/generate
+  │     { "username": "svc-atum-agent", "password": "..." }
+  │     ← { "token": "<JWT>", "refresh": "<refresh-JWT>" }
+  │
+  └─► POST atum-server/api/v2/partitionings
+        Authorization: Bearer <JWT>
+        ──► Server fetches JWKS from login-service (cached at startup)
+        ──► Validates JWT signature + expiry
+        ──► Extracts groups claim → checks for "atum-writers" group
+        ──► WRITER role ✓ → 201 Created
+```
+
+### JWT contents
+
+A login-service token contains:
+```json
+{
+  "sub": "svc-atum-agent",
+  "type": "access",
+  "iat": 1718780000,
+  "exp": 1718780900,
+  "groups": ["atum-writers", "dq-platform"],
+  "upn": "svc-atum-agent@corp.company.com"
+}
+```
+
+Group names come directly from your LDAP — no sync to Azure AD, no Object ID guessing.
+
+### Server implementation
+
+```scala
+// Tapir: bearer auth with JWT validation
+val bearerAuth: EndpointInput[AtumPrincipal] =
+  auth.bearer[String]().mapDecode { rawToken =>
+    JwtValidator
+      .validateAgainstJwks(rawToken, loginServiceJwksUrl)  // URL from config
+      .map(claims => AtumPrincipal.fromClaims(claims))
+  }
+
+// Role extraction from groups claim
+def roleFromClaims(claims: JwtClaims): Role =
+  if (claims.groups.contains(writerGroup)) Role.Writer  // group name from config
+  else Role.Reader
+```
+
+**Recommended JWT library:** [`com.github.jwt-scala:jwt-circe_2.13`](https://github.com/jwt-scala/jwt-scala) — pure Scala, Circe integration, ZIO-friendly. Or [`com.nimbusds:nimbus-jose-jwt`](https://connect2id.com/products/nimbus-jose-jwt) for a battle-hardened Java option.
+
+JWKS is fetched **once at startup** and cached. On key rotation, login-service keeps the old key available during a configurable layover period so in-flight tokens remain valid.
+
+### Configuration on atum-server
+
+```hocon
+atum.server.auth {
+  enabled = true
+  jwks-url = "https://login-service.company.com/token/public-key-jwks"
+  writer-group = "atum-writers"    # LDAP group name for write access
+  reader-group = ""                # empty = any authenticated user can read
+  jwks-cache-ttl = "15min"
+}
+```
+
+### Agent changes
+
+```hocon
+atum.dispatcher.http.auth {
+  type = "login-service"
+  token-url = "https://login-service.company.com/token/generate"
+  username = ${?ATUM_SERVICE_ACCOUNT}    # LDAP service account username
+  password = ${?ATUM_SERVICE_PASSWORD}   # from AWS Secrets Manager (already present)
+  refresh-url = "https://login-service.company.com/token/refresh"
+  token-cache-buffer-seconds = 60        # refresh this many seconds before expiry
+}
+```
+
+Agent's `HttpDispatcher`:
+1. Calls `/token/generate` at startup (or lazily)
+2. Caches the access token, tracks `exp`
+3. Injects `Authorization: Bearer <token>` on every request
+4. Calls `/token/refresh` before expiry (or on 401 response)
+
+**Java 8 compatible:** login-service tokens are plain JWT; any JWT library works on Java 8.
+
+### Reader changes
+
+```scala
+// Login-service credential passed at construction
+AtumReader(
+  serverConfig,
+  auth = LoginServiceAuth(
+    tokenUrl   = "https://login-service.company.com/token/generate",
+    username   = sys.env("ATUM_USERNAME"),
+    password   = sys.env("ATUM_PASSWORD")
+  )
+)
+```
+
+### Key rotation handling
+
+login-service supports automatic key rotation with:
+- `key-rotation-time`: how often keys rotate (e.g. 9h)
+- `key-lay-over-time`: old key still valid after rotation (e.g. 15min)  
+- `key-phase-out-time`: old key fully removed (e.g. 30min)
+
+atum-service needs to refresh its JWKS cache periodically (or on 401 with a new `kid`). The layover period ensures no token validation gap during rotation.
+
+Keys can be stored in **AWS Secrets Manager** (the `secretsmanager` SDK is already in atum-service's dependencies).
+
+### Pros
+
+- ✅ **Already exists in your organisation** — no new infrastructure, no new vendor
+- ✅ **Direct LDAP/AD group integration** — group names are your real LDAP group names (not Azure AD Object IDs)
+- ✅ **No Azure AD app registration needed** — uses your LDAP service account directly
+- ✅ **Standard JWT/JWKS** — atum-service code is the same as for Azure AD or Keycloak
+- ✅ **AWS Secrets Manager integration** — keys and service account credentials can be stored in Secrets Manager (already in atum-service dependency tree)
+- ✅ **Key rotation with layover** — no downtime during key rotation
+- ✅ **MS Entra (Azure AD) passthrough** — login-service can also validate Entra JWTs if needed
+- ✅ **SPNEGO/Kerberos** — transparent SSO for domain-joined users (useful for human Reader users)
+- ✅ **AbsaOSS ecosystem** — shared support, known patterns, consistent with other internal services
+- ✅ **Java 8 compatible** — JWT validation libraries work on Java 8
+
+### Cons
+
+- ⚠️ **login-service must be running** — it's a dependency; its availability affects auth (mitigated: JWKS is cached so token validation continues offline)
+- ⚠️ **Token generation requires login-service** — if login-service is down, agents cannot obtain new tokens (but existing cached tokens remain valid until expiry)
+- ⚠️ **Internal service — check deployment status** — confirm with your team that a login-service instance is deployed and accessible from atum-service's environment
+- ⚠️ **Service account management** — the Agent's LDAP service account password needs rotation; use AWS Secrets Manager
+
+### Effort estimate
+
+| Component | Effort |
+|-----------|--------|
+| Server (JWT middleware + RBAC, same as Option 1) | Medium (1–2 weeks) |
+| Agent (token acquisition + refresh loop) | Medium (1 week) |
+| Reader (token injection) | Small (days) |
+| login-service deployment verification | Small (hours, ops task) |
+| **Total** | **~2–3 weeks** |
 
 ---
 
@@ -535,49 +713,57 @@ def authMiddleware: HttpMiddleware[Task] = routes =>
 
 ## Comparison Matrix (All Options)
 
-| Criterion | Opt 1: Azure AD JWT | Opt 2: API Keys | Opt 3: mTLS | Opt 4: Keycloak | Opt 5: Hybrid |
-|-----------|---------------------|-----------------|-------------|-----------------|---------------|
-| **Complexity** | Medium | Low | High | Medium-High | Medium |
-| **LDAP/AD group integration** | ✅ Native | ❌ Manual | ❌ OU-based | ✅ Direct LDAP | ✅ (via JWT path) |
-| **User identity in token** | ✅ Full | ⚠️ Description | ⚠️ Cert CN | ✅ Full | ✅ Full (humans) |
-| **No external IdP needed** | ❌ Azure AD | ✅ | ✅ | ⚠️ Self-hosted | ⚠️ Partial |
-| **Works fully offline** | ⚠️ JWKS cached | ✅ | ✅ | ⚠️ JWKS cached | ⚠️ API key path |
-| **Automatic expiry/rotation** | ✅ | ❌ Manual | ⚠️ Cert TTL | ✅ | ✅ (JWT path) |
-| **Java 8 compatible (Agent)** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Human user auth (future)** | ✅ | ⚠️ Awkward | ❌ | ✅ | ✅ |
-| **Enterprise policy compliance** | ✅ | ⚠️ Check policy | ✅ Zero-trust | ✅ | ✅ |
-| **Operational overhead** | Low | Medium | High | High | Medium |
-| **Implementation effort** | ~3–4w | ~1–2w | ~2–4w + PKI | ~3–4w + ops | ~3–4w |
-| **Best for** | Standard enterprise | Fastest / PoC | Zero-trust K8s | No Azure AD | Mixed machine+human clients |
+| Criterion | Opt 0: login-service ⭐ | Opt 1: Azure AD JWT | Opt 2: API Keys | Opt 3: mTLS | Opt 4: Keycloak | Opt 5: Hybrid |
+|-----------|------------------------|---------------------|-----------------|-------------|-----------------|---------------|
+| **Complexity** | Low–Medium | Medium | Low | High | Medium-High | Medium |
+| **LDAP/AD group integration** | ✅ Direct LDAP | ✅ Via Azure AD sync | ❌ Manual | ❌ OU-based | ✅ Direct LDAP | ✅ (via JWT path) |
+| **User identity in token** | ✅ Full (sub, UPN, groups) | ✅ Full | ⚠️ Description | ⚠️ Cert CN | ✅ Full | ✅ Full (humans) |
+| **No external IdP needed** | ✅ Internal service | ❌ Azure AD | ✅ | ✅ | ⚠️ Self-hosted | ⚠️ Partial |
+| **Works fully offline** | ⚠️ JWKS cached | ⚠️ JWKS cached | ✅ | ✅ | ⚠️ JWKS cached | ⚠️ API key path |
+| **Automatic expiry/rotation** | ✅ token TTL + key rotation | ✅ | ❌ Manual | ⚠️ Cert TTL | ✅ | ✅ (JWT path) |
+| **Java 8 compatible (Agent)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Human user auth (future)** | ✅ SPNEGO/Kerberos | ✅ | ⚠️ Awkward | ❌ | ✅ | ✅ |
+| **Enterprise policy compliance** | ✅ Internal + LDAP | ✅ | ⚠️ Check policy | ✅ Zero-trust | ✅ | ✅ |
+| **Operational overhead** | Low (already deployed) | Low | Medium | High | High | Medium |
+| **Implementation effort** | ~2–3w | ~3–4w | ~1–2w | ~2–4w + PKI | ~3–4w + ops | ~3–4w |
+| **AbsaOSS ecosystem fit** | ✅ Native | ⚠️ Vendor | ✅ | ⚠️ | ⚠️ | ✅ |
+| **Best for** | atum-service, now | Standard enterprise | Fastest / PoC | Zero-trust K8s | No Azure AD | Mixed clients |
 
 ---
 
 ## Recommendation
 
-> ⭐ **Option 1 (Azure AD + JWT)** remains the recommended path for a standard enterprise environment.
+> ⭐ **Option 0 (AbsaOSS login-service)** is the clear recommended path for atum-service.
 
-> 🔄 **Option 5 (Hybrid)** is the most pragmatic production pattern: start with API keys (Option 2) for the Agent in week 1–2, then layer in JWT (Option 1 or 4) for human-facing Reader auth. The incremental nature reduces risk.
+**Rationale:**
+- It is an AbsaOSS-internal service purpose-built for exactly this pattern — the login-service README explicitly references atum-service as prior art
+- Direct LDAP/AD group integration — group names are your real LDAP group names, no Azure AD app registration bureaucracy
+- AWS Secrets Manager already in atum-service's dependency tree — service account credentials and keys can be stored there securely
+- Standard JWT/JWKS means the atum-service server-side implementation is identical to what you'd write for Azure AD or Keycloak
+- Key rotation with layover period eliminates validation gaps during key changes
+- SPNEGO/Kerberos support enables transparent SSO for domain-joined human users (Reader use case)
 
-> 🏠 **Option 4 (Keycloak)** if your organisation cannot use Azure AD — the server-side implementation is identical to Option 1, so the choice is purely an infrastructure/organisational one.
+> 🔄 **Option 5 (Hybrid, using login-service for JWT)** is the pragmatic production pattern: deploy API keys for Aqueduct pipeline agents first (fastest path, 1–2 weeks), then layer login-service JWT for human Reader authentication in the next milestone.
 
-> 🔒 **Option 3 (mTLS)** only if your security team has an explicit zero-trust mandate and PKI infrastructure (or Vault/SPIRE) is already in place.
+> 🌐 **Option 1 (Azure AD JWT)** if login-service is not available in your environment. Note: login-service also supports MS Entra passthrough, so both can coexist.
+
+> 🔒 **Option 3 (mTLS)** only if your security team has an explicit zero-trust mandate and Vault/SPIRE PKI infrastructure is already in place.
 
 ---
 
 ## Open Questions for Architects
 
-1. **Azure AD availability:** Is registering an Azure AD application feasible? Who is the AAD admin contact?
-2. **Group naming:** What AD group(s) map to the `WRITER` role? (e.g. `atum-writers`, `dq-platform-users`)
-3. **Service principals:** Should each Aqueduct pipeline have its own service principal, or share one? (Shared is simpler; per-pipeline gives better audit trail.)
-4. **Token audience (`aud` claim):** Should the server app registration be scoped to atum-service only, or a broader platform scope?
-5. **Offline validation:** Are there network policies that block access to `login.microsoftonline.com` (Azure AD) or require a self-hosted IdP (→ Option 4)?
-6. **App Roles vs Groups:** Does the org prefer Azure AD App Roles (explicit, no 200-group limit) or the `groups` claim? Check with the AAD admin.
-7. **Machine identity policy:** Does InfoSec require all service-to-service calls to use federated identity (Azure AD service principals), or are API keys acceptable for pipeline jobs?
-8. **Reader auth model:** Should the Reader library require auth configuration at construction time, or fall back to unauthenticated (for read-only public deployments)?
-9. **v2 backlog bundling:** OBS-02 (retry logging) and RES-01 (circuit breaker) — bundle into this milestone or keep separate?
+1. **login-service availability:** Is login-service deployed and accessible from atum-service's environment (same VPC/network)? What is the base URL?
+2. **Service account:** What LDAP service account should the Agent use to call `/token/generate`? Should each Aqueduct pipeline use a shared account or individual accounts per team?
+3. **Group naming:** What LDAP group(s) map to the `WRITER` role? (e.g. `atum-writers`, `dq-platform-users`)
+4. **Reader auth model:** Should the Reader library require a service account at construction time, support token passthrough (user provides their own JWT), or fall back to unauthenticated for read-only deployments?
+5. **JWKS cache TTL:** login-service layover period defaults to 15 min — JWKS cache TTL on atum-service should be ≤ layover to avoid validation gaps during key rotation.
+6. **Azure AD fallback:** If login-service is unavailable, should atum-service also accept Azure AD JWTs directly? (login-service supports MS Entra passthrough, enabling coexistence.)
+7. **Machine identity policy:** Does InfoSec require service-to-service calls to use federated identity (service principals / Kerberos), or are LDAP service accounts with token-generate acceptable for pipeline agents?
+8. **v2 backlog bundling:** OBS-02 (retry logging) and RES-01 (circuit breaker) — bundle into this milestone or keep separate?
 
 ---
 
 *Generated from codebase analysis of atum-service @ commit HEAD — 2026-06-19*  
 *Stack: ZIO 2.0.19 · Tapir 1.9.6 · http4s-blaze 0.23.16 · sttp 3.5.2 · Scala 2.13*  
-*Updated: 2026-06-19 — added Option 4 (Keycloak), Option 5 (Hybrid), and per-option refinements*
+*Updated: 2026-06-19 — added Option 0 (AbsaOSS login-service) as primary recommendation*
