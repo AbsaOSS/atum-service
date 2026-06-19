@@ -7,11 +7,15 @@
 
 ---
 
-## TL;DR — Recommended Path
+## TL;DR — Architect Decision (2026-06-19)
 
-> ⭐ **Option 0: AbsaOSS login-service** is the recommended path.  
-> It is an internal AbsaOSS JWT gateway with direct LDAP/AD group integration that already exists in your organisation. Its JWKS endpoint enables offline JWT validation on atum-service — same pattern as industry-standard OIDC, no Azure AD dependency, no self-hosted Keycloak needed.  
-> The login-service README even references atum-service as prior art.
+> ✅ **Option 6: Static Bearer Token (Pluggable)** — selected by architect.
+
+The Atum server should accept a **pre-configured static token** in HTTP headers and validate it before processing any request. Two tokens: one for **write access** (Agent), one for **read-only access** (Reader). Tokens are configured via env var / config file / AWS Secrets Manager. The Agent and Reader inject the token automatically — application code never touches it. Implementation follows the same pluggable pattern as DB credential retrieval.
+
+See [Option 6](#option-6--static-bearer-token-pluggable--architect-selected) for full details.
+
+---
 
 ---
 
@@ -764,6 +768,209 @@ def authMiddleware: HttpMiddleware[Task] = routes =>
 
 ---
 
+## Option 6 — Static Bearer Token (Pluggable) ✅ ARCHITECT-SELECTED
+
+> **Selected by architect (2026-06-19).** Simple pre-configured token validation — no external IdP, no token issuance endpoint, no refresh flows. Pluggable token retrieval (config file → env var → AWS Secrets Manager → custom provider). Two tokens: WRITE (Agent) and READ (Reader).
+
+### Design intent (architect's words)
+
+> *"The Atum server would accept a predefined token in the HTTP headers of each request and validate it before processing the request. The token could be configured via environment variable, configuration file, AWS Secrets Manager, or any other secure method. The suggested method of implementation should be similar to the one proposed in the previous section for retrieving database credentials — default to read from configuration file, with possibility to provide a custom implementation via plugin. The key point is that this should be easy to set up and use."*
+
+### How it works
+
+1. The **server** is configured with one or two tokens:
+   - `WRITE_TOKEN` — accepted for all endpoints (GET + POST + PATCH)
+   - `READ_TOKEN` — accepted for read-only endpoints (GET only)
+2. Every request must include `Authorization: Bearer <token>` (or a custom header).
+3. The server validates the header value against its configured token(s). No DB lookup, no JWKS fetch, no signature verification — a constant-time string comparison.
+4. The **Agent** has its `WRITE_TOKEN` configured at library setup time and injects it automatically on every request. Application code never sees it.
+5. The **Reader** has its `READ_TOKEN` configured at construction time and injects it automatically on every GET request.
+
+### Token retrieval — pluggable provider pattern
+
+Following the same pattern as DB credential retrieval:
+
+```
+Priority order (server and client side):
+  1. Custom provider (user-supplied plugin / implementation)
+  2. AWS Secrets Manager  
+  3. Environment variable
+  4. Configuration file (application.conf / reference.conf)
+```
+
+```scala
+// Token provider trait (server and client share this pattern)
+trait TokenProvider {
+  def getToken: Task[String]
+}
+
+// Built-in implementations
+object TokenProvider {
+  def fromConfig(key: String): TokenProvider      // reads from ZIO config / HOCON
+  def fromEnv(varName: String): TokenProvider     // reads from environment variable
+  def fromSecretsManager(secretName: String, fieldName: String): TokenProvider  // AWS
+  def custom(f: Task[String]): TokenProvider      // user-supplied
+}
+```
+
+### Server-side configuration
+
+```hocon
+# application.conf (server)
+atum.server.auth {
+  enabled = true
+  
+  write-token-provider = "config"     # or "env", "aws-secrets-manager", "custom"
+  write-token = ${?ATUM_WRITE_TOKEN}  # env var (used when provider = "env" or as fallback)
+  
+  read-token-provider = "config"
+  read-token = ${?ATUM_READ_TOKEN}
+  
+  # If only write-token is set and read-token is absent:
+  # Any valid token (write or read) grants read access
+  # Only write-token grants write access
+  
+  # AWS Secrets Manager variant:
+  # aws-secret-name = "atum-service-tokens"
+  # aws-write-token-field = "writeToken"
+  # aws-read-token-field = "readToken"
+  # aws-region = "eu-west-1"
+}
+```
+
+### Server implementation (ZIO + Tapir + http4s)
+
+```scala
+// Tapir security input — validate bearer token, return role
+val tokenAuth: EndpointInput[Role] =
+  auth.bearer[String]().mapDecode { token =>
+    tokenAuthService.validate(token).map {
+      case TokenMatch.Write => DecodeResult.Value(Role.Writer)
+      case TokenMatch.Read  => DecodeResult.Value(Role.Reader)
+      case TokenMatch.None  => DecodeResult.Error(token, new UnauthorizedException)
+    }
+  }
+
+// Validation service (constant-time comparison to prevent timing attacks)
+class TokenAuthService(writeToken: String, readToken: Option[String]) {
+  def validate(presented: String): UIO[TokenMatch] =
+    ZIO.succeed {
+      if (MessageDigest.isEqual(presented.getBytes, writeToken.getBytes)) TokenMatch.Write
+      else if (readToken.exists(rt => MessageDigest.isEqual(presented.getBytes, rt.getBytes))) TokenMatch.Read
+      else TokenMatch.None
+    }
+}
+```
+
+> ⚠️ **Use constant-time comparison** (`MessageDigest.isEqual` or similar) — naive `==` is vulnerable to timing attacks that can leak token values.
+
+### Agent changes
+
+```hocon
+# agent reference.conf
+atum.dispatcher.http.auth {
+  type = "bearer-token"
+  token-provider = "config"           # or "env", "aws-secrets-manager", "custom"
+  token = ${?ATUM_AUTH_TOKEN}         # env var / config value
+  header-name = "Authorization"       # default; produces "Bearer <token>"
+  
+  # AWS variant:
+  # token-provider = "aws-secrets-manager"
+  # aws-secret-name = "atum-agent-token"
+  # aws-token-field = "token"
+  # aws-region = "eu-west-1"
+}
+```
+
+**HttpDispatcher changes:**
+- Read token from configured `TokenProvider` at startup (or lazily on first request)
+- Inject `Authorization: Bearer <token>` on every outbound request
+- No expiry, no refresh — static token
+- Pluggable: user can supply a custom `TokenProvider` via `AtumAgent.Builder`
+
+```scala
+// AtumAgent public API — token configured once, invisible to application code
+AtumAgent.builder()
+  .serverUrl("https://atum.company.com")
+  .authToken(TokenProvider.fromEnv("ATUM_AUTH_TOKEN"))       // option A
+  .authToken(TokenProvider.fromConfig("atum.auth.token"))     // option B
+  .authToken(TokenProvider.fromSecretsManager("atum-tokens", "writeToken"))  // option C
+  .authToken(myCustomProvider)                                // option D
+  .build()
+```
+
+Application code calling `agent.createPartitioning(...)` never sees the token.
+
+### Reader changes
+
+```scala
+// AtumReader — same pluggable pattern
+AtumReader.builder()
+  .serverUrl("https://atum.company.com")
+  .authToken(TokenProvider.fromEnv("ATUM_READ_TOKEN"))
+  .build()
+```
+
+### Two-token model
+
+| Token | Configured on | Grants access to |
+|-------|--------------|-----------------|
+| WRITE token | Agent (Aqueduct pipelines) | GET + POST + PATCH (all endpoints) |
+| READ token | Reader module users | GET endpoints only |
+| No valid token | — | ❌ 401 Unauthorized |
+
+If a single-token setup is preferred (simpler): use one token for everything, no role distinction. The architect's N.B. suggests two tokens as an option.
+
+### Token generation and rotation
+
+Tokens are **arbitrary secrets** — generate with:
+```bash
+openssl rand -base64 32
+# or
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+**Rotation:** Update the token in the config/env/Secrets Manager, redeploy. For zero-downtime rotation, the server can accept **both old and new** tokens during a transition window (configured as a list).
+
+### What is NOT in scope
+
+- Token issuance endpoint (no `/token/generate`)  
+- Token expiry / refresh flows
+- User identity in the token (tokens identify a role, not a person — audit trail still via the existing `author` header)
+- Fine-grained per-user authorization (explicitly out of scope per architect: "a detailed authorization mechanism is on purpose left out — that's the responsibility of the application incorporating the Atum libraries")
+
+### Pros
+
+- ✅ **Simplest possible implementation** — string comparison, no crypto, no external services
+- ✅ **No external IdP** — fully self-contained, works offline
+- ✅ **Easy to set up** — one config value per component; application code never touches auth
+- ✅ **Pluggable** — matches the existing DB credential pattern; custom providers supported
+- ✅ **AWS Secrets Manager** — already in the server's dependency tree, natural fit
+- ✅ **Java 8 compatible** — just HTTP headers and string ops
+- ✅ **No token expiry surprises** — static tokens don't expire at 2am
+- ✅ **Two-token RBAC** — WRITE vs READ separation is simple and explicit
+
+### Cons
+
+- ⚠️ **Static tokens are long-lived** — if leaked, must be rotated immediately (mitigate: store in Secrets Manager, never in source code)
+- ⚠️ **No user identity** — the token identifies a role (WRITER / READER), not a specific person; audit trail relies on the existing `author` header
+- ⚠️ **No automatic rotation** — token rotation is a manual operational step (mitigate: AWS Secrets Manager with rotation lambda, or periodic rotation policy)
+- ⚠️ **Brute-force risk** — static tokens can be brute-forced if short; use ≥ 32 random bytes
+- ⚠️ **Not scalable to fine-grained authz** — if per-user or per-resource permissions are needed in future, this model needs extension (but architect explicitly deferred this)
+
+### Effort estimate
+
+| Component | Effort |
+|-----------|--------|
+| Server (bearer token middleware + role enforcement) | Small–Medium (1 week) |
+| Server (pluggable TokenProvider + Secrets Manager) | Small (days) |
+| Agent (token injection + pluggable provider) | Small (days) |
+| Reader (token injection + pluggable provider) | Small (days) |
+| Config + docs | Small (days) |
+| **Total** | **~1–2 weeks** |
+
+---
+
 *Generated from codebase analysis of atum-service @ commit HEAD — 2026-06-19*  
 *Stack: ZIO 2.0.19 · Tapir 1.9.6 · http4s-blaze 0.23.16 · sttp 3.5.2 · Scala 2.13*  
-*Updated: 2026-06-19 — added Option 0 (AbsaOSS login-service) as primary recommendation*
+*Updated: 2026-06-19 — added Option 6 (Static Bearer Token, architect-selected)*
