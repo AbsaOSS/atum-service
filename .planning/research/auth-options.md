@@ -373,53 +373,211 @@ Distribution: via Kubernetes secrets, HashiCorp Vault, or AWS Certificate Manage
 
 ---
 
-## Comparison Matrix
+## Option 4 — Keycloak + Direct LDAP Federation (Self-hosted OIDC)
 
-| Criterion | Option 1: Azure AD + JWT | Option 2: API Keys | Option 3: mTLS |
-|-----------|--------------------------|-------------------|----------------|
-| **Complexity** | Medium | Low | High |
-| **LDAP/AD group integration** | ✅ Native (via Azure AD sync) | ❌ Manual role assignment | ❌ OU-based, not LDAP groups |
-| **User identity in token** | ✅ Full (UPN, display name, groups) | ⚠️ Description only | ⚠️ Certificate CN only |
-| **No external IdP needed** | ❌ Requires Azure AD | ✅ Self-contained | ✅ Self-contained |
-| **Works offline** | ⚠️ JWKS cached | ✅ | ✅ |
-| **Automatic expiry/rotation** | ✅ (token TTL) | ❌ Manual | ⚠️ Cert lifetime (1–2y) |
-| **Java 8 compatible (Agent)** | ✅ | ✅ | ✅ |
-| **Human user auth (future)** | ✅ Authorization Code flow | ⚠️ Possible but awkward | ❌ Not designed for humans |
-| **Enterprise policy compliance** | ✅ Preferred by most InfoSec | ⚠️ Depends on policy | ✅ Zero-trust friendly |
-| **Operational overhead** | Low (Azure handles IdP) | Medium (key rotation) | High (PKI management) |
-| **Implementation effort** | ~3–4 weeks | ~1–2 weeks | ~2–4 weeks + PKI |
-| **Recommended for** | Greenfield enterprise | Fastest path / PoC | Strict zero-trust environments |
+> **Best for:** Teams that want LDAP/AD group integration but cannot (or do not want to) use Azure AD. Full ownership of the identity provider.
+
+### How it works
+
+[Keycloak](https://www.keycloak.org/) is an open-source identity provider that connects **directly to your corporate LDAP/AD** — no Azure AD required. It issues standard OAuth2/OIDC JWTs with group claims sourced from LDAP group memberships.
+
+The key insight: **the server-side code is identical to Option 1.** JWT validation against a JWKS endpoint works the same way regardless of whether the issuer is Azure AD or Keycloak. The only difference is in the JWKS URL and the token issuer (`iss` claim).
+
+### Architecture
+
+```
+Agent
+  │
+  ├─► Keycloak (OAuth2 Client Credentials)
+  │     → Keycloak reads group membership from LDAP
+  │     ← returns JWT with groups: ["atum-writers"]
+  │
+  └─► POST /api/v2/partitionings
+        Authorization: Bearer <JWT>
+        ──► Server validates JWT against Keycloak JWKS
+        ──► groups → WRITER role ✓
+```
+
+### What changes vs Option 1
+
+| Aspect | Option 1 (Azure AD) | Option 4 (Keycloak) |
+|--------|---------------------|---------------------|
+| IdP location | Azure (Microsoft-managed) | Self-hosted (your infra) |
+| LDAP integration | Via Azure AD Connect sync | Direct LDAP user federation |
+| App registration | Azure portal | Keycloak admin console |
+| JWKS URL | `login.microsoftonline.com` | `keycloak.yourcompany.com/realms/{realm}/protocol/openid-connect/certs` |
+| Server-side JWT code | Same | Same |
+| Agent/Reader OAuth2 code | Same | Same |
+| Infra to manage | None | Keycloak cluster + HA + upgrades |
+
+### Pros
+
+- ✅ **Direct LDAP connection** — no Azure AD, no sync delays, no dependency on Microsoft
+- ✅ **Full control** — own your token policies, lifetimes, group mappings
+- ✅ **Open source, battle-hardened** — used by Red Hat, large enterprises; CNCF graduated
+- ✅ **Server-side implementation identical to Option 1** — easy swap
+- ✅ **Multi-protocol** — supports SAML, OIDC, OAuth2, LDAP passthrough
+
+### Cons
+
+- ⚠️ **You operate the IdP** — Keycloak is HA-critical infrastructure; downtime = no auth
+- ⚠️ **Cluster management** — Keycloak HA requires PostgreSQL backend + multiple nodes
+- ⚠️ **Upgrade path** — Keycloak has had breaking changes between major versions
+- ⚠️ **Initial setup complexity** — realm configuration, client setup, LDAP federation mapping
+
+### Effort estimate
+
+| Component | Effort |
+|-----------|--------|
+| Keycloak deployment (Kubernetes/Docker) | Medium (1 week, mostly ops) |
+| Realm + client + LDAP federation setup | Small (days) |
+| Server (JWT middleware) — identical to Option 1 | Medium (1–2 weeks) |
+| Agent + Reader — identical to Option 1 | Medium (1 week) |
+| **Total** | **~3–4 weeks + ops setup** |
+
+---
+
+## Option 5 — Hybrid: API Keys for Machines, JWT for Humans
+
+> **Best for:** Pragmatic deployments where automated services (pipelines) and human operators have different auth needs. Combines the simplicity of Option 2 with the identity federation of Option 1 or 4.
+
+### How it works
+
+The server accepts **two credential types** on all protected endpoints:
+
+| Client Type | Credential | Auth Flow |
+|-------------|-----------|-----------|
+| Aqueduct pipeline jobs | `X-Api-Key: atm_<key>` | DB lookup (Option 2) |
+| Human operators / Reader notebooks | `Authorization: Bearer <JWT>` | JWKS validation (Option 1 or 4) |
+| Health/metrics endpoints | None | Always public |
+
+Role is derived from whichever credential is present:
+- API key → role from DB row
+- JWT → role from `groups` claim
+
+### Why this is common in practice
+
+Automated services like Aqueduct jobs have predictable, machine-controlled environments. They don't benefit from OAuth2 token flows — a static API key stored in Secrets Manager is simpler, more reliable (no refresh at 2am), and easier to debug. Human users, on the other hand, benefit greatly from SSO (they don't manage secrets) and proper identity attribution.
+
+### Server implementation
+
+```scala
+// Tapir: try JWT first, fall back to API key
+val combinedAuth: EndpointInput[Principal] =
+  auth.bearer[String]().mapDecode(JwtValidator.validate)
+    .orElse(auth.apiKey(header[String]("X-Api-Key")).mapDecode(ApiKeyValidator.validate))
+```
+
+Or more cleanly, implement as http4s middleware that runs before Tapir:
+
+```scala
+def authMiddleware: HttpMiddleware[Task] = routes =>
+  Kleisli { req =>
+    resolveCredential(req) match {  // checks both Bearer and X-Api-Key
+      case Some(principal) => routes(req.withAttribute(principalKey, principal))
+      case None            => Forbidden()
+    }
+  }
+```
+
+### Pros
+
+- ✅ **Best fit for atum-service's actual usage pattern** — pipelines + human readers are different use cases
+- ✅ **Incremental migration path** — deploy API keys first (1–2 weeks), add JWT later
+- ✅ **No token refresh complexity in Agent** — API keys don't expire on 1h TTL
+- ✅ **Humans get SSO** — Reader users authenticate via browser without managing secrets
+- ✅ **Audit trail**: API key logs show `source: aqueduct-prod-key-abc`, JWT logs show `user: ab@company.com`
+
+### Cons
+
+- ⚠️ **Two auth paths to maintain** — slightly more server-side complexity
+- ⚠️ **Still needs an IdP** for the JWT path (Azure AD or Keycloak)
+- ⚠️ **API key discipline still required** — key rotation, leakage scanning, etc.
+
+### Effort estimate
+
+| Component | Effort |
+|-----------|--------|
+| API key path (Option 2) | ~1–2 weeks |
+| JWT path (Option 1 or 4) | ~2–3 weeks (can be added later) |
+| Combined auth middleware | Small addition (days) |
+| **Total (both paths)** | **~3–4 weeks** |
+
+---
+
+## Refinements to Options 1–3
+
+### Option 1 (Azure AD + JWT) — adjustments
+
+- **Use App Roles instead of `groups` claim:** Azure AD app roles are purpose-built for API authorization. The `groups` claim can hit a 200-group limit in large orgs (token becomes truncated). App roles are explicit, scoped to your application, and not subject to the limit. Example: define `atum.writer` and `atum.reader` app roles in the Azure AD app registration.
+
+- **Validate `tid` claim:** Always check the tenant ID claim in addition to the JWT signature. This prevents tokens issued to other Azure AD tenants from being accepted (relevant in multi-tenant or partner environments).
+
+- **Token caching in Agent:** Cache tokens with `exp - 60s` TTL (60 second buffer before expiry). On 401 response, immediately re-acquire — do not just retry with the cached token.
+
+### Option 2 (API Keys) — adjustments
+
+- **Prefix-based key format:** Use `atm_<32-random-bytes-base62>`. The `atm_` prefix enables secret scanning tools (GitHub, GitLab, AWS) to auto-detect leaked keys in commits, CI logs, and issue trackers.
+
+- **HMAC-signed tokens (optional upgrade):** Structure keys as `atm_<key_id>.<hmac>`. The server can validate the HMAC without a DB lookup (stateless fast path), with DB used only for revocation checks. This adds security without sacrificing simplicity.
+
+- **Per-key scoping:** Add a `permissions` column to `api_keys` (e.g. `JSONB` or a bitmask). A key for read-only integrations can be `READER`; Aqueduct gets `WRITER`. Future: scope to specific endpoints if needed.
+
+### Option 3 (mTLS) — adjustments
+
+- **HashiCorp Vault PKI or AWS Private CA:** Eliminates the main operational burden. Both support short-lived certificates (24h–7d), automated renewal, and online revocation via OCSP. Vault PKI in particular integrates with Kubernetes service accounts for zero-touch cert issuance.
+
+- **SPIFFE/SPIRE on Kubernetes:** If atum-service runs on Kubernetes, SPIFFE/SPIRE provides automated workload identity (X.509 SVIDs) that are transparent to the application. The server's TLS stack just validates the cert; SPIRE handles all issuance and rotation. Eliminates cert distribution entirely.
+
+- **Short-lived certs (24h):** Rather than 1–2 year certs that need manual rotation, use 24h certs auto-renewed by the PKI. This removes the revocation problem entirely — a compromised cert expires within a day.
+
+---
+
+## Comparison Matrix (All Options)
+
+| Criterion | Opt 1: Azure AD JWT | Opt 2: API Keys | Opt 3: mTLS | Opt 4: Keycloak | Opt 5: Hybrid |
+|-----------|---------------------|-----------------|-------------|-----------------|---------------|
+| **Complexity** | Medium | Low | High | Medium-High | Medium |
+| **LDAP/AD group integration** | ✅ Native | ❌ Manual | ❌ OU-based | ✅ Direct LDAP | ✅ (via JWT path) |
+| **User identity in token** | ✅ Full | ⚠️ Description | ⚠️ Cert CN | ✅ Full | ✅ Full (humans) |
+| **No external IdP needed** | ❌ Azure AD | ✅ | ✅ | ⚠️ Self-hosted | ⚠️ Partial |
+| **Works fully offline** | ⚠️ JWKS cached | ✅ | ✅ | ⚠️ JWKS cached | ⚠️ API key path |
+| **Automatic expiry/rotation** | ✅ | ❌ Manual | ⚠️ Cert TTL | ✅ | ✅ (JWT path) |
+| **Java 8 compatible (Agent)** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Human user auth (future)** | ✅ | ⚠️ Awkward | ❌ | ✅ | ✅ |
+| **Enterprise policy compliance** | ✅ | ⚠️ Check policy | ✅ Zero-trust | ✅ | ✅ |
+| **Operational overhead** | Low | Medium | High | High | Medium |
+| **Implementation effort** | ~3–4w | ~1–2w | ~2–4w + PKI | ~3–4w + ops | ~3–4w |
+| **Best for** | Standard enterprise | Fastest / PoC | Zero-trust K8s | No Azure AD | Mixed machine+human clients |
 
 ---
 
 ## Recommendation
 
-> ⭐ **Option 1 (Azure AD + JWT)** is the recommended path for a production enterprise system.
+> ⭐ **Option 1 (Azure AD + JWT)** remains the recommended path for a standard enterprise environment.
 
-**Rationale:**
-- Your company already uses Active Directory — Azure AD (Entra ID) syncs those groups automatically
-- JWT is the industry standard for REST API auth; Tapir has first-class support for `auth.bearer`
-- The Agent runs as service principals (Aqueduct pipelines), which map directly to OAuth2 Client Credentials
-- The AWS Secrets Manager SDK is already in the server's dependency tree — client secrets can be stored there securely
-- Scales naturally: adding human users (e.g. `AtumReader` from a notebook) is just adding the Authorization Code flow
+> 🔄 **Option 5 (Hybrid)** is the most pragmatic production pattern: start with API keys (Option 2) for the Agent in week 1–2, then layer in JWT (Option 1 or 4) for human-facing Reader auth. The incremental nature reduces risk.
 
-**If you need the fastest path** (e.g. to unblock a security audit): implement **Option 2** first as a stepping stone. API keys can be live in 1–2 weeks and give you real authentication with minimal architectural change. Migrate to Option 1 in a subsequent milestone.
+> 🏠 **Option 4 (Keycloak)** if your organisation cannot use Azure AD — the server-side implementation is identical to Option 1, so the choice is purely an infrastructure/organisational one.
 
-**Option 3** is worth considering only if your security team has an existing PKI and a zero-trust mandate for all internal services.
+> 🔒 **Option 3 (mTLS)** only if your security team has an explicit zero-trust mandate and PKI infrastructure (or Vault/SPIRE) is already in place.
 
 ---
 
 ## Open Questions for Architects
 
-1. **Azure AD App Registration:** Does the company allow registering an Azure AD application for atum-service? Who is the AAD admin contact?
-2. **Group naming:** What AD group(s) should map to the `WRITER` role? (e.g. `atum-writers`, `dq-platform-users`)
+1. **Azure AD availability:** Is registering an Azure AD application feasible? Who is the AAD admin contact?
+2. **Group naming:** What AD group(s) map to the `WRITER` role? (e.g. `atum-writers`, `dq-platform-users`)
 3. **Service principals:** Should each Aqueduct pipeline have its own service principal, or share one? (Shared is simpler; per-pipeline gives better audit trail.)
-4. **Token audience (`aud` claim):** The server app registration defines the audience. Should this be scoped to atum-service only, or a broader platform scope?
-5. **Offline validation:** Are there network policies that would prevent the server from reaching `login.microsoftonline.com` for JWKS? If yes, JWKS must be pre-fetched and cached at deploy time.
-6. **v2 requirements:** OBS-02 (retry logging) and RES-01 (circuit breaker) in the backlog — should those be bundled into this milestone or stay separate?
-7. **Reader auth model:** Should the Reader library require auth configuration at construction time, or fall back to unauthenticated (for read-only public deployments)?
+4. **Token audience (`aud` claim):** Should the server app registration be scoped to atum-service only, or a broader platform scope?
+5. **Offline validation:** Are there network policies that block access to `login.microsoftonline.com` (Azure AD) or require a self-hosted IdP (→ Option 4)?
+6. **App Roles vs Groups:** Does the org prefer Azure AD App Roles (explicit, no 200-group limit) or the `groups` claim? Check with the AAD admin.
+7. **Machine identity policy:** Does InfoSec require all service-to-service calls to use federated identity (Azure AD service principals), or are API keys acceptable for pipeline jobs?
+8. **Reader auth model:** Should the Reader library require auth configuration at construction time, or fall back to unauthenticated (for read-only public deployments)?
+9. **v2 backlog bundling:** OBS-02 (retry logging) and RES-01 (circuit breaker) — bundle into this milestone or keep separate?
 
 ---
 
 *Generated from codebase analysis of atum-service @ commit HEAD — 2026-06-19*  
-*Stack: ZIO 2.0.19 · Tapir 1.9.6 · http4s-blaze 0.23.16 · sttp 3.5.2 · Scala 2.13*
+*Stack: ZIO 2.0.19 · Tapir 1.9.6 · http4s-blaze 0.23.16 · sttp 3.5.2 · Scala 2.13*  
+*Updated: 2026-06-19 — added Option 4 (Keycloak), Option 5 (Hybrid), and per-option refinements*
