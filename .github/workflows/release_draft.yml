@@ -67,7 +67,7 @@ jobs:
 
       - name: Generate Release Notes
         id: generate_release_notes
-        uses: AbsaOSS/generate-release-notes@da535383f54a6532adb84e88d3b6e5c7236132df
+        uses: AbsaOSS/generate-release-notes@b4d6e3fafcff2dedc32ec751975fa3d0b3efad67
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
