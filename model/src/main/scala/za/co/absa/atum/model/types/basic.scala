@@ -22,7 +22,7 @@ import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
 
 object basic {
   /**
-   * Type alias for Atum partitions
+   * Type alias for Atum partitions.
    */
   type AtumPartitions = ListMap[String, String]
   type AdditionalData = Map[String, Option[String]]
