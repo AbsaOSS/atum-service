@@ -78,8 +78,8 @@ lazy val server = {
     .enablePlugins(AssemblyPlugin)
     .enablePlugins(AutomateHeaderPlugin)
     .addSingleScalaBuild(Setup.serverAndDbScalaVersion, Dependencies.serverDependencies)
-    .enablePlugins(FilteredJacocoAgentPlugin)
     .dependsOn(model)
+    .enablePlugins(JacocoFilterPlugin)
 
   if (limitedProject) {
     null // if value other then null is returned, the condition doesn't seem to work.
@@ -100,8 +100,8 @@ lazy val agent = (projectMatrix in file("agent"))
     ): _*
   )
   .addSparkCrossBuild(SparkVersionAxis(spark3), Setup.clientSupportedScalaVersions, Dependencies.agentDependencies)
-  .enablePlugins(FilteredJacocoAgentPlugin)
   .dependsOn(model)
+  .enablePlugins(JacocoFilterPlugin)
 
 /**
  * Module `model` is the data model for data exchange with server
@@ -115,7 +115,7 @@ lazy val model = (projectMatrix in file("model"))
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.modelDependencies)
-  .enablePlugins(FilteredJacocoAgentPlugin)
+  .enablePlugins(JacocoFilterPlugin)
 
 /**
  * Module `database` is the source of database structures of the service
@@ -151,5 +151,5 @@ lazy val reader = (projectMatrix in file("reader"))
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)
-  .enablePlugins(FilteredJacocoAgentPlugin)
   .dependsOn(model)
+  .enablePlugins(JacocoFilterPlugin)
