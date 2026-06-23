@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: Release - create draft release
+name: Draft Release
 on:
   workflow_dispatch:
     inputs:
@@ -22,8 +22,15 @@ on:
         description: 'Name of git tag to be created, and then draft release created. Syntax: "v[0-9]+.[0-9]+.[0-9]+".'
         required: true
       from-tag-name:
-        description: 'Name of the git tag from which to detect changes from. Default value: latest tag. Syntax: "v[0-9]+.[0-9]+.[0-9]+".'
+        description: >-
+          Name of the git tag from which to detect changes from.
+          Default value: latest tag. Syntax: "v[0-9]+.[0-9]+.[0-9]+".
         required: false
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
 
 jobs:
   release-draft:
@@ -39,7 +46,7 @@ jobs:
         with:
           python-version: '3.14'
 
-      - name: Check format of received tag
+      - name: Check format of received target tag
         id: check-version-tag
         uses: AbsaOSS/version-tag-check@4145e48bf3f77a5afff2ec9afdd8afb6b53bce34
         env:
@@ -59,44 +66,46 @@ jobs:
           version-tag: ${{ github.event.inputs.from-tag-name }}
           should-exist: true
 
-      - name: Generate release notes
+      - name: Generate Release Notes
         id: generate_release_notes
-        uses: AbsaOSS/generate-release-notes@da535383f54a6532adb84e88d3b6e5c7236132df
+        uses: AbsaOSS/generate-release-notes@b4d6e3fafcff2dedc32ec751975fa3d0b3efad67
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          release-notes-title: "## [Rr]elease [Nn]otes"
           tag-name: ${{ github.event.inputs.tag-name }}
+          from-tag-name: ${{ github.event.inputs.from-tag-name }}
           chapters: |
-            - {"title": "Entries to skip 🚫", "label": "duplicate"}
-            - {"title": "Entries to skip 🚫", "label": "invalid"}
-            - {"title": "Entries to skip 🚫", "label": "wontfix"}
-            - {"title": "Entries to skip 🚫", "label": "no RN"}
-            - {"title": "Breaking Changes 💥", "label": "breaking-change"}
-            - {"title": "Security updates 👮", "label": "security"}
-            - {"title": "New Features 🎉", "label": "enhancement"}
-            - {"title": "New Features 🎉", "label": "feature"}
-            - {"title": "Bugfixes 🛠", "label": "bug"}
-            - {"title": "Epics 📖", "label": "Epic"}
-            - {"title": "Infrastructure ⚙️", "label": "infrastructure"}
-            - {"title": "Silent-live 🤫", "label": "silent-live"}
-            - {"title": "Documentation 📜", "label": "documentation"}
-          duplicity-scope: 'service'
-          duplicity-icon: '🔁'
+            - { title: Breaking Changes 💥, label: breaking change, order: 10 }
+            - { title: Epics 🚀, label: epic, order: 20 }
+            - { title: New Features 🎉, label: enhancement, order: 30 }
+            - { title: Bugfixes 🛠, label: bug, order: 40 }
+            - { title: Infrastructure ⚙️, label: infrastructure, order: 50 }
+            - { title: Spikes 💡, label: spike, order: 60 }
+            - { title: Agent 🤖, label: Agent, order: 70 }
+            - { title: DB 🗄️, label: DB, order: 75 }
+            - { title: Model 🧩, label: Model, order: 80 }
+            - { title: Server 🖥️, label: Server, order: 85 }
+            - { title: Reader 📖, label: Reader, order: 90 }
+            - { title: Entries to skip 🚫, label: duplicate, hidden: true, order: 99 }
+            - { title: Entries to skip 🚫, label: no RN, hidden: true, order: 99 }
+            - { title: Silent-live 🤫, catch-open-hierarchy: true, hidden: false }
           warnings: true
-#          skip-release-notes-labels: "no RN,duplicate,invalid,wontfix" I would rather see the chapter, review and remove it manually
           print-empty-chapters: false
-          row-format-issue: '_{title}_ {developers} in {number}'
-          row-format-pr: '_{title}_ {developers} in {number}'
-          row-format-link-pr: true
+          row-format-issue: '{type}: {number} _{title}_ by {developers} in {pull-requests}'
+          row-format-pr: '{number} _{title}_ by {developers}'
           hierarchy: true
+          row-format-hierarchy-issue: '{type}: {number} _{title}_ by {developers} {progress}'
 
-      - name: Create and Push Tag
+      - name: Create and push tag
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        env:
+          TAG_NAME: ${{ github.event.inputs.tag-name }}
         with:
           script: |
-            const tag = core.getInput('tag-name')
+            const tag = process.env.TAG_NAME;
             const ref = `refs/tags/${tag}`;
-            const sha = context.sha; // The SHA of the commit to tag
+            const sha = context.sha;
 
             await github.rest.git.createRef({
               owner: context.repo.owner,
@@ -107,7 +116,6 @@ jobs:
 
             console.log(`Tag created: ${tag}`);
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          tag-name: ${{ github.event.inputs.tag-name }}
 
       - name: Create draft release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
