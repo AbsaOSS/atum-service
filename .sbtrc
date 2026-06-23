@@ -36,6 +36,12 @@ alias testDB=; project database; testOnly *
 alias testCompatibility=; testOnly *CompatibilityTests
 
 # Jacoco Aliases
-alias jacoco=; jacocoOn; +clean; +test; jacocoReportAll; jacocoOff
-alias jacocoOff=; set every jacocoPluginEnabled := false
+alias jacoco=; jacocoOn; jacocoAgent; jacocoReader; jacocoModel; jacocoServer; jacocoOff
+
 alias jacocoOn=; set every jacocoPluginEnabled := true
+alias jacocoOff=; set every jacocoPluginEnabled := false
+
+alias jacocoAgent=; project agent_spark3; clean; testOnly *UnitTests *IntegrationTests; jacocoReportAll
+alias jacocoReader=; project reader; clean; testOnly *UnitTests *IntegrationTests; jacocoReportAll
+alias jacocoModel=; project model; clean; testOnly *UnitTests *IntegrationTests; jacocoReportAll
+alias jacocoServer=; project server; clean; testOnly *UnitTests *IntegrationTests; jacocoReportAll
