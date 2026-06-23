@@ -70,7 +70,7 @@ object Main extends ZIOAppDefault {
     ZIO.config[JvmMonitoringConfig](JvmMonitoringConfig.config).flatMap { jvmMonitoringConfig =>
       Server.server
         .provide(
-          // controller
+          // controllers
           PartitioningControllerImplV1.layer,
           PartitioningControllerImplV2.layer,
           CheckpointControllerImplV1.layer,
