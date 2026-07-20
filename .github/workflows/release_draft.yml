@@ -42,7 +42,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.14'
 
@@ -68,7 +68,7 @@ jobs:
 
       - name: Generate Release Notes
         id: generate_release_notes
-        uses: AbsaOSS/generate-release-notes@b4d6e3fafcff2dedc32ec751975fa3d0b3efad67
+        uses: AbsaOSS/generate-release-notes@26eca65fc504c088a7afd8b08545a738ad8b446b
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -118,7 +118,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create draft release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
