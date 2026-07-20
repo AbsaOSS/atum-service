@@ -91,10 +91,14 @@ class AgentServerCompatibilityTests extends DBTestSuite {
         assert(partitioningsResult.hasNext, "the partitioning should have been created on the server")
         val row = partitioningsResult.next()
 
+        // All column reads must happen before advancing the cursor: balta's QueryResultRow reads
+        // lazily from the live JDBC ResultSet, and hasNext calls resultSet.next(), which moves the
+        // cursor off this row (any read afterwards throws "ResultSet not positioned properly").
         assert(row.getJsonB("partitioning").contains(expectedPartitioning))
+        val id = row.getLong("id_partitioning").get
         assert(!partitioningsResult.hasNext)
 
-        row.getLong("id_partitioning").get
+        id
       }
 
     table("runs.additional_data").where(s"fk_partitioning = $partitioningId") { adResult =>
@@ -136,10 +140,10 @@ class AgentServerCompatibilityTests extends DBTestSuite {
 
         assert(row.getString("measure_name").contains("count"))
         assert(row.getString("measured_columns").contains("{}"))
-
+        val id = row.getLong("id_measure_definition").get
         assert(!measureDefResult.hasNext)
 
-        row.getLong("id_measure_definition").get
+        id
     }
 
     table("runs.measurements").where(s"fk_measure_definition = $measureDefinitionId") { measurementsResult =>
