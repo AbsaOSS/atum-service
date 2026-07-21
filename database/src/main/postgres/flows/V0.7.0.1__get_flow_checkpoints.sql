@@ -45,8 +45,7 @@ $$
     --------------------------------------------------------------------------------------------------------------------
 --
 -- Function: flows.get_flow_checkpoints(6)
---      Retrieves all checkpoints (measures and their measurement details) related to a primary flow
---      associated with the input partitioning.
+--      Retrieves all checkpoints (measures and their measurement details) related to an input flow.
 --
 -- Note: a single row returned from this function doesn't contain all data related to a single checkpoint - it only
 --     represents one measure associated with a checkpoint. So even if only a single checkpoint would be retrieved,
@@ -55,13 +54,12 @@ $$
 -- Note: checkpoints will be retrieved in ordered fashion, by checkpoint_time and id_checkpoint
 --
 -- Parameters:
---      i_partitioning_of_flow  - partitioning to use for identifying the flow associate with checkpoints
---                                that will be retrieved
+--      i_flow_id               - ID of the flow for which checkpoints are to be retrieved
 --      i_checkpoints_limit     - (optional) maximum number of checkpoint to return, returns all of them if NULL
 --      i_offset                - (optional) offset for checkpoints pagination
 --      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --      i_checkpoint_properties - (optional) if specified, returns only checkpoints that have all the given
---                                checkpoint properties (matching both property name and value)
+--                                  checkpoint properties (matching both property name and value)
 --      i_latest_first          - (optional) if true, checkpoints are ordered by process_start_time in descending order
 --
 --      Note: i_checkpoint_limit and i_offset are used for pagination purposes;
@@ -199,8 +197,6 @@ BEGIN
                      WHEN NOT _latest_first THEN LC.process_start_time
                      END ASC;
 END;
-$$
-    LANGUAGE plpgsql VOLATILE
-                     SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 GRANT EXECUTE ON FUNCTION flows.get_flow_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE, BOOLEAN) TO atum_owner;
