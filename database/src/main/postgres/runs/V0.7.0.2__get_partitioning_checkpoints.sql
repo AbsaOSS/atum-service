@@ -41,15 +41,15 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
 --
 -- Function: runs.get_partitioning_checkpoints(5)
 --      Retrieves checkpoints (measures and their measurement details) related to a
---      given partitioning (and checkpoint name, if specified).
+--      given partitioning (and checkpoint name and/or checkpoint properties, if specified).
 --
 -- Parameters:
---      i_partitioning          - partitioning of requested checkpoints
+--      i_partitioning_id       - ID of the partitioning for which checkpoints are to be retrieved
 --      i_checkpoints_limit     - (optional) maximum number of checkpoints to return
 --      i_offset                - (optional) offset of the first checkpoint to return
 --      i_checkpoint_name       - (optional) name of the checkpoint
 --      i_checkpoint_properties - (optional) if specified, returns only checkpoints that have all the given
---                                checkpoint properties (matching both property name and value)
+--                                  checkpoint properties (matching both property name and value)
 
 -- Note: i_checkpoints_limit and i_offset are used for pagination purposes;
 --       checkpoints are ordered by process_start_time in descending order
@@ -157,9 +157,7 @@ BEGIN
              runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
         ORDER BY LC.id_checkpoint, LC.process_start_time;
 END;
-$$
-    LANGUAGE plpgsql VOLATILE
-                     SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 ALTER FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE) OWNER TO atum_owner;
 GRANT EXECUTE ON FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE) TO atum_owner;
