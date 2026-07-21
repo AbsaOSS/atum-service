@@ -715,6 +715,134 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
 
   }
 
+  test("getFlowCheckpointsV2 should return only checkpoints matching the checkpoint properties filter") {
+
+    val partitioningId: Long = Random.nextLong()
+    table("runs.partitionings").insert(
+      add("id_partitioning", partitioningId)
+        .add("partitioning", partitioning)
+        .add("created_by", "Joseph")
+    )
+
+    val flowId: Long = Random.nextLong()
+    table("flows.flows").insert(
+      add("id_flow", flowId)
+        .add("flow_name", "flowNameProps")
+        .add("from_pattern", false)
+        .add("created_by", "Joseph")
+        .add("fk_primary_partitioning", partitioningId)
+    )
+    table("flows.partitioning_to_flow").insert(
+      add("fk_flow", flowId)
+        .add("fk_partitioning", partitioningId)
+        .add("created_by", "ObviouslySomeTest")
+    )
+
+    val startTime = OffsetDateTime.parse("1993-02-14T10:00:00Z")
+    val endTime = OffsetDateTime.parse("2024-04-24T10:00:00Z")
+
+    val checkpointMatching = UUID.randomUUID()
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", checkpointMatching)
+        .add("fk_partitioning", partitioningId)
+        .add("checkpoint_name", "MatchingCheckpoint")
+        .add("measured_by_atum_agent", true)
+        .add("process_start_time", startTime)
+        .add("process_end_time", endTime)
+        .add("created_by", "Joseph")
+    )
+    val checkpointNonMatching = UUID.randomUUID()
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", checkpointNonMatching)
+        .add("fk_partitioning", partitioningId)
+        .add("checkpoint_name", "NonMatchingCheckpoint")
+        .add("measured_by_atum_agent", true)
+        .add("process_start_time", startTime)
+        .add("process_end_time", endTime)
+        .add("created_by", "Joseph")
+    )
+
+    val measureDefinitionId: Long = Random.nextLong()
+    table("runs.measure_definitions").insert(
+      add("id_measure_definition", measureDefinitionId)
+        .add("fk_partitioning", partitioningId)
+        .add("measure_name", "cnt")
+        .add("measured_columns", CustomDBType("""{"col1"}""", "TEXT[]"))
+        .add("created_by", "Joseph")
+    )
+    table("runs.measurements").insert(
+      add("fk_measure_definition", measureDefinitionId)
+        .add("fk_checkpoint", checkpointMatching)
+        .add("measurement_value", measurementCnt)
+    )
+    table("runs.measurements").insert(
+      add("fk_measure_definition", measureDefinitionId)
+        .add("fk_checkpoint", checkpointNonMatching)
+        .add("measurement_value", measurementCnt)
+    )
+
+    // Only the matching checkpoint has the property jobId=123
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointMatching)
+        .add("property_name", "jobId")
+        .add("property_value", "123")
+    )
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointMatching)
+        .add("property_name", "env")
+        .add("property_value", "prod")
+    )
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointNonMatching)
+        .add("property_name", "jobId")
+        .add("property_value", "456")
+    )
+
+    def hstore(properties: Map[String, String]): CustomDBType = CustomDBType(
+      properties.map { case (k, v) => s""""$k"=>"$v"""" }.mkString(","),
+      "HSTORE"
+    )
+
+    // Filtering by jobId=123 returns only the matching checkpoint
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123")))
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getUUID("id_checkpoint").contains(checkpointMatching))
+        assert(!queryResult.hasNext)
+      }
+
+    // Requiring both jobId=123 and env=prod still returns the matching checkpoint (AND semantics)
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123", "env" -> "prod")))
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getUUID("id_checkpoint").contains(checkpointMatching))
+        assert(!queryResult.hasNext)
+      }
+
+    // Requiring jobId=123 AND a property the checkpoint doesn't have returns nothing (AND semantics)
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123", "env" -> "dev")))
+      .execute { queryResult =>
+        assert(!queryResult.hasNext)
+      }
+
+    // Filtering by a value that no checkpoint has returns nothing
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "999")))
+      .execute { queryResult =>
+        assert(!queryResult.hasNext)
+      }
+  }
+
   private def parseJsonBStringOrThrow(jsonBString: JsonBString): Json = {
     parse(jsonBString.value).getOrElse(throw new Exception("Failed to parse JsonBString to Json"))
   }

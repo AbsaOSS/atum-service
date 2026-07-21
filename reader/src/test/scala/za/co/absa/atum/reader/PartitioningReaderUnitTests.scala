@@ -247,6 +247,31 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
     assert(result == Right(expected))
   }
 
+  test("The partitioning checkpoints are properly queried by checkpoint properties and delivered as DTO") {
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings)) =>
+          assert(r.uri.querySegments.contains(KeyValue("partitioning", partitioningEncoded)))
+          Response.ok(partitioningResponse)
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings, "7", V2Paths.Checkpoints)) =>
+          assert(r.uri.querySegments.contains(KeyValue("offset", "0")))
+          assert(r.uri.querySegments.contains(KeyValue("limit", "10")))
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-properties", """{"prop1":"value1"}""")))
+          Response.ok(checkpointsResponse)
+      }
+
+    val atumPartitions: AtumPartitions = AtumPartitions(
+      List(
+        "a" -> "b",
+        "c" -> "d"
+      )
+    )
+
+    val reader = PartitioningReader(atumPartitions)
+    val result = reader.getCheckpointsByPropertiesPage(Map("prop1" -> "value1"))
+    assert(result.isRight)
+  }
+
   test("The partitioning additional data are properly queried and delivered as DTO") {
     val atumPartitions: AtumPartitions = AtumPartitions(
       List(

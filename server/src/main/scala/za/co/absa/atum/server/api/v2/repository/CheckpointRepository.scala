@@ -37,6 +37,7 @@ trait CheckpointRepository {
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]],
     includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]]
 }

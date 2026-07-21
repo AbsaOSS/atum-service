@@ -277,6 +277,31 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     assert(result == Right(expectedData))
   }
 
+  test("The flow checkpoints are properly queried by checkpoint properties and delivered as DTO") {
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List("partitionings")) =>
+          assert(r.uri.querySegments.contains(KeyValue("partitioning", partitioningEncoded)))
+          Response.ok(partitioningResponse)
+        case r if r.uri.path.endsWith(List("partitionings", "7", "main-flow")) =>
+          Response.ok(flowResponse)
+        case r if r.uri.path.endsWith(List("checkpoints")) =>
+          assert(r.uri.querySegments.contains(KeyValue("offset", "0")))
+          assert(r.uri.querySegments.contains(KeyValue("limit", "10")))
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-properties", """{"prop1":"value1"}""")))
+          Response.ok(checkpointsResponse)
+      }
+
+    val atumPartitions: AtumPartitions = AtumPartitions(List(
+      "a" -> "b",
+      "c" -> "d"
+    ))
+
+    val reader = FlowReader(atumPartitions)
+    val result = reader.getCheckpointsByPropertiesPage(Map("prop1" -> "value1"))
+    assert(result.isRight)
+  }
+
   test("Instantiate FlowReader with implicit arguments passed explicitly") {
     val atumPartitions: AtumPartitions = AtumPartitions(List(
       "a" -> "b",

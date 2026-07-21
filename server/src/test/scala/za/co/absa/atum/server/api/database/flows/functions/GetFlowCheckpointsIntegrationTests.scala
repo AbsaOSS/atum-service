@@ -37,7 +37,8 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
           flowId = 1L,
           limit = 10,
           offset = 0L,
-          checkpointName = Some("TestCheckpointName")
+          checkpointName = Some("TestCheckpointName"),
+          checkpointProperties = None
         )
 
         for {

@@ -73,10 +73,13 @@ class CheckpointRepositoryImpl(
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]],
     includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
-      getPartitioningCheckpointsFn(GetPartitioningCheckpointsArgs(partitioningId, limit, offset, checkpointName)),
+      getPartitioningCheckpointsFn(
+        GetPartitioningCheckpointsArgs(partitioningId, limit, offset, checkpointName, checkpointProperties)
+      ),
       "getPartitioningCheckpoints"
     )
       .map(_.flatten)

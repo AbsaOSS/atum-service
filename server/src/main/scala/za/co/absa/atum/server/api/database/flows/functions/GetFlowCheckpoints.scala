@@ -39,7 +39,8 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
         fr"${input.flowId}",
         fr"${input.limit}",
         fr"${input.offset}",
-        fr"${input.checkpointName}"
+        fr"${input.checkpointName}",
+        fr"${input.checkpointProperties}"
       )
     )
     with StandardStatusHandling
@@ -67,7 +68,8 @@ object GetFlowCheckpoints {
     flowId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]]
   )
 
   val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpoints] = ZLayer {

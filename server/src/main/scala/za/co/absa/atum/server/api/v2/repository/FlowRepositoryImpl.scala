@@ -39,10 +39,11 @@ class FlowRepositoryImpl(
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]],
     includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointWithPartitioningDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
-      getFlowCheckpointsFn(GetFlowCheckpointsArgs(flowId, limit, offset, checkpointName)),
+      getFlowCheckpointsFn(GetFlowCheckpointsArgs(flowId, limit, offset, checkpointName, checkpointProperties)),
       "getFlowCheckpoints"
     )
       .map(_.flatten)

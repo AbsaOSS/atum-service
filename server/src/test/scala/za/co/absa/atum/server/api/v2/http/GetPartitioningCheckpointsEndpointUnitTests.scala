@@ -40,9 +40,9 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
 
   private val uuid = UUID.randomUUID()
 
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, includeProperties = true))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, None, includeProperties = true))
     .thenReturn(
       ZIO.succeed(
         PaginatedResponse(
@@ -52,11 +52,11 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
         )
       )
     )
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 20, 0L, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 20, 0L, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(20, 0, hasMore = false), uuid)))
-  when(checkpointControllerMock.getPartitioningCheckpoints(2L, 10, 0L, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(2L, 10, 0L, None, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("partitioning not found")))
-  when(checkpointControllerMock.getPartitioningCheckpoints(3L, 10, 0L, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(3L, 10, 0L, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
@@ -68,6 +68,7 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
             limit: Int,
             offset: Long,
             checkpointName: Option[String],
+            checkpointProperties: Option[Map[String, String]],
             includeProperties: Boolean
           ) =>
         CheckpointController.getPartitioningCheckpoints(
@@ -75,6 +76,7 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
           limit,
           offset,
           checkpointName,
+          checkpointProperties,
           includeProperties
         )
     })

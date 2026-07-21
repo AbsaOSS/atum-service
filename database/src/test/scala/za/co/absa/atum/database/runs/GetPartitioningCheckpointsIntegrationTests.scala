@@ -331,4 +331,89 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
       }
   }
 
+  test("Returns only checkpoints matching the checkpoint properties filter") {
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning1)
+        .add("created_by", "Daniel")
+    )
+    val fkPartitioning: Long = table("runs.partitionings")
+      .fieldValue("partitioning", partitioning1, "id_partitioning").get.get
+
+    val checkpointMatching = UUID.randomUUID()
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", checkpointMatching)
+        .add("fk_partitioning", fkPartitioning)
+        .add("checkpoint_name", "matching")
+        .add("process_start_time", startTime1)
+        .add("process_end_time", endTime)
+        .add("measured_by_atum_agent", true)
+        .add("created_by", "Daniel")
+    )
+    val checkpointNonMatching = UUID.randomUUID()
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", checkpointNonMatching)
+        .add("fk_partitioning", fkPartitioning)
+        .add("checkpoint_name", "non-matching")
+        .add("process_start_time", startTime2)
+        .add("process_end_time", endTime)
+        .add("measured_by_atum_agent", true)
+        .add("created_by", "Daniel")
+    )
+
+    table("runs.measure_definitions").insert(
+      add("id_measure_definition", id_measure_definition1)
+        .add("fk_partitioning", fkPartitioning)
+        .add("created_by", "Daniel")
+        .add("measure_name", "measure_1")
+        .add("measured_columns", measured_columns1)
+    )
+    table("runs.measurements").insert(
+      add("fk_checkpoint", checkpointMatching)
+        .add("fk_measure_definition", id_measure_definition1)
+        .add("measurement_value", measurement1)
+    )
+    table("runs.measurements").insert(
+      add("fk_checkpoint", checkpointNonMatching)
+        .add("fk_measure_definition", id_measure_definition1)
+        .add("measurement_value", measurement2)
+    )
+
+    // Only the matching checkpoint has jobId=123
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointMatching)
+        .add("property_name", "jobId")
+        .add("property_value", "123")
+    )
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointNonMatching)
+        .add("property_name", "jobId")
+        .add("property_value", "456")
+    )
+
+    def hstore(properties: Map[String, String]): CustomDBType = CustomDBType(
+      properties.map { case (k, v) => s""""$k"=>"$v"""" }.mkString(","),
+      "HSTORE"
+    )
+
+    // Filtering by jobId=123 returns only the matching checkpoint
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123")))
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getUUID("id_checkpoint").contains(checkpointMatching))
+        assert(!queryResult.hasNext)
+      }
+
+    // Filtering by a value that no checkpoint has returns nothing
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "999")))
+      .execute { queryResult =>
+        assert(!queryResult.hasNext)
+      }
+  }
+
 }

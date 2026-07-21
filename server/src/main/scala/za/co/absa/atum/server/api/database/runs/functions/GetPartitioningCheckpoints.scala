@@ -39,7 +39,8 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
         fr"${args.partitioningId}",
         fr"${args.limit}",
         fr"${args.offset}",
-        fr"${args.checkpointName}"
+        fr"${args.checkpointName}",
+        fr"${args.checkpointProperties}"
       )
     )
     with StandardStatusHandling
@@ -64,7 +65,8 @@ object GetPartitioningCheckpoints {
     partitioningId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]]
   )
 
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpoints] = ZLayer {
