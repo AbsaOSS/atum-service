@@ -185,4 +185,5 @@ za.co.absa.atum.model.dto.PartitioningParentPatchDTO*#*
 za.co.absa.atum.model.ApiPaths*#*
 za.co.absa.atum.model.envelopes.ResponseEnvelope#*
 za.co.absa.atum.model.envelopes.StatusResponse#*
-za.co.absa.atum.model.envelopes.SuccessResponse#*"
+za.co.absa.atum.model.envelopes.SuccessResponse#*
+za.co.absa.atum.reader.requests.QueryParamNames#*
