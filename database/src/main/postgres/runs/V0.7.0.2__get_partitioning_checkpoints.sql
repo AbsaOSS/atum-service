@@ -14,7 +14,8 @@
  */
 
 -- The previous overload is dropped so that the new signature (adding the optional checkpoint
--- properties filter) is unambiguous when the function is called with named or defaulted arguments.
+-- properties filter and the latest-first ordering toggle) is unambiguous when the function is
+-- called with named or defaulted arguments.
 DROP FUNCTION IF EXISTS runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT);
 
 CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
@@ -23,6 +24,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     IN i_offset BIGINT DEFAULT 0,
     IN i_checkpoint_name TEXT DEFAULT NULL,
     IN i_checkpoint_properties HSTORE DEFAULT NULL,
+    IN i_latest_first BOOLEAN DEFAULT TRUE,
     OUT status INTEGER,
     OUT status_text TEXT,
     OUT id_checkpoint UUID,
@@ -39,7 +41,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     RETURNS SETOF record AS
     -------------------------------------------------------------------------------
 --
--- Function: runs.get_partitioning_checkpoints(5)
+-- Function: runs.get_partitioning_checkpoints(6)
 --      Retrieves checkpoints (measures and their measurement details) related to a
 --      given partitioning (and checkpoint name and/or checkpoint properties, if specified).
 --
@@ -50,10 +52,12 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
 --      i_checkpoint_name       - (optional) name of the checkpoint
 --      i_checkpoint_properties - (optional) if specified, returns only checkpoints that have all the given
 --                                  checkpoint properties (matching both property name and value)
+--      i_latest_first          - (optional) if true (default), checkpoints are ordered by process_start_time
+--                                  in descending order (latest first); if false, in ascending order
 
 -- Note: i_checkpoints_limit and i_offset are used for pagination purposes;
---       checkpoints are ordered by process_start_time in descending order
---       and then by id_checkpoint in ascending order
+--       checkpoints are ordered by process_start_time (descending by default, see i_latest_first)
+--       and then by id_checkpoint in ascending order as a tie-breaker
 --
 -- Returns:
 --      status                  - Status code
@@ -77,6 +81,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
 $$
 DECLARE
     _has_more BOOLEAN;
+    _latest_first BOOLEAN := coalesce(i_latest_first, TRUE);
 BEGIN
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id;
     IF NOT FOUND THEN
@@ -137,7 +142,13 @@ BEGIN
                                                )
                                            )
                                        )
-                                     ORDER BY C.process_start_time DESC, C.id_checkpoint ASC
+                                     ORDER BY CASE
+                                                  WHEN _latest_first THEN C.process_start_time
+                                                  END DESC,
+                                              CASE
+                                                  WHEN NOT _latest_first THEN C.process_start_time
+                                                  END ASC,
+                                              C.id_checkpoint ASC
                                      LIMIT i_checkpoints_limit OFFSET i_offset)
         SELECT 11                    AS status,
                'Ok'                  AS status_text,
@@ -156,9 +167,15 @@ BEGIN
              runs.measurements M ON LC.id_checkpoint = M.fk_checkpoint
                  INNER JOIN
              runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
-        ORDER BY LC.process_start_time DESC, LC.id_checkpoint ASC;
+        ORDER BY CASE
+                     WHEN _latest_first THEN LC.process_start_time
+                     END DESC,
+                 CASE
+                     WHEN NOT _latest_first THEN LC.process_start_time
+                     END ASC,
+                 LC.id_checkpoint ASC;
 END;
 $$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE) TO atum_owner;
+ALTER FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE, BOOLEAN) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE, BOOLEAN) TO atum_owner;

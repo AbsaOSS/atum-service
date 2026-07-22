@@ -416,4 +416,78 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
       }
   }
 
+  test("Respects the i_latest_first ordering toggle") {
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning1)
+        .add("created_by", "Daniel")
+    )
+    val fkPartitioning: Long = table("runs.partitionings")
+      .fieldValue("partitioning", partitioning1, "id_partitioning").get.get
+
+    // UUID order is deliberately the opposite of the time order, so these assertions only hold
+    // if ordering is driven by process_start_time (not by id_checkpoint).
+    val earlierCheckpoint = UUID.fromString("11111111-1111-1111-1111-111111111111")
+    val laterCheckpoint = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff")
+    val earlierTime = OffsetDateTime.parse("2020-01-01T10:00:00Z")
+    val laterTime = OffsetDateTime.parse("2023-01-01T10:00:00Z")
+
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", earlierCheckpoint)
+        .add("fk_partitioning", fkPartitioning)
+        .add("checkpoint_name", "earlier")
+        .add("process_start_time", earlierTime)
+        .add("process_end_time", endTime)
+        .add("measured_by_atum_agent", true)
+        .add("created_by", "Daniel")
+    )
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", laterCheckpoint)
+        .add("fk_partitioning", fkPartitioning)
+        .add("checkpoint_name", "later")
+        .add("process_start_time", laterTime)
+        .add("process_end_time", endTime)
+        .add("measured_by_atum_agent", true)
+        .add("created_by", "Daniel")
+    )
+
+    table("runs.measure_definitions").insert(
+      add("id_measure_definition", id_measure_definition1)
+        .add("fk_partitioning", fkPartitioning)
+        .add("created_by", "Daniel")
+        .add("measure_name", "measure_1")
+        .add("measured_columns", measured_columns1)
+    )
+    table("runs.measurements").insert(
+      add("fk_checkpoint", earlierCheckpoint)
+        .add("fk_measure_definition", id_measure_definition1)
+        .add("measurement_value", measurement1)
+    )
+    table("runs.measurements").insert(
+      add("fk_checkpoint", laterCheckpoint)
+        .add("fk_measure_definition", id_measure_definition1)
+        .add("measurement_value", measurement1)
+    )
+
+    // Default (i_latest_first defaults to TRUE) -> latest first
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        assert(queryResult.next().getUUID("id_checkpoint").contains(laterCheckpoint))
+        assert(queryResult.next().getUUID("id_checkpoint").contains(earlierCheckpoint))
+        assert(!queryResult.hasNext)
+      }
+
+    // i_latest_first = false -> earliest first
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_latest_first", false)
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        assert(queryResult.next().getUUID("id_checkpoint").contains(earlierCheckpoint))
+        assert(queryResult.next().getUUID("id_checkpoint").contains(laterCheckpoint))
+        assert(!queryResult.hasNext)
+      }
+  }
+
 }
