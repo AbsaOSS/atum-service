@@ -41,11 +41,11 @@ CREATE OR REPLACE FUNCTION flows.get_flow_checkpoints(
     OUT partitioning_author TEXT,
     OUT has_more BOOLEAN
 ) RETURNS SETOF record AS
-$$
-    --------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
 --
 -- Function: flows.get_flow_checkpoints(6)
---      Retrieves all checkpoints (measures and their measurement details) related to an input flow.
+--      Retrieves all checkpoints (measures and their measurement details) related to an
+--      input flow (and checkpoint name and/or checkpoint properties, if specified).
 --
 -- Note: a single row returned from this function doesn't contain all data related to a single checkpoint - it only
 --     represents one measure associated with a checkpoint. So even if only a single checkpoint would be retrieved,
@@ -55,16 +55,17 @@ $$
 --
 -- Parameters:
 --      i_flow_id               - ID of the flow for which checkpoints are to be retrieved
---      i_checkpoints_limit     - (optional) maximum number of checkpoint to return, returns all of them if NULL
---      i_offset                - (optional) offset for checkpoints pagination
+--      i_checkpoints_limit     - (optional) maximum number of checkpoints to return, returns all of them if NULL
+--      i_offset                - (optional) offset of the first checkpoint to return
 --      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --      i_checkpoint_properties - (optional) if specified, returns only checkpoints that have all the given
 --                                  checkpoint properties (matching both property name and value)
---      i_latest_first          - (optional) if true, checkpoints are ordered by process_start_time in descending order
+--      i_latest_first          - (optional) if true (default), checkpoints are ordered by process_start_time
+--                                  in descending order (latest first); if false, in ascending order
 --
---      Note: i_checkpoint_limit and i_offset are used for pagination purposes;
---            checkpoints are ordered by process_start_time in descending order
---            and then by id_checkpoint in ascending order
+-- Note: i_checkpoints_limit and i_offset are used for pagination purposes;
+--       checkpoints are ordered by process_start_time in descending order
+--       and then by id_checkpoint in ascending order
 --
 -- Returns:
 --      status                 - Status code
@@ -80,14 +81,15 @@ $$
 --      checkpoint_start_time  - Time of the checkpoint
 --      checkpoint_end_time    - End time of the checkpoint computation
 --      id_partitioning        - ID of the partitioning
---      partitioning         - Partitioning value
+--      partitioning           - Partitioning value
 --      partitioning_author    - Author of the partitioning
---      has_more               - flag indicating whether there are more checkpoints available, always `false` if `i_limit` is NULL
+--      has_more               - Flag indicating whether there are more checkpoints available, always `false` if `i_limit` is NULL
 --
 -- Status codes:
 --      11                     - OK
 --      42                     - Flow not found
 ---------------------------------------------------------------------------------------------------
+$$
 DECLARE
     _has_more     BOOLEAN;
     _latest_first BOOLEAN := coalesce(i_latest_first, TRUE);
@@ -180,7 +182,7 @@ BEGIN
                'OK'                  AS status_text,
                LC.id_checkpoint,
                LC.checkpoint_name,
-               LC.created_by         AS author,
+               LC.created_by         AS checkpoint_author,
                LC.measured_by_atum_agent,
                MD.measure_name,
                MD.measured_columns,

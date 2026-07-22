@@ -4,6 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -29,7 +30,7 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     OUT status_text TEXT,
     OUT id_checkpoint UUID,
     OUT checkpoint_name TEXT,
-    OUT author TEXT,
+    OUT checkpoint_author TEXT,
     OUT measured_by_atum_agent BOOLEAN,
     OUT measure_name TEXT,
     OUT measured_columns TEXT[],
@@ -37,50 +38,56 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     OUT checkpoint_start_time TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time TIMESTAMP WITH TIME ZONE,
     OUT has_more BOOLEAN
-)
-    RETURNS SETOF record AS
-    -------------------------------------------------------------------------------
+) RETURNS SETOF record AS
+--------------------------------------------------------------------------------------------------------------------
 --
 -- Function: runs.get_partitioning_checkpoints(6)
---      Retrieves checkpoints (measures and their measurement details) related to a
---      given partitioning (and checkpoint name and/or checkpoint properties, if specified).
+--      Retrieves all checkpoints (measures and their measurement details) related to a
+--      input partitioning (and checkpoint name and/or checkpoint properties, if specified).
+--
+-- Note: a single row returned from this function doesn't contain all data related to a single checkpoint - it only
+--     represents one measure associated with a checkpoint. So even if only a single checkpoint would be retrieved,
+--     this function can potentially return multiple rows.
+--
+-- Note: checkpoints will be retrieved in ordered fashion, by checkpoint_time and id_checkpoint
 --
 -- Parameters:
 --      i_partitioning_id       - ID of the partitioning for which checkpoints are to be retrieved
---      i_checkpoints_limit     - (optional) maximum number of checkpoints to return
+--      i_checkpoints_limit     - (optional) maximum number of checkpoints to return, returns all of them if NULL
 --      i_offset                - (optional) offset of the first checkpoint to return
---      i_checkpoint_name       - (optional) name of the checkpoint
+--      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
 --      i_checkpoint_properties - (optional) if specified, returns only checkpoints that have all the given
 --                                  checkpoint properties (matching both property name and value)
 --      i_latest_first          - (optional) if true (default), checkpoints are ordered by process_start_time
 --                                  in descending order (latest first); if false, in ascending order
-
+--
 -- Note: i_checkpoints_limit and i_offset are used for pagination purposes;
 --       checkpoints are ordered by process_start_time (descending by default, see i_latest_first)
 --       and then by id_checkpoint in ascending order as a tie-breaker
 --
 -- Returns:
 --      status                  - Status code
---      status_text             - Status message
---      id_checkpoint           - ID of the checkpoint
---      checkpoint_name         - Name of the checkpoint
---      author                  - Author of the checkpoint
---      measured_by_atum_agent  - Flag indicating whether the checkpoint was measured by ATUM agent
---      measure_name            - Name of the measure
---      measure_columns         - Columns of the measure
+--      status_text             - Status text
+--      id_checkpoint           - ID of retrieved checkpoint
+--      checkpoint_name         - Name of the retrieved checkpoint
+--      checkpoint_author       - Author of the checkpoint
+--      measured_by_atum_agent  - Flag indicating whether the checkpoint was measured by Atum Agent
+--                                (if false, data supplied manually)--      measure_name            - Name of the measure
+--      measure_name            - measure name associated with a given checkpoint
+--      measured_columns        - measure columns associated with a given checkpoint
+--      measurement_value       - measurement details associated with a given checkpoint
 --      measurement_value       - Value of the measurement
 --      checkpoint_start_time   - Time of the checkpoint
 --      checkpoint_end_time     - End time of the checkpoint computation
 --      has_more                - Flag indicating whether there are more checkpoints available
 --
 -- Status codes:
---      11 - OK
---      41 - Partitioning not found
---
--------------------------------------------------------------------------------
+--      11                      - OK
+--      41                      - Partitioning not found
+---------------------------------------------------------------------------------------------------
 $$
 DECLARE
-    _has_more BOOLEAN;
+    _has_more     BOOLEAN;
     _latest_first BOOLEAN := coalesce(i_latest_first, TRUE);
 BEGIN
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id;
@@ -91,6 +98,7 @@ BEGIN
         RETURN;
     END IF;
 
+    -- Determine if there are more checkpoints than the limit
     IF i_checkpoints_limit IS NOT NULL THEN
         SELECT count(*) > i_checkpoints_limit
         FROM (SELECT 1
@@ -111,13 +119,20 @@ BEGIN
                         )
                     )
                 )
-              ORDER BY C.process_start_time DESC, C.id_checkpoint ASC
+               ORDER BY CASE
+                            WHEN _latest_first THEN C.process_start_time
+                            END DESC,
+                        CASE
+                            WHEN NOT _latest_first THEN C.process_start_time
+                            END ASC,
+                        C.id_checkpoint ASC
               LIMIT i_checkpoints_limit + 1 OFFSET i_offset) s
         INTO _has_more;
     ELSE
         _has_more := false;
     END IF;
 
+    -- Retrieve the checkpoints and their associated measurements
     RETURN QUERY
         WITH limited_checkpoints AS (SELECT C.id_checkpoint,
                                             C.checkpoint_name,
@@ -151,13 +166,13 @@ BEGIN
                                               C.id_checkpoint ASC
                                      LIMIT i_checkpoints_limit OFFSET i_offset)
         SELECT 11                    AS status,
-               'Ok'                  AS status_text,
+               'OK'                  AS status_text,
                LC.id_checkpoint,
                LC.checkpoint_name,
-               LC.created_by         AS author,
+               LC.created_by         AS checkpoint_author,
                LC.measured_by_atum_agent,
-               md.measure_name,
-               md.measured_columns,
+               MD.measure_name,
+               MD.measured_columns,
                M.measurement_value,
                LC.process_start_time AS checkpoint_start_time,
                LC.process_end_time   AS checkpoint_end_time,
