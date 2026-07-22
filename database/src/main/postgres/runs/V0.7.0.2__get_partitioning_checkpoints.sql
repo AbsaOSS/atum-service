@@ -106,6 +106,7 @@ BEGIN
                         )
                     )
                 )
+              ORDER BY C.process_start_time DESC, C.id_checkpoint ASC
               LIMIT i_checkpoints_limit + 1 OFFSET i_offset) s
         INTO _has_more;
     ELSE
@@ -136,7 +137,7 @@ BEGIN
                                                )
                                            )
                                        )
-                                     ORDER BY C.id_checkpoint, C.process_start_time
+                                     ORDER BY C.process_start_time DESC, C.id_checkpoint ASC
                                      LIMIT i_checkpoints_limit OFFSET i_offset)
         SELECT 11                    AS status,
                'Ok'                  AS status_text,
@@ -155,7 +156,7 @@ BEGIN
              runs.measurements M ON LC.id_checkpoint = M.fk_checkpoint
                  INNER JOIN
              runs.measure_definitions MD ON M.fk_measure_definition = MD.id_measure_definition
-        ORDER BY LC.id_checkpoint, LC.process_start_time;
+        ORDER BY LC.process_start_time DESC, LC.id_checkpoint ASC;
 END;
 $$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 

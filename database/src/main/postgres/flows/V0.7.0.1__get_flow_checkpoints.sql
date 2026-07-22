@@ -128,6 +128,13 @@ BEGIN
                         )
                     )
                 )
+              ORDER BY CASE
+                          WHEN _latest_first THEN C.process_start_time
+                          END DESC,
+                      CASE
+                          WHEN NOT _latest_first THEN C.process_start_time
+                          END ASC,
+                      C.id_checkpoint ASC
               LIMIT i_checkpoints_limit + 1 OFFSET i_offset) s
         INTO _has_more;
     ELSE
@@ -166,7 +173,8 @@ BEGIN
                                                   END DESC,
                                               CASE
                                                   WHEN NOT _latest_first THEN C.process_start_time
-                                                  END ASC
+                                                  END ASC,
+                                              C.id_checkpoint ASC
                                      LIMIT i_checkpoints_limit OFFSET i_offset)
         SELECT 11                    AS status,
                'OK'                  AS status_text,
@@ -195,7 +203,8 @@ BEGIN
                      END DESC,
                  CASE
                      WHEN NOT _latest_first THEN LC.process_start_time
-                     END ASC;
+                     END ASC,
+                 LC.id_checkpoint ASC;
 END;
 $$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
