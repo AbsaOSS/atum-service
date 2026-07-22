@@ -49,7 +49,7 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
   override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq(
     "id_checkpoint",
     "checkpoint_name",
-    "author",
+    "checkpoint_author",
     "measured_by_atum_agent",
     "measure_name",
     "measured_columns",

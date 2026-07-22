@@ -72,11 +72,10 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
 --      checkpoint_name         - Name of the retrieved checkpoint
 --      checkpoint_author       - Author of the checkpoint
 --      measured_by_atum_agent  - Flag indicating whether the checkpoint was measured by Atum Agent
---                                (if false, data supplied manually)--      measure_name            - Name of the measure
+--                                (if false, data supplied manually)
 --      measure_name            - measure name associated with a given checkpoint
 --      measured_columns        - measure columns associated with a given checkpoint
 --      measurement_value       - measurement details associated with a given checkpoint
---      measurement_value       - Value of the measurement
 --      checkpoint_start_time   - Time of the checkpoint
 --      checkpoint_end_time     - End time of the checkpoint computation
 --      has_more                - Flag indicating whether there are more checkpoints available
