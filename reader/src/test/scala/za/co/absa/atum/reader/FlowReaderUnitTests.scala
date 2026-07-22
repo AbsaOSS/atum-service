@@ -288,7 +288,7 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
         case r if r.uri.path.endsWith(List("checkpoints")) =>
           assert(r.uri.querySegments.contains(KeyValue("offset", "0")))
           assert(r.uri.querySegments.contains(KeyValue("limit", "10")))
-          assert(r.uri.querySegments.contains(KeyValue("checkpoint-properties", """{"prop1":"value1"}""")))
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-properties", "eyJleGVjdXRpb25JRCI6IjAxOWY4OTgxLTc4NjgtNzlmYy04MWQzLTgxNDNhNDcwNmY4YSJ9")))
           Response.ok(checkpointsResponse)
       }
 
@@ -298,7 +298,8 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     ))
 
     val reader = FlowReader(atumPartitions)
-    val result = reader.getCheckpointsByPropertiesPage(Map("prop1" -> "value1"))
+    // base64url-encoded {"executionID":"019f8981-7868-79fc-81d3-8143a4706f8a"}
+    val result = reader.getCheckpointsByPropertiesPage(Map("executionID" -> "019f8981-7868-79fc-81d3-8143a4706f8a"))
     assert(result.isRight)
   }
 

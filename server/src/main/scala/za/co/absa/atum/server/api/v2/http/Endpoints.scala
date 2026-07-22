@@ -21,28 +21,29 @@ import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
 import sttp.tapir.{Codec, CodecFormat, DecodeResult, PublicEndpoint, Validator}
-import io.circe.parser.{decode => circeDecode}
-import io.circe.syntax._
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.ErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse._
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.server.api.v2.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.common.http.{BaseEndpoints, HttpEnv}
 
 import java.util.UUID
+import scala.util.{Failure, Success, Try}
 
 object Endpoints extends BaseEndpoints {
 
-  // Checkpoint properties are supplied as a single query parameter carrying a URL-encoded JSON object,
-  // e.g. `checkpoint-properties={"jobRunId":"123"}`. Invalid JSON results in a 400 Bad Request.
+  // Checkpoint properties are supplied as a single query parameter carrying a base64url-encoded JSON object,
+  // e.g. `checkpoint-properties=eyJleGVjdXRpb25JRCI6Ii4uLiJ9`. Malformed base64 or JSON results in a 400 Bad Request.
   private implicit val checkpointPropertiesQueryCodec: Codec[String, Map[String, String], CodecFormat.TextPlain] =
-    Codec.string.mapDecode { raw =>
-      circeDecode[Map[String, String]](raw) match {
-        case Right(properties) => DecodeResult.Value(properties)
-        case Left(error) => DecodeResult.Error(raw, error)
+    Codec.string.mapDecode { encoded =>
+      Try(encoded.fromBase64As[Map[String, String]]) match {
+        case Success(Right(properties)) => DecodeResult.Value(properties)
+        case Success(Left(error)) => DecodeResult.Error(encoded, error)
+        case Failure(exception) => DecodeResult.Error(encoded, exception)
       }
-    }(_.asJson.noSpaces)
+    }(_.asBase64EncodedJsonString)
 
   val postCheckpointEndpoint
     : PublicEndpoint[(Long, CheckpointV2DTO), ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String), Any] = {

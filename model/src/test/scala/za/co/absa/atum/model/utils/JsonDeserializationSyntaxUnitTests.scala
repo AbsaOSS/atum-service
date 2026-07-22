@@ -18,7 +18,7 @@ package za.co.absa.atum.model.utils
 
 import org.scalatest.funsuite.AnyFunSuiteLike
 import za.co.absa.atum.model.dto.{FlowDTO, PartitionDTO}
-import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonDeserializationSyntax
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions.{JsonDeserializationSyntax, JsonSerializationSyntax}
 
 class JsonDeserializationSyntaxUnitTests extends AnyFunSuiteLike {
   test("Decode object from Json with defined Option field") {
@@ -93,6 +93,20 @@ class JsonDeserializationSyntaxUnitTests extends AnyFunSuiteLike {
     val source = ""
     val result = source.fromBase64As[FlowDTO]
     assert(result.isLeft)
+  }
+
+  test("Decode a Map of checkpoint properties from base64url and round-trip") {
+    // base64url of {"executionID":"019f8981-7868-79fc-81d3-8143a4706f8a"}
+    val source = "eyJleGVjdXRpb25JRCI6IjAxOWY4OTgxLTc4NjgtNzlmYy04MWQzLTgxNDNhNDcwNmY4YSJ9"
+    val expected = Map("executionID" -> "019f8981-7868-79fc-81d3-8143a4706f8a")
+    assert(source.fromBase64As[Map[String, String]] == Right(expected))
+    assert(expected.asBase64EncodedJsonString.fromBase64As[Map[String, String]] == Right(expected))
+  }
+
+  test("Decode a base64url string containing url-safe alphabet characters") {
+    // base64url of {"k":">>>"} -> contains '-', which the non-url-safe Base64 decoder would reject
+    val source = "eyJrIjoiPj4-In0="
+    assert(source.fromBase64As[Map[String, String]] == Right(Map("k" -> ">>>")))
   }
 
 }

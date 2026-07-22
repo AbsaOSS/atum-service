@@ -19,8 +19,8 @@ package za.co.absa.atum.reader
 import sttp.client3.SttpBackend
 import sttp.monad.MonadError
 import sttp.monad.syntax._
-import io.circe.syntax._
 import za.co.absa.atum.model.ApiPaths.{Api, V2, V2Paths}
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO, CheckpointV2DTO}
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.types.basic.AtumPartitions
@@ -152,7 +152,7 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
     val endpoint = s"/$Api/$V2/${V2Paths.Partitionings}/$partitioningId/${V2Paths.Checkpoints}"
     val propertiesParam: Option[(String, String)] =
       if (checkpointProperties.isEmpty) None
-      else Some(QueryParamNames.CheckpointProperties -> checkpointProperties.asJson.noSpaces)
+      else Some(QueryParamNames.CheckpointProperties -> checkpointProperties.asBase64EncodedJsonString)
     val params = Map(
       QueryParamNames.Limit -> limit.toString,
       QueryParamNames.Offset -> offset.toString,

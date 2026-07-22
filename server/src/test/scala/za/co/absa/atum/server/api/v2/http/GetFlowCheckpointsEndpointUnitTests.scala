@@ -38,6 +38,13 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   private val flowControllerMockV2 = mock(classOf[FlowController])
   private val uuid = UUID.randomUUID()
 
+  // A checkpoint-properties filter with a single executionID (valid UUID) entry and its base64url-encoded JSON form,
+  // i.e. base64url of {"executionID":"019f8981-7868-79fc-81d3-8143a4706f8a"}
+  private val executionId = "019f8981-7868-79fc-81d3-8143a4706f8a"
+  private val executionIdProperties = Map("executionID" -> executionId)
+  private val encodedExecutionIdProperties =
+    "eyJleGVjdXRpb25JRCI6IjAxOWY4OTgxLTc4NjgtNzlmYy04MWQzLTgxNDNhNDcwNmY4YSJ9"
+
   when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, None, includeProperties = false))
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
@@ -59,7 +66,7 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
   when(
-    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(Map("jobRunId" -> "123")), includeProperties = false)
+    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(executionIdProperties), includeProperties = false)
   )
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
@@ -150,9 +157,8 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
         assertZIO(statusCode)(equalTo(StatusCode.NotFound))
       },
       test("Returns an expected PaginatedResponse[CheckpointWithPartitioningDTO] when filtering by checkpoint properties") {
-        val properties = """{"jobRunId":"123"}"""
         val baseUri =
-          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=$properties"
+          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=$encodedExecutionIdProperties"
         val response = basicRequest
           .get(baseUri)
           .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
@@ -168,9 +174,9 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
           )
         )
       },
-      test("Returns expected 400 when checkpoint-properties is not valid JSON") {
+      test("Returns expected 400 when checkpoint-properties is not valid base64") {
         val baseUri =
-          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=not-valid-json"
+          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=!!!not-base64!!!"
         val response = basicRequest
           .get(baseUri)
           .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
