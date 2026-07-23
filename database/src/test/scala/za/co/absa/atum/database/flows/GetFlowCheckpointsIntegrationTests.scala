@@ -103,6 +103,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     // Insert checkpoints and measure definitions
+    // checkpoint1 has a later start time so it sorts first with latest_first=TRUE
     val checkpointId1 = UUID.randomUUID()
     val startTime = OffsetDateTime.parse("1993-02-14T10:00:00Z")
     val endTime = OffsetDateTime.parse("2024-04-24T10:00:00Z")
@@ -117,8 +118,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     val checkpointId2 = UUID.randomUUID()
-    val startTimeOther = OffsetDateTime.parse("1993-02-14T10:00:00Z")
-    val endTimeOther = OffsetDateTime.parse("2024-04-24T10:00:00Z")
+    val startTimeOther = OffsetDateTime.parse("1992-02-14T10:00:00Z")
+    val endTimeOther = OffsetDateTime.parse("2023-04-24T10:00:00Z")
     table("runs.checkpoints").insert(
       add("id_checkpoint", checkpointId2)
         .add("fk_partitioning", partitioningId)
@@ -205,9 +206,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row2.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
         assert(row2.getString("checkpoint_author").contains("Joseph"))
         assert(row2.getBoolean("measured_by_atum_agent").contains(true))
-        assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
-        assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
-        assert(row1.getBoolean("has_more").contains(false))
+        assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTime))
+        assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTime))
+        assert(row2.getBoolean("has_more").contains(false))
 
         val measure2 = MeasuredDetails(
           row2.getString("measure_name").get,
@@ -226,7 +227,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row3.getBoolean("measured_by_atum_agent").contains(true))
         assert(row3.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
         assert(row3.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
-        assert(row1.getBoolean("has_more").contains(false))
+        assert(row3.getBoolean("has_more").contains(false))
 
         val measure3 = MeasuredDetails(
           row3.getString("measure_name").get,
@@ -545,6 +546,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     // Insert checkpoints and measure definitions
+    // checkpoint1 has a later start time so it sorts first with latest_first=TRUE
     val checkpointId1 = UUID.randomUUID()
     val startTime = OffsetDateTime.parse("1993-02-14T10:00:00Z")
     val endTime = OffsetDateTime.parse("2024-04-24T10:00:00Z")
@@ -559,8 +561,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     val checkpointId2 = UUID.randomUUID()
-    val startTimeOther = OffsetDateTime.parse("1993-02-14T10:00:00Z")
-    val endTimeOther = OffsetDateTime.parse("2024-04-24T10:00:00Z")
+    val startTimeOther = OffsetDateTime.parse("1992-02-14T10:00:00Z")
+    val endTimeOther = OffsetDateTime.parse("2023-04-24T10:00:00Z")
     table("runs.checkpoints").insert(
       add("id_checkpoint", checkpointId2)
         .add("fk_partitioning", partitioningId)
@@ -648,8 +650,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row2.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
         assert(row2.getString("checkpoint_author").contains("Joseph"))
         assert(row2.getBoolean("measured_by_atum_agent").contains(true))
-        assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
-        assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
+        assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTime))
+        assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTime))
         assert(queryResult.hasNext)
 
         val measure2 = MeasuredDetails(
