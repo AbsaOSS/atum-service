@@ -19,6 +19,7 @@ package za.co.absa.atum.agent
 import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
 import org.scalatest.funsuite.AnyFunSuiteLike
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.agent.exception.AtumAgentException.PartitioningUpdateException
 import za.co.absa.atum.model.dto.PartitioningSubmitDTO
 import za.co.absa.atum.model.types.basic.AtumPartitions
 
@@ -36,12 +37,42 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     assert(atumAgent.getOrCreateAtumContext(atumPartitions) == atumContext1)
     assert(atumContext1 == atumContext2)
 
-    // AtumSubContext contains expected AtumPartitions
+    // AtumSubContext contains expected AtumPartitions (merge mode)
     val atumSubContext = atumAgent.getOrCreateAtumSubContext(subPartitions)(atumContext1)
     assert(atumSubContext.atumPartitions == (atumPartitions ++ subPartitions))
 
     // AtumContext contains reference to expected AtumAgent
     assert(atumSubContext.agent == atumAgent)
+  }
+
+  test("getOrCreateAtumSubContext with mergeWithParent=false uses only sub partitions") {
+    val atumAgent = AtumAgent
+    val atumPartitions = AtumPartitions("parent" -> "value")
+    val subPartitions = AtumPartitions("child" -> "value")
+
+    val parentContext = atumAgent.getOrCreateAtumContext(atumPartitions)
+    val childContext = atumAgent.getOrCreateAtumSubContext(subPartitions, mergeWithParent = false)(parentContext)
+
+    // Child partitioning should contain ONLY the sub partitions, not parent's keys
+    assert(childContext.atumPartitions == subPartitions)
+    assert(!childContext.atumPartitions.contains("parent"))
+    assert(childContext.agent == atumAgent)
+  }
+
+  test("subPartitionContext with mergeWithParent=false skips overlap check") {
+    val atumAgent = AtumAgent
+    val atumPartitions = AtumPartitions("key" -> "parentVal")
+
+    val parentContext = atumAgent.getOrCreateAtumContext(atumPartitions)
+
+    // With merge=true, overlapping keys would throw
+    intercept[PartitioningUpdateException] {
+      parentContext.subPartitionContext(AtumPartitions("key" -> "childVal"), mergeWithParent = true)
+    }
+
+    // With merge=false, overlapping keys are allowed (child stands alone)
+    val childContext = parentContext.subPartitionContext(AtumPartitions("key" -> "childVal"), mergeWithParent = false)
+    assert(childContext.atumPartitions == AtumPartitions("key" -> "childVal"))
   }
 
   test("AtumAgent creates dispatcher per configuration") {

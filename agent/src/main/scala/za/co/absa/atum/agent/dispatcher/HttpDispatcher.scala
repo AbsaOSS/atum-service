@@ -106,6 +106,13 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data
     }
 
+    // Ensure parent-child flow link exists when the child already existed.
+    // The server-side create handles this at creation time, but when the child pre-exists
+    // (e.g. shared/canonical partitioning with multiple parents), we must explicitly link.
+    if (partitioningWithIdOpt.isDefined && parentPartitioningIdOpt.isDefined) {
+      ensureParentLink(newPartitioningWithIdDTO.id, parentPartitioningIdOpt.get, partitioning.authorIfNew)
+    }
+
     val measures = {
       val endpoint = Uri.unsafeParse(
         s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/${newPartitioningWithIdDTO.id}/${ApiPaths.V2Paths.Measures}"
@@ -129,6 +136,30 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       measures = measures,
       additionalData = additionalData.data.map(item => item.key -> item.value).toMap
     )
+  }
+
+  /**
+   * Ensures the parent-child flow link exists by calling the PATCH ancestors endpoint.
+   * Uses copyMeasurements=false and copyAdditionalData=false since the link is the only
+   * thing we need — measure/AD inheritance was either already done at creation time or
+   * is intentionally skipped for shared/canonical children.
+   */
+  private def ensureParentLink(childPartitioningId: Long, parentPartitioningId: Long, author: String): Unit = {
+    val endpoint = Uri.unsafeParse(
+      s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$childPartitioningId/${ApiPaths.V2Paths.Ancestors}"
+    )
+    val patchDTO = PartitioningParentPatchDTO(
+      parentPartitioningId = parentPartitioningId,
+      author = author,
+      copyMeasurements = false,
+      copyAdditionalData = false
+    )
+    val request = commonAtumRequest.patch(endpoint).body(patchDTO.asJsonString)
+    val response = withRetry(request)
+    // 409 Conflict means the link already exists — expected and safe to ignore.
+    if (response.code != StatusCode.Conflict) {
+      handleResponseBody(response)
+    }
   }
 
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {

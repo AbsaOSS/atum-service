@@ -88,12 +88,21 @@ trait AtumAgent {
    *  Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
    *  Retrieves the data from AtumService API.
    *  @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
+   *  @param mergeWithParent if true, the child partitioning is `parent ++ sub`. If false, only `sub` is used
+   *                         as partitioning content; the parent relationship is still recorded via flows.
    *  @param parentAtumContext Parent AtumContext.
    *  @return Atum context object
    */
-  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext = {
+  def getOrCreateAtumSubContext(
+    subPartitions: AtumPartitions,
+    mergeWithParent: Boolean = true
+  )(implicit parentAtumContext: AtumContext): AtumContext = {
     val authorIfNew = this.currentUser
-    val newPartitions: AtumPartitions = parentAtumContext.atumPartitions ++ subPartitions
+    val newPartitions: AtumPartitions = if (mergeWithParent) {
+      parentAtumContext.atumPartitions ++ subPartitions
+    } else {
+      subPartitions
+    }
 
     val newPartitionsDTO = newPartitions.toPartitioningDTO
     val parentPartitionsDTO = Some(parentAtumContext.atumPartitions.toPartitioningDTO)
