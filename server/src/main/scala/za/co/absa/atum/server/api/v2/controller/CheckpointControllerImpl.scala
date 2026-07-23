@@ -64,13 +64,23 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
     limit: Int,
     offset: Long,
     checkpointName: Option[String] = None,
+    checkpointProperties: Option[Map[String, String]] = None,
+    latestFirst: Option[Boolean] = None,
     includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
     mapToPaginatedResponse(
       limit,
       offset,
       serviceCall[PaginatedResult[CheckpointV2DTO], PaginatedResult[CheckpointV2DTO]](
-        checkpointService.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, includeProperties)
+        checkpointService.getPartitioningCheckpoints(
+          partitioningId,
+          limit,
+          offset,
+          checkpointName,
+          checkpointProperties,
+          latestFirst,
+          includeProperties
+        )
       )
     )
   }

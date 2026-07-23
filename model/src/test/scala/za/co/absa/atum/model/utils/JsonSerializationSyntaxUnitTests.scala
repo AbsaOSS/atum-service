@@ -54,4 +54,11 @@ class JsonSerializationSyntaxUnitTests extends AnyFunSuiteLike {
     assert(result == expected)
   }
 
+  test("Converting a Map of checkpoint properties to base64url") {
+    // base64url of {"executionID":"019f8981-7868-79fc-81d3-8143a4706f8a"}
+    val expected = "eyJleGVjdXRpb25JRCI6IjAxOWY4OTgxLTc4NjgtNzlmYy04MWQzLTgxNDNhNDcwNmY4YSJ9"
+    val result = Map("executionID" -> "019f8981-7868-79fc-81d3-8143a4706f8a").asBase64EncodedJsonString
+    assert(result == expected)
+  }
+
 }

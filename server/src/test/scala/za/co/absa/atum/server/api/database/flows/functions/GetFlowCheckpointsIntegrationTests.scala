@@ -32,12 +32,12 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
     suite("GetFlowCheckpointsIntegrationTests")(
       test("Should return checkpoints with the correct flowId, limit, and offset") {
 
-        // Define the GetFlowCheckpointsArgs DTO
         val args = GetFlowCheckpoints.GetFlowCheckpointsArgs(
           flowId = 1L,
           limit = 10,
           offset = 0L,
-          checkpointName = Some("TestCheckpointName")
+          checkpointName = Some("TestCheckpointName"),
+          checkpointProperties = None
         )
 
         for {

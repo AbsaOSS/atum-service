@@ -47,7 +47,7 @@ object JsonSyntaxExtensions {
     }
 
     def fromBase64As[T: Decoder]: Either[io.circe.Error, T] = {
-      val decodedBytes = Base64.getDecoder.decode(jsonStr)
+      val decodedBytes = Base64.getUrlDecoder.decode(jsonStr)
       val decodedString = new String(decodedBytes, "UTF-8")
       decode[T](decodedString)
     }

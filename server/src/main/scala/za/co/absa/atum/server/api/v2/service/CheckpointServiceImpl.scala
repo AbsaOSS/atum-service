@@ -50,10 +50,20 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]],
+    latestFirst: Option[Boolean],
     includeProperties: Boolean
   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]] = {
     repositoryCall(
-      checkpointRepository.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, includeProperties),
+      checkpointRepository.getPartitioningCheckpoints(
+        partitioningId,
+        limit,
+        offset,
+        checkpointName,
+        checkpointProperties,
+        latestFirst,
+        includeProperties
+      ),
       "getPartitioningCheckpoints"
     )
   }

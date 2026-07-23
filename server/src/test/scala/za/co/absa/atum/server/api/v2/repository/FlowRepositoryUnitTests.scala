@@ -38,7 +38,7 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getFlowCheckpointsV2Mock = mock(classOf[GetFlowCheckpoints])
   private val getCheckpointPropertiesMock: GetCheckpointProperties = mock(classOf[GetCheckpointProperties])
 
-  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(1, 1, 1L, None)))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(1, 1, 1L, None, None)))
     .thenReturn(
       ZIO.right(
         Seq(
@@ -46,9 +46,9 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
         )
       )
     )
-  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(2, 1, 1L, None)))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(2, 1, 1L, None, None)))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "success"), None))))
-  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(3, 1, 1L, None)))
+  when(getFlowCheckpointsV2Mock.apply(GetFlowCheckpointsArgs(3, 1, 1L, None, None)))
     .thenReturn(ZIO.fail(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
 
   when(
@@ -67,12 +67,12 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("GetFlowCheckpointsV2Suite")(
         test("Returns expected Right with CheckpointV2DTO without properties") {
           for {
-            result <- FlowRepository.getFlowCheckpoints(1, 1, 1L, None, includeProperties = false)
+            result <- FlowRepository.getFlowCheckpoints(1, 1, 1L, None, None, includeProperties = false)
           } yield assertTrue(result == ResultHasMore(Seq(checkpointWithPartitioningDTO1)))
         },
         test("Returns expected Right with CheckpointV2DTO with properties") {
           for {
-            result <- FlowRepository.getFlowCheckpoints(1, 1, 1L, None, includeProperties = true)
+            result <- FlowRepository.getFlowCheckpoints(1, 1, 1L, None, None, includeProperties = true)
           } yield assertTrue(
             result == ResultHasMore(
               Seq(checkpointWithPartitioningDTO1.copy(properties = Some(Map("propName1" -> "propValue1"))))
@@ -81,11 +81,11 @@ object FlowRepositoryUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected Right with CheckpointV2DTO") {
           for {
-            result <- FlowRepository.getFlowCheckpoints(2, 1, 1L, None, includeProperties = false)
+            result <- FlowRepository.getFlowCheckpoints(2, 1, 1L, None, None, includeProperties = false)
           } yield assertTrue(result == ResultNoMore(Seq.empty[CheckpointWithPartitioningDTO]))
         },
         test("Returns expected DatabaseError") {
-          assertZIO(FlowRepository.getFlowCheckpoints(3, 1, 1L, None, includeProperties = false).exit)(
+          assertZIO(FlowRepository.getFlowCheckpoints(3, 1, 1L, None, None, includeProperties = false).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         }

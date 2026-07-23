@@ -122,10 +122,10 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val result1 = queryResult.next()
         assert(result1.getInt("status").contains(11))
-        assert(result1.getString("status_text").contains("Ok"))
+        assert(result1.getString("status_text").contains("OK"))
         assert(result1.getUUID("id_checkpoint").contains(uuid1))
         assert(result1.getString("checkpoint_name").contains("checkpoint_1"))
-        assert(result1.getString("author").contains("Daniel"))
+        assert(result1.getString("checkpoint_author").contains("Daniel"))
         assert(result1.getBoolean("measured_by_atum_agent").contains(true))
         assert(result1.getString("measure_name").contains("measure_1"))
         assert(result1.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col1")))
@@ -137,10 +137,10 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val result2 = queryResult.next()
         assert(result2.getInt("status").contains(11))
-        assert(result2.getString("status_text").contains("Ok"))
+        assert(result2.getString("status_text").contains("OK"))
         assert(result2.getUUID("id_checkpoint").contains(uuid1))
         assert(result2.getString("checkpoint_name").contains("checkpoint_1"))
-        assert(result2.getString("author").contains("Daniel"))
+        assert(result2.getString("checkpoint_author").contains("Daniel"))
         assert(result2.getBoolean("measured_by_atum_agent").contains(true))
         assert(result2.getString("measure_name").contains("measure_2"))
         assert(result2.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col2")))
@@ -219,10 +219,10 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val result1 = queryResult.next()
         assert(result1.getInt("status").contains(11))
-        assert(result1.getString("status_text").contains("Ok"))
+        assert(result1.getString("status_text").contains("OK"))
         assert(result1.getUUID("id_checkpoint").contains(uuid2))
         assert(result1.getString("checkpoint_name").contains("checkpoint_2"))
-        assert(result1.getString("author").contains("Daniel"))
+        assert(result1.getString("checkpoint_author").contains("Daniel"))
         assert(result1.getBoolean("measured_by_atum_agent").contains(true))
         assert(result1.getString("measure_name").contains("measure_2"))
         assert(result1.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col2")))
@@ -233,10 +233,10 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
 
         val result2 = queryResult.next()
         assert(result2.getInt("status").contains(11))
-        assert(result2.getString("status_text").contains("Ok"))
+        assert(result2.getString("status_text").contains("OK"))
         assert(result2.getUUID("id_checkpoint").contains(uuid1))
         assert(result2.getString("checkpoint_name").contains("checkpoint_1"))
-        assert(result2.getString("author").contains("Daniel"))
+        assert(result2.getString("checkpoint_author").contains("Daniel"))
         assert(result2.getBoolean("measured_by_atum_agent").contains(true))
         assert(result2.getString("measure_name").contains("measure_1"))
         assert(result2.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col1")))
@@ -256,10 +256,10 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val result1 = queryResult.next()
         assert(result1.getInt("status").contains(11))
-        assert(result1.getString("status_text").contains("Ok"))
+        assert(result1.getString("status_text").contains("OK"))
         assert(result1.getUUID("id_checkpoint").contains(uuid1))
         assert(result1.getString("checkpoint_name").contains("checkpoint_1"))
-        assert(result1.getString("author").contains("Daniel"))
+        assert(result1.getString("checkpoint_author").contains("Daniel"))
         assert(result1.getBoolean("measured_by_atum_agent").contains(true))
         assert(result1.getString("measure_name").contains("measure_1"))
         assert(result1.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col1")))
@@ -301,10 +301,10 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         val result1 = queryResult.next()
         assert(result1.getInt("status").contains(11))
-        assert(result1.getString("status_text").contains("Ok"))
+        assert(result1.getString("status_text").contains("OK"))
         assert(result1.getUUID("id_checkpoint").contains(uuid2))
         assert(result1.getString("checkpoint_name").contains("checkpoint_2"))
-        assert(result1.getString("author").contains("Daniel"))
+        assert(result1.getString("checkpoint_author").contains("Daniel"))
         assert(result1.getBoolean("measured_by_atum_agent").contains(true))
         assert(result1.getString("measure_name").contains("measure_2"))
         assert(result1.getArray[String]("measured_columns").map(_.toSeq).contains(Seq("col2")))
@@ -327,6 +327,165 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         val result1 = queryResult.next()
         assert(result1.getInt("status").contains(41))
         assert(result1.getString("status_text").contains("Partitioning not found"))
+        assert(!queryResult.hasNext)
+      }
+  }
+
+  test("Returns only checkpoints matching the checkpoint properties filter") {
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning1)
+        .add("created_by", "Daniel")
+    )
+    val fkPartitioning: Long = table("runs.partitionings")
+      .fieldValue("partitioning", partitioning1, "id_partitioning").get.get
+
+    val checkpointMatching = UUID.randomUUID()
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", checkpointMatching)
+        .add("fk_partitioning", fkPartitioning)
+        .add("checkpoint_name", "matching")
+        .add("process_start_time", startTime1)
+        .add("process_end_time", endTime)
+        .add("measured_by_atum_agent", true)
+        .add("created_by", "Daniel")
+    )
+    val checkpointNonMatching = UUID.randomUUID()
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", checkpointNonMatching)
+        .add("fk_partitioning", fkPartitioning)
+        .add("checkpoint_name", "non-matching")
+        .add("process_start_time", startTime2)
+        .add("process_end_time", endTime)
+        .add("measured_by_atum_agent", true)
+        .add("created_by", "Daniel")
+    )
+
+    table("runs.measure_definitions").insert(
+      add("id_measure_definition", id_measure_definition1)
+        .add("fk_partitioning", fkPartitioning)
+        .add("created_by", "Daniel")
+        .add("measure_name", "measure_1")
+        .add("measured_columns", measured_columns1)
+    )
+    table("runs.measurements").insert(
+      add("fk_checkpoint", checkpointMatching)
+        .add("fk_measure_definition", id_measure_definition1)
+        .add("measurement_value", measurement1)
+    )
+    table("runs.measurements").insert(
+      add("fk_checkpoint", checkpointNonMatching)
+        .add("fk_measure_definition", id_measure_definition1)
+        .add("measurement_value", measurement2)
+    )
+
+    // Only the matching checkpoint has jobId=123
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointMatching)
+        .add("property_name", "jobId")
+        .add("property_value", "123")
+    )
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointNonMatching)
+        .add("property_name", "jobId")
+        .add("property_value", "456")
+    )
+
+    def hstore(properties: Map[String, String]): CustomDBType = CustomDBType(
+      properties.map { case (k, v) => s""""$k"=>"$v"""" }.mkString(","),
+      "HSTORE"
+    )
+
+    // Filtering by jobId=123 returns only the matching checkpoint
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123")))
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getUUID("id_checkpoint").contains(checkpointMatching))
+        assert(!queryResult.hasNext)
+      }
+
+    // Filtering by a value that no checkpoint has returns nothing
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "999")))
+      .execute { queryResult =>
+        assert(!queryResult.hasNext)
+      }
+  }
+
+  test("Respects the i_latest_first ordering toggle") {
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning1)
+        .add("created_by", "Daniel")
+    )
+    val fkPartitioning: Long = table("runs.partitionings")
+      .fieldValue("partitioning", partitioning1, "id_partitioning").get.get
+
+    // UUID order is deliberately the opposite of the time order, so these assertions only hold
+    // if ordering is driven by process_start_time (not by id_checkpoint).
+    val earlierCheckpoint = UUID.fromString("11111111-1111-1111-1111-111111111111")
+    val laterCheckpoint = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff")
+    val earlierTime = OffsetDateTime.parse("2020-01-01T10:00:00Z")
+    val laterTime = OffsetDateTime.parse("2023-01-01T10:00:00Z")
+
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", earlierCheckpoint)
+        .add("fk_partitioning", fkPartitioning)
+        .add("checkpoint_name", "earlier")
+        .add("process_start_time", earlierTime)
+        .add("process_end_time", endTime)
+        .add("measured_by_atum_agent", true)
+        .add("created_by", "Daniel")
+    )
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", laterCheckpoint)
+        .add("fk_partitioning", fkPartitioning)
+        .add("checkpoint_name", "later")
+        .add("process_start_time", laterTime)
+        .add("process_end_time", endTime)
+        .add("measured_by_atum_agent", true)
+        .add("created_by", "Daniel")
+    )
+
+    table("runs.measure_definitions").insert(
+      add("id_measure_definition", id_measure_definition1)
+        .add("fk_partitioning", fkPartitioning)
+        .add("created_by", "Daniel")
+        .add("measure_name", "measure_1")
+        .add("measured_columns", measured_columns1)
+    )
+    table("runs.measurements").insert(
+      add("fk_checkpoint", earlierCheckpoint)
+        .add("fk_measure_definition", id_measure_definition1)
+        .add("measurement_value", measurement1)
+    )
+    table("runs.measurements").insert(
+      add("fk_checkpoint", laterCheckpoint)
+        .add("fk_measure_definition", id_measure_definition1)
+        .add("measurement_value", measurement1)
+    )
+
+    // Default (i_latest_first defaults to TRUE) -> latest first
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        assert(queryResult.next().getUUID("id_checkpoint").contains(laterCheckpoint))
+        assert(queryResult.next().getUUID("id_checkpoint").contains(earlierCheckpoint))
+        assert(!queryResult.hasNext)
+      }
+
+    // i_latest_first = false -> earliest first
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_latest_first", false)
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        assert(queryResult.next().getUUID("id_checkpoint").contains(earlierCheckpoint))
+        assert(queryResult.next().getUUID("id_checkpoint").contains(laterCheckpoint))
         assert(!queryResult.hasNext)
       }
   }

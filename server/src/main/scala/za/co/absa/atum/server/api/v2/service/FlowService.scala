@@ -30,6 +30,7 @@ trait FlowService {
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]],
     includeProperties: Boolean
   ): IO[ServiceError, PaginatedResult[CheckpointWithPartitioningDTO]]
 

@@ -38,11 +38,18 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   private val flowControllerMockV2 = mock(classOf[FlowController])
   private val uuid = UUID.randomUUID()
 
-  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, includeProperties = false))
+  // A checkpoint-properties filter with a single executionID (valid UUID) entry and its base64url-encoded JSON form,
+  // i.e. base64url of {"executionID":"019f8981-7868-79fc-81d3-8143a4706f8a"}
+  private val executionId = "019f8981-7868-79fc-81d3-8143a4706f8a"
+  private val executionIdProperties = Map("executionID" -> executionId)
+  private val encodedExecutionIdProperties =
+    "eyJleGVjdXRpb25JRCI6IjAxOWY4OTgxLTc4NjgtNzlmYy04MWQzLTgxNDNhNDcwNmY4YSJ9"
+
+  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, None, includeProperties = false))
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
     )
-  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, includeProperties = true))
+  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, None, includeProperties = true))
     .thenReturn(
       ZIO.succeed(
         PaginatedResponse(
@@ -52,18 +59,24 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
         )
       )
     )
-  when(flowControllerMockV2.getFlowCheckpoints(2L, 5, 0L, None, includeProperties = false))
+  when(flowControllerMockV2.getFlowCheckpoints(2L, 5, 0L, None, None, includeProperties = false))
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO2), Pagination(5, 0, hasMore = false), uuid))
     )
-  when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None, includeProperties = false))
+  when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
+  when(
+    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(executionIdProperties), includeProperties = false)
+  )
+    .thenReturn(
+      ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
+    )
 
   private val flowControllerMockLayerV2 = ZLayer.succeed(flowControllerMockV2)
 
   private val getFlowCheckpointServerEndpoint = Endpoints.getFlowCheckpointsEndpoint.zServerLogic({
-    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], includeProperties: Boolean) =>
-      FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, includeProperties)
+    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, String]], includeProperties: Boolean) =>
+      FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, includeProperties)
   })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -142,6 +155,36 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.NotFound))
+      },
+      test("Returns an expected PaginatedResponse[CheckpointWithPartitioningDTO] when filtering by checkpoint properties") {
+        val baseUri =
+          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=$encodedExecutionIdProperties"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
+          .send(backendStub)
+
+        val body = response.map(_.body)
+        val statusCode = response.map(_.code)
+
+        assertZIO(body <&> statusCode)(
+          equalTo(
+            Right(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid)),
+            StatusCode.Ok
+          )
+        )
+      },
+      test("Returns expected 400 when checkpoint-properties is not valid base64") {
+        val baseUri =
+          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=!!!not-base64!!!"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       },
       test("Returns expected 400 when limit is out of range") {
         val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=1005&offset=0"

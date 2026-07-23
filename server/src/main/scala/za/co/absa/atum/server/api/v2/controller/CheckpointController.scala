@@ -43,6 +43,8 @@ trait CheckpointController {
     limit: Int,
     offset: Long,
     checkpointName: Option[String] = None,
+    checkpointProperties: Option[Map[String, String]] = None,
+    latestFirst: Option[Boolean] = None,
     includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]]
 

@@ -38,7 +38,9 @@ class CheckpointRepositoryImpl(
   getCheckpointV2Fn: GetPartitioningCheckpointV2,
   getPartitioningCheckpointsFn: GetPartitioningCheckpoints,
   override val getCheckpointPropertiesFn: GetCheckpointProperties
-) extends CheckpointRepository with BaseRepository with CheckpointPropertiesEnricher {
+) extends CheckpointRepository
+    with BaseRepository
+    with CheckpointPropertiesEnricher {
 
   override def writeCheckpoint(partitioningId: Long, checkpointV2DTO: CheckpointV2DTO): IO[DatabaseError, Unit] = {
     dbSingleResultCallWithStatus(
@@ -73,10 +75,14 @@ class CheckpointRepositoryImpl(
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]],
+    latestFirst: Option[Boolean],
     includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
-      getPartitioningCheckpointsFn(GetPartitioningCheckpointsArgs(partitioningId, limit, offset, checkpointName)),
+      getPartitioningCheckpointsFn(
+        GetPartitioningCheckpointsArgs(partitioningId, limit, offset, checkpointName, checkpointProperties, latestFirst)
+      ),
       "getPartitioningCheckpoints"
     )
       .map(_.flatten)

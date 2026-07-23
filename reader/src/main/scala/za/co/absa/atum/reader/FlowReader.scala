@@ -20,6 +20,7 @@ import sttp.client3.SttpBackend
 import sttp.monad.MonadError
 import sttp.monad.syntax._
 import za.co.absa.atum.model.dto.{CheckpointWithPartitioningDTO, FlowDTO}
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.model.envelopes.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.atum.reader.core.RequestResult.RequestResult
@@ -62,7 +63,7 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
       flowIdOrError <- mapRequestResultF(mainPartitioningIdOrError, queryFlowId)
       checkpointsOrError <- mapRequestResultF(
         flowIdOrError,
-        queryCheckpoints(_, None, pageSize, offset, includeProperties)
+        queryCheckpoints(_, None, Map.empty, pageSize, offset, includeProperties)
       )
     } yield checkpointsOrError
   }
@@ -88,7 +89,35 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
       flowIdOrError <- mapRequestResultF(mainPartitioningIdOrError, queryFlowId)
       checkpointsOrError <- mapRequestResultF(
         flowIdOrError,
-        queryCheckpoints(_, Some(checkpointName), pageSize, offset, includeProperties)
+        queryCheckpoints(_, Some(checkpointName), Map.empty, pageSize, offset, includeProperties)
+      )
+    } yield checkpointsOrError
+  }
+
+  /**
+   *  Function to retrieve a page of checkpoints belonging to the flow that have all the given
+   *  checkpoint properties (matching both property name and value).
+   *  The checkpoints are ordered by their creation order.
+   *
+   *  @param checkpointProperties - the checkpoint properties (key-value pairs) to filter with;
+   *                                a checkpoint is returned only if it has all of them
+   *  @param pageSize             - the size of the page (record count) to be returned
+   *  @param offset               - offset of the page (starting position)
+   *  @param includeProperties    - whether to include checkpoint properties in the response
+   *  @return                     - a page of checkpoints
+   */
+  def getCheckpointsByPropertiesPage(
+    checkpointProperties: Map[String, String],
+    pageSize: Int = 10,
+    offset: Long = 0,
+    includeProperties: Boolean = false
+  ): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
+    for {
+      mainPartitioningIdOrError <- partitioningId(mainFlowPartitioning)
+      flowIdOrError <- mapRequestResultF(mainPartitioningIdOrError, queryFlowId)
+      checkpointsOrError <- mapRequestResultF(
+        flowIdOrError,
+        queryCheckpoints(_, None, checkpointProperties, pageSize, offset, includeProperties)
       )
     } yield checkpointsOrError
   }
@@ -104,16 +133,22 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
   private def queryCheckpoints(
     flowId: Long,
     checkpointName: Option[String],
+    checkpointProperties: Map[String, String],
     limit: Int,
     offset: Long,
     includeProperties: Boolean
   ): F[RequestResult[PaginatedResponse[CheckpointWithPartitioningDTO]]] = {
     val endpoint = s"/$Api/$V2/${V2Paths.Flows}/$flowId/${V2Paths.Checkpoints}"
+    val propertiesParam: Option[(String, String)] =
+      if (checkpointProperties.isEmpty) None
+      else Some(QueryParamNames.CheckpointProperties -> checkpointProperties.asBase64EncodedJsonString)
     val params = Map(
       QueryParamNames.Limit -> limit.toString,
       QueryParamNames.Offset -> offset.toString,
       QueryParamNames.IncludeProperties -> includeProperties.toString
-    ) ++ checkpointName.map(QueryParamNames.CheckpointName -> _)
+    ) ++
+      checkpointName.map(QueryParamNames.CheckpointName -> _) ++
+      propertiesParam
     getQuery(endpoint, params)
   }
 

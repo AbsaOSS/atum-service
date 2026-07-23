@@ -103,6 +103,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     // Insert checkpoints and measure definitions
+    // checkpoint1 has a later start time so it sorts first with latest_first=TRUE
     val checkpointId1 = UUID.randomUUID()
     val startTime = OffsetDateTime.parse("1993-02-14T10:00:00Z")
     val endTime = OffsetDateTime.parse("2024-04-24T10:00:00Z")
@@ -117,8 +118,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     val checkpointId2 = UUID.randomUUID()
-    val startTimeOther = OffsetDateTime.parse("1993-02-14T10:00:00Z")
-    val endTimeOther = OffsetDateTime.parse("2024-04-24T10:00:00Z")
+    val startTimeOther = OffsetDateTime.parse("1992-02-14T10:00:00Z")
+    val endTimeOther = OffsetDateTime.parse("2023-04-24T10:00:00Z")
     table("runs.checkpoints").insert(
       add("id_checkpoint", checkpointId2)
         .add("fk_partitioning", partitioningId)
@@ -205,9 +206,9 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row2.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
         assert(row2.getString("checkpoint_author").contains("Joseph"))
         assert(row2.getBoolean("measured_by_atum_agent").contains(true))
-        assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
-        assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
-        assert(row1.getBoolean("has_more").contains(false))
+        assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTime))
+        assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTime))
+        assert(row2.getBoolean("has_more").contains(false))
 
         val measure2 = MeasuredDetails(
           row2.getString("measure_name").get,
@@ -226,7 +227,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row3.getBoolean("measured_by_atum_agent").contains(true))
         assert(row3.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
         assert(row3.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
-        assert(row1.getBoolean("has_more").contains(false))
+        assert(row3.getBoolean("has_more").contains(false))
 
         val measure3 = MeasuredDetails(
           row3.getString("measure_name").get,
@@ -545,6 +546,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     // Insert checkpoints and measure definitions
+    // checkpoint1 has a later start time so it sorts first with latest_first=TRUE
     val checkpointId1 = UUID.randomUUID()
     val startTime = OffsetDateTime.parse("1993-02-14T10:00:00Z")
     val endTime = OffsetDateTime.parse("2024-04-24T10:00:00Z")
@@ -559,8 +561,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     )
 
     val checkpointId2 = UUID.randomUUID()
-    val startTimeOther = OffsetDateTime.parse("1993-02-14T10:00:00Z")
-    val endTimeOther = OffsetDateTime.parse("2024-04-24T10:00:00Z")
+    val startTimeOther = OffsetDateTime.parse("1992-02-14T10:00:00Z")
+    val endTimeOther = OffsetDateTime.parse("2023-04-24T10:00:00Z")
     table("runs.checkpoints").insert(
       add("id_checkpoint", checkpointId2)
         .add("fk_partitioning", partitioningId)
@@ -648,8 +650,8 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(row2.getString("checkpoint_name").contains("CheckpointNameCntAndAvg"))
         assert(row2.getString("checkpoint_author").contains("Joseph"))
         assert(row2.getBoolean("measured_by_atum_agent").contains(true))
-        assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTimeOther))
-        assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTimeOther))
+        assert(row2.getOffsetDateTime("checkpoint_start_time").contains(startTime))
+        assert(row2.getOffsetDateTime("checkpoint_end_time").contains(endTime))
         assert(queryResult.hasNext)
 
         val measure2 = MeasuredDetails(
@@ -713,6 +715,134 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         assert(!queryResult.hasNext)
       }
 
+  }
+
+  test("getFlowCheckpointsV2 should return only checkpoints matching the checkpoint properties filter") {
+
+    val partitioningId: Long = Random.nextLong()
+    table("runs.partitionings").insert(
+      add("id_partitioning", partitioningId)
+        .add("partitioning", partitioning)
+        .add("created_by", "Joseph")
+    )
+
+    val flowId: Long = Random.nextLong()
+    table("flows.flows").insert(
+      add("id_flow", flowId)
+        .add("flow_name", "flowNameProps")
+        .add("from_pattern", false)
+        .add("created_by", "Joseph")
+        .add("fk_primary_partitioning", partitioningId)
+    )
+    table("flows.partitioning_to_flow").insert(
+      add("fk_flow", flowId)
+        .add("fk_partitioning", partitioningId)
+        .add("created_by", "ObviouslySomeTest")
+    )
+
+    val startTime = OffsetDateTime.parse("1993-02-14T10:00:00Z")
+    val endTime = OffsetDateTime.parse("2024-04-24T10:00:00Z")
+
+    val checkpointMatching = UUID.randomUUID()
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", checkpointMatching)
+        .add("fk_partitioning", partitioningId)
+        .add("checkpoint_name", "MatchingCheckpoint")
+        .add("measured_by_atum_agent", true)
+        .add("process_start_time", startTime)
+        .add("process_end_time", endTime)
+        .add("created_by", "Joseph")
+    )
+    val checkpointNonMatching = UUID.randomUUID()
+    table("runs.checkpoints").insert(
+      add("id_checkpoint", checkpointNonMatching)
+        .add("fk_partitioning", partitioningId)
+        .add("checkpoint_name", "NonMatchingCheckpoint")
+        .add("measured_by_atum_agent", true)
+        .add("process_start_time", startTime)
+        .add("process_end_time", endTime)
+        .add("created_by", "Joseph")
+    )
+
+    val measureDefinitionId: Long = Random.nextLong()
+    table("runs.measure_definitions").insert(
+      add("id_measure_definition", measureDefinitionId)
+        .add("fk_partitioning", partitioningId)
+        .add("measure_name", "cnt")
+        .add("measured_columns", CustomDBType("""{"col1"}""", "TEXT[]"))
+        .add("created_by", "Joseph")
+    )
+    table("runs.measurements").insert(
+      add("fk_measure_definition", measureDefinitionId)
+        .add("fk_checkpoint", checkpointMatching)
+        .add("measurement_value", measurementCnt)
+    )
+    table("runs.measurements").insert(
+      add("fk_measure_definition", measureDefinitionId)
+        .add("fk_checkpoint", checkpointNonMatching)
+        .add("measurement_value", measurementCnt)
+    )
+
+    // Only the matching checkpoint has the property jobId=123
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointMatching)
+        .add("property_name", "jobId")
+        .add("property_value", "123")
+    )
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointMatching)
+        .add("property_name", "env")
+        .add("property_value", "prod")
+    )
+    table("runs.checkpoint_properties").insert(
+      add("fk_checkpoint", checkpointNonMatching)
+        .add("property_name", "jobId")
+        .add("property_value", "456")
+    )
+
+    def hstore(properties: Map[String, String]): CustomDBType = CustomDBType(
+      properties.map { case (k, v) => s""""$k"=>"$v"""" }.mkString(","),
+      "HSTORE"
+    )
+
+    // Filtering by jobId=123 returns only the matching checkpoint
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123")))
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getInt("status").contains(11))
+        assert(row.getUUID("id_checkpoint").contains(checkpointMatching))
+        assert(!queryResult.hasNext)
+      }
+
+    // Requiring both jobId=123 and env=prod still returns the matching checkpoint (AND semantics)
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123", "env" -> "prod")))
+      .execute { queryResult =>
+        assert(queryResult.hasNext)
+        val row = queryResult.next()
+        assert(row.getUUID("id_checkpoint").contains(checkpointMatching))
+        assert(!queryResult.hasNext)
+      }
+
+    // Requiring jobId=123 AND a property the checkpoint doesn't have returns nothing (AND semantics)
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123", "env" -> "dev")))
+      .execute { queryResult =>
+        assert(!queryResult.hasNext)
+      }
+
+    // Filtering by a value that no checkpoint has returns nothing
+    function(fncGetFlowCheckpointsV2)
+      .setParam("i_flow_id", flowId)
+      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "999")))
+      .execute { queryResult =>
+        assert(!queryResult.hasNext)
+      }
   }
 
   private def parseJsonBStringOrThrow(jsonBString: JsonBString): Json = {

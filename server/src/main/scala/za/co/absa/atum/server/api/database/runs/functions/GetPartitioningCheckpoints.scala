@@ -39,7 +39,9 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
         fr"${args.partitioningId}",
         fr"${args.limit}",
         fr"${args.offset}",
-        fr"${args.checkpointName}"
+        fr"${args.checkpointName}",
+        fr"${args.checkpointProperties}",
+        fr"${args.latestFirst}"
       )
     )
     with StandardStatusHandling
@@ -48,7 +50,7 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
   override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq(
     "id_checkpoint",
     "checkpoint_name",
-    "author",
+    "checkpoint_author",
     "measured_by_atum_agent",
     "measure_name",
     "measured_columns",
@@ -64,7 +66,9 @@ object GetPartitioningCheckpoints {
     partitioningId: Long,
     limit: Int,
     offset: Long,
-    checkpointName: Option[String]
+    checkpointName: Option[String],
+    checkpointProperties: Option[Map[String, String]],
+    latestFirst: Option[Boolean]
   )
 
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpoints] = ZLayer {
