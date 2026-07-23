@@ -106,6 +106,12 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data
     }
 
+    // If both parent and child partitioning already existed before this function was called,
+    // we must explicitly link them here, because they might not been linked yet.
+    if (partitioningWithIdOpt.isDefined && parentPartitioningIdOpt.isDefined) {
+      ensureParentLink(newPartitioningWithIdDTO.id, parentPartitioningIdOpt.get, partitioning.authorIfNew)
+    }
+
     val measures = {
       val endpoint = Uri.unsafeParse(
         s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/${newPartitioningWithIdDTO.id}/${ApiPaths.V2Paths.Measures}"
@@ -129,6 +135,30 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       measures = measures,
       additionalData = additionalData.data.map(item => item.key -> item.value).toMap
     )
+  }
+
+  /**
+   *  Ensures the parent-child flow link exists by calling the PATCH ancestors endpoint.
+   *  Uses copyMeasurements=false and copyAdditionalData=false since the link is the only
+   *  thing we need — measure/AD inheritance was either already done at creation time or
+   *  is intentionally skipped for shared/canonical children.
+   */
+  private def ensureParentLink(childPartitioningId: Long, parentPartitioningId: Long, author: String): Unit = {
+    val endpoint = Uri.unsafeParse(
+      s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$childPartitioningId/${ApiPaths.V2Paths.Ancestors}"
+    )
+    val patchDTO = PartitioningParentPatchDTO(
+      parentPartitioningId = parentPartitioningId,
+      author = author,
+      copyMeasurements = false,
+      copyAdditionalData = false
+    )
+    val request = commonAtumRequest.patch(endpoint).body(patchDTO.asJsonString)
+    val response = withRetry(request)
+    // 409 Conflict means the link already exists — expected and safe to ignore.
+    if (response.code != StatusCode.Conflict) {
+      handleResponseBody(response)
+    }
   }
 
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
@@ -192,9 +222,9 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   }
 
   /**
-   * Sends `request` via the sttp backend, retrying on transient failures with exponential backoff.
-   * Retries on HTTP 5xx (server errors) and IOException (covers network failures,
-   * connection resets, and SocketTimeoutException which OkHttp throws on read/connect timeout).
+   *  Sends `request` via the sttp backend, retrying on transient failures with exponential backoff.
+   *  Retries on HTTP 5xx (server errors) and IOException (covers network failures,
+   *  connection resets, and SocketTimeoutException which OkHttp throws on read/connect timeout).
    */
   private def withRetry(
     request: Request[Either[String, String], capabilities.WebSockets]

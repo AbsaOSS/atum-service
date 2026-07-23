@@ -290,4 +290,120 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     noException should be thrownBy dispatcher.saveCheckpoint(checkpoint)
   }
 
+  "createPartitioning" should "ensure parent link via PATCH when child already exists" in {
+    val parentPartitioning = Seq(PartitionDTO("parentK", "parentV"))
+    val parentPartitioningId = 999L
+    val parentPartitioningWithId = PartitioningWithIdDTO(parentPartitioningId, parentPartitioning, "parentAuthor")
+    val existingChildWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
+
+    // Parent lookup succeeds
+    val getParentResponse = Response(
+      Right(SingleSuccessResponse(parentPartitioningWithId).asJsonString): Either[String, String],
+      StatusCode.Ok
+    )
+    // Child already exists (returns OK, not 404)
+    val getChildResponse = Response(
+      Right(SingleSuccessResponse(existingChildWithId).asJsonString): Either[String, String],
+      StatusCode.Ok
+    )
+    val measuresResponse =
+      Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
+    val additionalDataResponse =
+      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
+    val patchAncestorsResponse = Response(Right(""): Either[String, String], StatusCode.NoContent)
+
+    stubGetPartitioning(parentPartitioning, getParentResponse)
+    stubGetPartitioning(testPartitioningDTO, getChildResponse)
+    stubGetMeasures(measuresResponse)
+    stubGetAdditionalData(additionalDataResponse)
+    when(mockBackend.send(isPatchAncestorsRequest)).thenReturn(patchAncestorsResponse)
+
+    val dispatcherWithMocks = dispatcher
+    val result = dispatcherWithMocks.createPartitioning(
+      PartitioningSubmitDTO(testPartitioningDTO, Some(parentPartitioning), "author")
+    )
+
+    result.partitioning shouldBe existingChildWithId.partitioning
+
+    // Verify PATCH was called to ensure the parent link
+    verify(mockBackend).send(isPatchAncestorsRequest)
+    // Verify POST was never called (child already existed)
+    verify(mockBackend, never()).send(isPostPartitioningRequest)
+  }
+
+  it should "not call PATCH ancestors when child is newly created (link established at creation time)" in {
+    val parentPartitioning = Seq(PartitionDTO("parentK", "parentV"))
+    val parentPartitioningId = 999L
+    val parentPartitioningWithId = PartitioningWithIdDTO(parentPartitioningId, parentPartitioning, "parentAuthor")
+
+    val getParentResponse = Response(
+      Right(SingleSuccessResponse(parentPartitioningWithId).asJsonString): Either[String, String],
+      StatusCode.Ok
+    )
+    // Child does NOT exist
+    val getChildResponse = Response(Left("Not found"): Either[String, String], StatusCode.NotFound)
+    val postPartitioningResponse = Response(
+      Right(SingleSuccessResponse(createdPartitioningWithId).asJsonString): Either[String, String],
+      StatusCode.Created
+    )
+    val measuresResponse =
+      Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
+    val additionalDataResponse =
+      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
+
+    stubGetPartitioning(parentPartitioning, getParentResponse)
+    stubGetPartitioning(testPartitioningDTO, getChildResponse)
+    stubPostPartitioning(postPartitioningResponse)
+    stubGetMeasures(measuresResponse)
+    stubGetAdditionalData(additionalDataResponse)
+
+    val dispatcherWithMocks = dispatcher
+    dispatcherWithMocks.createPartitioning(
+      PartitioningSubmitDTO(testPartitioningDTO, Some(parentPartitioning), "author")
+    )
+
+    // PATCH should NOT be called — the POST already established the link
+    verify(mockBackend, never()).send(isPatchAncestorsRequest)
+  }
+
+  it should "treat 409 Conflict on ensure-link PATCH as success (link already exists)" in {
+    val parentPartitioning = Seq(PartitionDTO("parentK", "parentV"))
+    val parentPartitioningId = 999L
+    val parentPartitioningWithId = PartitioningWithIdDTO(parentPartitioningId, parentPartitioning, "parentAuthor")
+    val existingChildWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
+
+    val getParentResponse = Response(
+      Right(SingleSuccessResponse(parentPartitioningWithId).asJsonString): Either[String, String],
+      StatusCode.Ok
+    )
+    val getChildResponse = Response(
+      Right(SingleSuccessResponse(existingChildWithId).asJsonString): Either[String, String],
+      StatusCode.Ok
+    )
+    val measuresResponse =
+      Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
+    val additionalDataResponse =
+      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
+    val conflictResponse = Response(Left("Link already exists"): Either[String, String], StatusCode.Conflict)
+
+    stubGetPartitioning(parentPartitioning, getParentResponse)
+    stubGetPartitioning(testPartitioningDTO, getChildResponse)
+    stubGetMeasures(measuresResponse)
+    stubGetAdditionalData(additionalDataResponse)
+    when(mockBackend.send(isPatchAncestorsRequest)).thenReturn(conflictResponse)
+
+    val dispatcherWithMocks = dispatcher
+
+    // Should NOT throw — 409 on PATCH ancestors is expected
+    noException should be thrownBy dispatcherWithMocks.createPartitioning(
+      PartitioningSubmitDTO(testPartitioningDTO, Some(parentPartitioning), "author")
+    )
+  }
+
+  private def isPatchAncestorsRequest: Request[Either[String, String], capabilities.WebSockets] =
+    argThat(new org.mockito.ArgumentMatcher[Request[Either[String, String], sttp.capabilities.WebSockets]] {
+      override def matches(req: Request[Either[String, String], sttp.capabilities.WebSockets]): Boolean =
+        req != null && req.method.method == "PATCH" && req.uri.path.mkString.contains("ancestors")
+    })
+
 }
