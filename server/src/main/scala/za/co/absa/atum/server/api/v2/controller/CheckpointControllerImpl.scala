@@ -65,6 +65,7 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
     offset: Long,
     checkpointName: Option[String] = None,
     checkpointProperties: Option[Map[String, String]] = None,
+    latestFirst: Option[Boolean] = None,
     includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
     mapToPaginatedResponse(
@@ -77,6 +78,7 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
           offset,
           checkpointName,
           checkpointProperties,
+          latestFirst,
           includeProperties
         )
       )

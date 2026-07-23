@@ -41,6 +41,7 @@ trait CheckpointService {
     offset: Long,
     checkpointName: Option[String],
     checkpointProperties: Option[Map[String, String]],
+    latestFirst: Option[Boolean],
     includeProperties: Boolean
   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]]
 

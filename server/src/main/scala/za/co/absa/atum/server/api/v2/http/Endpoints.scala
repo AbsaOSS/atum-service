@@ -113,7 +113,7 @@ object Endpoints extends BaseEndpoints {
   }
 
   val getPartitioningCheckpointsEndpoint
-    : PublicEndpoint[(Long, Int, Long, Option[String], Option[Map[String, String]], Boolean), ErrorResponse, PaginatedResponse[
+    : PublicEndpoint[(Long, Int, Long, Option[String], Option[Map[String, String]], Option[Boolean], Boolean), ErrorResponse, PaginatedResponse[
       CheckpointV2DTO
     ], Any] = {
     apiV2.get
@@ -123,6 +123,7 @@ object Endpoints extends BaseEndpoints {
       .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
       .in(query[Option[String]]("checkpoint-name"))
       .in(query[Option[Map[String, String]]]("checkpoint-properties"))
+      .in(query[Option[Boolean]]("latest-first"))
       .in(query[Boolean]("include-properties").default(false))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
@@ -247,13 +248,13 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint[
-      (Long, Int, Long, Option[String], Option[Map[String, String]], Boolean),
+      (Long, Int, Long, Option[String], Option[Map[String, String]], Option[Boolean], Boolean),
       ErrorResponse,
       PaginatedResponse[CheckpointV2DTO]
     ](
       getPartitioningCheckpointsEndpoint,
-      { case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, String]], includeProperties: Boolean) =>
-        CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, checkpointProperties, includeProperties)
+      { case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, String]], latestFirst: Option[Boolean], includeProperties: Boolean) =>
+        CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, checkpointProperties, latestFirst, includeProperties)
       }
     ),
     createServerEndpoint[

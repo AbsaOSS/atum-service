@@ -51,11 +51,11 @@ object CheckpointControllerUnitTests extends ConfigProviderTest with TestData {
   when(checkpointServiceMock.getCheckpoint(partitioningId1, checkpointV2DTO3.id, includeProperties = false))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
-  when(checkpointServiceMock.getPartitioningCheckpoints(partitioningId1, 10, 0L, None, None, includeProperties = false))
+  when(checkpointServiceMock.getPartitioningCheckpoints(partitioningId1, 10, 0L, None, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(checkpointV2DTO1))))
-  when(checkpointServiceMock.getPartitioningCheckpoints(partitioningId2, 10, 0L, None, None, includeProperties = false))
+  when(checkpointServiceMock.getPartitioningCheckpoints(partitioningId2, 10, 0L, None, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq(checkpointV2DTO1))))
-  when(checkpointServiceMock.getPartitioningCheckpoints(0L, 10, 0L, None, None, includeProperties = false))
+  when(checkpointServiceMock.getPartitioningCheckpoints(0L, 10, 0L, None, None, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
 
   private val checkpointServiceMockLayer = ZLayer.succeed(checkpointServiceMock)
