@@ -55,6 +55,9 @@ class AtumContext private[agent] (
    *                         the parent-child relationship is still recorded in the data store (via flows).
    *  @return the sub-partition context
    */
+  def subPartitionContext(subPartitions: AtumPartitions): AtumContext =
+    subPartitionContext(subPartitions, mergeWithParent = true)
+
   def subPartitionContext(subPartitions: AtumPartitions, mergeWithParent: Boolean = true): AtumContext = {
     if (mergeWithParent) {
       val overlap = atumPartitions.keys.toSet.intersect(subPartitions.keys.toSet)
