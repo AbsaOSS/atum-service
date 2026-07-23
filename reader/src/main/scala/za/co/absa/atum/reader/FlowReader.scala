@@ -122,6 +122,13 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
     } yield checkpointsOrError
   }
 
+  /**
+   *  Returns the author of the partitioning identifying the flow.
+   *
+   *  @return - the author of the main flow partitioning
+   */
+  def getAuthor: F[RequestResult[String]] = partitioningAuthor(mainFlowPartitioning)
+
   private def queryFlowId(mainPartitioningId: Long): F[RequestResult[Long]] = {
     val endpoint = s"/$Api/$V2/${V2Paths.Partitionings}/$mainPartitioningId/${V2Paths.MainFlow}"
     val queryResult = getQuery[SingleSuccessResponse[FlowDTO]](endpoint)

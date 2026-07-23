@@ -314,6 +314,24 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     assert(flowReader.isInstanceOf[FlowReader[Identity]])
   }
 
+  test("The flow partitioning author is properly queried and delivered") {
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List("partitionings")) =>
+          assert(r.uri.querySegments.contains(KeyValue("partitioning", partitioningEncoded)))
+          Response.ok(partitioningResponse)
+      }
+
+    val atumPartitions: AtumPartitions = AtumPartitions(List(
+      "a" -> "b",
+      "c" -> "d"
+    ))
+
+    val reader = FlowReader(atumPartitions)
+    val result = reader.getAuthor
+    assert(result == Right("James Bond"))
+  }
+
 }
 
 object FlowReaderUnitTests {

@@ -72,6 +72,13 @@ class PartitioningIdProviderUnitTests extends AnyFunSuiteLike {
     assert(result == 1)
   }
 
+  test("Gets the partitioning author") {
+    val reader = ReaderWithPartitioningIdForTest(atumPartitionsToReply)
+    val response = reader.partitioningAuthor(atumPartitionsToReply)
+    val result: String = response.getOrElse(throw new Exception("Failed to get partitioning author"))
+    assert(result == "Gimli")
+  }
+
   test("Not found on the partitioning id") {
     val reader = ReaderWithPartitioningIdForTest(atumPartitionsToNotFound)
     val result = reader.partitioningId(atumPartitionsToNotFound)

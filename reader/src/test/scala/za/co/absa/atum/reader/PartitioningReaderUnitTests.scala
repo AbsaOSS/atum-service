@@ -301,6 +301,25 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
     val result = reader.getAdditionalData
     assert(result == Right(expected))
   }
+
+  test("The partitioning author is properly queried and delivered") {
+    val atumPartitions: AtumPartitions = AtumPartitions(
+      List(
+        "a" -> "b",
+        "c" -> "d"
+      )
+    )
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings)) =>
+          assert(r.uri.querySegments.contains(KeyValue("partitioning", partitioningEncoded)))
+          Response.ok(partitioningResponse)
+      }
+
+    val reader = PartitioningReader[Identity](atumPartitions)
+    val result = reader.getAuthor
+    assert(result == Right("James Bond"))
+  }
 }
 
 object PartitioningReaderUnitTests {
