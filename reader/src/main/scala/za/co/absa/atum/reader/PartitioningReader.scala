@@ -141,6 +141,13 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
     }
   }
 
+  /**
+   *  Returns the author of the partitioning.
+   *
+   *  @return - the author of the partitioning identifying this reader
+   */
+  def getAuthor: F[RequestResult[String]] = partitioningAuthor(partitioning)
+
   private def queryCheckpoints(
     partitioningId: Long,
     checkpointName: Option[String],

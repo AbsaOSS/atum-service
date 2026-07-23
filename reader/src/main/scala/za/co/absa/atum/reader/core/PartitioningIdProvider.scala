@@ -28,14 +28,25 @@ import za.co.absa.atum.reader.core.RequestResult.RequestResult
 
 trait PartitioningIdProvider[F[_]] {
   self: Reader[F] =>
-  def partitioningId(partitioning: AtumPartitions)(implicit monad: MonadError[F]): F[RequestResult[Long]] = {
+
+  def partitioningWithId(partitioning: AtumPartitions)(
+    implicit monad: MonadError[F]
+  ): F[RequestResult[PartitioningWithIdDTO]] = {
     val encodedPartitioning = partitioning.toPartitioningDTO.asBase64EncodedJsonString
     val queryResult = getQuery[SingleSuccessResponse[PartitioningWithIdDTO]](
       s"/$Api/$V2/${V2Paths.Partitionings}",
       Map("partitioning" -> encodedPartitioning)
     )
     queryResult.map { result =>
-      result.map(_.data.id)
+      result.map(_.data)
     }
+  }
+
+  def partitioningId(partitioning: AtumPartitions)(implicit monad: MonadError[F]): F[RequestResult[Long]] = {
+    partitioningWithId(partitioning).map(_.map(_.id))
+  }
+
+  def partitioningAuthor(partitioning: AtumPartitions)(implicit monad: MonadError[F]): F[RequestResult[String]] = {
+    partitioningWithId(partitioning).map(_.map(_.author))
   }
 }
