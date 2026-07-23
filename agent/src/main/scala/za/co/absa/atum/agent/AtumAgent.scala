@@ -98,6 +98,9 @@ trait AtumAgent {
    *  @param parentAtumContext Parent AtumContext.
    *  @return Atum context object
    */
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext =
+    getOrCreateAtumSubContext(subPartitions, mergeWithParent = true)
+
   def getOrCreateAtumSubContext(
     subPartitions: AtumPartitions,
     mergeWithParent: Boolean = true
