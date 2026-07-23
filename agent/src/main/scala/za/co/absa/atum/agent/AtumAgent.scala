@@ -87,9 +87,14 @@ trait AtumAgent {
   /**
    *  Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
    *  Retrieves the data from AtumService API.
+   *
    *  @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
-   *  @param mergeWithParent if true, the child partitioning is `parent ++ sub`. If false, only `sub` is used
-   *                         as partitioning content; the parent relationship is still recorded via flows.
+   *  @param mergeWithParent if true, the child partitioning is `parent ++ sub`
+   *                         if false, only `sub` is used as partitioning content,
+   *                         and the parent relationship is still recorded via flows.
+   *
+   *                         Note: If false and the child already existed, the Measures and Additional Data are not
+   *                         copied over from the parent to the child, otherwise they are copied.
    *  @param parentAtumContext Parent AtumContext.
    *  @return Atum context object
    */
