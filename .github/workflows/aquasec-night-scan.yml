@@ -1,0 +1,36 @@
+name: AquaSec Night Scan
+
+on:
+  schedule:
+    - cron: '31 1 * * *'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Enable Dry Run mode
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: aquasec-night-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  aquasec-night-scan:
+    uses: AbsaOSS/organizational-workflows/.github/workflows/aquasec-scan.yml@3b6a6b035bc2ddd0b0f2a8f8854df19314474312
+    with:
+      dry-run: ${{ inputs.dry-run || false }}
+      min-severity: 'high'
+      project-number: 193
+      project-org: 'absa-group'
+    secrets:
+      AQUA_KEY: ${{ secrets.AQUA_KEY }}
+      AQUA_SECRET: ${{ secrets.AQUA_SECRET }}
+      AQUA_GROUP_ID: ${{ secrets.AQUA_GROUP_ID }}
+      AQUA_REPOSITORY_ID: ${{ secrets.AQUA_REPOSITORY_ID }}
+      TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
