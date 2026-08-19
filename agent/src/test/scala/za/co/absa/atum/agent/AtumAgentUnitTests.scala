@@ -238,6 +238,40 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     assert(agentB.currentUser == System.getProperty("user.name"))
   }
 
+  test("currentUser is resolved once and cached for agents that do not override it") {
+    val originalAuthor = Option(System.getProperty("atum.author"))
+    try {
+      System.setProperty("atum.author", "first-app")
+      ConfigFactory.invalidateCaches()
+
+      // a custom agent that does NOT override currentUser -> relies on the cached trait default
+      val agent = new AtumAgent {
+        override val dispatcher: CapturingDispatcher =
+          AtumAgent.dispatcherFromConfig(configOf(Map(
+            "atum.dispatcher.type" -> "capture",
+            "atum.dispatcher.capture.capture-limit" -> 10
+          ))).asInstanceOf[CapturingDispatcher]
+      }
+
+      // first access resolves and caches the identity
+      assert(agent.currentUser == "first-app")
+
+      // change the backing system property and invalidate Typesafe caches:
+      // a recomputing `def` would observe the new value here
+      System.setProperty("atum.author", "second-app")
+      ConfigFactory.invalidateCaches()
+
+      // the resolved-once value must remain stable for the agent's lifetime
+      assert(agent.currentUser == "first-app")
+    } finally {
+      originalAuthor match {
+        case Some(value) => System.setProperty("atum.author", value)
+        case None        => System.clearProperty("atum.author")
+      }
+      ConfigFactory.invalidateCaches()
+    }
+  }
+
   private def configOf(configValues: Map[String, Any]): Config = {
     val emptyConfig = ConfigFactory.empty()
     configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>

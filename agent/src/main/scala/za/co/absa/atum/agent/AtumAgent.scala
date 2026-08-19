@@ -34,16 +34,24 @@ trait AtumAgent {
   /**
    *  The user used for auditing in author/createdBy fields.
    *
-   *  It is resolved once, when the agent is constructed:
+   *  It is resolved once per agent (on first access) and then cached for the agent's lifetime:
    *    - if the `atum.author` configuration key is set (e.g. in `application.conf` or via the
    *      `-Datum.author=...` JVM system property), that value is used - this is useful when the JVM
    *      user is a generic system account (e.g. `yarn`) and the application name is more meaningful;
    *    - otherwise it falls back to the user under whose security context the JVM is running
    *      (`System.getProperty("user.name")`), which is platform independent.
    *
+   *  Overriding this method replaces the resolution strategy entirely (see `AtumAgent.fromConfig`).
+   *
    *  Important: It's not supposed to be used for authorization as it can be spoofed!
    */
-  private[agent] def currentUser: String = AtumAgent.resolveAuthor(ConfigFactory.load())
+  private[agent] def currentUser: String = resolvedCurrentUser
+
+  // Cached, resolved-once default author identity. Ensures that agents which do not override
+  // `currentUser` keep a stable audit identity for their whole lifetime, even if the Typesafe
+  // Config caches are later invalidated or backing system properties change. The actual
+  // configuration loading is owned by the companion object (see `AtumAgent.defaultAuthor`).
+  private[this] lazy val resolvedCurrentUser: String = AtumAgent.defaultAuthor
 
   /**
    *  Sends `CheckpointDTO` to the AtumService API
@@ -143,7 +151,8 @@ object AtumAgent extends AtumAgent {
 
   override val dispatcher: Dispatcher = dispatcherFromConfig()
 
-  override val currentUser: String = resolveAuthor(ConfigFactory.load())
+  // `currentUser` is intentionally not overridden here: the trait default already delegates to
+  // `defaultAuthor` (below) and caches the result once, which is exactly what the singleton needs.
 
   private[agent] def dispatcherFromConfig(config: Config = ConfigFactory.load()): Dispatcher = {
     config.getString("atum.dispatcher.type") match {
@@ -153,6 +162,14 @@ object AtumAgent extends AtumAgent {
       case dt => throw new UnsupportedOperationException(s"Unsupported dispatcher type: '$dt'")
     }
   }
+
+  /**
+   *  The default author (createdBy) identity, resolved from the globally loaded configuration.
+   *  Callers cache the result (see the trait's `currentUser`), so this is evaluated once per agent.
+   *
+   *  @return the default author identity for agents that do not override `currentUser`.
+   */
+  private[agent] def defaultAuthor: String = resolveAuthor(ConfigFactory.load())
 
   /**
    *  Resolves the author (createdBy) identity used for auditing from the given configuration.
