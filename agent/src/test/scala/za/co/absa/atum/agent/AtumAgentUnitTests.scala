@@ -194,6 +194,84 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     assert(agentA.dispatcher ne agentB.dispatcher)
   }
 
+  test("currentUser falls back to the JVM user when atum.author is not set") {
+    val agent = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    )))
+
+    assert(agent.currentUser == System.getProperty("user.name"))
+  }
+
+  test("currentUser uses atum.author from config when set (trimmed)") {
+    val agent = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10,
+      "atum.author" -> "  my-application  "
+    )))
+
+    assert(agent.currentUser == "my-application")
+  }
+
+  test("currentUser falls back to the JVM user when atum.author is blank") {
+    val agent = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10,
+      "atum.author" -> "   "
+    )))
+
+    assert(agent.currentUser == System.getProperty("user.name"))
+  }
+
+  test("currentUser is resolved independently per config-backed agent") {
+    val agentA = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10,
+      "atum.author" -> "alice"
+    )))
+    val agentB = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    )))
+
+    assert(agentA.currentUser == "alice")
+    assert(agentB.currentUser == System.getProperty("user.name"))
+  }
+
+  test("currentUser is resolved once and cached for agents that do not override it") {
+    val originalAuthor = Option(System.getProperty("atum.author"))
+    try {
+      System.setProperty("atum.author", "first-app")
+      ConfigFactory.invalidateCaches()
+
+      // a custom agent that does NOT override currentUser -> relies on the cached trait default
+      val agent = new AtumAgent {
+        override val dispatcher: CapturingDispatcher =
+          AtumAgent.dispatcherFromConfig(configOf(Map(
+            "atum.dispatcher.type" -> "capture",
+            "atum.dispatcher.capture.capture-limit" -> 10
+          ))).asInstanceOf[CapturingDispatcher]
+      }
+
+      // first access resolves and caches the identity
+      assert(agent.currentUser == "first-app")
+
+      // change the backing system property and invalidate Typesafe caches:
+      // a recomputing `def` would observe the new value here
+      System.setProperty("atum.author", "second-app")
+      ConfigFactory.invalidateCaches()
+
+      // the resolved-once value must remain stable for the agent's lifetime
+      assert(agent.currentUser == "first-app")
+    } finally {
+      originalAuthor match {
+        case Some(value) => System.setProperty("atum.author", value)
+        case None        => System.clearProperty("atum.author")
+      }
+      ConfigFactory.invalidateCaches()
+    }
+  }
+
   private def configOf(configValues: Map[String, Any]): Config = {
     val emptyConfig = ConfigFactory.empty()
     configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
