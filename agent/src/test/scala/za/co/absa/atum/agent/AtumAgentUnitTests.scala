@@ -194,6 +194,50 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     assert(agentA.dispatcher ne agentB.dispatcher)
   }
 
+  test("currentUser falls back to the JVM user when atum.author is not set") {
+    val agent = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    )))
+
+    assert(agent.currentUser == System.getProperty("user.name"))
+  }
+
+  test("currentUser uses atum.author from config when set (trimmed)") {
+    val agent = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10,
+      "atum.author" -> "  my-application  "
+    )))
+
+    assert(agent.currentUser == "my-application")
+  }
+
+  test("currentUser falls back to the JVM user when atum.author is blank") {
+    val agent = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10,
+      "atum.author" -> "   "
+    )))
+
+    assert(agent.currentUser == System.getProperty("user.name"))
+  }
+
+  test("currentUser is resolved independently per config-backed agent") {
+    val agentA = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10,
+      "atum.author" -> "alice"
+    )))
+    val agentB = AtumAgent.fromConfig(configOf(Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    )))
+
+    assert(agentA.currentUser == "alice")
+    assert(agentB.currentUser == System.getProperty("user.name"))
+  }
+
   private def configOf(configValues: Map[String, Any]): Config = {
     val emptyConfig = ConfigFactory.empty()
     configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>

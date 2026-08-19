@@ -32,14 +32,18 @@ trait AtumAgent {
   val dispatcher: Dispatcher
 
   /**
-   *  Returns a user under whose security context the JVM is running.
-   *  Its purpose is for auditing in author/createdBy fields.
+   *  The user used for auditing in author/createdBy fields.
+   *
+   *  It is resolved once, when the agent is constructed:
+   *    - if the `atum.author` configuration key is set (e.g. in `application.conf` or via the
+   *      `-Datum.author=...` JVM system property), that value is used - this is useful when the JVM
+   *      user is a generic system account (e.g. `yarn`) and the application name is more meaningful;
+   *    - otherwise it falls back to the user under whose security context the JVM is running
+   *      (`System.getProperty("user.name")`), which is platform independent.
    *
    *  Important: It's not supposed to be used for authorization as it can be spoofed!
-   *
-   *  @return Current user.
    */
-  private[agent] def currentUser: String = System.getProperty("user.name") // platform independent
+  private[agent] def currentUser: String = AtumAgent.resolveAuthor(ConfigFactory.load())
 
   /**
    *  Sends `CheckpointDTO` to the AtumService API
@@ -139,6 +143,8 @@ object AtumAgent extends AtumAgent {
 
   override val dispatcher: Dispatcher = dispatcherFromConfig()
 
+  override val currentUser: String = resolveAuthor(ConfigFactory.load())
+
   private[agent] def dispatcherFromConfig(config: Config = ConfigFactory.load()): Dispatcher = {
     config.getString("atum.dispatcher.type") match {
       case "http" => new HttpDispatcher(config)
@@ -148,7 +154,25 @@ object AtumAgent extends AtumAgent {
     }
   }
 
+  /**
+   *  Resolves the author (createdBy) identity used for auditing from the given configuration.
+   *
+   *  If the optional `atum.author` key is present and non-blank, its (trimmed) value is used;
+   *  otherwise it falls back to `System.getProperty("user.name")`.
+   *
+   *  @param config configuration to read the optional `atum.author` key from.
+   *  @return the resolved author identity.
+   */
+  private[agent] def resolveAuthor(config: Config): String = {
+    if (config.hasPath("atum.author") && config.getString("atum.author").trim.nonEmpty) {
+      config.getString("atum.author").trim
+    } else {
+      System.getProperty("user.name") // platform independent
+    }
+  }
+
   def fromConfig(config: Config): AtumAgent = new AtumAgent {
     override val dispatcher: Dispatcher = dispatcherFromConfig(config)
+    override val currentUser: String = resolveAuthor(config)
   }
 }
