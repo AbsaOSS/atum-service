@@ -32,14 +32,26 @@ trait AtumAgent {
   val dispatcher: Dispatcher
 
   /**
-   *  Returns a user under whose security context the JVM is running.
-   *  Its purpose is for auditing in author/createdBy fields.
+   *  The user used for auditing in author/createdBy fields.
+   *
+   *  It is resolved once per agent (on first access) and then cached for the agent's lifetime:
+   *    - if the `atum.author` configuration key is set (e.g. in `application.conf` or via the
+   *      `-Datum.author=...` JVM system property), that value is used - this is useful when the JVM
+   *      user is a generic system account (e.g. `yarn`) and the application name is more meaningful;
+   *    - otherwise it falls back to the user under whose security context the JVM is running
+   *      (`System.getProperty("user.name")`), which is platform independent.
+   *
+   *  Overriding this method replaces the resolution strategy entirely (see `AtumAgent.fromConfig`).
    *
    *  Important: It's not supposed to be used for authorization as it can be spoofed!
-   *
-   *  @return Current user.
    */
-  private[agent] def currentUser: String = System.getProperty("user.name") // platform independent
+  private[agent] def currentUser: String = resolvedCurrentUser
+
+  // Cached, resolved-once default author identity. Ensures that agents which do not override
+  // `currentUser` keep a stable audit identity for their whole lifetime, even if the Typesafe
+  // Config caches are later invalidated or backing system properties change. The actual
+  // configuration loading is owned by the companion object (see `AtumAgent.defaultAuthor`).
+  private[this] lazy val resolvedCurrentUser: String = AtumAgent.defaultAuthor
 
   /**
    *  Sends `CheckpointDTO` to the AtumService API
@@ -139,6 +151,9 @@ object AtumAgent extends AtumAgent {
 
   override val dispatcher: Dispatcher = dispatcherFromConfig()
 
+  // `currentUser` is intentionally not overridden here: the trait default already delegates to
+  // `defaultAuthor` (below) and caches the result once, which is exactly what the singleton needs.
+
   private[agent] def dispatcherFromConfig(config: Config = ConfigFactory.load()): Dispatcher = {
     config.getString("atum.dispatcher.type") match {
       case "http" => new HttpDispatcher(config)
@@ -148,7 +163,33 @@ object AtumAgent extends AtumAgent {
     }
   }
 
+  /**
+   *  The default author (createdBy) identity, resolved from the globally loaded configuration.
+   *  Callers cache the result (see the trait's `currentUser`), so this is evaluated once per agent.
+   *
+   *  @return the default author identity for agents that do not override `currentUser`.
+   */
+  private[agent] def defaultAuthor: String = resolveAuthor(ConfigFactory.load())
+
+  /**
+   *  Resolves the author (createdBy) identity used for auditing from the given configuration.
+   *
+   *  If the optional `atum.author` key is present and non-blank, its (trimmed) value is used;
+   *  otherwise it falls back to `System.getProperty("user.name")`.
+   *
+   *  @param config configuration to read the optional `atum.author` key from.
+   *  @return the resolved author identity.
+   */
+  private[agent] def resolveAuthor(config: Config): String = {
+    if (config.hasPath("atum.author") && config.getString("atum.author").trim.nonEmpty) {
+      config.getString("atum.author").trim
+    } else {
+      System.getProperty("user.name") // platform independent
+    }
+  }
+
   def fromConfig(config: Config): AtumAgent = new AtumAgent {
     override val dispatcher: Dispatcher = dispatcherFromConfig(config)
+    override val currentUser: String = resolveAuthor(config)
   }
 }
