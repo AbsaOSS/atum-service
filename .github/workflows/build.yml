@@ -86,3 +86,30 @@ jobs:
       - name: Generate documentation
         run: sbt "project database" doc "project server" doc
 
+  aquasec-sbom-generation:
+    name: Aquasec SBOM Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Aquasec Manifest Generation
+        run: |
+          export BILLY_SERVER=https://billy.eu-1.codesec.aquasec.com
+          curl -sLo install.sh download.codesec.aquasec.com/billy/install.sh
+          curl -sLo install.sh.checksum https://github.com/argonsecurity/releases/releases/latest/download/install.sh.checksum
+          if ! cat install.sh.checksum | sha256sum --check; then
+          echo "install.sh checksum failed"
+          exit 1
+          fi
+          BINDIR="." sh install.sh
+          rm install.sh install.sh.checksum
+          ./billy generate \
+            --access-token "${{ secrets.GITHUB_TOKEN }}" \
+            --aqua-key "${{ secrets.AQUA_KEY }}" \
+            --aqua-secret "${{ secrets.AQUA_SECRET }}" \
+            --cspm-url https://eu-1.api.cloudsploit.com \
+            --artifact-path "${{ github.workspace }}"
