@@ -86,8 +86,8 @@ jobs:
       - name: Generate documentation
         run: sbt "project database" doc "project server" doc
 
-  aquasec-sbom-generation:
-    name: Aquasec SBOM Generation
+  sbom-and-aquasec-manifest:
+    name: SBOM and Aquasec Manifest
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -96,7 +96,27 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Generate filesystem SBOM (Trivy)
+        # Verifiable CycloneDX SBOM of the repository and its resolved dependencies. Trivy runs in local mode only:
+        # it writes a file and does NOT upload or register anything in AquaSec. Kept as a CI artifact for audit.
+        # Complements - does not replace - the AquaSec compliance step below.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: cyclonedx
+          output: atum-service-sbom.cyclonedx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: atum-service-sbom
+          path: atum-service-sbom.cyclonedx.json
+          if-no-files-found: error
+
       - name: Aquasec Manifest Generation
+        # Mandated org compliance step: reports a build manifest to AquaSec's supply-chain platform. This registers
+        # data upstream in AquaSec, but doesn't produce a local SBOM - the Trivy step above covers the verifiable SBOM.
         run: |
           export BILLY_SERVER=https://billy.eu-1.codesec.aquasec.com
           curl -sLo install.sh download.codesec.aquasec.com/billy/install.sh
@@ -112,4 +132,4 @@ jobs:
             --aqua-key "${{ secrets.AQUA_KEY }}" \
             --aqua-secret "${{ secrets.AQUA_SECRET }}" \
             --cspm-url https://eu-1.api.cloudsploit.com \
-            --artifact-path "${{ github.workspace }}"
+            --artifact-path "${{ github.workspace }}/server/Dockerfile"
