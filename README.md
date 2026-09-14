@@ -17,7 +17,7 @@
     - [Features](#features)
     - [Modules](#modules)
         - [Agent `agent/`](#agent-agent)
-        - [Reader `reader/`](#agent-agent)
+        - [Reader `reader/`](#reader-reader)
         - [Server `server/`](#server-server)
         - [Data Model `model/`](#data-model-model)
         - [Database `database/`](#database-database)
