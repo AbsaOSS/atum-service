@@ -11,7 +11,6 @@
 
 - [Atum Service](#atum-service)
     - [Motivation](#motivation)
-    - [Features](#features)
     - [Modules](#modules)
         - [Agent `agent/`](#agent-agent)
         - [Reader `reader/`](#reader-reader)
@@ -86,15 +85,11 @@ be calculated anytime between Spark transformations and actions, so as at the st
 We assume the data for ETL are processed in a series of batch jobs. Let's call each data set for a given batch
 job a *batch*. All checkpoints are calculated for a specific batch.
 
-## Features
-
-TBD
-
 ## Modules
 
 ### Agent `agent/`
 
-This module is intended to replace the current [Atum](https://github.com/AbsaOSS/atum) repository.
+This module is intended to replace the legacy [Atum](https://github.com/AbsaOSS/atum) library.
 It provides functionality for computing and pushing control metrics to the API located in `server/`.
 
 For more information, see the [Vocabulary section](#Vocabulary) or `agent/README.md` for more technical documentation.
@@ -152,11 +147,9 @@ version.*
 
 ### Server `server/`
 
-An API under construction that communicates with the Agent and with the persistent storage. It also provides measure
-configuration to the agent.
-
-The server accepts metrics potentially from several agents and saves them into database. In the future, it will be also
-able to send the metrics definitions back if requested.
+A REST API service offering capabilities for storing and retrieving measurement data from and to persistent storage.
+The server accepts metrics potentially from several `Atum Agents` and saves them into one central relational database. 
+Also, it is able to send the measurements back if requested via `Atum Reader`.
 
 Important note: the server never receives any real data - it only works with the metadata and metrics defined
 by the agent!
