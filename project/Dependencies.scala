@@ -207,11 +207,6 @@ object Dependencies {
     lazy val sttpClient3 = "com.softwaremill.sttp.client3" %% "core" % Versions.sttpClient
     lazy val sttpOkHttpBackend = "com.softwaremill.sttp.client3" %% "okhttp-backend" % Versions.sttpClient
 
-    // The agent logs through slf4j only. Both the API and the concrete binding are supplied by the Spark runtime the
-    // agent is deployed into (Spark always ships one - transitively pulling in slf4j-api itself, so it isn't declared
-    // here as its own dependency), so neither is a production dependency here - shipping our own binding (e.g.
-    // logback) as a compile/runtime dependency would compete with the host application's binding, silently
-    // overriding whatever logging setup the customer's Spark job already has.
     lazy val nameOf = "com.github.dwickern" %% "scala-nameof" % Versions.scalaNameof % Provided // it's provided, as it's a macro needed only at runtime
 
     lazy val balta = "za.co.absa" %% "balta" % Versions.balta % Test
