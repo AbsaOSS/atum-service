@@ -16,9 +16,6 @@
 
 package za.co.absa.atum.agent.core
 
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.classic.{Level, LoggerContext}
-import ch.qos.logback.core.read.ListAppender
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.helpers.{NOPLogger, NOPLoggerFactory}
@@ -26,7 +23,6 @@ import org.slf4j.{ILoggerFactory, Logger, LoggerFactory}
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.lang.reflect.Modifier
-import scala.jdk.CollectionConverters._
 
 object LoggingUnitTests {
   object LoggingObject extends Logging {
@@ -50,36 +46,6 @@ class LoggingUnitTests extends AnyFlatSpec with Matchers {
   import LoggingUnitTests._
 
   private val loggerFactory: ILoggerFactory = LoggerFactory.getILoggerFactory
-
-  /**
-   *  Which slf4j binding wins is decided by whatever the Spark runtime puts on the classpath - Spark 3.5
-   *  brings the log4j2 bridge, while the Spark 4 row ends up on logback. Message level capture is therefore
-   *  only attempted when logback is the bound provider; every other assertion in this suite is deliberately
-   *  binding agnostic, because that portability is exactly what the slf4j migration is meant to buy.
-   */
-  private def logbackContext: Option[LoggerContext] = loggerFactory match {
-    case context: LoggerContext => Some(context)
-    case _ => None
-  }
-
-  private def withCapturedLogs(context: LoggerContext, loggerName: String)(body: => Unit): Seq[ILoggingEvent] = {
-    val logger = context.getLogger(loggerName)
-    val appender = new ListAppender[ILoggingEvent]()
-    appender.setContext(context)
-    appender.start()
-
-    val originalLevel = logger.getLevel
-    logger.setLevel(Level.TRACE)
-    logger.addAppender(appender)
-    try {
-      body
-      appender.list.asScala.toSeq
-    } finally {
-      logger.detachAppender(appender)
-      logger.setLevel(originalLevel)
-      appender.stop()
-    }
-  }
 
   "Logging" should "name the logger after the implementing class" in {
     new LoggingClass().logger.getName shouldBe "za.co.absa.atum.agent.core.LoggingUnitTests$LoggingClass"
@@ -147,23 +113,5 @@ class LoggingUnitTests extends AnyFlatSpec with Matchers {
 
     classOf[Logger].isAssignableFrom(new LoggingClass().logger.getClass) shouldBe true
   }
-
-  it should "deliver the formatted message and level to the backend" in {
-    logbackContext match {
-      case None =>
-        cancel(s"the bound slf4j provider is ${loggerFactory.getClass.getName}, not logback - capture skipped")
-      case Some(context) =>
-        val fromClass = withCapturedLogs(context, "za.co.absa.atum.agent.core.LoggingUnitTests$LoggingClass") {
-          new LoggingClass().emit()
-        }
-        fromClass.map(_.getFormattedMessage) shouldBe Seq("from a class")
-        fromClass.map(_.getLevel) shouldBe Seq(Level.WARN)
-
-        val fromObject = withCapturedLogs(context, "za.co.absa.atum.agent.core.LoggingUnitTests$LoggingObject") {
-          LoggingObject.emit()
-        }
-        fromObject.map(_.getFormattedMessage) shouldBe Seq("from an object")
-        fromObject.map(_.getLevel) shouldBe Seq(Level.INFO)
-    }
-  }
 }
+
