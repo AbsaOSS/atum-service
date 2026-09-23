@@ -142,13 +142,13 @@ support for Spark 2.4. If you need the agent to work with Spark 2.4 follow these
 
 ### Reader `reader/`
 
-**NB!**  
-_This module is not yet implemented to an operational abilities and therefore not yet released._
-
 This module is intended to be used whenever an application wants to read the metrics stored by the _Atum Service_. It
 offers classes and methods to read the metrics from the database shielding away the complexity of accessing the _Atum
 Server_
 directly.
+
+*Scala 2.12 / 2.13, Java 8+. Has no Spark dependency, so it's usable in any JVM application regardless of Spark
+version.*
 
 ### Server `server/`
 
@@ -163,15 +163,23 @@ by the agent!
 
 See `server/README.md` for more technical documentation.
 
+*Scala 2.13, Java 11+ (deployed and CI-tested on Java 11). Has no Spark dependency.*
+
 ### Data Model `model/`
 
 This module defines a set of Data Transfer Objects. These are Atum-specific objects that carry data that are being
 passed from agent to server and vice versa.
 
+*Scala 2.12 / 2.13, Java 8+. Has no Spark dependency, so it's usable in any JVM application regardless of Spark
+version.*
+
 ### Database `database/`
 
 This module contains a set of scripts that are used to create and maintain the database models. It also contains
 integration tests that are used to verify the logic of our database functions.
+
+*Scala 2.13, Java 11+ (deployed and CI-tested on Java 11). Has no Spark dependency.*
+
 The database tests are integration tests in nature. Therefore, a few conditions applies:
 
 * The tests are excluded from task `test` and are run only by a dedicated `dbTest` task (`sbt dbTest`).
