@@ -35,6 +35,12 @@ alias testDB=; project database; testOnly *
 # Run specific: agent-server compatibility tests
 alias testCompatibility=; testOnly *CompatibilityTests
 
+# Run specific: agent tests against the Spark 4 build row (requires Java 17+)
+alias testAgentSpark4=; project agent_spark4; testAllStandard
+
+# Run specific: agent tests against both Spark 3 build rows (Scala 2.12 and 2.13), on the recommended Java 11 runtime
+alias testAgentSpark3=; project agent_spark3; testAllStandard; project agent_spark32_12; testAllStandard
+
 # Jacoco Aliases
 alias jacoco=; jacocoOn; jacocoAgent; jacocoReader; jacocoModel; jacocoServer; jacocoOff
 
