@@ -122,9 +122,6 @@ The agent logs exclusively through the SLF4J API and never bundles an SLF4J bind
 published artifact - both `slf4j-api` and the concrete binding are supplied by the Spark runtime the agent is
 deployed into (Spark always ships one). This means the agent's logging always defers to whatever logging
 setup the host Spark job/cluster already has in place, rather than competing with or silently overriding it.
-The agent's only production dependencies beyond Spark itself are `slf4j-api` (compile-time only) and
-`typesafe-config`; `logback-classic` and `spark-commons` are used solely by the agent's own test suite and are
-never shipped to consumers.
 
 #### Spark 2.4 support
 
