@@ -39,11 +39,72 @@ jobs:
         with:
           java-version: "adopt@1.8"
 
+      # On Java 8 the Spark 4 rows of the agent are not loaded into the project matrix at all (they need
+      # Java 17), so this job proves the Spark 3 line still builds and runs on its Java 8 baseline.
       - name: Build and run tests
         run: sbt testAllStandard
 
       - name: Generate documenation
         run: sbt doc
+
+  test-agent-spark4:
+    name: Test Agent (Spark 4)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: coursier/cache-action@95e5b1029b6b86e7bac033ee44a0697d8a527d2d
+
+      - name: Setup Scala
+        # installs the sbt launcher (its bundled JDK is immediately overridden below)
+        uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
+        with:
+          java-version: "adopt@1.8"
+
+      - name: Setup Java 17
+        # Spark 4 has a Java 17 baseline; on an older JDK the Spark 4 rows are not loaded at all.
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build and run tests
+        run: sbt "project agent_spark4" testAllStandard
+
+      - name: Generate documentation
+        run: sbt "project agent_spark4" doc
+
+  test-agent-spark3-java11:
+    name: Test Agent (Spark 3, Java 11)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: coursier/cache-action@95e5b1029b6b86e7bac033ee44a0697d8a527d2d
+
+      - name: Setup Scala
+        # installs the sbt launcher (its bundled JDK is immediately overridden below)
+        uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
+        with:
+          java-version: "adopt@1.8"
+
+      - name: Setup Java 11
+        # Java 8 is only the minimum for the Spark 3 agent line; Java 11 is the recommended runtime
+        # (see `Setup.recommendedJava`), so it needs its own blocking test job rather than relying on the
+        # Java 8 job above or the JaCoCo job (which runs on Java 11 but with continue-on-error).
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Build and run tests
+        run: sbt testAgentSpark3
 
   test-database-and-server:
     name: Test Database and Server

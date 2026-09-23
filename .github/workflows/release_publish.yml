@@ -36,6 +36,15 @@ jobs:
         with:
           java-version: "adopt@1.8"
 
+      - name: Setup Java 17
+        # The Spark 4 rows of the agent are only added to the project matrix on Java 17+, so publishing has to
+        # run on a JDK 17 or `atum-agent-spark4_2.13` would silently never be released. The Spark 3 / model /
+        # reader rows still compile with `-release 8`, so their bytecode stays Java 8 compatible either way.
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Run sbt ci-release
         run: sbt ci-release
         env:
