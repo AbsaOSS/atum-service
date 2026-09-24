@@ -99,7 +99,7 @@ object AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
-      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
+      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, measuredCol))).collect()
       MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
     }
 
@@ -118,7 +118,7 @@ object AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
-      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
+      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, measuredCol))).collect()
       MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
     }
 
@@ -139,7 +139,7 @@ object AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
-      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
+      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, measuredCol))).collect()
       MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
     }
 
@@ -162,7 +162,7 @@ object AtumMeasure {
 
     override def function: MeasurementFunction = (ds: DataFrame) => {
       val dataType = ds.select(measuredCol).schema.fields(0).dataType
-      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, col(measuredCol)))).collect()
+      val resultValue = ds.select(columnAggFn(castForAggregation(dataType, measuredCol))).collect()
       MeasureResult(handleAggregationResult(dataType, resultValue(0)(0)), resultValueType)
     }
 
@@ -196,18 +196,28 @@ object AtumMeasure {
 
   private def castForAggregation(
     dataType: DataType,
-    column: Column
+    columnName: String
   ): Column = {
+    val column = col(columnName)
     dataType match {
       case _: LongType =>
         // This is protection against long overflow, e.g. Long.MaxValue = 9223372036854775807:
         //   scala> sc.parallelize(List(Long.MaxValue, 1)).toDF.agg(sum("value")).take(1)(0)(0)
         //   res11: Any = -9223372036854775808
-        // Converting to BigDecimal fixes the issue
+        // Converting to BigDecimal fixes the issue. A Long always fits in decimal(38,0), so this cast can
+        // never fail regardless of Spark's ANSI setting - a plain `cast` is safe here.
         column.cast(DecimalType(38, 0))
       case _: StringType =>
-        // Support for string type aggregation
-        column.cast(DecimalType(38, 18))
+        // Support for string type aggregation. Spark 4 defaults `spark.sql.ansi.enabled` to true, under which
+        // a plain `cast()` throws on a malformed numeric string instead of returning null - Spark 3's
+        // non-ANSI-by-default behavior this aggregation relies on (see `handleAggregationResult`'s null
+        // handling below). `try_cast` always returns null on a bad cast, on both Spark 3.5+ and Spark 4,
+        // regardless of the ANSI setting. `Column.try_cast` itself is a Spark-4-only convenience method (the
+        // agent's main sources are shared, unmodified, across the Spark 3 and Spark 4 build rows), so the
+        // version-stable SQL `try_cast` expression is used instead.
+        // Modifying the column name in case it contains a backtick and catering for <table_name>.<column> format.
+        val escapedColumnName = columnName.split("\\.", -1).map(part => s"`${part.replace("`", "``")}`").mkString(".")
+        expr(s"try_cast($escapedColumnName as decimal(38,18))")
       case _ =>
         column
     }

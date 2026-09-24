@@ -22,7 +22,7 @@ on:
 jobs:
   publish-to-sonatype:
     name: Publish to Sonatype
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -31,10 +31,14 @@ jobs:
           fetch-depth: 0
       - uses: coursier/cache-action@95e5b1029b6b86e7bac033ee44a0697d8a527d2d
 
-      - name: Setup Scala
-        uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
+      - name: Setup JDK 17
+        # The Spark 4 rows of the agent are only added to the project matrix on Java 17+, so publishing has to
+        # run on a JDK 17 or `atum-agent-spark4_2.13` would silently never be released. The Spark 3 / model /
+        # reader rows still compile with `-release 8`, so their bytecode stays Java 8 compatible either way.
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
-          java-version: "adopt@1.8"
+          distribution: temurin
+          java-version: '17'
 
       - name: Run sbt ci-release
         run: sbt ci-release
@@ -47,7 +51,7 @@ jobs:
 
   publish-server-jar:
     name: Publish server jar
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -56,10 +60,12 @@ jobs:
           fetch-depth: 0
       - uses: coursier/cache-action@95e5b1029b6b86e7bac033ee44a0697d8a527d2d
 
-      - name: Setup Scala
-        uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
+      - name: Setup JDK 11
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
-          java-version: "adopt@1.11.0-11"
+          distribution: temurin
+          java-version: '11'
+
       - name: Run sbt assembly (produces jar)
         run: sbt assembly
 

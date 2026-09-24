@@ -5,16 +5,12 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 ![Java 11](https://img.shields.io/badge/Java_11-ED8B00?style=flat&logo=openjdk&logoColor=black)
 
-| Atum Server                                                                                                                                                                                                         | Atum Agent                                                                                                                                                                                                        | Atum Model | Atum Reader                                                                                                                                                                                                  |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Atum Server                                                                                                                            | Atum Agent                                                                                                                                                                                                        | Atum Model                                                                                                                                                                                                 | Atum Reader                                                                                                                                                                                                  |
+|----------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [![GitHub release](https://img.shields.io/github/release/AbsaOSS/atum-service.svg)](https://GitHub.com/AbsaOSS/atum-service/releases/) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.atum-service/atum-agent-spark3_2.13/badge.svg)](https://central.sonatype.com/search?q=atum-agent&namespace=za.co.absa.atum-service) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.atum-service/atum-model_2.13/badge.svg)](https://central.sonatype.com/search?q=atum-model&namespace=za.co.absa.atum-service) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.atum-service/atum-reader_2.13/badge.svg)](https://central.sonatype.com/search?q=atum-reader&namespace=za.co.absa.atum-service) |                                                                             
-
-
-
 
 - [Atum Service](#atum-service)
     - [Motivation](#motivation)
-    - [Features](#features)
     - [Modules](#modules)
         - [Agent `agent/`](#agent-agent)
         - [Reader `reader/`](#reader-reader)
@@ -46,16 +42,16 @@ One of the challenges regulated industries face is the requirement to track and 
 the accuracy and completeness of data. In an attempt to solve this data processing problem in Apache Spark applications,
 we propose the approach implemented in this application.
 
-The purpose of Atum Service is to add the ability to specify "checkpoints" in Spark applications. These checkpoints 
-are used to designate when and what metrics are calculated to ensure that critical input values have not been modified 
-as well as allow for quick and efficient representation of the completeness of a dataset. This application does not 
-implement any checks or validations against these control measures, i.e. it does not act on them - Atum Service is, 
+The purpose of Atum Service is to add the ability to specify "checkpoints" in Spark applications. These checkpoints
+are used to designate when and what metrics are calculated to ensure that critical input values have not been modified
+as well as allow for quick and efficient representation of the completeness of a dataset. This application does not
+implement any checks or validations against these control measures, i.e. it does not act on them - Atum Service is,
 rather, solely focused on capturing them.
 
-The application provides a concise and dynamic way to track completeness and accuracy of data produced from source 
-through a pipeline of Spark applications. All metrics are calculated at a DataFrame level using various aggregation 
-functions and are stored on a single central place, in a relational database. Comparing control metrics for various 
-checkpoints is not only helpful for complying with strict regulatory frameworks, but also helps during development 
+The application provides a concise and dynamic way to track completeness and accuracy of data produced from source
+through a pipeline of Spark applications. All metrics are calculated at a DataFrame level using various aggregation
+functions and are stored on a single central place, in a relational database. Comparing control metrics for various
+checkpoints is not only helpful for complying with strict regulatory frameworks, but also helps during development
 and debugging of your Spark-based data processing.
 
 ## Motivation
@@ -64,6 +60,7 @@ Big Data strategy for a company usually includes data gathering and ingestion pr
 That is the definition of how data from different systems operating inside a company
 are gathered and stored for further analysis and reporting. An ingestion processes can involve
 various transformations like:
+
 * Converting between data formats (XML, CSV, etc.)
 * Data type casting, for example converting XML strings to numeric values
 * Joining reference tables. For example this can include enriching existing
@@ -79,68 +76,106 @@ the BCBS set of regulations requires analysis and reporting to be based on data 
 Thus it is critical at the ingestion stage to preserve the accuracy and integrity of the data gathered from a
 source system.
 
-The purpose of Atum is to provide means of ensuring no critical fields have been modified during the processing and no 
-records are added or lost. To do this the library provides an ability to calculate *control numbers* of explicitly 
+The purpose of Atum is to provide means of ensuring no critical fields have been modified during the processing and no
+records are added or lost. To do this the library provides an ability to calculate *control numbers* of explicitly
 specified columns using a selection of agregate function. We call the set of such measurements at a given time
-a *checkpoint* and each value - a result of the function computation - we call a *control measurement*. Checkpoints can 
+a *checkpoint* and each value - a result of the function computation - we call a *control measurement*. Checkpoints can
 be calculated anytime between Spark transformations and actions, so as at the start of the process or after its end.
 
 We assume the data for ETL are processed in a series of batch jobs. Let's call each data set for a given batch
 job a *batch*. All checkpoints are calculated for a specific batch.
 
-## Features
-
-TBD
-
 ## Modules
 
 ### Agent `agent/`
-This module is intended to replace the current [Atum](https://github.com/AbsaOSS/atum) repository. 
+
+This module is intended to replace the legacy [Atum](https://github.com/AbsaOSS/atum) library.
 It provides functionality for computing and pushing control metrics to the API located in `server/`.
 
 For more information, see the [Vocabulary section](#Vocabulary) or `agent/README.md` for more technical documentation.
 
+#### Supported Spark / Scala / Java matrix
+
+The agent is cross-built per Spark major version. Pick the artifact matching the Spark your job runs on:
+
+| Spark | Scala      | Java                      | Artifact                                           |
+|-------|------------|---------------------------|----------------------------------------------------|
+| 3.5.x | 2.12, 2.13 | 8 minimum, 11 recommended | `atum-agent-spark3_2.12`, `atum-agent-spark3_2.13` |
+| 4.0.x | 2.13       | 17+                       | `atum-agent-spark4_2.13`                           |
+
+```scala
+// Spark 3.5.x
+libraryDependencies += "za.co.absa.atum-service" %% "atum-agent-spark3" % atumVersion
+
+// Spark 4.0.x
+libraryDependencies += "za.co.absa.atum-service" %% "atum-agent-spark4" % atumVersion
+```
+
+```sh
+sbt testAgentSpark3   # runs the agent test suites against both Spark 3 rows (Scala 2.12 and 2.13)
+sbt testAgentSpark4   # runs the agent test suites against the Spark 4 row; needs Java 17+
+```
+
+#### Logging
+
+The agent logs exclusively through the SLF4J API and never bundles an SLF4J binding (e.g. Logback) into its
+published artifact - both `slf4j-api` and the concrete binding are supplied by the Spark runtime the agent is
+deployed into (Spark always ships one). This means the agent's logging always defers to whatever logging
+setup the host Spark job/cluster already has in place, rather than competing with or silently overriding it.
+
 #### Spark 2.4 support
-Because there are some java level incompatibilities between Spark 2.4 and Spark 3.x when build on Java 11+, we have to 
-drop support for Spark 2.4. If you need the agent to work with Spark 2.4 follow these steps:
+
+Because there are some Java level incompatibilities between Spark 2.4 and Spark 3.x when build on Java 11+, we dropped
+support for Spark 2.4. If you need the agent to work with Spark 2.4 follow these steps:
+
 * Switch to Java 8
 * In `'build.sbt'` change the matrix rows, to be Spark 2.4 and Scala 2.11 for modules _agent_ and _model_
 * Build these two modules and use them in your project
 
 ### Reader `reader/`
-**NB!**  
-_This module is not yet implemented to an operational abilities and therefore not yet released._
 
 This module is intended to be used whenever an application wants to read the metrics stored by the _Atum Service_. It
-offers classes and methods to read the metrics from the database shielding away the complexity of accessing the _Atum Server_
+offers classes and methods to read the metrics from the database shielding away the complexity of accessing the _Atum
+Server_
 directly.
 
+*Scala 2.12 / 2.13, Java 8+. Has no Spark dependency, so it's usable in any JVM application regardless of Spark
+version.*
+
 ### Server `server/`
-An API under construction that communicates with the Agent and with the persistent storage. It also provides measure 
-configuration to the agent.
 
-The server accepts metrics potentially from several agents and saves them into database. In the future, it will be also 
-able to send the metrics definitions back if requested. 
+A REST API service offering capabilities for storing and retrieving measurement data from and to persistent storage.
+The server accepts metrics potentially from several `Atum Agents` and saves them into one central relational database. 
+Also, it is able to send the measurements back if requested via `Atum Reader`.
 
-Important note: the server never receives any real data - it only works with the metadata and metrics defined 
-by the agent! 
+Important note: the server never receives any real data - it only works with the metadata and metrics defined
+by the agent!
 
 See `server/README.md` for more technical documentation.
 
+*Scala 2.13, Java 11+ (deployed and CI-tested on Java 11). Has no Spark dependency.*
+
 ### Data Model `model/`
 
-This module defines a set of Data Transfer Objects. These are Atum-specific objects that carry data that are being 
+This module defines a set of Data Transfer Objects. These are Atum-specific objects that carry data that are being
 passed from agent to server and vice versa.
+
+*Scala 2.12 / 2.13, Java 8+. Has no Spark dependency, so it's usable in any JVM application regardless of Spark
+version.*
 
 ### Database `database/`
 
-This module contains a set of scripts that are used to create and maintain the database models. It also contains 
+This module contains a set of scripts that are used to create and maintain the database models. It also contains
 integration tests that are used to verify the logic of our database functions.
+
+*Scala 2.13, Java 11+ (deployed and CI-tested on Java 11). Has no Spark dependency.*
+
 The database tests are integration tests in nature. Therefore, a few conditions applies:
+
 * The tests are excluded from task `test` and are run only by a dedicated `dbTest` task (`sbt dbTest`).
-* The database structures must exist on the target database 
-  (follow the [deployment instructions in database module](database/README.md#Deployment)).
-* The connection information to the DB is provided in file `database/src/test/resources/database.properties` 
+* The database structures must exist on the target database (follow
+  the [deployment instructions in database module](database/README.md#Deployment)).
+* The connection information to the DB is provided in file `database/src/test/resources/database.properties`
   (See `database.properties.template` for syntax).
 
 ## Vocabulary
@@ -150,10 +185,10 @@ This section defines a vocabulary of words and phrases used across the codebase 
 ### Atum Agent
 
 Basically, the agent is supposed to be embedded into your application and its responsibility is to measure the
-given metrics and send the results to the server. It acts as an entity responsible for spawning the `Atum Context` 
+given metrics and send the results to the server. It acts as an entity responsible for spawning the `Atum Context`
 and communicating with the server.
 
-A user of the Atum Agent must provide certain `Partitioning` with a set of `Measures` he or she wants to calculate, 
+A user of the Atum Agent must provide certain `Partitioning` with a set of `Measures` he or she wants to calculate,
 and execute the `Checkpoint` operation. A server details are also needed to be configured.
 
 ### Partitioning
@@ -163,36 +198,37 @@ want to apply particular metrics on. It's similar to data partitioning in HDFS o
 The order of individual `Partitions` in a given `Partitioning` matters. It's a map-like structure in which the order
 of keys (partition names) matters.
 
-It's possible to define an additional metadata along with `Partitioning` - as a map-like structure with which 
-you can store various attributes associated with a given `Partitioning`, that you can potentially 
-use later in your application. Just to give you some ideas for these: 
+It's possible to define an additional metadata along with `Partitioning` - as a map-like structure with which
+you can store various attributes associated with a given `Partitioning`, that you can potentially
+use later in your application. Just to give you some ideas for these:
+
 * a name of your application, ETL Pipeline, or your Spark job
 * a list of owners of your application or your dataset
 * source system of a given dataset
 * and more
 
 ### Atum Context
- 
-This is a main entity responsible for actually performing calculations on a Spark DataFrame. Each `Atum Context` is 
-related to particular `Partitioning` - or to put in other words, each `Atum Context` contains all `Measures` 
+
+This is a main entity responsible for actually performing calculations on a Spark DataFrame. Each `Atum Context` is
+related to particular `Partitioning` - or to put in other words, each `Atum Context` contains all `Measures`
 for a specific data, defined by a given `Partitioning`, that are supposed to be calculated.
 
 ### Measure
 
-A `Measure` defines what and how a single metric should be calculated. So it's a type of control metric to compute, 
-such as count, sum, or hash, that also defines a list of columns (if applicable) that should be used when actually 
+A `Measure` defines what and how a single metric should be calculated. So it's a type of control metric to compute,
+such as count, sum, or hash, that also defines a list of columns (if applicable) that should be used when actually
 executing the calculation against a given Spark DataFrame.
 
-Some `Measures` define no columns (such as `count`), some require exactly one column (such as `sum` of values for 
+Some `Measures` define no columns (such as `count`), some require exactly one column (such as `sum` of values for
 particular column), and some require more columns (such as `hash` function).
 
 ### Measurement
 
-Practically speaking, a single `Measurement` contains a `Measure` and result associated with it. 
+Practically speaking, a single `Measurement` contains a `Measure` and result associated with it.
 
 ### Checkpoint
 
-Each `Checkpoint` defines a sequence of `Measurements` (containing individual `Measures` and their results) that are 
+Each `Checkpoint` defines a sequence of `Measurements` (containing individual `Measures` and their results) that are
 associated with certain `Partitioning`.
 
 A `Checkpoint` is defined on the agent side, the server only accepts it.
@@ -214,8 +250,8 @@ TBD
 
 ### Control measurement types
 
-The control measurement of one or more columns is an aggregation function result executed over the dataset. It can be 
-calculated differently depending on the column's data type, on business requirements and function used. This table 
+The control measurement of one or more columns is an aggregation function result executed over the dataset. It can be
+calculated differently depending on the column's data type, on business requirements and function used. This table
 represents all currently supported measurement types (aka measures):
 
 | Type                               | Description                                                   |
@@ -230,7 +266,6 @@ represents all currently supported measurement types (aka measures):
 [//]: # (| controlType.aggregatedTruncTotal    | Calculates SUM&#40;TRUNC&#40;&#41;&#41; of the specified column       |)
 
 [//]: # (| controlType.absAggregatedTruncTotal | Calculates SUM&#40;TRUNC&#40;ABS&#40;&#41;&#41;&#41; of the specified column  |)
-
 
 ## How to generate Code coverage report
 
@@ -252,50 +287,62 @@ The HTML and XML reports of coverage will be generated on the path:
 ## How to Run in IntelliJ
 
 To make this project runnable via IntelliJ, do the following:
-- Make sure that your configuration in `server/src/main/resources/reference.conf` 
+
+- Make sure that your configuration in `server/src/main/resources/reference.conf`
   is configured according to your needs
-- When building within an IDE sure to have the option `-language:higherKinds` on in the compiler options, as it's often not picked up from the SBT project settings.
+- When building within an IDE sure to have the option `-language:higherKinds` on in the compiler options, as it's often
+  not picked up from the SBT project settings.
 
 ## How to Run Tests
 
 ### Test controls
 
-See the commands configured in the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-Practices.html#.sbtrc) file to provide different testing profiles.
+See the commands configured in the `.sbtrc` [(link)](https://www.scala-sbt.org/1.x/docs/Best-Practices.html#.sbtrc) file
+to provide different testing profiles.
 
 ### Run Unit Tests
-Use the `test` command to execute all unit tests, skipping all other types of tests. 
+
+Use the `test` command to execute all unit tests, skipping all other types of tests.
+
 ```sbt
 sbt test
 ```
 
 ### Run Integration Tests
+
 Use the `testIT` command to execute all Integration tests, skipping all other test types.
+
 ```sbt
 sbt testIT
 ```
 
 ### Run All Standard Tests
 
-Use the `testAllStandard` command to execute all unit and integration tests except for the special ones mentioned below.
+Use the `testStandard` command to execute all unit and integration tests except for the special ones mentioned below.
 These still won't require any real DB or service to be present.
+
 ```sbt
-sbt testAllStandard
+sbt testStandard
 ```
 
-### Run Special Tests 
+### Run Special Tests
 
 These usually have dependency on some system or service being present on the machine where the tests are being executed.
 These also can be performance or penetration tests. Basically the point is that these tests require special
 setup and are usually slower to execute.
 
 Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules.
+
 - Hint: project custom command, requiring a real DB to be present and configured
+
 ```sbt
 sbt testDB
 ```
 
 If you want to run all Agent <-> Server compatibility tests, use the following command.
+
 - Hint: project custom command, requiring a real DB and service to be present and configured on the system
+
 ```sbt
 sbt testCompatibility
 ```

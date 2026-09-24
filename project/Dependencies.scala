@@ -20,6 +20,7 @@ object Dependencies {
 
   object Versions {
     val spark3 = "3.5.5"
+    val spark4 = "4.0.2"
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
@@ -29,7 +30,8 @@ object Dependencies {
     val specs2 = "4.10.0"
     val typesafeConfig = "1.4.2"
 
-    val sparkCommons = "0.6.3"
+    val sparkCommonsSpark3 = "0.6.3"
+    val sparkCommonsSpark4 = "1.0.0"
 
     val sttpClient = "3.5.2" //last supported version for Java 8
     val sttpCirceJson = "3.9.7"
@@ -37,8 +39,6 @@ object Dependencies {
     val postgresql = "42.6.0"
 
     val fadb = "0.7.0"
-
-    val logback = "1.2.3"
 
     val zio = "2.0.19"
     val zioLogging = "2.2.0"
@@ -69,6 +69,14 @@ object Dependencies {
 
     def getVersionUpToMajor(version: String): String = {
       truncateVersion(version, 1)
+    }
+
+    /**
+     * Spark 4 is the cut-off for several breaking changes (e.g. Java 17 baseline, Scala 2.12 dropped).
+     * Build settings key off this predicate rather than off an exact version.
+     */
+    def isSpark4OrLater(sparkVersion: String): Boolean = {
+      getVersionUpToMajor(sparkVersion).toInt >= 4
     }
   }
 
@@ -185,20 +193,19 @@ object Dependencies {
   }
 
   def agentDependencies(sparkVersion: String, scalaVersion: Version): Seq[ModuleID] = {
-    val sparkMinorVersion = Versions.getVersionUpToMinor(sparkVersion)
     val scalaMinorVersion = Versions.getVersionUpToMinor(scalaVersion.asString)
+    val spark4OrLater = Versions.isSpark4OrLater(sparkVersion)
+
+    val sparkCommonsVersion = if (spark4OrLater) Versions.sparkCommonsSpark4 else Versions.sparkCommonsSpark3
 
     lazy val sparkCore = "org.apache.spark" %% "spark-core" % sparkVersion % Provided
     lazy val sparkSql = "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
     lazy val typeSafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
-    lazy val sparkCommons = "za.co.absa" % s"spark-commons-spark${sparkMinorVersion}_$scalaMinorVersion" % Versions.sparkCommons
-    lazy val sparkCommonsTest = "za.co.absa" % s"spark-commons-test_$scalaMinorVersion" % Versions.sparkCommons % Test
+    lazy val sparkCommonsTest = "za.co.absa" % s"spark-commons-test_$scalaMinorVersion" % sparkCommonsVersion % Test
 
     lazy val sttpClient3 = "com.softwaremill.sttp.client3" %% "core" % Versions.sttpClient
     lazy val sttpOkHttpBackend = "com.softwaremill.sttp.client3" %% "okhttp-backend" % Versions.sttpClient
-
-    lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
 
     lazy val nameOf = "com.github.dwickern" %% "scala-nameof" % Versions.scalaNameof % Provided // it's provided, as it's a macro needed only at runtime
 
@@ -208,11 +215,9 @@ object Dependencies {
       sparkCore,
       sparkSql,
       typeSafeConfig,
-      sparkCommons,
       sparkCommonsTest,
       sttpClient3,
       sttpOkHttpBackend,
-      logback,
       nameOf
     ) ++
       testDependencies :+ balta

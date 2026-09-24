@@ -136,4 +136,32 @@ class MeasureUnitTests extends AnyFlatSpec with Matchers with SparkTestBase { se
     assert(dfFullSalaryAbsSumTruncResult.resultValueType == ResultValueType.LongValue)
   }
 
+  // Test for a Spark 4 behavior change: `spark.sql.ansi.enabled` defaults to `true` there, under which a plain `cast()`
+  // throws on a malformed numeric string instead of returning null as it does under Spark 3's non-ANSI default.
+  // `castForAggregation` uses `try_cast` instead, which always returns null on a bad cast regardless of the ANSI
+  // setting - this must hold on both Spark versions, so the test forces ANSI on explicitly to also cover Spark 3
+  // defensively.
+  it should "not throw and should treat a malformed numeric string as null when aggregating, with ANSI enabled" in {
+    val salarySum = SumOfValuesOfColumn("salary")
+
+    val dfWithBadSalary = spark
+      .createDataFrame(
+        Seq(
+          ("id", "firstName", "lastName", "email", "email2", "profession", "1000.50"),
+          ("id", "firstName", "lastName", "email", "email2", "profession", "not-a-number")
+        )
+      )
+      .toDF("id", "firstName", "lastName", "email", "email2", "profession", "salary")
+
+    val originalAnsiSetting = spark.conf.get("spark.sql.ansi.enabled", "false")
+    spark.conf.set("spark.sql.ansi.enabled", "true")
+    try {
+      val result = salarySum.function(dfWithBadSalary)
+      result.resultValue shouldBe "1000.5"
+      result.resultValueType shouldBe ResultValueType.BigDecimalValue
+    } finally {
+      spark.conf.set("spark.sql.ansi.enabled", originalAnsiSetting)
+    }
+  }
+
 }
