@@ -116,7 +116,14 @@ lazy val agent = {
         name := "atum-agent"
       ): _*
     )
+    .addSparkCrossBuild(
+      SparkVersionAxis(spark3),
+      Setup.clientSupportedScalaVersions(spark3),
+      Dependencies.agentDependencies
+    )
 
+  // Appending Spark 4 if needed (based on Java requirements) while also building and supporting Spark 3 on newer
+  // Java (that's why append, otherwise Spark 3 would be skipped on newer Java).
   val agentWithSpark = if (Setup.spark4Supported) {
     agent.addSparkCrossBuild(
       SparkVersionAxis(spark4),
@@ -124,11 +131,7 @@ lazy val agent = {
       Dependencies.agentDependencies
     )
   } else {
-    agent.addSparkCrossBuild(
-      SparkVersionAxis(spark3),
-      Setup.clientSupportedScalaVersions(spark3),
-      Dependencies.agentDependencies
-    )
+    agent
   }
 
   agentWithSpark

@@ -215,7 +215,9 @@ object AtumMeasure {
         // regardless of the ANSI setting. `Column.try_cast` itself is a Spark-4-only convenience method (the
         // agent's main sources are shared, unmodified, across the Spark 3 and Spark 4 build rows), so the
         // version-stable SQL `try_cast` expression is used instead.
-        expr(s"try_cast(`$columnName` as decimal(38,18))")
+        // Modifying the column name in case it contains a backtick and catering for <table_name>.<column> format.
+        val escapedColumnName = columnName.split("\\.", -1).map(part => s"`${part.replace("`", "``")}`").mkString(".")
+        expr(s"try_cast($escapedColumnName as decimal(38,18))")
       case _ =>
         column
     }
