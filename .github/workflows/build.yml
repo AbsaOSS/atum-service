@@ -32,8 +32,8 @@ jobs:
         include:
           - name: Test Agent, Reader and Model (Spark 3, Java 8)
             java-version: '8'
-            test-command: testStandard
-            doc-command: doc
+            test-command: testAgentReaderModelSpark3
+            doc-command: docAgentReaderModelSpark3
 
           - name: Test Agent, Reader and Model (Spark 3, Java 11)
             java-version: '11'
