@@ -33,10 +33,11 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Setup Scala
-        uses: olafurpg/setup-scala@32ffa16635ff8f19cc21ea253a987f0fdf29844c
+      - name: Setup JDK 8
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
-          java-version: "adopt@1.8"
+          distribution: temurin
+          java-version: '8'
 
       - name: Run scalafmt And Print Diff
         continue-on-error: true
