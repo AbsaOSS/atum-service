@@ -218,8 +218,7 @@ libraryDependencies += "za.co.absa.atum-service" %% "atum-agent-spark3" % "<vers
 
 #### 2. Configure the agent
 
-The agent is configured via [Typesafe Config](https://github.com/lightbend/config) (e.g. `application.conf`), all
-keys have defaults defined in the agent's `reference.conf`:
+The agent is configured via [Typesafe Config](https://github.com/lightbend/config) (e.g. `application.conf`); most settings have defaults in the agent's `reference.conf`, while `atum.dispatcher.http.url` is required when using the `http` dispatcher and the capture limit must be configured when using `capture`:
 
 ```hocon
 # dispatcher to be used: http, console or capture
