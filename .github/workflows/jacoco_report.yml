@@ -51,7 +51,7 @@ env:
 jobs:
   detect:
     name: Detect Changed Files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 2
     outputs:
       scala_changed: ${{ steps.filter.outputs.scala }}
@@ -74,7 +74,7 @@ jobs:
     name: JaCoCo Report
     needs: detect
     if: needs.detect.outputs.scala_changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       issues: write
@@ -133,6 +133,6 @@ jobs:
     name: No Operation
     needs: detect
     if: needs.detect.outputs.scala_changed != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - run: echo "No changes in Scala related files — passing."
