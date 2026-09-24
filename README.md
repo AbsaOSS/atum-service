@@ -210,7 +210,148 @@ even if it involves multiple applications or ETL pipelines.
 
 ### Atum Agent routines
 
-TBD
+#### 1. Add the dependency
+
+```scala
+libraryDependencies += "za.co.absa.atum-service" %% "atum-agent-spark3" % "<version>"
+```
+
+#### 2. Configure the agent
+
+The agent is configured via [Typesafe Config](https://github.com/lightbend/config) (e.g. `application.conf`); most settings have defaults in the agent's `reference.conf`, while `atum.dispatcher.http.url` is required when using the `http` dispatcher and the capture limit must be configured when using `capture`:
+
+```hocon
+# dispatcher to be used: http, console or capture
+atum.dispatcher.type = "http"
+
+# the REST API URI of the Atum Server (required for the http dispatcher)
+atum.dispatcher.http.url = "http://localhost:8080"
+
+# optional author/createdBy identity used for auditing; falls back to the JVM user (`user.name`)
+atum.author = "my-application-name"
+```
+
+Available dispatchers:
+
+| Dispatcher | Description                                                                                  |
+|------------|:---------------------------------------------------------------------------------------------|
+| `http`     | Sends the data to a running Atum Server via its REST API. Supports retries and timeouts.      |
+| `console`  | Prints the data to the standard output. Useful for local development.                         |
+| `capture`  | Keeps the data in memory (bounded by `atum.dispatcher.capture.capture-limit`). Used for tests.|
+
+#### 3. Obtain an Atum Context
+
+`AtumAgent` is the entry point - it is a singleton configured from the globally loaded configuration. An
+`AtumContext` is always bound to a `Partitioning`, and it is either created in the data store or retrieved if
+the partitioning already exists:
+
+```scala
+import za.co.absa.atum.agent.{AtumAgent, AtumContext}
+import za.co.absa.atum.model.types.basic.AtumPartitions
+
+// the partitioning is ordered - the order of the keys is part of its identity
+val atumPartitions = AtumPartitions(List(
+  "source" -> "CRM",
+  "snapshot_date" -> "2024-01-01"
+))
+
+implicit val atumContext: AtumContext = AtumAgent.getOrCreateAtumContext(atumPartitions)
+```
+
+If you need an agent with a different configuration than the globally loaded one (e.g. in tests), use
+`AtumAgent.fromConfig(config)` instead of the singleton.
+
+#### 4. Register measures
+
+Measures define what will be computed when a checkpoint is taken. They can be added and removed at any time,
+and the calls are chainable:
+
+```scala
+import za.co.absa.atum.agent.model.AtumMeasure._
+
+atumContext
+  .addMeasure(RecordCount())
+  .addMeasure(SumOfValuesOfColumn("amount"))
+  .addMeasure(SumOfHashesOfColumn("id"))
+
+// or in bulk
+atumContext.addMeasures(Set(RecordCount(), AbsSumOfValuesOfColumn("amount")))
+
+// and removed when no longer relevant
+atumContext.removeMeasure(SumOfHashesOfColumn("id"))
+```
+
+Note that measure definitions are persisted when a checkpoint is dispatched, so an `AtumContext` obtained for an already existing partitioning is populated with definitions previously stored for that partitioning.
+
+#### 5. Create checkpoints
+
+A checkpoint executes all registered measures against a given `DataFrame` and dispatches the results. The implicit
+`DatasetWrapper` makes this available directly on a `DataFrame`, so it can be placed in the middle of a
+transformation chain:
+
+```scala
+import spark.implicits._
+import za.co.absa.atum.agent.AtumContext._
+
+val df = spark.read.parquet("input")
+  .createCheckpoint("source data loaded")
+
+val transformedDf = df
+  .filter($"amount" > 0)
+  .createCheckpoint("invalid records removed", properties = Some(Map("stage" -> "cleansing")))
+```
+
+The same can be done explicitly through the context:
+
+```scala
+atumContext.createCheckpoint("source data loaded", df)
+```
+
+If the metrics were already computed elsewhere (e.g. by the data source itself), they can be reported without
+Spark ever recomputing them:
+
+```scala
+import za.co.absa.atum.agent.model.{MeasureResult, UnknownMeasure}
+import za.co.absa.atum.model.ResultValueType
+
+atumContext.createCheckpointOnProvidedData(
+  checkpointName = "metrics provided by the source system",
+  measurements = Map(
+    UnknownMeasure("recordsInSourceFile", Seq("*"), ResultValueType.LongValue) -> MeasureResult(1024L)
+  )
+)
+```
+
+#### 6. Sub-contexts (sub-partitionings)
+
+When a pipeline splits the data further (e.g. per country), a child context can be derived from the parent one.
+The parent-child relationship is recorded in the data store, which is what builds up the `Data Flow`:
+
+```scala
+implicit val countryContext: AtumContext =
+  atumContext.subPartitionContext(AtumPartitions("country" -> "SA"))
+```
+
+By default the child partitioning is `parent ++ sub` (and overlapping keys are rejected). Pass
+`mergeWithParent = false` if the child should be identified only by `subPartitions`, while the lineage is still
+kept via flows. Note that in that case measures and additional data are not copied over from the parent if the
+child partitioning already existed.
+
+#### 7. Additional data
+
+Arbitrary metadata (tags) can be attached to a partitioning - for example the version of the application that
+produced the data:
+
+```scala
+atumContext.addAdditionalData("app_version", "1.2.3")
+
+atumContext.addAdditionalData(Map(
+  "source_system" -> "CRM",
+  "pipeline_run_id" -> runId
+))
+
+val currentAd = atumContext.currentAdditionalData
+```
 
 ### Control measurement types
 
