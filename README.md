@@ -281,8 +281,7 @@ atumContext.addMeasures(Set(RecordCount(), AbsSumOfValuesOfColumn("amount")))
 atumContext.removeMeasure(SumOfHashesOfColumn("id"))
 ```
 
-Note that measures registered for a partitioning are persisted, so an `AtumContext` obtained for an already existing
-partitioning comes with its measures pre-populated.
+Note that measure definitions are persisted when a checkpoint is dispatched, so an `AtumContext` obtained for an already existing partitioning is populated with definitions previously stored for that partitioning.
 
 #### 5. Create checkpoints
 
