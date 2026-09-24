@@ -14,39 +14,43 @@
 # limitations under the License.
 #
 
-# Aliases in this file expected usage of test file naming conventions:
-#   - "UnitTests" suffix for test files and Suites which define unit tests
-#   - "IntegrationTests" suffix for test files and Suites which define integration tests
-#   - "CompatibilityTests" suffix for test files and Suites which define Agent <-> Server compatibility tests
+# Naming convention for aliases in this file:
+#   - Type-based tests; `test<Type>` acts on whichever project is currently selected; no scope of their own:
+#       `test`                       - unit tests only            (files/suites named `*UnitTests`)
+#       `testIT`                     - integration tests only     (files/suites named `*IntegrationTests`)
+#       `testStandard`               - both of the above combined ("standard", as opposed to the special kinds below)
+#       `testCompatibility`          - Agent <-> Server compatibility tests (files/suites named `*CompatibilityTests`)
+#
+#   - Scoped-based tests; `test<Scope>` aliases always mean "run `testStandard` for exactly this scope":
+#       `testAgentSpark3`            - both Spark 3 agent rows (Scala 2.12 + 2.13), recommended Java 11 runtime
+#       `testAgentSpark4`            - the Spark 4 agent row (Scala 2.13), requires Java 17+
+#       `testAgentReaderModelSpark3` - as `testAgentSpark3` but also with reader + model
+#       `testAgentReaderModelSpark4` - as `testAgentSpark4` but also with reader + model
+#       `testDB`                     - the `database` module
+#
+#   - `doc<Scope>` aliases mirror the `test<Scope>` scopes above but generate docs instead of running tests.
 
-# CPS QA types aliases
-# Run unit tests
+# Type-based tests
 alias test=; testOnly *UnitTests
-
-# Run integration tests
 alias testIT=; testOnly *IntegrationTests
-
-# Run all standard tests (all except the special ones below)
-alias testAllStandard=; test; testIT
-
-# Run specific: database tests using Balta
-alias testDB=; project database; testOnly *
-
-# Run specific: agent-server compatibility tests
+alias testStandard=; test; testIT
 alias testCompatibility=; testOnly *CompatibilityTests
 
-# Run specific: agent tests against both Spark 3 build rows (Scala 2.12 and 2.13), on the recommended Java 11 runtime
-alias testAgentSpark3=; project agent_spark3; testAllStandard; project agent_spark32_12; testAllStandard
+# Scope: agent, per Spark build row
+alias testAgentSpark3=; project agent_spark3; testStandard; project agent_spark32_12; testStandard
+alias testAgentSpark4=; project agent_spark4; testStandard
+alias docAgentSpark3=; project agent_spark3; doc; project agent_spark32_12; doc
+alias docAgentSpark4=; project agent_spark4; doc
 
-# Run specific: agent tests against the Spark 4 build row (requires Java 17+)
-alias testAgentSpark4=; project agent_spark4; testAllStandard
+# Scope: reader + model + a specific agent Spark build row
+alias testAgentReaderModelSpark3=; project reader; testStandard; project model; testStandard; testAgentSpark3
+alias docAgentReaderModelSpark3=; project reader; doc; project model; doc; docAgentSpark3
 
-# Convenience aliases: bundle reader + model together with a specific agent Spark row/doc task.
-alias testReaderModelSpark3=; project reader; testAllStandard; project model; testAllStandard; testAgentSpark3
-alias docReaderModelSpark3=; project reader; doc; project model; doc
+alias testAgentReaderModelSpark4=; project reader; testStandard; project model; testStandard; testAgentSpark4
+alias docAgentReaderModelSpark4=; project reader; doc; project model; doc; docAgentSpark4
 
-alias testReaderModelSpark4=; project reader; testAllStandard; project model; testAllStandard; testAgentSpark4
-alias docReaderModelSpark4=; project reader; doc; project model; doc; project agent_spark4; doc
+# Scope: database
+alias testDB=; project database; testStandard
 
 # Jacoco Aliases
 alias jacoco=; jacocoOn; jacocoAgent; jacocoReader; jacocoModel; jacocoServer; jacocoOff

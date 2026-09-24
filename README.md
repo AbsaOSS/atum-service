@@ -318,11 +318,11 @@ sbt testIT
 
 ### Run All Standard Tests
 
-Use the `testAllStandard` command to execute all unit and integration tests except for the special ones mentioned below.
+Use the `testStandard` command to execute all unit and integration tests except for the special ones mentioned below.
 These still won't require any real DB or service to be present.
 
 ```sbt
-sbt testAllStandard
+sbt testStandard
 ```
 
 ### Run Special Tests

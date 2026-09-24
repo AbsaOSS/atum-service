@@ -32,18 +32,18 @@ jobs:
         include:
           - name: Test Agent, Reader and Model (Spark 3, Java 8)
             java-version: '8'
-            test-command: testAllStandard
+            test-command: testStandard
             doc-command: doc
 
           - name: Test Agent, Reader and Model (Spark 3, Java 11)
             java-version: '11'
-            test-command: testReaderModelSpark3
-            doc-command: docReaderModelSpark3
+            test-command: testAgentReaderModelSpark3
+            doc-command: docAgentReaderModelSpark3
 
           - name: Test Agent, Reader and Model (Spark 4, Java 17)
             java-version: '17'
-            test-command: testReaderModelSpark4
-            doc-command: docReaderModelSpark4
+            test-command: testAgentReaderModelSpark4
+            doc-command: docAgentReaderModelSpark4
 
     steps:
       - name: Checkout code
