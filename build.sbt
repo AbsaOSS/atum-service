@@ -116,23 +116,22 @@ lazy val agent = {
         name := "atum-agent"
       ): _*
     )
-    .addSparkCrossBuild(
-      SparkVersionAxis(spark3),
-      Setup.clientSupportedScalaVersions(spark3),
-      Dependencies.agentDependencies
-    )
 
-  val agentWithSpark4 = if (Setup.spark4Supported) {
+  val agentWithSpark = if (Setup.spark4Supported) {
     agent.addSparkCrossBuild(
       SparkVersionAxis(spark4),
       Setup.clientSupportedScalaVersions(spark4),
       Dependencies.agentDependencies
     )
   } else {
-    agent
+    agent.addSparkCrossBuild(
+      SparkVersionAxis(spark3),
+      Setup.clientSupportedScalaVersions(spark3),
+      Dependencies.agentDependencies
+    )
   }
 
-  agentWithSpark4
+  agentWithSpark
     .dependsOn(model)
     .enablePlugins(JacocoFilterPlugin)
 }
