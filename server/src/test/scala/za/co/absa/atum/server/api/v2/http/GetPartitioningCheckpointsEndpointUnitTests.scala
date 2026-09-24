@@ -58,6 +58,9 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
     .thenReturn(ZIO.fail(NotFoundErrorResponse("partitioning not found")))
   when(checkpointControllerMock.getPartitioningCheckpoints(3L, 10, 0L, None, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, Some(Map("executionID" -> Seq("id1", "id2"))), None, includeProperties = false))
+    .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
+
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
 
@@ -68,7 +71,7 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
             limit: Int,
             offset: Long,
             checkpointName: Option[String],
-            checkpointProperties: Option[Map[String, String]],
+            checkpointProperties: Option[Map[String, Seq[String]]],
             latestFirst: Option[Boolean],
             includeProperties: Boolean
           ) =>
@@ -91,6 +94,27 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
       .backend()
 
     suite("GetPartitioningCheckpointsEndpointSuite")(
+      test("Returns an expected PaginatedResponse[CheckpointV2DTO] with checkpoint-properties having multiple values") {
+        import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
+        val properties = Map("executionID" -> Seq("id1", "id2"))
+        val encodedProps = properties.asBase64EncodedJsonString
+        val request = basicRequest
+          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=0&checkpoint-properties=$encodedProps")
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+
+        val response = request
+          .send(backendStub)
+
+        val body = response.map(_.body)
+        val statusCode = response.map(_.code)
+
+        assertZIO(body <&> statusCode)(
+          equalTo(
+            Right(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)),
+            StatusCode.Ok
+          )
+        )
+      },
       test("Returns an expected PaginatedResponse[CheckpointV2DTO] with more data available") {
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=0")

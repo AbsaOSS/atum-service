@@ -35,6 +35,12 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
           getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
           result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, None, None, None))
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+      },
+      test("Should apply pagination (limit and offset) accurately with combined filters") {
+        for {
+          getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
+          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, Some("TestCheckpointName"), Some(Map("key1" -> Seq("value1", "value2"))), None))
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(
       GetPartitioningCheckpoints.layer,

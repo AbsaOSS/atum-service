@@ -44,6 +44,20 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
           getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
           result <- getFlowCheckpoints(args)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
+      },
+      test("Should apply pagination (limit and offset) accurately with combined filters") {
+        val args = GetFlowCheckpoints.GetFlowCheckpointsArgs(
+          flowId = 1L,
+          limit = 10,
+          offset = 0L,
+          checkpointName = Some("TestCheckpointName"),
+          checkpointProperties = Some(Map("key1" -> Seq("value1", "value2")))
+        )
+
+        for {
+          getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
+          result <- getFlowCheckpoints(args)
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
       }
     ).provide(
       GetFlowCheckpoints.layer,

@@ -66,7 +66,7 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
   when(
-    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(executionIdProperties), includeProperties = false)
+    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(executionIdProperties.view.mapValues(Seq(_)).toMap), includeProperties = false)
   )
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
@@ -75,7 +75,7 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   private val flowControllerMockLayerV2 = ZLayer.succeed(flowControllerMockV2)
 
   private val getFlowCheckpointServerEndpoint = Endpoints.getFlowCheckpointsEndpoint.zServerLogic({
-    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, String]], includeProperties: Boolean) =>
+    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], includeProperties: Boolean) =>
       FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, includeProperties)
   })
 
