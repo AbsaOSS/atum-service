@@ -800,15 +800,17 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
         .add("property_value", "456")
     )
 
-    def hstore(properties: Map[String, String]): CustomDBType = CustomDBType(
-      properties.map { case (k, v) => s""""$k"=>"$v"""" }.mkString(","),
-      "HSTORE"
-    )
+    def jsonb(properties: Map[String, Seq[String]]): JsonBString = {
+      val inner = properties.map { case (k, vs) =>
+        s"\"$k\": [${vs.map(v => s"\"$v\"").mkString(", ")}]"
+      }.mkString(", ")
+      JsonBString(s"{$inner}")
+    }
 
     // Filtering by jobId=123 returns only the matching checkpoint
     function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", flowId)
-      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123")))
+      .setParam("i_checkpoint_properties", jsonb(Map("jobId" -> Seq("123"))))
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -820,7 +822,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     // Requiring both jobId=123 and env=prod still returns the matching checkpoint (AND semantics)
     function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", flowId)
-      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123", "env" -> "prod")))
+      .setParam("i_checkpoint_properties", jsonb(Map("jobId" -> Seq("123"), "env" -> Seq("prod"))))
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -831,7 +833,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     // Requiring jobId=123 AND a property the checkpoint doesn't have returns nothing (AND semantics)
     function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", flowId)
-      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123", "env" -> "dev")))
+      .setParam("i_checkpoint_properties", jsonb(Map("jobId" -> Seq("123"), "env" -> Seq("dev"))))
       .execute { queryResult =>
         assert(!queryResult.hasNext)
       }
@@ -839,7 +841,7 @@ class GetFlowCheckpointsIntegrationTests extends DBTestSuite {
     // Filtering by a value that no checkpoint has returns nothing
     function(fncGetFlowCheckpointsV2)
       .setParam("i_flow_id", flowId)
-      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "999")))
+      .setParam("i_checkpoint_properties", jsonb(Map("jobId" -> Seq("999"))))
       .execute { queryResult =>
         assert(!queryResult.hasNext)
       }

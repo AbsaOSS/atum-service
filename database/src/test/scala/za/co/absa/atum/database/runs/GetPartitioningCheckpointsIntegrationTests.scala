@@ -390,15 +390,17 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         .add("property_value", "456")
     )
 
-    def hstore(properties: Map[String, String]): CustomDBType = CustomDBType(
-      properties.map { case (k, v) => s""""$k"=>"$v"""" }.mkString(","),
-      "HSTORE"
-    )
+    def jsonb(properties: Map[String, Seq[String]]): JsonBString = {
+      val inner = properties.map { case (k, vs) =>
+        s"\"$k\": [${vs.map(v => s"\"$v\"").mkString(", ")}]"
+      }.mkString(", ")
+      JsonBString(s"{$inner}")
+    }
 
     // Filtering by jobId=123 returns only the matching checkpoint
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning)
-      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123")))
+      .setParam("i_checkpoint_properties", jsonb(Map("jobId" -> Seq("123"))))
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -410,7 +412,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
     // Filtering by a value that no checkpoint has returns nothing
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning)
-      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "999")))
+      .setParam("i_checkpoint_properties", jsonb(Map("jobId" -> Seq("999"))))
       .execute { queryResult =>
         assert(!queryResult.hasNext)
       }
