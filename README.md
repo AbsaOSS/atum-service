@@ -290,6 +290,7 @@ A checkpoint executes all registered measures against a given `DataFrame` and di
 transformation chain:
 
 ```scala
+import spark.implicits._
 import za.co.absa.atum.agent.AtumContext._
 
 val df = spark.read.parquet("input")
