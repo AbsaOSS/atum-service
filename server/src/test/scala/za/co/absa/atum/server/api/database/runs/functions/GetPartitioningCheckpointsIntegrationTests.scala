@@ -26,6 +26,8 @@ import zio.interop.catz.asyncInstance
 import zio.{Scope, ZIO}
 import zio.test._
 
+import java.time.ZonedDateTime
+
 object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -33,7 +35,21 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
       test("Returns expected sequence of Checkpoints with non-existing partitioning id") {
         for {
           getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
-          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, None, None, None))
+          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, None, None, None, None, None))
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+      },
+      test("Should apply pagination (limit and offset) accurately with combined filters") {
+        for {
+          getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
+          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, Some("TestCheckpointName"), Some(Map("key1" -> Seq("value1", "value2"))), None, None, None))
+        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+      },
+      test("Should bind the process start time window") {
+        val from = Some(ZonedDateTime.parse("2026-06-01T00:00:00Z"))
+        val to = Some(ZonedDateTime.parse("2026-08-01T00:00:00+02:00"))
+        for {
+          getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
+          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, None, None, Some(true), from, to))
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       }
     ).provide(

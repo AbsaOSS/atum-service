@@ -22,6 +22,7 @@ import za.co.absa.atum.model.envelopes.SuccessResponse.{PaginatedResponse, Singl
 import zio.IO
 import zio.macros.accessible
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @accessible
@@ -43,8 +44,10 @@ trait CheckpointController {
     limit: Int,
     offset: Long,
     checkpointName: Option[String] = None,
-    checkpointProperties: Option[Map[String, String]] = None,
+    checkpointProperties: Option[Map[String, Seq[String]]] = None,
     latestFirst: Option[Boolean] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
     includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]]
 

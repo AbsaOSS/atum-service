@@ -23,6 +23,7 @@ import za.co.absa.atum.server.api.v2.repository.CheckpointRepository
 import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends CheckpointService with BaseService {
@@ -50,8 +51,10 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
-    checkpointProperties: Option[Map[String, String]],
+    checkpointProperties: Option[Map[String, Seq[String]]],
     latestFirst: Option[Boolean],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime],
     includeProperties: Boolean
   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]] = {
     repositoryCall(
@@ -62,6 +65,8 @@ class CheckpointServiceImpl(checkpointRepository: CheckpointRepository) extends 
         checkpointName,
         checkpointProperties,
         latestFirst,
+        from,
+        to,
         includeProperties
       ),
       "getPartitioningCheckpoints"

@@ -29,6 +29,8 @@ import za.co.absa.atum.server.model.database.CheckpointItemWithPartitioningFromD
 import zio._
 import zio.interop.catz.asyncInstance
 
+import java.time.ZonedDateTime
+
 class FlowRepositoryImpl(
   getFlowCheckpointsFn: GetFlowCheckpoints,
   override val getCheckpointPropertiesFn: GetCheckpointProperties
@@ -39,11 +41,16 @@ class FlowRepositoryImpl(
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
-    checkpointProperties: Option[Map[String, String]],
+    checkpointProperties: Option[Map[String, Seq[String]]],
+    latestFirst: Option[Boolean],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime],
     includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointWithPartitioningDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
-      getFlowCheckpointsFn(GetFlowCheckpointsArgs(flowId, limit, offset, checkpointName, checkpointProperties)),
+      getFlowCheckpointsFn(
+        GetFlowCheckpointsArgs(flowId, limit, offset, checkpointName, checkpointProperties, latestFirst, from, to)
+      ),
       "getFlowCheckpoints"
     )
       .map(_.flatten)

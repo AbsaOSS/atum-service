@@ -24,6 +24,8 @@ import za.co.absa.atum.server.api.v2.service.FlowService
 import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
+import java.time.ZonedDateTime
+
 class FlowControllerImpl(flowService: FlowService) extends FlowController with BaseController {
 
   // to be replaced (and moved to checkpointcontroller) with new implementation in #233
@@ -32,12 +34,25 @@ class FlowControllerImpl(flowService: FlowService) extends FlowController with B
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
-    checkpointProperties: Option[Map[String, String]],
+    checkpointProperties: Option[Map[String, Seq[String]]],
+    latestFirst: Option[Boolean],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime],
     includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointWithPartitioningDTO]] = {
     val flowData =
       serviceCall[PaginatedResult[CheckpointWithPartitioningDTO], PaginatedResult[CheckpointWithPartitioningDTO]](
-        flowService.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, includeProperties)
+        flowService.getFlowCheckpoints(
+          flowId,
+          limit,
+          offset,
+          checkpointName,
+          checkpointProperties,
+          latestFirst,
+          from,
+          to,
+          includeProperties
+        )
       )
     mapToPaginatedResponse(limit, offset, flowData)
   }
