@@ -35,6 +35,8 @@ import doobie.postgres.implicits._
 
 import za.co.absa.atum.server.model.database.CheckpointItemWithPartitioningFromDB
 
+import java.time.ZonedDateTime
+
 class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetFlowCheckpointsArgs, Option[
       CheckpointItemWithPartitioningFromDB
@@ -44,7 +46,10 @@ class GetFlowCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
         fr"${input.limit}",
         fr"${input.offset}",
         fr"${input.checkpointName}",
-        fr"${input.checkpointProperties.map(_.asJson)}"
+        fr"${input.checkpointProperties.map(_.asJson)}",
+        fr"${input.latestFirst}",
+        fr"${input.from}",
+        fr"${input.to}"
       )
     )
     with StandardStatusHandling
@@ -73,7 +78,10 @@ object GetFlowCheckpoints {
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
-    checkpointProperties: Option[Map[String, Seq[String]]]
+    checkpointProperties: Option[Map[String, Seq[String]]],
+    latestFirst: Option[Boolean],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime]
   )
 
   val layer: URLayer[PostgresDatabaseProvider, GetFlowCheckpoints] = ZLayer {

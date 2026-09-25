@@ -22,6 +22,7 @@ import sttp.client3.circe.asJson
 import sttp.model.Uri
 import sttp.monad.MonadError
 import sttp.monad.syntax._
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.reader.core.RequestResult._
 import za.co.absa.atum.reader.server.ServerConfig
 import za.co.absa.atum.reader.exceptions.RequestException.CirceError
@@ -46,6 +47,27 @@ abstract class Reader[F[_]](implicit
   ): F[RequestResult[O]] = requestResult match {
     case Right(b) => f(b)
     case Left(a) => me.unit(Left(a))
+  }
+
+  /**
+   *  Queries the pages one after another, starting at offset 0, until the server reports there is no more data.
+   *
+   *  @param pageSize  - the size of the page (record count) to query
+   *  @param queryPage - function querying a page of the given size (limit) at the given offset
+   *  @return          - the records of all the pages, in order, or the first error encountered
+   */
+  protected def queryAllPages[T](
+    pageSize: Int,
+    queryPage: (Int, Long) => F[RequestResult[PaginatedResponse[T]]]
+  ): F[RequestResult[Seq[T]]] = {
+    def queryFrom(offset: Long, collected: Vector[T]): F[RequestResult[Seq[T]]] = {
+      queryPage(pageSize, offset).flatMap {
+        case Right(page) if page.pagination.hasMore => queryFrom(offset + pageSize, collected ++ page.data)
+        case Right(page) => me.unit(RequestOK[Seq[T]](collected ++ page.data))
+        case Left(error) => me.unit(RequestFail[Seq[T]](error))
+      }
+    }
+    queryFrom(0, Vector.empty)
   }
 
   protected def getQuery[R: Decoder](

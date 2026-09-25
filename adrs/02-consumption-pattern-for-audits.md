@@ -1,4 +1,4 @@
-# ADR 03 — Consumption Pattern for Audit Queries (Time-Windowed Lineage & Measurements)
+# ADR 02 — Consumption Pattern for Audit Queries (Time-Windowed Lineage & Measurements)
 
 |                         |                                                                                                                  |
 |-------------------------|------------------------------------------------------------------------------------------------------------------|
@@ -6,6 +6,7 @@
 | **Date**                | 2026-09-20                                                                                                       |
 | **Deciders**            | Atum Service maintainers, platform architects, audit/consumer stakeholders                                       |
 | **Affected components** | `server/` + `database/` (optional time-filter enhancement only), `reader/` (consumption client — already exists) |
+| **Implementation**      | §4 (time window, index, `latest-first` on flows) and its reader support done (2026-09-25); §5 and §6 deferred    |
 
 ---
 
@@ -31,9 +32,11 @@ addition that makes the time window efficient.
 
 Three facts about the current schema make this almost entirely a "use what's there" exercise:
 
-- **A "flow" is one lineage chain.** When partitionings are linked parent→child (including across applications),
-  they share **flow membership** (`flows.partitioning_to_flow`). So *one flow = one connected
-  lineage graph* — exactly the "set of related datasets" an audit cares about.
+- **A flow is a partitioning plus everything derived from it.** Every partitioning gets its own *main flow* when it
+  is created (`flows._create_flow`), and linking a child to a parent (including across applications) adds the child
+  to **all flows of the parent** (`flows._add_to_parent_flows` → `flows.partitioning_to_flow`). So the main flow of a
+  partitioning = the partitioning **and its descendants** — the "set of related datasets" downstream of it. It does
+  **not** contain the partitioning's ancestors; only the main flow of a root covers the whole lineage chain.
 - **One call returns every measurement in that chain, already tagged with its dataset.**
   `flows.get_flow_checkpoints(flowId, ...)` returns all checkpoints across the whole flow, and **every returned row
   carries the `id_partitioning` + `partitioning` JSON it belongs to** — plus `measure_name`, `measurement_value`,
@@ -47,7 +50,7 @@ A ready-made client also already exists: the **`reader`** module's `FlowReader`,
 partitioning → flow → paged-checkpoints walk described below.
 
 ```
-        Flow  =  one lineage chain (one connected component)
+        Main flow of "AQ dataset"  =  AQ dataset + everything derived from it
 
    AQ dataset ─────▶ UU domain ─────▶ UU feed
        │                 │                │
@@ -56,6 +59,8 @@ partitioning → flow → paged-checkpoints walk described below.
 
    GET /flows/{flowId}/checkpoints  ── returns ALL of these rows, each tagged
                                        with the partitioning it belongs to.
+
+   The main flow of "UU feed", however, contains only UU feed (and whatever is derived from it).
 ```
 
 ---
@@ -69,6 +74,10 @@ Three steps, all on **today's** v2 API:
    point from a business key such as `catalog_path`)*
 2. **Resolve its lineage chain → flow id.**
    `GET /api/v2/partitionings/{id}/main-flow` → `{ id: <flowId> }`.
+   This covers the dataset and its **descendants**. To include the **upstream** datasets too, start from the root:
+   `GET /api/v2/partitionings/{id}/ancestors` lists the primary partitionings of the flows the dataset belongs to;
+   take the root among them and use *its* main flow. (Known limitation: a partitioning re-parented with
+   `PATCH .../ancestors` joins the new parent's flows, but its already existing descendants do not.)
 3. **Pull all measurements across the chain, newest first, paged.**
    `GET /api/v2/flows/{flowId}/checkpoints?limit=100&offset=0&include-properties=true`.
    Each row = one measure of one checkpoint, **tagged with its partitioning**. That is the audit dataset:
@@ -114,7 +123,8 @@ If an audit wants the dataset graph *without* the measurements, use `GET /api/v2
 **Gap:** there is **no server-side time filter** on any checkpoint endpoint today. `get_flow_checkpoints` filters
 by `checkpoint-name` and `checkpoint-properties` only; "last 2 months" must be done client-side (above).
 
-**Proposed change — minimal and backward-compatible** (mirrors the *existing* optional filters, so nothing breaks):
+**Proposed change — minimal and backward-compatible** (mirrors the *existing* optional filters, so nothing breaks).
+*Implemented (2026-09-25), with the index choice described below:*
 
 - **Database:** add two optional parameters to `flows.get_flow_checkpoints`
   (and, for the single-dataset case, `runs.get_partitioning_checkpoints`):
@@ -135,16 +145,22 @@ by `checkpoint-name` and `checkpoint-properties` only; "last 2 months" must be d
   GET /api/v2/flows/{flowId}/checkpoints?from=2026-06-01T00:00:00Z&to=2026-08-01T00:00:00Z&limit=100
   ```
 
-- **Index:** add a supporting index on `runs.checkpoints (process_start_time)` — today the only index on that
-  table is on `fk_partitioning`, so a large flow's time-window scan has nothing to lean on. A composite
-  `(fk_partitioning, process_start_time)` also helps the single-partitioning endpoint.
+- **Index:** add a supporting index — today the only index on `runs.checkpoints` is on `fk_partitioning`, so a large
+  flow's time-window scan has nothing to lean on. *Implemented as the composite `(fk_partitioning, process_start_time)`
+  (`checkpoints_idx2`, built `CONCURRENTLY`)*: both endpoints read checkpoints per partitioning, so each partitioning
+  of the flow is range-scanned by time. On 2M checkpoints (200k in the flow) a 2-month page of 100 took ~26 ms with
+  it and ~1.2 s without it. The checkpoint properties filter got a supporting
+  `runs.checkpoint_properties (fk_checkpoint, property_name)` index as well.
 
 With this, "last 2 months" is a single server-side query per page instead of client-side over-fetching, and the
 cutoff logic lives in one place.
 
-*(Minor, optional: the `/flows/{flowId}/checkpoints` endpoint does not currently expose `latest-first` — the DB
-function has it and defaults to `TRUE`, which is what audits want anyway. Expose it only if ascending order is ever
-needed.)*
+*(Minor: the `/flows/{flowId}/checkpoints` endpoint now exposes `latest-first` too — the DB function has it and
+defaults to `TRUE`, which is what audits want anyway.)*
+
+**Consumption via the reader:** `FlowReader` / `PartitioningReader` take a `CheckpointFilter` (name, multi-value
+properties, `from` / `to`, `latestFirst`) in `getCheckpointsPage`, and `getAllCheckpoints` reads all the pages of a
+filtered query.
 
 ---
 
@@ -197,12 +213,12 @@ containment** lookup is for:
   — containment must target the `keysToValuesMap` sub-object, because the stored value is the envelope
   `{ keys, version, keysToValuesMap }` (with an ordered `keys` array), **not** a flat map — backed by a
   `jsonb_path_ops` **GIN index** on `(partitioning -> 'keysToValuesMap')` (none exists today — the store is
-  exact-match only, ADR 03 §5.4).
+  exact-match only).
 - **API:** `GET /api/v2/partitionings/search?keys=<base64 partial JSON>&limit=&offset=` (mirrors the existing
   base64-JSON convention of `GET /partitionings`).
 - **0 / 1 / many results:** a partial key legitimately matches many parents — link to **all** of them (the flow
   model is many-to-many, so N parents need no schema change), or, for the least-selective `catalog_path`-only
-  case, the most-recent — per ADR 03 §3.2's match-resolution strategy.
+  case, the most recent one.
 
 **Recommendation:** prefer the rollup convention; treat containment search as the fallback for heterogeneous or
 uncooperative producers (and ad-hoc audits).
@@ -237,7 +253,7 @@ Two facts (both verified in the schema) frame the whole list:
   hot linkage keys (`catalog_path`, `info_date`).
 - **Unlocks.** Subset / containment lookup ("all currencies"), query-by-dimension ("every partitioning where
   `currency = EUR`"), and partial-parent lookup (§5) become **indexed** SQL instead of scans. This is the single
-  change that turns ADR 03 **Option C** and ADR 04 **§5's hard case** from "new subsystem" into "one index + one
+  change that turns **§5's hard case** (containment search) from "new subsystem" into "one index + one
   function."
 - **Cost.** The GIN index is nearly free and fully backward-compatible (no write-path change). The normalized
   table costs a trigger, a backfill, and storage, and must be kept consistent with the JSONB.
@@ -254,6 +270,10 @@ Two facts (both verified in the schema) frame the whole list:
 - **Cost.** BRIN index: low and backward-compatible. Table partitioning: medium (migration), defer until needed.
 - **Verdict.** **Do the BRIN index with §4.** It is the cheapest structural change that scales the core audit
   query.
+- **Outcome (2026-09-25).** §4 shipped with the composite B-tree `(fk_partitioning, process_start_time)` instead:
+  checkpoint queries are always scoped to partitionings, and `process_start_time` is supplied by the client (late or
+  backfilled reports), so the physical time ordering BRIN depends on is not guaranteed. BRIN is deferred until
+  `EXPLAIN` at production volume shows a need.
 
 ### Bet 3 — Persist lineage as explicit edges (a real DAG)
 
@@ -272,7 +292,8 @@ Two facts (both verified in the schema) frame the whole list:
 
 **Recommended sequence.** Ship the two low-cost, backward-compatible indexes first — **Bet 1's GIN** and **Bet 2's
 BRIN** (no producer changes, and together they unlock most of the audit + partial-lookup value). Start **recording
-edges** (Bet 3) additively so provenance isn't lost.
+edges** (Bet 3) additively so provenance isn't lost. *(Bet 2 was covered by the composite B-tree of §4; Bets 1 and 3
+are deferred.)*
 
 ---
 
@@ -293,11 +314,11 @@ edges** (Bet 3) additively so provenance isn't lost.
 ## 8. Consequences & Open Questions
 
 - **Which timestamp is authoritative for "the last 2 months"?** `process_start_time` (when the data was *processed*) vs.
-  `created_at` (when the checkpoint was *reported to Atum*). Recommendation: filter on `process_start_time`
-  (business time), but confirm with the audit owners as for late/backfilled reports the two can differ.
+  `created_at` (when the checkpoint was *reported to Atum*). **Decided (2026-09-25): `process_start_time`** (business
+  time). For late/backfilled reports the two can differ.
 - **Volume at scale.** A long-lived flow accumulates many checkpoints; the proposed index is what keeps a
   time-window audit query cheap.
-- **Explicit parent -> child edges.** Flow membership gives the connected lineage *set*; if an audit needs the exact
+- **Explicit parent -> child edges.** Flow membership gives the downstream lineage *set*; if an audit needs the exact
   edge list (who is parent of whom), that is reconstructed today via `get_partitioning_ancestors` per node. A
   dedicated "flow graph" (nodes + edges) endpoint is a possible small future addition.
 - **Access control** for audit consumers (read-only scopes/authorization) is out of scope here.

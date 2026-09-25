@@ -24,7 +24,7 @@ import java.util.UUID
 
 class CheckpointItemWithPartitioningFromDBUnitTests extends AnyFunSuiteLike with TestData {
 
-  test("groupAndConvertItemsToCheckpointWithPartitioningDTOs should group by idCheckpoint and sort by checkpointStartTime in descending order") {
+  test("groupAndConvertItemsToCheckpointWithPartitioningDTOs should group by idCheckpoint and keep the order of the DB rows") {
     val checkpointItem1 = CheckpointItemWithPartitioningFromDB(
       idCheckpoint = UUID.randomUUID(),
       checkpointName = "checkpoint1",
@@ -57,14 +57,20 @@ class CheckpointItemWithPartitioningFromDBUnitTests extends AnyFunSuiteLike with
       hasMore = true
     )
 
-    val checkpointItems = Seq(checkpointItem1, checkpointItem2)
+    // a second measure of the first checkpoint, i.e. another DB row of the same checkpoint
+    val checkpointItem1OtherMeasure = checkpointItem1.copy(measureName = "measure3", measuredColumns = Seq("col3"))
 
-    val result = CheckpointItemWithPartitioningFromDB.groupAndConvertItemsToCheckpointWithPartitioningDTOs(checkpointItems)
+    // earliest first, as returned by the DB for latest-first = false
+    val earliestFirst = CheckpointItemWithPartitioningFromDB
+      .groupAndConvertItemsToCheckpointWithPartitioningDTOs(Seq(checkpointItem1, checkpointItem1OtherMeasure, checkpointItem2))
+    assert(earliestFirst.isRight)
+    assert(earliestFirst.toOption.get.map(_.id) == Seq(checkpointItem1.idCheckpoint, checkpointItem2.idCheckpoint))
+    assert(earliestFirst.toOption.get.head.measurements.size == 2)
 
-    assert(result.isRight)
-    val checkpoints = result.toOption.get
-
-    assert(checkpoints.size == 2)
-    assert(checkpoints.head.processStartTime.isAfter(checkpoints(1).processStartTime))
+    // latest first, as returned by the DB by default
+    val latestFirst = CheckpointItemWithPartitioningFromDB
+      .groupAndConvertItemsToCheckpointWithPartitioningDTOs(Seq(checkpointItem2, checkpointItem1, checkpointItem1OtherMeasure))
+    assert(latestFirst.isRight)
+    assert(latestFirst.toOption.get.map(_.id) == Seq(checkpointItem2.idCheckpoint, checkpointItem1.idCheckpoint))
   }
 }

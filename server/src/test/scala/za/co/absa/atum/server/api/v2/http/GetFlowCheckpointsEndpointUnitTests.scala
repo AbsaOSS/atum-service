@@ -32,6 +32,7 @@ import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO, ZLayer}
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData {
@@ -45,11 +46,11 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   private val encodedExecutionIdProperties =
     "eyJleGVjdXRpb25JRCI6IjAxOWY4OTgxLTc4NjgtNzlmYy04MWQzLTgxNDNhNDcwNmY4YSJ9"
 
-  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, None, includeProperties = false))
+  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, None, None, None, None, includeProperties = false))
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
     )
-  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, None, includeProperties = true))
+  when(flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, None, None, None, None, includeProperties = true))
     .thenReturn(
       ZIO.succeed(
         PaginatedResponse(
@@ -59,24 +60,56 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
         )
       )
     )
-  when(flowControllerMockV2.getFlowCheckpoints(2L, 5, 0L, None, None, includeProperties = false))
+  when(flowControllerMockV2.getFlowCheckpoints(2L, 5, 0L, None, None, None, None, None, includeProperties = false))
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO2), Pagination(5, 0, hasMore = false), uuid))
     )
-  when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None, None, includeProperties = false))
+  when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None, None, None, None, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
   when(
-    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(executionIdProperties.view.mapValues(Seq(_)).toMap), includeProperties = false)
+    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(executionIdProperties.view.mapValues(Seq(_)).toMap), None, None, None, includeProperties = false)
   )
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
     )
 
+  private val windowFrom = ZonedDateTime.parse("2026-06-01T00:00:00Z")
+  private val windowTo = ZonedDateTime.parse("2026-08-01T00:00:00Z")
+
+  when(
+    flowControllerMockV2.getFlowCheckpoints(
+      1L, 5, 0L, None, None, Some(false), Some(windowFrom), Some(windowTo), includeProperties = false
+    )
+  )
+    .thenReturn(
+      ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO2), Pagination(5, 0, hasMore = false), uuid))
+    )
+
   private val flowControllerMockLayerV2 = ZLayer.succeed(flowControllerMockV2)
 
   private val getFlowCheckpointServerEndpoint = Endpoints.getFlowCheckpointsEndpoint.zServerLogic({
-    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], includeProperties: Boolean) =>
-      FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, includeProperties)
+    case (
+          flowId: Long,
+          limit: Int,
+          offset: Long,
+          checkpointName: Option[String],
+          checkpointProperties: Option[Map[String, Seq[String]]],
+          latestFirst: Option[Boolean],
+          from: Option[ZonedDateTime],
+          to: Option[ZonedDateTime],
+          includeProperties: Boolean
+        ) =>
+      FlowController.getFlowCheckpoints(
+        flowId,
+        limit,
+        offset,
+        checkpointName,
+        checkpointProperties,
+        latestFirst,
+        from,
+        to,
+        includeProperties
+      )
   })
 
   def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -173,6 +206,47 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
             StatusCode.Ok
           )
         )
+      },
+      test("Returns an expected PaginatedResponse[CheckpointWithPartitioningDTO] when filtering by a time window, earliest first") {
+        val baseUri =
+          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&latest-first=false&from=2026-06-01T00:00:00Z&to=2026-08-01T00:00:00Z"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
+          .send(backendStub)
+
+        val body = response.map(_.body)
+        val statusCode = response.map(_.code)
+
+        assertZIO(body <&> statusCode)(
+          equalTo(
+            Right(PaginatedResponse(Seq(checkpointWithPartitioningDTO2), Pagination(5, 0, hasMore = false), uuid)),
+            StatusCode.Ok
+          )
+        )
+      },
+      test("Returns expected 400 when 'to' is not a valid date-time") {
+        val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&to=not-a-date-time"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+      },
+      test("Returns expected 400 when 'from' is after 'to'") {
+        val baseUri =
+          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&from=2026-08-01T00:00:00Z&to=2026-06-01T00:00:00Z"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       },
       test("Returns expected 400 when checkpoint-properties is not valid base64") {
         val baseUri =

@@ -1,3 +1,21 @@
+/*
+ * Copyright 2021 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+-- The previous overload is dropped so that the new signature (JSONB multi-value checkpoint properties filter and
+-- the process start time window) is unambiguous when the function is called with named or defaulted arguments.
 DROP FUNCTION IF EXISTS runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE, BOOLEAN);
 
 CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
@@ -7,6 +25,8 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     IN i_checkpoint_name TEXT DEFAULT NULL,
     IN i_checkpoint_properties JSONB DEFAULT NULL,
     IN i_latest_first BOOLEAN DEFAULT TRUE,
+    IN i_from_time TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    IN i_to_time TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     OUT status INTEGER,
     OUT status_text TEXT,
     OUT id_checkpoint UUID,
@@ -19,8 +39,53 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     OUT checkpoint_start_time TIMESTAMP WITH TIME ZONE,
     OUT checkpoint_end_time TIMESTAMP WITH TIME ZONE,
     OUT has_more BOOLEAN
-)
-    RETURNS SETOF record AS
+) RETURNS SETOF record AS
+--------------------------------------------------------------------------------------------------------------------
+--
+-- Function: runs.get_partitioning_checkpoints(8)
+--      Retrieves all checkpoints (measures and their measurement details) related to an input partitioning (and
+--      checkpoint name, checkpoint properties and/or process start time window, if specified).
+--
+-- Note: a single row returned from this function doesn't contain all data related to a single checkpoint - it only
+--     represents one measure associated with a checkpoint. So even if only a single checkpoint would be retrieved,
+--     this function can potentially return multiple rows.
+--
+-- Parameters:
+--      i_partitioning_id       - ID of the partitioning for which checkpoints are to be retrieved
+--      i_checkpoints_limit     - (optional) maximum number of checkpoints to return, returns all of them if NULL
+--      i_offset                - (optional) offset of the first checkpoint to return
+--      i_checkpoint_name       - (optional) if specified, returns data related to particular checkpoint's name
+--      i_checkpoint_properties - (optional) JSON object mapping a property name to an array of accepted values,
+--                                  e.g. {"executionID": ["a", "b"]}; returns only checkpoints that, for every given
+--                                  property name, have that property with one of the accepted values
+--      i_latest_first          - (optional) if true (default), checkpoints are ordered by process_start_time
+--                                  in descending order (latest first); if false, in ascending order
+--      i_from_time             - (optional) if specified, returns only checkpoints with process_start_time >= i_from_time
+--      i_to_time               - (optional) if specified, returns only checkpoints with process_start_time < i_to_time
+--
+-- Note: i_checkpoints_limit and i_offset are used for pagination purposes;
+--       checkpoints are ordered by process_start_time (descending by default, see i_latest_first)
+--       and then by id_checkpoint in ascending order as a tie-breaker
+--
+-- Returns:
+--      status                  - Status code
+--      status_text             - Status text
+--      id_checkpoint           - ID of retrieved checkpoint
+--      checkpoint_name         - Name of the retrieved checkpoint
+--      checkpoint_author       - Author of the checkpoint
+--      measured_by_atum_agent  - Flag indicating whether the checkpoint was measured by Atum Agent
+--                                (if false, data supplied manually)
+--      measure_name            - measure name associated with a given checkpoint
+--      measured_columns        - measure columns associated with a given checkpoint
+--      measurement_value       - measurement details associated with a given checkpoint
+--      checkpoint_start_time   - Time of the checkpoint
+--      checkpoint_end_time     - End time of the checkpoint computation
+--      has_more                - Flag indicating whether there are more checkpoints available
+--
+-- Status codes:
+--      11                      - OK
+--      41                      - Partitioning not found
+---------------------------------------------------------------------------------------------------
 $$
 DECLARE
     _has_more     BOOLEAN;
@@ -41,6 +106,8 @@ BEGIN
               FROM runs.checkpoints C
               WHERE C.fk_partitioning = i_partitioning_id
                 AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
+                AND (i_from_time IS NULL OR C.process_start_time >= i_from_time)
+                AND (i_to_time IS NULL OR C.process_start_time < i_to_time)
                 AND (
                     i_checkpoint_properties IS NULL
                     OR NOT EXISTS (
@@ -79,6 +146,8 @@ BEGIN
                                      FROM runs.checkpoints C
                                      WHERE C.fk_partitioning = i_partitioning_id
                                        AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
+                                       AND (i_from_time IS NULL OR C.process_start_time >= i_from_time)
+                                       AND (i_to_time IS NULL OR C.process_start_time < i_to_time)
                                        AND (
                                            i_checkpoint_properties IS NULL
                                            OR NOT EXISTS (
@@ -128,5 +197,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, JSONB, BOOLEAN) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, JSONB, BOOLEAN) TO atum_owner;
+ALTER FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, JSONB, BOOLEAN, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, JSONB, BOOLEAN, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE) TO atum_owner;

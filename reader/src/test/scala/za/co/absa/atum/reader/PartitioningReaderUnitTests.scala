@@ -39,10 +39,12 @@ import za.co.absa.atum.model.envelopes.Pagination
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.atum.reader.PartitioningReaderUnitTests._
+import za.co.absa.atum.reader.requests.CheckpointFilter
 import za.co.absa.atum.reader.server.ServerConfig
 
 import java.time.ZonedDateTime
 import java.util.UUID
+import scala.annotation.nowarn
 
 class PartitioningReaderUnitTests extends AnyFunSuiteLike {
   private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
@@ -243,7 +245,7 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
     )
 
     val reader = PartitioningReader(atumPartitions)
-    val result = reader.getCheckpointsOfNamePage("Test checkpoints 1")
+    val result = (reader.getCheckpointsOfNamePage("Test checkpoints 1"): @nowarn("cat=deprecation"))
     assert(result == Right(expected))
   }
 
@@ -269,8 +271,58 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
 
     val reader = PartitioningReader(atumPartitions)
     // base64url-encoded {"executionID":"019f8981-7868-79fc-81d3-8143a4706f8a"}
-    val result = reader.getCheckpointsByPropertiesPage(Map("executionID" -> "019f8981-7868-79fc-81d3-8143a4706f8a"))
+    val result = (
+      reader.getCheckpointsByPropertiesPage(Map("executionID" -> "019f8981-7868-79fc-81d3-8143a4706f8a")): @nowarn("cat=deprecation")
+    )
     assert(result.isRight)
+  }
+
+  test("The partitioning checkpoints are queried with name, multi-value properties and time window in a single request") {
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings)) =>
+          Response.ok(partitioningResponse)
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings, "7", V2Paths.Checkpoints)) =>
+          assert(r.uri.querySegments.contains(KeyValue("limit", "10")))
+          assert(r.uri.querySegments.contains(KeyValue("offset", "0")))
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-name", "Test checkpoints 1")))
+          // base64url-encoded {"executionID":["id1","id2"]}
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-properties", "eyJleGVjdXRpb25JRCI6WyJpZDEiLCJpZDIiXX0=")))
+          assert(r.uri.querySegments.contains(KeyValue("from", "2026-06-01T00:00:00Z")))
+          assert(!r.uri.paramsMap.contains("to"))
+          assert(!r.uri.paramsMap.contains("latest-first"))
+          Response.ok(checkpointsResponse)
+      }
+
+    val filter = CheckpointFilter(
+      name = Some("Test checkpoints 1"),
+      properties = Map("executionID" -> Set("id1", "id2")),
+      from = Some(ZonedDateTime.parse("2026-06-01T00:00:00Z"))
+    )
+    val result = PartitioningReader(AtumPartitions(List("a" -> "b", "c" -> "d"))).getCheckpointsPage(filter = filter)
+    assert(result.map(_.data.size) == Right(2))
+  }
+
+  test("All partitioning checkpoints satisfying the filter are queried page by page") {
+    var queriedOffsets = Vector.empty[String]
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings)) =>
+          Response.ok(partitioningResponse)
+        case r if r.uri.path.endsWith(List(V2Paths.Partitionings, "7", V2Paths.Checkpoints)) =>
+          assert(r.uri.querySegments.contains(KeyValue("limit", "2")))
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-name", "Test checkpoints 1")))
+          val offset = r.uri.paramsMap("offset")
+          queriedOffsets :+= offset
+          if (offset == "4") Response.ok(checkpointsResponse)
+          else Response.ok(checkpointsResponse.replace("\"hasMore\" : false", "\"hasMore\" : true"))
+      }
+
+    val result = PartitioningReader(AtumPartitions(List("a" -> "b", "c" -> "d")))
+      .getAllCheckpoints(CheckpointFilter(name = Some("Test checkpoints 1")), pageSize = 2)
+
+    assert(result.map(_.size) == Right(6))
+    assert(queriedOffsets == Vector("0", "2", "4"))
   }
 
   test("The partitioning additional data are properly queried and delivered as DTO") {

@@ -32,6 +32,7 @@
     - [Usage](#usage)
         - [Atum Agent routines](#atum-agent-routines)
         - [Control measurement types](#control-measurement-types)
+        - [Reading checkpoints](#reading-checkpoints)
     - [How to generate Code coverage report](#how-to-generate-code-coverage-report)
     - [How to Run in IntelliJ](#how-to-run-in-intellij)
     - [How to Run Tests](#how-to-run-tests)
@@ -230,6 +231,38 @@ represents all currently supported measurement types (aka measures):
 [//]: # (| controlType.aggregatedTruncTotal    | Calculates SUM&#40;TRUNC&#40;&#41;&#41; of the specified column       |)
 
 [//]: # (| controlType.absAggregatedTruncTotal | Calculates SUM&#40;TRUNC&#40;ABS&#40;&#41;&#41;&#41; of the specified column  |)
+
+### Reading checkpoints
+
+The _Atum Reader_ reads checkpoints of a partitioning (`PartitioningReader`) or of the whole flow a partitioning is the
+main partitioning of (`FlowReader`). The checkpoints to read are described by a `CheckpointFilter`; its parts are all
+optional and combined together:
+
+| Filter part   | Meaning                                                                                        |
+|---------------|:-----------------------------------------------------------------------------------------------|
+| `name`        | checkpoints of this name                                                                       |
+| `properties`  | for every property name given, the checkpoint property has one of the values (`IN (...)`)      |
+| `from`, `to`  | process start time window: `from` inclusive, `to` exclusive                                    |
+| `latestFirst` | order by process start time, latest first (default) or earliest first                          |
+
+For example, all measurements of a flow from the last two months, of two specific executions:
+
+```scala
+import za.co.absa.atum.reader.FlowReader
+import za.co.absa.atum.reader.requests.CheckpointFilter
+
+val filter = CheckpointFilter(
+  properties = Map("executionID" -> Set("a", "b")),
+  from = Some(ZonedDateTime.now().minusMonths(2))
+)
+val reader = FlowReader(mainFlowPartitioning)
+
+reader.getCheckpointsPage(pageSize = 100, offset = 0, filter = filter) // one page
+reader.getAllCheckpoints(filter)                                         // all pages, held in memory
+```
+
+Each flow checkpoint carries the partitioning it belongs to. The flow of a partitioning covers the partitioning and the
+partitionings derived from it (its descendants), not its ancestors.
 
 
 ## How to generate Code coverage report

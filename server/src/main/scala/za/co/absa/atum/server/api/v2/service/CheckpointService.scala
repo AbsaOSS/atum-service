@@ -22,6 +22,7 @@ import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @accessible
@@ -42,6 +43,8 @@ trait CheckpointService {
     checkpointName: Option[String],
     checkpointProperties: Option[Map[String, Seq[String]]],
     latestFirst: Option[Boolean],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime],
     includeProperties: Boolean
   ): IO[ServiceError, PaginatedResult[CheckpointV2DTO]]
 
