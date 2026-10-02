@@ -20,7 +20,7 @@ object Dependencies {
 
   object Versions {
     val spark3 = "3.5.5"
-    val spark4 = "4.0.2"
+    val spark4 = "4.1.2"
 
     val scalatest = "3.2.15"
     val scalaMockito = "1.17.12"
