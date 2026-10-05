@@ -23,15 +23,19 @@ import za.co.absa.commons.version.Version
 
 
 object Setup {
-  //supported Java versions
-  val requiredJava: Double = "1.8".toDouble
-  val recommendedJava: Double = "11".toDouble
   val currentJava: Double =  sys.props("java.specification.version").toDouble
 
+  //supported Java versions
+  val spark3RequiredJava: Double = "1.8".toDouble // absolute minimum
+  val recommendedJava: Double = "11".toDouble
+
+  //Spark 4 has a Java 17 baseline, so its build rows cannot even be compiled on an older JDK
+  val spark4RequiredJava: Double = "17".toDouble
+  val spark4Supported: Boolean = currentJava >= spark4RequiredJava
+
   //possible supported Scala versions
-  val scala211: Version = Version.asSemVer("2.11.12")
   val scala212: Version = Version.asSemVer("2.12.18")
-  val scala213: Version = Version.asSemVer("2.13.13")
+  val scala213: Version = Version.asSemVer("2.13.18")
 
   lazy val commonSettings: Seq[SettingsDefinition] = Seq(
     scalacOptions ++= Setup.commonScalacOptions,
@@ -45,6 +49,25 @@ object Setup {
     scala212,
     scala213,
   )
+
+  /**
+   * Scala versions supported for a given Spark axis. Spark 4 dropped Scala 2.12, so the 2.12 row must never be
+   * attempted against it - resolution of `spark-core_2.12:4.x` would simply fail.
+   */
+  def clientSupportedScalaVersions(sparkVersion: String): Seq[Version] = {
+    if (Dependencies.Versions.isSpark4OrLater(sparkVersion)) Seq(scala213)
+    else clientSupportedScalaVersions
+  }
+
+  //Java bytecode level the client modules (agent, model, reader) are compiled down to
+  val spark3ClientJavaTarget: String = "1.8"
+  val spark4ClientJavaTarget: String = "17"
+
+  /** Spark 3 artifacts stay on Java 8 bytecode; Spark 4 requires a Java 17 baseline. */
+  def clientJavaTarget(sparkVersion: String): String = {
+    if (Dependencies.Versions.isSpark4OrLater(sparkVersion)) spark4ClientJavaTarget
+    else spark3ClientJavaTarget
+  }
 
   val commonScalacOptions: Seq[String] = Seq(
     "-unchecked",
@@ -63,19 +86,23 @@ object Setup {
     "-Ymacro-annotations"
   )
 
-  val clientJavacOptions: Seq[String] = Seq("-source", "1.8", "-target", "1.8", "-Xlint")
-  def clientScalacOptions(scalaVersion: Version): Seq[String] = {
+  def clientJavacOptions(javaTarget: String = spark3ClientJavaTarget): Seq[String] =
+    Seq("-source", javaTarget, "-target", javaTarget, "-Xlint")
+
+  def clientScalacOptions(scalaVersion: Version, javaTarget: String = spark3ClientJavaTarget): Seq[String] = {
+    //scalac's `-release` takes the JEP-322 feature number, so "1.8" has to be normalised to "8"
+    val release = javaTarget.stripPrefix("1.")
     if (scalaVersion >= scala213) {
       Seq(
-        "-release", "8",
+        "-release", release,
         "-language:higherKinds",
         "-Ymacro-annotations"
       )
     } else {
       Seq(
-        "-release", "8",
+        "-release", release,
         "-language:higherKinds",
-        "-target:8"
+        s"-target:$release"
       )
     }
   }
