@@ -22,6 +22,8 @@ import za.co.absa.atum.server.config.PostgresConfig
 import zio._
 import zio.interop.catz._
 
+import java.sql.DriverManager
+
 object TestTransactorProvider {
 
   val layerWithoutRollback: ZLayer[Any, Config.Error, Transactor[Task]] = ZLayer {
@@ -51,6 +53,25 @@ object TestTransactorProvider {
       )
       transactorWithRollback = Transactor.strategy.set(transactor, Strategy.default.copy(after = HC.rollback))
     } yield transactorWithRollback
+  }
+
+  // All database calls share a single connection and a single transaction, rolled back once the layer is released.
+  // This allows seeding data with some database functions and reading them back with others within a test.
+  val layerWithSingleTransactionRollback: ZLayer[Any, Throwable, Transactor[Task]] = ZLayer.scoped {
+    for {
+      postgresConfig <- ZIO.config[PostgresConfig](PostgresConfig.config)
+      connection <- ZIO.acquireRelease(
+        ZIO.attemptBlocking {
+          val connection = DriverManager.getConnection(
+            s"jdbc:postgresql://${postgresConfig.serverName}:${postgresConfig.portNumber}/${postgresConfig.databaseName}",
+            postgresConfig.user,
+            postgresConfig.password
+          )
+          connection.setAutoCommit(false)
+          connection
+        }
+      )(connection => ZIO.attemptBlocking { connection.rollback(); connection.close() }.orDie)
+    } yield Transactor.strategy.set(Transactor.fromConnection[Task](connection), Strategy.void)
   }
 
 }
