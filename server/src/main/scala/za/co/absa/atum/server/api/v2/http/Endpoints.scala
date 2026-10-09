@@ -50,7 +50,7 @@ object Endpoints extends BaseEndpoints {
       }
     }(_.asBase64EncodedJsonString)
       .validate(Validator.custom { properties =>
-        val propertiesWithoutValues = properties.collect { case (name, values) if values.isEmpty => name }
+        val propertiesWithoutValues = properties.filter(_._2.isEmpty).keys
         if (propertiesWithoutValues.isEmpty) ValidationResult.Valid
         else
           ValidationResult.Invalid(

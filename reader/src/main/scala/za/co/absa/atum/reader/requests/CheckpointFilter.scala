@@ -34,8 +34,7 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
  *  @param name       - only checkpoints of this name
  *  @param properties - only checkpoints that, for every property name given, have that property with one of the given
  *                      values, e.g. `Map("executionID" -> Set("a", "b"))` means `executionID IN (a, b)`; every property
- *                      needs at least one value
- *  @throws IllegalArgumentException if a property is given without any value
+ *                      needs at least one value, otherwise an `IllegalArgumentException` is thrown
  */
 case class CheckpointFilter(
   name: Option[String] = None,
@@ -44,7 +43,7 @@ case class CheckpointFilter(
 
   require(
     properties.values.forall(_.nonEmpty),
-    s"Checkpoint properties without any accepted value: ${properties.collect { case (n, v) if v.isEmpty => n }.mkString(", ")}"
+    s"Checkpoint properties without any accepted value: ${properties.filter(_._2.isEmpty).keys.mkString(", ")}"
   )
 
   private[reader] def toQueryParams: Map[String, String] = {
