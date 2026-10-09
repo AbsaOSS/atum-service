@@ -70,7 +70,7 @@ object TestTransactorProvider {
           connection.setAutoCommit(false)
           connection
         }
-      )(connection => ZIO.attemptBlocking { connection.rollback(); connection.close() }.orDie)
+      )(connection => ZIO.attemptBlocking(try connection.rollback() finally connection.close()).orDie)
     } yield Transactor.strategy.set(Transactor.fromConnection[Task](connection), Strategy.void)
   }
 
