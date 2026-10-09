@@ -20,7 +20,7 @@ DROP FUNCTION IF EXISTS runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, T
 
 CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     IN i_partitioning_id BIGINT,
-    IN i_checkpoints_limit INT DEFAULT NULL,
+    IN i_checkpoints_limit INT DEFAULT 5,
     IN i_offset BIGINT DEFAULT 0,
     IN i_checkpoint_name TEXT DEFAULT NULL,
     IN i_checkpoint_properties JSONB DEFAULT NULL,
