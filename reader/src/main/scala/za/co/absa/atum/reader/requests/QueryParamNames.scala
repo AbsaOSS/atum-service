@@ -22,4 +22,7 @@ object QueryParamNames {
   final val CheckpointName = "checkpoint-name"
   final val CheckpointProperties = "checkpoint-properties"
   final val IncludeProperties = "include-properties"
+  final val LatestFirst = "latest-first"
+  final val From = "from"
+  final val To = "to"
 }

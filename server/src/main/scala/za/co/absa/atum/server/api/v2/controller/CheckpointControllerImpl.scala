@@ -25,6 +25,7 @@ import za.co.absa.atum.server.api.v2.service.CheckpointService
 import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 class CheckpointControllerImpl(checkpointService: CheckpointService) extends CheckpointController with BaseController {
@@ -66,6 +67,8 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
     checkpointName: Option[String] = None,
     checkpointProperties: Option[Map[String, Seq[String]]] = None,
     latestFirst: Option[Boolean] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
     includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointV2DTO]] = {
     mapToPaginatedResponse(
@@ -79,6 +82,8 @@ class CheckpointControllerImpl(checkpointService: CheckpointService) extends Che
           checkpointName,
           checkpointProperties,
           latestFirst,
+          from,
+          to,
           includeProperties
         )
       )

@@ -23,6 +23,8 @@ import za.co.absa.atum.server.api.v2.repository.FlowRepository
 import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
+import java.time.ZonedDateTime
+
 class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with BaseService {
 
  override def getFlowCheckpoints(
@@ -31,10 +33,23 @@ class FlowServiceImpl(flowRepository: FlowRepository) extends FlowService with B
      offset: Long,
      checkpointName: Option[String],
      checkpointProperties: Option[Map[String, Seq[String]]],
+     latestFirst: Option[Boolean],
+     from: Option[ZonedDateTime],
+     to: Option[ZonedDateTime],
      includeProperties: Boolean
    ): IO[ServiceError, PaginatedResult[CheckpointWithPartitioningDTO]] = {
     repositoryCall(
-      flowRepository.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, includeProperties),
+      flowRepository.getFlowCheckpoints(
+        flowId,
+        limit,
+        offset,
+        checkpointName,
+        checkpointProperties,
+        latestFirst,
+        from,
+        to,
+        includeProperties
+      ),
       "getFlowCheckpoints"
     )
   }
