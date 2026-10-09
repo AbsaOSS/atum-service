@@ -32,7 +32,6 @@
     - [Usage](#usage)
         - [Atum Agent routines](#atum-agent-routines)
         - [Control measurement types](#control-measurement-types)
-        - [Reading checkpoints](#reading-checkpoints)
     - [How to generate Code coverage report](#how-to-generate-code-coverage-report)
     - [How to Run in IntelliJ](#how-to-run-in-intellij)
     - [How to Run Tests](#how-to-run-tests)
@@ -372,6 +371,7 @@ represents all currently supported measurement types (aka measures):
 [//]: # (| controlType.aggregatedTruncTotal    | Calculates SUM&#40;TRUNC&#40;&#41;&#41; of the specified column       |)
 
 [//]: # (| controlType.absAggregatedTruncTotal | Calculates SUM&#40;TRUNC&#40;ABS&#40;&#41;&#41;&#41; of the specified column  |)
+
 
 ## How to generate Code coverage report
 

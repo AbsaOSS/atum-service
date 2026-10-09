@@ -32,7 +32,6 @@ import zio.test.Assertion.equalTo
 import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
 import zio.{Scope, ZIO, ZLayer}
 
-import java.time.ZonedDateTime
 import java.util.UUID
 
 object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData {
@@ -41,12 +40,9 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
 
   private val uuid = UUID.randomUUID()
 
-  private val windowFrom = ZonedDateTime.parse("2026-06-01T00:00:00Z")
-  private val windowTo = ZonedDateTime.parse("2026-08-01T00:00:00Z")
-
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, None, None, None, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, None, None, None, None, includeProperties = true))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, None, None, includeProperties = true))
     .thenReturn(
       ZIO.succeed(
         PaginatedResponse(
@@ -56,20 +52,14 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
         )
       )
     )
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 20, 0L, None, None, None, None, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 20, 0L, None, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(20, 0, hasMore = false), uuid)))
-  when(checkpointControllerMock.getPartitioningCheckpoints(2L, 10, 0L, None, None, None, None, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(2L, 10, 0L, None, None, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("partitioning not found")))
-  when(checkpointControllerMock.getPartitioningCheckpoints(3L, 10, 0L, None, None, None, None, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(3L, 10, 0L, None, None, None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
-  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, Some(Map("executionID" -> Seq("id1", "id2"))), None, None, None, includeProperties = false))
+  when(checkpointControllerMock.getPartitioningCheckpoints(1L, 10, 0L, None, Some(Map("executionID" -> Seq("id1", "id2"))), None, includeProperties = false))
     .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO1), Pagination(10, 0, hasMore = true), uuid)))
-  when(
-    checkpointControllerMock.getPartitioningCheckpoints(
-      1L, 10, 0L, None, None, None, Some(windowFrom), Some(windowTo), includeProperties = false
-    )
-  )
-    .thenReturn(ZIO.succeed(PaginatedResponse(Seq(checkpointV2DTO2), Pagination(10, 0, hasMore = false), uuid)))
 
 
   private val checkpointControllerMockLayer = ZLayer.succeed(checkpointControllerMock)
@@ -83,8 +73,6 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
             checkpointName: Option[String],
             checkpointProperties: Option[Map[String, Seq[String]]],
             latestFirst: Option[Boolean],
-            from: Option[ZonedDateTime],
-            to: Option[ZonedDateTime],
             includeProperties: Boolean
           ) =>
         CheckpointController.getPartitioningCheckpoints(
@@ -94,8 +82,6 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
           checkpointName,
           checkpointProperties,
           latestFirst,
-          from,
-          to,
           includeProperties
         )
     })
@@ -128,52 +114,6 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
             StatusCode.Ok
           )
         )
-      },
-      test("Returns an expected PaginatedResponse[CheckpointV2DTO] when filtering by a process start time window") {
-        val request = basicRequest
-          .get(
-            uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=0&from=2026-06-01T00:00:00Z&to=2026-08-01T00:00:00Z"
-          )
-          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
-
-        val response = request
-          .send(backendStub)
-
-        val body = response.map(_.body)
-        val statusCode = response.map(_.code)
-
-        assertZIO(body <&> statusCode)(
-          equalTo(
-            Right(PaginatedResponse(Seq(checkpointV2DTO2), Pagination(10, 0, hasMore = false), uuid)),
-            StatusCode.Ok
-          )
-        )
-      },
-      test("Returns expected 400 when 'from' is not a valid date-time") {
-        val request = basicRequest
-          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=0&from=2026-06-01")
-          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
-
-        val response = request
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
-      },
-      test("Returns expected 400 when 'from' is not before 'to'") {
-        val request = basicRequest
-          .get(
-            uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=0&from=2026-08-01T00:00:00Z&to=2026-08-01T00:00:00Z"
-          )
-          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
-
-        val response = request
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       },
       test("Returns an expected PaginatedResponse[CheckpointV2DTO] with more data available") {
         val request = basicRequest

@@ -31,7 +31,6 @@ import za.co.absa.atum.server.model.database.CheckpointItemFromDB
 import zio._
 import zio.interop.catz.asyncInstance
 
-import java.time.ZonedDateTime
 import java.util.UUID
 
 class CheckpointRepositoryImpl(
@@ -78,22 +77,11 @@ class CheckpointRepositoryImpl(
     checkpointName: Option[String],
     checkpointProperties: Option[Map[String, Seq[String]]],
     latestFirst: Option[Boolean],
-    from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime],
     includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointV2DTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getPartitioningCheckpointsFn(
-        GetPartitioningCheckpointsArgs(
-          partitioningId,
-          limit,
-          offset,
-          checkpointName,
-          checkpointProperties,
-          latestFirst,
-          from,
-          to
-        )
+        GetPartitioningCheckpointsArgs(partitioningId, limit, offset, checkpointName, checkpointProperties, latestFirst)
       ),
       "getPartitioningCheckpoints"
     )

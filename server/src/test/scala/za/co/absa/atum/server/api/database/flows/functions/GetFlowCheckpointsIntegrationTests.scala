@@ -25,8 +25,6 @@ import zio._
 import zio.test._
 import zio.interop.catz.asyncInstance
 
-import java.time.ZonedDateTime
-
 object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -39,10 +37,7 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
           limit = 10,
           offset = 0L,
           checkpointName = Some("TestCheckpointName"),
-          checkpointProperties = None,
-          latestFirst = None,
-          from = None,
-          to = None
+          checkpointProperties = None
         )
 
         for {
@@ -56,27 +51,7 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
           limit = 10,
           offset = 0L,
           checkpointName = Some("TestCheckpointName"),
-          checkpointProperties = Some(Map("key1" -> Seq("value1", "value2"))),
-          latestFirst = None,
-          from = None,
-          to = None
-        )
-
-        for {
-          getFlowCheckpoints <- ZIO.service[GetFlowCheckpoints]
-          result <- getFlowCheckpoints(args)
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(42, "Flow not found"))))
-      },
-      test("Should bind the latest-first flag and the process start time window") {
-        val args = GetFlowCheckpoints.GetFlowCheckpointsArgs(
-          flowId = 1L,
-          limit = 10,
-          offset = 0L,
-          checkpointName = None,
-          checkpointProperties = None,
-          latestFirst = Some(false),
-          from = Some(ZonedDateTime.parse("2026-06-01T00:00:00Z")),
-          to = Some(ZonedDateTime.parse("2026-08-01T00:00:00+02:00"))
+          checkpointProperties = Some(Map("key1" -> Seq("value1", "value2")))
         )
 
         for {

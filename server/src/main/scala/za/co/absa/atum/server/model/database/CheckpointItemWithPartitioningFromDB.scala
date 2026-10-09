@@ -98,8 +98,10 @@ object CheckpointItemWithPartitioningFromDB {
     checkpointItems: Seq[CheckpointItemWithPartitioningFromDB]
   ): Either[Throwable, Seq[CheckpointWithPartitioningDTO]] = {
     val groupedItems = checkpointItems.groupBy(_.idCheckpoint)
-    // the DB function returns the items already ordered (latest or earliest first, as requested), so keep that order
-    val orderedCheckpointIds = checkpointItems.map(_.idCheckpoint).distinct
+    val orderedCheckpointIds = checkpointItems
+      .sortBy(_.checkpointStartTime)(Ordering[ZonedDateTime].reverse)
+      .map(_.idCheckpoint)
+      .distinct
 
     val result = orderedCheckpointIds.map { id => fromItemsToCheckpointWithPartitioningDTO(groupedItems(id)) }
 

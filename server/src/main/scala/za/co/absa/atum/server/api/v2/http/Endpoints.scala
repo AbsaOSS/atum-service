@@ -20,7 +20,7 @@ import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
-import sttp.tapir.{Codec, CodecFormat, DecodeResult, EndpointInput, PublicEndpoint, ValidationResult, Validator}
+import sttp.tapir.{Codec, CodecFormat, DecodeResult, PublicEndpoint, Validator}
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.ErrorResponse
@@ -29,7 +29,6 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.server.api.v2.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.common.http.{BaseEndpoints, HttpEnv}
 
-import java.time.ZonedDateTime
 import java.util.UUID
 import scala.util.{Failure, Success, Try}
 
@@ -49,21 +48,6 @@ object Endpoints extends BaseEndpoints {
           }
       }
     }(_.asBase64EncodedJsonString)
-
-  // Optional half-open window `from <= process start time < to` for checkpoint queries, supplied as ISO-8601 date-times
-  // with an offset, e.g. `from=2026-06-01T00:00:00Z`. A malformed value, or `from` not before `to`, results in a
-  // 400 Bad Request.
-  private val checkpointTimeWindowInput: EndpointInput[(Option[ZonedDateTime], Option[ZonedDateTime])] =
-    query[Option[ZonedDateTime]]("from")
-      .description("inclusive lower bound of the checkpoint's process start time (ISO-8601 date-time with offset)")
-      .and(
-        query[Option[ZonedDateTime]]("to")
-          .description("exclusive upper bound of the checkpoint's process start time (ISO-8601 date-time with offset)")
-      )
-      .validate(Validator.custom {
-        case (Some(from), Some(to)) if !from.isBefore(to) => ValidationResult.Invalid("'from' must be before 'to'")
-        case _ => ValidationResult.Valid
-      })
 
   val postCheckpointEndpoint
     : PublicEndpoint[(Long, CheckpointV2DTO), ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String), Any] = {
@@ -133,7 +117,7 @@ object Endpoints extends BaseEndpoints {
   }
 
   val getPartitioningCheckpointsEndpoint
-    : PublicEndpoint[(Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Option[ZonedDateTime], Option[ZonedDateTime], Boolean), ErrorResponse, PaginatedResponse[
+    : PublicEndpoint[(Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Boolean), ErrorResponse, PaginatedResponse[
       CheckpointV2DTO
     ], Any] = {
     apiV2.get
@@ -144,7 +128,6 @@ object Endpoints extends BaseEndpoints {
       .in(query[Option[String]]("checkpoint-name"))
       .in(query[Option[Map[String, Seq[String]]]]("checkpoint-properties"))
       .in(query[Option[Boolean]]("latest-first"))
-      .in(checkpointTimeWindowInput)
       .in(query[Boolean]("include-properties").default(false))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
@@ -152,7 +135,7 @@ object Endpoints extends BaseEndpoints {
   }
 
   val getFlowCheckpointsEndpoint
-    : PublicEndpoint[(Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Option[ZonedDateTime], Option[ZonedDateTime], Boolean), ErrorResponse, PaginatedResponse[
+    : PublicEndpoint[(Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Boolean), ErrorResponse, PaginatedResponse[
       CheckpointWithPartitioningDTO
     ], Any] = {
     apiV2.get
@@ -161,8 +144,6 @@ object Endpoints extends BaseEndpoints {
       .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
       .in(query[Option[String]]("checkpoint-name"))
       .in(query[Option[Map[String, Seq[String]]]]("checkpoint-properties"))
-      .in(query[Option[Boolean]]("latest-first"))
-      .in(checkpointTimeWindowInput)
       .in(query[Boolean]("include-properties").default(false))
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointWithPartitioningDTO]])
@@ -271,23 +252,23 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint[
-      (Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Option[ZonedDateTime], Option[ZonedDateTime], Boolean),
+      (Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Boolean),
       ErrorResponse,
       PaginatedResponse[CheckpointV2DTO]
     ](
       getPartitioningCheckpointsEndpoint,
-      { case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], latestFirst: Option[Boolean], from: Option[ZonedDateTime], to: Option[ZonedDateTime], includeProperties: Boolean) =>
-        CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, checkpointProperties, latestFirst, from, to, includeProperties)
+      { case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], latestFirst: Option[Boolean], includeProperties: Boolean) =>
+        CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, checkpointProperties, latestFirst, includeProperties)
       }
     ),
     createServerEndpoint[
-      (Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Option[ZonedDateTime], Option[ZonedDateTime], Boolean),
+      (Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Boolean),
       ErrorResponse,
       PaginatedResponse[CheckpointWithPartitioningDTO]
     ](
       getFlowCheckpointsEndpoint,
-      { case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], latestFirst: Option[Boolean], from: Option[ZonedDateTime], to: Option[ZonedDateTime], includeProperties: Boolean) =>
-        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, latestFirst, from, to, includeProperties)
+      { case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], includeProperties: Boolean) =>
+        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, includeProperties)
       }
     ),
     createServerEndpoint(getPartitioningByIdEndpoint, PartitioningController.getPartitioningById),

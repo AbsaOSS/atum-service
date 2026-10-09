@@ -19,8 +19,6 @@ package za.co.absa.atum.reader.requests
 import org.scalatest.funsuite.AnyFunSuiteLike
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 
-import java.time.ZonedDateTime
-
 class CheckpointFilterUnitTests extends AnyFunSuiteLike {
 
   test("An empty filter adds no query params") {
@@ -45,19 +43,13 @@ class CheckpointFilterUnitTests extends AnyFunSuiteLike {
     )
   }
 
-  test("The time window is sent as UTC instants and all filter parts are combined") {
-    val filter = CheckpointFilter(
-      name = Some("checkpoint name"),
-      from = Some(ZonedDateTime.parse("2026-06-01T02:00:00+02:00[Europe/Budapest]")),
-      to = Some(ZonedDateTime.parse("2026-08-01T00:00:00.5Z")),
-      latestFirst = Some(false)
-    )
+  test("Name and properties are combined") {
+    val filter = CheckpointFilter(name = Some("checkpoint name"), properties = Map("env" -> Set("prod")))
     assert(
       filter.toQueryParams == Map(
         "checkpoint-name" -> "checkpoint name",
-        "from" -> "2026-06-01T00:00:00Z",
-        "to" -> "2026-08-01T00:00:00.500Z",
-        "latest-first" -> "false"
+        // base64url-encoded {"env":"prod"}
+        "checkpoint-properties" -> "eyJlbnYiOiJwcm9kIn0="
       )
     )
   }
