@@ -80,8 +80,8 @@ Three steps, all on **today's** v2 API:
    `PATCH .../ancestors` joins the new parent's flows, but its already existing descendants do not.)
 3. **Pull all measurements across the chain, newest first, paged.**
    `GET /api/v2/flows/{flowId}/checkpoints?limit=100&offset=0&include-properties=true`.
-   Each row = one measure of one checkpoint, **tagged with its partitioning**. That is the audit dataset:
-   measurements + their dataset relationships across the whole lineage chain.
+   Each item = one checkpoint with all its measurements nested, **tagged with its partitioning**. That is the audit
+   dataset: measurements + their dataset relationships across the whole lineage chain.
 
 ### Worked example (HTTP)
 
@@ -96,16 +96,16 @@ GET /api/v2/partitionings/2000000010448528/main-flow                        ->  
 GET /api/v2/flows/3000000000123456/checkpoints?limit=100&offset=0&include-properties=true
 ```
 
-Each page item carries `checkpointStartTime`, `measureName`/`measurementValue`, and the `partitioning` it belongs
-to — so relationships come for free.
+Each page item is one checkpoint carrying its `processStartTime`, its `measurements` (each a `measure` - name and
+measured columns - with its `result`), and the `partitioning` it belongs to — so relationships come for free.
 
 ### "Last 2 months" today (no server change needed)
 
-Because results are latest-first, page step 3 and **stop at the first row older than the cutoff**:
+Because results are latest-first, page step 3 and **stop at the first checkpoint older than the cutoff**:
 
 ```
-keep the page while  checkpointStartTime >= now - 2 months
-stop as soon as a row is older (all later rows are older too)
+keep the page while  processStartTime >= now - 2 months
+stop as soon as a checkpoint is older (all later checkpoints are older too)
 ```
 
 This works on the current API. Its only cost is over-fetching whole pages and re-implementing the cutoff in every
@@ -318,7 +318,8 @@ are deferred.)*
   time). For late/backfilled reports the two can differ.
 - **Volume at scale.** A long-lived flow accumulates many checkpoints; the proposed index is what keeps a
   time-window audit query cheap.
-- **Explicit parent -> child edges.** Flow membership gives the downstream lineage *set*; if an audit needs the exact
-  edge list (who is parent of whom), that is reconstructed today via `get_partitioning_ancestors` per node. A
-  dedicated "flow graph" (nodes + edges) endpoint is a possible small future addition.
+- **Explicit parent -> child edges.** Flow membership gives the downstream lineage *set* only. If an audit needs the
+  exact edge list (who is parent of whom), it cannot be reconstructed today: `get_partitioning_ancestors` returns the
+  flow roots a partitioning belongs to, not its immediate parents (see §6). The edges have to be persisted first
+  (Bet 3); a dedicated "flow graph" (nodes + edges) endpoint can follow.
 - **Access control** for audit consumers (read-only scopes/authorization) is out of scope here.
