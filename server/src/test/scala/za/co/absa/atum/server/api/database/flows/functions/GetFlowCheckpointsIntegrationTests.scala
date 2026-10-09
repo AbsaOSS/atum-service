@@ -97,7 +97,10 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
           limit = 10,
           offset = 0L,
           checkpointName = Some("TestCheckpointName"),
-          checkpointProperties = None
+          checkpointProperties = None,
+          latestFirst = None,
+          from = None,
+          to = None
         )
 
         for {
@@ -112,7 +115,10 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
             limit = 2,
             offset = offset,
             checkpointName = Some(checkpointName),
-            checkpointProperties = Some(Map("executionID" -> Seq("a", "b")))
+            checkpointProperties = Some(Map("executionID" -> Seq("a", "b"))),
+            latestFirst = None,
+            from = None,
+            to = None
           )
         )
 
@@ -131,6 +137,30 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
           firstPage == (Seq(matching3, matching2), true),
           secondPage == (Seq(matching1), false)
         )
+      },
+      test("Should apply the earliest-first order and the process start time window") {
+        def getWindowPage(flowId: Long) = getPage(
+          GetFlowCheckpointsArgs(
+            flowId = flowId,
+            limit = 10,
+            offset = 0L,
+            checkpointName = None,
+            checkpointProperties = None,
+            latestFirst = Some(false),
+            from = Some(firstStartTime.plusMinutes(2)),
+            to = Some(firstStartTime.plusMinutes(4))
+          )
+        )
+
+        for {
+          partitioningId <- createPartitioning
+          flowId <- getMainFlowId(partitioningId)
+          _ <- writeCheckpoint(partitioningId, checkpointName, None, startMinute = 1)
+          atWindowStart <- writeCheckpoint(partitioningId, checkpointName, None, startMinute = 2)
+          inWindow <- writeCheckpoint(partitioningId, checkpointName, None, startMinute = 3)
+          _ <- writeCheckpoint(partitioningId, checkpointName, None, startMinute = 4)
+          page <- getWindowPage(flowId)
+        } yield assertTrue(page == (Seq(atWindowStart, inWindow), false))
       }
     ).provide(
       GetFlowCheckpoints.layer,

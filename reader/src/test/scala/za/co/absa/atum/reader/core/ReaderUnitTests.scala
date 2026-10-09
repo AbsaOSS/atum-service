@@ -22,6 +22,8 @@ import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{Identity, SttpBackend}
 import sttp.client3.monad.IdMonad
 import sttp.monad.MonadError
+import za.co.absa.atum.model.envelopes.Pagination
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.reader.core.RequestResult.{RequestFail, RequestOK, RequestResult}
 import za.co.absa.atum.reader.exceptions.RequestException.ParsingException
 import za.co.absa.atum.reader.server.ServerConfig
@@ -35,6 +37,13 @@ class ReaderUnitTests extends AnyFunSuiteLike {
 
     override def mapRequestResultF[I, O](requestResult: RequestResult[I], f: I => F[RequestResult[O]]): F[RequestResult[O]] = {
       super.mapRequestResultF(requestResult, f)
+    }
+
+    override def queryAllPages[T](
+      pageSize: Int,
+      queryPage: (Int, Long) => F[RequestResult[PaginatedResponse[T]]]
+    ): F[RequestResult[Seq[T]]] = {
+      super.queryAllPages(pageSize, queryPage)
     }
   }
 
@@ -56,5 +65,23 @@ class ReaderUnitTests extends AnyFunSuiteLike {
     val requestResult = RequestFail(ParsingException("Just a test", ""))
     val result = reader.mapRequestResultF(requestResult, fnc)
     assert(result == requestResult)
+  }
+
+  test("All pages are queried, without exhausting the stack even when the effect is synchronous") {
+    val recordCount = 100000L
+    def queryPage(limit: Int, offset: Long): Identity[RequestResult[PaginatedResponse[Long]]] =
+      RequestOK(PaginatedResponse(Seq(offset), Pagination(limit, offset, hasMore = offset + limit < recordCount)))
+    val reader = new ReaderForTesting[Identity]
+    val result = reader.queryAllPages(1, queryPage)
+    assert(result == RequestOK(0L until recordCount))
+  }
+
+  test("Querying all pages stops at the first page failing") {
+    def queryPage(limit: Int, offset: Long): Identity[RequestResult[PaginatedResponse[Long]]] =
+      if (offset < 2) RequestOK(PaginatedResponse(Seq(offset), Pagination(limit, offset, hasMore = true)))
+      else RequestFail(ParsingException("Just a test", ""))
+    val reader = new ReaderForTesting[Identity]
+    val result = reader.queryAllPages(1, queryPage)
+    assert(result == RequestFail(ParsingException("Just a test", "")))
   }
 }

@@ -45,12 +45,12 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
 
   /**
    *  Function to retrieve a page of checkpoints belonging to the flow, optionally filtered.
-   *  The checkpoints are ordered by their process start time, latest first.
+   *  The checkpoints are ordered by their process start time, latest first unless the filter says otherwise.
    *
    *  @param pageSize          - the size of the page (record count) to be returned
    *  @param offset            - offset of the page (starting position)
    *  @param includeProperties - whether to include checkpoint properties in the response
-   *  @param filter            - the checkpoints to return (by name and/or properties)
+   *  @param filter            - the checkpoints to return (name, properties, process start time window) and their order
    *  @return                  - a page of checkpoints
    */
   def getCheckpointsPage(
@@ -64,6 +64,32 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
       checkpointsOrError <- mapRequestResultF(
         flowIdOrError,
         queryCheckpoints(_, filter, pageSize, offset, includeProperties)
+      )
+    } yield checkpointsOrError
+  }
+
+  /**
+   *  Function to retrieve all checkpoints belonging to the flow that satisfy the filter, querying them page by page.
+   *  The checkpoints are ordered by their process start time, latest first unless the filter says otherwise.
+   *
+   *  All matching checkpoints are held in memory, so bound the query with the filter, typically with a process start
+   *  time window, e.g. `CheckpointFilter(from = Some(ZonedDateTime.now().minusMonths(2)))` for the last two months.
+   *
+   *  @param filter            - the checkpoints to return (name, properties, process start time window) and their order
+   *  @param includeProperties - whether to include checkpoint properties in the response
+   *  @param pageSize          - the size of the pages (record count) to query the checkpoints in
+   *  @return                  - all the checkpoints satisfying the filter, or the first error encountered
+   */
+  def getAllCheckpoints(
+    filter: CheckpointFilter = CheckpointFilter.empty,
+    includeProperties: Boolean = false,
+    pageSize: Int = 100
+  ): F[RequestResult[Seq[CheckpointWithPartitioningDTO]]] = {
+    for {
+      flowIdOrError <- flowId
+      checkpointsOrError <- mapRequestResultF(
+        flowIdOrError,
+        (flowId: Long) => queryAllPages(pageSize, queryCheckpoints(flowId, filter, _, _, includeProperties))
       )
     } yield checkpointsOrError
   }

@@ -83,7 +83,7 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
       test("Returns expected sequence of Checkpoints with non-existing partitioning id") {
         for {
           getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
-          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, None, None, None))
+          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, None, None, None, None, None))
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       },
       test("Should apply pagination (limit and offset) accurately with combined filters") {
@@ -94,7 +94,9 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
             offset = offset,
             checkpointName = Some(checkpointName),
             checkpointProperties = Some(Map("executionID" -> Seq("a", "b"))),
-            latestFirst = None
+            latestFirst = None,
+            from = None,
+            to = None
           )
         )
 
@@ -112,6 +114,29 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
           firstPage == (Seq(matching3, matching2), true),
           secondPage == (Seq(matching1), false)
         )
+      },
+      test("Should apply the earliest-first order and the process start time window") {
+        def getWindowPage(partitioningId: Long) = getPage(
+          GetPartitioningCheckpointsArgs(
+            partitioningId = partitioningId,
+            limit = 10,
+            offset = 0L,
+            checkpointName = None,
+            checkpointProperties = None,
+            latestFirst = Some(false),
+            from = Some(firstStartTime.plusMinutes(2)),
+            to = Some(firstStartTime.plusMinutes(4))
+          )
+        )
+
+        for {
+          partitioningId <- createPartitioning
+          _ <- writeCheckpoint(partitioningId, checkpointName, None, startMinute = 1)
+          atWindowStart <- writeCheckpoint(partitioningId, checkpointName, None, startMinute = 2)
+          inWindow <- writeCheckpoint(partitioningId, checkpointName, None, startMinute = 3)
+          _ <- writeCheckpoint(partitioningId, checkpointName, None, startMinute = 4)
+          page <- getWindowPage(partitioningId)
+        } yield assertTrue(page == (Seq(atWindowStart, inWindow), false))
       }
     ).provide(
       GetPartitioningCheckpoints.layer,

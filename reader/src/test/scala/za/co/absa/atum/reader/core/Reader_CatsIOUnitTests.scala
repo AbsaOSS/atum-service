@@ -23,8 +23,10 @@ import sttp.client3.SttpBackend
 import sttp.client3.testing.SttpBackendStub
 import sttp.monad.{MonadAsyncError, MonadError}
 import za.co.absa.atum.model.dto.PartitionDTO
+import za.co.absa.atum.model.envelopes.Pagination
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
-import za.co.absa.atum.reader.core.RequestResult.RequestResult
+import za.co.absa.atum.reader.core.RequestResult.{RequestOK, RequestResult}
 import za.co.absa.atum.reader.server.ServerConfig
 
 class Reader_CatsIOUnitTests extends AnyFunSuiteLike {
@@ -33,6 +35,10 @@ class Reader_CatsIOUnitTests extends AnyFunSuiteLike {
   private class ReaderForTest[F[_]](implicit serverConfig: ServerConfig, backend: SttpBackend[F, Any], ev: MonadError[F])
     extends Reader {
     override def getQuery[R: Decoder](endpointUri: String, params: Map[String, String]): F[RequestResult[R]] = super.getQuery(endpointUri, params)
+    override def queryAllPages[T](
+      pageSize: Int,
+      queryPage: (Int, Long) => F[RequestResult[PaginatedResponse[T]]]
+    ): F[RequestResult[Seq[T]]] = super.queryAllPages(pageSize, queryPage)
   }
 
   test("Using Cats IO based backend") {
@@ -47,6 +53,21 @@ class Reader_CatsIOUnitTests extends AnyFunSuiteLike {
     val query = reader.getQuery[PartitionDTO]("/test", Map.empty)
     val result = query.unsafeRunSync()
     assert(result == Right(partitionDTO))
+  }
+
+  test("Querying all pages using Cats IO based backend, the query being repeatable") {
+    import cats.effect.IO
+    import za.co.absa.atum.reader.implicits.io.catsIOMonadError
+
+    implicit val server: SttpBackendStub[IO, Any] = SttpBackendStub[IO, Any](implicitly[MonadAsyncError[IO]])
+    val recordCount = 10000L
+    def queryPage(limit: Int, offset: Long): IO[RequestResult[PaginatedResponse[Long]]] =
+      IO(RequestOK(PaginatedResponse(Seq(offset), Pagination(limit, offset, hasMore = offset + limit < recordCount))))
+
+    val reader = new ReaderForTest
+    val query = reader.queryAllPages(1, queryPage)
+    assert(query.unsafeRunSync() == RequestOK(0L until recordCount))
+    assert(query.unsafeRunSync() == RequestOK(0L until recordCount))
   }
 
 }

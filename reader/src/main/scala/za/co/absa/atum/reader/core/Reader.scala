@@ -22,9 +22,14 @@ import sttp.client3.circe.asJson
 import sttp.model.Uri
 import sttp.monad.MonadError
 import sttp.monad.syntax._
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
+import za.co.absa.atum.reader.core.Reader.{Detached, NextPage, PageHandOver, Pending}
 import za.co.absa.atum.reader.core.RequestResult._
 import za.co.absa.atum.reader.server.ServerConfig
 import za.co.absa.atum.reader.exceptions.RequestException.CirceError
+
+import java.util.concurrent.atomic.AtomicReference
+import scala.annotation.tailrec
 
 /**
  *  Reader is a base class for reading data from a remote server.
@@ -48,6 +53,50 @@ abstract class Reader[F[_]](implicit
     case Left(a) => me.unit(Left(a))
   }
 
+  /**
+   *  Queries the pages one after another, starting at offset 0, until the server reports there is no more data.
+   *
+   *  The paging is stack-safe for any effect, including the strict ones (e.g. `Identity`), where `flatMap` runs its
+   *  continuation right away and a plain recursion would add stack frames with each page.
+   *
+   *  @param pageSize  - the size of the page (record count) to query
+   *  @param queryPage - function querying a page of the given size (limit) at the given offset
+   *  @return          - the records of all the pages, in order, or the first error encountered
+   */
+  protected def queryAllPages[T](
+    pageSize: Int,
+    queryPage: (Int, Long) => F[RequestResult[PaginatedResponse[T]]]
+  ): F[RequestResult[Seq[T]]] = {
+    // If the continuation of a page runs before `flatMap` returns (strict effect), it only hands the records collected
+    // so far over to the loop, which then queries the next page iteratively. Otherwise (asynchronous or lazy effect)
+    // the continuation queries the next page itself, the effect taking care of the stack. The hand-over is atomic, as
+    // the continuation of an asynchronous effect may run on another thread at the same time.
+    @tailrec
+    def queryFrom(offset: Long, collected: Vector[T]): F[RequestResult[Seq[T]]] = {
+      val handOver = new AtomicReference[PageHandOver[T]](Pending)
+      val result = queryPage(pageSize, offset).flatMap {
+        case Right(page) if page.pagination.hasMore =>
+          val nextCollected = collected ++ page.data
+          if (handOver.compareAndSet(Pending, new NextPage(nextCollected))) {
+            me.unit(RequestOK[Seq[T]](nextCollected)) // discarded, the loop continues with the next page
+          } else {
+            queryFromWithinEffect(offset + pageSize, nextCollected)
+          }
+        case Right(page) => me.unit(RequestOK[Seq[T]](collected ++ page.data))
+        case Left(error) => me.unit(RequestFail[Seq[T]](error))
+      }
+      handOver.getAndSet(Detached) match {
+        case nextPage: NextPage[T] => queryFrom(offset + pageSize, nextPage.collected)
+        case _ => result
+      }
+    }
+    // not a tail call, therefore kept apart for `queryFrom` to remain tail-recursive
+    def queryFromWithinEffect(offset: Long, collected: Vector[T]): F[RequestResult[Seq[T]]] =
+      queryFrom(offset, collected)
+
+    queryFrom(0, Vector.empty)
+  }
+
   protected def getQuery[R: Decoder](
     endpointUri: String,
     params: Map[String, String] = Map.empty
@@ -62,4 +111,11 @@ abstract class Reader[F[_]](implicit
 
     response.map(_.toRequestResult)
   }
+}
+
+object Reader {
+  private sealed class PageHandOver[+T]
+  private final class NextPage[+T](val collected: Vector[T]) extends PageHandOver[T]
+  private val Pending: PageHandOver[Nothing] = new PageHandOver
+  private val Detached: PageHandOver[Nothing] = new PageHandOver
 }

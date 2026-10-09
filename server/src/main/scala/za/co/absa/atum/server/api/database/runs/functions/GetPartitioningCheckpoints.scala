@@ -35,6 +35,8 @@ import io.circe.generic.auto._
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
+import java.time.ZonedDateTime
+
 class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointsArgs, Option[
       CheckpointItemFromDB.Paginated
@@ -45,7 +47,9 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
         fr"${args.offset}",
         fr"${args.checkpointName}",
         fr"${args.checkpointProperties.map(_.asJson)}",
-        fr"${args.latestFirst}"
+        fr"${args.latestFirst}",
+        fr"${args.from}",
+        fr"${args.to}"
       )
     )
     with StandardStatusHandling
@@ -72,7 +76,9 @@ object GetPartitioningCheckpoints {
     offset: Long,
     checkpointName: Option[String],
     checkpointProperties: Option[Map[String, Seq[String]]],
-    latestFirst: Option[Boolean]
+    latestFirst: Option[Boolean],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime]
   )
 
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpoints] = ZLayer {
