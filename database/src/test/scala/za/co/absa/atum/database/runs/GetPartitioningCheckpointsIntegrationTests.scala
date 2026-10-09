@@ -17,7 +17,7 @@
 package za.co.absa.atum.database.runs
 
 import za.co.absa.balta.DBTestSuite
-import za.co.absa.balta.classes.JsonBString
+import za.co.absa.balta.classes.{JsonBString, QueryResult}
 import za.co.absa.balta.classes.setter.CustomDBType
 
 import java.time.OffsetDateTime
@@ -390,15 +390,17 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         .add("property_value", "456")
     )
 
-    def hstore(properties: Map[String, String]): CustomDBType = CustomDBType(
-      properties.map { case (k, v) => s""""$k"=>"$v"""" }.mkString(","),
-      "HSTORE"
-    )
+    def jsonb(properties: Map[String, Seq[String]]): JsonBString = {
+      val inner = properties.map { case (k, vs) =>
+        s"\"$k\": [${vs.map(v => s"\"$v\"").mkString(", ")}]"
+      }.mkString(", ")
+      JsonBString(s"{$inner}")
+    }
 
     // Filtering by jobId=123 returns only the matching checkpoint
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning)
-      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "123")))
+      .setParam("i_checkpoint_properties", jsonb(Map("jobId" -> Seq("123"))))
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -410,7 +412,7 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
     // Filtering by a value that no checkpoint has returns nothing
     function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning)
-      .setParam("i_checkpoint_properties", hstore(Map("jobId" -> "999")))
+      .setParam("i_checkpoint_properties", jsonb(Map("jobId" -> Seq("999"))))
       .execute { queryResult =>
         assert(!queryResult.hasNext)
       }
@@ -486,6 +488,120 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
         assert(queryResult.hasNext)
         assert(queryResult.next().getUUID("id_checkpoint").contains(earlierCheckpoint))
         assert(queryResult.next().getUUID("id_checkpoint").contains(laterCheckpoint))
+        assert(!queryResult.hasNext)
+      }
+  }
+
+  test("Returns only checkpoints within the process start time window") {
+    table("runs.partitionings").insert(
+      add("partitioning", partitioning1)
+        .add("created_by", "Daniel")
+    )
+    val fkPartitioning: Long = table("runs.partitionings")
+      .fieldValue("partitioning", partitioning1, "id_partitioning").get.get
+
+    table("runs.measure_definitions").insert(
+      add("id_measure_definition", id_measure_definition1)
+        .add("fk_partitioning", fkPartitioning)
+        .add("created_by", "Daniel")
+        .add("measure_name", "measure_1")
+        .add("measured_columns", measured_columns1)
+    )
+
+    // one checkpoint at the start of each month, January to April; named "odd" / "even" by month number
+    val times = Seq(
+      OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+      OffsetDateTime.parse("2026-02-01T00:00:00Z"),
+      OffsetDateTime.parse("2026-03-01T00:00:00Z"),
+      OffsetDateTime.parse("2026-04-01T00:00:00Z")
+    )
+    val checkpointIds = times.map(_ => UUID.randomUUID())
+    times.zip(checkpointIds).zipWithIndex.foreach { case ((time, checkpointId), i) =>
+      table("runs.checkpoints").insert(
+        add("id_checkpoint", checkpointId)
+          .add("fk_partitioning", fkPartitioning)
+          .add("checkpoint_name", if (i % 2 == 0) "odd" else "even")
+          .add("process_start_time", time)
+          .add("process_end_time", endTime)
+          .add("measured_by_atum_agent", true)
+          .add("created_by", "Daniel")
+      )
+      table("runs.measurements").insert(
+        add("fk_checkpoint", checkpointId)
+          .add("fk_measure_definition", id_measure_definition1)
+          .add("measurement_value", measurement1)
+      )
+    }
+    val Seq(jan, feb, mar, apr) = checkpointIds
+
+    def checkpointsOf(queryResult: QueryResult): Seq[UUID] =
+      queryResult.map(_.getUUID("id_checkpoint").get).toList
+
+    // i_from_time is inclusive
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_from_time", times(1))
+      .execute { queryResult =>
+        assert(checkpointsOf(queryResult) == Seq(apr, mar, feb))
+      }
+
+    // i_to_time is exclusive
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_to_time", times(2))
+      .execute { queryResult =>
+        assert(checkpointsOf(queryResult) == Seq(feb, jan))
+      }
+
+    // both bounds, earliest first
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_from_time", times(1))
+      .setParam("i_to_time", times(3))
+      .setParam("i_latest_first", false)
+      .execute { queryResult =>
+        assert(checkpointsOf(queryResult) == Seq(feb, mar))
+      }
+
+    // paging within the window: has_more is computed over the window only
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_checkpoints_limit", 1)
+      .setParam("i_from_time", times(1))
+      .setParam("i_to_time", times(3))
+      .execute { queryResult =>
+        val row = queryResult.next()
+        assert(row.getUUID("id_checkpoint").contains(mar))
+        assert(row.getBoolean("has_more").contains(true))
+        assert(!queryResult.hasNext)
+      }
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_checkpoints_limit", 1)
+      .setParam("i_offset", 1L)
+      .setParam("i_from_time", times(1))
+      .setParam("i_to_time", times(3))
+      .execute { queryResult =>
+        val row = queryResult.next()
+        assert(row.getUUID("id_checkpoint").contains(feb))
+        assert(row.getBoolean("has_more").contains(false))
+        assert(!queryResult.hasNext)
+      }
+
+    // combined with the checkpoint name filter
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_checkpoint_name", "odd")
+      .setParam("i_from_time", times(1))
+      .execute { queryResult =>
+        assert(checkpointsOf(queryResult) == Seq(mar))
+      }
+
+    // a window without checkpoints returns no rows
+    function(fncGetPartitioningCheckpoints)
+      .setParam("i_partitioning_id", fkPartitioning)
+      .setParam("i_from_time", OffsetDateTime.parse("2027-01-01T00:00:00Z"))
+      .execute { queryResult =>
         assert(!queryResult.hasNext)
       }
   }

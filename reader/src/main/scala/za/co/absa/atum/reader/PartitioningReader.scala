@@ -20,13 +20,12 @@ import sttp.client3.SttpBackend
 import sttp.monad.MonadError
 import sttp.monad.syntax._
 import za.co.absa.atum.model.ApiPaths.{Api, V2, V2Paths}
-import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO, CheckpointV2DTO}
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.atum.reader.core.RequestResult.RequestResult
 import za.co.absa.atum.reader.core.{PartitioningIdProvider, Reader}
-import za.co.absa.atum.reader.requests.QueryParamNames
+import za.co.absa.atum.reader.requests.{CheckpointFilter, QueryParamNames}
 import za.co.absa.atum.reader.server.ServerConfig
 
 /**
@@ -43,24 +42,26 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
     with PartitioningIdProvider[F] {
 
   /**
-   *  Function to retrieve a page of checkpoints belonging to the partitioning.
-   *  The checkpoints are ordered by their creation order.
+   *  Function to retrieve a page of checkpoints belonging to the partitioning, optionally filtered.
+   *  The checkpoints are ordered by their process start time, latest first.
    *
-   *  @param pageSize  - the size of the page (record count) to be returned
-   *  @param offset    - offset of the page (starting position)
+   *  @param pageSize          - the size of the page (record count) to be returned
+   *  @param offset            - offset of the page (starting position)
    *  @param includeProperties - whether to include checkpoint properties in the response
-   *  @return          - a page of checkpoints
+   *  @param filter            - the checkpoints to return (by name and/or properties)
+   *  @return                  - a page of checkpoints
    */
   def getCheckpointsPage(
     pageSize: Int = 10,
     offset: Long = 0,
-    includeProperties: Boolean = false
+    includeProperties: Boolean = false,
+    filter: CheckpointFilter = CheckpointFilter.empty
   ): F[RequestResult[PaginatedResponse[CheckpointV2DTO]]] = {
     for {
       partitioningIdOrError <- partitioningId(partitioning)
       checkpointsOrError <- mapRequestResultF(
         partitioningIdOrError,
-        queryCheckpoints(_, None, Map.empty, pageSize, offset, includeProperties)
+        queryCheckpoints(_, filter, pageSize, offset, includeProperties)
       )
     } yield checkpointsOrError
   }
@@ -69,7 +70,7 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
    *  Function to retrieve a page of checkpoints of the given name belonging to the partitioning. (While the usual logic
    *  would suggest, there would be only one checkpoint of a name, nothing prevents to have checkpoints of the same name;
    *  also during reprocessing the checkpoints might multiply.)
-   *  The checkpoints are ordered by their creation order.
+   *  The checkpoints are ordered by their process start time, latest first.
    *
    *  @param checkpointName    - the name to filter with
    *  @param pageSize          - the size of the page (record count) to be returned
@@ -77,25 +78,20 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
    *  @param includeProperties - whether to include checkpoint properties in the response
    *  @return                  - a page of checkpoints
    */
+  @deprecated("Use getCheckpointsPage with filter = CheckpointFilter(name = Some(checkpointName))", "0.9.0")
   def getCheckpointsOfNamePage(
     checkpointName: String,
     pageSize: Int = 10,
     offset: Long = 0,
     includeProperties: Boolean = false
   ): F[RequestResult[PaginatedResponse[CheckpointV2DTO]]] = {
-    for {
-      partitioningIdOrError <- partitioningId(partitioning)
-      checkpointsOrError <- mapRequestResultF(
-        partitioningIdOrError,
-        queryCheckpoints(_, Some(checkpointName), Map.empty, pageSize, offset, includeProperties)
-      )
-    } yield checkpointsOrError
+    getCheckpointsPage(pageSize, offset, includeProperties, CheckpointFilter(name = Some(checkpointName)))
   }
 
   /**
    *  Function to retrieve a page of checkpoints belonging to the partitioning that have all the given
    *  checkpoint properties (matching both property name and value).
-   *  The checkpoints are ordered by their creation order.
+   *  The checkpoints are ordered by their process start time, latest first.
    *
    *  @param checkpointProperties - the checkpoint properties (key-value pairs) to filter with;
    *                                a checkpoint is returned only if it has all of them
@@ -104,19 +100,15 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
    *  @param includeProperties    - whether to include checkpoint properties in the response
    *  @return                     - a page of checkpoints
    */
+  @deprecated("Use getCheckpointsPage with filter = CheckpointFilter(properties = ...)", "0.9.0")
   def getCheckpointsByPropertiesPage(
     checkpointProperties: Map[String, String],
     pageSize: Int = 10,
     offset: Long = 0,
     includeProperties: Boolean = false
   ): F[RequestResult[PaginatedResponse[CheckpointV2DTO]]] = {
-    for {
-      partitioningIdOrError <- partitioningId(partitioning)
-      checkpointsOrError <- mapRequestResultF(
-        partitioningIdOrError,
-        queryCheckpoints(_, None, checkpointProperties, pageSize, offset, includeProperties)
-      )
-    } yield checkpointsOrError
+    val properties = checkpointProperties.map { case (propertyName, value) => propertyName -> Set(value) }
+    getCheckpointsPage(pageSize, offset, includeProperties, CheckpointFilter(properties = properties))
   }
 
   /**
@@ -150,23 +142,17 @@ case class PartitioningReader[F[_]](partitioning: AtumPartitions)(implicit
 
   private def queryCheckpoints(
     partitioningId: Long,
-    checkpointName: Option[String],
-    checkpointProperties: Map[String, String],
+    filter: CheckpointFilter,
     limit: Int,
     offset: Long,
     includeProperties: Boolean
   ): F[RequestResult[PaginatedResponse[CheckpointV2DTO]]] = {
     val endpoint = s"/$Api/$V2/${V2Paths.Partitionings}/$partitioningId/${V2Paths.Checkpoints}"
-    val propertiesParam: Option[(String, String)] =
-      if (checkpointProperties.isEmpty) None
-      else Some(QueryParamNames.CheckpointProperties -> checkpointProperties.asBase64EncodedJsonString)
     val params = Map(
       QueryParamNames.Limit -> limit.toString,
       QueryParamNames.Offset -> offset.toString,
       QueryParamNames.IncludeProperties -> includeProperties.toString
-    ) ++
-      checkpointName.map(QueryParamNames.CheckpointName -> _) ++
-      propertiesParam
+    ) ++ filter.toQueryParams
     getQuery(endpoint, params)
   }
 

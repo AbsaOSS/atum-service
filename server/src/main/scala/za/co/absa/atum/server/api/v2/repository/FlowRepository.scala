@@ -30,7 +30,7 @@ trait FlowRepository {
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
-    checkpointProperties: Option[Map[String, String]],
+    checkpointProperties: Option[Map[String, Seq[String]]],
     includeProperties: Boolean
   ): IO[DatabaseError, PaginatedResult[CheckpointWithPartitioningDTO]]
 

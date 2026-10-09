@@ -25,9 +25,13 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWith
 import zio._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
+
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
 import za.co.absa.atum.server.model.database.CheckpointItemFromDB
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
+import io.circe.syntax._
+import io.circe.generic.auto._
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
@@ -40,7 +44,7 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
         fr"${args.limit}",
         fr"${args.offset}",
         fr"${args.checkpointName}",
-        fr"${args.checkpointProperties}",
+        fr"${args.checkpointProperties.map(_.asJson)}",
         fr"${args.latestFirst}"
       )
     )
@@ -67,7 +71,7 @@ object GetPartitioningCheckpoints {
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
-    checkpointProperties: Option[Map[String, String]],
+    checkpointProperties: Option[Map[String, Seq[String]]],
     latestFirst: Option[Boolean]
   )
 

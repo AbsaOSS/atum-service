@@ -66,7 +66,7 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   when(flowControllerMockV2.getFlowCheckpoints(3L, 5, 0L, None, None, includeProperties = false))
     .thenReturn(ZIO.fail(NotFoundErrorResponse("Flow not found for a given ID")))
   when(
-    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(executionIdProperties), includeProperties = false)
+    flowControllerMockV2.getFlowCheckpoints(1L, 5, 0L, None, Some(executionIdProperties.view.mapValues(Seq(_)).toMap), includeProperties = false)
   )
     .thenReturn(
       ZIO.succeed(PaginatedResponse(Seq(checkpointWithPartitioningDTO1), Pagination(5, 0, hasMore = true), uuid))
@@ -75,7 +75,7 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
   private val flowControllerMockLayerV2 = ZLayer.succeed(flowControllerMockV2)
 
   private val getFlowCheckpointServerEndpoint = Endpoints.getFlowCheckpointsEndpoint.zServerLogic({
-    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, String]], includeProperties: Boolean) =>
+    case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], includeProperties: Boolean) =>
       FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, includeProperties)
   })
 
@@ -177,6 +177,20 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
       test("Returns expected 400 when checkpoint-properties is not valid base64") {
         val baseUri =
           uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=!!!not-base64!!!"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+      },
+      test("Returns expected 400 when a checkpoint property has no accepted value") {
+        import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
+        val encodedProps = Map("executionID" -> Seq.empty[String]).asBase64EncodedJsonString
+        val baseUri =
+          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=$encodedProps"
         val response = basicRequest
           .get(baseUri)
           .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])

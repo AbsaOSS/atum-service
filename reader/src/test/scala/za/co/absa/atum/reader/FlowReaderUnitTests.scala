@@ -31,10 +31,12 @@ import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 import za.co.absa.atum.reader.FlowReaderUnitTests._
 import za.co.absa.atum.reader.PartitioningReaderUnitTests.checkpointsResponseWithProperties
+import za.co.absa.atum.reader.requests.CheckpointFilter
 import za.co.absa.atum.reader.server.ServerConfig
 
 import java.time.ZonedDateTime
 import java.util.UUID
+import scala.annotation.nowarn
 
 class FlowReaderUnitTests extends AnyFunSuiteLike {
   private implicit val serverConfig: ServerConfig = ServerConfig.fromConfig()
@@ -192,7 +194,7 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     )
 
     val reader = FlowReader(atumPartitions)
-    val result = reader.getCheckpointsOfNamePage("Test checkpoints 1")
+    val result = (reader.getCheckpointsOfNamePage("Test checkpoints 1"): @nowarn("cat=deprecation"))
     assert(result == Right(expectedData))
   }
 
@@ -273,7 +275,7 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     )
 
     val reader = FlowReader(atumPartitions)
-    val result = reader.getCheckpointsOfNamePage("Test checkpoints 1", includeProperties = true)
+    val result = (reader.getCheckpointsOfNamePage("Test checkpoints 1", includeProperties = true): @nowarn("cat=deprecation"))
     assert(result == Right(expectedData))
   }
 
@@ -299,8 +301,35 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
 
     val reader = FlowReader(atumPartitions)
     // base64url-encoded {"executionID":"019f8981-7868-79fc-81d3-8143a4706f8a"}
-    val result = reader.getCheckpointsByPropertiesPage(Map("executionID" -> "019f8981-7868-79fc-81d3-8143a4706f8a"))
+    val result = (
+      reader.getCheckpointsByPropertiesPage(Map("executionID" -> "019f8981-7868-79fc-81d3-8143a4706f8a")): @nowarn("cat=deprecation")
+    )
     assert(result.isRight)
+  }
+
+  test("The flow checkpoints are queried with name and multi-value properties in a single request") {
+    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
+      .whenRequestMatchesPartial {
+        case r if r.uri.path.endsWith(List("partitionings")) =>
+          Response.ok(partitioningResponse)
+        case r if r.uri.path.endsWith(List("partitionings", "7", "main-flow")) =>
+          Response.ok(flowResponse)
+        case r if r.uri.path.endsWith(List("flows", "42", "checkpoints")) =>
+          assert(r.uri.querySegments.contains(KeyValue("limit", "5")))
+          assert(r.uri.querySegments.contains(KeyValue("offset", "10")))
+          assert(r.uri.querySegments.contains(KeyValue("include-properties", "true")))
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-name", "Test checkpoints 1")))
+          assert(r.uri.querySegments.contains(KeyValue("checkpoint-properties", multiValuePropertiesEncoded)))
+          Response.ok(checkpointsResponse)
+      }
+
+    val filter = CheckpointFilter(
+      name = Some("Test checkpoints 1"),
+      properties = Map("executionID" -> Set("id2", "id1"))
+    )
+    val result = FlowReader(AtumPartitions(List("a" -> "b", "c" -> "d")))
+      .getCheckpointsPage(pageSize = 5, offset = 10, includeProperties = true, filter = filter)
+    assert(result.map(_.data.size) == Right(2))
   }
 
   test("Instantiate FlowReader with implicit arguments passed explicitly") {
@@ -335,6 +364,9 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
 }
 
 object FlowReaderUnitTests {
+
+  // base64url-encoded {"executionID":["id1","id2"]}
+  private val multiValuePropertiesEncoded = "eyJleGVjdXRpb25JRCI6WyJpZDEiLCJpZDIiXX0="
 
   private val partitioningEncoded = "W3sia2V5IjoiYSIsInZhbHVlIjoiYiJ9LHsia2V5IjoiYyIsInZhbHVlIjoiZCJ9XQ=="
 

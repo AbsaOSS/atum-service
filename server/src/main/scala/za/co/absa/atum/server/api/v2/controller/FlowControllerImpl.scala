@@ -32,7 +32,7 @@ class FlowControllerImpl(flowService: FlowService) extends FlowController with B
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
-    checkpointProperties: Option[Map[String, String]],
+    checkpointProperties: Option[Map[String, Seq[String]]],
     includeProperties: Boolean
   ): IO[ErrorResponse, PaginatedResponse[CheckpointWithPartitioningDTO]] = {
     val flowData =
