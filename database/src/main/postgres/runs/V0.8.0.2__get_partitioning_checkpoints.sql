@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
--- The previous overload is dropped so that the new signature (JSONB multi-value checkpoint properties filter) is
--- unambiguous when the function is called with named or defaulted arguments.
+-- The previous overload is dropped so that the new signature (JSONB multi-value checkpoint properties filter and
+-- the process start time window) is unambiguous when the function is called with named or defaulted arguments.
 DROP FUNCTION IF EXISTS runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, HSTORE, BOOLEAN);
 
 CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
@@ -25,6 +25,8 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
     IN i_checkpoint_name TEXT DEFAULT NULL,
     IN i_checkpoint_properties JSONB DEFAULT NULL,
     IN i_latest_first BOOLEAN DEFAULT TRUE,
+    IN i_from_time TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    IN i_to_time TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     OUT status INTEGER,
     OUT status_text TEXT,
     OUT id_checkpoint UUID,
@@ -40,9 +42,9 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
 ) RETURNS SETOF record AS
 --------------------------------------------------------------------------------------------------------------------
 --
--- Function: runs.get_partitioning_checkpoints(6)
+-- Function: runs.get_partitioning_checkpoints(8)
 --      Retrieves all checkpoints (measures and their measurement details) related to an input partitioning (and
---      checkpoint name and/or checkpoint properties, if specified).
+--      checkpoint name, checkpoint properties and/or process start time window, if specified).
 --
 -- Note: a single row returned from this function doesn't contain all data related to a single checkpoint - it only
 --     represents one measure associated with a checkpoint. So even if only a single checkpoint would be retrieved,
@@ -58,6 +60,8 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_checkpoints(
 --                                  property name, have that property with one of the accepted values
 --      i_latest_first          - (optional) if true (default), checkpoints are ordered by process_start_time
 --                                  in descending order (latest first); if false, in ascending order
+--      i_from_time             - (optional) if specified, returns only checkpoints with process_start_time >= i_from_time
+--      i_to_time               - (optional) if specified, returns only checkpoints with process_start_time < i_to_time
 --
 -- Note: i_checkpoints_limit and i_offset are used for pagination purposes;
 --       checkpoints are ordered by process_start_time (descending by default, see i_latest_first)
@@ -102,6 +106,8 @@ BEGIN
               FROM runs.checkpoints C
               WHERE C.fk_partitioning = i_partitioning_id
                 AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
+                AND (i_from_time IS NULL OR C.process_start_time >= i_from_time)
+                AND (i_to_time IS NULL OR C.process_start_time < i_to_time)
                 AND (
                     i_checkpoint_properties IS NULL
                     OR NOT EXISTS (
@@ -140,6 +146,8 @@ BEGIN
                                      FROM runs.checkpoints C
                                      WHERE C.fk_partitioning = i_partitioning_id
                                        AND (i_checkpoint_name IS NULL OR C.checkpoint_name = i_checkpoint_name)
+                                       AND (i_from_time IS NULL OR C.process_start_time >= i_from_time)
+                                       AND (i_to_time IS NULL OR C.process_start_time < i_to_time)
                                        AND (
                                            i_checkpoint_properties IS NULL
                                            OR NOT EXISTS (
@@ -189,5 +197,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, JSONB, BOOLEAN) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, JSONB, BOOLEAN) TO atum_owner;
+ALTER FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, JSONB, BOOLEAN, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE) OWNER TO atum_owner;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_checkpoints(BIGINT, INT, BIGINT, TEXT, JSONB, BOOLEAN, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE) TO atum_owner;
