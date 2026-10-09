@@ -186,6 +186,20 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
 
         assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       },
+      test("Returns expected 400 when a checkpoint property has no accepted value") {
+        import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
+        val encodedProps = Map("executionID" -> Seq.empty[String]).asBase64EncodedJsonString
+        val baseUri =
+          uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=$encodedProps"
+        val response = basicRequest
+          .get(baseUri)
+          .response(asJson[PaginatedResponse[CheckpointWithPartitioningDTO]])
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+      },
       test("Returns expected 400 when limit is out of range") {
         val baseUri = uri"https://test.com/api/v2/flows/1/checkpoints?limit=1005&offset=0"
         val response = basicRequest

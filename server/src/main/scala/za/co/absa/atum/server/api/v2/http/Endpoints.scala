@@ -20,7 +20,7 @@ import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
-import sttp.tapir.{Codec, CodecFormat, DecodeResult, PublicEndpoint, Validator}
+import sttp.tapir.{Codec, CodecFormat, DecodeResult, PublicEndpoint, ValidationResult, Validator}
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.ErrorResponse
@@ -35,7 +35,8 @@ import scala.util.{Failure, Success, Try}
 object Endpoints extends BaseEndpoints {
 
   // Checkpoint properties are supplied as a single query parameter carrying a base64url-encoded JSON object,
-  // e.g. `checkpoint-properties=eyJleGVjdXRpb25JRCI6Ii4uLiJ9`. Malformed base64 or JSON results in a 400 Bad Request.
+  // e.g. `checkpoint-properties=eyJleGVjdXRpb25JRCI6Ii4uLiJ9`. Malformed base64 or JSON, or a property without any
+  // accepted value (e.g. `{"executionID": []}`, which would match no checkpoint), results in a 400 Bad Request.
   private implicit val checkpointPropertiesQueryCodec: Codec[String, Map[String, Seq[String]], CodecFormat.TextPlain] =
     Codec.string.mapDecode { encoded =>
       Try(encoded.fromBase64As[Map[String, Seq[String]]]) match {
@@ -48,6 +49,14 @@ object Endpoints extends BaseEndpoints {
           }
       }
     }(_.asBase64EncodedJsonString)
+      .validate(Validator.custom { properties =>
+        val propertiesWithoutValues = properties.collect { case (name, values) if values.isEmpty => name }
+        if (propertiesWithoutValues.isEmpty) ValidationResult.Valid
+        else
+          ValidationResult.Invalid(
+            s"Checkpoint properties without any accepted value: ${propertiesWithoutValues.mkString(", ")}"
+          )
+      })
 
   val postCheckpointEndpoint
     : PublicEndpoint[(Long, CheckpointV2DTO), ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String), Any] = {

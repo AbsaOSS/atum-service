@@ -54,4 +54,12 @@ class CheckpointFilterUnitTests extends AnyFunSuiteLike {
     )
   }
 
+  test("A property without any value is rejected, as it would match no checkpoint") {
+    val exception = intercept[IllegalArgumentException] {
+      CheckpointFilter(properties = Map("executionID" -> Set.empty[String], "env" -> Set("prod")))
+    }
+    assert(exception.getMessage.contains("executionID"))
+    assert(!exception.getMessage.contains("env"))
+  }
+
 }

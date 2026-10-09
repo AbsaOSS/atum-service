@@ -211,6 +211,20 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
 
         assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       },
+      test("Returns expected 400 when a checkpoint property has no accepted value") {
+        import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
+        val encodedProps = Map("executionID" -> Seq.empty[String]).asBase64EncodedJsonString
+        val request = basicRequest
+          .get(uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=0&checkpoint-properties=$encodedProps")
+          .response(asJson[PaginatedResponse[CheckpointV2DTO]])
+
+        val response = request
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+      },
       test(
         "Returns an expected PaginatedResponse[CheckpointV2DTO] with more data available " +
           "(call without optional params)"
