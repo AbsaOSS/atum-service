@@ -56,7 +56,13 @@ object TestTransactorProvider {
   }
 
   // All database calls share a single connection and a single transaction, rolled back once the layer is released.
-  // This allows seeding data with some database functions and reading them back with others within a test.
+  //
+  // Why: some tests first insert their own test data ("seed" it) by calling database functions, e.g. CreatePartitioning
+  // to create a partitioning and WriteCheckpointV2 to write checkpoints into it, and then call the function under test,
+  // e.g. GetPartitioningCheckpoints, to read that data back. For this to work, the inserted rows must still exist when
+  // the function under test runs:
+  //  - layerWithRollback rolls back after every single call, so the inserted rows are gone before they can be read;
+  //  - layerWithoutRollback would keep the rows, but they would also stay in the test database permanently.
   val layerWithSingleTransactionRollback: ZLayer[Any, Throwable, Transactor[Task]] = ZLayer.scoped {
     for {
       postgresConfig <- ZIO.config[PostgresConfig](PostgresConfig.config)
