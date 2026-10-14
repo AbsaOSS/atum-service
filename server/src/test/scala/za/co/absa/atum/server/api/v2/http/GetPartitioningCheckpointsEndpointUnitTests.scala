@@ -26,6 +26,7 @@ import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointV2DTO
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.model.envelopes.{NotFoundErrorResponse, Pagination}
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.v2.controller.CheckpointController
 import zio.test.Assertion.equalTo
@@ -109,7 +110,6 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
 
     suite("GetPartitioningCheckpointsEndpointSuite")(
       test("Returns an expected PaginatedResponse[CheckpointV2DTO] with checkpoint-properties having multiple values") {
-        import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
         val properties = Map("executionID" -> Seq("id1", "id2"))
         val encodedProps = properties.asBase64EncodedJsonString
         val request = basicRequest
@@ -272,7 +272,6 @@ object GetPartitioningCheckpointsEndpointUnitTests extends ZIOSpecDefault with T
         assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       },
       test("Returns expected 400 when a checkpoint property has no accepted value") {
-        import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
         val encodedProps = Map("executionID" -> Seq.empty[String]).asBase64EncodedJsonString
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/1/checkpoints?limit=10&offset=0&checkpoint-properties=$encodedProps")

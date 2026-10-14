@@ -90,9 +90,9 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("GetFlowCheckpointsIntegrationTests")(
-      test("Should return checkpoints with the correct flowId, limit, and offset") {
+      test("Should return DataNotFoundException when flow does not exist") {
 
-        val args = GetFlowCheckpoints.GetFlowCheckpointsArgs(
+        val args = GetFlowCheckpointsArgs(
           flowId = 1L,
           limit = 10,
           offset = 0L,

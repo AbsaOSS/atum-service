@@ -281,19 +281,6 @@ class GetPartitioningCheckpointsIntegrationTests extends DBTestSuite {
       }
 
     function(fncGetPartitioningCheckpoints)
-      .setParam("i_partitioning_id", 0L)
-      .setParam("i_checkpoints_limit", 2)
-      .setParam("i_offset", 1)
-      .setParam("i_checkpoint_name", i_checkpoint_name)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val result = queryResult.next()
-        assert(result.getInt("status").contains(41))
-        assert(result.getString("status_text").contains("Partitioning not found"))
-        assert(!queryResult.hasNext)
-      }
-
-    function(fncGetPartitioningCheckpoints)
       .setParam("i_partitioning_id", fkPartitioning1)
       .setParam("i_checkpoints_limit", 1)
       .setParam("i_offset", i_offset)

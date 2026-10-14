@@ -26,6 +26,7 @@ import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.CheckpointWithPartitioningDTO
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 import za.co.absa.atum.model.envelopes.{NotFoundErrorResponse, Pagination}
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.v2.controller.FlowController
 import zio.test.Assertion.equalTo
@@ -261,7 +262,6 @@ object GetFlowCheckpointsEndpointUnitTests extends ZIOSpecDefault with TestData 
         assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       },
       test("Returns expected 400 when a checkpoint property has no accepted value") {
-        import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
         val encodedProps = Map("executionID" -> Seq.empty[String]).asBase64EncodedJsonString
         val baseUri =
           uri"https://test.com/api/v2/flows/1/checkpoints?limit=5&offset=0&checkpoint-properties=$encodedProps"
