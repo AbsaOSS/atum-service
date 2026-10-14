@@ -80,21 +80,30 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     suite("GetPartitioningCheckpointsIntegrationTests")(
-      test("Returns expected sequence of Checkpoints with non-existing partitioning id") {
+      test("Should return DataNotFoundException when partitioning does not exist") {
+        val args = GetPartitioningCheckpointsArgs(
+          partitioningId = 0L,
+          limit = 10,
+          offset = 0L,
+          checkpointName = None,
+          checkpointProperties = None,
+          latestFirst = None
+        )
+
         for {
           getPartitioningCheckpoints <- ZIO.service[GetPartitioningCheckpoints]
-          result <- getPartitioningCheckpoints(GetPartitioningCheckpointsArgs(0L, 10, 0L, None, None, None))
+          result <- getPartitioningCheckpoints(args)
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
       },
       test("Should apply pagination (limit and offset) accurately with combined filters") {
-        def getFilteredPage(partitioningId: Long, offset: Long) = getPage(
+        def getFilteredPage(partitioningId: Long, offset: Long, latestFirst: Option[Boolean] = None) = getPage(
           GetPartitioningCheckpointsArgs(
             partitioningId = partitioningId,
             limit = 2,
             offset = offset,
             checkpointName = Some(checkpointName),
             checkpointProperties = Some(Map("executionID" -> Seq("a", "b"))),
-            latestFirst = None
+            latestFirst = latestFirst
           )
         )
 
@@ -108,9 +117,11 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
           matching3 <- writeCheckpoint(partitioningId, checkpointName, Some("a"), startMinute = 6)
           firstPage <- getFilteredPage(partitioningId, offset = 0L)
           secondPage <- getFilteredPage(partitioningId, offset = 2L)
+          earliestFirstPage <- getFilteredPage(partitioningId, offset = 0L, latestFirst = Some(false))
         } yield assertTrue(
           firstPage == (Seq(matching3, matching2), true),
-          secondPage == (Seq(matching1), false)
+          secondPage == (Seq(matching1), false),
+          earliestFirstPage == (Seq(matching1, matching2), true)
         )
       }
     ).provide(
