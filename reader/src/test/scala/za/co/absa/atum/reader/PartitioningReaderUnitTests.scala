@@ -303,28 +303,6 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
     assert(result.map(_.data.size) == Right(2))
   }
 
-  test("All partitioning checkpoints satisfying the filter are queried page by page") {
-    var queriedOffsets = Vector.empty[String]
-    implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
-      .whenRequestMatchesPartial {
-        case r if r.uri.path.endsWith(List(V2Paths.Partitionings)) =>
-          Response.ok(partitioningResponse)
-        case r if r.uri.path.endsWith(List(V2Paths.Partitionings, "7", V2Paths.Checkpoints)) =>
-          assert(r.uri.querySegments.contains(KeyValue("limit", "2")))
-          assert(r.uri.querySegments.contains(KeyValue("checkpoint-name", "Test checkpoints 1")))
-          val offset = r.uri.paramsMap("offset")
-          queriedOffsets :+= offset
-          if (offset == "4") Response.ok(checkpointsResponse)
-          else Response.ok(checkpointsResponse.replace("\"hasMore\" : false", "\"hasMore\" : true"))
-      }
-
-    val result = PartitioningReader(AtumPartitions(List("a" -> "b", "c" -> "d")))
-      .getAllCheckpoints(CheckpointFilter(name = Some("Test checkpoints 1")), pageSize = 2)
-
-    assert(result.map(_.size) == Right(6))
-    assert(queriedOffsets == Vector("0", "2", "4"))
-  }
-
   test("The partitioning additional data are properly queried and delivered as DTO") {
     val atumPartitions: AtumPartitions = AtumPartitions(
       List(

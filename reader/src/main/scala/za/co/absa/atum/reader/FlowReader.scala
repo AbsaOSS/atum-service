@@ -69,32 +69,6 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
   }
 
   /**
-   *  Function to retrieve all checkpoints belonging to the flow that satisfy the filter, querying them page by page.
-   *  The checkpoints are ordered by their process start time, latest first unless the filter says otherwise.
-   *
-   *  All matching checkpoints are held in memory, so bound the query with the filter, typically with a process start
-   *  time window, e.g. `CheckpointFilter(from = Some(ZonedDateTime.now().minusMonths(2)))` for the last two months.
-   *
-   *  @param filter            - the checkpoints to return (name, properties, process start time window) and their order
-   *  @param includeProperties - whether to include checkpoint properties in the response
-   *  @param pageSize          - the size of the pages (record count) to query the checkpoints in
-   *  @return                  - all the checkpoints satisfying the filter, or the first error encountered
-   */
-  def getAllCheckpoints(
-    filter: CheckpointFilter = CheckpointFilter.empty,
-    includeProperties: Boolean = false,
-    pageSize: Int = 100
-  ): F[RequestResult[Seq[CheckpointWithPartitioningDTO]]] = {
-    for {
-      flowIdOrError <- flowId
-      checkpointsOrError <- mapRequestResultF(
-        flowIdOrError,
-        (flowId: Long) => queryAllPages(pageSize, queryCheckpoints(flowId, filter, _, _, includeProperties))
-      )
-    } yield checkpointsOrError
-  }
-
-  /**
    *  Function to retrieve a page of checkpoints of the given name belonging to the flow.
    *  The checkpoints are ordered by their process start time, latest first.
    *

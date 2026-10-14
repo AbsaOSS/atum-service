@@ -159,8 +159,9 @@ cutoff logic lives in one place.
 defaults to `TRUE`, which is what audits want anyway.)*
 
 **Consumption via the reader:** `FlowReader` / `PartitioningReader` take a `CheckpointFilter` (name, multi-value
-properties, `from` / `to`, `latestFirst`) in `getCheckpointsPage`, and `getAllCheckpoints` reads all the pages of a
-filtered query.
+properties, `from` / `to`, `latestFirst`) in `getCheckpointsPage`. No "read all pages" helper is provided: audit
+consumers are expected to call the REST API directly, and the reader's Scala consumers page as they need; such a
+helper can be added later without breaking the API, should a consumer need it.
 
 ---
 
