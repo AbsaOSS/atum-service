@@ -87,7 +87,9 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
           offset = 0L,
           checkpointName = None,
           checkpointProperties = None,
-          latestFirst = None
+          latestFirst = None,
+          from = None,
+          to = None
         )
 
         for {
