@@ -114,8 +114,7 @@ Applications control pagination; the Reader does not discover datasets from part
 the original parent-child lineage graph.
 
 Reader features require a compatible server version. In particular, older servers can ignore checkpoint time-window
-parameters; using a newer Reader alone does not enable server-side filtering. For deployment prerequisites and the
-REST-based audit consumption pattern, see [ADR 02](adrs/02-consumption-pattern-for-audits.md).
+parameters; using a newer Reader alone does not enable server-side filtering.
 
 ### Server `server/`
 An API under construction that communicates with the Agent and with the persistent storage. It also provides measure 
