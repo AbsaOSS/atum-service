@@ -108,12 +108,14 @@ drop support for Spark 2.4. If you need the agent to work with Spark 2.4 follow 
 * Build these two modules and use them in your project
 
 ### Reader `reader/`
-**NB!**  
-_This module is not yet implemented to an operational abilities and therefore not yet released._
+This module is a Scala client for applications reading metrics stored by the _Atum Service_. `FlowReader` and
+`PartitioningReader` resolve partitionings and retrieve checkpoint pages through the server's REST API.
+Applications control pagination; the Reader does not discover datasets from partial business keys or reconstruct
+the original parent-child lineage graph.
 
-This module is intended to be used whenever an application wants to read the metrics stored by the _Atum Service_. It
-offers classes and methods to read the metrics from the database shielding away the complexity of accessing the _Atum Server_
-directly.
+Reader features require a compatible server version. In particular, older servers can ignore checkpoint time-window
+parameters; using a newer Reader alone does not enable server-side filtering. For deployment prerequisites and the
+REST-based audit consumption pattern, see [ADR 02](adrs/02-consumption-pattern-for-audits.md).
 
 ### Server `server/`
 An API under construction that communicates with the Agent and with the persistent storage. It also provides measure 
