@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
-import org.apache.spark.internal.Logging
+import za.co.absa.atum.agent.core.Logging
 import za.co.absa.atum.model.dto._
 
 /**
@@ -25,7 +25,7 @@ import za.co.absa.atum.model.dto._
  */
 class ConsoleDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
-  logInfo("using console dispatcher")
+  log.info("using console dispatcher")
 
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
     println(s"Fetching AtumContext using ConsoleDispatcher with partitioning $partitioning")

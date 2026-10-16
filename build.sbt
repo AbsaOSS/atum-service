@@ -17,7 +17,7 @@
 import sbt.*
 import sbt.Keys.*
 import Dependencies.*
-import Dependencies.Versions.spark3
+import Dependencies.Versions.{spark3, spark4}
 import VersionAxes.*
 
 ThisBuild / scalaVersion := Setup.scala213.asString
@@ -31,13 +31,24 @@ val limitedProject: Boolean = Setup.currentJava < Setup.recommendedJava
 initialize := {
   val _ = initialize.value // Ensure previous initializations are run
 
-  assert(Setup.currentJava >= Setup.requiredJava,
-    s"Running on Java version ${Setup.currentJava}, required is at least version ${Setup.requiredJava}, recommended is ${Setup.recommendedJava}")
+  assert(
+    Setup.currentJava >= Setup.spark3RequiredJava,
+    s"Running on Java version ${Setup.currentJava}, required is at least version ${Setup.spark3RequiredJava}, recommended is ${Setup.recommendedJava}"
+  )
 
   if (limitedProject) {
     val log = Keys.sLog.value
-    log.warn(s"Some nodules will not be loaded, because they require at least Java ${Setup.recommendedJava} while Java ${Setup.currentJava} has been found")
+    log.warn(
+      s"Some nodules will not be loaded, because they require at least Java ${Setup.recommendedJava} while Java ${Setup.currentJava} has been found"
+    )
     log.warn("""Affected modules are: "atum-server", "atum-database"""")
+  }
+
+  if (!Setup.spark4Supported) {
+    val log = Keys.sLog.value
+    log.warn(
+      s"The Spark ${Dependencies.Versions.spark4} rows of the 'atum-agent' module will not be loaded, because they require at least Java ${Setup.spark4RequiredJava} while Java ${Setup.currentJava} has been found"
+    )
   }
 }
 
@@ -70,7 +81,7 @@ lazy val server = {
         version := git.gitDescribedVersion.value.map(_.takeWhile(_ != '-')).getOrElse("unknown"),
         buildInfoKeys := Seq[BuildInfoKey](
           version,
-          "fullVersion" -> git.gitDescribedVersion.value.getOrElse("unknown"),
+          "fullVersion" -> git.gitDescribedVersion.value.getOrElse("unknown")
         ),
         buildInfoPackage := "za.co.absa.atum.server.api.common.http"
       ): _*
@@ -90,18 +101,43 @@ lazy val server = {
 
 /**
  * Module `agent` is the library to be plugged into the Spark application to measure the data and send it to the server
+ *
+ * It is cross-built per Spark major version, each axis carrying its own Scala and Java baseline:
+ * - Spark 3.5.x -> Scala 2.12 + 2.13, Java 8  (`atum-agent-spark3_2.12`, `atum-agent-spark3_2.13`)
+ * - Spark 4.0.x -> Scala 2.13,        Java 17 (`atum-agent-spark4_2.13`)
+ *
+ * The Spark 4 rows require a JDK 17+ to compile, so they are only added when sbt itself runs on one.
  */
-lazy val agent = (projectMatrix in file("agent"))
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-  .settings(
-    Setup.commonSettings ++ Seq(
-      name := "atum-agent",
-      javacOptions ++= Setup.clientJavacOptions
-    ): _*
-  )
-  .addSparkCrossBuild(SparkVersionAxis(spark3), Setup.clientSupportedScalaVersions, Dependencies.agentDependencies)
-  .dependsOn(model)
-  .enablePlugins(JacocoFilterPlugin)
+lazy val agent = {
+  val agent = (projectMatrix in file("agent"))
+    .disablePlugins(sbtassembly.AssemblyPlugin)
+    .settings(
+      Setup.commonSettings ++ Seq(
+        name := "atum-agent"
+      ): _*
+    )
+    .addSparkCrossBuild(
+      SparkVersionAxis(spark3),
+      Setup.clientSupportedScalaVersions(spark3),
+      Dependencies.agentDependencies
+    )
+
+  // Appending Spark 4 if needed (based on Java requirements) while also building and supporting Spark 3 on newer
+  // Java (that's why append, otherwise Spark 3 would be skipped on newer Java).
+  val agentWithSpark = if (Setup.spark4Supported) {
+    agent.addSparkCrossBuild(
+      SparkVersionAxis(spark4),
+      Setup.clientSupportedScalaVersions(spark4),
+      Dependencies.agentDependencies
+    )
+  } else {
+    agent
+  }
+
+  agentWithSpark
+    .dependsOn(model)
+    .enablePlugins(JacocoFilterPlugin)
+}
 
 /**
  * Module `model` is the data model for data exchange with server
@@ -111,7 +147,7 @@ lazy val model = (projectMatrix in file("model"))
   .settings(
     Setup.commonSettings ++ Seq(
       name         := "atum-model",
-      javacOptions ++= Setup.clientJavacOptions,
+      javacOptions ++= Setup.clientJavacOptions()
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.modelDependencies)
@@ -147,7 +183,7 @@ lazy val reader = (projectMatrix in file("reader"))
   .settings(
     Setup.commonSettings ++ Seq(
       name := "atum-reader",
-      javacOptions ++= Setup.clientJavacOptions
+      javacOptions ++= Setup.clientJavacOptions()
     ): _*
   )
   .addScalaCrossBuild(Setup.clientSupportedScalaVersions, Dependencies.readerDependencies)

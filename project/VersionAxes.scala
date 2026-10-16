@@ -43,15 +43,28 @@ object VersionAxes {
                            dependenciesFnc: (String, Version) => Seq[ModuleID],
                            settings: Def.SettingsDefinition*): ProjectMatrix = {
       val sparkVersion = sparkAxis.sparkVersion
-      scalaVersions.foldLeft(projectMatrix) { case (currentProjectMatrix, scalaVersion) =>
+      val javaTarget = Setup.clientJavaTarget(sparkVersion)
+      //guard: never build a Scala version the Spark axis does not support (notably 2.12 against Spark 4),
+      //otherwise dependency resolution blows up on a non-existent `spark-core_2.12:4.x`. Fails loudly instead
+      //of silently dropping the unsupported row, so a misconfigured call site is caught at build-definition time.
+      val supportedScalaVersions = Setup.clientSupportedScalaVersions(sparkVersion)
+      val unsupportedScalaVersions = scalaVersions.filterNot(supportedScalaVersions.contains)
+      require(
+        unsupportedScalaVersions.isEmpty,
+        s"Spark $sparkVersion does not support Scala version(s) ${unsupportedScalaVersions.map(_.asString).mkString(", ")}. " +
+          s"Supported Scala versions for this Spark axis are: ${supportedScalaVersions.map(_.asString).mkString(", ")}."
+      )
+
+      scalaVersions.distinct.foldLeft(projectMatrix) { case (currentProjectMatrix, scalaVersion) =>
         currentProjectMatrix.customRow(
           scalaVersions = Seq(scalaVersion.asString),
           axisValues = Seq(sparkAxis, VirtualAxis.jvm),
           _.settings(
             moduleName := camelCaseToLowerDashCase(name.value + sparkAxis.directorySuffix),
-            scalacOptions ++= Setup.clientScalacOptions(scalaVersion),
+            scalacOptions ++= Setup.clientScalacOptions(scalaVersion, javaTarget),
+            javacOptions ++= Setup.clientJavacOptions(javaTarget),
             libraryDependencies ++= dependenciesFnc(sparkVersion, scalaVersion),
-            printVersionInfo := streams.value.log.info(s"Building ${name.value} with Spark $sparkVersion, Scala ${scalaVersion.asString}"),
+            printVersionInfo := streams.value.log.info(s"Building ${name.value} with Spark $sparkVersion, Scala ${scalaVersion.asString}, Java $javaTarget"),
             (Compile / compile) := ((Compile / compile) dependsOn printVersionInfo).value,
           ).settings(settings *)
         )

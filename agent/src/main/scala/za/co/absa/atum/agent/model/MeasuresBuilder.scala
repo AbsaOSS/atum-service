@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.agent.model
 
+import za.co.absa.atum.agent.core.Logging
 import za.co.absa.atum.agent.model.AtumMeasure._
 import za.co.absa.atum.model.dto.MeasureDTO
-import org.apache.spark.internal.Logging
 
 import scala.util.Try
 
@@ -34,7 +34,7 @@ private [agent] object MeasuresBuilder extends Logging {
         case Some(value) =>
           Some(value)
         case None =>
-          logWarning(s"Measure not supported or unknown: $measure.")
+          log.warn(s"Measure not supported or unknown: $measure.")
           None
       }
     }
