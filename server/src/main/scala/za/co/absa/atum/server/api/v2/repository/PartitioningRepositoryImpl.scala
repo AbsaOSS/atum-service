@@ -23,6 +23,7 @@ import za.co.absa.atum.server.api.database.flows.functions._
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
+import za.co.absa.atum.server.api.database.runs.functions.SearchPartitionings.SearchPartitioningsArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
@@ -37,6 +38,8 @@ import za.co.absa.atum.server.model.database.{
 import zio._
 import zio.interop.catz.asyncInstance
 
+import java.time.ZonedDateTime
+
 class PartitioningRepositoryImpl(
   createPartitioningFn: CreatePartitioning,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
@@ -48,7 +51,8 @@ class PartitioningRepositoryImpl(
   getFlowPartitioningsFn: GetFlowPartitionings,
   getPartitioningMainFlowFn: GetPartitioningMainFlow,
   updatePartitioningParentFn: UpdatePartitioningParent,
-  getPartitioningAncestorsFn: GetPartitioningAncestors
+  getPartitioningAncestorsFn: GetPartitioningAncestors,
+  searchPartitioningsFn: SearchPartitionings
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -109,6 +113,44 @@ class PartitioningRepositoryImpl(
         "getPartitioning"
       )
     )
+  }
+
+  override def searchPartitionings(
+    limit: Int,
+    offset: Long,
+    keys: Option[Map[String, String]],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime]
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+    val databaseFrom = from.map(ceilToMicrosecond)
+    val databaseTo = to.map(ceilToMicrosecond)
+    val emptyWindow = from.zip(to).exists { case (start, end) => start.isBefore(end) } &&
+      databaseFrom.zip(databaseTo).exists { case (start, end) => start.isEqual(end) }
+
+    if (emptyWindow) ZIO.succeed(ResultNoMore(Seq.empty))
+    else {
+      dbMultipleResultCallWithAggregatedStatus(
+        searchPartitioningsFn(SearchPartitioningsArgs(limit, offset, keys, databaseFrom, databaseTo)),
+        "searchPartitionings"
+      ).map(_.flatten)
+        .flatMap { partitioningResults =>
+          ZIO
+            .fromEither(PartitioningResult.resultsToPartitioningWithIdDTOs(partitioningResults))
+            .mapBoth(
+              error => GeneralDatabaseError(error.getMessage),
+              partitionings => {
+                if (partitioningResults.headOption.exists(_.hasMore)) ResultHasMore(partitionings)
+                else ResultNoMore(partitionings)
+              }
+            )
+        }
+    }
+  }
+
+  // For microsecond-stored timestamps, ceiling both bounds preserves >= from and < to without JDBC rounding.
+  private def ceilToMicrosecond(time: ZonedDateTime): ZonedDateTime = {
+    val remainingNanos = time.getNano % 1000
+    if (remainingNanos == 0) time else time.plusNanos(1000 - remainingNanos)
   }
 
   private def processPartitioningFromDBOptionIO(
@@ -207,7 +249,8 @@ object PartitioningRepositoryImpl {
       with GetFlowPartitionings
       with GetPartitioningMainFlow
       with UpdatePartitioningParent
-      with GetPartitioningAncestors,
+      with GetPartitioningAncestors
+      with SearchPartitionings,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -222,6 +265,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
       updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
       getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
+      searchPartitionings <- ZIO.service[SearchPartitionings]
     } yield new PartitioningRepositoryImpl(
       createPartitioning,
       getPartitioningMeasures,
@@ -233,7 +277,8 @@ object PartitioningRepositoryImpl {
       getFlowPartitionings,
       getPartitioningMainFlow,
       updatePartitioningParent,
-      getPartitioningAncestors
+      getPartitioningAncestors,
+      searchPartitionings
     )
   }
 
