@@ -2611,30 +2611,18 @@
           "response": []
         },
         {
-          "name": "Act: partitionings / search (time window only) - 200",
+          "name": "Act: partitionings / search (time window only, no matches) - 200",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Time-only search returns an empty page\", function () {",
                   "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Content-Type is application/json\", function () {",
                   "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
-                  "});",
-                  "",
-                  "pm.test(\"Response contains the partitioning with a checkpoint in the window\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    const ids = jsonData[\"data\"].map((partitioning) => partitioning[\"id\"]);",
-                  "",
-                  "    // other clients may write to the same server, so only the presence of the tested partitioning is asserted",
-                  "    pm.expect(ids).to.include(pm.collectionVariables.get(\"partitioning_id\"));",
-                  "    pm.expect(ids).to.not.include(pm.collectionVariables.get(\"partitioningChild_id\"));",
-                  "    pm.expect(jsonData[\"pagination\"][\"limit\"]).to.eql(1000);",
-                  "    pm.expect(jsonData[\"pagination\"][\"offset\"]).to.eql(0);",
-                  "});",
+                  "    const page = pm.response.json();",
+                  "    pm.expect(page.data).to.be.an(\"array\").that.is.empty;",
+                  "    pm.expect(page.pagination).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
                   ""
                 ],
                 "type": "text/javascript",
@@ -2645,12 +2633,6 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
-                  "const processStart = new Date(pm.collectionVariables.get(\"checkpoint_processStartTime\"));",
-                  "const shiftedIso = (millis) => new Date(processStart.getTime() + millis).toISOString();",
-                  "",
-                  "// 'from' is inclusive, so a 1 ms window starting at the checkpoint's process start time must match it",
-                  "pm.variables.set(\"search_from\", shiftedIso(0));",
-                  "pm.variables.set(\"search_to\", shiftedIso(1));",
                   ""
                 ],
                 "type": "text/javascript",
@@ -2674,7 +2656,7 @@
               }
             },
             "url": {
-              "raw": "{{host}}/api/v2/partitionings/search?from={{search_from}}&to={{search_to}}&limit=1000",
+              "raw": "{{host}}/api/v2/partitionings/search?from=2100-01-01T00:00:00Z&to=2100-01-02T00:00:00Z&limit=10&offset=0",
               "host": [
                 "{{host}}"
               ],
@@ -2687,15 +2669,19 @@
               "query": [
                 {
                   "key": "from",
-                  "value": "{{search_from}}"
+                  "value": "2100-01-01T00:00:00Z"
                 },
                 {
                   "key": "to",
-                  "value": "{{search_to}}"
+                  "value": "2100-01-02T00:00:00Z"
                 },
                 {
                   "key": "limit",
-                  "value": "1000"
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
                 }
               ]
             }

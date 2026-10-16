@@ -187,7 +187,51 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
         hasMore
       )
       assertPage(query(keys = pagingKeys, limit = Some(limit), offset = Some(offset)), expected, hasMore)
+      Seq(None, Some(JsonBString("{}"))).foreach { keys =>
+        assertPage(
+          query(keys = keys, from = Some(fromTime), to = Some(toTime), limit = Some(limit), offset = Some(offset)),
+          expected,
+          hasMore
+        )
+      }
     }
+  }
+
+  test("Time-only pagination excludes orphan checkpoints before applying offset and limit") {
+    val partitionings = (0 until 3).map(index => insertPartitioning("time-page" -> index.toString))
+    partitionings.foreach { case (id, _) =>
+      insertCheckpoint(id, fromTime)
+      insertCheckpoint(id, fromTime.plusDays(1))
+    }
+    insertCheckpoint(Long.MinValue, fromTime)
+    insertCheckpoint(Long.MaxValue, fromTime)
+
+    Seq(None, Some(JsonBString("{}"))).foreach { keys =>
+      assertPage(query(keys = keys, from = Some(fromTime), limit = Some(2)), partitionings.take(2), hasMore = true)
+      assertPage(
+        query(keys = keys, from = Some(fromTime), limit = Some(2), offset = Some(2L)), partitionings.drop(2)
+      )
+      assertPage(query(keys = keys, from = Some(fromTime), limit = Some(2), offset = Some(3L)), Seq.empty)
+    }
+  }
+
+  test("A time-only search reaches a partitioning after one thousand lower-ID matches") {
+    val partitionings = (0 to 1000).map { index =>
+      val partitioning = insertPartitioning("time-page" -> index.toString)
+      insertCheckpoint(partitioning._1, fromTime)
+      partitioning
+    }.sortBy(_._1)
+    insertCheckpoint(partitionings.head._1, fromTime)
+
+    assertPage(
+      query(from = Some(fromTime), to = Some(fromTime.plusNanos(1000000)), limit = Some(1000)),
+      partitionings.take(1000),
+      hasMore = true
+    )
+    assertPage(
+      query(from = Some(fromTime), to = Some(fromTime.plusNanos(1000000)), limit = Some(1000), offset = Some(1000L)),
+      partitionings.drop(1000)
+    )
   }
 
   test("Default limit and offset return the first ten partitionings") {

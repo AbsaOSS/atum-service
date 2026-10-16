@@ -43,6 +43,7 @@ $$
 DECLARE
     _keys JSONB := nullif(i_keys, '{}'::JSONB);
     _predicates TEXT := '';
+    _time_predicates TEXT := '';
 BEGIN
     IF i_limit IS NULL OR i_limit < 1 OR i_limit > 1000 THEN
         RAISE EXCEPTION 'i_limit must be between 1 and 1000 and must not be NULL'
@@ -73,19 +74,53 @@ BEGIN
 
     -- Only fixed predicate fragments are concatenated; all input values stay bound.
     -- Replanning avoids a generic optional-filter plan that cannot use selective key/time indexes.
-    IF _keys IS NOT NULL THEN
-        _predicates := _predicates || ' AND (P.partitioning -> ''keysToValuesMap'') @> $3';
+    IF i_from_time IS NOT NULL THEN
+        _time_predicates := _time_predicates || ' AND C.process_start_time >= $4';
     END IF;
-    IF i_from_time IS NOT NULL OR i_to_time IS NOT NULL THEN
+    IF i_to_time IS NOT NULL THEN
+        _time_predicates := _time_predicates || ' AND C.process_start_time < $5';
+    END IF;
+
+    IF _keys IS NULL THEN
+        -- Scalar primary-key lookups prevent an ID-ordered merge join from scanning unrelated history.
+        -- Exclude orphan checkpoints before paging; load full partitioning rows only for the selected IDs.
+        RETURN QUERY EXECUTE
+            $query$
+            WITH active_ids AS MATERIALIZED (
+                SELECT DISTINCT C.fk_partitioning
+                FROM runs.checkpoints C
+                WHERE TRUE
+            $query$ || _time_predicates || $query$
+            ),
+            page_ids AS MATERIALIZED (
+                SELECT A.fk_partitioning
+                FROM active_ids A
+                WHERE (SELECT P.id_partitioning FROM runs.partitionings P
+                       WHERE P.id_partitioning = A.fk_partitioning) IS NOT NULL
+                ORDER BY A.fk_partitioning
+                LIMIT $1 + 1 OFFSET $2
+            ),
+            page_partitionings AS MATERIALIZED (
+                SELECT (SELECT P FROM runs.partitionings P
+                        WHERE P.id_partitioning = I.fk_partitioning) AS partitioning_row
+                FROM page_ids I
+            )
+            SELECT 11, 'OK'::TEXT, (P.partitioning_row).id_partitioning,
+                   (P.partitioning_row).partitioning, (P.partitioning_row).created_by,
+                   count(*) OVER () > $1
+            FROM page_partitionings P
+            ORDER BY (P.partitioning_row).id_partitioning
+            LIMIT $1
+            $query$
+            USING i_limit, i_offset, _keys, i_from_time, i_to_time;
+        RETURN;
+    END IF;
+
+    _predicates := ' AND (P.partitioning -> ''keysToValuesMap'') @> $3';
+    IF _time_predicates <> '' THEN
         _predicates := _predicates ||
-            ' AND EXISTS (SELECT 1 FROM runs.checkpoints C WHERE C.fk_partitioning = P.id_partitioning';
-        IF i_from_time IS NOT NULL THEN
-            _predicates := _predicates || ' AND C.process_start_time >= $4';
-        END IF;
-        IF i_to_time IS NOT NULL THEN
-            _predicates := _predicates || ' AND C.process_start_time < $5';
-        END IF;
-        _predicates := _predicates || ')';
+            ' AND EXISTS (SELECT 1 FROM runs.checkpoints C WHERE C.fk_partitioning = P.id_partitioning' ||
+            _time_predicates || ')';
     END IF;
 
     RETURN QUERY EXECUTE

@@ -29,7 +29,7 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.server.api.v2.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.common.http.{BaseEndpoints, HttpEnv}
 
-import java.time.ZonedDateTime
+import java.time.{Duration, ZonedDateTime}
 import java.util.UUID
 import scala.util.{Failure, Success, Try}
 
@@ -88,14 +88,22 @@ object Endpoints extends BaseEndpoints {
         case _ => ValidationResult.Valid
       })
 
+  private val maxPartitioningSearchWindow = Duration.ofDays(365)
+
   private val partitioningSearchInput
     : EndpointInput[(Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime])] =
     query[Option[Map[String, String]]]("keys")
       .description("base64url-encoded JSON object of partial partitioning keys; all supplied string values must match")
       .and(checkpointTimeWindowInput)
       .validate(Validator.custom {
-        case (keys, from, to) if keys.exists(_.nonEmpty) || from.isDefined || to.isDefined => ValidationResult.Valid
-        case _ => ValidationResult.Invalid("At least one non-empty key filter or time bound is required")
+        case (_, Some(_), None) | (_, None, Some(_)) =>
+          ValidationResult.Invalid("'from' and 'to' must be supplied together")
+        case (_, Some(from), Some(to)) if Duration.between(from.toInstant, to.toInstant)
+          .compareTo(maxPartitioningSearchWindow) > 0 =>
+          ValidationResult.Invalid("The time window must not exceed 365 days")
+        case (keys, None, None) if keys.forall(_.isEmpty) =>
+          ValidationResult.Invalid("At least one non-empty key filter or complete time window is required")
+        case _ => ValidationResult.Valid
       })
 
   val postCheckpointEndpoint
@@ -222,8 +230,8 @@ object Endpoints extends BaseEndpoints {
       .in(partitioningSearchInput)
       .description(
         "Search distinct partitionings by partial keys and/or checkpoint process start time, ordered by partitioning ID " +
-          "ascending. Key-only searches include partitionings without checkpoints. Time bounds require at least one " +
-          "matching checkpoint. Pagination is live, not a snapshot."
+          "ascending. Key-only searches include partitionings without checkpoints. Time selection requires both bounds, " +
+          "a window no longer than 365 days, and at least one matching checkpoint. Pagination is live, not a snapshot."
       )
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])

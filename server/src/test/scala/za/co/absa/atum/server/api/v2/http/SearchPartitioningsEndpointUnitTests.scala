@@ -50,10 +50,6 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
   private val validSearches = Seq(
     ValidSearch("key-only search decodes Unicode and empty string values with defaults",
       Seq("keys" -> encodedKeys), keys = Some(searchKeys)),
-    ValidSearch("from-only search preserves the supplied positive timezone",
-      Seq("from" -> searchFrom.toString), from = Some(searchFrom)),
-    ValidSearch("to-only search preserves the supplied negative timezone",
-      Seq("to" -> searchTo.toString), to = Some(searchTo)),
     ValidSearch("time-only bounded search",
       Seq("from" -> searchFrom.toString, "to" -> searchTo.toString), from = Some(searchFrom), to = Some(searchTo)),
     ValidSearch("combined search forwards custom limit and nonzero offset",
@@ -64,9 +60,13 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
     ValidSearch("maximum limit and offset beyond Int range are accepted",
       Seq("keys" -> encodedKeys, "limit" -> "1000", "offset" -> searchOffset.toString),
       limit = 1000, offset = searchOffset, keys = Some(searchKeys)),
-    ValidSearch("empty keys with a time bound are accepted",
-      Seq("keys" -> encodeSearchJson("{}"), "from" -> searchFrom.toString),
-      keys = Some(Map.empty[String, String]), from = Some(searchFrom)),
+    ValidSearch("empty keys with a complete time window are accepted",
+      Seq("keys" -> encodeSearchJson("{}"), "from" -> searchFrom.toString, "to" -> searchTo.toString),
+      keys = Some(Map.empty[String, String]), from = Some(searchFrom), to = Some(searchTo)),
+    ValidSearch("a 365-day time window is accepted",
+      Seq("from" -> "2026-06-01T00:00:00Z", "to" -> "2027-06-01T00:00:00Z"),
+      from = Some(ZonedDateTime.parse("2026-06-01T00:00:00Z")),
+      to = Some(ZonedDateTime.parse("2027-06-01T00:00:00Z"))),
     ValidSearch("valid instant ordering is accepted even when local date ordering is reversed",
       Seq("from" -> "2026-06-02T00:30:00+02:00", "to" -> "2026-06-01T23:45:00Z"),
       from = Some(ZonedDateTime.parse("2026-06-02T00:30:00+02:00")),
@@ -104,12 +104,16 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
         "invalid from" -> Seq("from" -> "not-a-date"),
         "invalid to" -> Seq("to" -> "2026-99-01T00:00:00Z"),
         "missing date offset" -> Seq("from" -> "2026-06-01T00:00:00"),
+        "from without to" -> Seq("from" -> searchFrom.toString),
+        "to without from" -> Seq("to" -> searchTo.toString),
         "equal time bounds" -> Seq("from" -> searchFrom.toString, "to" -> searchFrom.toString),
         "equal instants in different timezones" ->
           Seq("from" -> "2026-06-01T02:00:00+02:00", "to" -> "2026-06-01T00:00:00Z"),
         "reversed bounds" -> Seq("from" -> searchTo.toString, "to" -> searchFrom.toString),
         "locally ordered but instant-reversed bounds" ->
-          Seq("from" -> "2026-06-01T00:00:00-04:00", "to" -> "2026-06-01T02:00:00+02:00")
+          Seq("from" -> "2026-06-01T00:00:00-04:00", "to" -> "2026-06-01T02:00:00+02:00"),
+        "window longer than 365 days" ->
+          Seq("from" -> "2026-06-01T00:00:00Z", "to" -> "2027-06-02T00:00:00Z")
       ).map { case (name, params) => name -> (Seq("keys" -> encodedKeys) ++ params) } ++
       Seq(
         "zero limit" -> ("limit" -> "0"),
