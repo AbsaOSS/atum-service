@@ -18,7 +18,7 @@ package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
 import okhttp3.OkHttpClient
-import org.apache.spark.internal.Logging
+import za.co.absa.atum.agent.core.Logging
 import sttp.capabilities
 import sttp.client3._
 import sttp.model.Uri
