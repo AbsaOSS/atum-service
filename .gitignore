@@ -92,3 +92,9 @@ utils/resources/*.conf
 /server/selfsigned.crt
 /server/selfsigned.p12
 /.bloop/
+
+# AI Files
+.agents/
+.planning/
+.skills/
+graphify-out/
