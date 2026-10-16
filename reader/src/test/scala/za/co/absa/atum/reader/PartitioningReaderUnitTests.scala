@@ -277,7 +277,7 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
     assert(result.isRight)
   }
 
-  test("The partitioning checkpoints are queried with name and multi-value properties in a single request") {
+  test("The partitioning checkpoints are queried with name, multi-value properties and time window in a single request") {
     implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
       .whenRequestMatchesPartial {
         case r if r.uri.path.endsWith(List(V2Paths.Partitionings)) =>
@@ -288,12 +288,16 @@ class PartitioningReaderUnitTests extends AnyFunSuiteLike {
           assert(r.uri.querySegments.contains(KeyValue("checkpoint-name", "Test checkpoints 1")))
           // base64url-encoded {"executionID":["id1","id2"]}
           assert(r.uri.querySegments.contains(KeyValue("checkpoint-properties", "eyJleGVjdXRpb25JRCI6WyJpZDEiLCJpZDIiXX0=")))
+          assert(r.uri.querySegments.contains(KeyValue("from", "2026-06-01T00:00:00Z")))
+          assert(!r.uri.paramsMap.contains("to"))
+          assert(!r.uri.paramsMap.contains("latest-first"))
           Response.ok(checkpointsResponse)
       }
 
     val filter = CheckpointFilter(
       name = Some("Test checkpoints 1"),
-      properties = Map("executionID" -> Set("id1", "id2"))
+      properties = Map("executionID" -> Set("id1", "id2")),
+      from = Some(ZonedDateTime.parse("2026-06-01T00:00:00Z"))
     )
     val result = PartitioningReader(AtumPartitions(List("a" -> "b", "c" -> "d"))).getCheckpointsPage(filter = filter)
     assert(result.map(_.data.size) == Right(2))

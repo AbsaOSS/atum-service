@@ -174,6 +174,72 @@ class GetFlowPartitioningsIntegrationTests extends DBTestSuite {
       }
   }
 
+  Seq(
+    ("first page", Some(2), 0L, Seq(0, 1), true),
+    ("middle page", Some(2), 2L, Seq(2, 3), true),
+    ("last partial page", Some(2), 4L, Seq(4), false),
+    ("exact final full page", Some(2), 3L, Seq(3, 4), false),
+    ("offset at the end", Some(2), 5L, Seq.empty[Int], false),
+    ("offset beyond the end", Some(2), 6L, Seq.empty[Int], false),
+    ("unlimited first page", None, 0L, Seq(0, 1, 2, 3, 4), false),
+    ("unlimited page with an offset", None, 2L, Seq(2, 3, 4), false)
+  ).foreach { case (description, limit, offset, expectedIndices, hasMore) =>
+    test(s"Returns ordered partitionings and has_more for $description") {
+      val partitionings = (0 until 5).map { index =>
+        val partitioning = JsonBString(
+          s"""{"version":1,"keys":["page"],"keysToValuesMap":{"page":"$index"}}"""
+        )
+        table(partitioningsTable).insert(add("partitioning", partitioning).add("created_by", "Pagination author"))
+        val id: Long = table(partitioningsTable)
+          .fieldValue("partitioning", partitioning, "id_partitioning").get.get
+        (id, partitioning)
+      }.sortBy(_._1)
+
+      val flowId = function(createFlowFn)
+        .setParam("i_fk_partitioning", partitionings.last._1)
+        .setParam("i_by_user", "Pagination author")
+        .execute { queryResult =>
+          val row = queryResult.next()
+          assert(row.getInt("status").contains(11))
+          row.getLong("id_flow").get
+        }
+
+      partitionings.init.reverse.foreach { case (id, _) =>
+        function(addToParentFlowsFn)
+          .setParam("i_fk_parent_partitioning", partitionings.last._1)
+          .setParam("i_fk_partitioning", id)
+          .setParam("i_by_user", "Pagination author")
+          .execute { queryResult =>
+            assert(queryResult.next().getInt("status").contains(11))
+          }
+      }
+
+      val pageQuery = function(getFlowPartitioningsFn)
+        .setParam("i_flow_id", flowId)
+        .setParam("i_offset", offset)
+      val limitedQuery = limit match {
+        case Some(value) => pageQuery.setParam("i_limit", value)
+        case None => pageQuery.setParamNull("i_limit")
+      }
+
+      limitedQuery.execute { queryResult =>
+        expectedIndices.foreach { index =>
+          assert(queryResult.hasNext)
+          val row = queryResult.next()
+          val (expectedId, expectedPartitioning) = partitionings(index)
+          assert(row.getInt("status").contains(11))
+          assert(row.getString("status_text").contains("OK"))
+          assert(row.getLong("id").contains(expectedId))
+          assert(parseJsonBStringOrThrow(row.getJsonB("partitioning").get) ==
+            parseJsonBStringOrThrow(expectedPartitioning))
+          assert(row.getString("author").contains("Pagination author"))
+          assert(row.getBoolean("has_more").contains(hasMore))
+        }
+        assert(!queryResult.hasNext)
+      }
+    }
+  }
+
   test("Fails for non-existent flow"){
     function(getFlowPartitioningsFn)
       .setParam("i_flow_id", 999999)

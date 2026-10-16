@@ -18,27 +18,37 @@ package za.co.absa.atum.reader.requests
 
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 
+import java.time.ZonedDateTime
+
 /**
  *  Filter of a checkpoints query. All its parts are optional and a checkpoint has to satisfy all the given ones.
  *
- *  Example - checkpoints of the given name, of any of the two executions:
+ *  Example - checkpoints of two executions processed in the last two months, latest first:
  *  {{{
  *    CheckpointFilter(
- *      name = Some("Data written"),
- *      properties = Map("executionID" -> Set("a", "b"))
+ *      properties = Map("executionID" -> Set("a", "b")),
+ *      from = Some(ZonedDateTime.now().minusMonths(2))
  *    )
  *  }}}
  *
- *  Note: properties with more than one value require an Atum server supporting them; older servers reject them.
+ *  Note: the time window and properties with more than one value require an Atum server supporting them; older servers
+ *  ignore the time window and reject multi-value properties.
  *
- *  @param name       - only checkpoints of this name
- *  @param properties - only checkpoints that, for every property name given, have that property with one of the given
- *                      values, e.g. `Map("executionID" -> Set("a", "b"))` means `executionID IN (a, b)`; every property
- *                      needs at least one value, otherwise an `IllegalArgumentException` is thrown
+ *  @param name        - only checkpoints of this name
+ *  @param properties  - only checkpoints that, for every property name given, have that property with one of the given
+ *                       values, e.g. `Map("executionID" -> Set("a", "b"))` means `executionID IN (a, b)`; every property
+ *                       needs at least one value, otherwise an `IllegalArgumentException` is thrown
+ *  @param from        - only checkpoints with process start time at or after this time (inclusive)
+ *  @param to          - only checkpoints with process start time before this time (exclusive)
+ *  @param latestFirst - order of the checkpoints by their process start time: latest first if `true`, earliest first if
+ *                       `false`, server default (latest first) if not specified
  */
 case class CheckpointFilter(
   name: Option[String] = None,
-  properties: Map[String, Set[String]] = Map.empty
+  properties: Map[String, Set[String]] = Map.empty,
+  from: Option[ZonedDateTime] = None,
+  to: Option[ZonedDateTime] = None,
+  latestFirst: Option[Boolean] = None
 ) {
 
   require(
@@ -47,7 +57,11 @@ case class CheckpointFilter(
   )
 
   private[reader] def toQueryParams: Map[String, String] = {
-    name.map(QueryParamNames.CheckpointName -> _).toMap ++ propertiesParam
+    name.map(QueryParamNames.CheckpointName -> _).toMap ++
+      propertiesParam ++
+      from.map(QueryParamNames.From -> _.toInstant.toString) ++
+      to.map(QueryParamNames.To -> _.toInstant.toString) ++
+      latestFirst.map(QueryParamNames.LatestFirst -> _.toString)
   }
 
   private def propertiesParam: Option[(String, String)] = {

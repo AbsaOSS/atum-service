@@ -307,7 +307,7 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
     assert(result.isRight)
   }
 
-  test("The flow checkpoints are queried with name and multi-value properties in a single request") {
+  test("The flow checkpoints are queried with name, multi-value properties and time window in a single request") {
     implicit val server: SttpBackendStub[Identity, capabilities.WebSockets] = SttpBackendStub.synchronous
       .whenRequestMatchesPartial {
         case r if r.uri.path.endsWith(List("partitionings")) =>
@@ -320,12 +320,18 @@ class FlowReaderUnitTests extends AnyFunSuiteLike {
           assert(r.uri.querySegments.contains(KeyValue("include-properties", "true")))
           assert(r.uri.querySegments.contains(KeyValue("checkpoint-name", "Test checkpoints 1")))
           assert(r.uri.querySegments.contains(KeyValue("checkpoint-properties", multiValuePropertiesEncoded)))
+          assert(r.uri.querySegments.contains(KeyValue("from", "2026-06-01T00:00:00Z")))
+          assert(r.uri.querySegments.contains(KeyValue("to", "2026-08-01T00:00:00Z")))
+          assert(r.uri.querySegments.contains(KeyValue("latest-first", "false")))
           Response.ok(checkpointsResponse)
       }
 
     val filter = CheckpointFilter(
       name = Some("Test checkpoints 1"),
-      properties = Map("executionID" -> Set("id2", "id1"))
+      properties = Map("executionID" -> Set("id2", "id1")),
+      from = Some(ZonedDateTime.parse("2026-06-01T02:00:00+02:00")),
+      to = Some(ZonedDateTime.parse("2026-08-01T00:00:00Z")),
+      latestFirst = Some(false)
     )
     val result = FlowReader(AtumPartitions(List("a" -> "b", "c" -> "d")))
       .getCheckpointsPage(pageSize = 5, offset = 10, includeProperties = true, filter = filter)

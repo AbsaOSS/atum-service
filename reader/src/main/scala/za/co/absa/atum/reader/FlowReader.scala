@@ -45,12 +45,12 @@ case class FlowReader[F[_]](mainFlowPartitioning: AtumPartitions)(implicit
 
   /**
    *  Function to retrieve a page of checkpoints belonging to the flow, optionally filtered.
-   *  The checkpoints are ordered by their process start time, latest first.
+   *  The checkpoints are ordered by their process start time, latest first unless the filter says otherwise.
    *
    *  @param pageSize          - the size of the page (record count) to be returned
    *  @param offset            - offset of the page (starting position)
    *  @param includeProperties - whether to include checkpoint properties in the response
-   *  @param filter            - the checkpoints to return (by name and/or properties)
+   *  @param filter            - the checkpoints to return (name, properties, process start time window) and their order
    *  @return                  - a page of checkpoints
    */
   def getCheckpointsPage(
