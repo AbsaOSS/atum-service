@@ -22,6 +22,8 @@ import za.co.absa.atum.server.config.PostgresConfig
 import zio._
 import zio.interop.catz._
 
+import java.sql.DriverManager
+
 object TestTransactorProvider {
 
   val layerWithoutRollback: ZLayer[Any, Config.Error, Transactor[Task]] = ZLayer {
@@ -51,6 +53,29 @@ object TestTransactorProvider {
       )
       transactorWithRollback = Transactor.strategy.set(transactor, Strategy.default.copy(after = HC.rollback))
     } yield transactorWithRollback
+  }
+
+  // All database calls share a single connection and a single transaction, rolled back once the layer is released.
+  //
+  // Why: some tests first insert test data (e.g. via CreatePartitioning, WriteCheckpointV2) and then read it back
+  // with the function under test (e.g. GetPartitioningCheckpoints), so the inserted rows must survive between calls:
+  //  - layerWithRollback rolls back after each call, so the rows are gone before they can be read;
+  //  - layerWithoutRollback keeps the rows, but permanently.
+  val layerWithSingleTransactionRollback: ZLayer[Any, Throwable, Transactor[Task]] = ZLayer.scoped {
+    for {
+      postgresConfig <- ZIO.config[PostgresConfig](PostgresConfig.config)
+      connection <- ZIO.acquireRelease(
+        ZIO.attemptBlocking {
+          val connection = DriverManager.getConnection(
+            s"jdbc:postgresql://${postgresConfig.serverName}:${postgresConfig.portNumber}/${postgresConfig.databaseName}",
+            postgresConfig.user,
+            postgresConfig.password
+          )
+          connection.setAutoCommit(false)
+          connection
+        }
+      )(connection => ZIO.attemptBlocking(try connection.rollback() finally connection.close()).orDie)
+    } yield Transactor.strategy.set(Transactor.fromConnection[Task](connection), Strategy.void)
   }
 
 }

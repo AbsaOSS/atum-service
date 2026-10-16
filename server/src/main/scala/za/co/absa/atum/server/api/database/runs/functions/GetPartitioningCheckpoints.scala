@@ -25,11 +25,17 @@ import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWith
 import zio._
 import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import doobie.postgres.implicits._
+
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningCheckpoints.GetPartitioningCheckpointsArgs
 import za.co.absa.atum.server.model.database.CheckpointItemFromDB
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
+import io.circe.syntax._
+import io.circe.generic.auto._
 import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstRowStatusAggregator
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
+
+import java.time.ZonedDateTime
 
 class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningCheckpointsArgs, Option[
@@ -40,8 +46,10 @@ class GetPartitioningCheckpoints(implicit schema: DBSchema, dbEngine: DoobieEngi
         fr"${args.limit}",
         fr"${args.offset}",
         fr"${args.checkpointName}",
-        fr"${args.checkpointProperties}",
-        fr"${args.latestFirst}"
+        fr"${args.checkpointProperties.map(_.asJson)}",
+        fr"${args.latestFirst}",
+        fr"${args.from}",
+        fr"${args.to}"
       )
     )
     with StandardStatusHandling
@@ -67,8 +75,10 @@ object GetPartitioningCheckpoints {
     limit: Int,
     offset: Long,
     checkpointName: Option[String],
-    checkpointProperties: Option[Map[String, String]],
-    latestFirst: Option[Boolean]
+    checkpointProperties: Option[Map[String, Seq[String]]],
+    latestFirst: Option[Boolean],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime]
   )
 
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningCheckpoints] = ZLayer {

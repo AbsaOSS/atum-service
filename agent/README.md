@@ -25,7 +25,7 @@ Use `AtumPartitions` to get an `AtumContext` from the service using the `AtumAge
 import za.co.absa.atum.agent.AtumAgent
 import za.co.absa.atum.model.types.basic.AtumPartitions
 
-val atumPartitions = AtumPartitions("country" -> "za", "dataset" -> "customers")
+val atumPartitions = AtumPartitions(List("country" -> "za", "dataset" -> "customers"))
 val atumContext1 = AtumAgent.getOrCreateAtumContext(atumPartitions)
 ```
 
@@ -45,7 +45,7 @@ val config = ConfigFactory.parseString(
 )
 
 val customAgent = AtumAgent.fromConfig(config)
-val atumPartitions = AtumPartitions("country" -> "za", "dataset" -> "customers")
+val atumPartitions = AtumPartitions(List("country" -> "za", "dataset" -> "customers"))
 val atumContext = customAgent.getOrCreateAtumContext(atumPartitions)
 ```
 
@@ -53,10 +53,17 @@ val atumContext = customAgent.getOrCreateAtumContext(atumPartitions)
 A list of key values that maintains the order of arrival of the items, the `AtumService`
 is able to deliver the correct `AtumContext` according to the `AtumPartitions` we give it.
 ```scala
-    val atumPartitions = AtumPartitions().withPartitions(ListMap("name" -> "partition-name", "country" -> "SA", "gender" -> "female" ))
+val atumPartitions = AtumPartitions(List(
+  "name" -> "partition-name",
+  "country" -> "SA",
+  "gender" -> "female"
+))
 
-    val subPartition = atumPartitions.addPartition("otherKey", "otherValue")
+val withOtherKey = atumPartitions ++ AtumPartitions("otherKey" -> "otherValue")
 ```
+
+Constructing these keys does not register a parent-child relationship. Use
+`AtumContext.subPartitionContext` to create a linked child context.
 
 Control measures can also be overwritten, added or removed.
 
