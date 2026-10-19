@@ -81,14 +81,34 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
     (p1, p2, child)
   }
 
-  private def addMeasure(id: Long, name: String, columnsLiteral: String, author: String): Unit = {
-    table("runs.measure_definitions").insert(
-      add("fk_partitioning", id)
-        .add("created_by", author)
-        .add("measure_name", name)
-        .add("measured_columns", CustomDBType(columnsLiteral, "TEXT[]"))
-    )
+  private def addMeasure(
+    id: Long,
+    name: String,
+    columnsLiteral: String,
+    author: String,
+    createdAt: Option[String] = None
+  ): Unit = {
+    val base = add("fk_partitioning", id)
+      .add("created_by", author)
+      .add("measure_name", name)
+      .add("measured_columns", CustomDBType(columnsLiteral, "TEXT[]"))
+    val params = createdAt match {
+      case Some(ts) => base.add("created_at", CustomDBType(ts, "TIMESTAMPTZ"))
+      case None => base
+    }
+    table("runs.measure_definitions").insert(params)
     ()
+  }
+
+  private def hasExecute(role: String, signature: String): Boolean = {
+    val statement = dbConnection.connection.createStatement()
+    try {
+      val rs = statement.executeQuery(s"SELECT has_function_privilege('$role', '$signature', 'EXECUTE')")
+      assert(rs.next())
+      rs.getBoolean(1)
+    } finally {
+      statement.close()
+    }
   }
 
   private def addAd(id: Long, key: String, value: Option[String]): Unit = {
@@ -104,7 +124,7 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
   private def ids(xs: Seq[Any]): CustomDBType =
     CustomDBType(xs.map(x => if (x == null) "NULL" else x.toString).mkString("{", ",", "}"), "BIGINT[]")
 
-  private def copy(child: Long, scope: CustomDBType, copyFrom: CustomDBType): (Int, String, Seq[String]) = {
+  private def copy(child: Long, scope: CustomDBType, copyFrom: CustomDBType): (Int, String, Seq[String], Int) = {
     function(fncCopyParentsData)
       .setParam("i_id_partitioning", child)
       .setParam("i_conflict_scope_parent_ids", scope)
@@ -116,7 +136,8 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
         val result = (
           row.getInt("status").get,
           row.getString("status_text").get,
-          row.getArray[String]("skipped_ad_keys").map(_.toSeq).get
+          row.getArray[String]("skipped_ad_keys").map(_.toSeq).get,
+          row.getInt("copied_rows").get
         )
         assert(!qr.hasNext)
         result
@@ -152,7 +173,7 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
 
     val result = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
 
-    assert(result == (11, "Parent data copied", Seq.empty[String]))
+    assert(result == (11, "Parent data copied", Seq.empty[String], 3))
     assert(measureCount(child) == 3)
     assert(measureCount(child, "m1") == 1)
     assert(measureCount(child, "m3") == 1)
@@ -169,9 +190,10 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
 
     val result = copy(child, ids(Seq(p1)), ids(Seq(p1)))
 
-    assert(result == (11, "Parent data copied", Seq.empty[String]))
+    assert(result == (11, "Parent data copied", Seq.empty[String], 0))
     assert(measureCount(child, "m1") == 1)
     table("runs.measure_definitions").where(measureOf(child, "m1")) { r =>
+      assert(r.hasNext)
       assert(r.next().getString("created_by").contains("Carol"))
     }
   }
@@ -183,10 +205,11 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
 
     val result = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
 
-    assert(result == (11, "Parent data copied", Seq.empty[String]))
+    assert(result == (11, "Parent data copied", Seq.empty[String], 1))
     assert(adCount(child, "k_same") == 1)
     assert(adValue(child, "k_same").contains(Some("v")))
     table("runs.additional_data").where(adOf(child, "k_same")) { r =>
+      assert(r.hasNext)
       assert(r.next().getString("created_by").contains("Copier"))
     }
   }
@@ -196,12 +219,13 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
     addAd(p1, "k_conf", Some("a"))
     addAd(p2, "k_conf", Some("b"))
 
-    val (status, statusText, skipped) = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
+    val (status, statusText, skipped, copied) = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
 
     assert(status == 11)
     assert(statusText == "Parent data copied")
     assert(adValue(child, "k_conf").isEmpty)
     assert(skipped == Seq("k_conf"))
+    assert(copied == 0)
   }
 
   test("Additional data NULL values: identical NULLs copied once, NULL vs value skipped") {
@@ -211,7 +235,7 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
     addAd(p1, "k_mix", None)
     addAd(p2, "k_mix", Some("x"))
 
-    val (status, _, skipped) = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
+    val (status, _, skipped, _) = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
 
     assert(status == 11)
     assert(adCount(child, "k_null") == 1)
@@ -228,12 +252,11 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
     addAd(p1, "k_own2", Some("a"))
     addAd(p2, "k_own2", Some("b"))
 
-    val (status, _, skipped) = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
+    val (status, _, skipped, _) = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
 
     assert(status == 11)
     assert(adValue(child, "k_own").contains(Some("child")))
     assert(adValue(child, "k_own2").contains(Some("c")))
-    assert(!skipped.contains("k_own2"))
     assert(skipped.isEmpty)
   }
 
@@ -246,7 +269,7 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
     addMeasure(p1, "m_p1", """{"col1"}""", "Alice")
     addMeasure(p2, "m_p2", """{"col2"}""", "Bob")
 
-    val (status, _, skipped) = copy(child, ids(Seq(p1, p2)), ids(Seq(p2)))
+    val (status, _, skipped, _) = copy(child, ids(Seq(p1, p2)), ids(Seq(p2)))
 
     assert(status == 11)
     assert(skipped == Seq("k_x"))
@@ -265,7 +288,7 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
 
     val result = copy(child, ids(Seq(p1, p2)), ids(Seq.empty))
 
-    assert(result == (14, "Nothing to copy", Seq.empty[String]))
+    assert(result == (14, "Nothing to copy", Seq.empty[String], 0))
     assert(measureCount(child) == 0)
     assert(adCount(child) == 0)
   }
@@ -280,13 +303,79 @@ class CopyParentsDataToPartitioningIntegrationTests extends DBTestSuite {
     val messy = ids(Seq(p1, p1, null, child))
     val result = copy(child, messy, messy)
 
-    assert(result == (11, "Parent data copied", Seq.empty[String]))
+    assert(result == (11, "Parent data copied", Seq.empty[String], 4))
     assert(measureCount(child) == 2)
     assert(measureCount(child, "m1") == 1)
     assert(measureCount(child, "m2") == 1)
     assert(adCount(child) == 2)
     assert(adValue(child, "k_a").contains(Some("a")))
     assert(adValue(child, "k_n").contains(None))
+  }
+
+  test("The earliest parent row wins for a duplicated measure definition, independent of row order") {
+    val (p1, p2, child) = createAll()
+    // p1's row is inserted first (lower id_measure_definition) but carries the LATER created_at
+    addMeasure(p1, "m1", """{"col1"}""", "Alice", Some("2021-01-01T00:00:00Z"))
+    addMeasure(p2, "m1", """{"col1"}""", "Bob", Some("2020-01-01T00:00:00Z"))
+
+    val (status, _, _, copied) = copy(child, ids(Seq(p1, p2)), ids(Seq(p1, p2)))
+
+    assert(status == 11)
+    assert(copied == 1)
+    table("runs.measure_definitions").where(measureOf(child, "m1")) { r =>
+      assert(r.hasNext)
+      assert(r.next().getString("created_by").contains("Bob"))
+      assert(!r.hasNext)
+    }
+  }
+
+  test("A non-existent or NULL child partitioning returns status 41 and copies nothing") {
+    val (p1, _, _) = createAll()
+    addMeasure(p1, "m1", """{"col1"}""", "Alice")
+    addAd(p1, "k_a", Some("a"))
+    val adBefore = table("runs.additional_data").count()
+    val measuresBefore = table("runs.measure_definitions").count()
+
+    val missing = copy(987654321987L, ids(Seq(p1)), ids(Seq(p1)))
+    assert(missing == (41, "Partitioning not found", Seq.empty[String], 0))
+
+    function(fncCopyParentsData)
+      .setParamNull("i_id_partitioning")
+      .setParam("i_conflict_scope_parent_ids", ids(Seq(p1)))
+      .setParam("i_copy_from_parent_ids", ids(Seq(p1)))
+      .setParam("i_by_user", "Copier")
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        assert(row.getInt("status").contains(41))
+        assert(row.getString("status_text").contains("Partitioning not found"))
+      }
+
+    assert(table("runs.additional_data").count() == adBefore)
+    assert(table("runs.measure_definitions").count() == measuresBefore)
+  }
+
+  test("EXECUTE on the helper is granted to the owner only") {
+    val signature = "runs._copy_parents_data_to_partitioning(bigint,bigint[],bigint[],text)"
+
+    assert(hasExecute("atum_owner", signature))
+    assert(!hasExecute("atum_user", signature))
+    assert(!hasExecute("atum_reader", signature))
+    assert(!hasExecute("public", signature))
+  }
+
+  test("The helper pins the search_path") {
+    val signature = "runs._copy_parents_data_to_partitioning(bigint,bigint[],bigint[],text)"
+    val statement = dbConnection.connection.createStatement()
+    try {
+      val rs = statement.executeQuery(
+        s"SELECT coalesce(proconfig::text, '') LIKE '%search_path=pg_catalog,%' FROM pg_proc WHERE oid = '$signature'::regprocedure"
+      )
+      assert(rs.next())
+      assert(rs.getBoolean(1))
+    } finally {
+      statement.close()
+    }
   }
 
 }

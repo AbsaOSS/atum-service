@@ -21,7 +21,8 @@ CREATE OR REPLACE FUNCTION runs._copy_parents_data_to_partitioning(
     IN  i_by_user                       TEXT,
     OUT status                          INTEGER,
     OUT status_text                     TEXT,
-    OUT skipped_ad_keys                 TEXT[]
+    OUT skipped_ad_keys                 TEXT[],
+    OUT copied_rows                     INTEGER
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -36,27 +37,46 @@ $$
 --          differ across the conflict-scope parents (NULL counts as a value) is skipped; a key with a
 --          single value across those parents is copied once
 --
+--      Attribution of the copied rows (deliberately different, see IN-06 of the phase-1 review):
+--        * measure definitions keep the original created_by/created_at of the parent row. They are the
+--          same definition continued in the child, and this matches the shipped runs.create_partitioning,
+--          which copies measure definitions with their original created_by/created_at.
+--        * additional data rows are new values written by this call, so they are stamped with i_by_user
+--          and the current time (as runs.create_or_update_additional_data does).
+--
 -- Parameters:
 --      i_id_partitioning               - id of the child partitioning receiving the data
---      i_conflict_scope_parent_ids     - all parents considered for additional data conflict detection
---      i_copy_from_parent_ids          - parents whose data is copied (the newly linked parents)
+--      i_conflict_scope_parent_ids     - all partitionings considered for additional data conflict
+--                                        detection (the copy-from parents are always added to this scope)
+--      i_copy_from_parent_ids          - parents whose data is copied
 --      i_by_user                       - user behind the change
 --
 -- Returns:
 --      status              - Status code
 --      status_text         - Status text
 --      skipped_ad_keys     - additional data keys skipped due to conflicting parent values, sorted, never NULL
+--      copied_rows         - number of rows (measure definitions + additional data) actually inserted
 --
 -- Status codes:
 --      11                  - Parent data copied
 --      14                  - Nothing to copy
+--      41                  - Partitioning not found (NULL or non-existent i_id_partitioning)
 --
 -------------------------------------------------------------------------------
 DECLARE
     _copy_from              BIGINT[];
     _conflict_scope         BIGINT[];
+    _rows                   INTEGER;
 BEGIN
     skipped_ad_keys := '{}'::TEXT[];
+    copied_rows := 0;
+
+    PERFORM 1 FROM runs.partitionings P WHERE P.id_partitioning = i_id_partitioning;
+    IF NOT FOUND THEN
+        status := 41;
+        status_text := 'Partitioning not found';
+        RETURN;
+    END IF;
 
     _copy_from := ARRAY(
         SELECT DISTINCT PID.id
@@ -84,6 +104,8 @@ BEGIN
     WHERE MD.fk_partitioning = ANY(_copy_from)
     ORDER BY MD.measure_name, MD.measured_columns, MD.created_at, MD.id_measure_definition
     ON CONFLICT ON CONSTRAINT measure_definitions_unq DO NOTHING;
+    GET DIAGNOSTICS _rows = ROW_COUNT;
+    copied_rows := copied_rows + _rows;
 
     -- additional data: keys skipped because the parents disagree (reported only if the child lacks the key)
     SELECT COALESCE(array_agg(K.ad_name ORDER BY K.ad_name), '{}'::TEXT[])
@@ -112,13 +134,19 @@ BEGIN
     HAVING cardinality(array_agg(DISTINCT AD.ad_value)) = 1
        AND bool_or(AD.fk_partitioning = ANY(_copy_from))
     ON CONFLICT ON CONSTRAINT ad_unq DO NOTHING;
+    GET DIAGNOSTICS _rows = ROW_COUNT;
+    copied_rows := copied_rows + _rows;
 
     status := 11;
     status_text := 'Parent data copied';
     RETURN;
 END;
 $$
-LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+-- search_path is pinned (pg_catalog first, so built-in functions and operators cannot be shadowed). public is
+-- required because the column defaults of the inserted tables call public.global_id(), which resolves its
+-- sequence through the search_path of the running function; pg_temp is last so temporary objects cannot shadow.
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp;
 
 ALTER FUNCTION runs._copy_parents_data_to_partitioning(BIGINT, BIGINT[], BIGINT[], TEXT) OWNER TO atum_owner;
 REVOKE EXECUTE ON FUNCTION runs._copy_parents_data_to_partitioning(BIGINT, BIGINT[], BIGINT[], TEXT) FROM PUBLIC;
