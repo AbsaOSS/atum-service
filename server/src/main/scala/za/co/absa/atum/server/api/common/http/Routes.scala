@@ -57,6 +57,7 @@ object Routes extends ServerOptions with ServerUtils {
       api.v2.http.Endpoints.getPartitioningCheckpointsEndpoint,
       api.v2.http.Endpoints.getPartitioningCheckpointEndpoint,
       api.v2.http.Endpoints.getPartitioningEndpoint,
+      api.v2.http.Endpoints.searchPartitioningsEndpoint,
       api.v2.http.Endpoints.getPartitioningMeasuresEndpoint,
       api.v2.http.Endpoints.getPartitioningMainFlowEndpoint,
       api.v2.http.Endpoints.getFlowPartitioningsEndpoint,
