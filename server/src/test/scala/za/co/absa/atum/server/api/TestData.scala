@@ -138,6 +138,21 @@ trait TestData {
   protected val partitioningSubmitV2DTO3: PartitioningSubmitV2DTO =
     partitioningSubmitV2DTO1.copy(author = "yetAnotherAuthor")
 
+  protected val partitioningSubmitV2DTOMultiParent: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "multiParentAuthor")
+
+  protected val partitioningSubmitV2DTOMultiParentDup: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L, 2L, 1L), author = "dupAuthor")
+
+  protected val partitioningSubmitV2DTOMultiParentNotFound: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "nf")
+
+  protected val partitioningSubmitV2DTOMultiParentCycle: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "cyc")
+
+  protected val partitioningSubmitV2DTOMultiParentBoom: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "boom")
+
   // Flow
   protected val flowDTO1: FlowDTO = FlowDTO(
     id = 1L,

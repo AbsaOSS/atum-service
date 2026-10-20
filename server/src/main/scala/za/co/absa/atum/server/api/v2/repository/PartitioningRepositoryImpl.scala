@@ -39,6 +39,7 @@ import zio.interop.catz.asyncInstance
 
 class PartitioningRepositoryImpl(
   createPartitioningFn: CreatePartitioning,
+  createPartitioningWithParentsFn: CreatePartitioningWithParents,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
@@ -55,11 +56,15 @@ class PartitioningRepositoryImpl(
   override def createPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[DatabaseError, PartitioningWithIdDTO] = {
+    val distinctIds = partitioningSubmitDTO.parentPartitioningIds.distinct
+    val normalized = partitioningSubmitDTO.copy(parentPartitioningIds = distinctIds)
     for {
-      result <- dbSingleResultCallWithStatus(
-        createPartitioningFn(partitioningSubmitDTO),
-        "createPartitioning"
-      )
+      result <-
+        if (distinctIds.size >= 2) {
+          dbSingleResultCallWithStatus(createPartitioningWithParentsFn(normalized), "createPartitioning")
+        } else {
+          dbSingleResultCallWithStatus(createPartitioningFn(normalized), "createPartitioning")
+        }
     } yield PartitioningWithIdDTO(result, partitioningSubmitDTO.partitioning, partitioningSubmitDTO.author)
   }
 
@@ -198,6 +203,7 @@ class PartitioningRepositoryImpl(
 object PartitioningRepositoryImpl {
   val layer: URLayer[
     CreatePartitioning
+      with CreatePartitioningWithParents
       with GetPartitioningMeasures
       with CreateOrUpdateAdditionalData
       with GetPartitioningAdditionalData
@@ -212,6 +218,7 @@ object PartitioningRepositoryImpl {
   ] = ZLayer {
     for {
       createPartitioning <- ZIO.service[CreatePartitioning]
+      createPartitioningWithParents <- ZIO.service[CreatePartitioningWithParents]
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
@@ -224,6 +231,7 @@ object PartitioningRepositoryImpl {
       getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
     } yield new PartitioningRepositoryImpl(
       createPartitioning,
+      createPartitioningWithParents,
       getPartitioningMeasures,
       createOrUpdateAdditionalData,
       getPartitioningAdditionalData,

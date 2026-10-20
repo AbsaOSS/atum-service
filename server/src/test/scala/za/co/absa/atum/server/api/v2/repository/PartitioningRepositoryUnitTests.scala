@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.v2.repository
 
-import org.mockito.Mockito.{mock, when}
+import org.mockito.Mockito.{mock, never, verify, when}
 import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
@@ -49,7 +49,39 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(createPartitioningMock.apply(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
+  private val singleAfterDedupe = partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(3L), author = "single")
+  when(createPartitioningMock.apply(singleAfterDedupe))
+    .thenReturn(ZIO.right(Row(FunctionStatus(12, "ok"), partitioningWithIdDTO1.id)))
+
   private val createPartitioningMockLayer = ZLayer.succeed(createPartitioningMock)
+
+  // Create Partitioning With Parents Mocks
+  private val createPartitioningWithParentsMock = mock(classOf[CreatePartitioningWithParents])
+
+  private def multi(author: String) = partitioningSubmitV2DTOMultiParent.copy(author = author)
+  private val multi12 = multi("s12")
+  private val multi13 = multi("s13")
+  private val multi14 = multi("s14")
+
+  when(createPartitioningWithParentsMock.apply(multi12))
+    .thenReturn(ZIO.right(Row(FunctionStatus(12, "ok"), partitioningWithIdDTO1.id)))
+  when(createPartitioningWithParentsMock.apply(multi13))
+    .thenReturn(ZIO.right(Row(FunctionStatus(13, "relinked"), partitioningWithIdDTO1.id)))
+  when(createPartitioningWithParentsMock.apply(multi14))
+    .thenReturn(ZIO.right(Row(FunctionStatus(14, "present"), partitioningWithIdDTO1.id)))
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParent))
+    .thenReturn(ZIO.right(Row(FunctionStatus(12, "ok"), partitioningWithIdDTO1.id)))
+  // the de-duplicated form of partitioningSubmitV2DTOMultiParentDup
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentDup.copy(parentPartitioningIds = Seq(1L, 2L))))
+    .thenReturn(ZIO.right(Row(FunctionStatus(12, "ok"), partitioningWithIdDTO1.id)))
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentNotFound))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Parent partitioning not found"))))
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentCycle))
+    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(43, "Cycle detected"))))
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentBoom))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
+
+  private val createPartitioningWithParentsMockLayer = ZLayer.succeed(createPartitioningWithParentsMock)
 
   // Create Additional Data Mocks
   private val createOrUpdateAdditionalDataMock = mock(classOf[CreateOrUpdateAdditionalData])
@@ -204,6 +236,59 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected GeneralDatabaseError") {
           assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTO3).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        },
+        test("0 parents routes to single-parent function only") {
+          for {
+            _ <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTO1)
+          } yield {
+            verify(createPartitioningWithParentsMock, never()).apply(partitioningSubmitV2DTO1)
+            assertTrue(true)
+          }
+        },
+        test("2 parents routes to with-parents function only") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParent)
+          } yield {
+            verify(createPartitioningMock, never()).apply(partitioningSubmitV2DTOMultiParent)
+            assertTrue(result == PartitioningWithIdDTO(partitioningWithIdDTO1.id, partitioningDTO1, "multiParentAuthor"))
+          }
+        },
+        test("duplicate ids are de-duplicated before routing to with-parents") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentDup)
+          } yield assertTrue(result.id == partitioningWithIdDTO1.id)
+        },
+        test("duplicates collapsing to one parent route to the single-parent function") {
+          for {
+            result <- PartitioningRepository.createPartitioning(
+              partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(3L, 3L), author = "single")
+            )
+          } yield {
+            verify(createPartitioningWithParentsMock, never()).apply(singleAfterDedupe)
+            assertTrue(result.id == partitioningWithIdDTO1.id)
+          }
+        },
+        test("with-parents statuses 12, 13, 14 are successes") {
+          for {
+            r12 <- PartitioningRepository.createPartitioning(multi12)
+            r13 <- PartitioningRepository.createPartitioning(multi13)
+            r14 <- PartitioningRepository.createPartitioning(multi14)
+          } yield assertTrue(Seq(r12, r13, r14).forall(_.id == partitioningWithIdDTO1.id))
+        },
+        test("with-parents status 41 maps to NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("with-parents status 43 maps to ConflictDatabaseError") {
+          assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit)(
+            failsWithA[ConflictDatabaseError]
+          )
+        },
+        test("with-parents unexpected exception maps to GeneralDatabaseError") {
+          assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentBoom).exit)(
             failsWithA[GeneralDatabaseError]
           )
         }
@@ -413,6 +498,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   }.provide(
     PartitioningRepositoryImpl.layer,
     createPartitioningMockLayer,
+    createPartitioningWithParentsMockLayer,
     getPartitioningMeasuresMockLayer,
     createOrUpdateAdditionalDataMockLayer,
     getPartitioningByIdByIdMockLayer,
