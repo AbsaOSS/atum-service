@@ -586,4 +586,35 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     assert(actual == expected)
   }
 
+  "PartitioningSubmitV2DTO" should "encode multiple parents without the legacy key" in {
+    val p = Seq(PartitionDTO("k", "v"))
+    val json = PartitioningSubmitV2DTO(p, Seq(1L, 2L), "a").asJsonString
+    assert(json.contains("\"parentPartitioningIds\":[1,2]"))
+    assert(!json.contains("\"parentPartitioningId\":"))
+    assert(PartitioningSubmitV2DTO(p, None, "a").asJsonString.contains("\"parentPartitioningIds\":[]"))
+  }
+
+  "PartitioningSubmitV2DTO" should "decode old, null, missing and new parent fields" in {
+    val base = """"partitioning":[{"key":"k","value":"v"}],"author":"a""""
+    assert(s"""{$base,"parentPartitioningId":5}""".as[PartitioningSubmitV2DTO].parentPartitioningIds == Seq(5L))
+    assert(s"""{$base,"parentPartitioningId":null}""".as[PartitioningSubmitV2DTO].parentPartitioningIds.isEmpty)
+    assert(s"""{$base}""".as[PartitioningSubmitV2DTO].parentPartitioningIds.isEmpty)
+    assert(s"""{$base,"parentPartitioningIds":[3,4]}""".as[PartitioningSubmitV2DTO].parentPartitioningIds == Seq(3L, 4L))
+    assert(
+      s"""{$base,"parentPartitioningId":5,"parentPartitioningIds":[5,6]}""".as[PartitioningSubmitV2DTO]
+        .parentPartitioningIds == Seq(5L, 6L)
+    )
+  }
+
+  "PartitioningSubmitV2DTO" should "round-trip and support the single-parent compat apply" in {
+    val p = Seq(PartitionDTO("k", "v"))
+    Seq(Seq.empty[Long], Seq(1L), Seq(1L, 2L, 3L)).foreach { ids =>
+      val dto = PartitioningSubmitV2DTO(p, ids, "a")
+      assert(dto.asJsonString.as[PartitioningSubmitV2DTO] == dto)
+    }
+    assert(PartitioningSubmitV2DTO(p, Some(7L), "a").parentPartitioningIds == Seq(7L))
+    assert(PartitioningSubmitV2DTO(p, None, "a").parentPartitioningIds.isEmpty)
+    assert(PartitioningSubmitV2DTO(partitioning = p, parentPartitioningId = None, author = "a").parentPartitioningIds.isEmpty)
+  }
+
 }

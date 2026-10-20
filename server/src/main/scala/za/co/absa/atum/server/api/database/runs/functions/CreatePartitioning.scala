@@ -34,7 +34,7 @@ class CreatePartitioning(implicit schema: DBSchema, dbEngine: DoobieEngine[Task]
     Seq(
       fr"${PartitioningForDB.fromSeqPartitionDTO(partitioningSubmit.partitioning).asJson}",
       fr"${partitioningSubmit.author}",
-      fr"${partitioningSubmit.parentPartitioningId}"
+      fr"${partitioningSubmit.parentPartitioningIds.headOption}"
     )
   )
     with StandardStatusHandling {
