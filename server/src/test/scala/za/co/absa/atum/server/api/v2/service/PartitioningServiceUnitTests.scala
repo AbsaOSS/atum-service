@@ -39,6 +39,11 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("parent not found")))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOMultiParentCycle))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("cycle")))
+
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(0L, additionalDataPatchDTO1))
@@ -132,6 +137,16 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected GeneralServiceError") {
           assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTO3).exit)(
             failsWithA[GeneralServiceError]
+          )
+        },
+        test("Multi-parent NotFoundDatabaseError maps to NotFoundServiceError") {
+          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        },
+        test("Multi-parent cycle ConflictDatabaseError maps to ConflictServiceError") {
+          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit)(
+            failsWithA[ConflictServiceError]
           )
         }
       ),

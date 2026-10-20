@@ -16,7 +16,7 @@
 
 package za.co.absa.atum.server.api.v2.controller
 
-import org.mockito.Mockito.{mock, when}
+import org.mockito.Mockito.{mock, never, verify, when}
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.envelopes._
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
@@ -37,6 +37,22 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
   when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(ConflictServiceError("Partitioning already present")))
+
+  private val dto100 = partitioningSubmitV2DTO1.copy(parentPartitioningIds = 1L to 100L, author = "p100")
+  private val dto101 = partitioningSubmitV2DTO1.copy(parentPartitioningIds = 1L to 101L, author = "p101")
+  private val dtoDupHeavy =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = (1L to 50L) ++ (1L to 50L) ++ (1L to 50L), author = "pdup")
+
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTOMultiParent))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningServiceMock.createPartitioning(dto100))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningServiceMock.createPartitioning(dtoDupHeavy.copy(parentPartitioningIds = 1L to 50L)))
+    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound))
+    .thenReturn(ZIO.fail(NotFoundServiceError("parent not found")))
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTOMultiParentCycle))
+    .thenReturn(ZIO.fail(ConflictServiceError("cycle")))
 
   when(partitioningServiceMock.getPartitioningMeasures(partitioningDTO1))
     .thenReturn(ZIO.succeed(Seq(measureDTO1, measureDTO2)))
@@ -128,6 +144,40 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected ConflictServiceError") {
           assertZIO(PartitioningController.postPartitioning(partitioningSubmitV2DTO3).exit)(
+            failsWithA[ConflictErrorResponse]
+          )
+        },
+        test("Multi-parent succeeds with 201-style response and Location uri") {
+          for {
+            result <- PartitioningController.postPartitioning(partitioningSubmitV2DTOMultiParent)
+          } yield assertTrue(
+            result._1.copy(requestId = uuid1) == SingleSuccessResponse(partitioningWithIdDTO1, uuid1) &&
+              result._2 == s"/api/v2/partitionings/${partitioningWithIdDTO1.id}"
+          )
+        },
+        test("100 distinct parents is accepted") {
+          assertZIO(PartitioningController.postPartitioning(dto100).map(_._1.data))(
+            Assertion.equalTo(partitioningWithIdDTO1)
+          )
+        },
+        test("101 distinct parents fails with BadRequestResponse and does not call the service") {
+          for {
+            exit <- PartitioningController.postPartitioning(dto101).exit
+          } yield assertTrue(exit.causeOption.flatMap(_.failureOption).exists(_.isInstanceOf[BadRequestResponse])) &&
+            assertTrue({ verify(partitioningServiceMock, never()).createPartitioning(dto101); true })
+        },
+        test("150 ids deduplicating to 50 are accepted and the service gets the deduped DTO") {
+          assertZIO(PartitioningController.postPartitioning(dtoDupHeavy).map(_._1.data))(
+            Assertion.equalTo(partitioningWithIdDTO1)
+          )
+        },
+        test("Multi-parent NotFoundServiceError maps to NotFoundErrorResponse") {
+          assertZIO(PartitioningController.postPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit)(
+            failsWithA[NotFoundErrorResponse]
+          )
+        },
+        test("Multi-parent cycle ConflictServiceError maps to ConflictErrorResponse") {
+          assertZIO(PartitioningController.postPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit)(
             failsWithA[ConflictErrorResponse]
           )
         }
