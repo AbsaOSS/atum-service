@@ -88,7 +88,7 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
   }
 
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    val parentPartitioningIdOpt = partitioning.parentPartitioning.map(getPartitioningId)
+    val parentPartitioningIdOpt = partitioning.parentPartitionings.headOption.map(getPartitioningId)
     val partitioningWithIdOpt = getPartitioning(partitioning.partitioning)
 
     val newPartitioningWithIdDTO = partitioningWithIdOpt.getOrElse {
