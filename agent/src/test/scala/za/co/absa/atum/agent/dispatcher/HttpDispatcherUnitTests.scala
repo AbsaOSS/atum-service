@@ -12,7 +12,7 @@ import sttp.capabilities
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
-import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
+import za.co.absa.atum.model.utils.JsonSyntaxExtensions.{JsonDeserializationSyntax, JsonSerializationSyntax}
 
 import java.time.ZonedDateTime
 
@@ -398,6 +398,94 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     noException should be thrownBy dispatcherWithMocks.createPartitioning(
       PartitioningSubmitDTO(testPartitioningDTO, Some(parentPartitioning), "author")
     )
+  }
+
+  // ---- multi-parent (D-02, D-03) ----
+
+  private def okResp(body: String, code: StatusCode = StatusCode.Ok): Response[Either[String, String]] =
+    Response(Right(body): Either[String, String], code)
+
+  private def stubParent(parent: Seq[PartitionDTO], id: Long): Unit =
+    stubGetPartitioning(parent, okResp(SingleSuccessResponse(PartitioningWithIdDTO(id, parent, "pa")).asJsonString))
+
+  private def stubTail(): Unit = {
+    stubGetMeasures(okResp(MultiSuccessResponse(measures).asJsonString))
+    stubGetAdditionalData(okResp(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString))
+  }
+
+  private def capturePostBodies(): Seq[PartitioningSubmitV2DTO] = {
+    import scala.collection.JavaConverters._
+    val captor = org.mockito.ArgumentCaptor.forClass(classOf[Request[Either[String, String], capabilities.WebSockets]])
+    verify(mockBackend, atLeastOnce()).send(captor.capture())
+    captor.getAllValues.asScala.toList
+      .filter(r => r.method.method == "POST" && r.uri.path.mkString.contains("partitionings"))
+      .map { r =>
+        val body = r.body match {
+          case StringBody(s, _, _) => s
+          case other               => fail(s"Unexpected body type: $other")
+        }
+        body.as[PartitioningSubmitV2DTO]
+      }
+  }
+
+  private def parentsN(n: Int): Seq[Seq[PartitionDTO]] = (1 to n).map(i => Seq(PartitionDTO(s"pk$i", s"pv$i")))
+
+  private def runMulti(n: Int, childExists: Boolean): Unit = {
+    val parents = parentsN(n)
+    parents.zipWithIndex.foreach { case (p, i) => stubParent(p, 901L + i) }
+    if (childExists) {
+      stubGetPartitioning(testPartitioningDTO, okResp(SingleSuccessResponse(createdPartitioningWithId).asJsonString))
+    }
+    stubPostPartitioning(okResp(SingleSuccessResponse(createdPartitioningWithId).asJsonString, StatusCode.Created))
+    stubTail()
+    val result = dispatcher.createPartitioning(PartitioningSubmitDTO(testPartitioningDTO, parents, "author"))
+    result.partitioning shouldBe createdPartitioningWithId.partitioning
+
+    verify(mockBackend, times(1)).send(isPostPartitioningRequest)
+    verify(mockBackend, never()).send(isPatchAncestorsRequest)
+    verify(mockBackend, never()).send(isGetPartitioningRequest(testPartitioningDTO))
+    val bodies = capturePostBodies()
+    bodies should have size 1
+    bodies.head.parentPartitioningIds shouldBe (0 until n).map(901L + _)
+    bodies.head.partitioning shouldBe testPartitioningDTO
+    bodies.head.author shouldBe "author"
+  }
+
+  it should "send ONE POST carrying all parent ids in order for 2 parents (child absent)" in {
+    runMulti(2, childExists = false)
+  }
+
+  it should "send ONE POST, no child GET and no PATCH for 2 parents when child already exists" in {
+    runMulti(2, childExists = true)
+  }
+
+  it should "send all three parent ids in order in one POST for 3 parents" in {
+    runMulti(3, childExists = false)
+  }
+
+  it should "propagate HttpException and send no POST when any parent is not found" in {
+    val parents = parentsN(2)
+    stubParent(parents.head, 901L)
+    stubGetPartitioning(parents(1), Response(Left("Not found"): Either[String, String], StatusCode.NotFound))
+    stubPostPartitioning(okResp(SingleSuccessResponse(createdPartitioningWithId).asJsonString, StatusCode.Created))
+    stubTail()
+
+    an[HttpException] should be thrownBy
+      dispatcher.createPartitioning(PartitioningSubmitDTO(testPartitioningDTO, parents, "author"))
+    verify(mockBackend, never()).send(isPostPartitioningRequest)
+  }
+
+  it should "keep 0-parent flow: child GET, then POST with empty parentPartitioningIds" in {
+    stubGetPartitioning(testPartitioningDTO, Response(Left("Not found"): Either[String, String], StatusCode.NotFound))
+    stubPostPartitioning(okResp(SingleSuccessResponse(createdPartitioningWithId).asJsonString, StatusCode.Created))
+    stubTail()
+
+    dispatcher.createPartitioning(PartitioningSubmitDTO(testPartitioningDTO, Seq.empty[PartitioningDTO], "author"))
+
+    verify(mockBackend).send(isGetPartitioningRequest(testPartitioningDTO))
+    val bodies = capturePostBodies()
+    bodies should have size 1
+    bodies.head.parentPartitioningIds shouldBe Seq.empty[Long]
   }
 
   private def isPatchAncestorsRequest: Request[Either[String, String], capabilities.WebSockets] =
