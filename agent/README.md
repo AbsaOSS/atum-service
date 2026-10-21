@@ -64,6 +64,10 @@ val withOtherKey = atumPartitions ++ AtumPartitions("otherKey" -> "otherValue")
 
 Constructing these keys does not register a parent-child relationship. Use
 `AtumContext.subPartitionContext` to create a linked child context.
+To link a child to several parents at once, use
+`atumContext.subContext(childPartitions, Seq(parentA, parentB))` (or
+`AtumAgent.getOrCreateAtumSubContext(childPartitions, parents)`); the child is identified by
+`childPartitions` only and a single create call records all parent links.
 
 Control measures can also be overwritten, added or removed.
 
