@@ -134,6 +134,34 @@ trait AtumAgent {
     getExistingOrNewContext(newPartitions, atumContext)
   }
 
+  /**
+   *  Provides an AtumContext for a child partitioning linked to several parents in a single operation.
+   *
+   *  The child identity is `subPartitions` only (no merge with any parent). Exactly one create call is issued
+   *  to the dispatcher carrying all parents. Parents are de-duplicated by their partitions (first occurrence
+   *  order is kept). Union and de-duplication of Measures and Additional Data is done server-side.
+   *
+   *  @param subPartitions Partitions identifying the child.
+   *  @param parents       All parent contexts; must not be empty.
+   *  @return Atum context object of the child
+   *  @throws IllegalArgumentException if `parents` is empty
+   */
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions, parents: Seq[AtumContext]): AtumContext = {
+    require(parents.nonEmpty, "At least one parent AtumContext is required to create a sub-context.")
+
+    val distinctParents = parents.map(_.atumPartitions).distinct
+    val partitioningDTO = PartitioningSubmitDTO(
+      subPartitions.toPartitioningDTO,
+      distinctParents.map(_.toPartitioningDTO),
+      this.currentUser
+    )
+
+    val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
+    val atumContext = AtumContext.fromDTO(atumContextDTO, this)
+
+    getExistingOrNewContext(subPartitions, atumContext)
+  }
+
   private def getExistingOrNewContext(atumPartitions: AtumPartitions, newAtumContext: => AtumContext): AtumContext = {
     synchronized {
       contexts.getOrElse(

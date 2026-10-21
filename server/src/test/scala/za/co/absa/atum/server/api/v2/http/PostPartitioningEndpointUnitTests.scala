@@ -25,7 +25,8 @@ import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.{PartitioningSubmitV2DTO, PartitioningWithIdDTO}
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
-import za.co.absa.atum.model.envelopes.{ConflictErrorResponse, InternalServerErrorResponse}
+import za.co.absa.atum.model.envelopes.{BadRequestResponse, ConflictErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
+import io.circe.syntax._
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.v2.controller.PartitioningController
 import zio._
@@ -44,6 +45,23 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with TestData {
 
   when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(InternalServerErrorResponse("error")))
+
+  private val legacyDto = PartitioningSubmitV2DTO(partitioningDTO1, Some(5L), "a")
+  private val noParentDto = PartitioningSubmitV2DTO(partitioningDTO1, None, "np")
+  private val dto101 = partitioningSubmitV2DTO1.copy(parentPartitioningIds = 1L to 101L, author = "p101")
+
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTOMultiParent))
+    .thenReturn(ZIO.succeed((SingleSuccessResponse(partitioningWithIdDTO1, uuid1), "location")))
+  when(partitioningControllerMock.postPartitioning(legacyDto))
+    .thenReturn(ZIO.succeed((SingleSuccessResponse(partitioningWithIdDTO1, uuid1), "location")))
+  when(partitioningControllerMock.postPartitioning(noParentDto))
+    .thenReturn(ZIO.succeed((SingleSuccessResponse(partitioningWithIdDTO1, uuid1), "location")))
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTOMultiParentNotFound))
+    .thenReturn(ZIO.fail(NotFoundErrorResponse("parent not found")))
+  when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTOMultiParentCycle))
+    .thenReturn(ZIO.fail(ConflictErrorResponse("cycle")))
+  when(partitioningControllerMock.postPartitioning(dto101))
+    .thenReturn(ZIO.fail(BadRequestResponse("too many parents")))
 
   private val createPartitioningEndpointMockLayer = ZLayer.succeed(partitioningControllerMock)
 
@@ -77,6 +95,35 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with TestData {
         assertZIO(body <&> statusCode <&> header)(
           equalTo(Right(SingleSuccessResponse(partitioningWithIdDTO1, uuid1)), StatusCode.Created, Some("location"))
         )
+      },
+      test("Multi-parent body returns 201, envelope and Location header") {
+        val response = request.body(partitioningSubmitV2DTOMultiParent).send(backendStub)
+        assertZIO(response.map(r => (r.body, r.code, r.header("Location"))))(
+          equalTo((Right(SingleSuccessResponse(partitioningWithIdDTO1, uuid1)), StatusCode.Created, Some("location")))
+        )
+      },
+      test("Legacy single-parent JSON (parentPartitioningId) returns 201") {
+        val json = s"""{"partitioning":${partitioningDTO1.asJson.noSpaces},"parentPartitioningId":5,"author":"a"}"""
+        val response = request.contentType("application/json").body(json).send(backendStub)
+        assertZIO(response.map(_.code))(equalTo(StatusCode.Created))
+      },
+      test("No-parent JSON returns 201") {
+        val json = s"""{"partitioning":${partitioningDTO1.asJson.noSpaces},"author":"np"}"""
+        val response = request.contentType("application/json").body(json).send(backendStub)
+        assertZIO(response.map(_.code))(equalTo(StatusCode.Created))
+      },
+      test("Missing parent returns 404") {
+        assertZIO(request.body(partitioningSubmitV2DTOMultiParentNotFound).send(backendStub).map(_.code))(
+          equalTo(StatusCode.NotFound)
+        )
+      },
+      test("Cycle returns 409") {
+        assertZIO(request.body(partitioningSubmitV2DTOMultiParentCycle).send(backendStub).map(_.code))(
+          equalTo(StatusCode.Conflict)
+        )
+      },
+      test("Too many parents returns 400") {
+        assertZIO(request.body(dto101).send(backendStub).map(_.code))(equalTo(StatusCode.BadRequest))
       },
       test("Returns expected BadRequest") {
         val response = request

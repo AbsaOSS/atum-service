@@ -16,6 +16,17 @@ za.co.absa.atum.server.Main within your IDE). This deploys it to `localhost:8080
 sbt "server/runMain za.co.absa.atum.server.Main"
 ```
 
+### Version compatibility (multi-parent)
+
+Always upgrade the server before the agents. A multi-parent capable agent sends `parentPartitionings`
+(`PartitioningSubmitDTO`) / `parentPartitioningIds` (`PartitioningSubmitV2DTO`) when creating a partitioning.
+An older server ignores these unknown fields and silently drops the extra parents (or all of them, with no error).
+Multi-parent support requires the `runs.create_partitioning_with_parents` database migration (V0.10.0.2) and the
+v2 endpoint support in this server.
+
+Single-parent behaviour, public signatures, and decoding of previously produced JSON (field absent -> empty list)
+are unchanged; only the *encoded* JSON of the two submit DTOs now includes the new field.
+
 ### REST API Reference
 
 The REST API exposes a Swagger Documentation UI which documents all the HTTP endpoints exposed.

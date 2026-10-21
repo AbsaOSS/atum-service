@@ -99,6 +99,7 @@ object Endpoints extends BaseEndpoints {
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .out(header[String]("Location"))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   val getPartitioningAdditionalDataEndpoint

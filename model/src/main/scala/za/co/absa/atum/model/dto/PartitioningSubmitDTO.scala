@@ -16,16 +16,45 @@
 
 package za.co.absa.atum.model.dto
 
-import io.circe.generic.semiauto._
 import io.circe._
+import io.circe.syntax._
 
 case class PartitioningSubmitDTO(
   partitioning: PartitioningDTO,
-  parentPartitioning: Option[PartitioningDTO],
+  parentPartitionings: Seq[PartitioningDTO],
   authorIfNew: String
 )
 
 object PartitioningSubmitDTO {
-  implicit val decodePartitioningSubmitDTO: Decoder[PartitioningSubmitDTO] = deriveDecoder
-  implicit val encodePartitioningSubmitDTO: Encoder[PartitioningSubmitDTO] = deriveEncoder
+
+  /**
+   *  Single-parent compatibility factory.
+   */
+  def apply(
+    partitioning: PartitioningDTO,
+    parentPartitioning: Option[PartitioningDTO],
+    authorIfNew: String
+  ): PartitioningSubmitDTO =
+    new PartitioningSubmitDTO(partitioning, parentPartitioning.toSeq, authorIfNew)
+
+  implicit val decodePartitioningSubmitDTO: Decoder[PartitioningSubmitDTO] = Decoder.instance { c =>
+    for {
+      partitioning <- c.downField("partitioning").as[PartitioningDTO]
+      oldParent <- c.downField("parentPartitioning").as[Option[PartitioningDTO]]
+      newParents <- c.downField("parentPartitionings").as[Option[Seq[PartitioningDTO]]]
+      author <- c.downField("authorIfNew").as[String]
+    } yield new PartitioningSubmitDTO(
+      partitioning,
+      (oldParent.toSeq ++ newParents.getOrElse(Seq.empty)).distinct,
+      author
+    )
+  }
+
+  implicit val encodePartitioningSubmitDTO: Encoder[PartitioningSubmitDTO] = Encoder.instance { dto =>
+    Json.obj(
+      "partitioning" -> dto.partitioning.asJson,
+      "parentPartitionings" -> dto.parentPartitionings.asJson,
+      "authorIfNew" -> dto.authorIfNew.asJson
+    )
+  }
 }

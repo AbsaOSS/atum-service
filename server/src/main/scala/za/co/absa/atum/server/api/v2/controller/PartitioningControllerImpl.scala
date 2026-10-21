@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.v2.controller
 import za.co.absa.atum.model.ApiPaths.V2Paths
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse._
-import za.co.absa.atum.model.envelopes.{ErrorResponse, GeneralErrorResponse}
+import za.co.absa.atum.model.envelopes.{BadRequestResponse, ErrorResponse, GeneralErrorResponse}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonDeserializationSyntax
 import za.co.absa.atum.server.api.common.controller.BaseController
 import za.co.absa.atum.server.api.v2.service.PartitioningService
@@ -53,10 +53,19 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   override def postPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
+    val distinctIds = partitioningSubmitDTO.parentPartitioningIds.distinct
     for {
+      _ <- ZIO.when(distinctIds.size > PartitioningControllerImpl.MaxParents)(
+        ZIO.fail(
+          BadRequestResponse(
+            s"Too many parent partitionings: ${distinctIds.size}, " +
+              s"maximum allowed is ${PartitioningControllerImpl.MaxParents}"
+          )
+        )
+      )
       response <- mapToSingleSuccessResponse(
         serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
-          partitioningService.createPartitioning(partitioningSubmitDTO)
+          partitioningService.createPartitioning(partitioningSubmitDTO.copy(parentPartitioningIds = distinctIds))
         )
       )
       uri <- createRootAnchoredResourcePath(Seq(V2Paths.Partitionings, response.data.id.toString), apiVersion = 2)
@@ -151,6 +160,8 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 }
 
 object PartitioningControllerImpl {
+  private val MaxParents = 100
+
   val layer: URLayer[PartitioningService, PartitioningController] = ZLayer {
     for {
       partitioningService <- ZIO.service[PartitioningService]

@@ -87,29 +87,41 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     }
   }
 
+  private def postCreatePartitioning(
+    partitioning: PartitioningSubmitDTO,
+    parentIds: Seq[Long]
+  ): PartitioningWithIdDTO = {
+    val endpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
+    val request = commonAtumRequest
+      .post(endpoint)
+      .body(
+        PartitioningSubmitV2DTO(
+          partitioning.partitioning,
+          parentIds,
+          partitioning.authorIfNew
+        ).asJsonString
+      )
+    val response = withRetry(request)
+    handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data
+  }
+
   override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    val parentPartitioningIdOpt = partitioning.parentPartitioning.map(getPartitioningId)
-    val partitioningWithIdOpt = getPartitioning(partitioning.partitioning)
+    // D-02: resolve ALL parent ids (one GET each, in input order); a 404 aborts before any POST.
+    val parentIds: Seq[Long] = partitioning.parentPartitionings.map(getPartitioningId)
 
-    val newPartitioningWithIdDTO = partitioningWithIdOpt.getOrElse {
-      val endpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
-      val request = commonAtumRequest
-        .post(endpoint)
-        .body(
-          PartitioningSubmitV2DTO(
-            partitioning.partitioning,
-            parentPartitioningIdOpt,
-            partitioning.authorIfNew
-          ).asJsonString
-        )
-      val response = withRetry(request)
-      handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data
-    }
+    val newPartitioningWithIdDTO = if (parentIds.size >= 2) {
+      // D-03: multi-parent - always POST; the server links idempotently, so no child GET and no ensureParentLink.
+      postCreatePartitioning(partitioning, parentIds)
+    } else {
+      val partitioningWithIdOpt = getPartitioning(partitioning.partitioning)
+      val created = partitioningWithIdOpt.getOrElse(postCreatePartitioning(partitioning, parentIds))
 
-    // If both parent and child partitioning already existed before this function was called,
-    // we must explicitly link them here, because they might not been linked yet.
-    if (partitioningWithIdOpt.isDefined && parentPartitioningIdOpt.isDefined) {
-      ensureParentLink(newPartitioningWithIdDTO.id, parentPartitioningIdOpt.get, partitioning.authorIfNew)
+      // If both parent and child partitioning already existed before this function was called,
+      // we must explicitly link them here, because they might not been linked yet.
+      if (partitioningWithIdOpt.isDefined && parentIds.nonEmpty) {
+        ensureParentLink(created.id, parentIds.head, partitioning.authorIfNew)
+      }
+      created
     }
 
     val measures = {

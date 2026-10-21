@@ -17,11 +17,16 @@
 package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{mock, never, times, verify, when}
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
+import org.mockito.ArgumentCaptor
 import org.scalatest.funsuite.AnyFunSuiteLike
-import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, Dispatcher, HttpDispatcher}
 import za.co.absa.atum.agent.exception.AtumAgentException.PartitioningUpdateException
-import za.co.absa.atum.model.dto.PartitioningSubmitDTO
-import za.co.absa.atum.model.types.basic.AtumPartitions
+import za.co.absa.atum.model.dto.{AtumContextDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 
 class AtumAgentUnitTests extends AnyFunSuiteLike {
 
@@ -270,6 +275,74 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       }
       ConfigFactory.invalidateCaches()
     }
+  }
+
+  private class MockedDispatcherAgent extends AtumAgent {
+    override val dispatcher: Dispatcher = mock(classOf[Dispatcher])
+    override private[agent] def currentUser: String = "multi-parent-user"
+
+    def parent(partitions: AtumPartitions): AtumContext =
+      AtumContext.fromDTO(AtumContextDTO(partitions.toPartitioningDTO), this)
+
+    def stubDispatcher(): Unit =
+      when(dispatcher.createPartitioning(any[PartitioningSubmitDTO])).thenAnswer(new Answer[AtumContextDTO] {
+        override def answer(invocation: InvocationOnMock): AtumContextDTO =
+          AtumContextDTO(invocation.getArgument[PartitioningSubmitDTO](0).partitioning)
+      })
+
+    def captured(): PartitioningSubmitDTO = {
+      val captor = ArgumentCaptor.forClass(classOf[PartitioningSubmitDTO])
+      verify(dispatcher, times(1)).createPartitioning(captor.capture())
+      captor.getValue
+    }
+  }
+
+  private val mp1 = AtumPartitions("p" -> "1")
+  private val mp2 = AtumPartitions("p" -> "2")
+  private val mp3 = AtumPartitions("p" -> "3")
+  private val mpChild = AtumPartitions("child" -> "c")
+
+  test("multi-parent getOrCreateAtumSubContext dispatches once with all parents and child identity only") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+    val parents = Seq(mp1, mp2, mp3).map(agent.parent)
+
+    val child = agent.getOrCreateAtumSubContext(mpChild, parents)
+
+    val dto = agent.captured()
+    assert(dto.parentPartitionings == Seq(mp1, mp2, mp3).map(_.toPartitioningDTO))
+    assert(dto.authorIfNew == "multi-parent-user")
+    assert(dto.partitioning == mpChild.toPartitioningDTO)
+    assert(child.atumPartitions == mpChild)
+    assert(child.agent == agent)
+  }
+
+  test("multi-parent getOrCreateAtumSubContext de-duplicates parents by partitions") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+    val parents = Seq(agent.parent(mp1), agent.parent(mp1), agent.parent(mp2))
+
+    agent.getOrCreateAtumSubContext(mpChild, parents)
+
+    assert(agent.captured().parentPartitionings == Seq(mp1, mp2).map(_.toPartitioningDTO))
+  }
+
+  test("multi-parent getOrCreateAtumSubContext rejects empty parents without dispatching") {
+    val agent = new MockedDispatcherAgent
+
+    intercept[IllegalArgumentException] {
+      agent.getOrCreateAtumSubContext(mpChild, Seq.empty)
+    }
+    verify(agent.dispatcher, never()).createPartitioning(any[PartitioningSubmitDTO])
+  }
+
+  test("multi-parent getOrCreateAtumSubContext accepts a single-element Seq") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+
+    agent.getOrCreateAtumSubContext(mpChild, Seq(agent.parent(mp1)))
+
+    assert(agent.captured().parentPartitionings == Seq(mp1.toPartitioningDTO))
   }
 
   private def configOf(configValues: Map[String, Any]): Config = {
