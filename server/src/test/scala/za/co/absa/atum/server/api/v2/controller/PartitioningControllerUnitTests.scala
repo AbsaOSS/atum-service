@@ -118,6 +118,10 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
   when(partitioningServiceMock.getPartitioningAncestors(2222L, 1, 0L))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningServiceMock.getPartitioningAncestors(5555L, 10, 0L))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2))))
+  when(partitioningServiceMock.getPartitioningAncestors(6666L, 2, 0L))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2))))
   when(partitioningServiceMock.getPartitioningAncestors(8888L, 1, 0L))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
   when(partitioningServiceMock.getPartitioningAncestors(9999L, 1, 0L))
@@ -337,6 +341,31 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningController.getPartitioningAncestors(2222L, 1, 0L)
             expected = PaginatedResponse(Seq(partitioningWithIdDTO1), Pagination(1, 0L, hasMore = false), uuid1)
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(actual == expected)
+        },
+        test("Returns all ancestors of a multi-parent child in a PaginatedResponse with no more data") {
+          for {
+            result <- PartitioningController.getPartitioningAncestors(5555L, 10, 0L)
+            expected = PaginatedResponse(
+              Seq(partitioningWithIdDTO1, partitioningWithIdDTO2),
+              Pagination(10, 0L, hasMore = false),
+              uuid1
+            )
+            actual = result.copy(requestId = uuid1)
+          } yield assertTrue(
+            actual == expected,
+            actual.data.map(_.id).distinct.size == actual.data.size
+          )
+        },
+        test("Returns all ancestors of a multi-parent child in a PaginatedResponse with more data") {
+          for {
+            result <- PartitioningController.getPartitioningAncestors(6666L, 2, 0L)
+            expected = PaginatedResponse(
+              Seq(partitioningWithIdDTO1, partitioningWithIdDTO2),
+              Pagination(2, 0L, hasMore = true),
+              uuid1
+            )
             actual = result.copy(requestId = uuid1)
           } yield assertTrue(actual == expected)
         },

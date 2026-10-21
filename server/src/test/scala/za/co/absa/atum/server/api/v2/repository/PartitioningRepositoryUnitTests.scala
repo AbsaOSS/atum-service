@@ -207,6 +207,24 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult1)))))
   when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1111L, 10, 0L))
   ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult2)))))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(3333L, 10, 0L))
+  ).thenReturn(
+    ZIO.right(
+      Seq(
+        Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult1)),
+        Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult2NoMore))
+      )
+    )
+  )
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(4444L, 10, 0L))
+  ).thenReturn(
+    ZIO.right(
+      Seq(
+        Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult1HasMore)),
+        Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult2))
+      )
+    )
+  )
   when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(9999L, 10, 0L))
   ).thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
   when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(8888L, 10, 0L))
@@ -482,6 +500,22 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningRepository.getPartitioningAncestors(1111L, 10, 0L)
           } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO2)))
+        },
+        test("Returns all ancestors of a multi-parent child once with ResultNoMore") {
+          for {
+            result <- PartitioningRepository.getPartitioningAncestors(3333L, 10, 0L)
+          } yield assertTrue(
+            result == ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2)),
+            result.data.map(_.id).distinct.size == result.data.size
+          )
+        },
+        test("Returns all ancestors of a multi-parent child once with ResultHasMore") {
+          for {
+            result <- PartitioningRepository.getPartitioningAncestors(4444L, 10, 0L)
+          } yield assertTrue(
+            result == ResultHasMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2)),
+            result.data.map(_.id).distinct.size == result.data.size
+          )
         },
         test("Returns expected NotFoundDatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAncestors(9999L, 10, 0L).exit)(

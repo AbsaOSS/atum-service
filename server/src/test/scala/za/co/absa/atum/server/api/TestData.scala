@@ -107,6 +107,13 @@ trait TestData {
     hasMore = true
   )
 
+  // Multi-parent ancestor fixtures (two distinct ancestors; hasMore variants of the above)
+  protected val getPartitioningAncestorsResult1HasMore: GetPartitioningAncestorsResult =
+    getPartitioningAncestorsResult1.copy(hasMore = true)
+
+  protected val getPartitioningAncestorsResult2NoMore: GetPartitioningAncestorsResult =
+    getPartitioningAncestorsResult2.copy(hasMore = false)
+
   // Partitioning with ID DTO
   protected val partitioningWithIdDTO1: PartitioningWithIdDTO = PartitioningWithIdDTO(
     id = partitioningFromDB1.id,
