@@ -414,10 +414,9 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
   }
 
   private def capturePostBodies(): Seq[PartitioningSubmitV2DTO] = {
-    import scala.collection.JavaConverters._
     val captor = org.mockito.ArgumentCaptor.forClass(classOf[Request[Either[String, String], capabilities.WebSockets]])
     verify(mockBackend, atLeastOnce()).send(captor.capture())
-    captor.getAllValues.asScala.toList
+    (0 until captor.getAllValues.size).map(captor.getAllValues.get).toList
       .filter(r => r.method.method == "POST" && r.uri.path.mkString.contains("partitionings"))
       .map { r =>
         val body = r.body match {
