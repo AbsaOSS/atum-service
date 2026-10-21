@@ -69,6 +69,17 @@ To link a child to several parents at once, use
 `AtumAgent.getOrCreateAtumSubContext(childPartitions, parents)`); the child is identified by
 `childPartitions` only and a single create call records all parent links.
 
+#### Version compatibility (multi-parent)
+
+Always upgrade the server before the agents. A multi-parent capable agent sends `parentPartitionings`
+(`PartitioningSubmitDTO`) / `parentPartitioningIds` (`PartitioningSubmitV2DTO`) when creating a partitioning.
+An older server ignores these unknown fields and silently drops the extra parents (or all of them, with no error).
+Multi-parent sub-contexts therefore require a server that includes the `runs.create_partitioning_with_parents`
+migration (V0.10.0.2) and the matching v2 endpoint support.
+
+Single-parent behaviour, public signatures, and decoding of previously produced JSON (field absent -> empty list)
+are unchanged; only the *encoded* JSON of the two submit DTOs now includes the new field.
+
 Control measures can also be overwritten, added or removed.
 
 ```scala
