@@ -29,7 +29,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: coursier/cache-action@95e5b1029b6b86e7bac033ee44a0697d8a527d2d
+      - uses: coursier/cache-action@057d08c2f9a2c4e7a4d33df3aae657b7db88b8cc
 
       - name: Setup JDK 17
         # The Spark 4 rows of the agent are only added to the project matrix on Java 17+, so publishing has to
@@ -58,7 +58,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: coursier/cache-action@95e5b1029b6b86e7bac033ee44a0697d8a527d2d
+      - uses: coursier/cache-action@057d08c2f9a2c4e7a4d33df3aae657b7db88b8cc
 
       - name: Setup JDK 11
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
