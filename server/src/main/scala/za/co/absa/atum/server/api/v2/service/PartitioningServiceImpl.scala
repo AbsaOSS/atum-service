@@ -23,6 +23,8 @@ import za.co.absa.atum.server.api.v2.repository.PartitioningRepository
 import za.co.absa.atum.server.model.PaginatedResult
 import zio._
 
+import java.time.ZonedDateTime
+
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     extends PartitioningService
     with BaseService {
@@ -95,6 +97,19 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     repositoryCall(
       partitioningRepository.getPartitioningMainFlow(partitioningId),
       "getPartitioningMainFlow"
+    )
+  }
+
+  override def searchPartitionings(
+    limit: Int,
+    offset: Long,
+    keys: Option[Map[String, String]],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime]
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
+    repositoryCall(
+      partitioningRepository.searchPartitionings(limit, offset, keys, from, to),
+      "searchPartitionings"
     )
   }
 

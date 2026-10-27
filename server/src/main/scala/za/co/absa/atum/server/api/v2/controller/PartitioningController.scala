@@ -22,6 +22,8 @@ import za.co.absa.atum.model.envelopes.SuccessResponse._
 import zio.IO
 import zio.macros.accessible
 
+import java.time.ZonedDateTime
+
 @accessible
 trait PartitioningController {
 
@@ -47,6 +49,14 @@ trait PartitioningController {
   def getPartitioning(
     partitioning: String
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]]
+
+  def searchPartitionings(
+    limit: Int,
+    offset: Long,
+    keys: Option[Map[String, String]],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime]
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
 
   def getFlowPartitionings(
     flowId: Long,
