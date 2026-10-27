@@ -34,7 +34,7 @@ class CreatePartitioningIfNotExists(implicit schema: DBSchema, dbEngine: DoobieE
       Seq(
         fr"${PartitioningForDB.fromSeqPartitionDTO(partitioningSubmit.partitioning).asJson}",
         fr"${partitioningSubmit.authorIfNew}",
-        fr"${partitioningSubmit.parentPartitioning.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
+        fr"${partitioningSubmit.parentPartitionings.headOption.map(PartitioningForDB.fromSeqPartitionDTO).map(_.asJson)}"
       ))
     with StandardStatusHandling
 

@@ -43,6 +43,16 @@ object GetPartitioningAncestorsEndpointUnitTests extends ZIOSpecDefault with Tes
         PaginatedResponse(Seq.empty, Pagination(1, 0, hasMore = true), uuid1)
       )
     )
+  when(partitioningControllerMock.getPartitioningAncestors(7777L, 10, 0L))
+    .thenReturn(
+      ZIO.succeed(
+        PaginatedResponse(
+          Seq(partitioningWithIdDTO1, partitioningWithIdDTO2),
+          Pagination(10, 0, hasMore = false),
+          uuid1
+        )
+      )
+    )
   when(partitioningControllerMock.getPartitioningAncestors(8888L, 1, 0L))
     .thenReturn(
       ZIO.fail(
@@ -84,6 +94,30 @@ object GetPartitioningAncestorsEndpointUnitTests extends ZIOSpecDefault with Tes
         assertZIO(body <&> statusCode)(
           equalTo(
             Right(PaginatedResponse(Seq.empty[PartitioningWithIdDTO], Pagination(1, 0, hasMore = true), uuid1)),
+            StatusCode.Ok
+          )
+        )
+      },
+      test("Returns all ancestors of a multi-parent child in the standard envelope") {
+        val request = basicRequest
+          .get(uri"https://test.com/api/v2/partitionings/7777/ancestors?limit=10&offset=0")
+          .response(asJson[PaginatedResponse[PartitioningWithIdDTO]])
+
+        val response = request
+          .send(backendStub)
+
+        val body = response.map(_.body)
+        val statusCode = response.map(_.code)
+
+        assertZIO(body <&> statusCode)(
+          equalTo(
+            Right(
+              PaginatedResponse(
+                Seq(partitioningWithIdDTO1, partitioningWithIdDTO2),
+                Pagination(10, 0, hasMore = false),
+                uuid1
+              )
+            ),
             StatusCode.Ok
           )
         )

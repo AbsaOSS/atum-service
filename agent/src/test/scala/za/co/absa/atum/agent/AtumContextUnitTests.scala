@@ -232,4 +232,31 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     value.properties shouldBe properties
   }
 
+  "subContext" should "delegate once to the agent multi-parent overload" in {
+    val mockAgent = mock(classOf[AtumAgent])
+    val parent1 = new AtumContext(AtumPartitions("sc1" -> "a"), mockAgent)
+    val parent2 = new AtumContext(AtumPartitions("sc2" -> "b"), mockAgent)
+    val sub = AtumPartitions("sc" -> "child")
+    val expected = new AtumContext(sub, mockAgent)
+    when(mockAgent.getOrCreateAtumSubContext(sub, Seq(parent1, parent2))).thenReturn(expected)
+
+    val result = parent1.subContext(sub, Seq(parent1, parent2))
+
+    verify(mockAgent, times(1)).getOrCreateAtumSubContext(sub, Seq(parent1, parent2))
+    assert(result eq expected)
+  }
+
+  it should "propagate IllegalArgumentException for empty parents" in {
+    val ctx = AtumAgent.getOrCreateAtumContext(AtumPartitions("sc3" -> "x"))
+    an[IllegalArgumentException] should be thrownBy ctx.subContext(AtumPartitions("sc" -> "y"), Seq.empty)
+  }
+
+  it should "create a child identified by sub partitions only with the real agent" in {
+    val a = AtumAgent.getOrCreateAtumContext(AtumPartitions("sc4" -> "a"))
+    val b = AtumAgent.getOrCreateAtumContext(AtumPartitions("sc5" -> "b"))
+    val sub = AtumPartitions("sc6" -> "child")
+
+    a.subContext(sub, Seq(a, b)).atumPartitions shouldBe sub
+  }
+
 }

@@ -39,6 +39,11 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("parent not found")))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOMultiParentCycle))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("cycle")))
+
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(0L, additionalDataPatchDTO1))
@@ -104,6 +109,8 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
   when(partitioningRepositoryMock.getPartitioningAncestors(2222L, 1, 1L))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningRepositoryMock.getPartitioningAncestors(5555L, 10, 0L))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2))))
   when(partitioningRepositoryMock.getPartitioningAncestors(8888L, 1, 1L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
   when(partitioningRepositoryMock.getPartitioningAncestors(9999L, 1, 1L))
@@ -132,6 +139,16 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected GeneralServiceError") {
           assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTO3).exit)(
             failsWithA[GeneralServiceError]
+          )
+        },
+        test("Multi-parent NotFoundDatabaseError maps to NotFoundServiceError") {
+          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        },
+        test("Multi-parent cycle ConflictDatabaseError maps to ConflictServiceError") {
+          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit)(
+            failsWithA[ConflictServiceError]
           )
         }
       ),
@@ -286,6 +303,11 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.getPartitioningAncestors(2222L, 1, 1L)
           } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns all ancestors of a multi-parent child unchanged") {
+          for {
+            result <- PartitioningService.getPartitioningAncestors(5555L, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2)))
         },
         test("Returns expected GeneralServiceError when database error occurs") {
           assertZIO(PartitioningService.getPartitioningAncestors(8888L, 1, 1L).exit)(

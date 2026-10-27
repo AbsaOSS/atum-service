@@ -33,6 +33,12 @@ object CreatePartitioningIntegrationTests extends ConfigProviderTest with TestDa
           createPartitioning <- ZIO.service[CreatePartitioning]
           result <- createPartitioning(partitioningSubmitV2DTO1)
         } yield assertTrue(result.isRight)
+      },
+      test("Returns expected Right for explicit empty parent list") {
+        for {
+          createPartitioning <- ZIO.service[CreatePartitioning]
+          result <- createPartitioning(partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq.empty))
+        } yield assertTrue(result.isRight)
       }
     ).provide(
       CreatePartitioning.layer,

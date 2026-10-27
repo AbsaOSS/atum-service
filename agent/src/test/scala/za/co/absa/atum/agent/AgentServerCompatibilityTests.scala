@@ -24,11 +24,21 @@ import za.co.absa.balta.classes.JsonBString
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import za.co.absa.atum.agent.dispatcher.{HttpDispatcher, HttpRetry}
 
+import io.circe.parser.decode
+import za.co.absa.atum.model.dto.PartitioningWithIdDTO
+import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
+
+import java.net.URI
+import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import scala.collection.immutable.ListMap
 
 class AgentServerCompatibilityTests extends DBTestSuite {
 
   private val serverUrl = "http://localhost:8080"
+
+  // Agent writes are committed by the server and not rolled back by balta, so partition values are unique
+  // per run to keep the tests re-runnable (and runnable on several build axes) against the same database.
+  private val runSuffix = System.currentTimeMillis().toString
 
   private val testDataForRDD = Seq(
     Row("A", 8.0),
@@ -168,8 +178,8 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     }
 
     val domainAtumPartitioning = ListMap(
-      "partition1" -> "valueFromTest1",
-      "partition2" -> "valueFromTest2"
+      "partition1" -> s"valueFromTest1-$runSuffix",
+      "partition2" -> s"valueFromTest2-$runSuffix"
     )
 
     verifyAgentServerCompatibility(agent, domainAtumPartitioning)
@@ -202,10 +212,99 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     assert(retry != HttpRetry.Default)
 
     val domainAtumPartitioning = ListMap(
-      "customPartition1" -> "customValueFromTest1",
-      "customPartition2" -> "customValueFromTest2"
+      "customPartition1" -> s"customValueFromTest1-$runSuffix",
+      "customPartition2" -> s"customValueFromTest2-$runSuffix"
     )
 
     verifyAgentServerCompatibility(agent, domainAtumPartitioning)
+  }
+
+  // Need to add service & pg run in CI
+  test("Agent multi-parent getOrCreateAtumSubContext should create one child linked to both parents on the server") {
+    val agent: AtumAgent = new AtumAgent {
+      override val dispatcher: HttpDispatcher = new HttpDispatcher(
+        ConfigFactory
+          .empty()
+          .withValue("atum.dispatcher.type", ConfigValueFactory.fromAnyRef("http"))
+          .withValue("atum.dispatcher.http.url", ConfigValueFactory.fromAnyRef(serverUrl))
+      )
+    }
+
+    // Unique values per run: agent writes are committed by the server and not rolled back by balta.
+    val suffix = System.currentTimeMillis().toString
+    val parentAMap = ListMap("mpParentA" -> s"a$suffix")
+    val parentBMap = ListMap("mpParentB" -> s"b$suffix")
+    val childMap = ListMap("mpChild" -> s"c$suffix")
+
+    def containment(partitioning: ListMap[String, String]): String = {
+      val json = partitioning.map { case (k, v) => s""""$k": "$v"""" }.mkString("{", ", ", "}")
+      s"""partitioning @> '{"keysToValuesMap": $json}'::jsonb"""
+    }
+
+    def partitioningIds(partitioning: ListMap[String, String]): Seq[Long] =
+      table("runs.partitionings").where(containment(partitioning)) { result =>
+        var ids = Vector.empty[Long]
+        // read the id before advancing the cursor (balta reads lazily from the live ResultSet)
+        while (result.hasNext) {
+          ids = ids :+ result.next().getLong("id_partitioning").get
+        }
+        ids
+      }
+
+    val parentA = agent.getOrCreateAtumContext(parentAMap)
+    val parentB = agent.getOrCreateAtumContext(parentBMap)
+
+    assert(partitioningIds(childMap).isEmpty, "the child must not exist before the call")
+
+    val child = agent.getOrCreateAtumSubContext(childMap, Seq(parentA, parentB))
+
+    // Repeated call with duplicated parents must be idempotent (same child, no new rows).
+    val childAgain = agent.getOrCreateAtumSubContext(childMap, Seq(parentA, parentB, parentA))
+    assert(childAgain.atumPartitions == child.atumPartitions)
+
+    val idsA = partitioningIds(parentAMap)
+    val idsB = partitioningIds(parentBMap)
+    val idsChild = partitioningIds(childMap)
+    assert(idsA.size == 1 && idsB.size == 1, "each parent exists exactly once")
+    assert(idsChild.size == 1, "exactly one child must exist")
+    val (idA, idB, childId) = (idsA.head, idsB.head, idsChild.head)
+
+    // PRIMARY: server read path - ancestors of the child are exactly {A, B}, no duplicates.
+    val response = HttpClient
+      .newHttpClient()
+      .send(
+        HttpRequest.newBuilder(URI.create(s"$serverUrl/api/v2/partitionings/$childId/ancestors?limit=1000")).GET().build(),
+        HttpResponse.BodyHandlers.ofString()
+      )
+    assert(response.statusCode() == 200, s"unexpected response: ${response.body()}")
+    val ancestorIds = decode[PaginatedResponse[PartitioningWithIdDTO]](response.body()) match {
+      case Right(parsed) => parsed.data.map(_.id)
+      case Left(error)   => fail(s"cannot decode ancestors response: $error")
+    }
+    assert(ancestorIds.toSet == Set(idA, idB))
+    assert(ancestorIds.size == 2)
+    assert(!ancestorIds.contains(childId))
+
+    // SECONDARY: flows - the child belongs to own flow + A's + B's primary flows, without duplicate links.
+    def primaryFlowId(partitioningId: Long): Long =
+      table("flows.flows").where(s"fk_primary_partitioning = $partitioningId") { result =>
+        assert(result.hasNext)
+        val id = result.next().getLong("id_flow").get
+        assert(!result.hasNext)
+        id
+      }
+
+    val flowA = primaryFlowId(idA)
+    val flowB = primaryFlowId(idB)
+    val childFlows = table("flows.partitioning_to_flow").where(s"fk_partitioning = $childId") { result =>
+      var flows = Vector.empty[Long]
+      while (result.hasNext) {
+        flows = flows :+ result.next().getLong("fk_flow").get
+      }
+      flows
+    }
+    assert(childFlows.contains(flowA))
+    assert(childFlows.contains(flowB))
+    assert(childFlows.distinct.size == childFlows.size, "no duplicate (fk_flow, fk_partitioning) links")
   }
 }

@@ -91,6 +91,7 @@ object Main extends ZIOAppDefault {
           // database
           CreatePartitioningIfNotExists.layer,
           CreatePartitioning.layer,
+          CreatePartitioningWithParents.layer,
           GetPartitioningMeasures.layer,
           GetPartitioningMeasuresById.layer,
           GetPartitioningAdditionalData.layer,

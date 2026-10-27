@@ -68,6 +68,19 @@ class AtumContext private[agent] (
     agent.getOrCreateAtumSubContext(subPartitions, mergeWithParent)(this)
   }
 
+  /**
+   *  Creates (or obtains) a child context linked to several parents in one operation.
+   *
+   *  `parents` is the full parent set - this context is NOT implicitly added, include it if wanted.
+   *  The child identity is `subPartitions` only, so no overlap check applies.
+   *
+   *  @param subPartitions partitions identifying the child
+   *  @param parents       all parent contexts (must not be empty)
+   *  @return the child context
+   */
+  def subContext(subPartitions: AtumPartitions, parents: Seq[AtumContext]): AtumContext =
+    agent.getOrCreateAtumSubContext(subPartitions, parents)
+
   private def takeMeasurements(df: DataFrame): Set[MeasurementDTO] = {
     measures.map { m =>
       // TODO group measurements together: https://github.com/AbsaOSS/atum-service/issues/98
