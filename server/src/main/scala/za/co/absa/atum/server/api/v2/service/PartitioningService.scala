@@ -22,6 +22,8 @@ import za.co.absa.atum.server.model.PaginatedResult
 import zio.IO
 import zio.macros.accessible
 
+import java.time.ZonedDateTime
+
 @accessible
 trait PartitioningService {
 
@@ -45,6 +47,14 @@ trait PartitioningService {
   def getPartitioning(
     partitioning: PartitioningDTO
   ): IO[ServiceError, PartitioningWithIdDTO]
+
+  def searchPartitionings(
+    limit: Int,
+    offset: Long,
+    keys: Option[Map[String, String]],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime]
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
 
   def getFlowPartitionings(
     flowId: Long,

@@ -29,11 +29,25 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.server.api.v2.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.common.http.{BaseEndpoints, HttpEnv}
 
-import java.time.ZonedDateTime
+import java.time.{Duration, ZonedDateTime}
 import java.util.UUID
 import scala.util.{Failure, Success, Try}
 
 object Endpoints extends BaseEndpoints {
+
+  private implicit val partitioningKeysQueryCodec: Codec[String, Map[String, String], CodecFormat.TextPlain] =
+    Codec.string.mapDecode { encoded =>
+      Try(encoded.fromBase64As[Map[String, String]]) match {
+        case Success(Right(keys)) => DecodeResult.Value(keys)
+        case Success(Left(error)) => DecodeResult.Error(encoded, error)
+        case Failure(exception) => DecodeResult.Error(encoded, exception)
+      }
+    }(_.asBase64EncodedJsonString)
+      .validate(Validator.custom { keys =>
+        if (keys.exists { case (key, value) => key.contains('\u0000') || value.contains('\u0000') })
+          ValidationResult.Invalid("Partitioning keys and values must not contain NUL characters")
+        else ValidationResult.Valid
+      })
 
   // Checkpoint properties are supplied as a single query parameter carrying a base64url-encoded JSON object,
   // e.g. `checkpoint-properties=eyJleGVjdXRpb25JRCI6Ii4uLiJ9`. Malformed base64 or JSON, or a property without any
@@ -71,6 +85,24 @@ object Endpoints extends BaseEndpoints {
       )
       .validate(Validator.custom {
         case (Some(from), Some(to)) if !from.isBefore(to) => ValidationResult.Invalid("'from' must be before 'to'")
+        case _ => ValidationResult.Valid
+      })
+
+  private val maxPartitioningSearchWindow = Duration.ofDays(365)
+
+  private val partitioningSearchInput
+    : EndpointInput[(Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime])] =
+    query[Option[Map[String, String]]]("keys")
+      .description("base64url-encoded JSON object of partial partitioning keys; all supplied string values must match")
+      .and(checkpointTimeWindowInput)
+      .validate(Validator.custom {
+        case (_, Some(_), None) | (_, None, Some(_)) =>
+          ValidationResult.Invalid("'from' and 'to' must be supplied together")
+        case (_, Some(from), Some(to)) if Duration.between(from.toInstant, to.toInstant)
+          .compareTo(maxPartitioningSearchWindow) > 0 =>
+          ValidationResult.Invalid("The time window must not exceed 365 days")
+        case (keys, None, None) if keys.forall(_.isEmpty) =>
+          ValidationResult.Invalid("At least one non-empty key filter or complete time window is required")
         case _ => ValidationResult.Valid
       })
 
@@ -187,6 +219,24 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  val searchPartitioningsEndpoint
+    : PublicEndpoint[(Int, Long, Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime]), ErrorResponse, PaginatedResponse[
+      PartitioningWithIdDTO
+    ], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / V2Paths.Search)
+      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
+      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
+      .in(partitioningSearchInput)
+      .description(
+        "Search distinct partitionings by partial keys and/or checkpoint process start time, ordered by partitioning ID " +
+          "ascending. Key-only searches include partitionings without checkpoints. Time selection requires both bounds, " +
+          "a window no longer than 365 days, and at least one matching checkpoint. Pagination is live, not a snapshot."
+      )
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
+  }
+
   val getPartitioningMeasuresEndpoint
     : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
     apiV2.get
@@ -297,6 +347,16 @@ object Endpoints extends BaseEndpoints {
       getFlowCheckpointsEndpoint,
       { case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], latestFirst: Option[Boolean], from: Option[ZonedDateTime], to: Option[ZonedDateTime], includeProperties: Boolean) =>
         FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, latestFirst, from, to, includeProperties)
+      }
+    ),
+    createServerEndpoint[
+      (Int, Long, Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime]),
+      ErrorResponse,
+      PaginatedResponse[PartitioningWithIdDTO]
+    ](
+      searchPartitioningsEndpoint,
+      { case (limit: Int, offset: Long, keys: Option[Map[String, String]], from: Option[ZonedDateTime], to: Option[ZonedDateTime]) =>
+        PartitioningController.searchPartitionings(limit, offset, keys, from, to)
       }
     ),
     createServerEndpoint(getPartitioningByIdEndpoint, PartitioningController.getPartitioningById),
