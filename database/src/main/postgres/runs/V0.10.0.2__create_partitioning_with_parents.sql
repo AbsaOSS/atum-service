@@ -18,83 +18,69 @@ CREATE OR REPLACE FUNCTION runs.create_partitioning_with_parents(
     IN  i_partitioning              JSONB,
     IN  i_by_user                   TEXT,
     IN  i_parent_partitioning_ids   BIGINT[],
+    IN  i_copy_measure_definitions  BOOLEAN,
     OUT status                      INTEGER,
     OUT status_text                 TEXT,
     OUT id_partitioning             BIGINT,
-    OUT skipped_ad_keys             TEXT[]
+    OUT created_by                  TEXT
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.create_partitioning_with_parents(3)
---      Creates a partitioning entry, or reuses the existing one, and links it to all the given parent
---      partitionings within a single transaction. It is a separate function (not an overload of
---      runs.create_partitioning), so that no existing call of runs.create_partitioning can become
---      ambiguous.
+-- Function: runs.create_partitioning_with_parents(4)
+--      Creates a partitioning entry, or reuses the existing one, and links it to all the given parent partitionings
+--      (zero, one or many) within a single transaction. It is a separate function (not an overload of
+--      runs.create_partitioning), so that no existing call of runs.create_partitioning can become ambiguous.
 --
---      An already existing partitioning is not reported as an error; the supplied parents are linked
---      to it (idempotent re-link).
+--      An already existing partitioning is not reported as an error: the call is idempotent, the supplied
+--      parents are linked to it (if they are not linked yet) and the id and the STORED author (created_by) of the
+--      existing partitioning are returned, never the caller.
 --
---      Data copy: measure definitions and additional data of EVERY supplied parent are copied to the
---      partitioning using the union + de-duplication policy of runs._copy_parents_data_to_partitioning
---      (the partitioning's own data always wins, existing rows are never duplicated). The copy does not
---      depend on whether the parent was already an ancestor, so supplying {p1,p2} in one call and
---      {p1} followed by {p1,p2} end up with the same data.
+--      Linking (new and existing partitioning alike) is delegated to flows._link_to_parents: a self-link or a
+--      cycle is rejected with status 32 before anything is written; when every parent is already an ancestor
+--      the call takes a lock-free fast path; otherwise it takes the global advisory lock, re-checks and links the
+--      partitioning and all its descendants to the flows of the parents (narrow propagation).
 --
---      Additional data conflicts: a key is skipped (and reported) when the values of that key differ
---      across ALL the ancestors of the partitioning after linking (every primary partitioning of the
---      flows the partitioning is a member of - the same set runs.get_partitioning_ancestors returns).
---      The scope is deliberately the full ancestor set and not only the parents of this call, so that a
---      key skipped for a conflict is not filled in later by a parent linked in another call. The
---      trade-off is that the check is conservative: a disagreement anywhere in the lineage (e.g. a
---      parent that overrode a key inherited from its own parent) skips the key rather than picking one
---      value. A value the partitioning already holds (own or inherited earlier) counts as its own.
+--      Measure definitions: copied only when i_copy_measure_definitions is true (NULL means false), only when
+--      the partitioning is newly created by this call, as the distinct union over all the supplied parents by
+--      (measure_name, measured_columns). The copies get created_by = the caller (i_by_user) and created_at = now(),
+--      not the parent's. The order of measured_columns is significant ({a,b} is not the same as {b,a}).
 --
---      Cycles: when the partitioning already exists, a supplied parent that is the partitioning itself
---      or one of its descendants is rejected with status 43 before anything is written. This is a
---      write-side guard only; it does not detect cycles that already exist (read-side lineage cycle
---      detection is a separate, deferred concern).
---
---      Descendants: when parents are linked to an existing partitioning, all its descendants are added
---      to the flows of the new parents as well, so the new parents are their ancestors too.
+--      Additional data is NEVER copied.
 --
 -- Parameters:
 --      i_partitioning              - partitioning to create or to link to the parents
 --      i_by_user                   - user behind the change
 --      i_parent_partitioning_ids   - ids of the parent partitionings; NULL elements and duplicates are
 --                                    ignored; NULL or empty array means no parents
+--      i_copy_measure_definitions  - copy the measure definitions of the parents to a newly created
+--                                    partitioning; NULL is treated as false (no DEFAULT on purpose: a missing
+--                                    bind must fail loudly)
 --
 -- Returns:
 --      status              - Status code
 --      status_text         - Status text
 --      id_partitioning     - id of the partitioning (NULL if the call failed)
---      skipped_ad_keys     - additional data keys skipped due to conflicting ancestor values, sorted,
---                            never NULL
+--      created_by          - author of the partitioning: the caller if it was created by this call, otherwise
+--                            the stored author (NULL if the call failed)
 --
 -- Status codes:
 --      11                  - Partitioning created
 --      12                  - Partitioning created with parent partitioning
---      13                  - Partitioning parents registered (an existing partitioning got new links
---                            and/or data copied)
+--      13                  - Partitioning parents registered (an existing partitioning got new links)
 --      14                  - Partitioning already present (nothing was written)
---      41                  - Parent partitioning not found
---      43                  - Parent partitioning would create a cycle (is the partitioning itself or
---                            its descendant)
+--      32                  - Parent partitioning would create a cycle (is the partitioning itself or its
+--                            descendant); the text names the offending ids, nothing was written
+--      41                  - Parent partitioning not found (nothing was written)
 --
 -------------------------------------------------------------------------------
 DECLARE
     _parent_ids             BIGINT[];
-    _conflict_scope         BIGINT[];
-    _parent_id              BIGINT;
     _child_id               BIGINT;
     _child_created          BOOLEAN;
-    _changed                BOOLEAN := false;
-    _copied_rows            INTEGER := 0;
-    _rows                   INTEGER;
     _link_status            INTEGER;
+    _link_status_text       TEXT;
 BEGIN
-    skipped_ad_keys := '{}'::TEXT[];
-
     -- normalize parents: distinct, non-NULL, deterministic order
     _parent_ids := ARRAY(
         SELECT DISTINCT PID.id
@@ -116,7 +102,10 @@ BEGIN
     END IF;
 
     id_partitioning := NULL;
-    _child_id := runs._get_id_partitioning(i_partitioning, true);
+    created_by := NULL;
+    -- non-locking lookup: no FOR UPDATE (it would risk a lock-order inversion against the advisory lock
+    -- taken inside flows._link_to_parents)
+    _child_id := runs._get_id_partitioning(i_partitioning, false);
     _child_created := false;
 
     IF _child_id IS NULL THEN
@@ -131,75 +120,46 @@ BEGIN
             _child_created := true;
             PERFORM 1 FROM flows._create_flow(_child_id, i_by_user);
         ELSE
-            _child_id := runs._get_id_partitioning(i_partitioning, true);
+            _child_id := runs._get_id_partitioning(i_partitioning, false);
             IF _child_id IS NULL THEN
                 RAISE EXCEPTION 'Partitioning vanished while being created concurrently';
             END IF;
         END IF;
     END IF;
 
-    IF NOT _child_created AND cardinality(_parent_ids) > 0 THEN
-        -- serializes the re-linking of existing partitionings, so that two concurrent calls cannot
-        -- together create a cycle that neither of them can see; released at the end of the transaction
-        PERFORM pg_advisory_xact_lock(hashtextextended('atum.runs.create_partitioning_with_parents', 0));
+    -- all linking (self-link / cycle rejection, lock-free fast path, global advisory lock, narrow propagation of the
+    -- partitioning and its descendants) lives in the shared helper; it writes nothing when it returns 32
+    SELECT LTP.status, LTP.status_text
+    FROM flows._link_to_parents(_child_id, _parent_ids, i_by_user) AS LTP
+    INTO _link_status, _link_status_text;
 
-        -- a parent that is the partitioning itself or its descendant would create a cycle (a partitioning is a
-        -- member of the flow it is primary for, and so are all its descendants); nothing has been written yet
-        PERFORM 1
-        FROM unnest(_parent_ids) AS PID(id)
-        INNER JOIN flows.partitioning_to_flow PTF ON PTF.fk_partitioning = PID.id
-        INNER JOIN flows.flows F ON F.id_flow = PTF.fk_flow
-        WHERE F.fk_primary_partitioning = _child_id;
-        IF FOUND THEN
-            status := 43;
-            status_text := 'Parent partitioning would create a cycle';
-            RETURN;
-        END IF;
+    IF _link_status = 32 THEN
+        status := 32;
+        status_text := _link_status_text;
+        RETURN;
     END IF;
 
-    -- link every parent; no short-circuit for an existing partitioning; idempotent per parent
-    FOREACH _parent_id IN ARRAY _parent_ids LOOP
-        SELECT ATPF.status
-        FROM flows._add_to_parent_flows(_parent_id, _child_id, i_by_user) AS ATPF
-        INTO _link_status;
-        IF _link_status = 11 THEN
-            _changed := true;
-        END IF;
-    END LOOP;
-
-    IF NOT _child_created AND cardinality(_parent_ids) > 0 THEN
-        -- the descendants of the partitioning become reachable from the flows of the new ancestors too
-        -- (a new partitioning has no descendants)
-        INSERT INTO flows.partitioning_to_flow (fk_flow, fk_partitioning, created_by)
-        SELECT CPTF.fk_flow, DPTF.fk_partitioning, i_by_user
-        FROM flows.partitioning_to_flow CPTF
-        INNER JOIN flows.flows CF ON CF.fk_primary_partitioning = _child_id
-        INNER JOIN flows.partitioning_to_flow DPTF ON DPTF.fk_flow = CF.id_flow AND DPTF.fk_partitioning <> _child_id
-        WHERE CPTF.fk_partitioning = _child_id
-        ON CONFLICT DO NOTHING;
-        GET DIAGNOSTICS _rows = ROW_COUNT;
-        IF _rows > 0 THEN
-            _changed := true;
-        END IF;
-    END IF;
-
-    -- copy measure definitions and additional data from the supplied parents
-    IF cardinality(_parent_ids) > 0 THEN
-        -- every ancestor of the partitioning after linking
-        _conflict_scope := ARRAY(
-            SELECT DISTINCT F.fk_primary_partitioning
-            FROM flows.partitioning_to_flow PTF
-            INNER JOIN flows.flows F ON F.id_flow = PTF.fk_flow
-            WHERE PTF.fk_partitioning = _child_id
-              AND F.fk_primary_partitioning <> _child_id
-        );
-
-        SELECT CPD.skipped_ad_keys, CPD.copied_rows
-        FROM runs._copy_parents_data_to_partitioning(_child_id, _conflict_scope, _parent_ids, i_by_user) AS CPD
-        INTO skipped_ad_keys, _copied_rows;
+    -- measure definitions are copied only to a newly created partitioning and only when asked for; the distinct
+    -- union over the parents by (measure_name, measured_columns); created_at is the column default now()
+    IF _child_created AND COALESCE(i_copy_measure_definitions, false) AND cardinality(_parent_ids) > 0 THEN
+        INSERT INTO runs.measure_definitions (fk_partitioning, measure_name, measured_columns, created_by)
+        SELECT DISTINCT _child_id, MD.measure_name, MD.measured_columns, i_by_user
+        FROM runs.measure_definitions MD
+        WHERE MD.fk_partitioning = ANY(_parent_ids)
+        ON CONFLICT ON CONSTRAINT measure_definitions_unq DO NOTHING;
     END IF;
 
     id_partitioning := _child_id;
+
+    IF _child_created THEN
+        created_by := i_by_user;
+    ELSE
+        -- the author of an existing partitioning is the stored one, never the caller
+        SELECT P.created_by
+        FROM runs.partitionings P
+        WHERE P.id_partitioning = _child_id
+        INTO created_by;
+    END IF;
 
     IF _child_created THEN
         IF cardinality(_parent_ids) = 0 THEN
@@ -209,17 +169,12 @@ BEGIN
             status := 12;
             status_text := 'Partitioning created with parent partitioning';
         END IF;
-    ELSIF _changed OR _copied_rows > 0 THEN
+    ELSIF _link_status = 11 THEN
         status := 13;
         status_text := 'Partitioning parents registered';
     ELSE
         status := 14;
         status_text := 'Partitioning already present';
-    END IF;
-
-    IF cardinality(skipped_ad_keys) > 0 THEN
-        status_text := status_text || '; ' || cardinality(skipped_ad_keys)::TEXT
-            || ' conflicting additional data key(s) skipped';
     END IF;
 
     RETURN;
@@ -232,6 +187,6 @@ $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER
 SET search_path = pg_catalog, public, pg_temp;
 
-ALTER FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[]) OWNER TO atum_owner;
-REVOKE EXECUTE ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[]) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[]) TO atum_user;
+ALTER FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) TO atum_user;

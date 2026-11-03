@@ -433,6 +433,7 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
       .setParam("i_partitioning", p)
       .setParam("i_by_user", "Child")
       .setParam("i_parent_partitioning_ids", parents)
+      .setParam("i_copy_measure_definitions", false)
       .execute { qr =>
         assert(qr.hasNext)
         val row = qr.next()

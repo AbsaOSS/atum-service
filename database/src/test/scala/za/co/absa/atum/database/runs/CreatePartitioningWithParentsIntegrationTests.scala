@@ -20,67 +20,33 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.{JsonBString, QueryResult}
 import za.co.absa.balta.classes.setter.CustomDBType
 
+import java.time.OffsetDateTime
+
+/**
+ *  Tests of `runs.create_partitioning_with_parents(jsonb, text, bigint[], boolean)` (LINEAGE-03..06, POLICY-02/03).
+ *
+ *  Test-design pitfall: the advisory lock taken by `flows._link_to_parents` is transaction-scoped and `DBTestSuite`
+ *  runs the whole test body in a single transaction (rolled back at the end). Once ANY slow-path call has happened
+ *  in a test, the lock count of the session stays 1 until the rollback. Therefore:
+ *   - fixture graphs are seeded WITHOUT the new function (`runs.create_partitioning` of the v1 path takes no lock),
+ *   - every `advisoryLocksHeld() == 0` assertion precedes the first slow-path call of its test,
+ *   - the slow-path test asserts `== 1` as its very last step.
+ */
 class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
 
-  private case class CreateResult(status: Int, statusText: String, id: Option[Long], skippedKeys: Seq[String])
+  private case class CreateResult(status: Int, statusText: String, id: Option[Long], createdBy: Option[String])
 
   private val fncCreatePartitioning = "runs.create_partitioning"
   private val fncCreateWithParents = "runs.create_partitioning_with_parents"
   private val fncGetAncestors = "runs.get_partitioning_ancestors"
+  private val signature = "runs.create_partitioning_with_parents(jsonb,text,bigint[],boolean)"
 
   private val cycleText = "Parent partitioning would create a cycle"
+  private val oldDate = OffsetDateTime.parse("2020-01-01T00:00:00Z")
 
-  private val parent1Partitioning = JsonBString(
-    """
-      |{
-      |  "version": 1,
-      |  "keys": ["mpkey1"],
-      |  "keysToValuesMap": {
-      |    "mpkey1": "valueMP1"
-      |  }
-      |}
-      |""".stripMargin
-  )
+  private val missingParentId = 987654321987L
 
-  private val parent2Partitioning = JsonBString(
-    """
-      |{
-      |  "version": 1,
-      |  "keys": ["mpkey2"],
-      |  "keysToValuesMap": {
-      |    "mpkey2": "valueMP2"
-      |  }
-      |}
-      |""".stripMargin
-  )
-
-  private val parent3Partitioning = JsonBString(
-    """
-      |{
-      |  "version": 1,
-      |  "keys": ["mpkey3"],
-      |  "keysToValuesMap": {
-      |    "mpkey3": "valueMP3"
-      |  }
-      |}
-      |""".stripMargin
-  )
-
-  private val childPartitioning = JsonBString(
-    """
-      |{
-      |  "version": 1,
-      |  "keys": ["mpkey1", "mpkey2", "mckey"],
-      |  "keysToValuesMap": {
-      |    "mpkey1": "valueMP1",
-      |    "mpkey2": "valueMP2",
-      |    "mckey": "valueMC"
-      |  }
-      |}
-      |""".stripMargin
-  )
-
-  private def lineagePartitioning(name: String): JsonBString = JsonBString(
+  private def lineage(name: String): JsonBString = JsonBString(
     s"""
        |{
        |  "version": 1,
@@ -92,22 +58,24 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
        |""".stripMargin
   )
 
-  private val missingParentId = 987654321987L
-
   private def ids(xs: Seq[Any]): CustomDBType =
     CustomDBType(xs.map(x => if (x == null) "NULL" else x.toString).mkString("{", ",", "}"), "BIGINT[]")
 
-  private def createParent(p: JsonBString, author: String): Long = {
-    function(fncCreatePartitioning)
+  /** Seeds a partitioning via the v1 path (takes NO advisory lock); an optional parent is linked with it. */
+  private def seed(p: JsonBString, parent: Option[Long] = None, author: String = "Seeder"): Long = {
+    val call = function(fncCreatePartitioning)
       .setParam("i_partitioning", p)
       .setParam("i_by_user", author)
-      .setParamNull("i_parent_partitioning_id")
-      .execute { qr =>
-        assert(qr.hasNext)
-        val row = qr.next()
-        assert(row.getInt("status").contains(11))
-        row.getLong("id_partitioning").get
-      }
+    val withParent = parent match {
+      case Some(id) => call.setParam("i_parent_partitioning_id", id)
+      case None => call.setParamNull("i_parent_partitioning_id")
+    }
+    withParent.execute { qr =>
+      assert(qr.hasNext)
+      val row = qr.next()
+      assert(row.getInt("status").exists(s => s == 11 || s == 12))
+      row.getLong("id_partitioning").get
+    }
   }
 
   private def readResult(qr: QueryResult): CreateResult = {
@@ -117,25 +85,41 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
       row.getInt("status").get,
       row.getString("status_text").get,
       row.getLong("id_partitioning"),
-      row.getArray[String]("skipped_ad_keys").map(_.toSeq).get
+      row.getString("created_by")
     )
     assert(!qr.hasNext)
     result
   }
 
-  private def createMulti(p: JsonBString, parents: CustomDBType): CreateResult = {
+  private def createMulti(
+    p: JsonBString,
+    parents: CustomDBType,
+    copyMd: Boolean = false,
+    user: String = "Fantômas"
+  ): CreateResult = {
     function(fncCreateWithParents)
       .setParam("i_partitioning", p)
-      .setParam("i_by_user", "Fantômas")
+      .setParam("i_by_user", user)
       .setParam("i_parent_partitioning_ids", parents)
+      .setParam("i_copy_measure_definitions", copyMd)
       .execute(readResult)
   }
 
-  private def createMultiNull(p: JsonBString): CreateResult = {
+  private def createMultiNullParents(p: JsonBString): CreateResult = {
     function(fncCreateWithParents)
       .setParam("i_partitioning", p)
       .setParam("i_by_user", "Fantômas")
       .setParamNull("i_parent_partitioning_ids")
+      .setParam("i_copy_measure_definitions", false)
+      .execute(readResult)
+  }
+
+  private def createMultiNullFlag(p: JsonBString, parents: CustomDBType): CreateResult = {
+    function(fncCreateWithParents)
+      .setParam("i_partitioning", p)
+      .setParam("i_by_user", "Fantômas")
+      .setParam("i_parent_partitioning_ids", parents)
+      .setParamNull("i_copy_measure_definitions")
       .execute(readResult)
   }
 
@@ -153,34 +137,26 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
       }
   }
 
-  private def addMeasure(id: Long, name: String, columnsLiteral: String, author: String): Unit = {
-    table("runs.measure_definitions").insert(
-      add("fk_partitioning", id)
-        .add("created_by", author)
-        .add("measure_name", name)
-        .add("measured_columns", CustomDBType(columnsLiteral, "TEXT[]"))
+  private def addMeasure(
+    id: Long,
+    name: String,
+    columnsLiteral: String,
+    author: String,
+    createdAt: Option[OffsetDateTime] = None
+  ): Unit = {
+    val base = add("fk_partitioning", id)
+      .add("created_by", author)
+      .add("measure_name", name)
+      .add("measured_columns", CustomDBType(columnsLiteral, "TEXT[]"))
+    table("runs.measure_definitions").insert(createdAt.fold(base)(base.add("created_at", _)))
+    ()
+  }
+
+  private def addAd(id: Long, key: String, value: String): Unit = {
+    table("runs.additional_data").insert(
+      add("fk_partitioning", id).add("created_by", "Seeder").add("ad_name", key).add("ad_value", value)
     )
     ()
-  }
-
-  private def addAd(id: Long, key: String, value: Option[String]): Unit = {
-    val base = add("fk_partitioning", id).add("created_by", "Seeder").add("ad_name", key)
-    val params = value match {
-      case Some(v) => base.add("ad_value", v)
-      case None => base.addNull("ad_value")
-    }
-    table("runs.additional_data").insert(params)
-    ()
-  }
-
-  private def reparent(child: Long, parent: Long): Unit = {
-    function("runs.update_partitioning_parent")
-      .setParam("i_id_partitioning", child)
-      .setParam("i_id_parent_partitioning", parent)
-      .setParam("i_by_user", "Seeder")
-      .execute { qr =>
-        assert(qr.next().getInt("status").contains(11))
-      }
   }
 
   private def queryBoolean(sql: String): Boolean = {
@@ -194,14 +170,35 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     }
   }
 
-  private def hasExecute(role: String, signature: String): Boolean =
+  private def queryLong(sql: String): Long = {
+    val statement = dbConnection.connection.createStatement()
+    try {
+      val rs = statement.executeQuery(sql)
+      assert(rs.next())
+      rs.getLong(1)
+    } finally {
+      statement.close()
+    }
+  }
+
+  /** Advisory locks held by THIS session (the transaction-scoped lock is visible in pg_locks for our own backend). */
+  private def advisoryLocksHeld(): Long = queryLong(
+    "SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND pid = pg_backend_pid()"
+  )
+
+  private def hasExecute(role: String): Boolean =
     queryBoolean(s"SELECT has_function_privilege('$role', '$signature', 'EXECUTE')")
+
+  private def fourTableCounts(): Seq[Long] = Seq(
+    table("runs.partitionings").count(),
+    table("flows.partitioning_to_flow").count(),
+    table("runs.measure_definitions").count(),
+    table("runs.additional_data").count()
+  )
 
   // balta 0.1.0 binds multi-column NamedParams in the wrong order (https://github.com/AbsaOSS/balta/issues/2),
   // so two-column filters are expressed as SQL conditions; inputs are generated ids and test-constant names only
   private def measureOf(id: Long, name: String): String = s"fk_partitioning = $id AND measure_name = '$name'"
-
-  private def adOf(id: Long, key: String): String = s"fk_partitioning = $id AND ad_name = '$key'"
 
   private def measureCount(id: Long): Long = table("runs.measure_definitions").count(add("fk_partitioning", id))
 
@@ -209,278 +206,487 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
 
   private def adCount(id: Long): Long = table("runs.additional_data").count(add("fk_partitioning", id))
 
-  private def adCount(id: Long, key: String): Long = table("runs.additional_data").count(adOf(id, key))
+  // ---- creation ----------------------------------------------------------------------------------------------
 
-  private def adValue(id: Long, key: String): Option[Option[String]] = {
-    table("runs.additional_data").where(adOf(id, key)) { r =>
-      if (r.hasNext) Some(r.next().getString("ad_value")) else None
-    }
+  test("Create with no parents: 11, the caller is the author, a single own flow and no advisory lock") {
+    val result = createMulti(lineage("child"), ids(Seq.empty))
+
+    assert(advisoryLocksHeld() == 0)
+    assert(result.status == 11)
+    assert(result.statusText == "Partitioning created")
+    assert(result.createdBy.contains("Fantômas"))
+    val child = result.id.get
+    assert(flowCount(child) == 1)
+    assert(ancestorIds(child).isEmpty)
   }
 
-  // p1 (lower id) becomes a child of p2 (higher id); p2's data is seeded AFTER the re-parenting so p1 does not carry it
-  private def reversedTopology(): (Long, Long) = {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val p2 = createParent(parent2Partitioning, "Bob")
-    assert(p1 < p2)
-    reparent(p1, p2)
-    addMeasure(p2, "m_p2", """{"col2"}""", "Bob")
-    addAd(p2, "k_p2", Some("z"))
-    addMeasure(p1, "m_p1", """{"col1"}""", "Alice")
-    (p1, p2)
-  }
+  test("Create with one parent: 12 and the parent is the only ancestor") {
+    val p1 = seed(lineage("p1"))
 
-  test("Child created with two parents is linked into both parents' flows in one call") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val p2 = createParent(parent2Partitioning, "Bob")
-
-    val result = createMulti(childPartitioning, ids(Seq(p1, p2)))
+    val result = createMulti(lineage("child"), ids(Seq(p1)))
 
     assert(result.status == 12)
     assert(result.statusText == "Partitioning created with parent partitioning")
+    assert(result.createdBy.contains("Fantômas"))
     val child = result.id.get
-    assert(flowCount(child) == 3)
-    assert(flowCount(p1) == 1)
-    assert(flowCount(p2) == 1)
-    assert(ancestorIds(child) == Set(p1, p2))
+    assert(flowCount(child) == 2)
+    assert(ancestorIds(child) == Set(p1))
   }
 
-  test("Missing parent fails with status 41 and creates nothing") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val ptfBefore = table("flows.partitioning_to_flow").count()
+  test("Create with N distinct parents: 12 and the child is a member of every parent's flow") {
+    val p1 = seed(lineage("p1"))
+    val p2 = seed(lineage("p2"))
+    val p3 = seed(lineage("p3"))
 
-    val result = createMulti(childPartitioning, ids(Seq(p1, missingParentId)))
+    val result = createMulti(lineage("child"), ids(Seq(p1, p2, p3)))
 
-    assert(result.status == 41)
-    assert(result.statusText == "Parent partitioning not found")
-    assert(result.id.isEmpty)
-    assert(table("runs.partitionings").count(add("partitioning", childPartitioning)) == 0)
-    assert(table("flows.partitioning_to_flow").count() == ptfBefore)
+    assert(result.status == 12)
+    val child = result.id.get
+    assert(flowCount(child) == 4)
+    assert(ancestorIds(child) == Set(p1, p2, p3))
+    Seq(p1, p2, p3).foreach(p => assert(flowCount(p) == 1))
   }
 
-  test("Missing parent for an existing child links nothing") {
-    val p2 = createParent(parent2Partitioning, "Bob")
-    val created = createMulti(childPartitioning, ids(Seq.empty))
-    assert(created.status == 11)
-    val child = created.id.get
-    assert(flowCount(child) == 1)
+  test("Duplicate parent ids and a NULL element are ignored") {
+    val p1 = seed(lineage("p1"))
 
-    val result = createMulti(childPartitioning, ids(Seq(p2, missingParentId)))
+    val result = createMulti(lineage("child"), ids(Seq(p1, p1, null)))
 
-    assert(result.status == 41)
-    assert(result.statusText == "Parent partitioning not found")
-    assert(result.id.isEmpty)
-    assert(flowCount(child) == 1)
-    assert(flowCount(p2) == 1)
+    assert(result.status == 12)
+    assert(flowCount(result.id.get) == 2)
+    assert(ancestorIds(result.id.get) == Set(p1))
   }
 
-  test("NULL parent array behaves like a parentless create") {
-    val result = createMultiNull(childPartitioning)
+  test("A NULL parent array behaves like a parentless create") {
+    val result = createMultiNullParents(lineage("child"))
 
+    assert(advisoryLocksHeld() == 0)
     assert(result.status == 11)
-    assert(result.statusText == "Partitioning created")
     assert(flowCount(result.id.get) == 1)
   }
 
-  test("Empty parent array behaves like a parentless create") {
-    val result = createMulti(childPartitioning, CustomDBType("{}", "BIGINT[]"))
+  test("An empty parent array behaves like a parentless create") {
+    val result = createMulti(lineage("child"), CustomDBType("{}", "BIGINT[]"))
 
+    assert(advisoryLocksHeld() == 0)
     assert(result.status == 11)
-    assert(result.statusText == "Partitioning created")
     assert(flowCount(result.id.get) == 1)
   }
 
-  test("Existing partitioning with a NULL or empty parent array is a successful no-op (status 14, not 31)") {
-    val child = createParent(childPartitioning, "Carol")
+  test("Existing partitioning with a NULL or empty parent array is a no-op: 14, no lock, nothing written") {
+    val child = seed(lineage("child"), author = "Carol")
+    val before = fourTableCounts()
 
-    val withEmpty = createMulti(childPartitioning, ids(Seq.empty))
+    val withEmpty = createMulti(lineage("child"), ids(Seq.empty))
     assert(withEmpty.status == 14)
     assert(withEmpty.statusText == "Partitioning already present")
     assert(withEmpty.id.contains(child))
 
-    val withNull = createMultiNull(childPartitioning)
+    val withNull = createMultiNullParents(lineage("child"))
     assert(withNull.status == 14)
     assert(withNull.id.contains(child))
 
-    assert(flowCount(child) == 1)
+    assert(fourTableCounts() == before)
+    assert(advisoryLocksHeld() == 0)
   }
 
-  test("Single-element parent array behaves like the single-parent create and also copies additional data") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    addMeasure(p1, "m1", """{"col1"}""", "Alice")
-    addAd(p1, "k1", Some("v1"))
+  // ---- idempotency and linking of existing partitionings -----------------------------------------------------
 
-    val result = createMulti(childPartitioning, ids(Seq(p1)))
-
-    assert(result.status == 12)
-    assert(result.statusText == "Partitioning created with parent partitioning")
-    val child = result.id.get
-    assert(flowCount(child) == 2)
-    assert(measureCount(child) == 1)
-    table("runs.measure_definitions").where(measureOf(child, "m1")) { r =>
-      assert(r.hasNext)
-      assert(r.next().getString("created_by").contains("Alice"))
-    }
-    // RD-1 superset: the shipped single-parent create path copies measures only
-    assert(adValue(child, "k1").contains(Some("v1")))
-  }
-
-  test("Existing child is linked to a newly supplied parent instead of returning status 31") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val child = createParent(childPartitioning, "Carol")
-    assert(flowCount(child) == 1)
-
-    val result = createMulti(childPartitioning, ids(Seq(p1)))
-
-    assert(result.status != 31)
-    assert(result.status == 13)
-    assert(result.statusText == "Partitioning parents registered")
-    assert(result.id.contains(child))
-    assert(flowCount(child) == 2)
-    assert(ancestorIds(child).contains(p1))
-  }
-
-  test("Re-submitting the same parents is idempotent") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val p2 = createParent(parent2Partitioning, "Bob")
-    addMeasure(p1, "m1", """{"col1"}""", "Alice")
-    addAd(p1, "k1", Some("v1"))
-
-    val first = createMulti(childPartitioning, ids(Seq(p1, p2)))
+  test("Idempotent re-create by ANOTHER user: 14, nothing written, same id and the STORED author") {
+    val p1 = seed(lineage("p1"))
+    val p2 = seed(lineage("p2"))
+    val first = createMulti(lineage("child"), ids(Seq(p1, p2)), user = "Alice")
     assert(first.status == 12)
-    val child = first.id.get
-    val flowsBefore = flowCount(child)
-    val measuresBefore = measureCount(child)
-    val adBefore = adCount(child)
-    assert(measuresBefore == 1)
-    assert(adBefore == 1)
+    assert(first.createdBy.contains("Alice"))
+    val before = fourTableCounts()
 
-    val second = createMulti(childPartitioning, ids(Seq(p1, p2)))
+    val second = createMulti(lineage("child"), ids(Seq(p1, p2)), user = "Mallory")
 
     assert(second.status == 14)
     assert(second.statusText == "Partitioning already present")
-    assert(second.id.contains(child))
-    assert(flowCount(child) == flowsBefore)
-    assert(measureCount(child) == measuresBefore)
-    assert(adCount(child) == adBefore)
+    assert(second.id == first.id)
+    assert(second.createdBy.contains("Alice"))
+    assert(queryBoolean(s"SELECT created_by = 'Alice' FROM runs.partitionings WHERE id_partitioning = ${first.id.get}"))
+    assert(fourTableCounts() == before)
   }
 
-  test("Existing child linked to one more parent copies the new parent's data without duplicating the old") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val p2 = createParent(parent2Partitioning, "Bob")
+  test("Re-linking an already linked direct parent: 14, nothing written and no advisory lock") {
+    val p1 = seed(lineage("p1"))
+    val child = seed(lineage("child"), Some(p1))
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("child"), ids(Seq(p1)), user = "Mallory")
+
+    assert(advisoryLocksHeld() == 0)
+    assert(result.status == 14)
+    assert(result.id.contains(child))
+    assert(fourTableCounts() == before)
+  }
+
+  test("Re-linking a direct parent and a grandparent: 14, nothing written and no advisory lock") {
+    val g = seed(lineage("g"))
+    val p = seed(lineage("p"), Some(g))
+    val child = seed(lineage("child"), Some(p))
+    assert(ancestorIds(child) == Set(p, g))
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("child"), ids(Seq(p, g)))
+
+    assert(advisoryLocksHeld() == 0)
+    assert(result.status == 14)
+    assert(result.id.contains(child))
+    assert(fourTableCounts() == before)
+  }
+
+  test("Existing child gets a new parent: 13 and the child is a member of the parent's flow") {
+    val p1 = seed(lineage("p1"))
+    val child = seed(lineage("child"), author = "Carol")
+    assert(ancestorIds(child).isEmpty)
+
+    val result = createMulti(lineage("child"), ids(Seq(p1)))
+
+    assert(result.status == 13)
+    assert(result.statusText == "Partitioning parents registered")
+    assert(result.id.contains(child))
+    assert(result.createdBy.contains("Carol"))
+    assert(flowCount(child) == 2)
+    assert(ancestorIds(child) == Set(p1))
+  }
+
+  test("Existing child with a mix of linked and new parents: 13 and all of them become ancestors") {
+    val p1 = seed(lineage("p1"))
+    val p2 = seed(lineage("p2"))
+    val child = seed(lineage("child"), Some(p1))
+    assert(ancestorIds(child) == Set(p1))
+
+    val result = createMulti(lineage("child"), ids(Seq(p1, p2)))
+
+    assert(result.status == 13)
+    assert(result.id.contains(child))
+    assert(ancestorIds(child) == Set(p1, p2))
+  }
+
+  // ---- cycles and missing parents ----------------------------------------------------------------------------
+
+  test("A partitioning cannot be its own parent: 32 naming the id, nothing written") {
+    val child = seed(lineage("child"), author = "Carol")
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("child"), ids(Seq(child)))
+
+    assert(result.status == 32)
+    assert(result.statusText == s"$cycleText: $child")
+    assert(result.id.isEmpty)
+    assert(result.createdBy.isEmpty)
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(child).isEmpty)
+  }
+
+  test("A direct descendant as a parent: 32, nothing written (partitionings, flows, measures, additional data)") {
+    val c = seed(lineage("C"))
+    val d = seed(lineage("D"), Some(c))
+    addMeasure(d, "m_d", """{"col"}""", "Dave")
+    addAd(d, "k_d", "x")
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("C"), ids(Seq(d)), copyMd = true)
+
+    assert(result.status == 32)
+    assert(result.statusText == s"$cycleText: $d")
+    assert(result.id.isEmpty)
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(c).isEmpty)
+    assert(ancestorIds(d) == Set(c))
+  }
+
+  test("An indirect descendant as a parent (A -> B -> C, A under C): 32, nothing written") {
+    val a = seed(lineage("A"))
+    val b = seed(lineage("B"), Some(a))
+    val c = seed(lineage("C"), Some(b))
+    assert(ancestorIds(c) == Set(a, b))
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("A"), ids(Seq(c)))
+
+    assert(result.status == 32)
+    assert(result.statusText == s"$cycleText: $c")
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(a).isEmpty)
+  }
+
+  test("A valid parent together with a cycle-making one: 32 and nothing is written for the valid one") {
+    val ok = seed(lineage("ok"))
+    val c = seed(lineage("C"))
+    val d = seed(lineage("D"), Some(c))
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("C"), ids(Seq(ok, d)))
+
+    assert(result.status == 32)
+    assert(result.statusText == s"$cycleText: $d")
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(c).isEmpty)
+  }
+
+  test("Several offending parents are all named, comma separated in ascending order") {
+    val c = seed(lineage("C"))
+    val d = seed(lineage("D"), Some(c))
+    val e = seed(lineage("E"), Some(c))
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("C"), ids(Seq(e, d)))
+
+    assert(result.status == 32)
+    assert(result.statusText == s"$cycleText: ${Seq(d, e).sorted.mkString(",")}")
+    assert(fourTableCounts() == before)
+  }
+
+  test("Unknown parent of a new child: 41 and the child is NOT created") {
+    val p1 = seed(lineage("p1"))
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("child"), ids(Seq(p1, missingParentId)))
+
+    assert(result.status == 41)
+    assert(result.statusText == "Parent partitioning not found")
+    assert(result.id.isEmpty)
+    assert(result.createdBy.isEmpty)
+    assert(table("runs.partitionings").count(add("partitioning", lineage("child"))) == 0)
+    assert(fourTableCounts() == before)
+  }
+
+  test("Unknown parent of an existing child: 41 and nothing is linked") {
+    val p2 = seed(lineage("p2"))
+    val child = seed(lineage("child"))
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("child"), ids(Seq(p2, missingParentId)))
+
+    assert(result.status == 41)
+    assert(result.id.isEmpty)
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(child).isEmpty)
+  }
+
+  // ---- measure definitions (POLICY-03) -----------------------------------------------------------------------
+
+  test("Measure copy flag false: nothing is copied to a new child") {
+    val p1 = seed(lineage("p1"))
     addMeasure(p1, "m1", """{"col1"}""", "Alice")
-    addMeasure(p2, "m2", """{"col2"}""", "Bob")
 
-    val first = createMulti(childPartitioning, ids(Seq(p1)))
-    assert(first.status == 12)
-    val child = first.id.get
-    assert(measureCount(child, "m1") == 1)
-    assert(measureCount(child, "m2") == 0)
-
-    val second = createMulti(childPartitioning, ids(Seq(p1, p2)))
-
-    assert(second.status == 13)
-    assert(second.statusText == "Partitioning parents registered")
-    assert(second.id.contains(child))
-    assert(flowCount(child) == 3)
-    assert(measureCount(child, "m2") == 1)
-    assert(measureCount(child, "m1") == 1)
-    assert(measureCount(child) == 2)
-  }
-
-  test("Duplicate and NULL parent ids are ignored") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-
-    val result = createMulti(childPartitioning, ids(Seq(p1, p1, null)))
+    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = false)
 
     assert(result.status == 12)
-    assert(flowCount(result.id.get) == 2)
+    assert(measureCount(result.id.get) == 0)
   }
 
-  test("Two parents sharing a measure and an additional data key give the child a single copy") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val p2 = createParent(parent2Partitioning, "Bob")
+  test("Measure copy flag NULL is treated as false") {
+    val p1 = seed(lineage("p1"))
     addMeasure(p1, "m1", """{"col1"}""", "Alice")
-    addAd(p1, "k_same", Some("v"))
-    addAd(p1, "k_conf", Some("a"))
-    addMeasure(p2, "m1", """{"col1"}""", "Bob")
-    addMeasure(p2, "m2", """{"col2"}""", "Bob")
-    addAd(p2, "k_same", Some("v"))
-    addAd(p2, "k_conf", Some("b"))
 
-    val result = createMulti(childPartitioning, ids(Seq(p1, p2)))
+    val result = createMultiNullFlag(lineage("child"), ids(Seq(p1)))
 
     assert(result.status == 12)
-    assert(
-      result.statusText == "Partitioning created with parent partitioning; 1 conflicting additional data key(s) skipped"
-    )
-    assert(result.skippedKeys == Seq("k_conf"))
+    assert(measureCount(result.id.get) == 0)
+  }
+
+  test("Measure copy flag true with one parent copies its measure definitions") {
+    val p1 = seed(lineage("p1"))
+    addMeasure(p1, "m1", """{"col1"}""", "Alice")
+    addMeasure(p1, "m2", """{"col2"}""", "Alice")
+
+    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true)
+
+    assert(result.status == 12)
     val child = result.id.get
     assert(measureCount(child) == 2)
     assert(measureCount(child, "m1") == 1)
-    assert(adCount(child, "k_same") == 1)
-    assert(adValue(child, "k_same").contains(Some("v")))
-    assert(adCount(child, "k_conf") == 0)
-    // copied additional data rows are stamped with the user of the call
-    table("runs.additional_data").where(adOf(child, "k_same")) { r =>
-      assert(r.hasNext)
-      assert(r.next().getString("created_by").contains("Fantômas"))
-    }
+    assert(measureCount(child, "m2") == 1)
   }
 
-  test("A key skipped for a conflict is not filled in later by another parent (CR-01)") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val p2 = createParent(parent2Partitioning, "Bob")
-    val p3 = createParent(parent3Partitioning, "Dave")
-    addAd(p1, "k", Some("a"))
-    addAd(p3, "k", Some("b"))
-    addAd(p2, "k", Some("a"))
+  test("Measure copy flag true with N parents copies the distinct union by (name, columns); column order counts") {
+    val p1 = seed(lineage("p1"))
+    val p2 = seed(lineage("p2"))
+    addMeasure(p1, "m_shared", """{"x"}""", "Alice")
+    addMeasure(p1, "m_ab", """{"a","b"}""", "Alice")
+    addMeasure(p2, "m_shared", """{"x"}""", "Bob")
+    addMeasure(p2, "m_ab", """{"b","a"}""", "Bob")
+    addMeasure(p2, "m_only2", """{"y"}""", "Bob")
 
-    val first = createMulti(childPartitioning, ids(Seq(p1, p3)))
-    assert(first.status == 12)
-    assert(first.skippedKeys == Seq("k"))
-    val child = first.id.get
-    assert(adCount(child, "k") == 0)
+    val result = createMulti(lineage("child"), ids(Seq(p1, p2)), copyMd = true)
 
-    val second = createMulti(childPartitioning, ids(Seq(p2)))
-
-    assert(second.status == 13)
-    assert(second.statusText == "Partitioning parents registered; 1 conflicting additional data key(s) skipped")
-    assert(second.skippedKeys == Seq("k"))
-    assert(adCount(child, "k") == 0)
-    assert(ancestorIds(child) == Set(p1, p2, p3))
+    assert(result.status == 12)
+    val child = result.id.get
+    assert(measureCount(child) == 4)
+    assert(measureCount(child, "m_shared") == 1)
+    assert(measureCount(child, "m_ab") == 2)
+    assert(measureCount(child, "m_only2") == 1)
   }
 
-  test(
-    "Shipped runs.create_partitioning is untouched: 2-arg, named and positional untyped NULL calls resolve (WR-02)"
-  ) {
-    val p1 = createParent(parent1Partitioning, "Alice")
+  test("Copied measure definitions are authored by the caller and stamped with now(), not the parent's") {
+    val p1 = seed(lineage("p1"))
+    addMeasure(p1, "m1", """{"col1"}""", "Alice", Some(oldDate))
+
+    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true, user = "Caller")
+
+    val child = result.id.get
+    assert(measureCount(child, "m1") == 1)
+    val condition = s"fk_partitioning = $child AND measure_name = 'm1'"
+    assert(queryBoolean(s"SELECT created_by = 'Caller' FROM runs.measure_definitions WHERE $condition"))
+    assert(queryBoolean(s"SELECT created_at = now() FROM runs.measure_definitions WHERE $condition"))
+    assert(
+      queryBoolean(
+        s"SELECT created_at <> '2020-01-01T00:00:00Z'::timestamptz FROM runs.measure_definitions WHERE $condition"
+      )
+    )
+    assert(queryBoolean(s"SELECT created_by = 'Alice' FROM runs.measure_definitions WHERE fk_partitioning = $p1"))
+  }
+
+  test("Measure copy flag true on an EXISTING child copies nothing, also when the link is new") {
+    val p1 = seed(lineage("p1"))
+    addMeasure(p1, "m_parent", """{"col1"}""", "Alice")
+    val child = seed(lineage("child"))
+    addMeasure(child, "m_own", """{"own"}""", "Carol")
+
+    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true)
+
+    assert(result.status == 13)
+    assert(measureCount(child) == 1)
+    assert(measureCount(child, "m_own") == 1)
+    assert(measureCount(child, "m_parent") == 0)
+  }
+
+  test("Measure copy flag true on an existing child that is already linked copies nothing (14)") {
+    val p1 = seed(lineage("p1"))
+    val child = seed(lineage("child"), Some(p1))
+    addMeasure(p1, "m_later", """{"col1"}""", "Alice")
+
+    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true)
+
+    assert(result.status == 14)
+    assert(measureCount(child, "m_later") == 0)
+  }
+
+  // ---- additional data (POLICY-02) ---------------------------------------------------------------------------
+
+  test("Additional data is never copied to a new child, even with the measure copy flag on") {
+    val p1 = seed(lineage("p1"))
+    val p2 = seed(lineage("p2"))
+    addAd(p1, "k1", "v1")
+    addAd(p2, "k2", "v2")
+    addMeasure(p1, "m1", """{"col1"}""", "Alice")
+
+    val result = createMulti(lineage("child"), ids(Seq(p1, p2)), copyMd = true)
+
+    assert(result.status == 12)
+    val child = result.id.get
+    assert(adCount(child) == 0)
+    assert(measureCount(child, "m1") == 1)
+  }
+
+  test("Additional data is never copied to an existing child, linked now or already") {
+    val p1 = seed(lineage("p1"))
+    val p2 = seed(lineage("p2"))
+    addAd(p1, "k1", "v1")
+    addAd(p2, "k2", "v2")
+    val child = seed(lineage("child"), Some(p1))
+
+    val linked = createMulti(lineage("child"), ids(Seq(p1, p2)), copyMd = true)
+    assert(linked.status == 13)
+    assert(adCount(child) == 0)
+
+    val again = createMulti(lineage("child"), ids(Seq(p1, p2)), copyMd = true)
+    assert(again.status == 14)
+    assert(adCount(child) == 0)
+  }
+
+  // ---- lineage shapes ----------------------------------------------------------------------------------------
+
+  test("Diamond via create: D under (B, E) where B is under A gets all of them as ancestors") {
+    val a = seed(lineage("A"))
+    val b = seed(lineage("B"), Some(a))
+    val e = seed(lineage("E"))
+
+    val result = createMulti(lineage("D"), ids(Seq(b, e)))
+
+    assert(result.status == 12)
+    val d = result.id.get
+    assert(ancestorIds(d) == Set(a, b, e))
+    assert(flowCount(d) == 4)
+  }
+
+  test("Descendants of an existing child become reachable from a newly linked parent (WR-05)") {
+    val n = seed(lineage("N"))
+    val c = seed(lineage("C"))
+    val d = seed(lineage("D"), Some(c))
+    val e = seed(lineage("E"), Some(d))
+    assert(ancestorIds(e) == Set(c, d))
+
+    val result = createMulti(lineage("C"), ids(Seq(n)))
+
+    assert(result.status == 13)
+    assert(ancestorIds(c) == Set(n))
+    assert(ancestorIds(d) == Set(c, n))
+    assert(ancestorIds(e) == Set(c, d, n))
+
+    val flowsBefore = table("flows.partitioning_to_flow").count()
+    val again = createMulti(lineage("C"), ids(Seq(n)))
+    assert(again.status == 14)
+    assert(table("flows.partitioning_to_flow").count() == flowsBefore)
+  }
+
+  // ---- privileges, removed objects, locking ------------------------------------------------------------------
+
+  test("Privileges: execute for the owner and atum_user only; search_path is pinned") {
+    assert(hasExecute("atum_owner"))
+    assert(hasExecute("atum_user"))
+    assert(!hasExecute("atum_reader"))
+    assert(!hasExecute("public"))
+    assert(
+      queryBoolean(
+        s"SELECT coalesce(proconfig::text, '') LIKE '%search_path=pg_catalog, public, pg_temp%' " +
+          s"FROM pg_proc WHERE oid = '$signature'::regprocedure"
+      )
+    )
+  }
+
+  test("The old 3-argument function and the additional data copy helper do not exist") {
+    assert(queryBoolean("SELECT to_regprocedure('runs.create_partitioning_with_parents(jsonb,text,bigint[])') IS NULL"))
+    assert(
+      queryBoolean(
+        "SELECT to_regprocedure('runs._copy_parents_data_to_partitioning(bigint,bigint[],bigint[],text)') IS NULL"
+      )
+    )
+    assert(queryBoolean(s"SELECT to_regprocedure('$signature') IS NOT NULL"))
+  }
+
+  test("Shipped runs.create_partitioning is untouched: 2-arg, named and positional untyped NULL calls resolve") {
+    val p1 = seed(lineage("p1"))
 
     val child = function(fncCreatePartitioning)
-      .setParam("i_partitioning", childPartitioning)
+      .setParam("i_partitioning", lineage("child"))
       .setParam("i_by_user", "Fantômas")
       .execute { qr =>
         assert(qr.hasNext)
         val row = qr.next()
         assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("Partitioning created"))
         row.getLong("id_partitioning").get
       }
 
     function(fncCreatePartitioning)
-      .setParam("i_partitioning", childPartitioning)
+      .setParam("i_partitioning", lineage("child"))
       .setParam("i_by_user", "Fantômas")
       .setParam("i_parent_partitioning_id", p1)
       .execute { qr =>
         assert(qr.hasNext)
         val row = qr.next()
         assert(row.getInt("status").contains(31))
-        assert(row.getString("status_text").contains("Partitioning already exists"))
         assert(row.getLong("id_partitioning").contains(child))
       }
 
     assert(flowCount(child) == 1)
 
-    // positional call with an untyped NULL literal: it was ambiguous with an overload of the shipped function
+    // positional call with an untyped NULL literal must not be ambiguous
     val statement = dbConnection.connection.createStatement()
     try {
       val rs = statement.executeQuery(
@@ -489,13 +695,11 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
       )
       assert(rs.next())
       assert(rs.getInt("status") == 11)
-      assert(rs.getString("status_text") == "Partitioning created")
       assert(!rs.next())
     } finally {
       statement.close()
     }
 
-    // the shipped function is the only one of that name
     assert(
       queryBoolean(
         "SELECT count(*) = 1 FROM pg_proc WHERE proname = 'create_partitioning' AND pronamespace = 'runs'::regnamespace"
@@ -503,196 +707,15 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     )
   }
 
-  test("Create copies every parent's data even when the lower-id parent is already a child of the higher-id parent") {
-    val (p1, p2) = reversedTopology()
+  test("Slow path (new child with a parent) takes exactly one advisory lock") {
+    // runs.create_partitioning_with_parents is the only place of this suite that goes through the slow path here
+    val p1 = seed(lineage("p1"))
+    assert(advisoryLocksHeld() == 0)
 
-    val result = createMulti(childPartitioning, ids(Seq(p1, p2)))
+    val result = createMulti(lineage("child"), ids(Seq(p1)))
 
     assert(result.status == 12)
-    val child = result.id.get
-    assert(measureCount(child, "m_p1") == 1)
-    assert(measureCount(child, "m_p2") == 1)
-    assert(adValue(child, "k_p2").contains(Some("z")))
-    assert(flowCount(child) == 3)
-  }
-
-  test("Existing child: parents not yet ancestors before the call are all registered and copied") {
-    val (p1, p2) = reversedTopology()
-    val created = createMulti(childPartitioning, ids(Seq.empty))
-    assert(created.status == 11)
-    val child = created.id.get
-
-    val result = createMulti(childPartitioning, ids(Seq(p1, p2)))
-
-    assert(result.status == 13)
-    assert(result.statusText == "Partitioning parents registered")
-    assert(result.id.contains(child))
-    assert(measureCount(child, "m_p1") == 1)
-    assert(measureCount(child, "m_p2") == 1)
-    assert(adValue(child, "k_p2").contains(Some("z")))
-
-    val flowsBefore = flowCount(child)
-    val measuresBefore = measureCount(child)
-    val adBefore = adCount(child)
-
-    val again = createMulti(childPartitioning, ids(Seq(p1, p2)))
-
-    assert(again.status == 14)
-    assert(again.statusText == "Partitioning already present")
-    assert(again.id.contains(child))
-    assert(flowCount(child) == flowsBefore)
-    assert(measureCount(child) == measuresBefore)
-    assert(adCount(child) == adBefore)
-  }
-
-  test("Existing child: a supplied parent that is already an ancestor still has its data copied (WR-01)") {
-    val (p1, p2) = reversedTopology()
-
-    val first = createMulti(childPartitioning, ids(Seq(p1)))
-    assert(first.status == 12)
-    val child = first.id.get
-    assert(ancestorIds(child) == Set(p1, p2))
-    assert(measureCount(child, "m_p2") == 0)
-
-    val second = createMulti(childPartitioning, ids(Seq(p2)))
-
-    assert(second.status == 13)
-    assert(second.id.contains(child))
-    assert(measureCount(child, "m_p2") == 1)
-    assert(adValue(child, "k_p2").contains(Some("z")))
-    assert(ancestorIds(child) == Set(p1, p2))
-
-    val third = createMulti(childPartitioning, ids(Seq(p2)))
-    assert(third.status == 14)
-    assert(measureCount(child, "m_p2") == 1)
-  }
-
-  test("The same parent set gives the same data in one call or in two calls (WR-01)") {
-    val (p1, p2) = reversedTopology()
-    val otherChild = lineagePartitioning("other-child")
-
-    val oneCall = createMulti(childPartitioning, ids(Seq(p1, p2)))
-    val child = oneCall.id.get
-
-    val firstOfTwo = createMulti(otherChild, ids(Seq(p1)))
-    assert(firstOfTwo.status == 12)
-    val secondOfTwo = createMulti(otherChild, ids(Seq(p1, p2)))
-    assert(secondOfTwo.status == 13)
-    val other = secondOfTwo.id.get
-
-    assert(measureCount(other) == measureCount(child))
-    assert(measureCount(other, "m_p1") == 1)
-    assert(measureCount(other, "m_p2") == 1)
-    assert(adCount(other) == adCount(child))
-    assert(adValue(other, "k_p2") == adValue(child, "k_p2"))
-    assert(ancestorIds(other) == ancestorIds(child))
-  }
-
-  test("Status 13 is returned when new flow links were written for an already registered parent (WR-06)") {
-    val g = createParent(parent3Partitioning, "Dave")
-    val p2 = createParent(parent2Partitioning, "Bob")
-    val first = createMulti(childPartitioning, ids(Seq(p2)))
-    assert(first.status == 12)
-    val child = first.id.get
-    assert(ancestorIds(child) == Set(p2))
-
-    // p2 gains a flow after the child was linked to it
-    reparent(p2, g)
-    assert(ancestorIds(child) == Set(p2))
-
-    val second = createMulti(childPartitioning, ids(Seq(p2)))
-
-    assert(second.status == 13)
-    assert(second.statusText == "Partitioning parents registered")
-    assert(ancestorIds(child) == Set(p2, g))
-
-    val third = createMulti(childPartitioning, ids(Seq(p2)))
-    assert(third.status == 14)
-  }
-
-  test("A partitioning cannot be linked as its own parent (CR-02)") {
-    val child = createParent(childPartitioning, "Carol")
-    val ptfBefore = table("flows.partitioning_to_flow").count()
-
-    val result = createMulti(childPartitioning, ids(Seq(child)))
-
-    assert(result.status == 43)
-    assert(result.statusText == cycleText)
-    assert(result.id.isEmpty)
-    assert(table("flows.partitioning_to_flow").count() == ptfBefore)
-    assert(ancestorIds(child).isEmpty)
-  }
-
-  test("A descendant cannot be linked as a parent of its ancestor and nothing is written (CR-02)") {
-    val c = createParent(lineagePartitioning("C"), "Carol")
-    val created = createMulti(lineagePartitioning("D"), ids(Seq(c)))
-    assert(created.status == 12)
-    val d = created.id.get
-    addMeasure(d, "m_d", """{"col"}""", "Dave")
-    addAd(d, "k_d", Some("x"))
-    val ptfBefore = table("flows.partitioning_to_flow").count()
-
-    val result = createMulti(lineagePartitioning("C"), ids(Seq(d)))
-
-    assert(result.status == 43)
-    assert(result.statusText == cycleText)
-    assert(result.id.isEmpty)
-    assert(table("flows.partitioning_to_flow").count() == ptfBefore)
-    assert(ancestorIds(c).isEmpty)
-    assert(ancestorIds(d) == Set(c))
-    assert(measureCount(c, "m_d") == 0)
-    assert(adCount(c, "k_d") == 0)
-  }
-
-  test("A transitive descendant among the parents rejects the whole call, valid parents included (CR-02)") {
-    val p1 = createParent(parent1Partitioning, "Alice")
-    val c = createParent(lineagePartitioning("C"), "Carol")
-    val d = createMulti(lineagePartitioning("D"), ids(Seq(c))).id.get
-    val e = createMulti(lineagePartitioning("E"), ids(Seq(d))).id.get
-    assert(ancestorIds(e) == Set(c, d))
-    val ptfBefore = table("flows.partitioning_to_flow").count()
-
-    val result = createMulti(lineagePartitioning("C"), ids(Seq(p1, e)))
-
-    assert(result.status == 43)
-    assert(result.statusText == cycleText)
-    assert(table("flows.partitioning_to_flow").count() == ptfBefore)
-    assert(ancestorIds(c).isEmpty)
-  }
-
-  test("Descendants of an existing child become reachable from a newly linked parent (WR-05)") {
-    val n = createParent(parent1Partitioning, "Alice")
-    val c = createParent(lineagePartitioning("C"), "Carol")
-    val d = createMulti(lineagePartitioning("D"), ids(Seq(c))).id.get
-    val e = createMulti(lineagePartitioning("E"), ids(Seq(d))).id.get
-    assert(ancestorIds(d) == Set(c))
-    assert(ancestorIds(e) == Set(c, d))
-
-    val result = createMulti(lineagePartitioning("C"), ids(Seq(n)))
-
-    assert(result.status == 13)
-    assert(ancestorIds(c) == Set(n))
-    assert(ancestorIds(d) == Set(c, n))
-    assert(ancestorIds(e) == Set(c, d, n))
-
-    val flowsBefore = table("flows.partitioning_to_flow").count()
-    val again = createMulti(lineagePartitioning("C"), ids(Seq(n)))
-    assert(again.status == 14)
-    assert(table("flows.partitioning_to_flow").count() == flowsBefore)
-  }
-
-  test("Privileges: execute is granted to the owner and atum_user only, and the search_path is pinned (WR-04, WR-08)") {
-    val signature = "runs.create_partitioning_with_parents(jsonb,text,bigint[])"
-
-    assert(hasExecute("atum_owner", signature))
-    assert(hasExecute("atum_user", signature))
-    assert(!hasExecute("atum_reader", signature))
-    assert(!hasExecute("public", signature))
-    assert(
-      queryBoolean(
-        s"SELECT coalesce(proconfig::text, '') LIKE '%search_path=pg_catalog,%' FROM pg_proc WHERE oid = '$signature'::regprocedure"
-      )
-    )
+    assert(advisoryLocksHeld() == 1)
   }
 
 }
