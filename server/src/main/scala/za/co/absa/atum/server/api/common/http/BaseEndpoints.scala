@@ -84,7 +84,12 @@ trait BaseEndpoints extends ServerUtils {
   }
 
   protected val apiV1: PublicEndpoint[Unit, ErrorResponse, Unit, Any] = {
-    baseEndpoint.in(Api / V1)
+    baseEndpoint
+      .in(Api / V1)
+      .deprecated()
+      .description(
+        s"Deprecated: API v1 is superseded by API v2 (/$Api/$V2/...) and is planned for removal in a later release."
+      )
   }
 
   protected val apiV2: PublicEndpoint[Unit, ErrorResponse, Unit, Any] = {

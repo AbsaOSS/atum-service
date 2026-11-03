@@ -23,6 +23,7 @@ import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.v2.repository.PartitioningRepository
+import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio._
 import zio.test.Assertion.failsWithA
@@ -33,9 +34,12 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   private val partitioningRepositoryMock = mock(classOf[PartitioningRepository])
 
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO1))
-    .thenReturn(ZIO.succeed(PartitioningWithIdDTO(1L, Seq.empty, "author")))
+    .thenReturn(ZIO.succeed(Created(PartitioningWithIdDTO(1L, Seq.empty, "author"))))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOExistingAuthor))
+    .thenReturn(ZIO.succeed(Existing(PartitioningWithIdDTO(1L, Seq.empty, "stored-author"))))
+  // a conflict is a cycle only ("already exists" is a success, see CreationResult.Existing)
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO2))
-    .thenReturn(ZIO.fail(ConflictDatabaseError("Partitioning already exists")))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("Partitioning parent link would create a cycle")))
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
@@ -122,33 +126,44 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
 
     suite("PartitioningServiceSuite")(
       suite("CreatePartitioningSuite")(
-        test("Returns expected Right with PartitioningWithIdDTO") {
+        test("Passes Created(PartitioningWithIdDTO) through") {
           for {
             result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO1)
-          } yield assertTrue(result == PartitioningWithIdDTO(1L, Seq.empty, "author"))
+          } yield assertTrue(result == Created(PartitioningWithIdDTO(1L, Seq.empty, "author")))
+        },
+        test("Passes Existing(PartitioningWithIdDTO) through (not turned into Created)") {
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTOExistingAuthor)
+          } yield assertTrue(result == Existing(PartitioningWithIdDTO(1L, Seq.empty, "stored-author")))
         },
         test("Returns expected ConflictServiceError") {
           for {
             result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO2).exit
           } yield assertTrue(
             result == Exit.fail(
-              ConflictServiceError("Failed to perform 'createPartitioning': Partitioning already exists")
+              ConflictServiceError(
+                "Failed to perform 'createPartitioning': Partitioning parent link would create a cycle"
+              )
             )
           )
         },
         test("Returns expected GeneralServiceError") {
-          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTO3).exit)(
-            failsWithA[GeneralServiceError]
-          )
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO3).exit
+          } yield assertTrue(result == Exit.fail(GeneralServiceError("Failed to perform 'createPartitioning': boom!")))
         },
         test("Multi-parent NotFoundDatabaseError maps to NotFoundServiceError") {
-          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit)(
-            failsWithA[NotFoundServiceError]
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit
+          } yield assertTrue(
+            result == Exit.fail(NotFoundServiceError("Failed to perform 'createPartitioning': parent not found"))
           )
         },
         test("Multi-parent cycle ConflictDatabaseError maps to ConflictServiceError") {
-          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit)(
-            failsWithA[ConflictServiceError]
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit
+          } yield assertTrue(
+            result == Exit.fail(ConflictServiceError("Failed to perform 'createPartitioning': cycle"))
           )
         }
       ),

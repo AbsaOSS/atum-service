@@ -19,16 +19,27 @@ package za.co.absa.atum.model.dto
 import io.circe._
 import io.circe.syntax._
 
+/**
+ *  Request body of the v2 `POST /partitionings` endpoint.
+ *
+ *  @param partitioning           the partitioning to create (or to obtain, if it already exists)
+ *  @param parentPartitioningIds  ids of the parent partitionings to link (0..N)
+ *  @param author                 author stored if the partitioning is newly created
+ *  @param copyMeasureDefinitions opt-in: copy the parents' measure definitions to a NEWLY created partitioning.
+ *                                Absent or `null` in JSON means `false`.
+ */
 case class PartitioningSubmitV2DTO(
   partitioning: PartitioningDTO,
   parentPartitioningIds: Seq[Long],
-  author: String
+  author: String,
+  copyMeasureDefinitions: Boolean = false
 )
 
 object PartitioningSubmitV2DTO {
 
   /**
-   *  Single-parent compatibility factory.
+   *  Single-parent compatibility factory. Has NO default arguments on purpose: Scala allows only one overloaded
+   *  `apply` to define defaults, and that one is the synthetic case-class `apply` (flag defaults to `false`).
    */
   def apply(
     partitioning: PartitioningDTO,
@@ -40,13 +51,15 @@ object PartitioningSubmitV2DTO {
   implicit val decodePartitioningSubmitV2DTO: Decoder[PartitioningSubmitV2DTO] = Decoder.instance { c =>
     for {
       partitioning <- c.downField("partitioning").as[PartitioningDTO]
-      oldParent <- c.downField("parentPartitioningId").as[Option[Long]]
-      newParents <- c.downField("parentPartitioningIds").as[Option[Seq[Long]]]
+      legacyParent <- c.downField("parentPartitioningId").as[Option[Long]]
+      parents <- c.downField("parentPartitioningIds").as[Option[Seq[Long]]]
       author <- c.downField("author").as[String]
+      copyMeasureDefinitions <- c.downField("copyMeasureDefinitions").as[Option[Boolean]]
     } yield new PartitioningSubmitV2DTO(
       partitioning,
-      (oldParent.toSeq ++ newParents.getOrElse(Seq.empty)).distinct,
-      author
+      (legacyParent.toSeq ++ parents.getOrElse(Seq.empty)).distinct,
+      author,
+      copyMeasureDefinitions.getOrElse(false)
     )
   }
 
@@ -54,7 +67,8 @@ object PartitioningSubmitV2DTO {
     Json.obj(
       "partitioning" -> dto.partitioning.asJson,
       "parentPartitioningIds" -> dto.parentPartitioningIds.asJson,
-      "author" -> dto.author.asJson
+      "author" -> dto.author.asJson,
+      "copyMeasureDefinitions" -> dto.copyMeasureDefinitions.asJson
     )
   }
 }

@@ -16,13 +16,15 @@
 
 package za.co.absa.atum.server.api.v2.controller
 
-import org.mockito.Mockito.{mock, never, verify, when}
+import org.mockito.Mockito.{mock, never, times, verify, when}
+import sttp.model.StatusCode
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.envelopes._
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonSerializationSyntax
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.v2.service.PartitioningService
+import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio._
 import zio.test.Assertion.failsWithA
@@ -32,11 +34,11 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   private val partitioningServiceMock = mock(classOf[PartitioningService])
 
   when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO1))
-    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+    .thenReturn(ZIO.succeed(Created(partitioningWithIdDTO1)))
   when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO2))
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
   when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTO3))
-    .thenReturn(ZIO.fail(ConflictServiceError("Partitioning already present")))
+    .thenReturn(ZIO.fail(ConflictServiceError("Partitioning parent link would create a cycle")))
 
   private val dto100 = partitioningSubmitV2DTO1.copy(parentPartitioningIds = 1L to 100L, author = "p100")
   private val dto101 = partitioningSubmitV2DTO1.copy(parentPartitioningIds = 1L to 101L, author = "p101")
@@ -44,11 +46,16 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     partitioningSubmitV2DTO1.copy(parentPartitioningIds = (1L to 50L) ++ (1L to 50L) ++ (1L to 50L), author = "pdup")
 
   when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTOMultiParent))
-    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+    .thenReturn(ZIO.succeed(Created(partitioningWithIdDTO1)))
+  private val dupDeduped = partitioningSubmitV2DTOMultiParentDup.copy(parentPartitioningIds = Seq(1L, 2L))
+  when(partitioningServiceMock.createPartitioning(dupDeduped))
+    .thenReturn(ZIO.succeed(Created(partitioningWithIdDTO1)))
+  when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTOExistingAuthor))
+    .thenReturn(ZIO.succeed(Existing(partitioningWithIdDTO2.copy(id = 77L, author = "stored-author"))))
   when(partitioningServiceMock.createPartitioning(dto100))
-    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+    .thenReturn(ZIO.succeed(Created(partitioningWithIdDTO1)))
   when(partitioningServiceMock.createPartitioning(dtoDupHeavy.copy(parentPartitioningIds = 1L to 50L)))
-    .thenReturn(ZIO.succeed(partitioningWithIdDTO1))
+    .thenReturn(ZIO.succeed(Created(partitioningWithIdDTO1)))
   when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound))
     .thenReturn(ZIO.fail(NotFoundServiceError("parent not found")))
   when(partitioningServiceMock.createPartitioning(partitioningSubmitV2DTOMultiParentCycle))
@@ -132,14 +139,25 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     suite("PartitioningControllerSuite")(
       suite("CreatePartitioningSuite")(
-        test("Returns expected PartitioningWithIdDTO") {
+        test("Created -> 201 with Location and the single-success body") {
           for {
             result <- PartitioningController.postPartitioning(partitioningSubmitV2DTO1)
             expectedData = SingleSuccessResponse(partitioningWithIdDTO1, uuid1)
-            actualData = result._1.copy(requestId = uuid1)
+            actualData = result._2.copy(requestId = uuid1)
             expectedUri = s"/api/v2/partitionings/${partitioningWithIdDTO1.id}"
-            actualUri = result._2
-          } yield assertTrue(actualData == expectedData && actualUri == expectedUri)
+            actualUri = result._3
+          } yield assertTrue(result._1 == StatusCode.Created && actualData == expectedData && actualUri == expectedUri)
+        },
+        test("Existing -> 200 with Location and the same body shape (stored author)") {
+          for {
+            result <- PartitioningController.postPartitioning(partitioningSubmitV2DTOExistingAuthor)
+            expectedBody = partitioningWithIdDTO2.copy(id = 77L, author = "stored-author")
+          } yield assertTrue(
+            result._1 == StatusCode.Ok,
+            result._2.copy(requestId = uuid1) == SingleSuccessResponse(expectedBody, uuid1),
+            result._2.data.author == "stored-author",
+            result._3 == "/api/v2/partitionings/77"
+          )
         },
         test("Returns expected InternalServerErrorResponse") {
           assertZIO(PartitioningController.postPartitioning(partitioningSubmitV2DTO2).exit)(
@@ -155,12 +173,13 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningController.postPartitioning(partitioningSubmitV2DTOMultiParent)
           } yield assertTrue(
-            result._1.copy(requestId = uuid1) == SingleSuccessResponse(partitioningWithIdDTO1, uuid1) &&
-              result._2 == s"/api/v2/partitionings/${partitioningWithIdDTO1.id}"
+            result._1 == StatusCode.Created &&
+              result._2.copy(requestId = uuid1) == SingleSuccessResponse(partitioningWithIdDTO1, uuid1) &&
+              result._3 == s"/api/v2/partitionings/${partitioningWithIdDTO1.id}"
           )
         },
         test("100 distinct parents is accepted") {
-          assertZIO(PartitioningController.postPartitioning(dto100).map(_._1.data))(
+          assertZIO(PartitioningController.postPartitioning(dto100).map(_._2.data))(
             Assertion.equalTo(partitioningWithIdDTO1)
           )
         },
@@ -171,8 +190,23 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
             assertTrue({ verify(partitioningServiceMock, never()).createPartitioning(dto101); true })
         },
         test("150 ids deduplicating to 50 are accepted and the service gets the deduped DTO") {
-          assertZIO(PartitioningController.postPartitioning(dtoDupHeavy).map(_._1.data))(
-            Assertion.equalTo(partitioningWithIdDTO1)
+          val deduped = dtoDupHeavy.copy(parentPartitioningIds = 1L to 50L)
+          for {
+            data <- PartitioningController.postPartitioning(dtoDupHeavy).map(_._2.data)
+          } yield assertTrue(
+            data == partitioningWithIdDTO1,
+            { verify(partitioningServiceMock, times(1)).createPartitioning(deduped); true },
+            { verify(partitioningServiceMock, never()).createPartitioning(dtoDupHeavy); true }
+          )
+        },
+        test("duplicate ids are removed before the service call, order preserved") {
+          val deduped = dupDeduped
+          for {
+            result <- PartitioningController.postPartitioning(partitioningSubmitV2DTOMultiParentDup)
+          } yield assertTrue(
+            result._1 == StatusCode.Created,
+            { verify(partitioningServiceMock, times(1)).createPartitioning(deduped); true },
+            { verify(partitioningServiceMock, never()).createPartitioning(partitioningSubmitV2DTOMultiParentDup); true }
           )
         },
         test("Multi-parent NotFoundServiceError maps to NotFoundErrorResponse") {

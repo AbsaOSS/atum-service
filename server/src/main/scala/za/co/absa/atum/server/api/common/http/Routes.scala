@@ -22,6 +22,7 @@ import sttp.tapir.server.http4s.Http4sServerInterpreter
 import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
+import sttp.tapir.AnyEndpoint
 import sttp.tapir.ztapir._
 import za.co.absa.atum.server.config.{HikariMonitoringConfig, HttpMonitoringConfig, JvmMonitoringConfig}
 import zio._
@@ -36,39 +37,26 @@ object Routes extends ServerOptions with ServerUtils {
     val metricsInterceptorOption: Option[MetricsRequestInterceptor[HttpEnv.F]] = {
       if (httpMonitoringConfig.enabled) Some(HttpMetrics.prometheusMetrics.metricsInterceptor()) else None
     }
-    val endpoints: List[ZServerEndpoint[HttpEnv.Env, Any]] = {
-      api.v1.http.Endpoints.serverEndpoints ++
-        api.v2.http.Endpoints.serverEndpoints ++
-        api.common.http.Endpoints.serverEndpoints
-    }
-
-    ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption)).from(endpoints).toRoutes
+    ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(metricsInterceptorOption))
+      .from(servedEndpoints)
+      .toRoutes
   }
 
+  /** All endpoints served by the API (v1 + v2 + common), excluding the metrics endpoints. */
+  private val servedEndpoints: List[ZServerEndpoint[HttpEnv.Env, Any]] =
+    api.v1.http.Endpoints.serverEndpoints ++
+      api.v2.http.Endpoints.serverEndpoints ++
+      api.common.http.Endpoints.serverEndpoints
+
+  /**
+   *  All endpoints documented by the Swagger UI / OpenAPI (also used by tests). Derived from the served endpoints,
+   *  so the documentation cannot drift from what is actually served.
+   */
+  val swaggerEndpoints: List[AnyEndpoint] = servedEndpoints.map(_.endpoint)
+
   private def createSwaggerRoutes: HttpRoutes[HttpEnv.F] = {
-    val endpoints = List(
-      api.v1.http.Endpoints.createCheckpointEndpoint,
-      api.v1.http.Endpoints.createPartitioningEndpoint,
-      api.v2.http.Endpoints.postCheckpointEndpoint,
-      api.v2.http.Endpoints.postPartitioningEndpoint,
-      api.v2.http.Endpoints.getPartitioningAdditionalDataEndpoint,
-      api.v2.http.Endpoints.patchPartitioningAdditionalDataEndpoint,
-      api.v2.http.Endpoints.patchPartitioningParentEndpoint,
-      api.v2.http.Endpoints.getPartitioningCheckpointsEndpoint,
-      api.v2.http.Endpoints.getPartitioningCheckpointEndpoint,
-      api.v2.http.Endpoints.getPartitioningEndpoint,
-      api.v2.http.Endpoints.getPartitioningMeasuresEndpoint,
-      api.v2.http.Endpoints.getPartitioningMainFlowEndpoint,
-      api.v2.http.Endpoints.getFlowPartitioningsEndpoint,
-      api.v2.http.Endpoints.getFlowCheckpointsEndpoint,
-      api.v2.http.Endpoints.getPartitioningAncestorsEndpoint,
-      api.common.http.Endpoints.healthEndpoint,
-      api.common.http.Endpoints.readinessEndpoint,
-      api.common.http.Endpoints.livenessEndpoint,
-      api.common.http.Endpoints.buildInfoEndpoint
-    )
     ZHttp4sServerInterpreter[HttpEnv.Env](http4sServerOptions(None))
-      .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](endpoints, "Atum API", "1.0"))
+      .from(SwaggerInterpreter().fromEndpoints[HttpEnv.F](swaggerEndpoints, "Atum API", "1.0"))
       .toRoutes
   }
 

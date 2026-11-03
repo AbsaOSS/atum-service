@@ -446,7 +446,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     )
 
     val expectedPartitioningDTOJson =
-      """{"partitioning":[{"key":"key","value":"val"}],"parentPartitionings":[],"authorIfNew":"authorTest"}"""
+      """{"partitioning":[{"key":"key","value":"val"}],"parentPartitioning":null,"authorIfNew":"authorTest"}"""
     val actualPartitioningDTOJson = partitioningDTO.asJsonString
 
     assert(actualPartitioningDTOJson == expectedPartitioningDTOJson)
@@ -481,7 +481,7 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
       """
         |{
         |"partitioning":[{"key":"key","value":"val"}],
-        |"parentPartitionings":[[{"key":"parentKey","value":"parentVal"}]],
+        |"parentPartitioning":[{"key":"parentKey","value":"parentVal"}],
         |"authorIfNew":"authorTest"
         |}
         |""".linearize
@@ -490,49 +490,20 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     assert(actualPartitioningDTOJson == expectedPartitioningDTOJson)
   }
 
-  "fromJson" should "decode old-format parentPartitioning into a one-element parentPartitionings" in {
-    val json = """{"partitioning":[{"key":"key","value":"val"}],"parentPartitioning":[{"key":"p","value":"v"}],"authorIfNew":"a"}"""
-    val actual = json.as[PartitioningSubmitDTO]
-    assert(actual.parentPartitionings == Seq(Seq(PartitionDTO("p", "v"))))
+  "fromJson" should "decode a literal v0.10.0 v1 body with and without parentPartitioning" in {
+    val nullJson = """{"partitioning":[{"key":"k","value":"v"}],"parentPartitioning":null,"authorIfNew":"a"}"""
+    val parentJson =
+      """{"partitioning":[{"key":"k","value":"v"}],"parentPartitioning":[{"key":"p","value":"v"}],"authorIfNew":"a"}"""
+    val missingJson = """{"partitioning":[{"key":"k","value":"v"}],"authorIfNew":"a"}"""
+    assert(nullJson.as[PartitioningSubmitDTO].parentPartitioning.isEmpty)
+    assert(parentJson.as[PartitioningSubmitDTO].parentPartitioning == Some(Seq(PartitionDTO("p", "v"))))
+    assert(missingJson.as[PartitioningSubmitDTO].parentPartitioning.isEmpty)
   }
 
-  "fromJson" should "decode null or missing parent fields into empty parentPartitionings" in {
-    val nullJson = """{"partitioning":[{"key":"key","value":"val"}],"parentPartitioning":null,"authorIfNew":"a"}"""
-    val missingJson = """{"partitioning":[{"key":"key","value":"val"}],"authorIfNew":"a"}"""
-    assert(nullJson.as[PartitioningSubmitDTO].parentPartitionings.isEmpty)
-    assert(missingJson.as[PartitioningSubmitDTO].parentPartitionings.isEmpty)
-  }
-
-  "fromJson" should "merge both parent fields, old first, de-duplicated" in {
+  "fromJson" should "ignore an unknown parentPartitionings key on the v1 DTO" in {
     val json =
-      """{"partitioning":[{"key":"key","value":"val"}],
-        |"parentPartitioning":[{"key":"p1","value":"v1"}],
-        |"parentPartitionings":[[{"key":"p2","value":"v2"}],[{"key":"p1","value":"v1"}]],
-        |"authorIfNew":"a"}""".stripMargin
-    val actual = json.as[PartitioningSubmitDTO]
-    assert(actual.parentPartitionings == Seq(Seq(PartitionDTO("p1", "v1")), Seq(PartitionDTO("p2", "v2"))))
-  }
-
-  "asJsonString" should "never emit the legacy parentPartitioning field" in {
-    val withParent = PartitioningSubmitDTO(Seq(PartitionDTO("k", "v")), Some(Seq(PartitionDTO("p", "v"))), "a")
-    val noParent = PartitioningSubmitDTO(Seq(PartitionDTO("k", "v")), None, "a")
-    assert(!withParent.asJsonString.contains("\"parentPartitioning\":"))
-    assert(!noParent.asJsonString.contains("\"parentPartitioning\":"))
-  }
-
-  "asJsonString" should "round-trip a multi-parent PartitioningSubmitDTO preserving order" in {
-    val dto = PartitioningSubmitDTO(
-      Seq(PartitionDTO("k", "v")),
-      Seq(
-        Seq(PartitionDTO("a", "1"), PartitionDTO("b", "2")),
-        Seq(PartitionDTO("b", "2"), PartitionDTO("a", "1")),
-        Seq(PartitionDTO("c", "3"))
-      ),
-      "author"
-    )
-    val actual = dto.asJsonString.as[PartitioningSubmitDTO]
-    assert(actual == dto)
-    assert(actual.parentPartitionings == dto.parentPartitionings)
+      """{"partitioning":[{"key":"k","value":"v"}],"parentPartitionings":[[{"key":"x","value":"y"}]],"authorIfNew":"a"}"""
+    assert(json.as[PartitioningSubmitDTO].parentPartitioning.isEmpty)
   }
 
   "asJsonString" should "serialize Seq[PartitionDTO] into json string" in {
@@ -586,35 +557,91 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
     assert(actual == expected)
   }
 
-  "PartitioningSubmitV2DTO" should "encode multiple parents without the legacy key" in {
-    val p = Seq(PartitionDTO("k", "v"))
-    val json = PartitioningSubmitV2DTO(p, Seq(1L, 2L), "a").asJsonString
-    assert(json.contains("\"parentPartitioningIds\":[1,2]"))
-    assert(!json.contains("\"parentPartitioningId\":"))
-    assert(PartitioningSubmitV2DTO(p, None, "a").asJsonString.contains("\"parentPartitioningIds\":[]"))
+  private val v2Base = """"partitioning":[{"key":"k","value":"v"}],"author":"a""""
+
+  "PartitioningSubmitV2DTO" should "decode literal v0.10.0 bodies with copyMeasureDefinitions = false" in {
+    val bodies = Seq(
+      s"""{$v2Base,"parentPartitioningId":null}""" -> Seq.empty[Long],
+      s"""{$v2Base,"parentPartitioningId":5}""" -> Seq(5L),
+      s"""{$v2Base,"parentPartitioningId":"5"}""" -> Seq(5L),
+      s"""{$v2Base}""" -> Seq.empty[Long]
+    )
+    bodies.foreach { case (json, expectedIds) =>
+      val actual = json.as[PartitioningSubmitV2DTO]
+      assert(actual.parentPartitioningIds == expectedIds, json)
+      assert(!actual.copyMeasureDefinitions, json)
+    }
   }
 
-  "PartitioningSubmitV2DTO" should "decode old, null, missing and new parent fields" in {
-    val base = """"partitioning":[{"key":"k","value":"v"}],"author":"a""""
-    assert(s"""{$base,"parentPartitioningId":5}""".as[PartitioningSubmitV2DTO].parentPartitioningIds == Seq(5L))
-    assert(s"""{$base,"parentPartitioningId":null}""".as[PartitioningSubmitV2DTO].parentPartitioningIds.isEmpty)
-    assert(s"""{$base}""".as[PartitioningSubmitV2DTO].parentPartitioningIds.isEmpty)
-    assert(s"""{$base,"parentPartitioningIds":[3,4]}""".as[PartitioningSubmitV2DTO].parentPartitioningIds == Seq(3L, 4L))
+  "PartitioningSubmitV2DTO" should "decode the copyMeasureDefinitions flag: absent, null, true, false" in {
+    assert(!s"""{$v2Base}""".as[PartitioningSubmitV2DTO].copyMeasureDefinitions)
+    assert(!s"""{$v2Base,"copyMeasureDefinitions":null}""".as[PartitioningSubmitV2DTO].copyMeasureDefinitions)
+    assert(s"""{$v2Base,"copyMeasureDefinitions":true}""".as[PartitioningSubmitV2DTO].copyMeasureDefinitions)
+    assert(!s"""{$v2Base,"copyMeasureDefinitions":false}""".as[PartitioningSubmitV2DTO].copyMeasureDefinitions)
+  }
+
+  "PartitioningSubmitV2DTO" should "reject a non-boolean copyMeasureDefinitions" in {
+    assert(decode[PartitioningSubmitV2DTO](s"""{$v2Base,"copyMeasureDefinitions":"yes"}""").isLeft)
+    assert(decode[PartitioningSubmitV2DTO](s"""{$v2Base,"copyMeasureDefinitions":"true"}""").isLeft)
+    // sanity: the same base body without the bad flag decodes fine, so the failures above are caused by the flag
+    assert(decode[PartitioningSubmitV2DTO](s"""{$v2Base}""").isRight)
+  }
+
+  "PartitioningSubmitV2DTO" should "reject a non-numeric legacy parentPartitioningId" in {
+    assert(decode[PartitioningSubmitV2DTO](s"""{$v2Base,"parentPartitioningId":"abc"}""").isLeft)
+    assert(decode[PartitioningSubmitV2DTO](s"""{$v2Base,"parentPartitioningId":5}""").isRight)
+  }
+
+  "PartitioningSubmitV2DTO" should "reject null or non-numeric elements in parentPartitioningIds" in {
+    assert(decode[PartitioningSubmitV2DTO](s"""{$v2Base,"parentPartitioningIds":[1,null]}""").isLeft)
+    assert(decode[PartitioningSubmitV2DTO](s"""{$v2Base,"parentPartitioningIds":["x"]}""").isLeft)
+    assert(decode[PartitioningSubmitV2DTO](s"""{$v2Base,"parentPartitioningIds":[1,2]}""").isRight)
+  }
+
+  "PartitioningSubmitV2DTO" should "treat a null parentPartitioningIds as empty" in {
+    assert(s"""{$v2Base,"parentPartitioningIds":null}""".as[PartitioningSubmitV2DTO].parentPartitioningIds.isEmpty)
+  }
+
+  "PartitioningSubmitV2DTO" should "de-duplicate ids within parentPartitioningIds, keeping first-seen order" in {
+    val json = s"""{$v2Base,"parentPartitioningIds":[2,2,1,2,1]}"""
+    assert(json.as[PartitioningSubmitV2DTO].parentPartitioningIds == Seq(2L, 1L))
+  }
+
+  "PartitioningSubmitV2DTO" should "merge legacy parentPartitioningId with parentPartitioningIds (legacy first, distinct)" in {
+    val dedup = s"""{$v2Base,"parentPartitioningId":5,"parentPartitioningIds":[5,6]}"""
+    val legacyFirst = s"""{$v2Base,"parentPartitioningId":7,"parentPartitioningIds":[3,4]}"""
+    assert(dedup.as[PartitioningSubmitV2DTO].parentPartitioningIds == Seq(5L, 6L))
+    assert(legacyFirst.as[PartitioningSubmitV2DTO].parentPartitioningIds == Seq(7L, 3L, 4L))
+  }
+
+  "PartitioningSubmitV2DTO" should "encode the flag and only the plural parent key (exact JSON)" in {
+    val p = Seq(PartitionDTO("k", "v"))
+    def expected(ids: String, flag: Boolean): String =
+      s"""{"partitioning":[{"key":"k","value":"v"}],"parentPartitioningIds":$ids,""" +
+        s""""author":"a","copyMeasureDefinitions":$flag}"""
+
+    assert(PartitioningSubmitV2DTO(p, Seq(1L, 2L), "a").asJsonString == expected("[1,2]", flag = false))
     assert(
-      s"""{$base,"parentPartitioningId":5,"parentPartitioningIds":[5,6]}""".as[PartitioningSubmitV2DTO]
-        .parentPartitioningIds == Seq(5L, 6L)
+      PartitioningSubmitV2DTO(p, Seq(1L, 2L), "a", copyMeasureDefinitions = true).asJsonString ==
+        expected("[1,2]", flag = true)
     )
+    assert(PartitioningSubmitV2DTO(p, None, "a").asJsonString == expected("[]", flag = false))
   }
 
   "PartitioningSubmitV2DTO" should "round-trip and support the single-parent compat apply" in {
     val p = Seq(PartitionDTO("k", "v"))
-    Seq(Seq.empty[Long], Seq(1L), Seq(1L, 2L, 3L)).foreach { ids =>
-      val dto = PartitioningSubmitV2DTO(p, ids, "a")
+    for {
+      ids <- Seq(Seq.empty[Long], Seq(1L), Seq(1L, 2L, 3L))
+      flag <- Seq(false, true)
+    } {
+      val dto = PartitioningSubmitV2DTO(p, ids, "a", flag)
       assert(dto.asJsonString.as[PartitioningSubmitV2DTO] == dto)
     }
-    assert(PartitioningSubmitV2DTO(p, Some(7L), "a").parentPartitioningIds == Seq(7L))
-    assert(PartitioningSubmitV2DTO(p, None, "a").parentPartitioningIds.isEmpty)
-    assert(PartitioningSubmitV2DTO(partitioning = p, parentPartitioningId = None, author = "a").parentPartitioningIds.isEmpty)
+    val single = PartitioningSubmitV2DTO(p, Some(7L), "a")
+    assert(single.parentPartitioningIds == Seq(7L))
+    assert(!single.copyMeasureDefinitions)
+    assert(PartitioningSubmitV2DTO(partitioning = p, parentPartitioningId = None, author = "a")
+      .parentPartitioningIds.isEmpty)
   }
 
 }

@@ -19,7 +19,7 @@ package za.co.absa.atum.server.api.common.repository
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.db.fadb.exceptions._
-import za.co.absa.db.fadb.status.{FailedOrRow, FailedOrRows}
+import za.co.absa.db.fadb.status.{FailedOrRow, FailedOrRows, Row}
 import zio._
 
 trait BaseRepository {
@@ -54,19 +54,30 @@ trait BaseRepository {
       GeneralDatabaseError(s"Operation '$operationName' failed with unexpected error: ${error.getMessage}")
   }
 
-  protected def dbSingleResultCallWithStatus[R](
+  /**
+   *  Like [[dbSingleResultCallWithStatus]] but keeps the whole `Row`, so the caller can inspect
+   *  `functionStatus` (e.g. 11/12 created vs 13/14 existing), which `Row.data` alone does not carry.
+   */
+  protected def dbSingleResultCallWithStatusRow[R](
     dbFuncCall: Task[FailedOrRow[R]],
     operationName: String
-  ): IO[DatabaseError, R] = {
+  ): IO[DatabaseError, Row[R]] = {
     logAndReturn(operationName, dbFuncCall)
       .flatMap {
         case Left(statusException) => ZIO.fail(statusException)
-        case Right(value) => ZIO.succeed(value.data)
+        case Right(value) => ZIO.succeed(value)
       }
       .mapError {
         defaultErrorHandler(operationName)
       }
       .tapError(error => ZIO.logError(s"Operation '$operationName' failed: ${error.message}"))
+  }
+
+  protected def dbSingleResultCallWithStatus[R](
+    dbFuncCall: Task[FailedOrRow[R]],
+    operationName: String
+  ): IO[DatabaseError, R] = {
+    dbSingleResultCallWithStatusRow(dbFuncCall, operationName).map(_.data)
   }
 
   protected def dbMultipleResultCallWithAggregatedStatus[R](

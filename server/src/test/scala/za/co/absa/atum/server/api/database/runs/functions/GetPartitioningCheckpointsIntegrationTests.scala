@@ -38,13 +38,13 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
   private val checkpointName = "Data written"
   private val firstStartTime = ZonedDateTime.parse("2026-01-01T00:00:00Z")
 
-  private def createPartitioning: ZIO[CreatePartitioning, Throwable, Long] =
+  private def createPartitioning: ZIO[CreatePartitioningWithParents, Throwable, Long] =
     ZIO
-      .serviceWithZIO[CreatePartitioning](
+      .serviceWithZIO[CreatePartitioningWithParents](
         _(PartitioningSubmitV2DTO(Seq(PartitionDTO("key", UUID.randomUUID().toString)), None, "author"))
       )
       .flatMap(ZIO.fromEither(_))
-      .map(_.data)
+      .map(_.data.id)
 
   private def writeCheckpoint(
     partitioningId: Long,
@@ -154,7 +154,7 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
       }
     ).provide(
       GetPartitioningCheckpoints.layer,
-      CreatePartitioning.layer,
+      CreatePartitioningWithParents.layer,
       WriteCheckpointV2.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithSingleTransactionRollback

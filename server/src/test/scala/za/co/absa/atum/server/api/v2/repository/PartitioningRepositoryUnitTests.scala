@@ -16,8 +16,15 @@
 
 package za.co.absa.atum.server.api.v2.repository
 
-import org.mockito.Mockito.{mock, never, verify, when}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataItemDTO, AdditionalDataItemV2DTO, PartitioningWithIdDTO}
+import org.mockito.Mockito.{mock, mockingDetails, times, verify, when}
+import za.co.absa.atum.model.dto.{
+  AdditionalDataDTO,
+  AdditionalDataItemDTO,
+  AdditionalDataItemV2DTO,
+  PartitioningParentPatchDTO,
+  PartitioningSubmitV2DTO,
+  PartitioningWithIdDTO
+}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
@@ -28,8 +35,9 @@ import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningPare
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
+import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
-import za.co.absa.atum.server.model.database.{AdditionalDataItemFromDB, PartitioningForDB}
+import za.co.absa.atum.server.model.database.{AdditionalDataItemFromDB, CreatedPartitioningFromDB, PartitioningForDB}
 import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
@@ -37,47 +45,68 @@ import zio.interop.catz.asyncInstance
 import zio.test.Assertion.failsWithA
 import zio.test._
 
+import scala.jdk.CollectionConverters._
+
 object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
-  // Create Partitioning If Not Exists V2 Mocks
-  private val createPartitioningMock = mock(classOf[CreatePartitioning])
-
-  when(createPartitioningMock.apply(partitioningSubmitV2DTO1))
-    .thenReturn(ZIO.right(Row(FunctionStatus(11, "success"), partitioningWithIdDTO1.id)))
-  when(createPartitioningMock.apply(partitioningSubmitV2DTO2))
-    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(31, "Partitioning already present"))))
-  when(createPartitioningMock.apply(partitioningSubmitV2DTO3))
-    .thenReturn(ZIO.fail(new Exception("boom!")))
-
-  private val singleAfterDedupe = partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(3L), author = "single")
-  when(createPartitioningMock.apply(singleAfterDedupe))
-    .thenReturn(ZIO.right(Row(FunctionStatus(12, "ok"), partitioningWithIdDTO1.id)))
-
-  private val createPartitioningMockLayer = ZLayer.succeed(createPartitioningMock)
-
-  // Create Partitioning With Parents Mocks
+  // Create Partitioning With Parents Mocks (the single DB path of PartitioningRepository.createPartitioning)
   private val createPartitioningWithParentsMock = mock(classOf[CreatePartitioningWithParents])
 
-  private def multi(author: String) = partitioningSubmitV2DTOMultiParent.copy(author = author)
-  private val multi12 = multi("s12")
-  private val multi13 = multi("s13")
-  private val multi14 = multi("s14")
+  // The DB function returns the id and the STORED created_by. Every stub below returns a stored author that
+  // differs from the requester's author, so a "use the request author" regression fails the tests (SERVER-04).
+  private val storedAuthor = "stored-author"
+  private val createdId = partitioningWithIdDTO1.id
 
-  when(createPartitioningWithParentsMock.apply(multi12))
-    .thenReturn(ZIO.right(Row(FunctionStatus(12, "ok"), partitioningWithIdDTO1.id)))
-  when(createPartitioningWithParentsMock.apply(multi13))
-    .thenReturn(ZIO.right(Row(FunctionStatus(13, "relinked"), partitioningWithIdDTO1.id)))
-  when(createPartitioningWithParentsMock.apply(multi14))
-    .thenReturn(ZIO.right(Row(FunctionStatus(14, "present"), partitioningWithIdDTO1.id)))
+  private def createdRow(code: Int, text: String, createdBy: String) =
+    ZIO.right(Row(FunctionStatus(code, text), CreatedPartitioningFromDB(createdId, createdBy)))
+
+  private def expected(createdBy: String): PartitioningWithIdDTO =
+    PartitioningWithIdDTO(createdId, partitioningDTO1, createdBy)
+
+  private def timesCalled(dto: PartitioningSubmitV2DTO, count: Int) =
+    ZIO.attempt(verify(createPartitioningWithParentsMock, times(count)).apply(dto))
+
+  /** DTOs the mocked DB function was really invoked with (by author), read from Mockito's invocation record. */
+  private def receivedByCreateFn(author: String): Seq[PartitioningSubmitV2DTO] =
+    mockingDetails(createPartitioningWithParentsMock).getInvocations.asScala.toSeq
+      .map(_.getArgument[PartitioningSubmitV2DTO](0))
+      .filter(_.author == author)
+
+  // 0 / 1 / N parents all go to the SAME mock
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTO1))
+    .thenReturn(createdRow(11, "success", "stored-0"))
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOSingleParent))
+    .thenReturn(createdRow(12, "ok", "stored-1"))
   when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParent))
-    .thenReturn(ZIO.right(Row(FunctionStatus(12, "ok"), partitioningWithIdDTO1.id)))
-  // the de-duplicated form of partitioningSubmitV2DTOMultiParentDup
-  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentDup.copy(parentPartitioningIds = Seq(1L, 2L))))
-    .thenReturn(ZIO.right(Row(FunctionStatus(12, "ok"), partitioningWithIdDTO1.id)))
+    .thenReturn(createdRow(12, "ok", "stored-n"))
+  // ids reach the DB function untouched (no dedupe/normalisation in the repository)
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTODuplicateIds))
+    .thenReturn(createdRow(12, "ok", "stored-dup"))
+
+  private val dto11 = partitioningSubmitV2DTOMultiParent.copy(author = "req11")
+  private val dto12 = partitioningSubmitV2DTOMultiParent.copy(author = "req12")
+  private val dto13 = partitioningSubmitV2DTOExistingAuthor.copy(author = "req13")
+  private val dto14 = partitioningSubmitV2DTOExistingAuthor.copy(author = "req14")
+  private val dtoUnexpected = partitioningSubmitV2DTOMultiParent.copy(author = "reqUnexpected")
+
+  when(createPartitioningWithParentsMock.apply(dto11)).thenReturn(createdRow(11, "created", storedAuthor))
+  when(createPartitioningWithParentsMock.apply(dto12)).thenReturn(createdRow(12, "created + linked", storedAuthor))
+  when(createPartitioningWithParentsMock.apply(dto13)).thenReturn(createdRow(13, "new parent", storedAuthor))
+  when(createPartitioningWithParentsMock.apply(dto14)).thenReturn(createdRow(14, "nothing written", storedAuthor))
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOExistingAuthor))
+    .thenReturn(createdRow(14, "nothing written", storedAuthor))
+  when(createPartitioningWithParentsMock.apply(dtoUnexpected)).thenReturn(createdRow(99, "weird", storedAuthor))
+
+  // Phase 8/9 contract: "already exists" is a success (13/14), a conflict is a cycle (32) only; the old
+  // single-parent status 31 "Partitioning already present" no longer exists
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTO2))
+    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Cycle detected"))))
+  when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTO3))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
   when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentNotFound))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Parent partitioning not found"))))
   when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentCycle))
-    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(43, "Cycle detected"))))
+    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Cycle detected"))))
   when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentBoom))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
@@ -198,7 +227,17 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(3L,partitioningParentPatchDTO1)))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  private val cyclePatchDTO = PartitioningParentPatchDTO(parentPartitioningId = 5L, author = "cycle-author")
+  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(5L, cyclePatchDTO)))
+    .thenReturn(
+      ZIO.left(DataConflictException(FunctionStatus(32, "Parent partitioning would create a cycle: 5")))
+    )
+
   private val updatePartitioningParentMockLayer = ZLayer.succeed(updatePartitioningParentMock)
+
+  private def isPatchWarning(partitioningId: Long)(entry: ZTestLogger.LogEntry): Boolean =
+    entry.logLevel == LogLevel.Warning &&
+      entry.message().contains(s"PATCH /ancestors rejected for partitioning $partitioningId ")
 
   // Get Ancestors By Id Mocks
   private val getPartitioningAncestorsMock = mock(classOf[GetPartitioningAncestors])
@@ -229,6 +268,12 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   ).thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
   when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(8888L, 10, 0L))
   ).thenReturn(ZIO.fail(new Exception("boom!")))
+  // existing partitioning WITHOUT ancestors: the wrapper yields a status-14 row without data (see
+  // GetPartitioningAncestorsIntegrationTests, which pins that through the real wrapper), or no rows at all
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(5555L, 10, 0L))
+  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(14, "OK"), None))))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(6666L, 10, 0L))
+  ).thenReturn(ZIO.right(Seq.empty))
 
   private val getPartitioningAncestorsMockLayer = ZLayer.succeed(getPartitioningAncestorsMock)
 
@@ -236,78 +281,127 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
     suite("PartitioningRepositorySuite")(
       suite("CreatePartitioningSuite")(
-        test("Returns expected Right with PartitioningWithIdDTO") {
+        test("0 parents, status 11 -> Created with the stored author, one call on the single DB function") {
           for {
             result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTO1)
-          } yield assertTrue(result.isInstanceOf[PartitioningWithIdDTO])
+            _ <- timesCalled(partitioningSubmitV2DTO1, 1)
+          } yield assertTrue(
+            result == Created(expected("stored-0")),
+            result.data.author != partitioningSubmitV2DTO1.author
+          )
         },
-        test("Returns expected Left with DataConflictException") {
+        test("1 parent, status 12 -> Created, same single DB function (times(1))") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOSingleParent)
+            _ <- timesCalled(partitioningSubmitV2DTOSingleParent, 1)
+          } yield assertTrue(result == Created(expected("stored-1")))
+        },
+        test("N parents, status 12 -> Created, same single DB function (times(1))") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParent)
+            _ <- timesCalled(partitioningSubmitV2DTOMultiParent, 1)
+          } yield assertTrue(result == Created(expected("stored-n")))
+        },
+        test("duplicate parent ids reach the DB function unchanged (no dedupe in the repository)") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTODuplicateIds)
+            _ <- timesCalled(partitioningSubmitV2DTODuplicateIds, 1)
+            received <- ZIO.succeed(receivedByCreateFn(partitioningSubmitV2DTODuplicateIds.author))
+          } yield assertTrue(
+            // what the DB function actually received, independently of the fixture constant
+            received.map(_.parentPartitioningIds) == Seq(Seq(1L, 1L, 2L)),
+            result == Created(expected("stored-dup"))
+          )
+        },
+        test("statuses 11 and 12 -> Created") {
+          for {
+            r11 <- PartitioningRepository.createPartitioning(dto11)
+            r12 <- PartitioningRepository.createPartitioning(dto12)
+            _ <- timesCalled(dto11, 1)
+            _ <- timesCalled(dto12, 1)
+          } yield assertTrue(
+            r11 == Created(expected(storedAuthor)),
+            r12 == Created(expected(storedAuthor))
+          )
+        },
+        test("statuses 13 (existing + new parent) and 14 (existing, nothing written) -> Existing") {
+          for {
+            r13 <- PartitioningRepository.createPartitioning(dto13)
+            r14 <- PartitioningRepository.createPartitioning(dto14)
+            _ <- timesCalled(dto13, 1)
+            _ <- timesCalled(dto14, 1)
+          } yield assertTrue(
+            r13 == Existing(expected(storedAuthor)),
+            r14 == Existing(expected(storedAuthor))
+          )
+        },
+        test("Existing (status 14) carries the STORED author, not the requester's") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOExistingAuthor)
+          } yield assertTrue(
+            partitioningSubmitV2DTOExistingAuthor.author == "requester",
+            result.data.author == "stored-author",
+            result.data.author != partitioningSubmitV2DTOExistingAuthor.author,
+            result.data.partitioning == partitioningSubmitV2DTOExistingAuthor.partitioning
+          )
+        },
+        test("Returns expected ConflictDatabaseError (cycle, status 32)") {
           for {
             result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTO2).exit
           } yield assertTrue(
             result == Exit.fail(
               ConflictDatabaseError(
-                "Exception caused by operation: 'createPartitioning': (31) Partitioning already present"
+                "Exception caused by operation: 'createPartitioning': (32) Cycle detected"
               )
             )
           )
         },
-        test("Returns expected GeneralDatabaseError") {
-          assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTO3).exit)(
-            failsWithA[GeneralDatabaseError]
-          )
-        },
-        test("0 parents routes to single-parent function only") {
+        test("with-parents status 32 maps to ConflictDatabaseError") {
           for {
-            _ <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTO1)
-          } yield {
-            verify(createPartitioningWithParentsMock, never()).apply(partitioningSubmitV2DTO1)
-            assertTrue(true)
-          }
-        },
-        test("2 parents routes to with-parents function only") {
-          for {
-            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParent)
-          } yield {
-            verify(createPartitioningMock, never()).apply(partitioningSubmitV2DTOMultiParent)
-            assertTrue(result == PartitioningWithIdDTO(partitioningWithIdDTO1.id, partitioningDTO1, "multiParentAuthor"))
-          }
-        },
-        test("duplicate ids are de-duplicated before routing to with-parents") {
-          for {
-            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentDup)
-          } yield assertTrue(result.id == partitioningWithIdDTO1.id)
-        },
-        test("duplicates collapsing to one parent route to the single-parent function") {
-          for {
-            result <- PartitioningRepository.createPartitioning(
-              partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(3L, 3L), author = "single")
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              ConflictDatabaseError("Exception caused by operation: 'createPartitioning': (32) Cycle detected")
             )
-          } yield {
-            verify(createPartitioningWithParentsMock, never()).apply(singleAfterDedupe)
-            assertTrue(result.id == partitioningWithIdDTO1.id)
-          }
+          )
         },
-        test("with-parents statuses 12, 13, 14 are successes") {
+        test("status 41 maps to NotFoundDatabaseError") {
           for {
-            r12 <- PartitioningRepository.createPartitioning(multi12)
-            r13 <- PartitioningRepository.createPartitioning(multi13)
-            r14 <- PartitioningRepository.createPartitioning(multi14)
-          } yield assertTrue(Seq(r12, r13, r14).forall(_.id == partitioningWithIdDTO1.id))
-        },
-        test("with-parents status 41 maps to NotFoundDatabaseError") {
-          assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit)(
-            failsWithA[NotFoundDatabaseError]
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              NotFoundDatabaseError(
+                "Exception caused by operation: 'createPartitioning': (41) Parent partitioning not found"
+              )
+            )
           )
         },
-        test("with-parents status 43 maps to ConflictDatabaseError") {
-          assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit)(
-            failsWithA[ConflictDatabaseError]
+        test("unexpected status on a successful row: generic client message, details only in the server log") {
+          for {
+            result <- PartitioningRepository.createPartitioning(dtoUnexpected).exit
+            logged <- ZTestLogger.logOutput.map(_.filter(_.message().contains("unexpected DB status 99")))
+          } yield assertTrue(
+            // exact, generic message: neither the status code nor the DB status text reach the client
+            result == Exit.fail(
+              GeneralDatabaseError("Unexpected response from the database while creating the partitioning")
+            ),
+            logged.size == 1,
+            logged.head.logLevel == LogLevel.Error,
+            logged.head.message().contains("createPartitioning"),
+            logged.head.message().contains("weird")
           )
         },
-        test("with-parents unexpected exception maps to GeneralDatabaseError") {
-          assertZIO(PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentBoom).exit)(
-            failsWithA[GeneralDatabaseError]
+        test("a failing DB task maps to GeneralDatabaseError") {
+          for {
+            result <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTO3).exit
+            resultN <- PartitioningRepository.createPartitioning(partitioningSubmitV2DTOMultiParentBoom).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              GeneralDatabaseError("Operation 'createPartitioning' failed with unexpected error: boom!")
+            ),
+            resultN == Exit.fail(
+              GeneralDatabaseError("Operation 'createPartitioning' failed with unexpected error: boom!")
+            )
           )
         }
       ),
@@ -488,6 +582,23 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected GeneralDatabaseError") {
           assertZIO(PartitioningRepository.updatePartitioningParent(3L,partitioningParentPatchDTO1).exit)(
             failsWithA[GeneralDatabaseError])
+        },
+        test("Status 32 (cycle) maps to ConflictDatabaseError and logs exactly one PATCH WARN") {
+          for {
+            exit <- PartitioningRepository.updatePartitioningParent(5L, cyclePatchDTO).exit
+            warnings <- ZTestLogger.logOutput.map(_.filter(isPatchWarning(5L)))
+          } yield assert(exit)(failsWithA[ConflictDatabaseError]) &&
+            assertTrue(
+              warnings.size == 1,
+              warnings.head.message().contains("cycle"),
+              warnings.head.message().contains("partitioning 5")
+            )
+        },
+        test("A non-conflict failure logs no PATCH WARN") {
+          for {
+            exit <- PartitioningRepository.updatePartitioningParent(3L, partitioningParentPatchDTO1).exit
+            warnings <- ZTestLogger.logOutput.map(_.filter(isPatchWarning(3L)))
+          } yield assert(exit)(failsWithA[GeneralDatabaseError]) && assertTrue(warnings.isEmpty)
         }
       ),
       suite("GetPartitioningAncestorsSuite")(
@@ -517,6 +628,16 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             result.data.map(_.id).distinct.size == result.data.size
           )
         },
+        test("An existing partitioning with no ancestors (status 14 row without data) -> empty ResultNoMore") {
+          for {
+            result <- PartitioningRepository.getPartitioningAncestors(5555L, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
+        },
+        test("No rows at all -> empty ResultNoMore") {
+          for {
+            result <- PartitioningRepository.getPartitioningAncestors(6666L, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
+        },
         test("Returns expected NotFoundDatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAncestors(9999L, 10, 0L).exit)(
             failsWithA[NotFoundDatabaseError]
@@ -531,7 +652,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     )
   }.provide(
     PartitioningRepositoryImpl.layer,
-    createPartitioningMockLayer,
     createPartitioningWithParentsMockLayer,
     getPartitioningMeasuresMockLayer,
     createOrUpdateAdditionalDataMockLayer,

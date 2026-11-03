@@ -90,7 +90,6 @@ object Main extends ZIOAppDefault {
           FlowRepositoryImplV2.layer,
           // database
           CreatePartitioningIfNotExists.layer,
-          CreatePartitioning.layer,
           CreatePartitioningWithParents.layer,
           GetPartitioningMeasures.layer,
           GetPartitioningMeasuresById.layer,

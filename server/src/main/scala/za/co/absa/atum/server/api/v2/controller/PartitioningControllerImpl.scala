@@ -23,7 +23,9 @@ import za.co.absa.atum.model.envelopes.{BadRequestResponse, ErrorResponse, Gener
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonDeserializationSyntax
 import za.co.absa.atum.server.api.common.controller.BaseController
 import za.co.absa.atum.server.api.v2.service.PartitioningService
-import za.co.absa.atum.server.model.PaginatedResult
+import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
+import za.co.absa.atum.server.model.{CreationResult, PaginatedResult}
+import sttp.model.StatusCode
 import zio._
 
 class PartitioningControllerImpl(partitioningService: PartitioningService)
@@ -52,7 +54,9 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
   override def postPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
-  ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
+  ): IO[ErrorResponse, (StatusCode, SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
+    // dedupe here as well: the cap must apply to DISTINCT ids whoever calls the controller (the decoder and the SQL
+    // dedupe too, the SQL one being the authoritative one for what is stored)
     val distinctIds = partitioningSubmitDTO.parentPartitioningIds.distinct
     for {
       _ <- ZIO.when(distinctIds.size > PartitioningControllerImpl.MaxParents)(
@@ -63,13 +67,16 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
           )
         )
       )
-      response <- mapToSingleSuccessResponse(
-        serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
-          partitioningService.createPartitioning(partitioningSubmitDTO.copy(parentPartitioningIds = distinctIds))
-        )
+      result <- serviceCall[CreationResult[PartitioningWithIdDTO], CreationResult[PartitioningWithIdDTO]](
+        partitioningService.createPartitioning(partitioningSubmitDTO.copy(parentPartitioningIds = distinctIds))
       )
-      uri <- createRootAnchoredResourcePath(Seq(V2Paths.Partitionings, response.data.id.toString), apiVersion = 2)
-    } yield (response, uri)
+      response = SingleSuccessResponse(result.data)
+      status = result match {
+        case Created(_)  => StatusCode.Created
+        case Existing(_) => StatusCode.Ok
+      }
+      uri <- createRootAnchoredResourcePath(Seq(V2Paths.Partitionings, result.data.id.toString), apiVersion = 2)
+    } yield (status, response, uri)
   }
 
   override def patchPartitioningAdditionalData(
@@ -160,7 +167,8 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 }
 
 object PartitioningControllerImpl {
-  private val MaxParents = 100
+  /** Maximum number of DISTINCT parent ids accepted by `POST /partitionings` (more is answered with 400). */
+  val MaxParents = 100
 
   val layer: URLayer[PartitioningService, PartitioningController] = ZLayer {
     for {
