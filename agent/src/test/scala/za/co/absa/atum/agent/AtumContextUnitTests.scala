@@ -19,13 +19,19 @@ package za.co.absa.atum.agent
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
 import org.mockito.ArgumentCaptor
-import org.mockito.Mockito.{mock, times, verify, when}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{mock, never, times, verify, when}
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.atum.agent.dispatcher.Dispatcher
+import za.co.absa.atum.agent.exception.AtumAgentException.PartitioningUpdateException
 import za.co.absa.atum.agent.model.AtumMeasure.{DistinctRecordCount, RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.{Measure, MeasureResult, MeasurementBuilder, UnknownMeasure}
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO}
 import za.co.absa.atum.model.types.basic._
 
 class AtumContextUnitTests extends AnyFlatSpec with Matchers {
@@ -232,31 +238,107 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     value.properties shouldBe properties
   }
 
-  "subContext" should "delegate once to the agent multi-parent overload" in {
-    val mockAgent = mock(classOf[AtumAgent])
-    val parent1 = new AtumContext(AtumPartitions("sc1" -> "a"), mockAgent)
-    val parent2 = new AtumContext(AtumPartitions("sc2" -> "b"), mockAgent)
-    val sub = AtumPartitions("sc" -> "child")
-    val expected = new AtumContext(sub, mockAgent)
-    when(mockAgent.getOrCreateAtumSubContext(sub, Seq(parent1, parent2))).thenReturn(expected)
+  // ---- subPartitionContext and the copyMeasureDefinitions flag ----
 
-    val result = parent1.subContext(sub, Seq(parent1, parent2))
+  private class RecordingAgent extends AtumAgent {
+    override val dispatcher: Dispatcher = mock(classOf[Dispatcher])
+    override private[agent] def currentUser: String = "sub-context-user"
 
-    verify(mockAgent, times(1)).getOrCreateAtumSubContext(sub, Seq(parent1, parent2))
-    assert(result eq expected)
+    when(dispatcher.createPartitioning(any[PartitioningCreateRequest])).thenAnswer(new Answer[AtumContextDTO] {
+      override def answer(invocation: InvocationOnMock): AtumContextDTO =
+        AtumContextDTO(invocation.getArgument[PartitioningCreateRequest](0).partitioning)
+    })
+
+    def captured(): PartitioningCreateRequest = {
+      val captor = ArgumentCaptor.forClass(classOf[PartitioningCreateRequest])
+      verify(dispatcher, times(1)).createPartitioning(captor.capture())
+      captor.getValue
+    }
+
+    def neverDispatched(): Unit =
+      verify(dispatcher, never()).createPartitioning(any[PartitioningCreateRequest])
   }
 
-  it should "propagate IllegalArgumentException for empty parents" in {
-    val ctx = AtumAgent.getOrCreateAtumContext(AtumPartitions("sc3" -> "x"))
-    an[IllegalArgumentException] should be thrownBy ctx.subContext(AtumPartitions("sc" -> "y"), Seq.empty)
+  private val parentPartitions = AtumPartitions("p" -> "1")
+  private val childPartitions = AtumPartitions("c" -> "2")
+
+  private def parentContext(agent: AtumAgent): AtumContext = new AtumContext(parentPartitions, agent)
+
+  private val subPartitionRows: Seq[(String, AtumContext => AtumContext, Boolean, Boolean)] = Seq(
+    ("1-arg", c => c.subPartitionContext(childPartitions), false, true),
+    (
+      "2-arg mergeWithParent = false",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = false),
+      false,
+      false
+    ),
+    ("2-arg mergeWithParent = true", c => c.subPartitionContext(childPartitions, mergeWithParent = true), false, true),
+    (
+      "3-arg merge = true, copy = true",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = true, copyMeasureDefinitions = true),
+      true,
+      true
+    ),
+    (
+      "3-arg merge = false, copy = true",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = false, copyMeasureDefinitions = true),
+      true,
+      false
+    ),
+    (
+      "3-arg merge = true, copy = false",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = true, copyMeasureDefinitions = false),
+      false,
+      true
+    ),
+    (
+      "3-arg merge = false, copy = false",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = false, copyMeasureDefinitions = false),
+      false,
+      false
+    )
+  )
+
+  subPartitionRows.foreach { case (name, call, expectedFlag, expectedMerged) =>
+    "subPartitionContext" should s"send copyMeasureDefinitions = $expectedFlag with one dispatch ($name)" in {
+      val agent = new RecordingAgent
+      val parent = parentContext(agent)
+
+      val child = call(parent)
+
+      val dto = agent.captured()
+      dto.copyMeasureDefinitions shouldBe expectedFlag
+      dto.parentPartitionings shouldBe Seq(parentPartitions.toPartitioningDTO)
+      val expectedChild = if (expectedMerged) parentPartitions ++ childPartitions else childPartitions
+      dto.partitioning shouldBe expectedChild.toPartitioningDTO
+      child.atumPartitions shouldBe expectedChild
+    }
   }
 
-  it should "create a child identified by sub partitions only with the real agent" in {
-    val a = AtumAgent.getOrCreateAtumContext(AtumPartitions("sc4" -> "a"))
-    val b = AtumAgent.getOrCreateAtumContext(AtumPartitions("sc5" -> "b"))
-    val sub = AtumPartitions("sc6" -> "child")
+  it should "throw PartitioningUpdateException on key overlap with merge = true, copy = true, without dispatching" in {
+    val agent = new RecordingAgent
+    val parent = parentContext(agent)
 
-    a.subContext(sub, Seq(a, b)).atumPartitions shouldBe sub
+    an[PartitioningUpdateException] should be thrownBy {
+      parent.subPartitionContext(AtumPartitions("p" -> "other"), mergeWithParent = true, copyMeasureDefinitions = true)
+    }
+    agent.neverDispatched()
+  }
+
+  it should "not throw on key overlap with merge = false, copy = true" in {
+    val agent = new RecordingAgent
+    val parent = parentContext(agent)
+    val overlapping = AtumPartitions("p" -> "other")
+
+    val child = parent.subPartitionContext(overlapping, mergeWithParent = false, copyMeasureDefinitions = true)
+
+    agent.captured().copyMeasureDefinitions shouldBe true
+    child.atumPartitions shouldBe overlapping
+  }
+
+  it should "expose only the $default$2 getter for subPartitionContext (no default on the new overload)" in {
+    classOf[AtumContext].getMethods.map(_.getName).filter(_.startsWith("subPartitionContext$default")).toSet shouldBe
+      Set("subPartitionContext$default$2")
   }
 
 }

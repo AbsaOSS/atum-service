@@ -10,6 +10,7 @@ import sttp.model.StatusCode
 import com.typesafe.config.Config
 import sttp.capabilities
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.{JsonDeserializationSyntax, JsonSerializationSyntax}
@@ -23,7 +24,7 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
   val serverUrl = "http://test-server"
 
   val testPartitioningDTO: Seq[PartitionDTO] = Seq(PartitionDTO("k", "v"))
-  val testPartitioningSubmitDTO = PartitioningSubmitDTO(testPartitioningDTO, None, "author")
+  val testPartitioningCreateRequest = PartitioningCreateRequest(testPartitioningDTO, None, "author")
   val createdPartitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
   val measures: Seq[MeasureDTO] = Seq(MeasureDTO("m1", Seq("c1")), MeasureDTO("m2", Seq("c2")))
   val additionalData: Seq[AdditionalDataItemV2DTO] = Seq(
@@ -95,7 +96,6 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
       Right(SingleSuccessResponse(parentPartitioningWithId).asJsonString): Either[String, String],
       StatusCode.Ok
     )
-    val getPartitioningResponse = Response(Left("Not found"): Either[String, String], StatusCode.NotFound)
     val postPartitioningResponse = Response(
       Right(SingleSuccessResponse(createdPartitioningWithId).asJsonString): Either[String, String],
       StatusCode.Created
@@ -106,14 +106,13 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
       Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
 
     stubGetPartitioning(parentPartitioning, getParentResponse)
-    stubGetPartitioning(testPartitioningDTO, getPartitioningResponse)
     stubPostPartitioning(postPartitioningResponse)
     stubGetMeasures(measuresResponse)
     stubGetAdditionalData(additionalDataResponse)
 
     val dispatcherWithMocks = dispatcher
     val result = dispatcherWithMocks.createPartitioning(
-      PartitioningSubmitDTO(testPartitioningDTO, Some(parentPartitioning), "author")
+      PartitioningCreateRequest(testPartitioningDTO, Some(parentPartitioning), "author")
     )
 
     result.partitioning shouldBe createdPartitioningWithId.partitioning
@@ -122,25 +121,29 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     result.additionalData should contain key "key2"
     result.additionalData("key1") shouldBe Some("val1")
     result.additionalData("key2") shouldBe None
+
+    // exactly one POST, the child is never looked up with a GET
+    verify(mockBackend, times(1)).send(isPostPartitioningRequest)
+    verify(mockBackend, never()).send(isGetPartitioningRequest(testPartitioningDTO))
   }
 
-  it should "return AtumContextDTO for existing partitioning without creating a new one" in {
-    val existingPartitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
-    val getPartitioningResponse = Response(
+  it should "return AtumContextDTO built from the POST answer 200 OK for an existing partitioning (one POST)" in {
+    val existingPartitioningWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "stored-author")
+    val postPartitioningResponse = Response(
       Right(SingleSuccessResponse(existingPartitioningWithId).asJsonString): Either[String, String],
       StatusCode.Ok
     )
     val measuresResponse =
       Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
     val additionalDataResponse =
-      Response(Right(SingleSuccessResponse(additionalData).asJsonString): Either[String, String], StatusCode.Ok)
+      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
 
-    stubGetPartitioning(testPartitioningDTO, getPartitioningResponse)
+    stubPostPartitioning(postPartitioningResponse)
     stubGetMeasures(measuresResponse)
     stubGetAdditionalData(additionalDataResponse)
 
     val dispatcherWithMocks = dispatcher
-    val result = dispatcherWithMocks.createPartitioning(testPartitioningSubmitDTO)
+    val result = dispatcherWithMocks.createPartitioning(testPartitioningCreateRequest)
 
     result.partitioning shouldBe existingPartitioningWithId.partitioning
     result.measures shouldBe measures.toSet
@@ -149,11 +152,12 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     result.additionalData("key1") shouldBe Some("val1")
     result.additionalData("key2") shouldBe None
 
-    verify(mockBackend, never()).send(isPostPartitioningRequest)
+    verify(mockBackend, times(1)).send(isPostPartitioningRequest)
+    verify(mockBackend, never()).send(isGetPartitioningRequest(testPartitioningDTO))
+    verify(mockBackend, never()).send(isPatchAncestorsRequest)
   }
 
   it should "handle empty measures and additional data for a new partitioning" in {
-    val getPartitioningResponse = Response(Left("Not found"): Either[String, String], StatusCode.NotFound)
     val postPartitioningResponse = Response(
       Right(SingleSuccessResponse(createdPartitioningWithId).asJsonString): Either[String, String],
       StatusCode.Created
@@ -168,13 +172,12 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
       StatusCode.Ok
     )
 
-    stubGetPartitioning(testPartitioningDTO, getPartitioningResponse)
     stubPostPartitioning(postPartitioningResponse)
     stubGetMeasures(measuresResponse)
     stubGetAdditionalData(additionalDataResponse)
 
     val dispatcherWithMocks = dispatcher
-    val result = dispatcherWithMocks.createPartitioning(testPartitioningSubmitDTO)
+    val result = dispatcherWithMocks.createPartitioning(testPartitioningCreateRequest)
 
     result.partitioning shouldBe createdPartitioningWithId.partitioning
     result.measures shouldBe empty
@@ -290,114 +293,19 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     noException should be thrownBy dispatcher.saveCheckpoint(checkpoint)
   }
 
-  "createPartitioning" should "ensure parent link via PATCH when child already exists" in {
-    val parentPartitioning = Seq(PartitionDTO("parentK", "parentV"))
-    val parentPartitioningId = 999L
-    val parentPartitioningWithId = PartitioningWithIdDTO(parentPartitioningId, parentPartitioning, "parentAuthor")
-    val existingChildWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
+  "createPartitioning" should "send ONE POST and surface HTTP 409 (cycle) as HttpException without PATCH or retry" in {
+    val parents = parentsN(1)
+    stubParent(parents.head, 901L)
+    stubPostPartitioning(Response(Left("cycle detected"): Either[String, String], StatusCode.Conflict))
+    stubTail()
 
-    // Parent lookup succeeds
-    val getParentResponse = Response(
-      Right(SingleSuccessResponse(parentPartitioningWithId).asJsonString): Either[String, String],
-      StatusCode.Ok
-    )
-    // Child already exists (returns OK, not 404)
-    val getChildResponse = Response(
-      Right(SingleSuccessResponse(existingChildWithId).asJsonString): Either[String, String],
-      StatusCode.Ok
-    )
-    val measuresResponse =
-      Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
-    val additionalDataResponse =
-      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
-    val patchAncestorsResponse = Response(Right(""): Either[String, String], StatusCode.NoContent)
+    val ex = the[HttpException] thrownBy
+      dispatcher.createPartitioning(PartitioningCreateRequest(testPartitioningDTO, parents, "author"))
+    ex.statusCode shouldBe 409
 
-    stubGetPartitioning(parentPartitioning, getParentResponse)
-    stubGetPartitioning(testPartitioningDTO, getChildResponse)
-    stubGetMeasures(measuresResponse)
-    stubGetAdditionalData(additionalDataResponse)
-    when(mockBackend.send(isPatchAncestorsRequest)).thenReturn(patchAncestorsResponse)
-
-    val dispatcherWithMocks = dispatcher
-    val result = dispatcherWithMocks.createPartitioning(
-      PartitioningSubmitDTO(testPartitioningDTO, Some(parentPartitioning), "author")
-    )
-
-    result.partitioning shouldBe existingChildWithId.partitioning
-
-    // Verify PATCH was called to ensure the parent link
-    verify(mockBackend).send(isPatchAncestorsRequest)
-    // Verify POST was never called (child already existed)
-    verify(mockBackend, never()).send(isPostPartitioningRequest)
-  }
-
-  it should "not call PATCH ancestors when child is newly created (link established at creation time)" in {
-    val parentPartitioning = Seq(PartitionDTO("parentK", "parentV"))
-    val parentPartitioningId = 999L
-    val parentPartitioningWithId = PartitioningWithIdDTO(parentPartitioningId, parentPartitioning, "parentAuthor")
-
-    val getParentResponse = Response(
-      Right(SingleSuccessResponse(parentPartitioningWithId).asJsonString): Either[String, String],
-      StatusCode.Ok
-    )
-    // Child does NOT exist
-    val getChildResponse = Response(Left("Not found"): Either[String, String], StatusCode.NotFound)
-    val postPartitioningResponse = Response(
-      Right(SingleSuccessResponse(createdPartitioningWithId).asJsonString): Either[String, String],
-      StatusCode.Created
-    )
-    val measuresResponse =
-      Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
-    val additionalDataResponse =
-      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
-
-    stubGetPartitioning(parentPartitioning, getParentResponse)
-    stubGetPartitioning(testPartitioningDTO, getChildResponse)
-    stubPostPartitioning(postPartitioningResponse)
-    stubGetMeasures(measuresResponse)
-    stubGetAdditionalData(additionalDataResponse)
-
-    val dispatcherWithMocks = dispatcher
-    dispatcherWithMocks.createPartitioning(
-      PartitioningSubmitDTO(testPartitioningDTO, Some(parentPartitioning), "author")
-    )
-
-    // PATCH should NOT be called — the POST already established the link
+    verify(mockBackend, times(1)).send(isPostPartitioningRequest)
     verify(mockBackend, never()).send(isPatchAncestorsRequest)
-  }
-
-  it should "treat 409 Conflict on ensure-link PATCH as success (link already exists)" in {
-    val parentPartitioning = Seq(PartitionDTO("parentK", "parentV"))
-    val parentPartitioningId = 999L
-    val parentPartitioningWithId = PartitioningWithIdDTO(parentPartitioningId, parentPartitioning, "parentAuthor")
-    val existingChildWithId = PartitioningWithIdDTO(123L, testPartitioningDTO, "author")
-
-    val getParentResponse = Response(
-      Right(SingleSuccessResponse(parentPartitioningWithId).asJsonString): Either[String, String],
-      StatusCode.Ok
-    )
-    val getChildResponse = Response(
-      Right(SingleSuccessResponse(existingChildWithId).asJsonString): Either[String, String],
-      StatusCode.Ok
-    )
-    val measuresResponse =
-      Response(Right(MultiSuccessResponse(measures).asJsonString): Either[String, String], StatusCode.Ok)
-    val additionalDataResponse =
-      Response(Right(MultiSuccessResponse[AdditionalDataItemV2DTO](additionalData).asJsonString): Either[String, String], StatusCode.Ok)
-    val conflictResponse = Response(Left("Link already exists"): Either[String, String], StatusCode.Conflict)
-
-    stubGetPartitioning(parentPartitioning, getParentResponse)
-    stubGetPartitioning(testPartitioningDTO, getChildResponse)
-    stubGetMeasures(measuresResponse)
-    stubGetAdditionalData(additionalDataResponse)
-    when(mockBackend.send(isPatchAncestorsRequest)).thenReturn(conflictResponse)
-
-    val dispatcherWithMocks = dispatcher
-
-    // Should NOT throw — 409 on PATCH ancestors is expected
-    noException should be thrownBy dispatcherWithMocks.createPartitioning(
-      PartitioningSubmitDTO(testPartitioningDTO, Some(parentPartitioning), "author")
-    )
+    verify(mockBackend, never()).send(isGetPartitioningRequest(testPartitioningDTO))
   }
 
   // ---- multi-parent (D-02, D-03) ----
@@ -429,37 +337,46 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
 
   private def parentsN(n: Int): Seq[Seq[PartitionDTO]] = (1 to n).map(i => Seq(PartitionDTO(s"pk$i", s"pv$i")))
 
-  private def runMulti(n: Int, childExists: Boolean): Unit = {
+  private def runMatrix(n: Int, status: StatusCode, flag: Boolean): Unit = {
     val parents = parentsN(n)
     parents.zipWithIndex.foreach { case (p, i) => stubParent(p, 901L + i) }
-    if (childExists) {
-      stubGetPartitioning(testPartitioningDTO, okResp(SingleSuccessResponse(createdPartitioningWithId).asJsonString))
-    }
-    stubPostPartitioning(okResp(SingleSuccessResponse(createdPartitioningWithId).asJsonString, StatusCode.Created))
+    val storedAuthor = if (status == StatusCode.Ok) "stored-author" else "author"
+    val stored = PartitioningWithIdDTO(123L, testPartitioningDTO, storedAuthor)
+    stubPostPartitioning(okResp(SingleSuccessResponse(stored).asJsonString, status))
     stubTail()
-    val result = dispatcher.createPartitioning(PartitioningSubmitDTO(testPartitioningDTO, parents, "author"))
-    result.partitioning shouldBe createdPartitioningWithId.partitioning
 
+    val result = dispatcher.createPartitioning(
+      PartitioningCreateRequest(testPartitioningDTO, parents, "author", copyMeasureDefinitions = flag)
+    )
+
+    result shouldBe AtumContextDTO(
+      partitioning = testPartitioningDTO,
+      measures = measures.toSet,
+      additionalData = additionalData.map(item => item.key -> item.value).toMap
+    )
+
+    // exactly one POST, never a PATCH, never a GET of the child; n parent GETs + POST + measures + additional data
     verify(mockBackend, times(1)).send(isPostPartitioningRequest)
     verify(mockBackend, never()).send(isPatchAncestorsRequest)
     verify(mockBackend, never()).send(isGetPartitioningRequest(testPartitioningDTO))
+    verify(mockBackend, times(n + 3)).send(any[Request[Either[String, String], capabilities.WebSockets]])
+
     val bodies = capturePostBodies()
     bodies should have size 1
     bodies.head.parentPartitioningIds shouldBe (0 until n).map(901L + _)
     bodies.head.partitioning shouldBe testPartitioningDTO
     bodies.head.author shouldBe "author"
+    bodies.head.copyMeasureDefinitions shouldBe flag
   }
 
-  it should "send ONE POST carrying all parent ids in order for 2 parents (child absent)" in {
-    runMulti(2, childExists = false)
-  }
-
-  it should "send ONE POST, no child GET and no PATCH for 2 parents when child already exists" in {
-    runMulti(2, childExists = true)
-  }
-
-  it should "send all three parent ids in order in one POST for 3 parents" in {
-    runMulti(3, childExists = false)
+  for {
+    n <- 0 to 3
+    (status, statusName) <- Seq((StatusCode.Created, "201 Created"), (StatusCode.Ok, "200 OK"))
+    flag <- Seq(false, true)
+  } {
+    it should s"send exactly one POST for $n parent(s), status $statusName, flag $flag (no child GET, no PATCH)" in {
+      runMatrix(n, status, flag)
+    }
   }
 
   it should "propagate HttpException and send no POST when any parent is not found" in {
@@ -470,21 +387,38 @@ class HttpDispatcherUnitTests extends AnyFlatSpec with Matchers with BeforeAndAf
     stubTail()
 
     an[HttpException] should be thrownBy
-      dispatcher.createPartitioning(PartitioningSubmitDTO(testPartitioningDTO, parents, "author"))
+      dispatcher.createPartitioning(PartitioningCreateRequest(testPartitioningDTO, parents, "author"))
     verify(mockBackend, never()).send(isPostPartitioningRequest)
+    verify(mockBackend, never()).send(isPatchAncestorsRequest)
   }
 
-  it should "keep 0-parent flow: child GET, then POST with empty parentPartitioningIds" in {
-    stubGetPartitioning(testPartitioningDTO, Response(Left("Not found"): Either[String, String], StatusCode.NotFound))
+  it should "POST copyMeasureDefinitions = false for a request built with the Option factory (Some parent)" in {
+    val parent = Seq(PartitionDTO("pk1", "pv1"))
+    stubParent(parent, 901L)
     stubPostPartitioning(okResp(SingleSuccessResponse(createdPartitioningWithId).asJsonString, StatusCode.Created))
     stubTail()
 
-    dispatcher.createPartitioning(PartitioningSubmitDTO(testPartitioningDTO, Seq.empty[PartitioningDTO], "author"))
+    dispatcher.createPartitioning(PartitioningCreateRequest(testPartitioningDTO, Some(parent), "author"))
 
-    verify(mockBackend).send(isGetPartitioningRequest(testPartitioningDTO))
+    verify(mockBackend, never()).send(isGetPartitioningRequest(testPartitioningDTO))
+    verify(mockBackend, never()).send(isPatchAncestorsRequest)
+    val bodies = capturePostBodies()
+    bodies should have size 1
+    bodies.head.parentPartitioningIds shouldBe Seq(901L)
+    bodies.head.copyMeasureDefinitions shouldBe false
+  }
+
+  it should "POST copyMeasureDefinitions = false and no parents for a request built with the Option factory (None)" in {
+    stubPostPartitioning(okResp(SingleSuccessResponse(createdPartitioningWithId).asJsonString, StatusCode.Created))
+    stubTail()
+
+    dispatcher.createPartitioning(PartitioningCreateRequest(testPartitioningDTO, None, "author"))
+
+    verify(mockBackend, never()).send(isGetPartitioningRequest(testPartitioningDTO))
     val bodies = capturePostBodies()
     bodies should have size 1
     bodies.head.parentPartitioningIds shouldBe Seq.empty[Long]
+    bodies.head.copyMeasureDefinitions shouldBe false
   }
 
   private def isPatchAncestorsRequest: Request[Either[String, String], capabilities.WebSockets] =

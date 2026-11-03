@@ -18,7 +18,8 @@ package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, Dispatcher, HttpDispatcher}
-import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
+import za.co.absa.atum.model.dto.{AdditionalDataDTO, AdditionalDataPatchDTO, CheckpointDTO}
 import za.co.absa.atum.model.types.basic.AtumPartitions
 import za.co.absa.atum.model.types.basic.AtumPartitionsOps
 
@@ -82,13 +83,15 @@ trait AtumAgent {
    *    already is an author who previously created the partitioning in the data store. Each Atum Context thus
    *    can have different author potentially.
    *
+   *  Measure definitions are not involved: a root partitioning has no parents, so nothing is copied.
+   *
    *  @param atumPartitions: Partitioning based on which an Atum Context will be created or obtained.
    *  @return Atum context object that's either newly created in the data store, or obtained because the input
    *          partitioning already existed.
    */
   def getOrCreateAtumContext(atumPartitions: AtumPartitions): AtumContext = {
     val authorIfNew = this.currentUser
-    val partitioningDTO = PartitioningSubmitDTO(atumPartitions.toPartitioningDTO, None, authorIfNew)
+    val partitioningDTO = PartitioningCreateRequest(atumPartitions.toPartitioningDTO, None, authorIfNew)
 
     val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
     val atumContext = AtumContext.fromDTO(atumContextDTO, this)
@@ -97,25 +100,65 @@ trait AtumAgent {
   }
 
   /**
-   *  Provides an AtumContext given a `AtumPartitions` instance for sub partitions.
-   *  Retrieves the data from AtumService API.
+   *  Provides an AtumContext for a child partitioning linked to a single parent, merging the parent's partitions
+   *  with `subPartitions` (equivalent to `getOrCreateAtumSubContext(subPartitions, mergeWithParent = true)`).
    *
-   *  @param subPartitions Sub partitions based on which an Atum Context will be created or obtained.
-   *  @param mergeWithParent if true, the child partitioning is `parent ++ sub`
-   *                         if false, only `sub` is used as partitioning content,
-   *                         and the parent relationship is still recorded via flows.
+   *  This overload exists for binary compatibility: it was published in agent v0.10.0 and earlier, so code compiled
+   *  against those versions keeps linking.
    *
-   *                         Note: If false and the child already existed, the Measures and Additional Data are not
-   *                         copied over from the parent to the child, otherwise they are copied.
-   *  @param parentAtumContext Parent AtumContext.
-   *  @return Atum context object
+   *  Measure definitions are NOT copied (copyMeasureDefinitions = false). Copying is governed solely by the
+   *  `copyMeasureDefinitions` flag of the overload
+   *  `getOrCreateAtumSubContext(subPartitions, mergeWithParent, copyMeasureDefinitions)`.
+   *
+   *  @param subPartitions     Partitions identifying the child.
+   *  @param parentAtumContext Parent context.
+   *
+   *  @return Atum context object of the child
    */
   def getOrCreateAtumSubContext(subPartitions: AtumPartitions)(implicit parentAtumContext: AtumContext): AtumContext =
-    getOrCreateAtumSubContext(subPartitions, mergeWithParent = true)
+    getOrCreateAtumSubContext(subPartitions, mergeWithParent = true, copyMeasureDefinitions = false)
 
+  /**
+   *  Provides an AtumContext for a child partitioning linked to a single parent.
+   *
+   *  Does not copy measure definitions (copyMeasureDefinitions = false); to opt in use the overload with
+   *  `copyMeasureDefinitions`.
+   *
+   *  @param subPartitions   Partitions identifying the child.
+   *  @param mergeWithParent if true, the child partitioning is `parent ++ sub`;
+   *                         if false, only `sub` is used as partitioning content,
+   *                         and the parent relationship is still recorded via flows.
+   *  @param parentAtumContext Parent context.
+   *
+   *  @return Atum context object of the child
+   */
   def getOrCreateAtumSubContext(
     subPartitions: AtumPartitions,
     mergeWithParent: Boolean = true
+  )(implicit parentAtumContext: AtumContext): AtumContext =
+    getOrCreateAtumSubContext(subPartitions, mergeWithParent, copyMeasureDefinitions = false)
+
+  /**
+   *  Provides an AtumContext for a child partitioning linked to a single parent, with explicit control over the copying
+   *  of the parent's measure definitions.
+   *
+   *  @param subPartitions   Partitions identifying the child.
+   *  @param mergeWithParent if true, the child partitioning is `parent ++ sub`;
+   *                         if false, only `sub` is used as partitioning content,
+   *                         and the parent relationship is still recorded via flows.
+   *  @param copyMeasureDefinitions if true and the child partitioning is newly created, the parent's measure
+   *                         definitions are copied to it by the server; if false (what every other overload sends)
+   *                         nothing is copied. Copying is governed solely by this flag, independent of
+   *                         `mergeWithParent`. An already existing child never receives copies.
+   *                         Additional data is never copied.
+   *  @param parentAtumContext Parent context.
+   *
+   *  @return Atum context object of the child
+   */
+  def getOrCreateAtumSubContext(
+    subPartitions: AtumPartitions,
+    mergeWithParent: Boolean,
+    copyMeasureDefinitions: Boolean
   )(implicit parentAtumContext: AtumContext): AtumContext = {
     val authorIfNew = this.currentUser
     val newPartitions: AtumPartitions = if (mergeWithParent) {
@@ -125,8 +168,9 @@ trait AtumAgent {
     }
 
     val newPartitionsDTO = newPartitions.toPartitioningDTO
-    val parentPartitionsDTO = Some(parentAtumContext.atumPartitions.toPartitioningDTO)
-    val partitioningDTO = PartitioningSubmitDTO(newPartitionsDTO, parentPartitionsDTO, authorIfNew)
+    val parentPartitionsDTO = Seq(parentAtumContext.atumPartitions.toPartitioningDTO)
+    val partitioningDTO =
+      PartitioningCreateRequest(newPartitionsDTO, parentPartitionsDTO, authorIfNew, copyMeasureDefinitions)
 
     val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)
     val atumContext = AtumContext.fromDTO(atumContextDTO, this)
@@ -141,19 +185,50 @@ trait AtumAgent {
    *  to the dispatcher carrying all parents. Parents are de-duplicated by their partitions (first occurrence
    *  order is kept). Union and de-duplication of Measures and Additional Data is done server-side.
    *
-   *  @param subPartitions Partitions identifying the child.
-   *  @param parents       All parent contexts; must not be empty.
+   *  Does not copy measure definitions (copyMeasureDefinitions = false); to opt in use the overload with
+   *  `copyMeasureDefinitions`.
+   *
+   *  @param subPartitions      Partitions identifying the child.
+   *  @param parentAtumContexts All parent contexts; must not be empty.
+   *
    *  @return Atum context object of the child
-   *  @throws IllegalArgumentException if `parents` is empty
+   *  @throws IllegalArgumentException if `parentAtumContexts` is empty
    */
-  def getOrCreateAtumSubContext(subPartitions: AtumPartitions, parents: Seq[AtumContext]): AtumContext = {
-    require(parents.nonEmpty, "At least one parent AtumContext is required to create a sub-context.")
+  def getOrCreateAtumSubContext(subPartitions: AtumPartitions, parentAtumContexts: Seq[AtumContext]): AtumContext =
+    getOrCreateAtumSubContext(subPartitions, parentAtumContexts, copyMeasureDefinitions = false)
 
-    val distinctParents = parents.map(_.atumPartitions).distinct
-    val partitioningDTO = PartitioningSubmitDTO(
+  /**
+   *  Provides an AtumContext for a child partitioning linked to several parents in a single operation, with explicit
+   *  control over the copying of the parents' measure definitions.
+   *
+   *  The child identity is `subPartitions` only (no merge with any parent). Exactly one create call is issued
+   *  to the dispatcher carrying all parents. Parents are de-duplicated by their partitions (first occurrence
+   *  order is kept). Union and de-duplication of Measures and Additional Data is done server-side.
+   *
+   *  @param subPartitions      Partitions identifying the child.
+   *  @param parentAtumContexts All parent contexts; must not be empty.
+   *  @param copyMeasureDefinitions if true and the child partitioning is newly created, the parents' measure
+   *                            definitions are copied to it by the server; if false (what every other overload sends)
+   *                            nothing is copied. Copying is governed solely by this flag. An already existing child
+   *                            never receives copies. Additional data is never copied.
+   *
+   *  @return Atum context object of the child
+   *  @throws IllegalArgumentException if `parentAtumContexts` is empty
+   */
+  def getOrCreateAtumSubContext(
+    subPartitions: AtumPartitions,
+    parentAtumContexts: Seq[AtumContext],
+    copyMeasureDefinitions: Boolean
+  ): AtumContext = {
+    require(parentAtumContexts.nonEmpty, "At least one parent AtumContext is required to create a sub-context.")
+
+    val distinctParents = parentAtumContexts.map(_.atumPartitions).distinct // just in case
+
+    val partitioningDTO = PartitioningCreateRequest(
       subPartitions.toPartitioningDTO,
       distinctParents.map(_.toPartitioningDTO),
-      this.currentUser
+      this.currentUser,
+      copyMeasureDefinitions
     )
 
     val atumContextDTO = dispatcher.createPartitioning(partitioningDTO)

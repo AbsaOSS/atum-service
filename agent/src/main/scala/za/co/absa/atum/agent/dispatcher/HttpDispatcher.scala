@@ -25,6 +25,7 @@ import sttp.model.Uri
 import sttp.client3.okhttp.OkHttpSyncBackend
 import sttp.model.StatusCode
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
 import za.co.absa.atum.model.ApiPaths
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, SingleSuccessResponse}
@@ -75,20 +76,12 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
     handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data.id
   }
 
-  private[dispatcher] def getPartitioning(partitioning: PartitioningDTO): Option[PartitioningWithIdDTO] = {
-    val encodedPartitioning = partitioning.asBase64EncodedJsonString
-    val request = commonAtumRequest.get(getPartitioningIdEndpoint.addParam("partitioning", encodedPartitioning))
-
-    val response = withRetry(request)
-
-    response.code match {
-      case StatusCode.NotFound => None
-      case _ => Some(handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data)
-    }
-  }
-
+  /**
+   *  Accepts any 2xx: the server answers 201 for a newly created and 200 for an already existing partitioning
+   *  (same body); any other status becomes an HttpException (409 = cycle only).
+   */
   private def postCreatePartitioning(
-    partitioning: PartitioningSubmitDTO,
+    partitioning: PartitioningCreateRequest,
     parentIds: Seq[Long]
   ): PartitioningWithIdDTO = {
     val endpoint = Uri.unsafeParse(s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}")
@@ -98,31 +91,22 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
         PartitioningSubmitV2DTO(
           partitioning.partitioning,
           parentIds,
-          partitioning.authorIfNew
+          partitioning.authorIfNew,
+          partitioning.copyMeasureDefinitions
         ).asJsonString
       )
     val response = withRetry(request)
     handleResponseBody(response).as[SingleSuccessResponse[PartitioningWithIdDTO]].data
   }
 
-  override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
-    // D-02: resolve ALL parent ids (one GET each, in input order); a 404 aborts before any POST.
+  /**
+   *  Exactly one POST for 0..N parents (the server decides created 201 vs existing 200 and links parents
+   *  idempotently); parent ids are resolved with one GET each, in input order (a 404 aborts before the POST).
+   */
+  override protected[agent] def createPartitioning(partitioning: PartitioningCreateRequest): AtumContextDTO = {
     val parentIds: Seq[Long] = partitioning.parentPartitionings.map(getPartitioningId)
 
-    val newPartitioningWithIdDTO = if (parentIds.size >= 2) {
-      // D-03: multi-parent - always POST; the server links idempotently, so no child GET and no ensureParentLink.
-      postCreatePartitioning(partitioning, parentIds)
-    } else {
-      val partitioningWithIdOpt = getPartitioning(partitioning.partitioning)
-      val created = partitioningWithIdOpt.getOrElse(postCreatePartitioning(partitioning, parentIds))
-
-      // If both parent and child partitioning already existed before this function was called,
-      // we must explicitly link them here, because they might not been linked yet.
-      if (partitioningWithIdOpt.isDefined && parentIds.nonEmpty) {
-        ensureParentLink(created.id, parentIds.head, partitioning.authorIfNew)
-      }
-      created
-    }
+    val newPartitioningWithIdDTO = postCreatePartitioning(partitioning, parentIds)
 
     val measures = {
       val endpoint = Uri.unsafeParse(
@@ -147,30 +131,6 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
       measures = measures,
       additionalData = additionalData.data.map(item => item.key -> item.value).toMap
     )
-  }
-
-  /**
-   *  Ensures the parent-child flow link exists by calling the PATCH ancestors endpoint.
-   *  Uses copyMeasurements=false and copyAdditionalData=false since the link is the only
-   *  thing we need — measure/AD inheritance was either already done at creation time or
-   *  is intentionally skipped for shared/canonical children.
-   */
-  private def ensureParentLink(childPartitioningId: Long, parentPartitioningId: Long, author: String): Unit = {
-    val endpoint = Uri.unsafeParse(
-      s"$serverUrl$apiV2/${ApiPaths.V2Paths.Partitionings}/$childPartitioningId/${ApiPaths.V2Paths.Ancestors}"
-    )
-    val patchDTO = PartitioningParentPatchDTO(
-      parentPartitioningId = parentPartitioningId,
-      author = author,
-      copyMeasurements = false,
-      copyAdditionalData = false
-    )
-    val request = commonAtumRequest.patch(endpoint).body(patchDTO.asJsonString)
-    val response = withRetry(request)
-    // 409 Conflict means the link already exists — expected and safe to ignore.
-    if (response.code != StatusCode.Conflict) {
-      handleResponseBody(response)
-    }
   }
 
   override protected[agent] def saveCheckpoint(checkpoint: CheckpointDTO): Unit = {
