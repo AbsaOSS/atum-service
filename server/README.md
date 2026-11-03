@@ -92,8 +92,7 @@ The flag on a request for an already existing partitioning (`200`) does nothing.
 - Propagation is deliberately narrow and order independent: every flow that contains the parent receives the child and
   the members of the child's own flow. The cycle check runs before anything is written. Links that are redundant change
   nothing. Existing data is **not** back-filled, see "Concurrency, retries and known limitations" below and the
-  read-only diagnostics in [database/README.md](../database/README.md#diagnostics-read-only), the design is described in
-  [ADR 02](../adrs/02-consumption-pattern-for-audits.md).
+  read-only diagnostics in [database/README.md](../database/README.md#diagnostics-read-only).
 
 `GET /api/v2/partitionings/{partitioningId}/ancestors` answers `200` with an empty `data` list (and `hasMore: false`)
 for a partitioning without ancestors, `404` for an unknown id.
