@@ -1856,7 +1856,7 @@
     },
     {
       "name": "Test: consolidated POST and linking (v1.1)",
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings (idempotent, 0..N parents: 201 created / 200 existing, 404 unknown parent, 409 cycle, 400 more than 100 distinct parents, copyMeasureDefinitions true / false / absent)\n    \n- PATCH:/api/v2/partitionings/{partitioningId}/ancestors (both copy flags required, 204, 409 cycle and self-link, 404 unknown parent)\n    \n- GET:/api/v2/partitionings/{partitioningId}/ancestors (root: 200 with an empty list)\n    \n- GET:/api/v2/partitionings/{partitioningId}/measures\n    \n- GET:/api/v2/partitionings/{partitioningId}/additional-data\n    \n- GET:/api/v2/partitionings/{partitioningId}/main-flow\n    \n- GET:/api/v2/flows/{flowId}/partitionings\n    \n- POST:/api/v2/partitionings/{partitioningId}/checkpoints\n    \n- GET:/api/v2/partitionings?partitioning=\n    \nAll partitionings of this folder use the unique suffix in the collection variable v11_suffix (regenerated unconditionally by the first request of the folder, so a re-run after an aborted run starts clean); all ids are kept in collection variables with the prefix v11_. Ids of probe requests for unknown partitionings are >= 9007199254740000 (never allocated by the database sequence). Error responses are checked by status code and envelope shape (message, requestId), not by message wording.",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings (idempotent, 0..N parents: 201 created / 200 existing, 404 unknown parent and the child is not created, 409 cycle, 400 more than 100 distinct parents, copyMeasureDefinitions true / false)\n    \n- PATCH:/api/v2/partitionings/{partitioningId}/ancestors (both copy flags required: 400 without them; 204 late link, which also adds the descendants of the linked partitioning to the flow of the new parent)\n    \n- GET:/api/v2/partitionings/{partitioningId}/ancestors (200, exact set of the direct parents)\n    \n- GET:/api/v2/partitionings/{partitioningId}/measures\n    \n- GET:/api/v2/partitionings/{partitioningId}/additional-data\n    \n- GET:/api/v2/partitionings/{partitioningId}/main-flow\n    \n- GET:/api/v2/flows/{flowId}/partitionings\n    \n- POST:/api/v2/partitionings/{partitioningId}/checkpoints\n    \n- GET:/api/v2/partitionings?partitioning=\n    \nAll partitionings of this folder use the unique suffix in the collection variable v11_suffix (regenerated unconditionally by the first request of the folder, so a re-run after an aborted run starts clean); all ids are kept in collection variables with the prefix v11_. Ids of probe requests for unknown partitionings are >= 9007199254740000 (never allocated by the database sequence). This folder is an HTTP-contract smoke test with one happy path per behaviour; the edge cases (boundaries, self-link, copy-flag matrix) are covered by the database and server tests. Error responses are checked by status code and envelope shape (message, requestId), not by message wording.",
       "event": [
         {
           "listen": "prerequest",
@@ -1996,51 +1996,6 @@
                 "api",
                 "v2",
                 "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 ancestors of root R (empty list) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200 for a partitioning without ancestors', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('data is an empty list', function () { pm.expect(pm.response.json().data).to.eql([]); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_r_id}}/ancestors?limit=10&offset=0",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_r_id}}",
-                "ancestors"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                }
               ]
             }
           },
@@ -2197,45 +2152,6 @@
           "response": []
         },
         {
-          "name": "Act: v11 parent P measures (one definition) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Exactly the count definition', function () {",
-                  "    const d = pm.response.json().data;",
-                  "    pm.expect(d).to.have.lengthOf(1);",
-                  "    pm.expect(d[0]).to.eql({ measureName: 'count', measuredColumns: ['*'] });",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_p_id}}/measures",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_p_id}}",
-                "measures"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "Act: v11 child C1 (new, copyMeasureDefinitions true) - 201",
           "event": [
             {
@@ -2368,54 +2284,6 @@
           "response": []
         },
         {
-          "name": "Act: v11 child C1 ancestors (exactly P) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Ancestors are exactly [P]', function () {",
-                  "    pm.expect(pm.response.json().data.map(function (x) { return String(x.id); })).to.eql([String(g('v11_p_id'))]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_c1_id}}/ancestors?limit=10&offset=0",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_c1_id}}",
-                "ancestors"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "Act: v11 child C2 (new, copyMeasureDefinitions false) - 201",
           "event": [
             {
@@ -2503,198 +2371,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 child C3 (new, copyMeasureDefinitions absent) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_c3_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Response body has expected values', function () {",
-                  "    const d = pm.response.json().data;",
-                  "    pm.expect(d.partitioning).to.eql([{ key: 'v11Test', value: 'C3_' + g('v11_suffix') }]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"C3_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_p_id}}]}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 child C3 measures (none, default is false) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('No measure definitions when the flag is absent', function () { pm.expect(pm.response.json().data).to.eql([]); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_c3_id}}/measures",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_c3_id}}",
-                "measures"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 root X (create) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_x_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Response body has expected values', function () {",
-                  "    const d = pm.response.json().data;",
-                  "    pm.expect(d.partitioning).to.eql([{ key: 'v11Test', value: 'X_' + g('v11_suffix') }]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"X_{{v11_suffix}}\"}], \"parentPartitioningIds\": []}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 root E (create, no parents yet) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_e_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Response body has expected values', function () {",
-                  "    const d = pm.response.json().data;",
-                  "    pm.expect(d.partitioning).to.eql([{ key: 'v11Test', value: 'E_' + g('v11_suffix') }]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"E_{{v11_suffix}}\"}], \"parentPartitioningIds\": []}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 existing child E gets a single new parent X via POST - 200",
+          "name": "Act: v11 existing R gets a single new parent P via POST - 200",
           "event": [
             {
               "listen": "test",
@@ -2703,13 +2380,13 @@
                 "packages": {},
                 "exec": [
                   "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Status code is 200 (E already exists, X is linked)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Status code is 200 (R already exists, P is linked)', function () { pm.response.to.have.status(200); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Same id as the existing E, stored author and same Location', function () {",
+                  "pm.test('Same id as the existing R, stored author and same Location', function () {",
                   "    const d = pm.response.json().data;",
-                  "    pm.expect(String(d.id)).to.eql(String(g('v11_e_id')));",
+                  "    pm.expect(String(d.id)).to.eql(String(g('v11_r_id')));",
                   "    pm.expect(d.author).to.eql('postman_v11');",
-                  "    pm.expect(pm.response.headers.get('Location')).to.match(new RegExp('/api/v2/partitionings/' + g('v11_e_id') + '$'));",
+                  "    pm.expect(pm.response.headers.get('Location')).to.match(new RegExp('/api/v2/partitionings/' + g('v11_r_id') + '$'));",
                   "});"
                 ]
               }
@@ -2720,7 +2397,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\"author\": \"postman_v11_other\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"E_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_x_id}}]}",
+              "raw": "{\"author\": \"postman_v11_other\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"R_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_p_id}}]}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2742,7 +2419,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 child E ancestors (exactly X) - 200",
+          "name": "Act: v11 R ancestors (exactly P) - 200",
           "event": [
             {
               "listen": "test",
@@ -2753,8 +2430,8 @@
                   "const g = function (k) { return pm.collectionVariables.get(k); };",
                   "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Ancestors are exactly [X]', function () {",
-                  "    pm.expect(pm.response.json().data.map(function (x) { return String(x.id); })).to.eql([String(g('v11_x_id'))]);",
+                  "pm.test('Ancestors are exactly [P]', function () {",
+                  "    pm.expect(pm.response.json().data.map(function (x) { return String(x.id); })).to.eql([String(g('v11_p_id'))]);",
                   "});"
                 ]
               }
@@ -2764,7 +2441,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_e_id}}/ancestors?limit=10&offset=0",
+              "raw": "{{host}}/api/v2/partitionings/{{v11_r_id}}/ancestors?limit=10&offset=0",
               "host": [
                 "{{host}}"
               ],
@@ -2772,7 +2449,7 @@
                 "api",
                 "v2",
                 "partitionings",
-                "{{v11_e_id}}",
+                "{{v11_r_id}}",
                 "ancestors"
               ],
               "query": [
@@ -2790,7 +2467,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 existing child E gets parent P with copyMeasureDefinitions true - 200",
+          "name": "Act: v11 child M (new, two parents P and R in ONE call) - 201",
           "event": [
             {
               "listen": "test",
@@ -2798,12 +2475,18 @@
                 "type": "text/javascript",
                 "packages": {},
                 "exec": [
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Status code is 200 (existing child)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Same id as the existing E', function () {",
-                  "    pm.expect(String(pm.response.json().data.id)).to.eql(String(g('v11_e_id')));",
-                  "});"
+                  "const g = function (k) { return pm.collectionVariables.get(k); };",
+                  "pm.test('Response body has expected values', function () {",
+                  "    pm.expect(pm.response.json().data.partitioning).to.eql([{ key: 'v11Test', value: 'M_' + g('v11_suffix') }]);",
+                  "});",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    try {",
+                  "        const _j = pm.response.json();",
+                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_m_id', _j.data.id); }",
+                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
+                  "}"
                 ]
               }
             }
@@ -2813,7 +2496,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"E_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_p_id}}], \"copyMeasureDefinitions\": true}",
+              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"M_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_p_id}}, {{v11_r_id}}]}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2829,90 +2512,6 @@
                 "api",
                 "v2",
                 "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 child E measures (flag on an existing child copies nothing) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Measure definitions are copied only when a NEW child is created', function () { pm.expect(pm.response.json().data).to.eql([]); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_e_id}}/measures",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_e_id}}",
-                "measures"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 child E ancestors (X and P) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Ancestors are X and P (order-agnostic)', function () {",
-                  "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([String(g('v11_x_id')), String(g('v11_p_id'))].sort());",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_e_id}}/ancestors?limit=10&offset=0",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_e_id}}",
-                "ancestors"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                }
               ]
             }
           },
@@ -2963,7 +2562,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 flow of P lists exactly P, C1, C2, C3 and E (narrow propagation, no leak) - 200",
+          "name": "Act: v11 flow of P lists exactly P, C1, C2, R and M - 200",
           "event": [
             {
               "listen": "test",
@@ -2974,9 +2573,9 @@
                   "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
                   "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('The flow contains exactly P, C1, C2, C3 and E: X, R, N and every other partitioning are not members', function () {",
+                  "pm.test('The flow of P contains exactly P, C1, C2, R (linked by POST) and M (two-parent child): nothing else is a member', function () {",
                   "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([g('v11_p_id'), g('v11_c1_id'), g('v11_c2_id'), g('v11_c3_id'), g('v11_e_id')].map(String).sort());",
+                  "    pm.expect(ids).to.eql([g('v11_p_id'), g('v11_c1_id'), g('v11_c2_id'), g('v11_r_id'), g('v11_m_id')].map(String).sort());",
                   "});"
                 ]
               }
@@ -3012,7 +2611,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 main flow of X - 200",
+          "name": "Act: v11 main flow of R - 200",
           "event": [
             {
               "listen": "test",
@@ -3026,7 +2625,7 @@
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    try {",
                   "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_x_flow_id', _j.data.id); }",
+                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_r_flow_id', _j.data.id); }",
                   "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
                   "}"
                 ]
@@ -3037,7 +2636,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_x_id}}/main-flow",
+              "raw": "{{host}}/api/v2/partitionings/{{v11_r_id}}/main-flow",
               "host": [
                 "{{host}}"
               ],
@@ -3045,7 +2644,7 @@
                 "api",
                 "v2",
                 "partitionings",
-                "{{v11_x_id}}",
+                "{{v11_r_id}}",
                 "main-flow"
               ]
             }
@@ -3053,7 +2652,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 flow of X lists exactly X and E - 200",
+          "name": "Act: v11 flow of R lists exactly R and M - 200",
           "event": [
             {
               "listen": "test",
@@ -3064,9 +2663,9 @@
                   "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
                   "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('The flow contains exactly X and its child E (E has two parents, P and X, and does not leak into other flows)', function () {",
+                  "pm.test('The flow of R contains exactly R and M (the second parent of the one POST); P, C1 and C2 are not members', function () {",
                   "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([g('v11_x_id'), g('v11_e_id')].map(String).sort());",
+                  "    pm.expect(ids).to.eql([g('v11_r_id'), g('v11_m_id')].map(String).sort());",
                   "});"
                 ]
               }
@@ -3076,7 +2675,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{host}}/api/v2/flows/{{v11_x_flow_id}}/partitionings?limit=100&offset=0",
+              "raw": "{{host}}/api/v2/flows/{{v11_r_flow_id}}/partitionings?limit=100&offset=0",
               "host": [
                 "{{host}}"
               ],
@@ -3084,7 +2683,7 @@
                 "api",
                 "v2",
                 "flows",
-                "{{v11_x_flow_id}}",
+                "{{v11_r_flow_id}}",
                 "partitionings"
               ],
               "query": [
@@ -3102,538 +2701,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 multi-parent root MA (create) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Response body has expected values', function () {",
-                  "    pm.expect(pm.response.json().data.partitioning).to.eql([{ key: 'v11Test', value: 'MA_' + g('v11_suffix') }]);",
-                  "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_ma_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"MA_{{v11_suffix}}\"}], \"parentPartitioningIds\": []}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 multi-parent root MB (create) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Response body has expected values', function () {",
-                  "    pm.expect(pm.response.json().data.partitioning).to.eql([{ key: 'v11Test', value: 'MB_' + g('v11_suffix') }]);",
-                  "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_mb_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"MB_{{v11_suffix}}\"}], \"parentPartitioningIds\": []}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 child M (new, two parents MA and MB in ONE call) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Response body has expected values', function () {",
-                  "    pm.expect(pm.response.json().data.partitioning).to.eql([{ key: 'v11Test', value: 'M_' + g('v11_suffix') }]);",
-                  "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_m_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"M_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_ma_id}}, {{v11_mb_id}}]}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 child M ancestors (exactly MA and MB) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Both parents of the one POST are linked: the ancestors are exactly MA and MB', function () {",
-                  "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([g('v11_ma_id'), g('v11_mb_id')].map(String).sort());",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_m_id}}/ancestors?limit=10&offset=0",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_m_id}}",
-                "ancestors"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 main flow of MA - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Main flow id is returned', function () { pm.expect(pm.response.json().data.id).to.be.a('number'); });",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_ma_flow_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_ma_id}}/main-flow",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_ma_id}}",
-                "main-flow"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 flow of MA lists exactly MA and M - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('The flow of MA contains exactly MA and M (MB and every unrelated partitioning are not members)', function () {",
-                  "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([g('v11_ma_id'), g('v11_m_id')].map(String).sort());",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/flows/{{v11_ma_flow_id}}/partitionings?limit=100&offset=0",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "flows",
-                "{{v11_ma_flow_id}}",
-                "partitionings"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "100"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 main flow of MB - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Main flow id is returned', function () { pm.expect(pm.response.json().data.id).to.be.a('number'); });",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_mb_flow_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_mb_id}}/main-flow",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_mb_id}}",
-                "main-flow"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 flow of MB lists exactly MB and M - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('The flow of MB contains exactly MB and M (MA and every unrelated partitioning are not members)', function () {",
-                  "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([g('v11_mb_id'), g('v11_m_id')].map(String).sort());",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/flows/{{v11_mb_flow_id}}/partitionings?limit=100&offset=0",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "flows",
-                "{{v11_mb_flow_id}}",
-                "partitionings"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "100"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 descendant scenario: root PB (create) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Response body has expected values', function () {",
-                  "    pm.expect(pm.response.json().data.partitioning).to.eql([{ key: 'v11Test', value: 'PB_' + g('v11_suffix') }]);",
-                  "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_pb_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"PB_{{v11_suffix}}\"}], \"parentPartitioningIds\": []}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 descendant scenario: child PC (new, parent PB) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_pc_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"PC_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_pb_id}}]}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 descendant scenario: root PQ (create) - 201",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Response body has expected values', function () {",
-                  "    pm.expect(pm.response.json().data.partitioning).to.eql([{ key: 'v11Test', value: 'PQ_' + g('v11_suffix') }]);",
-                  "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_pq_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"PQ_{{v11_suffix}}\"}], \"parentPartitioningIds\": []}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 descendant scenario: late link of PB under PQ via PATCH (PB already has the child PC) - 204",
+          "name": "Act: v11 descendant: late link of R under C2 via PATCH (R already has the child M) - 204",
           "event": [
             {
               "listen": "test",
@@ -3651,7 +2719,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\"parentPartitioningId\": {{v11_pq_id}}, \"author\": \"postman_v11\", \"copyMeasurements\": false, \"copyAdditionalData\": false}",
+              "raw": "{\"parentPartitioningId\": {{v11_c2_id}}, \"author\": \"postman_v11\", \"copyMeasurements\": false, \"copyAdditionalData\": false}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3659,7 +2727,7 @@
               }
             },
             "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_pb_id}}/ancestors",
+              "raw": "{{host}}/api/v2/partitionings/{{v11_r_id}}/ancestors",
               "host": [
                 "{{host}}"
               ],
@@ -3667,7 +2735,7 @@
                 "api",
                 "v2",
                 "partitionings",
-                "{{v11_pb_id}}",
+                "{{v11_r_id}}",
                 "ancestors"
               ]
             }
@@ -3675,7 +2743,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 descendant scenario: main flow of PQ - 200",
+          "name": "Act: v11 descendant: main flow of C2 - 200",
           "event": [
             {
               "listen": "test",
@@ -3689,7 +2757,7 @@
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    try {",
                   "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_pq_flow_id', _j.data.id); }",
+                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_c2_flow_id', _j.data.id); }",
                   "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
                   "}"
                 ]
@@ -3700,7 +2768,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_pq_id}}/main-flow",
+              "raw": "{{host}}/api/v2/partitionings/{{v11_c2_id}}/main-flow",
               "host": [
                 "{{host}}"
               ],
@@ -3708,7 +2776,7 @@
                 "api",
                 "v2",
                 "partitionings",
-                "{{v11_pq_id}}",
+                "{{v11_c2_id}}",
                 "main-flow"
               ]
             }
@@ -3716,7 +2784,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 descendant scenario: flow of PQ lists exactly PQ, PB and the descendant PC - 200",
+          "name": "Act: v11 descendant: flow of C2 lists exactly C2, R and the descendant M - 200",
           "event": [
             {
               "listen": "test",
@@ -3727,9 +2795,9 @@
                   "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
                   "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('The flow of PQ contains exactly PQ, PB and PC: the child PC that was already below PB came along, nothing else did', function () {",
+                  "pm.test('The flow of C2 contains exactly C2, R and M: the child M that was already below R came along, nothing else did', function () {",
                   "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([g('v11_pq_id'), g('v11_pb_id'), g('v11_pc_id')].map(String).sort());",
+                  "    pm.expect(ids).to.eql([g('v11_c2_id'), g('v11_r_id'), g('v11_m_id')].map(String).sort());",
                   "});"
                 ]
               }
@@ -3739,7 +2807,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{host}}/api/v2/flows/{{v11_pq_flow_id}}/partitionings?limit=100&offset=0",
+              "raw": "{{host}}/api/v2/flows/{{v11_c2_flow_id}}/partitionings?limit=100&offset=0",
               "host": [
                 "{{host}}"
               ],
@@ -3747,7 +2815,7 @@
                 "api",
                 "v2",
                 "flows",
-                "{{v11_pq_flow_id}}",
+                "{{v11_c2_flow_id}}",
                 "partitionings"
               ],
               "query": [
@@ -3765,56 +2833,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 descendant scenario: ancestors of PC (exactly PB and PQ) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('PC has the ancestors PB (its parent) and PQ (the late-linked grandparent)', function () {",
-                  "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([g('v11_pb_id'), g('v11_pq_id')].map(String).sort());",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_pc_id}}/ancestors?limit=10&offset=0",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_pc_id}}",
-                "ancestors"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 cycle via POST (X under its own child E) - 409",
+          "name": "Act: v11 cycle via POST (P under its own descendant M) - 409",
           "event": [
             {
               "listen": "test",
@@ -3838,7 +2857,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"X_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_e_id}}]}",
+              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"P_{{v11_suffix}}\"}], \"parentPartitioningIds\": [{{v11_m_id}}]}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3854,198 +2873,6 @@
                 "api",
                 "v2",
                 "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 cycle via PATCH (X under its own child E) - 409",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 409', function () { pm.response.to.have.status(409); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Error envelope carries message and requestId (the wording of the message is not part of the contract)', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('requestId');",
-                  "    pm.expect(j).to.have.property('message');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"parentPartitioningId\": {{v11_e_id}}, \"author\": \"postman_v11\", \"copyMeasurements\": false, \"copyAdditionalData\": false}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_x_id}}/ancestors",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_x_id}}",
-                "ancestors"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 self-link via PATCH (X under X) - 409",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 409', function () { pm.response.to.have.status(409); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Error envelope carries message and requestId (the wording of the message is not part of the contract)', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('requestId');",
-                  "    pm.expect(j).to.have.property('message');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"parentPartitioningId\": {{v11_x_id}}, \"author\": \"postman_v11\", \"copyMeasurements\": false, \"copyAdditionalData\": false}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_x_id}}/ancestors",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_x_id}}",
-                "ancestors"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 PATCH without the copy flags (both are required) - 400",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Error envelope carries message and requestId (the wording of the message is not part of the contract)', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('requestId');",
-                  "    pm.expect(j).to.have.property('message');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"parentPartitioningId\": {{v11_p_id}}, \"author\": \"postman_v11\"}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_r_id}}/ancestors",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_r_id}}",
-                "ancestors"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 PATCH with an unknown parent - 404",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 404', function () { pm.response.to.have.status(404); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Error envelope carries message and requestId (the wording of the message is not part of the contract)', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('requestId');",
-                  "    pm.expect(j).to.have.property('message');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"parentPartitioningId\": 9007199254740991, \"author\": \"postman_v11\", \"copyMeasurements\": false, \"copyAdditionalData\": false}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_r_id}}/ancestors",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_r_id}}",
-                "ancestors"
               ]
             }
           },
@@ -4148,65 +2975,6 @@
           "response": []
         },
         {
-          "name": "Act: v11 POST with 100 distinct unknown parents (at the cap, passes the cap check) - 404",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "const ids = [];",
-                  "for (let i = 1; i <= 100; i++) { ids.push(9007199254740000 + i); }",
-                  "const body = { author: 'postman_v11', partitioning: [{ key: 'v11Test', value: 'CAP100_' + pm.collectionVariables.get('v11_suffix') }], parentPartitioningIds: ids };",
-                  "pm.collectionVariables.set('v11_cap100_body', JSON.stringify(body));"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 404: 100 distinct parents are within the cap, they just do not exist', function () { pm.response.to.have.status(404); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Error envelope carries message and requestId (the wording of the message is not part of the contract)', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('requestId');",
-                  "    pm.expect(j).to.have.property('message');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{{v11_cap100_body}}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
           "name": "Act: v11 POST with 101 distinct parents - 400",
           "event": [
             {
@@ -4266,7 +3034,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 child C4 (new root for the PATCH copy flags) - 201",
+          "name": "Act: v11 PATCH without the copy flags (both are required) - 400",
           "event": [
             {
               "listen": "test",
@@ -4274,233 +3042,12 @@
                 "type": "text/javascript",
                 "packages": {},
                 "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    try {",
-                  "        const _j = pm.response.json();",
-                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_c4_id', _j.data.id); }",
-                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
-                  "}",
-                  "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Response body has expected values', function () {",
-                  "    const d = pm.response.json().data;",
-                  "    pm.expect(d.partitioning).to.eql([{ key: 'v11Test', value: 'C4_' + g('v11_suffix') }]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"C4_{{v11_suffix}}\"}], \"parentPartitioningIds\": []}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 PATCH C4 under P (copyMeasurements true, copyAdditionalData false) - 204",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"parentPartitioningId\": {{v11_p_id}}, \"author\": \"postman_v11\", \"copyMeasurements\": true, \"copyAdditionalData\": false}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_c4_id}}/ancestors",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_c4_id}}",
-                "ancestors"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 child C4 measures (copied by PATCH copyMeasurements) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('The definition of P was copied by the PATCH', function () {",
-                  "    const d = pm.response.json().data;",
-                  "    pm.expect(d).to.have.lengthOf(1);",
-                  "    pm.expect(d[0]).to.eql({ measureName: 'count', measuredColumns: ['*'] });",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_c4_id}}/measures",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_c4_id}}",
-                "measures"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 child C4 sets its own value for the parent's additional-data key - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('The child holds its own value for the key', function () {",
-                  "    const d = pm.response.json().data;",
-                  "    pm.expect(d.filter(function (x) { return x.key === 'v11ParentOnly'; }).map(function (x) { return x.value; })).to.eql(['childValue']);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"byUser\": \"postman_v11\", \"data\": {\"v11ParentOnly\": \"childValue\"}}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_c4_id}}/additional-data",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_c4_id}}",
-                "additional-data"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 PATCH C4 under P again with copyAdditionalData true (the link already exists) - 204",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"parentPartitioningId\": {{v11_p_id}}, \"author\": \"postman_v11\", \"copyMeasurements\": false, \"copyAdditionalData\": true}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_c4_id}}/ancestors",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api",
-                "v2",
-                "partitionings",
-                "{{v11_c4_id}}",
-                "ancestors"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Act: v11 child C4 additional data (the parent's value OVERWROTE the child's) - 200",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "exec": [
-                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('copyAdditionalData true overwrites the same-named key of the child with the parent value', function () {",
-                  "    const d = pm.response.json().data;",
-                  "    pm.expect(d.map(function (x) { return x.key + '=' + x.value; })).to.eql(['v11ParentOnly=parentValue']);",
+                  "pm.test('Error envelope carries message and requestId (the wording of the message is not part of the contract)', function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('requestId');",
+                  "    pm.expect(j).to.have.property('message');",
                   "});",
                   "// Cleanup of the folder state (the first request of the folder resets it anyway)",
                   "Object.keys(pm.collectionVariables.toObject()).forEach(function (k) {",
@@ -4511,10 +3058,19 @@
             }
           ],
           "request": {
-            "method": "GET",
+            "method": "PATCH",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"parentPartitioningId\": {{v11_p_id}}, \"author\": \"postman_v11\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": "{{host}}/api/v2/partitionings/{{v11_c4_id}}/additional-data",
+              "raw": "{{host}}/api/v2/partitionings/{{v11_r_id}}/ancestors",
               "host": [
                 "{{host}}"
               ],
@@ -4522,8 +3078,8 @@
                 "api",
                 "v2",
                 "partitionings",
-                "{{v11_c4_id}}",
-                "additional-data"
+                "{{v11_r_id}}",
+                "ancestors"
               ]
             }
           },
