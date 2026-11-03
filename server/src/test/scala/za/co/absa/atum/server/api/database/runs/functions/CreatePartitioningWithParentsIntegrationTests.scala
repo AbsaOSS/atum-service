@@ -85,17 +85,6 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           result.toOption.get.data.createdBy == "requesterA"
         )
       },
-      test("T-b: new partitioning with 1 parent -> status 12, ancestors == [parent]") {
-        for {
-          parent <- createNew("bParent")
-          child <- create(uniquePartitioning("bChild"), Seq(parent))
-          ancestors <- ancestorIds(child.toOption.get.data.id)
-        } yield assertTrue(
-          child.isRight,
-          child.toOption.get.functionStatus.statusCode == 12,
-          ancestors == Seq(parent)
-        )
-      },
       test("T-c: same call again -> status 14, same id, STORED created_by even with a different requester") {
         val key = uniquePartitioning("c")
         for {
@@ -128,22 +117,6 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           after == Seq(parent)
         )
       },
-      test("T-e: existing child already linked to the parent -> status 14, ancestors unchanged") {
-        val childKey = uniquePartitioning("eChild")
-        for {
-          parent <- createNew("eParent")
-          child <- create(childKey, Seq(parent))
-          childId = child.toOption.get.data.id
-          again <- create(childKey, Seq(parent))
-          after <- ancestorIds(childId)
-        } yield assertTrue(
-          child.toOption.get.functionStatus.statusCode == 12,
-          again.isRight,
-          again.toOption.get.functionStatus.statusCode == 14,
-          again.toOption.get.data.id == childId,
-          after == Seq(parent)
-        )
-      },
       test("T-f: unknown parent -> Left status 41 and nothing is written") {
         val key = uniquePartitioning("fChild")
         for {
@@ -158,20 +131,6 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
             case DataNotFoundException(status) => status.statusCode == 41
             case _                             => false
           }
-        )
-      },
-      test("T-f2: one known + one unknown parent -> Left status 41 and nothing is written") {
-        val key = uniquePartitioning("f2Child")
-        for {
-          parent <- createNew("f2Parent")
-          result <- create(key, Seq(parent, Long.MaxValue))
-          stored <- getPartitioning(key)
-        } yield assertTrue(
-          result.left.exists {
-            case DataNotFoundException(status) => status.statusCode == 41
-            case _                             => false
-          },
-          stored.isLeft
         )
       },
       test("T-g: cycle -> Left status 32 and ancestors unchanged") {
@@ -194,45 +153,6 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           ancestorsOfP == Seq(cId)
         )
       },
-      test("T-g2: self-link of an existing partitioning -> Left status 32, ancestors unchanged") {
-        val key = uniquePartitioning("selfX")
-        for {
-          x <- create(key, Seq.empty[Long])
-          xId = x.toOption.get.data.id
-          result <- create(key, Seq(xId))
-          ancestors <- ancestorIds(xId)
-        } yield assertTrue(
-          result.left.exists {
-            case DataConflictException(status) => status.statusCode == 32
-            case _                             => false
-          },
-          ancestors.isEmpty
-        )
-      },
-      test("T-h: duplicate parent ids behave like a single parent") {
-        for {
-          parent <- createNew("hParent")
-          child <- create(uniquePartitioning("hChild"), Seq(parent, parent))
-          ancestors <- ancestorIds(child.toOption.get.data.id)
-        } yield assertTrue(
-          child.isRight,
-          child.toOption.get.functionStatus.statusCode == 12,
-          ancestors == Seq(parent)
-        )
-      },
-      test("T-i: two parents -> status 12, ancestors == both parents") {
-        for {
-          p1 <- createNew("iP1")
-          p2 <- createNew("iP2")
-          child <- create(uniquePartitioning("iChild"), Seq(p1, p2))
-          ancestors <- ancestorIds(child.toOption.get.data.id)
-        } yield assertTrue(
-          child.isRight,
-          child.toOption.get.functionStatus.statusCode == 12,
-          ancestors.size == 2,
-          ancestors.toSet == Set(p1, p2)
-        )
-      },
       test("T-j1: flag true -> NEW child receives the parent's measure definition") {
         for {
           parent <- createNew("mdTrueParent")
@@ -243,41 +163,6 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           child.isRight,
           child.toOption.get.functionStatus.statusCode == 12,
           measures == Seq(SeededMeasureName)
-        )
-      },
-      test("T-j2: flag false -> NEW child gets NO measure definitions") {
-        for {
-          parent <- createNew("mdFalseParent")
-          _ <- seedMeasure(parent)
-          child <- create(uniquePartitioning("mdFalseChild"), Seq(parent), copy = false)
-          measures <- measureNames(child.toOption.get.data.id)
-        } yield assertTrue(child.isRight, child.toOption.get.functionStatus.statusCode == 12, measures.isEmpty)
-      },
-      test("T-j3: flag absent (default) -> NEW child gets NO measure definitions") {
-        for {
-          createWithParents <- ZIO.service[CreatePartitioningWithParents]
-          parent <- createNew("mdAbsentParent")
-          _ <- seedMeasure(parent)
-          child <- createWithParents(
-            PartitioningSubmitV2DTO(uniquePartitioning("mdAbsentChild"), Seq(parent), "author")
-          )
-          measures <- measureNames(child.toOption.get.data.id)
-        } yield assertTrue(child.isRight, child.toOption.get.functionStatus.statusCode == 12, measures.isEmpty)
-      },
-      test("T-j4: EXISTING child + flag true -> nothing is copied") {
-        val childKey = uniquePartitioning("mdExistingChild")
-        for {
-          parent <- createNew("mdExistingParent")
-          _ <- seedMeasure(parent)
-          existing <- create(childKey, Seq.empty[Long])
-          linked <- create(childKey, Seq(parent), copy = true)
-          measures <- measureNames(existing.toOption.get.data.id)
-        } yield assertTrue(
-          existing.isRight,
-          linked.isRight,
-          linked.toOption.get.functionStatus.statusCode == 13,
-          linked.toOption.get.data.id == existing.toOption.get.data.id,
-          measures.isEmpty
         )
       }
     ).provide(

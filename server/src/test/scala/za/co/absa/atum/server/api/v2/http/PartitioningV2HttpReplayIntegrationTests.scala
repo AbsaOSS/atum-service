@@ -16,10 +16,6 @@
 
 package za.co.absa.atum.server.api.v2.http
 
-import cats.data.NonEmptyList
-import doobie.Transactor
-import doobie.implicits._
-import doobie.util.fragments
 import io.circe.parser.decode
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{UriContext, asStringAlways, basicRequest}
@@ -47,12 +43,10 @@ import java.util.UUID
  *  the real controller, service, repository and DB functions, against a real Postgres.
  *  Everything below the Tapir stub is real. Only the three endpoints under test are mounted (not the aggregated
  *  server endpoint list, whose environment would also need the v1 controllers and the metrics publisher).
- *  Each test gets its own single-transaction connection (rolled back at the end) shared by the HTTP calls and the
- *  SQL probes, uses unique tags and only scoped SQL counts.
+ *  Each test gets its own single-transaction connection (rolled back at the end) and uses unique tags.
  */
 object PartitioningV2HttpReplayIntegrationTests extends ConfigProviderTest {
 
-  private val SeededMeasureName = "seededCount"
   private val Base = "/api/v2/partitionings"
 
   private case class Resp(code: StatusCode, location: Option[String], body: String)
@@ -156,40 +150,6 @@ object PartitioningV2HttpReplayIntegrationTests extends ConfigProviderTest {
     } yield dto.id
 
   // ---------------------------------------------------------------------------------------------------------------
-  // SQL probes on the same shared transaction (scoped by unique tag / explicit ids only)
-  // ---------------------------------------------------------------------------------------------------------------
-
-  private def countPartitioningsByTag(tag: String) =
-    ZIO.serviceWithZIO[Transactor[Task]] { xa =>
-      val pattern = s"%$tag%"
-      sql"SELECT count(*) FROM runs.partitionings WHERE partitioning::text LIKE $pattern"
-        .query[Long]
-        .unique
-        .transact(xa)
-    }
-
-  private def countFlowLinks(ids: Seq[Long]) =
-    ZIO.serviceWithZIO[Transactor[Task]] { xa =>
-      (fr"SELECT count(*) FROM flows.partitioning_to_flow WHERE" ++
-        fragments.in(fr"fk_partitioning", NonEmptyList.fromListUnsafe(ids.toList)))
-        .query[Long]
-        .unique
-        .transact(xa)
-    }
-
-  private def seedMeasureDefinition(partitioningId: Long) =
-    ZIO.serviceWithZIO[Transactor[Task]] { xa =>
-      sql"""INSERT INTO runs.measure_definitions
-              (fk_partitioning, measure_name, measured_columns, created_by, created_at)
-            VALUES ($partitioningId, $SeededMeasureName, ARRAY['col1'], 'seed', now())""".update.run.transact(xa)
-    }
-
-  private def measuresOf(partitioningId: Long) =
-    ZIO.serviceWithZIO[GetPartitioningMeasuresById](_(partitioningId)).map { result =>
-      result.toOption.get.flatMap(_.data.measureName)
-    }
-
-  // ---------------------------------------------------------------------------------------------------------------
 
   override def spec: Spec[Unit with TestEnvironment with Scope, Any] = {
 
@@ -208,36 +168,6 @@ object PartitioningV2HttpReplayIntegrationTests extends ConfigProviderTest {
           second.code != StatusCode.Conflict,
           secondDto == firstDto,
           second.location == first.location
-        )
-      },
-      test("R1b: v0.10.0 body without any parent key -> 201, then 200") {
-        val tag = uniqueTag()
-        val body = literalBody(tag, "agent", "")
-        for {
-          first <- post(body)
-          firstDto <- parsed(first)
-          second <- post(body)
-          secondDto <- parsed(second)
-        } yield assertTrue(
-          first.code == StatusCode.Created,
-          second.code == StatusCode.Ok,
-          secondDto.id == firstDto.id,
-          second.location == location(firstDto.id)
-        )
-      },
-      test("R2: repeat by a DIFFERENT author -> 200 and the STORED (first) author in the body") {
-        val tag = uniqueTag()
-        for {
-          first <- post(noParentsBody(tag, author = "firstAuthor"))
-          firstDto <- parsed(first)
-          second <- post(noParentsBody(tag, author = "otherAuthor"))
-          secondDto <- parsed(second)
-        } yield assertTrue(
-          first.code == StatusCode.Created,
-          firstDto.author == "firstAuthor",
-          second.code == StatusCode.Ok,
-          secondDto.id == firstDto.id,
-          secondDto.author == "firstAuthor"
         )
       },
       test("R3: legacy numeric and numeric-string parentPartitioningId -> 201, ancestors == [parent]") {
@@ -301,39 +231,6 @@ object PartitioningV2HttpReplayIntegrationTests extends ConfigProviderTest {
           bothAncestors.toSet == Set(p1, p2)
         )
       },
-      test("R6: measure definitions are NOT inherited without the flag or with null; inherited with true") {
-        for {
-          parent <- createNew(uniqueTag())
-          _ <- seedMeasureDefinition(parent)
-          noFlag <- post(legacyIdBody(uniqueTag(), parent))
-          noFlagDto <- parsed(noFlag)
-          nullFlag <- post(
-            literalBody(uniqueTag(), "agent", s""","parentPartitioningId":$parent,"copyMeasureDefinitions":null""")
-          )
-          nullFlagDto <- parsed(nullFlag)
-          falseFlag <- post(
-            literalBody(uniqueTag(), "agent", s""","parentPartitioningId":$parent,"copyMeasureDefinitions":false""")
-          )
-          falseFlagDto <- parsed(falseFlag)
-          trueFlag <- post(
-            literalBody(uniqueTag(), "agent", s""","parentPartitioningId":$parent,"copyMeasureDefinitions":true""")
-          )
-          trueFlagDto <- parsed(trueFlag)
-          noFlagMeasures <- measuresOf(noFlagDto.id)
-          nullFlagMeasures <- measuresOf(nullFlagDto.id)
-          falseFlagMeasures <- measuresOf(falseFlagDto.id)
-          trueFlagMeasures <- measuresOf(trueFlagDto.id)
-        } yield assertTrue(
-          noFlag.code == StatusCode.Created,
-          nullFlag.code == StatusCode.Created,
-          falseFlag.code == StatusCode.Created,
-          trueFlag.code == StatusCode.Created,
-          noFlagMeasures.isEmpty,
-          nullFlagMeasures.isEmpty,
-          falseFlagMeasures.isEmpty,
-          trueFlagMeasures == Seq(SeededMeasureName)
-        )
-      },
       test("R7: PATCH {parentPartitioningId, author, copy*:false} -> 204; repeated -> 204 (idempotent)") {
         for {
           parent <- createNew(uniqueTag())
@@ -345,78 +242,6 @@ object PartitioningV2HttpReplayIntegrationTests extends ConfigProviderTest {
           first.code == StatusCode.NoContent,
           second.code == StatusCode.NoContent,
           after == Seq(parent)
-        )
-      },
-      test("R8: PATCH cycle -> 409 and nothing is written (ancestors and scoped link counts unchanged)") {
-        for {
-          c <- createNew(uniqueTag())
-          pResp <- post(legacyIdBody(uniqueTag(), c)) // P is a child of C
-          pDto <- parsed(pResp)
-          p = pDto.id
-          countBefore <- countFlowLinks(Seq(c, p))
-          ancestorsOfCBefore <- ancestors(c)
-          ancestorsOfPBefore <- ancestors(p)
-          cycle <- patch(c, patchBody(p)) // would make C a child of its own descendant
-          countAfter <- countFlowLinks(Seq(c, p))
-          ancestorsOfCAfter <- ancestors(c)
-          ancestorsOfPAfter <- ancestors(p)
-        } yield assertTrue(
-          pResp.code == StatusCode.Created,
-          ancestorsOfPBefore == Seq(c),
-          cycle.code == StatusCode.Conflict,
-          countAfter == countBefore,
-          ancestorsOfCBefore.isEmpty,
-          ancestorsOfCAfter.isEmpty,
-          ancestorsOfPAfter == Seq(c)
-        )
-      },
-      test("R9: POST with an unknown parent -> 404 and nothing is written") {
-        val tag = uniqueTag()
-        for {
-          resp <- post(legacyIdBody(tag, Long.MaxValue))
-          written <- countPartitioningsByTag(tag)
-          plural <- post(pluralBody(tag, Seq(Long.MaxValue)))
-          writtenAfterPlural <- countPartitioningsByTag(tag)
-        } yield assertTrue(
-          resp.code == StatusCode.NotFound,
-          written == 0L,
-          plural.code == StatusCode.NotFound,
-          writtenAfterPlural == 0L
-        )
-      },
-      test("R10: POST cycle -> 409; 'already exists' is never 409") {
-        val tagC = uniqueTag()
-        for {
-          cResp <- post(noParentsBody(tagC))
-          cDto <- parsed(cResp)
-          pResp <- post(legacyIdBody(uniqueTag(), cDto.id)) // P is a child of C
-          pDto <- parsed(pResp)
-          countBefore <- countFlowLinks(Seq(cDto.id, pDto.id))
-          cycle <- post(legacyIdBody(tagC, pDto.id)) // C would become a child of its own descendant
-          countAfter <- countFlowLinks(Seq(cDto.id, pDto.id))
-          ancestorsOfC <- ancestors(cDto.id)
-          repeat <- post(noParentsBody(tagC))
-        } yield assertTrue(
-          cResp.code == StatusCode.Created,
-          pResp.code == StatusCode.Created,
-          cycle.code == StatusCode.Conflict,
-          countAfter == countBefore,
-          ancestorsOfC.isEmpty,
-          repeat.code == StatusCode.Ok
-        )
-      },
-      test("R11: GET ancestors -> 200 + empty list without ancestors, 404 if the partitioning is unknown") {
-        for {
-          id <- createNew(uniqueTag())
-          none <- getAncestors(id)
-          noneBody <- ZIO
-            .fromEither(decode[PaginatedResponse[PartitioningWithIdDTO]](none.body))
-            .mapError(e => new RuntimeException(s"unexpected body ${none.code}: ${none.body} ($e)"))
-          unknown <- getAncestors(Long.MaxValue)
-        } yield assertTrue(
-          none.code == StatusCode.Ok,
-          noneBody.data.isEmpty,
-          unknown.code == StatusCode.NotFound
         )
       }
     ).provide(

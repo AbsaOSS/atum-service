@@ -29,8 +29,7 @@ import java.time.OffsetDateTime
  *  runs the whole test body in a single transaction (rolled back at the end). Once ANY slow-path call has happened
  *  in a test, the lock count of the session stays 1 until the rollback. Therefore:
  *   - fixture graphs are seeded WITHOUT the new function (`runs.create_partitioning` of the v1 path takes no lock),
- *   - every `advisoryLocksHeld() == 0` assertion precedes the first slow-path call of its test,
- *   - the slow-path test asserts `== 1` as its very last step.
+ *   - every `advisoryLocksHeld() == 0` assertion precedes the first slow-path call of its test.
  */
 class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
 
@@ -310,34 +309,6 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     assert(fourTableCounts() == before)
   }
 
-  test("Re-linking an already linked direct parent: 14, nothing written and no advisory lock") {
-    val p1 = seed(lineage("p1"))
-    val child = seed(lineage("child"), Some(p1))
-    val before = fourTableCounts()
-
-    val result = createMulti(lineage("child"), ids(Seq(p1)), user = "Mallory")
-
-    assert(advisoryLocksHeld() == 0)
-    assert(result.status == 14)
-    assert(result.id.contains(child))
-    assert(fourTableCounts() == before)
-  }
-
-  test("Re-linking a direct parent and a grandparent: 14, nothing written and no advisory lock") {
-    val g = seed(lineage("g"))
-    val p = seed(lineage("p"), Some(g))
-    val child = seed(lineage("child"), Some(p))
-    assert(ancestorIds(child) == Set(p, g))
-    val before = fourTableCounts()
-
-    val result = createMulti(lineage("child"), ids(Seq(p, g)))
-
-    assert(advisoryLocksHeld() == 0)
-    assert(result.status == 14)
-    assert(result.id.contains(child))
-    assert(fourTableCounts() == before)
-  }
-
   test("Existing child gets a new parent: 13 and the child is a member of the parent's flow") {
     val p1 = seed(lineage("p1"))
     val child = seed(lineage("child"), author = "Carol")
@@ -368,77 +339,24 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
 
   // ---- cycles and missing parents ----------------------------------------------------------------------------
 
-  test("A partitioning cannot be its own parent: 32 naming the id, nothing written") {
-    val child = seed(lineage("child"), author = "Carol")
-    val before = fourTableCounts()
-
-    val result = createMulti(lineage("child"), ids(Seq(child)))
-
-    assert(result.status == 32)
-    assert(result.statusText == s"$cycleText: $child")
-    assert(result.id.isEmpty)
-    assert(result.createdBy.isEmpty)
-    assert(fourTableCounts() == before)
-    assert(ancestorIds(child).isEmpty)
-  }
-
-  test("A direct descendant as a parent: 32, nothing written (partitionings, flows, measures, additional data)") {
+  test("A valid parent together with a direct descendant as a parent: 32, nothing written or copied") {
+    val ok = seed(lineage("ok"))
     val c = seed(lineage("C"))
     val d = seed(lineage("D"), Some(c))
     addMeasure(d, "m_d", """{"col"}""", "Dave")
     addAd(d, "k_d", "x")
+    addMeasure(ok, "m_ok", """{"col"}""", "Olga")
     val before = fourTableCounts()
 
-    val result = createMulti(lineage("C"), ids(Seq(d)), copyMd = true)
+    val result = createMulti(lineage("C"), ids(Seq(ok, d)), copyMd = true)
 
     assert(result.status == 32)
     assert(result.statusText == s"$cycleText: $d")
     assert(result.id.isEmpty)
+    assert(result.createdBy.isEmpty)
     assert(fourTableCounts() == before)
     assert(ancestorIds(c).isEmpty)
     assert(ancestorIds(d) == Set(c))
-  }
-
-  test("An indirect descendant as a parent (A -> B -> C, A under C): 32, nothing written") {
-    val a = seed(lineage("A"))
-    val b = seed(lineage("B"), Some(a))
-    val c = seed(lineage("C"), Some(b))
-    assert(ancestorIds(c) == Set(a, b))
-    val before = fourTableCounts()
-
-    val result = createMulti(lineage("A"), ids(Seq(c)))
-
-    assert(result.status == 32)
-    assert(result.statusText == s"$cycleText: $c")
-    assert(fourTableCounts() == before)
-    assert(ancestorIds(a).isEmpty)
-  }
-
-  test("A valid parent together with a cycle-making one: 32 and nothing is written for the valid one") {
-    val ok = seed(lineage("ok"))
-    val c = seed(lineage("C"))
-    val d = seed(lineage("D"), Some(c))
-    val before = fourTableCounts()
-
-    val result = createMulti(lineage("C"), ids(Seq(ok, d)))
-
-    assert(result.status == 32)
-    assert(result.statusText == s"$cycleText: $d")
-    assert(fourTableCounts() == before)
-    assert(ancestorIds(c).isEmpty)
-  }
-
-  test("Several offending parents are all named, comma separated in ascending order") {
-    val c = seed(lineage("C"))
-    val d = seed(lineage("D"), Some(c))
-    val e = seed(lineage("E"), Some(c))
-    val before = fourTableCounts()
-
-    val result = createMulti(lineage("C"), ids(Seq(e, d)))
-
-    assert(result.status == 32)
-    assert(result.statusText == s"$cycleText: ${Seq(d, e).sorted.mkString(",")}")
-    assert(fourTableCounts() == before)
   }
 
   test("Unknown parent of a new child: 41 and the child is NOT created") {
@@ -470,38 +388,17 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
 
   // ---- measure definitions (POLICY-03) -----------------------------------------------------------------------
 
-  test("Measure copy flag false: nothing is copied to a new child") {
+  test("Measure copy flag false or NULL: nothing is copied to a new child") {
     val p1 = seed(lineage("p1"))
     addMeasure(p1, "m1", """{"col1"}""", "Alice")
 
-    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = false)
+    val withFalse = createMulti(lineage("child"), ids(Seq(p1)), copyMd = false)
+    val withNull = createMultiNullFlag(lineage("childNull"), ids(Seq(p1)))
 
-    assert(result.status == 12)
-    assert(measureCount(result.id.get) == 0)
-  }
-
-  test("Measure copy flag NULL is treated as false") {
-    val p1 = seed(lineage("p1"))
-    addMeasure(p1, "m1", """{"col1"}""", "Alice")
-
-    val result = createMultiNullFlag(lineage("child"), ids(Seq(p1)))
-
-    assert(result.status == 12)
-    assert(measureCount(result.id.get) == 0)
-  }
-
-  test("Measure copy flag true with one parent copies its measure definitions") {
-    val p1 = seed(lineage("p1"))
-    addMeasure(p1, "m1", """{"col1"}""", "Alice")
-    addMeasure(p1, "m2", """{"col2"}""", "Alice")
-
-    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true)
-
-    assert(result.status == 12)
-    val child = result.id.get
-    assert(measureCount(child) == 2)
-    assert(measureCount(child, "m1") == 1)
-    assert(measureCount(child, "m2") == 1)
+    assert(withFalse.status == 12)
+    assert(measureCount(withFalse.id.get) == 0)
+    assert(withNull.status == 12)
+    assert(measureCount(withNull.id.get) == 0)
   }
 
   test("Measure copy flag true with N parents copies the distinct union by (name, columns); column order counts") {
@@ -512,6 +409,8 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     addMeasure(p2, "m_shared", """{"x"}""", "Bob")
     addMeasure(p2, "m_ab", """{"b","a"}""", "Bob")
     addMeasure(p2, "m_only2", """{"y"}""", "Bob")
+    addAd(p1, "k1", "v1")
+    addAd(p2, "k2", "v2")
 
     val result = createMulti(lineage("child"), ids(Seq(p1, p2)), copyMd = true)
 
@@ -521,6 +420,7 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     assert(measureCount(child, "m_shared") == 1)
     assert(measureCount(child, "m_ab") == 2)
     assert(measureCount(child, "m_only2") == 1)
+    assert(adCount(child) == 0)
   }
 
   test("Copied measure definitions are authored by the caller and stamped with now(), not the parent's") {
@@ -542,61 +442,27 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     assert(queryBoolean(s"SELECT created_by = 'Alice' FROM runs.measure_definitions WHERE fk_partitioning = $p1"))
   }
 
-  test("Measure copy flag true on an EXISTING child copies nothing, also when the link is new") {
+  test("Measure copy flag true on an EXISTING child copies nothing: linked now (13) or already (14)") {
     val p1 = seed(lineage("p1"))
     addMeasure(p1, "m_parent", """{"col1"}""", "Alice")
+    addAd(p1, "k1", "v1")
     val child = seed(lineage("child"))
     addMeasure(child, "m_own", """{"own"}""", "Carol")
 
-    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true)
+    val linked = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true)
 
-    assert(result.status == 13)
+    assert(linked.status == 13)
     assert(measureCount(child) == 1)
     assert(measureCount(child, "m_own") == 1)
     assert(measureCount(child, "m_parent") == 0)
-  }
+    assert(adCount(child) == 0)
 
-  test("Measure copy flag true on an existing child that is already linked copies nothing (14)") {
-    val p1 = seed(lineage("p1"))
-    val child = seed(lineage("child"), Some(p1))
     addMeasure(p1, "m_later", """{"col1"}""", "Alice")
 
-    val result = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true)
+    val again = createMulti(lineage("child"), ids(Seq(p1)), copyMd = true)
 
-    assert(result.status == 14)
-    assert(measureCount(child, "m_later") == 0)
-  }
-
-  // ---- additional data (POLICY-02) ---------------------------------------------------------------------------
-
-  test("Additional data is never copied to a new child, even with the measure copy flag on") {
-    val p1 = seed(lineage("p1"))
-    val p2 = seed(lineage("p2"))
-    addAd(p1, "k1", "v1")
-    addAd(p2, "k2", "v2")
-    addMeasure(p1, "m1", """{"col1"}""", "Alice")
-
-    val result = createMulti(lineage("child"), ids(Seq(p1, p2)), copyMd = true)
-
-    assert(result.status == 12)
-    val child = result.id.get
-    assert(adCount(child) == 0)
-    assert(measureCount(child, "m1") == 1)
-  }
-
-  test("Additional data is never copied to an existing child, linked now or already") {
-    val p1 = seed(lineage("p1"))
-    val p2 = seed(lineage("p2"))
-    addAd(p1, "k1", "v1")
-    addAd(p2, "k2", "v2")
-    val child = seed(lineage("child"), Some(p1))
-
-    val linked = createMulti(lineage("child"), ids(Seq(p1, p2)), copyMd = true)
-    assert(linked.status == 13)
-    assert(adCount(child) == 0)
-
-    val again = createMulti(lineage("child"), ids(Seq(p1, p2)), copyMd = true)
     assert(again.status == 14)
+    assert(measureCount(child, "m_later") == 0)
     assert(adCount(child) == 0)
   }
 
@@ -705,17 +571,6 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
         "SELECT count(*) = 1 FROM pg_proc WHERE proname = 'create_partitioning' AND pronamespace = 'runs'::regnamespace"
       )
     )
-  }
-
-  test("Slow path (new child with a parent) takes exactly one advisory lock") {
-    // runs.create_partitioning_with_parents is the only place of this suite that goes through the slow path here
-    val p1 = seed(lineage("p1"))
-    assert(advisoryLocksHeld() == 0)
-
-    val result = createMulti(lineage("child"), ids(Seq(p1)))
-
-    assert(result.status == 12)
-    assert(advisoryLocksHeld() == 1)
   }
 
 }

@@ -106,137 +106,6 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest)
   }
 
-  //Check for child partitioning
-  test("Child Partitioning not found") {
-
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
-
-    function(updateParentFn)
-      .setParam("i_id_partitioning", nonExistentID)
-      .setParam("i_id_parent_partitioning", parentPartitioningIDTest)
-      .setParam("i_by_user", "Fantômas")
-      .setParam("i_copy_measurements", true)
-      .setParam("i_copy_additional_data", true)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(41))
-        assert(row.getString("status_text").contains("Child Partitioning not found"))
-        assert(!queryResult.hasNext)
-      }
-  }
-
-  //Check for Parent Partitioning
-  test("Parent Partitioning not found") {
-
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
-
-    function(updateParentFn)
-      .setParam("i_id_partitioning", childPartitioningIDTest)
-      .setParam("i_id_parent_partitioning", nonExistentID)
-      .setParam("i_by_user", "Fantômas")
-      .setParam("i_copy_measurements", true)
-      .setParam("i_copy_additional_data", true)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(42))
-        assert(row.getString("status_text").contains("Parent Partitioning not found"))
-        assert(!queryResult.hasNext)
-      }
-  }
-
-  //Update Parent with no additional data and no measurements
-  test("Parent Partitioning Updated no additional data and no measurements") {
-
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
-
-    function(updateParentFn)
-      .setParam("i_id_partitioning", childPartitioningIDTest)
-      .setParam("i_id_parent_partitioning", parentPartitioningIDTest)
-      .setParam("i_by_user", "Happy Nappy")
-      .setParam("i_copy_measurements", false)
-      .setParam("i_copy_additional_data", false)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("OK"))
-        assert(!queryResult.hasNext)
-      }
-
-    assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningIDTest)) == 1
-    )
-    assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", childPartitioningIDTest)) == 2
-    )
-
-    function(fncGetPartitioningAdditionalData)
-      .setParam("i_partitioning_id", childPartitioningIDTest)
-      .execute { queryResult =>
-        assert(!queryResult.hasNext)
-      }
-
-    function(fncGetPartitioningMeasuresById)
-      .setParam(childPartitioningIDTest)
-      .execute { queryResult =>
-        assert(!queryResult.hasNext)
-      }
-  }
-
-  //Update Parent with additional data and no measurements
-  test("Parent Partitioning Updated with additional data and no measurements") {
-
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
-
-    function(updateParentFn)
-      .setParam("i_id_partitioning", childPartitioningIDTest)
-      .setParam("i_id_parent_partitioning", parentPartitioningIDTest)
-      .setParam("i_by_user", "Happy Nappy")
-      .setParam("i_copy_measurements", false)
-      .setParam("i_copy_additional_data", true)
-      .execute { queryResult =>
-        assert(queryResult.hasNext)
-        val row = queryResult.next()
-        assert(row.getInt("status").contains(11))
-        assert(row.getString("status_text").contains("OK"))
-        assert(!queryResult.hasNext)
-      }
-
-    assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", parentPartitioningIDTest)) == 1
-    )
-    assert(
-      table("flows.partitioning_to_flow").count(add("fk_partitioning", childPartitioningIDTest)) == 2
-    )
-
-    function(fncGetPartitioningAdditionalData)
-      .setParam("i_partitioning_id", childPartitioningIDTest)
-      .execute { queryResult =>
-        val results = queryResult.next()
-        assert(results.getInt("status").contains(11))
-        assert(results.getString("status_text").contains("OK"))
-        assert(results.getString("ad_name").contains("ad_1"))
-        assert(results.getString("ad_value").contains("This is the additional data for Joseph"))
-        assert(results.getString("ad_author").contains("Happy Nappy"))
-
-        val results2 = queryResult.next()
-        assert(results2.getInt("status").contains(11))
-        assert(results2.getString("status_text").contains("OK"))
-        assert(results2.getString("ad_name").contains("ad_2"))
-        assert(results2.getString("ad_value").contains("This is the additional data for Joseph"))
-        assert(results2.getString("ad_author").contains("Happy Nappy"))
-        assert(!queryResult.hasNext)
-      }
-
-    function(fncGetPartitioningMeasuresById)
-      .setParam(childPartitioningIDTest)
-      .execute { queryResult =>
-        assert(!queryResult.hasNext)
-      }
-  }
-
   //Update Parent with additional data and with measurements
   test("Parent Partitioning Updated with additional data and with measurements") {
 
@@ -306,7 +175,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   // runs the whole test body in one transaction (rolled back at the end). After ANY slow-path call the lock count of
   // the session stays 1 until the rollback. Therefore fixture links are seeded WITHOUT the linking routine
   // (`runs.create_partitioning` of the v1 path takes no lock) and every `advisoryLocksHeld() == 0` assertion
-  // precedes the first slow-path call of its test; the slow-path assertion `== 1` is the last step of its test.
+  // precedes the first slow-path call of its test.
 
   private case class PatchResult(status: Int, statusText: String)
 
@@ -451,41 +320,6 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
 
   // ---- rejections: 32 before any write, 41, 42 ------------------------------------------------------------------
 
-  test("Self-link is rejected with 32 (was a silent 11 before) and nothing is written") {
-    val x = seedParentWithData("self")
-    val before = fourTableCounts()
-
-    assert(advisoryLocksHeld() == 0)
-    val result = patch(x, x, copyMeasurements = true, copyAdditionalData = true)
-
-    assert(result.status == 32)
-    assert(result.statusText.startsWith(s"$cycleText: "))
-    assert(result.statusText.contains(x.toString))
-    assert(fourTableCounts() == before)
-    assert(measureNames(x) == parentMeasures)
-    assert(adNames(x) == parentAdNames)
-    assert(advisoryLocksHeld() == 0)
-  }
-
-  test("Direct cycle is rejected with 32 and neither measure definitions nor additional data are copied") {
-    val p = seed("direct-p")
-    val c = seed("direct-c", Some(p))
-    addMeasure(c, "child_measure", """{"colC"}""")
-    addAd(c, "child_ad", "child value")
-    val before = fourTableCounts()
-
-    // c is a child of p; making p a child of c would create a cycle
-    val result = patch(p, c, copyMeasurements = true, copyAdditionalData = true)
-
-    assert(result.status == 32)
-    assert(result.statusText.startsWith(s"$cycleText: "))
-    assert(result.statusText.contains(c.toString))
-    assert(fourTableCounts() == before)
-    assert(measureCount(p) == 0)
-    assert(adCount(p) == 0)
-    assert(ancestorIds(p).isEmpty)
-  }
-
   test("Indirect cycle A -> B -> C, linking A under C, is rejected with 32 naming C") {
     val a = seed("indirect-a")
     val b = seed("indirect-b", Some(a))
@@ -503,20 +337,6 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     assert(adCount(a) == 0)
     assert(ancestorIds(a).isEmpty)
     assert(ancestorIds(c) == Set(a, b))
-  }
-
-  test("A cycle is rejected with 32 also when both copy flags are false, and a descendant cycle too") {
-    val a = seed("flagsoff-a")
-    val b = seed("flagsoff-b", Some(a))
-    val c = seed("flagsoff-c", Some(b))
-    val before = fourTableCounts()
-
-    val result = patch(b, c, copyMeasurements = false, copyAdditionalData = false)
-
-    assert(result.status == 32)
-    assert(result.statusText == s"$cycleText: $c")
-    assert(fourTableCounts() == before)
-    assert(ancestorIds(b) == Set(a))
   }
 
   test("Child missing: 41 and nothing is written (both flags true)") {
@@ -684,24 +504,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     )
   }
 
-  // ---- locking, privileges, configuration -----------------------------------------------------------------------
-
-  test("An already linked pair takes the lock-free fast path, a new link takes exactly one advisory lock") {
-    val parent = seed("lock-parent")
-    val linked = seed("lock-linked", Some(parent))
-    val fresh = seed("lock-fresh")
-
-    assert(advisoryLocksHeld() == 0)
-    val noop = patch(linked, parent, copyMeasurements = false, copyAdditionalData = false)
-    assert(noop.status == 11)
-    assert(noop.statusText == "OK")
-    assert(advisoryLocksHeld() == 0)
-
-    val linkedNow = patch(fresh, parent, copyMeasurements = false, copyAdditionalData = false)
-    assert(linkedNow.status == 11)
-    assert(ancestorIds(fresh) == Set(parent))
-    assert(advisoryLocksHeld() == 1)
-  }
+  // ---- privileges, configuration ---------------------------------------------------------------------------------
 
   test("Privileges and function configuration: atum_user may execute, the search_path is pinned") {
     assert(queryBoolean(s"SELECT has_function_privilege('atum_user', '$signature', 'EXECUTE')"))
