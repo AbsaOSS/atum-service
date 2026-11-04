@@ -192,7 +192,7 @@ trait AtumAgent {
    *  @param parentAtumContexts All parent contexts; must not be empty.
    *
    *  @return Atum context object of the child
-   *  @throws IllegalArgumentException if `parentAtumContexts` is empty
+   *  @throws java.lang.IllegalArgumentException if `parentAtumContexts` is empty
    *  @throws za.co.absa.atum.agent.exception.AtumAgentException.HttpException with status 409 if a parent would create
    *          a cycle, or if the child already exists, has descendants of its own and would get a new parent
    */
@@ -216,7 +216,7 @@ trait AtumAgent {
    *                            never receives copies. Additional data is never copied.
    *
    *  @return Atum context object of the child
-   *  @throws IllegalArgumentException if `parentAtumContexts` is empty
+   *  @throws java.lang.IllegalArgumentException if `parentAtumContexts` is empty
    */
   def getOrCreateAtumSubContext(
     subPartitions: AtumPartitions,
