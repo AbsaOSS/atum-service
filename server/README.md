@@ -25,26 +25,7 @@ v0.5.x use them; agents v0.6.0+ use API v2 (`POST /api/v2/partitionings`,
 ### Version compatibility
 
 **Always upgrade the server before the agents.** The server accepts what released agents send; a newer agent against an
-older server is not supported (it silently loses the parents). Applying the server requires the new database migrations,
-see [database/README.md](../database/README.md).
-
-| Client | Against this server |
-|--------|---------------------|
-| Agent up to v0.5.x | API v1 (deprecated), unchanged |
-| Agent v0.6 - v0.10 | works, but a newly created child **no longer inherits** the parent's measure definitions (now opt-in); a `409` of `PATCH .../ancestors` (cycle, or the child already has descendants) is ignored by these agents |
-| Agent of this release | full feature set, measure-definition copy is opt-in |
-| Agent of this release | an **older** server: the parents are lost |
-
-### Linking behaviour (API v2)
-
-- `POST /api/v2/partitionings` is an idempotent create-or-link for 0..N parents: `201` created, `200` already existing,
-  `404` unknown parent, `409` cycle, or an existing partitioning that already has descendants would get a new parent.
-- `copyMeasureDefinitions` (default `false`) copies the parents' measure definitions to a newly created partitioning only.
-  Additional data is never copied by `POST`.
-- `PATCH /api/v2/partitionings/{partitioningId}/ancestors` links an existing partitioning to a parent (same `409` rules).
-
-Details of the linking rules, known limitations and repair recipes are in [database/README.md](../database/README.md);
-the agent side is described in [agent/README.md](../agent/README.md).
+older server is to be avoided.
 
 ### REST API Reference
 
