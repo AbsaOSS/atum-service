@@ -30,29 +30,19 @@ import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbPut
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 
-/**
- *  Wrapper of `runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN)`.
- *  Statuses: 11 created, 12 created with parent(s), 13 existing + new parent links, 14 existing and nothing written
- *  (all OK), 32 cycle and 33 existing partitioning already has descendants (both mapped to a conflict by
- *  `StandardStatusHandling`), 41 parent not found.
- *  Binds `copyMeasureDefinitions` (the Phase 7 DTO flag) as the 4th argument.
- *  Returns the partitioning id and the STORED author (`created_by`): the caller when this call created the
- *  partitioning, otherwise the author recorded when it was first created.
- */
 class CreatePartitioningWithParents(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitV2DTO, CreatedPartitioningFromDB, Task](
-    partitioningSubmit =>
-      Seq(
-        fr"${PartitioningForDB.fromSeqPartitionDTO(partitioningSubmit.partitioning).asJson}",
-        fr"${partitioningSubmit.author}",
-        fr"${partitioningSubmit.parentPartitioningIds.toList}::BIGINT[]",
-        fr"${partitioningSubmit.copyMeasureDefinitions}"
-      )
-  )
+    extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitV2DTO, CreatedPartitioningFromDB, Task](
+      partitioningSubmit =>
+        Seq(
+          fr"${PartitioningForDB.fromSeqPartitionDTO(partitioningSubmit.partitioning).asJson}",
+          fr"${partitioningSubmit.author}",
+          fr"${partitioningSubmit.parentPartitioningIds.toList}::BIGINT[]",
+          fr"${partitioningSubmit.copyMeasureDefinitions}"
+        )
+    )
     with StandardStatusHandling {
 
-  // Selects both data columns; `created_by` is the STORED author (see class doc).
-  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("id_partitioning", "created_by")
+  override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("id_partitioning", "created_by", "was_created")
 }
 
 object CreatePartitioningWithParents {

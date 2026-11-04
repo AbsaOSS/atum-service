@@ -56,18 +56,10 @@ class PartitioningRepositoryImpl(
   override def createPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
   ): IO[DatabaseError, CreationResult[PartitioningWithIdDTO]] = {
-    dbSingleResultCallWithStatusRow(createPartitioningWithParentsFn(partitioningSubmitDTO), "createPartitioning")
-      .flatMap { row =>
-        val result = PartitioningWithIdDTO(row.data.id, partitioningSubmitDTO.partitioning, row.data.createdBy)
-        row.functionStatus.statusCode match {
-          case 11 | 12 => ZIO.succeed(Created(result))
-          case 13 | 14 => ZIO.succeed(Existing(result))
-          case other =>
-            // the DB status text stays in the server log; the client only gets a generic message
-            ZIO.logError(
-              s"createPartitioning: unexpected DB status $other: ${row.functionStatus.statusText}"
-            ) *> ZIO.fail(GeneralDatabaseError(PartitioningRepositoryImpl.UnexpectedCreateStatusMessage))
-        }
+    dbSingleResultCallWithStatus(createPartitioningWithParentsFn(partitioningSubmitDTO), "createPartitioning")
+      .map { created =>
+        val result = PartitioningWithIdDTO(created.id, partitioningSubmitDTO.partitioning, created.createdBy)
+        if (created.wasCreated) Created(result) else Existing(result)
       }
   }
 
@@ -211,10 +203,6 @@ class PartitioningRepositoryImpl(
 }
 
 object PartitioningRepositoryImpl {
-
-  /** Client-facing message for an OK-class status the repository does not know; details go to the server log only. */
-  val UnexpectedCreateStatusMessage = "Unexpected response from the database while creating the partitioning"
-
   val layer: URLayer[
     CreatePartitioningWithParents
       with GetPartitioningMeasures

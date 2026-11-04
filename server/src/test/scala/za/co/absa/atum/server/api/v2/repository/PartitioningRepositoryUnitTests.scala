@@ -58,7 +58,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val createdId = partitioningWithIdDTO1.id
 
   private def createdRow(code: Int, text: String, createdBy: String) =
-    ZIO.right(Row(FunctionStatus(code, text), CreatedPartitioningFromDB(createdId, createdBy)))
+    ZIO.right(Row(FunctionStatus(code, text), CreatedPartitioningFromDB(createdId, createdBy, code == 11 || code == 12)))
 
   private def expected(createdBy: String): PartitioningWithIdDTO =
     PartitioningWithIdDTO(createdId, partitioningDTO1, createdBy)
@@ -87,7 +87,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val dto12 = partitioningSubmitV2DTOMultiParent.copy(author = "req12")
   private val dto13 = partitioningSubmitV2DTOExistingAuthor.copy(author = "req13")
   private val dto14 = partitioningSubmitV2DTOExistingAuthor.copy(author = "req14")
-  private val dtoUnexpected = partitioningSubmitV2DTOMultiParent.copy(author = "reqUnexpected")
 
   when(createPartitioningWithParentsMock.apply(dto11)).thenReturn(createdRow(11, "created", storedAuthor))
   when(createPartitioningWithParentsMock.apply(dto12)).thenReturn(createdRow(12, "created + linked", storedAuthor))
@@ -95,9 +94,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(createPartitioningWithParentsMock.apply(dto14)).thenReturn(createdRow(14, "nothing written", storedAuthor))
   when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOExistingAuthor))
     .thenReturn(createdRow(14, "nothing written", storedAuthor))
-  when(createPartitioningWithParentsMock.apply(dtoUnexpected)).thenReturn(createdRow(99, "weird", storedAuthor))
 
-  // Phase 8/9 contract: "already exists" is a success (13/14), a conflict is a cycle (32) or descendants (33); the old
+  // The "already exists" is a success (13/14), a conflict is a cycle (32) or descendants (33); the old
   // single-parent status 31 "Partitioning already present" no longer exists
   when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTO2))
     .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Cycle detected"))))
@@ -384,21 +382,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
                 "Exception caused by operation: 'createPartitioning': (41) Parent partitioning not found"
               )
             )
-          )
-        },
-        test("unexpected status on a successful row: generic client message, details only in the server log") {
-          for {
-            result <- PartitioningRepository.createPartitioning(dtoUnexpected).exit
-            logged <- ZTestLogger.logOutput.map(_.filter(_.message().contains("unexpected DB status 99")))
-          } yield assertTrue(
-            // exact, generic message: neither the status code nor the DB status text reach the client
-            result == Exit.fail(
-              GeneralDatabaseError("Unexpected response from the database while creating the partitioning")
-            ),
-            logged.size == 1,
-            logged.head.logLevel == LogLevel.Error,
-            logged.head.message().contains("createPartitioning"),
-            logged.head.message().contains("weird")
           )
         },
         test("a failing DB task maps to GeneralDatabaseError") {

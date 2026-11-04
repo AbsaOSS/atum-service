@@ -160,7 +160,7 @@ trait TestData {
   protected val partitioningSubmitV2DTOMultiParentBoom: PartitioningSubmitV2DTO =
     partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "boom")
 
-  // Phase 9 (09-04): one dedicated fixture per repository scenario, so Mockito `times(1)` verifications stay exact
+  // One dedicated fixture per repository scenario, so Mockito `times(1)` verifications stay exact
   protected val partitioningSubmitV2DTOSingleParent: PartitioningSubmitV2DTO =
     partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(5L), author = "singleParentAuthor")
 

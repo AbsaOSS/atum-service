@@ -18,9 +18,11 @@ package za.co.absa.atum.server.model.database
 
 /**
  *  Row payload of `runs.create_partitioning_with_parents`. Field order matches the SELECT order
- *  (`id_partitioning`, `created_by`). `createdBy` is the author STORED in the database.
+ *  (`id_partitioning`, `created_by`, `was_created`). `createdBy` is the author STORED in the database,
+ *  `wasCreated` tells whether this call created the partitioning (false = it already existed).
  */
 case class CreatedPartitioningFromDB(
   id: Long,
-  createdBy: String
+  createdBy: String,
+  wasCreated: Boolean
 )

@@ -33,26 +33,16 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
-/**
- *  Wrapper of `runs.get_partitioning_ancestors(BIGINT, INT, BIGINT)`.
- *  Statuses: 10 OK (one row per ancestor), 14 OK with NO ancestors (a single row whose data columns are all NULL),
- *  41 partitioning not found (mapped to a not-found exception by `StandardStatusHandling`).
- *
- *  fa-db 0.7.0 `DoobieQueryWithStatus` throws `IllegalStateException("Status is OK but data is missing")` for an OK
- *  row without data, which surfaced as HTTP 500 for an existing partitioning that has no ancestors. The query is
- *  therefore replaced by one that treats an OK status without data as "no ancestor" (`None`), so the call yields an
- *  empty result; the 41 row is still turned into a `DataNotFoundException` before any data is looked at.
- */
 class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningAncestorsArgs, Option[
-    GetPartitioningAncestorsResult
-  ], Task](args =>
-    Seq(
-      fr"${args.partitioningId}",
-      fr"${args.limit}",
-      fr"${args.offset}"
+    extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningAncestorsArgs, Option[
+      GetPartitioningAncestorsResult
+    ], Task](args =>
+      Seq(
+        fr"${args.partitioningId}",
+        fr"${args.limit}",
+        fr"${args.offset}"
+      )
     )
-  )
     with StandardStatusHandling
     with ByFirstErrorStatusAggregator {
 
@@ -77,7 +67,7 @@ class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine
 object GetPartitioningAncestors {
   case class GetPartitioningAncestorsArgs(partitioningId: Long, limit: Int, offset: Long)
   case class GetPartitioningAncestorsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
-    extends PartitioningResult(id, partitioningJson, author)
+      extends PartitioningResult(id, partitioningJson, author)
 
   /**
    *  Status check first (a non-OK status such as 41 becomes a `StatusException`), then the row; an OK row without

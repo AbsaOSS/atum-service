@@ -82,7 +82,8 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           result.isRight,
           result.toOption.get.functionStatus.statusCode == 11,
           result.toOption.get.data.id > 0L,
-          result.toOption.get.data.createdBy == "requesterA"
+          result.toOption.get.data.createdBy == "requesterA",
+          result.toOption.get.data.wasCreated
         )
       },
       test("T-c: same call again -> status 14, same id, STORED created_by even with a different requester") {
@@ -96,7 +97,9 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           first.toOption.get.functionStatus.statusCode == 11,
           second.toOption.get.functionStatus.statusCode == 14,
           second.toOption.get.data.id == first.toOption.get.data.id,
-          second.toOption.get.data.createdBy == "firstAuthor"
+          second.toOption.get.data.createdBy == "firstAuthor",
+          first.toOption.get.data.wasCreated,
+          !second.toOption.get.data.wasCreated
         )
       },
       test("T-d: existing child + NEW parent -> status 13, same id, parent visible in ancestors (DB-02)") {

@@ -20,27 +20,13 @@ import sttp.model.StatusCode
 import sttp.tapir.generic.auto.schemaForCaseClass
 import sttp.tapir.json.circe.jsonBody
 import sttp.tapir.ztapir._
-import sttp.tapir.{
-  Codec,
-  CodecFormat,
-  DecodeResult,
-  EndpointInput,
-  PublicEndpoint,
-  Schema,
-  ValidationResult,
-  Validator
-}
+import sttp.tapir.{Codec, CodecFormat, DecodeResult, EndpointInput, PublicEndpoint, ValidationResult, Validator}
 import za.co.absa.atum.model.ApiPaths._
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.ErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse._
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
-import za.co.absa.atum.server.api.v2.controller.{
-  CheckpointController,
-  FlowController,
-  PartitioningController,
-  PartitioningControllerImpl
-}
+import za.co.absa.atum.server.api.v2.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.common.http.{BaseEndpoints, HttpEnv}
 
 import java.time.ZonedDateTime
@@ -100,38 +86,6 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  // Single source of truth for the cap is the controller; this is documented in the OpenAPI texts below.
-  private val MaxParentPartitionings: Int = PartitioningControllerImpl.MaxParents
-
-  // Tapir's derivation ignores Scala default parameters, so the model DTO's `copyMeasureDefinitions = false` would be
-  // documented as a REQUIRED property. This documentation-only override marks it optional with default `false`;
-  // runtime decoding stays the Circe decoder from the model module. `partitioning` is a Seq, which Tapir documents as
-  // optional by default, but the decoder rejects a body without it, so it is documented as required.
-  // The 100-distinct-parents cap is documented in text only: a Tapir `maxSize` validator would be enforced by the
-  // interpreter and answer with Tapir's default decode-failure body instead of the `BadRequestResponse` envelope the
-  // controller returns (the controller is the single place that enforces the cap, on DISTINCT ids).
-  // Likewise the legacy single-parent key `parentPartitioningId` accepted by the decoder cannot be added to the
-  // derived schema as a real property, so it is described in the text of `parentPartitioningIds`.
-  // Private on purpose: only `jsonBody` of this object needs it, so it cannot leak through `import Endpoints._`.
-  private implicit lazy val partitioningSubmitV2Schema: Schema[PartitioningSubmitV2DTO] =
-    Schema
-      .derived[PartitioningSubmitV2DTO]
-      .modify(_.partitioning)(_.copy(isOptional = false))
-      .modify(_.parentPartitioningIds)(
-        _.description(
-          s"Parent partitioning ids (0..N); duplicates are ignored, at most $MaxParentPartitionings distinct ids " +
-            "(more is answered with 400). The legacy single-parent key `parentPartitioningId` (number or numeric " +
-            "string) is also accepted and is merged into this list."
-        )
-      )
-      .modify(_.copyMeasureDefinitions)(
-        _.default(false)
-          .description(
-            "Copy measure definitions from the parent(s) to a newly created partitioning; " +
-              "default false (absent/null = false)"
-          )
-      )
-
   val postPartitioningEndpoint: PublicEndpoint[
     PartitioningSubmitV2DTO,
     ErrorResponse,
@@ -141,22 +95,7 @@ object Endpoints extends BaseEndpoints {
     apiV2.post
       .in(V2Paths.Partitionings)
       .in(jsonBody[PartitioningSubmitV2DTO])
-      .description(
-        "Idempotent create-or-link of a partitioning: 201 when it was created, 200 when it already existed " +
-          "(parents, if any, are linked in both cases). At most " +
-          s"$MaxParentPartitionings distinct parent ids are accepted (400 otherwise); 404 for an unknown parent; " +
-          "409 for a dependency cycle, or when an existing partitioning that already has descendants would get a " +
-          "new parent. The legacy single-parent key `parentPartitioningId` is accepted " +
-          "besides `parentPartitioningIds`. The `Location` header is returned on 200 as well as on 201."
-      )
-      .out(
-        statusCode
-          .description(StatusCode.Created, "Partitioning created; parents (if any) linked")
-          .description(
-            StatusCode.Ok,
-            "Partitioning already existed; parents (if any) linked; body carries the stored author"
-          )
-      )
+      .out(statusCode)
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .out(header[String]("Location"))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
@@ -286,12 +225,6 @@ object Endpoints extends BaseEndpoints {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
       .in(jsonBody[PartitioningParentPatchDTO])
-      .description(
-        "Links the partitioning under a parent (204; also when the parent is already an ancestor). 409 when the " +
-          "parent would create a dependency cycle, or when the partitioning already has descendants and would get a " +
-          "new parent (descendants are never moved into the flows of the new parent); 404 for an unknown " +
-          "partitioning or parent."
-      )
       .out(statusCode(StatusCode.NoContent))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)

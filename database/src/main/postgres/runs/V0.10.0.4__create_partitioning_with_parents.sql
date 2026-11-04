@@ -22,7 +22,8 @@ CREATE OR REPLACE FUNCTION runs.create_partitioning_with_parents(
     OUT status                      INTEGER,
     OUT status_text                 TEXT,
     OUT id_partitioning             BIGINT,
-    OUT created_by                  TEXT
+    OUT created_by                  TEXT,
+    OUT was_created                 BOOLEAN
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -66,6 +67,8 @@ $$
 --      id_partitioning     - id of the partitioning (NULL if the call failed)
 --      created_by          - author of the partitioning: the caller if it was created by this call, otherwise
 --                            the stored author (NULL if the call failed)
+--      was_created         - true if this call created the partitioning, false if it already existed
+--                            (NULL if the call failed)
 --
 -- Status codes:
 --      11                  - Partitioning created
@@ -108,6 +111,7 @@ BEGIN
 
     id_partitioning := NULL;
     created_by := NULL;
+    was_created := NULL;
 
     _child_id := runs._get_id_partitioning(i_partitioning, false);
     _child_created := false;
@@ -154,6 +158,7 @@ BEGIN
     END IF;
 
     id_partitioning := _child_id;
+    was_created := _child_created;
 
     IF _child_created THEN
         created_by := i_by_user;
