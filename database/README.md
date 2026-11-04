@@ -35,7 +35,7 @@ to set the current state as the baseline.
 
 ## Migration notes for 1.1 (parent linking)
 
-Three migrations of the unreleased 1.1 line (versions `V0.10.0.x` that are not part of the released `v0.10.0` tag) define how
+Four migrations of the unreleased 1.1 line (versions `V0.10.0.x` that are not part of the released `v0.10.0` tag) define how
 partitionings are linked to their parents:
 
 | Migration | State | Notes |
@@ -43,6 +43,7 @@ partitionings are linked to their parents:
 | `flows/V0.10.0.1___link_to_parents.sql` | new | `flows._link_to_parents`; replaces the deleted `runs/V0.10.0.1___copy_parents_data_to_partitioning.sql` |
 | `runs/V0.10.0.2__create_partitioning_with_parents.sql` | edited in place | `runs.create_partitioning_with_parents` (idempotent, 0..N parents) |
 | `runs/V0.10.0.3__update_partitioning_parent.sql` | new | redefines `runs.update_partitioning_parent` (same signature as in `V0.3.0.4`) on top of `flows._link_to_parents` |
+| `flows/V0.10.0.4__partitioning_to_flow_index.ddl` | new | index on `flows.partitioning_to_flow (fk_partitioning)`: the primary key cannot serve lookups by partitioning, and `flows._link_to_parents` does one per parent under the global advisory lock. Built `CONCURRENTLY` (writes are not blocked; Flyway runs the single statement outside a transaction); if the build fails it leaves an `INVALID` index that must be dropped before re-running |
 
 These are in-place edits of versions that were never released. Any database that already applied an earlier build of these
 `V0.10.0.x` migrations (for example a developer database that followed this branch) fails Flyway validation with
