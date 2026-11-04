@@ -28,8 +28,10 @@ import io.circe.parser.decode
 import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
 
-import java.net.URI
-import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import sttp.capabilities
+import sttp.client3._
+import sttp.client3.okhttp.OkHttpSyncBackend
+import sttp.model.Uri
 import scala.collection.immutable.ListMap
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
@@ -37,6 +39,35 @@ import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 class AgentServerCompatibilityTests extends DBTestSuite {
 
   private val serverUrl = "http://localhost:8080"
+
+  // sttp/OkHttp is used instead of java.net.http: the agent module (and its tests) must stay Java-8-compilable,
+  // and java.net.http only exists from Java 11 onwards.
+  private val httpBackend: SttpBackend[Identity, capabilities.WebSockets] = OkHttpSyncBackend()
+
+  /** Mimics the slice of `java.net.http.HttpHeaders` these tests need. */
+  private final case class CompatHeaders(values: Seq[(String, String)]) {
+    def firstValue(name: String): java.util.Optional[String] =
+      java.util.Optional.ofNullable(values.collectFirst { case (k, v) if k.equalsIgnoreCase(name) => v }.orNull)
+  }
+
+  /** Minimal response wrapper exposing `.statusCode()` / `.body()` / `.headers()` as java.net.http's did. */
+  private final case class CompatResponse(code: Int, payload: String, allHeaders: Seq[(String, String)]) {
+    def statusCode(): Int = code
+    def body(): String = payload
+    def headers(): CompatHeaders = CompatHeaders(allHeaders)
+  }
+
+  private def httpCall(method: String, path: String, jsonBody: Option[String] = None): CompatResponse = {
+    val uri = Uri.unsafeParse(s"$serverUrl$path")
+    val base = (method match {
+      case "GET"   => basicRequest.get(uri)
+      case "POST"  => basicRequest.post(uri)
+      case "PATCH" => basicRequest.patch(uri)
+    }).header("Content-Type", "application/json")
+    val withBody = jsonBody.fold(base)(base.body(_))
+    val response = withBody.response(asString).send(httpBackend)
+    CompatResponse(response.code.code, response.body.merge, response.headers.map(h => h.name -> h.value))
+  }
 
   // Agent writes are committed by the server and not rolled back by balta, so partition values are unique
   // per run to keep the tests re-runnable (and runnable on several build axes) against the same database.
@@ -272,12 +303,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     val (idA, idB, childId) = (idsA.head, idsB.head, idsChild.head)
 
     // PRIMARY: server read path - ancestors of the child are exactly {A, B}, no duplicates.
-    val response = HttpClient
-      .newHttpClient()
-      .send(
-        HttpRequest.newBuilder(URI.create(s"$serverUrl/api/v2/partitionings/$childId/ancestors?limit=1000")).GET().build(),
-        HttpResponse.BodyHandlers.ofString()
-      )
+    val response = httpCall("GET", s"/api/v2/partitionings/$childId/ancestors?limit=1000")
     assert(response.statusCode() == 200, s"unexpected response: ${response.body()}")
     val ancestorIds = decode[PaginatedResponse[PartitioningWithIdDTO]](response.body()) match {
       case Right(parsed) => parsed.data.map(_.id)
@@ -328,9 +354,6 @@ class AgentServerCompatibilityTests extends DBTestSuite {
   // Unique per JVM run: millis + a random part, so two build axes started in the same millisecond (or a re-run) never
   // share a key. The first POST of a test asserts a strict 201, a shared key would turn it into a spurious 200.
   private val v11Run: String = s"${System.currentTimeMillis()}-${java.util.UUID.randomUUID().toString.take(8)}"
-
-  // One client for all requests of the v11 tests.
-  private lazy val v11Client: HttpClient = HttpClient.newHttpClient()
 
   // A probe id that no database sequence reaches (Number.MAX_SAFE_INTEGER, still a valid Long).
   private val v11UnknownId: Long = 9007199254740991L
@@ -406,21 +429,6 @@ class AgentServerCompatibilityTests extends DBTestSuite {
       count
     }
 
-  private def v11Http(method: String, path: String, body: Option[String] = None): HttpResponse[String] = {
-    val publisher = body match {
-      case Some(json) => HttpRequest.BodyPublishers.ofString(json)
-      case None       => HttpRequest.BodyPublishers.noBody()
-    }
-    v11Client.send(
-      HttpRequest
-        .newBuilder(URI.create(s"$serverUrl$path"))
-        .header("Content-Type", "application/json")
-        .method(method, publisher)
-        .build(),
-      HttpResponse.BodyHandlers.ofString()
-    )
-  }
-
   private def v11PostBody(partitioning: ListMap[String, String], parentIds: Seq[Long], author: String): String = {
     val keyValues = partitioning
       .map { case (k, v) => s"""{"key":"${v11JsonEscape(k)}","value":"${v11JsonEscape(v)}"}""" }
@@ -436,21 +444,21 @@ class AgentServerCompatibilityTests extends DBTestSuite {
         """"measuredByAtumAgent":false,"processStartTime":"2026-01-01T00:00:00Z","processEndTime":"2026-01-01T00:00:01Z",""" +
         """"measurements":[{"measure":{"measureName":"count","measuredColumns":[]},""" +
         """"result":{"mainValue":{"value":"4","valueType":"Long"},"supportValues":{}}}]}"""
-    val response = v11Http("POST", s"/api/v2/partitionings/$partitioningId/checkpoints", Some(body))
+    val response = httpCall("POST", s"/api/v2/partitionings/$partitioningId/checkpoints", Some(body))
     assert(response.statusCode() == 201, s"unexpected checkpoint response: ${response.body()}")
   }
 
   private def v11PatchBody(parentId: Long): String =
     s"""{"parentPartitioningId":$parentId,"author":"compat","copyMeasurements":false,"copyAdditionalData":false}"""
 
-  private def v11Decode(response: HttpResponse[String]): PartitioningWithIdDTO =
+  private def v11Decode(response: CompatResponse): PartitioningWithIdDTO =
     decode[SingleSuccessResponse[PartitioningWithIdDTO]](response.body()) match {
       case Right(parsed) => parsed.data
       case Left(error)   => fail(s"cannot decode create-partitioning response: $error, body: ${response.body()}")
     }
 
   private def v11AncestorIds(partitioningId: Long): Seq[Long] = {
-    val response = v11Http("GET", s"/api/v2/partitionings/$partitioningId/ancestors?limit=1000")
+    val response = httpCall("GET", s"/api/v2/partitionings/$partitioningId/ancestors?limit=1000")
     assert(response.statusCode() == 200, s"unexpected response: ${response.body()}")
     decode[PaginatedResponse[PartitioningWithIdDTO]](response.body()) match {
       case Right(parsed) => parsed.data.map(_.id)
@@ -477,14 +485,14 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     // VERIFY-01 (Phase 11)
     val key = ListMap("v11Repost" -> s"r$v11Run")
 
-    val created = v11Http("POST", "/api/v2/partitionings", Some(v11PostBody(key, Seq.empty, "compat-author-1")))
+    val created = httpCall("POST", "/api/v2/partitionings", Some(v11PostBody(key, Seq.empty, "compat-author-1")))
     assert(created.statusCode() == 201, s"unexpected response: ${created.body()}")
     val createdLocation = created.headers().firstValue("Location").orElse("")
     val createdDto = v11Decode(created)
     assert(createdLocation.endsWith(s"/${createdDto.id}"), s"unexpected Location: $createdLocation")
     assert(createdDto.author == "compat-author-1")
 
-    val existing = v11Http("POST", "/api/v2/partitionings", Some(v11PostBody(key, Seq.empty, "compat-author-2")))
+    val existing = httpCall("POST", "/api/v2/partitionings", Some(v11PostBody(key, Seq.empty, "compat-author-2")))
     assert(existing.statusCode() == 200, s"unexpected response: ${existing.body()}")
     assert(existing.headers().firstValue("Location").orElse("") == createdLocation)
     val existingDto = v11Decode(existing)
@@ -612,7 +620,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     assert(cycle.statusCode == 409)
 
     // a self-link through the PATCH endpoint is a cycle as well
-    val selfLink = v11Http("PATCH", s"/api/v2/partitionings/$parentId/ancestors", Some(v11PatchBody(parentId)))
+    val selfLink = httpCall("PATCH", s"/api/v2/partitionings/$parentId/ancestors", Some(v11PatchBody(parentId)))
     assert(selfLink.statusCode() == 409, s"unexpected response: ${selfLink.body()}")
 
     assert(v11AncestorIds(parentId).isEmpty, "the parent is still a root")
@@ -627,7 +635,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     val childMap = ListMap("v11UnknownParentChild" -> s"c$v11Run")
     assert(v11PartitioningIds(childMap).isEmpty)
 
-    val response = v11Http("POST", "/api/v2/partitionings", Some(v11PostBody(childMap, Seq(v11UnknownId), "compat")))
+    val response = httpCall("POST", "/api/v2/partitionings", Some(v11PostBody(childMap, Seq(v11UnknownId), "compat")))
     assert(response.statusCode() == 404, s"unexpected response: ${response.body()}")
     assert(v11PartitioningIds(childMap).isEmpty, "the child must not be created when a parent is unknown")
 
