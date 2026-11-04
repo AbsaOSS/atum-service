@@ -53,7 +53,8 @@ loses even a single parent. For JVM users the Scala shape of `PartitioningSubmit
   STORED author, and any new parent links in the request are still applied, so linking a single new parent to an
   existing partitioning works;
 - `404` for an unknown parent;
-- `409` only for a dependency cycle.
+- `409` for a dependency cycle, or when an existing partitioning that already has descendants would get a new parent
+  (nothing is written; a partitioning created by the request is always a leaf).
 
 The legacy single-parent key `parentPartitioningId` is still accepted next to `parentPartitioningIds`.
 
@@ -80,7 +81,8 @@ The flag on a request for an already existing partitioning (`200`) does nothing.
   **Both are required**: the Scala DTO declares defaults, but the JSON decoder does not apply them, so a body without
   one or both flags is answered with `400` (verified on a running server).
 - `204` on success. Repeating the request (or linking something that is already linked) is a no-op that is also `204`.
-- `409` when the link is a self-link or would create a dependency cycle; `404` when the child or the parent is unknown
+- `409` when the link is a self-link, would create a dependency cycle, or the partitioning already has descendants and
+  the parent is not yet its ancestor (nothing is written); `404` when the child or the parent is unknown
   (the not-found messages, status 41 and 42, do not name the id).
 - Both copy flags are opt-in per request: `true` copies the parent's measure definitions and/or additional data to the
   child, `false` copies nothing. **`copyAdditionalData: true` overwrites the child's own values for additional-data keys
@@ -89,9 +91,12 @@ The flag on a request for an already existing partitioning (`200`) does nothing.
   the child's own definition wins and nothing is overwritten. Both copies are also applied when the link already existed,
   so a repeated request applies them again (an additional-data value the child changed in the meantime is overwritten
   again).
-- Propagation is deliberately narrow and order independent: every flow that contains the parent receives the child and
-  the members of the child's own flow. The cycle check runs before anything is written. Links that are redundant change
-  nothing. Existing data is **not** back-filled, see "Concurrency, retries and known limitations" below and the
+- Descendants are never propagated: every flow that contains the parent receives the child only (a newly created
+  child therefore joins every flow that contains its parent). The cycle check (`409`) runs before anything is written.
+  Linking an **existing** partitioning that already has descendants under a **new** parent is refused with `409`
+  (database status `33`) and nothing is written (no flow membership, no copies); only leaves can get new parents, so
+  build the hierarchy top-down. Links that are redundant, also for a partitioning with descendants, change nothing
+  (`204` / `200`). Creation-time linking of a new partitioning is unaffected. Existing data is **not** back-filled, see "Concurrency, retries and known limitations" below and the
   read-only diagnostics in [database/README.md](../database/README.md#diagnostics-read-only).
 
 `GET /api/v2/partitionings/{partitioningId}/ancestors` answers `200` with an empty `data` list (and `hasMore: false`)
@@ -106,7 +111,7 @@ Deploy the server before upgrading any agent. The server accepts what the releas
 |--------|---------------------|--------|
 | Agent up to v0.5.x | uses API v1 (deprecated) | unchanged, v1 keeps behaving as in v0.10.0 |
 | Agent v0.6 - v0.7 | `GET` partitioning, `POST` only if it is missing, any `2xx` is success | works; a newly created child **no longer inherits** the parent's measure definitions (the server default is now `false`) |
-| Agent v0.8 - v0.10 | as above, plus `PATCH .../ancestors` (flags `false`) for an existing child | works and loses the inheritance as above; a `409` of that `PATCH` (cycle) is **ignored** by these agents, they treat it as "link already exists", so a rejected link is not reported |
+| Agent v0.8 - v0.10 | as above, plus `PATCH .../ancestors` (flags `false`) for an existing child | works and loses the inheritance as above; a `409` of that `PATCH` (cycle, or the child already has descendants) is **ignored** by these agents, they treat it as "link already exists", so a rejected link is not reported |
 | Agent of this release | one `POST` for 0..N parents | full feature set, the copy opt-in is available through the new overloads |
 | Agent of this release | an **older** server | the parents are lost: the encoded request carries only `parentPartitioningIds`, which an older server ignores |
 | REST client | `POST` / `PATCH` / `GET` as described above | `POST` is idempotent (`201` / `200`), the legacy single-parent key is accepted |
@@ -133,7 +138,8 @@ creates a measure definition on its own, the definitions are created by a checkp
   described in [Resetting a development database](../database/README.md#resetting-a-development-database).
   Never run `flywayRepair` for this.
 - Known limitations that are tracked as follow-ups and not changed by this release: the deprecated v1
-  `runs.create_partitioning(_if_not_exists)` is lock-free and can race a v2 re-link and lose a descendant;
+  `runs.create_partitioning(_if_not_exists)` is lock-free: a v1 create of a new child can race a v2 link of its parent
+  under a new ancestor and miss that ancestor's flow (no existing descendant is ever lost);
   `runs.update_partitioning_parent` and the internal `flows._add_to_parent_flows` / `flows._create_flow` are executable by
   `PUBLIC`; there is no READ COMMITTED guard and no test of the opposite-link race; `BaseController` still has a stray
   `println`; `runs.get_partitioning_ancestors` returns the status-14 "no rows" record (with `has_more` `NULL`) for any

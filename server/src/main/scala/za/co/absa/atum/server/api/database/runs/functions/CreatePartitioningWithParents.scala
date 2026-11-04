@@ -33,7 +33,8 @@ import zio._
 /**
  *  Wrapper of `runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN)`.
  *  Statuses: 11 created, 12 created with parent(s), 13 existing + new parent links, 14 existing and nothing written
- *  (all OK), 32 cycle (mapped to a conflict by `StandardStatusHandling`), 41 parent not found.
+ *  (all OK), 32 cycle and 33 existing partitioning already has descendants (both mapped to a conflict by
+ *  `StandardStatusHandling`), 41 parent not found.
  *  Binds `copyMeasureDefinitions` (the Phase 7 DTO flag) as the 4th argument.
  *  Returns the partitioning id and the STORED author (`created_by`): the caller when this call created the
  *  partitioning, otherwise the author recorded when it was first created.

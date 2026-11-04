@@ -180,7 +180,7 @@ class PartitioningRepositoryImpl(
       case ConflictDatabaseError(message) =>
         ZIO.logWarning(
           s"PATCH /ancestors rejected for partitioning $partitioningId " +
-            s"(parent ${partitioningParentPatchDTO.parentPartitioningId}) - cycle: $message"
+            s"(parent ${partitioningParentPatchDTO.parentPartitioningId}) - conflict (cycle or descendants): $message"
         )
       case _ => ZIO.unit
     }

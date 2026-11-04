@@ -30,12 +30,13 @@ $$
 --      Update the Parent Partitioning for a given partitioning ID and copies measurements and additional data from parent.
 --
 --      The link is written by flows._link_to_parents, the routine shared with
---      runs.create_partitioning_with_parents: it rejects self-links and cycles, serializes writers and propagates the
---      child (with all of its descendants) into every flow containing the parent.
+--      runs.create_partitioning_with_parents: it rejects self-links, cycles and a child that already has descendants
+--      (when a new link would be needed), serializes writers and adds the child (never its descendants) into every
+--      flow containing the parent.
 --
---      Order of work: validate (41, 42) -> link (32 on a cycle) -> copy. The link comes first because fa-db commits
---      the transaction before it inspects the status, so a non-OK status must be returned before the first write
---      (including the copies below).
+--      Order of work: validate (41, 42) -> link (32 on a cycle, 33 on descendants) -> copy. The link comes first
+--      because fa-db commits the transaction before it inspects the status, so a non-OK status must be returned
+--      before the first write (including the copies below).
 --
 --      The copies are applied according to the flags also when the link was already in place (the helper's
 --      "nothing to do" outcome is not an error here), so a repeated call is harmless:
@@ -59,6 +60,8 @@ $$
 --      11 - OK
 --      32 - The parent is the child itself or one of its descendants (the link would create a cycle);
 --           the status text names the offending partitioning id(s); nothing is written
+--      33 - The partitioning already has descendants and the parent is not yet its ancestor (it cannot be linked
+--           under a new parent); nothing is written (no copies either)
 --      41 - Child Partitioning not found
 --      42 - Parent Partitioning not found
 --
@@ -85,12 +88,12 @@ BEGIN
         RETURN;
     END IF;
 
-    --Link FIRST: a self-link or a cycle returns 32 before anything is written
+    --Link FIRST: a self-link, a cycle (32) or a child with descendants (33) returns before anything is written
     SELECT LTP.status, LTP.status_text
     FROM flows._link_to_parents(i_id_partitioning, ARRAY[i_id_parent_partitioning], i_by_user) AS LTP
     INTO _link_status, _link_status_text;
-    IF _link_status = 32 THEN
-        status := 32;
+    IF _link_status IN (32, 33) THEN
+        status := _link_status;
         status_text := _link_status_text;
         RETURN;
     END IF;

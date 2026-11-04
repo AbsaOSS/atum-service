@@ -145,7 +145,8 @@ object Endpoints extends BaseEndpoints {
         "Idempotent create-or-link of a partitioning: 201 when it was created, 200 when it already existed " +
           "(parents, if any, are linked in both cases). At most " +
           s"$MaxParentPartitionings distinct parent ids are accepted (400 otherwise); 404 for an unknown parent; " +
-          "409 only for a dependency cycle. The legacy single-parent key `parentPartitioningId` is accepted " +
+          "409 for a dependency cycle, or when an existing partitioning that already has descendants would get a " +
+          "new parent. The legacy single-parent key `parentPartitioningId` is accepted " +
           "besides `parentPartitioningIds`. The `Location` header is returned on 200 as well as on 201."
       )
       .out(
@@ -285,6 +286,12 @@ object Endpoints extends BaseEndpoints {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
       .in(jsonBody[PartitioningParentPatchDTO])
+      .description(
+        "Links the partitioning under a parent (204; also when the parent is already an ancestor). 409 when the " +
+          "parent would create a dependency cycle, or when the partitioning already has descendants and would get a " +
+          "new parent (descendants are never moved into the flows of the new parent); 404 for an unknown " +
+          "partitioning or parent."
+      )
       .out(statusCode(StatusCode.NoContent))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)

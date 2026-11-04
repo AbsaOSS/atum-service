@@ -25,12 +25,16 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
 --
 -- Function: flows._link_to_parents(3)
 --      The single place that links an (existing) child partitioning under one or more parent partitionings:
---      it rejects self-links and cycles, serializes writers with one global advisory lock and propagates the child
---      (and all of its descendants) into every flow that contains a parent.
+--      it rejects self-links, cycles and partitionings that already have descendants, serializes writers with one
+--      global advisory lock and adds the child (only the child) to every flow that contains a parent.
 --      Used by runs.create_partitioning_with_parents and runs.update_partitioning_parent.
 --
 -- Closure-table invariant: members(F(A)) = {A} U descendants(A), where F(A) is the flow whose primary partitioning is A.
 --      The ancestors of X are the primary partitionings of the flows containing X (excluding X).
+--      The invariant holds because only a leaf (a partitioning whose own flow has no other member) is ever linked
+--      under a NEW parent: nothing but the child itself has to join the flows of the parents. A partitioning with
+--      descendants is refused (status 33) instead of dragging its descendants into the flows of the new parents.
+--      Data written by older versions of the service may violate the invariant; this function never repairs it.
 --
 -- Parameters:
 --      i_child_id              - id of the child partitioning (must already exist)
@@ -40,18 +44,22 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
 --
 -- Returns:
 --      status                  - Status code
---      status_text             - Status text (for status 32 it names the offending partitioning ids, comma separated)
+--      status_text             - Status text (for status 32 it names the offending partitioning ids, comma separated,
+--                                for status 33 the id of the child)
 --
 -- Status codes:
 --      11 - Links written
 --      14 - Nothing to do (every parent is already a direct or transitive ancestor, or there are no parents)
 --      32 - A parent is the child itself or one of its descendants (the link would create a cycle)
+--      33 - The child already has descendants and a new link would be needed (it cannot be linked under new parents)
 --
 -- Notes:
 --      - Self-link is rejected BEFORE the fast path (the child is a member of its own flow and would otherwise look
 --        "already linked").
---      - Status 32 is always returned before the first write; fa-db commits first and inspects the status afterwards,
---        so every non-OK status MUST precede any write.
+--      - Status 32 and 33 are always returned before the first write; fa-db commits first and inspects the status
+--        afterwards, so every non-OK status MUST precede any write.
+--      - Leaf check (status 33) applies only to NEW links, it comes after the lock and the cycle check: a re-link of a
+--        child (even one with descendants) to parents that are already its ancestors stays a no-op (status 14).
 --      - Fast path: when every parent already has the child in its own flow, nothing is written and NO lock is taken.
 --      - Lock: one global exclusive transaction-scoped advisory lock, taken only when the fast path does not apply
 --        (this includes a brand-new child with parents). The statements after the lock re-check under a fresh
@@ -60,8 +68,9 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
 --      - No lock_timeout (P8-Q4, locked decision): a waiting writer holds a pool connection (Hikari max 10).
 --        Accepted residual risk; slow-path calls are short and re-links of existing ancestors take the lock-free
 --        fast path. To be documented in README/ADR in Phase 11.
---      - The v1 path runs.create_partitioning does not take this lock; it links only a brand-new child (no
---        descendants), so it cannot lose an update.
+--      - The v1 path runs.create_partitioning does not take this lock; it links only a brand-new child (a leaf). It
+--        can race a concurrent link of its parent under a new ancestor and then miss that ancestor's flow (known
+--        limitation of the deprecated v1 path, see database/README.md).
 --      - Callers must not hold a FOR UPDATE row lock when calling this function (lock-order inversion vs. the
 --        advisory lock).
 --
@@ -118,20 +127,23 @@ BEGIN
         RETURN;
     END IF;
 
-    -- every flow containing a parent receives the child and all members of the child's flow (its descendants)
-    WITH MEMBERS AS (
-        SELECT i_child_id AS id_member
-        UNION
-        SELECT CPTF.fk_partitioning
-        FROM flows.flows CF
-        INNER JOIN flows.partitioning_to_flow CPTF ON CPTF.fk_flow = CF.id_flow
-        WHERE CF.fk_primary_partitioning = i_child_id
-    )
+    -- leaf check (also under the lock): a child with descendants (any member of its own flow other than itself)
+    -- would drag them into the flows of the new parents, so such a link is refused
+    PERFORM 1
+    FROM flows.flows CF
+    INNER JOIN flows.partitioning_to_flow CPTF ON CPTF.fk_flow = CF.id_flow
+    WHERE CF.fk_primary_partitioning = i_child_id AND CPTF.fk_partitioning <> i_child_id;
+    IF FOUND THEN
+        status := 33;
+        status_text := 'Partitioning already has descendants and cannot be linked under new parents: ' || i_child_id::TEXT;
+        RETURN;
+    END IF;
+
+    -- every flow containing a parent receives the child (a leaf)
     INSERT INTO flows.partitioning_to_flow (fk_flow, fk_partitioning, created_by)
-    SELECT DISTINCT PPTF.fk_flow, M.id_member, i_by_user
+    SELECT DISTINCT PPTF.fk_flow, i_child_id, i_by_user
     FROM unnest(_parent_ids) AS PID(id)
     INNER JOIN flows.partitioning_to_flow PPTF ON PPTF.fk_partitioning = PID.id
-    CROSS JOIN MEMBERS M
     ON CONFLICT DO NOTHING;
     GET DIAGNOSTICS _rows = ROW_COUNT;
 

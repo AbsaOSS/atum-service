@@ -99,22 +99,26 @@ so a parent measuring `["a","b"]` and another parent measuring `["b","a"]` produ
 ## Parent linking functions
 
 * `flows._link_to_parents(child, parents[], user)` is the single place that links an existing partitioning under one or more parents. It rejects a self-link or a cycle with status `32`
-  before anything is written; when every parent already has the child in its flow it writes nothing and takes no lock (fast path, status `14`); otherwise it takes one global
-  transaction-scoped advisory lock and adds the child **and all members of the child's own main flow** to every flow that contains a parent (status `11`), so the result does not depend on the order
-  in which links are made. There is no `lock_timeout`: a waiting writer holds a pool connection (Hikari maximum 10). The re-checks after the lock are correct only under READ COMMITTED
+  before anything is written; when every parent already has the child in its flow it writes nothing and takes no lock (fast path, status `14`, also for a child that has descendants); otherwise it takes one global
+  transaction-scoped advisory lock and, after the cycle check, refuses a child that already has descendants (any other member in the child's own main flow) with status `33` before anything is written.
+  Otherwise it adds **only the child** to every flow that contains a parent (status `11`): descendants are never propagated into the flows of a new parent, only leaves are linked under new parents.
+  There is no `lock_timeout`: a waiting writer holds a pool connection (Hikari maximum 10). The re-checks after the lock are correct only under READ COMMITTED
   (the default); do not run the application with REPEATABLE READ or SERIALIZABLE.
 * `runs.create_partitioning_with_parents(partitioning, user, parent_ids[], copy_measure_definitions)` creates the partitioning or reuses the existing one (idempotent), links all parents through
   `flows._link_to_parents` in the same transaction, and returns the stored `created_by` of an existing partitioning. Status `11` created without parents, `12` created with parents, `13` parents registered on an existing
-  partitioning, `14` already present, `32` cycle, `41` parent not found. Measure definitions are copied only when the partitioning is newly created by the call and the flag is `true`
+  partitioning, `14` already present, `32` cycle, `33` the existing partitioning already has descendants and would get a new parent (nothing is written, no measure definitions are copied;
+  a partitioning created by the call is always a leaf), `41` parent not found. Measure definitions are copied only when the partitioning is newly created by the call and the flag is `true`
   (`NULL` means `false`); additional data is never copied.
-* `runs.update_partitioning_parent(child, parent, user, copy_measurements DEFAULT true, copy_additional_data DEFAULT true)` links through `flows._link_to_parents` first (`32` on a cycle or self-link,
-  nothing is written), then applies the copy flags; the DB-level defaults of both flags are `true`. Repeating a call re-applies the copies and does not fail. The additional-data copy **overwrites** the child's values for same-named keys (the parent wins); the measure-definition copy is `INSERT ... ON CONFLICT DO NOTHING` (the child's own definition wins). Statuses: `11` OK, `32` cycle, `41` child not found, `42` parent not found.
+* `runs.update_partitioning_parent(child, parent, user, copy_measurements DEFAULT true, copy_additional_data DEFAULT true)` links through `flows._link_to_parents` first (`32` on a cycle or self-link, `33` when the child already has descendants and the parent is not yet its ancestor;
+  nothing is written), then applies the copy flags; the DB-level defaults of both flags are `true`. Repeating a call re-applies the copies and does not fail. The additional-data copy **overwrites** the child's values for same-named keys (the parent wins); the measure-definition copy is `INSERT ... ON CONFLICT DO NOTHING` (the child's own definition wins). Statuses: `11` OK, `32` cycle, `33` child already has descendants, `41` child not found, `42` parent not found.
 
 ## Data created before 1.1: no backfill, diagnostics
 
 The linking functions maintain the closure invariant `members(F(A)) = {A} ∪ descendants(A)`, where `F(A)` is the main flow of partitioning `A` (the row of `flows.flows` whose
-`fk_primary_partitioning` is `A`). Parent links that were written by older server versions did not propagate to descendants that already existed, and the migrations of 1.1 do **not** backfill
-that data. Such data is not repaired automatically; the queries below detect it.
+`fk_primary_partitioning` is `A`). The 1.1 linking functions never propagate descendants: only a leaf (a partitioning without descendants) can be linked under a new parent, an existing partitioning that already has descendants is
+refused with status `33` / HTTP `409`, and a newly created child joins every flow that contains its parent. Parent links that were written by older server versions did propagate
+only the child, not the descendants that already existed, and the migrations of 1.1 do **not** backfill that data. The same hole can still arise when the deprecated lock-free v1 create races a link of its parent under a new
+ancestor (see "Known limitations"). Such data is not repaired automatically; the queries below detect it.
 
 ### Diagnostics (READ-ONLY)
 
@@ -126,7 +130,7 @@ BEGIN READ ONLY;
 ROLLBACK;
 ```
 
-**D1 - missing descendants** (the no-backfill hole). One row per member `missing_member_id` of the flow of `child_id` that is absent from the flow of `ancestor_id` although `child_id` is in that flow:
+**D1 - missing descendants** (the no-backfill hole; legacy data written by older servers, or the v1 race mentioned above). One row per member `missing_member_id` of the flow of `child_id` that is absent from the flow of `ancestor_id` although `child_id` is in that flow:
 
 ```sql
 SELECT FP.fk_primary_partitioning AS ancestor_id,
@@ -149,16 +153,21 @@ WHERE NOT EXISTS (
 ORDER BY ancestor_id, child_id, missing_member_id;
 ```
 
-Repair (a write, deliberately not part of the query): link `missing_member_id` under `ancestor_id`, with both copy flags `false` so that no data is copied:
+Repair (a write, deliberately not part of the query): add `missing_member_id` to the flow of `ancestor_id` with one insert per row (this works for every member, whether or not it has descendants itself):
 
-```
-PATCH /api/v2/partitionings/{missing_member_id}/ancestors
-{"parentPartitioningId": <ancestor_id>, "author": "<you>", "copyMeasurements": false, "copyAdditionalData": false}
+```sql
+INSERT INTO flows.partitioning_to_flow (fk_flow, fk_partitioning, created_by)
+SELECT F.id_flow, <missing_member_id>, '<you>'
+FROM flows.flows F
+WHERE F.fk_primary_partitioning = <ancestor_id>
+ON CONFLICT DO NOTHING;
 ```
 
-or `SELECT status FROM runs.update_partitioning_parent(<missing_member_id>, <ancestor_id>, '<you>', false, false);` (status `11`). The link propagates the member (and the members of its own flow)
-into every flow that contains `ancestor_id`. Use `missing_member_id`, **not** `child_id`: re-linking `child_id` under `ancestor_id` answers `11` as well, but it takes the lock-free
-"already linked" path and repairs nothing. Re-run D1 afterwards and repeat until it returns no rows; a hole that is several levels deep needs more than one round.
+For a `missing_member_id` that is a leaf the link API does the same: `PATCH /api/v2/partitionings/{missing_member_id}/ancestors` with
+`{"parentPartitioningId": <ancestor_id>, "author": "<you>", "copyMeasurements": false, "copyAdditionalData": false}`
+(or `SELECT status FROM runs.update_partitioning_parent(<missing_member_id>, <ancestor_id>, '<you>', false, false);`, status `11`). A `missing_member_id` that has descendants is refused with `33` / `409`
+(descendants are never propagated), use the insert for it. Use `missing_member_id`, **not** `child_id`: re-linking `child_id` under `ancestor_id` takes the lock-free
+"already linked" path and repairs nothing. Re-run D1 afterwards.
 
 **D2 - mutual membership** (a dependency cycle). Pairs `partitioning_a < partitioning_b` where each one is a member of the flow of the other. The current code rejects every cycle with `409` / status `32`,
 so such rows can only come from legacy or manually written data; there is no automatic repair, inspect the data and decide which of the two `flows.partitioning_to_flow` rows is wrong:
@@ -198,8 +207,9 @@ ORDER BY partitioning_id;
 
 These are known and documented; they are not fixed by the 1.1 migrations.
 
-* The deprecated v1 functions `runs.create_partitioning` / `runs.create_partitioning_if_not_exists` are lock-free: a v1 create can race a v2 re-link and lose a descendant (Phase 8 review CR-01).
-  The explanatory comment inside `flows/V0.10.0.1___link_to_parents.sql` that says the v1 path cannot lose an update is inaccurate for that race; it cannot be corrected without a new migration, so it is a follow-up.
+* The deprecated v1 functions `runs.create_partitioning` / `runs.create_partitioning_if_not_exists` are lock-free: a v1 create of a new child under P can race a concurrent v2 link of P under a new ancestor Q
+  and then miss the flow of Q (the new child is a descendant of P but not a member of the flow of Q; D1 reports it). Only the brand-new child can be missed; no existing descendant is ever moved or lost
+  (Phase 8 review CR-01, narrowed because descendants are no longer propagated).
 * `runs.update_partitioning_parent` is executable by `PUBLIC` (no `REVOKE` in its migration; WR-01).
 * There is no guard against a transaction isolation level other than READ COMMITTED (WR-02): REPEATABLE READ and SERIALIZABLE callers are unsupported.
 * `flows._add_to_parent_flows` and `flows._create_flow` are executable by `PUBLIC` and neither take the advisory lock nor check for cycles (IN-05); never call them directly.

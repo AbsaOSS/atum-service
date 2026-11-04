@@ -37,7 +37,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(Created(PartitioningWithIdDTO(1L, Seq.empty, "author"))))
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOExistingAuthor))
     .thenReturn(ZIO.succeed(Existing(PartitioningWithIdDTO(1L, Seq.empty, "stored-author"))))
-  // a conflict is a cycle only ("already exists" is a success, see CreationResult.Existing)
+  // a conflict is a cycle or descendants ("already exists" is a success, see CreationResult.Existing)
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO2))
     .thenReturn(ZIO.fail(ConflictDatabaseError("Partitioning parent link would create a cycle")))
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO3))

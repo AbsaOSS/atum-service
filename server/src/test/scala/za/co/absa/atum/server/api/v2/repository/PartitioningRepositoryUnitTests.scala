@@ -97,7 +97,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(createdRow(14, "nothing written", storedAuthor))
   when(createPartitioningWithParentsMock.apply(dtoUnexpected)).thenReturn(createdRow(99, "weird", storedAuthor))
 
-  // Phase 8/9 contract: "already exists" is a success (13/14), a conflict is a cycle (32) only; the old
+  // Phase 8/9 contract: "already exists" is a success (13/14), a conflict is a cycle (32) or descendants (33); the old
   // single-parent status 31 "Partitioning already present" no longer exists
   when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTO2))
     .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Cycle detected"))))
@@ -231,6 +231,16 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(5L, cyclePatchDTO)))
     .thenReturn(
       ZIO.left(DataConflictException(FunctionStatus(32, "Parent partitioning would create a cycle: 5")))
+    )
+
+  private val descendantsPatchDTO = PartitioningParentPatchDTO(parentPartitioningId = 6L, author = "desc-author")
+  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(6L, descendantsPatchDTO)))
+    .thenReturn(
+      ZIO.left(
+        DataConflictException(
+          FunctionStatus(33, "Partitioning already has descendants and cannot be linked under new parents: 6")
+        )
+      )
     )
 
   private val updatePartitioningParentMockLayer = ZLayer.succeed(updatePartitioningParentMock)
@@ -593,6 +603,13 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
               warnings.head.message().contains("cycle"),
               warnings.head.message().contains("partitioning 5")
             )
+        },
+        test("Status 33 (descendants) maps to ConflictDatabaseError and logs exactly one PATCH WARN") {
+          for {
+            exit <- PartitioningRepository.updatePartitioningParent(6L, descendantsPatchDTO).exit
+            warnings <- ZTestLogger.logOutput.map(_.filter(isPatchWarning(6L)))
+          } yield assert(exit)(failsWithA[ConflictDatabaseError]) &&
+            assertTrue(warnings.size == 1, warnings.head.message().contains("descendants"))
         },
         test("A non-conflict failure logs no PATCH WARN") {
           for {

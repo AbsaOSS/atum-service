@@ -350,21 +350,59 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     assert(table("flows.partitioning_to_flow").count(add("fk_partitioning", d)) == 4)
   }
 
-  test("descendants of the child are propagated into the new parent's flows") {
+  test("a child with descendants is refused with 33 under a new parent and nothing is written") {
     val c = seed(uniq("c"))
     val d = seed(uniq("d"), Some(c))
     val n = seed(uniq("n"))
+    val m = seed(uniq("m"))
+    val before = counts()
 
-    assert(link(c, ids(Seq(n)))._1 == 11)
+    val (status, text) = link(c, ids(Seq(n)))
 
-    assert(ancestorIds(d) == Set(c, n))
-    assert(ancestorIds(c) == Set(n))
-    assert(flowMembers(n) == Set(n, c, d))
+    assert(status == 33)
+    assert(text.contains("descendants"))
+    assert(text.endsWith(c.toString))
+    // a mix of new parents is refused as a whole
+    assert(link(c, ids(Seq(n, m)))._1 == 33)
+    assert(counts() == before)
+    assert(ancestorIds(c).isEmpty)
+    assert(ancestorIds(d) == Set(c))
+    assert(flowMembers(n) == Set(n))
+    assert(flowMembers(m) == Set(m))
     assert(flowMembers(c) == Set(c, d))
   }
 
+  test("a child with descendants is refused with 33 also when only one of several parents is new") {
+    val a = seed(uniq("a"))
+    val c = seed(uniq("c"), Some(a))
+    val d = seed(uniq("d"), Some(c))
+    val n = seed(uniq("n"))
+    val before = counts()
+
+    assert(link(c, ids(Seq(a, n)))._1 == 33)
+
+    assert(counts() == before)
+    assert(ancestorIds(c) == Set(a))
+    assert(ancestorIds(d) == Set(a, c))
+    assert(flowMembers(n) == Set(n))
+  }
+
+  test("re-linking a child with descendants to an ancestor it already has stays a lock-free no-op (14)") {
+    val a = seed(uniq("a"))
+    val c = seed(uniq("c"), Some(a))
+    val d = seed(uniq("d"), Some(c))
+    val before = counts()
+
+    assert(link(c, ids(Seq(a)))._1 == 14)
+    assert(link(d, ids(Seq(a, c)))._1 == 14)
+
+    assert(counts() == before)
+    assert(flowMembers(a) == Set(a, c, d))
+    assert(advisoryLocksHeld() == 0)
+  }
+
   /** Roles: X <- Y <- Z is a chain, N a new top-level partitioning; the FINAL graph is N <- X <- Y <- Z. */
-  private def orderIndependenceScenario(chainFirst: Boolean): Map[String, Set[String]] = {
+  private def topDownScenario(): Map[String, Set[String]] = {
     val x = seed(uniq("x"))
     val y = seed(uniq("y"))
     val z = seed(uniq("z"))
@@ -373,13 +411,10 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     val roleOf = Map(x -> "X", y -> "Y", z -> "Z", n -> "N")
     def roles(s: Set[Long]): Set[String] = s.map(roleOf)
 
-    val steps: Seq[() => (Int, String)] =
-      if (chainFirst) {
-        Seq(() => link(y, ids(Seq(x))), () => link(z, ids(Seq(y))), () => link(x, ids(Seq(n))))
-      } else {
-        Seq(() => link(x, ids(Seq(n))), () => link(y, ids(Seq(x))), () => link(z, ids(Seq(y))))
-      }
-    steps.foreach(step => assert(step()._1 == 11))
+    // only leaves are linked: N first, then X under N, Y under X and Z under Y
+    assert(link(x, ids(Seq(n)))._1 == 11)
+    assert(link(y, ids(Seq(x)))._1 == 11)
+    assert(link(z, ids(Seq(y)))._1 == 11)
 
     // flow checkpoints seen through every flow above the leaf hold exactly the leaf's checkpoint
     Seq(n, x, y).foreach(p => assert(flowCheckpointIds(p) == Set(checkpoint)))
@@ -407,12 +442,25 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     "members(F(Z))" -> Set("Z")
   )
 
-  test("order independence: chain first (Y<-X, Z<-Y, then X<-N) gives the full closure") {
-    assert(orderIndependenceScenario(chainFirst = true) == expectedFinalGraph)
+  test("top-down linking (X<-N, then Y<-X, Z<-Y) gives the full closure") {
+    assert(topDownScenario() == expectedFinalGraph)
   }
 
-  test("order independence: N first (X<-N, then Y<-X, Z<-Y) gives the identical closure") {
-    assert(orderIndependenceScenario(chainFirst = false) == expectedFinalGraph)
+  test("bottom-up linking is refused: after Y<-X and Z<-Y, X<-N returns 33 and the closure stays untouched") {
+    val x = seed(uniq("x"))
+    val y = seed(uniq("y"))
+    val z = seed(uniq("z"))
+    val n = seed(uniq("n"))
+    assert(link(y, ids(Seq(x)))._1 == 11)
+    assert(link(z, ids(Seq(y)))._1 == 11)
+    val before = counts()
+
+    assert(link(x, ids(Seq(n)))._1 == 33)
+
+    assert(counts() == before)
+    assert(flowMembers(n) == Set(n))
+    assert(flowMembers(x) == Set(x, y, z))
+    assert(ancestorIds(z) == Set(x, y))
   }
 
   test("privileges: only atum_owner may execute the helper and its search_path is pinned") {

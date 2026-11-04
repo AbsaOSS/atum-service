@@ -153,6 +153,31 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           ancestorsOfP == Seq(cId)
         )
       },
+      test("T-g2: existing partitioning with descendants + NEW parent -> Left status 33 (conflict), nothing written") {
+        val keyC = uniquePartitioning("g2C")
+        for {
+          c <- create(keyC, Seq.empty[Long])
+          cId = c.toOption.get.data.id
+          p <- create(uniquePartitioning("g2P"), Seq(cId))
+          pId = p.toOption.get.data.id
+          n <- createNew("g2N")
+          _ <- seedMeasure(n)
+          result <- create(keyC, Seq(n), copy = true)
+          ancestorsOfC <- ancestorIds(cId)
+          ancestorsOfP <- ancestorIds(pId)
+          measuresOfC <- measureNames(cId)
+          relinked <- create(keyC, Seq.empty[Long])
+        } yield assertTrue(
+          result.left.exists {
+            case DataConflictException(status) => status.statusCode == 33
+            case _                             => false
+          },
+          ancestorsOfC.isEmpty,
+          ancestorsOfP == Seq(cId),
+          measuresOfC.isEmpty,
+          relinked.toOption.get.functionStatus.statusCode == 14
+        )
+      },
       test("T-j1: flag true -> NEW child receives the parent's measure definition") {
         for {
           parent <- createNew("mdTrueParent")

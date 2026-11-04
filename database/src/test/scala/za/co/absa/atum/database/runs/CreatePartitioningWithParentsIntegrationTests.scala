@@ -481,24 +481,41 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     assert(flowCount(d) == 4)
   }
 
-  test("Descendants of an existing child become reachable from a newly linked parent (WR-05)") {
+  test("An existing child with descendants is refused under a new parent: 33, nothing written or copied") {
     val n = seed(lineage("N"))
     val c = seed(lineage("C"))
     val d = seed(lineage("D"), Some(c))
     val e = seed(lineage("E"), Some(d))
+    addMeasure(n, "m_n", """{"col"}""", "Nora")
+    addAd(n, "k_n", "x")
+    val before = fourTableCounts()
+
+    val result = createMulti(lineage("C"), ids(Seq(n)), copyMd = true)
+
+    assert(result.status == 33)
+    assert(result.statusText.contains("descendants"))
+    assert(result.id.isEmpty)
+    assert(result.createdBy.isEmpty)
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(c).isEmpty)
+    assert(ancestorIds(d) == Set(c))
     assert(ancestorIds(e) == Set(c, d))
+    assert(measureCount(c) == 0)
+  }
 
-    val result = createMulti(lineage("C"), ids(Seq(n)))
+  test("An existing child with descendants stays a no-op (14) when every parent is already its ancestor") {
+    val a = seed(lineage("A"))
+    val c = seed(lineage("C"), Some(a))
+    val d = seed(lineage("D"), Some(c))
+    val before = fourTableCounts()
 
-    assert(result.status == 13)
-    assert(ancestorIds(c) == Set(n))
-    assert(ancestorIds(d) == Set(c, n))
-    assert(ancestorIds(e) == Set(c, d, n))
+    val again = createMulti(lineage("C"), ids(Seq(a)))
 
-    val flowsBefore = table("flows.partitioning_to_flow").count()
-    val again = createMulti(lineage("C"), ids(Seq(n)))
     assert(again.status == 14)
-    assert(table("flows.partitioning_to_flow").count() == flowsBefore)
+    assert(again.id.contains(c))
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(d) == Set(a, c))
+    assert(advisoryLocksHeld() == 0)
   }
 
   // ---- privileges, removed objects, locking ------------------------------------------------------------------

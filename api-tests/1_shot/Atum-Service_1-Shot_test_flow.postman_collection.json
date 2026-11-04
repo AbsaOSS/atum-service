@@ -1856,7 +1856,7 @@
     },
     {
       "name": "Test: consolidated POST and linking (v1.1)",
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- PATCH:/api/v2/partitionings/{partitioningId}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningId}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningId}/measures\n    \n- GET:/api/v2/partitionings/{partitioningId}/additional-data\n    \n- GET:/api/v2/partitionings/{partitioningId}/main-flow\n    \n- GET:/api/v2/flows/{flowId}/partitionings\n    \n- POST:/api/v2/partitionings/{partitioningId}/checkpoints\n    \n- GET:/api/v2/partitionings?partitioning=\n    \nThe POST covers: 201 created / 200 existing, 0..N parents, 404 unknown parent (the child is not created), 409 cycle, 400 more than 100 distinct parents, copyMeasureDefinitions true / false. The PATCH covers: 400 without the copy flags, 204 late link that also adds the descendants of the linked partitioning to the flow of the new parent. All partitionings of this folder use the unique suffix in the collection variable v11_suffix (regenerated unconditionally by the first request of the folder, so a re-run after an aborted run starts clean); all ids are kept in collection variables with the prefix v11_. Ids of probe requests for unknown partitionings are >= 9007199254740000 (never allocated by the database sequence). This folder is an HTTP-contract smoke test with one happy path per behaviour; the edge cases (boundaries, self-link, copy-flag matrix) are covered by the database and server tests. Error responses are checked by status code and envelope shape (message, requestId), not by message wording.",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- PATCH:/api/v2/partitionings/{partitioningId}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningId}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningId}/measures\n    \n- GET:/api/v2/partitionings/{partitioningId}/additional-data\n    \n- GET:/api/v2/partitionings/{partitioningId}/main-flow\n    \n- GET:/api/v2/flows/{flowId}/partitionings\n    \n- POST:/api/v2/partitionings/{partitioningId}/checkpoints\n    \n- GET:/api/v2/partitionings?partitioning=\n    \nThe POST covers: 201 created / 200 existing, 0..N parents, 404 unknown parent (the child is not created), 409 cycle, 400 more than 100 distinct parents, copyMeasureDefinitions true / false. The PATCH covers: 400 without the copy flags, 409 when the linked partitioning already has descendants (nothing is written, the flow of the new parent is unchanged). All partitionings of this folder use the unique suffix in the collection variable v11_suffix (regenerated unconditionally by the first request of the folder, so a re-run after an aborted run starts clean); all ids are kept in collection variables with the prefix v11_. Ids of probe requests for unknown partitionings are >= 9007199254740000 (never allocated by the database sequence). This folder is an HTTP-contract smoke test with one happy path per behaviour; the edge cases (boundaries, self-link, copy-flag matrix) are covered by the database and server tests. Error responses are checked by status code and envelope shape (message, requestId), not by message wording.",
       "event": [
         {
           "listen": "prerequest",
@@ -2701,7 +2701,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 descendant: late link of R under C2 via PATCH (R already has the child M) - 204",
+          "name": "Act: v11 descendant: late link of R under C2 via PATCH (R already has the child M) - 409",
           "event": [
             {
               "listen": "test",
@@ -2709,7 +2709,12 @@
                 "type": "text/javascript",
                 "packages": {},
                 "exec": [
-                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                  "pm.test('Status code is 409 (R already has descendants and cannot get a new parent)', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Error envelope carries message and requestId', function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('message');",
+                  "    pm.expect(j).to.have.property('requestId');",
+                  "});"
                 ]
               }
             }
@@ -2784,7 +2789,7 @@
           "response": []
         },
         {
-          "name": "Act: v11 descendant: flow of C2 lists exactly C2, R and the descendant M - 200",
+          "name": "Act: v11 descendant: flow of C2 is unchanged, exactly C2 - 200",
           "event": [
             {
               "listen": "test",
@@ -2795,9 +2800,9 @@
                   "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
                   "const g = function (k) { return pm.collectionVariables.get(k); };",
-                  "pm.test('The flow of C2 contains exactly C2, R and M: the child M that was already below R came along, nothing else did', function () {",
+                  "pm.test('The flow of C2 contains exactly C2: the refused link wrote nothing, neither R nor its child M is a member', function () {",
                   "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
-                  "    pm.expect(ids).to.eql([g('v11_c2_id'), g('v11_r_id'), g('v11_m_id')].map(String).sort());",
+                  "    pm.expect(ids).to.eql([g('v11_c2_id')].map(String).sort());",
                   "});"
                 ]
               }

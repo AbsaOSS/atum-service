@@ -37,9 +37,12 @@ $$
 --      existing partitioning are returned, never the caller.
 --
 --      Linking (new and existing partitioning alike) is delegated to flows._link_to_parents: a self-link or a
---      cycle is rejected with status 32 before anything is written; when every parent is already an ancestor
---      the call takes a lock-free fast path; otherwise it takes the global advisory lock, re-checks and links the
---      partitioning and all its descendants to the flows of the parents (narrow propagation).
+--      cycle is rejected with status 32 and an existing partitioning that already has descendants is refused with
+--      status 33 (a link that is not needed yet is no error, see below) before anything is written; when every
+--      parent is already an ancestor the call takes a lock-free fast path; otherwise it takes the global advisory
+--      lock, re-checks and adds the partitioning (a leaf) to the flows of the parents. Descendants are never
+--      propagated. A partitioning created by this call is always a leaf, so status 33 can only happen for an
+--      existing one.
 --
 --      Measure definitions: copied only when i_copy_measure_definitions is true (NULL means false), only when
 --      the partitioning is newly created by this call, as the distinct union over all the supplied parents by
@@ -71,6 +74,8 @@ $$
 --      14                  - Partitioning already present (nothing was written)
 --      32                  - Parent partitioning would create a cycle (is the partitioning itself or its
 --                            descendant); the text names the offending ids, nothing was written
+--      33                  - An existing partitioning already has descendants and would get a new parent
+--                            (nothing was written, no measure definitions are copied)
 --      41                  - Parent partitioning not found (nothing was written)
 --
 -------------------------------------------------------------------------------
@@ -127,14 +132,14 @@ BEGIN
         END IF;
     END IF;
 
-    -- all linking (self-link / cycle rejection, lock-free fast path, global advisory lock, narrow propagation of the
-    -- partitioning and its descendants) lives in the shared helper; it writes nothing when it returns 32
+    -- all linking (self-link / cycle / has-descendants rejection, lock-free fast path, global advisory lock) lives in
+    -- the shared helper; it writes nothing when it returns 32 or 33
     SELECT LTP.status, LTP.status_text
     FROM flows._link_to_parents(_child_id, _parent_ids, i_by_user) AS LTP
     INTO _link_status, _link_status_text;
 
-    IF _link_status = 32 THEN
-        status := 32;
+    IF _link_status IN (32, 33) THEN
+        status := _link_status;
         status_text := _link_status_text;
         RETURN;
     END IF;

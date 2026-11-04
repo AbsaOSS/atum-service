@@ -51,7 +51,7 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO1))
     .thenReturn(ZIO.succeed((StatusCode.Created, SingleSuccessResponse(partitioningWithIdDTO1, uuid1), "location")))
 
-  // 409 means a parent-link cycle only; an existing partitioning is a 200 success, never a conflict
+  // 409 means a parent-link cycle (or an existing partitioning with descendants); an existing partitioning is a 200 success, never a conflict
   when(partitioningControllerMock.postPartitioning(partitioningSubmitV2DTO2))
     .thenReturn(ZIO.fail(ConflictErrorResponse("Partitioning parent link would create a cycle")))
 
@@ -171,7 +171,7 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with TestData {
       test("A BadRequestResponse from the controller is rendered as 400") {
         assertZIO(request.body(dto101).send(backendStub).map(_.code))(equalTo(StatusCode.BadRequest))
       },
-      test("Returns expected Conflict (409, cycle only)") {
+      test("Returns expected Conflict (409, cycle)") {
         val response = request
           .body(partitioningSubmitV2DTO2)
           .send(backendStub)

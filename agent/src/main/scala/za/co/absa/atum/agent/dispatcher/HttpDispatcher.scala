@@ -78,7 +78,8 @@ class HttpDispatcher(config: Config) extends Dispatcher(config) with Logging {
 
   /**
    *  Accepts any 2xx: the server answers 201 for a newly created and 200 for an already existing partitioning
-   *  (same body); any other status becomes an HttpException (409 = cycle only).
+   *  (same body); any other status becomes an HttpException (409 = a cycle, or an existing partitioning that
+   *  already has descendants would get a new parent).
    */
   private def postCreatePartitioning(
     partitioning: PartitioningCreateRequest,

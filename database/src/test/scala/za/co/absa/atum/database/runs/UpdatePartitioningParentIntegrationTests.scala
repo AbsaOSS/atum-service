@@ -378,20 +378,41 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     assert(adCount(child) == 0)
   }
 
-  test("Grandparent and descendant propagation through PATCH (LINEAGE-03)") {
+  test("A leaf gets the grandparents through PATCH; once it has descendants a new parent is refused with 33") {
     val a = seed("prop-a")
     val b = seed("prop-b", Some(a))
     val c = seed("prop-c")
-    val d = seed("prop-d", Some(c))
-    val n = seed("prop-n")
+    val n = seedParentWithData("prop-n")
 
     assert(patch(c, b, copyMeasurements = false, copyAdditionalData = false).status == 11)
     assert(ancestorIds(c) == Set(a, b))
-    assert(ancestorIds(d) == Set(a, b, c))
 
-    assert(patch(c, n, copyMeasurements = false, copyAdditionalData = false).status == 11)
-    assert(ancestorIds(c) == Set(a, b, n))
-    assert(ancestorIds(d) == Set(a, b, c, n))
+    val d = seed("prop-d", Some(c))
+    val before = fourTableCounts()
+
+    val result = patch(c, n, copyMeasurements = true, copyAdditionalData = true)
+
+    assert(result.status == 33)
+    assert(result.statusText.contains("descendants"))
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(c) == Set(a, b))
+    assert(ancestorIds(d) == Set(a, b, c))
+    assert(measureCount(c) == 0)
+    assert(adCount(c) == 0)
+  }
+
+  test("A child with descendants stays a no-op (11, no new link) when the parent is already its ancestor") {
+    val a = seed("noop-desc-a")
+    val c = seed("noop-desc-c", Some(a))
+    val d = seed("noop-desc-d", Some(c))
+    val before = fourTableCounts()
+
+    val result = patch(c, a, copyMeasurements = false, copyAdditionalData = false)
+
+    assert(result.status == 11)
+    assert(fourTableCounts() == before)
+    assert(ancestorIds(d) == Set(a, c))
+    assert(advisoryLocksHeld() == 0)
   }
 
   test("Copies are applied on a link that is already in place (POLICY-04), no new link is written") {
