@@ -36,6 +36,20 @@ import scala.collection.immutable.ListMap
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
 import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 
+/** Mimics the slice of `java.net.http.HttpHeaders` these tests need. Top-level (not nested in the test class) so
+ *  the synthesized case class equality doesn't need an outer-instance check. */
+private final case class CompatHeaders(values: Seq[(String, String)]) {
+  def firstValue(name: String): java.util.Optional[String] =
+    java.util.Optional.ofNullable(values.collectFirst { case (k, v) if k.equalsIgnoreCase(name) => v }.orNull)
+}
+
+/** Minimal response wrapper exposing `.statusCode()` / `.body()` / `.headers()` as java.net.http's did. */
+private final case class CompatResponse(code: Int, payload: String, allHeaders: Seq[(String, String)]) {
+  def statusCode(): Int = code
+  def body(): String = payload
+  def headers(): CompatHeaders = CompatHeaders(allHeaders)
+}
+
 class AgentServerCompatibilityTests extends DBTestSuite {
 
   private val serverUrl = "http://localhost:8080"
@@ -43,19 +57,6 @@ class AgentServerCompatibilityTests extends DBTestSuite {
   // sttp/OkHttp is used instead of java.net.http: the agent module (and its tests) must stay Java-8-compilable,
   // and java.net.http only exists from Java 11 onwards.
   private val httpBackend: SttpBackend[Identity, capabilities.WebSockets] = OkHttpSyncBackend()
-
-  /** Mimics the slice of `java.net.http.HttpHeaders` these tests need. */
-  private final case class CompatHeaders(values: Seq[(String, String)]) {
-    def firstValue(name: String): java.util.Optional[String] =
-      java.util.Optional.ofNullable(values.collectFirst { case (k, v) if k.equalsIgnoreCase(name) => v }.orNull)
-  }
-
-  /** Minimal response wrapper exposing `.statusCode()` / `.body()` / `.headers()` as java.net.http's did. */
-  private final case class CompatResponse(code: Int, payload: String, allHeaders: Seq[(String, String)]) {
-    def statusCode(): Int = code
-    def body(): String = payload
-    def headers(): CompatHeaders = CompatHeaders(allHeaders)
-  }
 
   private def httpCall(method: String, path: String, jsonBody: Option[String] = None): CompatResponse = {
     val uri = Uri.unsafeParse(s"$serverUrl$path")
