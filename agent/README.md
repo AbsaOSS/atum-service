@@ -112,8 +112,10 @@ Creating a sub-context resolves each parent id first with one `GET` (in the give
 
 - An unknown parent: the lookup `GET` answers `404` and the agent throws a bare `HttpException(404, body)`
   (`za.co.absa.atum.agent.exception.AtumAgentException.HttpException`) before any `POST` is sent.
-- A dependency cycle: the `POST` answers `409` and the agent throws `HttpException(409, body)`. This release of the agent
-  does not swallow it (agents v0.8 - v0.10 did ignore a `409` of their `PATCH`).
+- A `409`: the `POST` answers `409` for a dependency cycle, or when an already existing partitioning that has
+  descendants of its own would get a new parent (descendants are never propagated into the flows of a new parent), and
+  the agent throws `HttpException(409, body)`. This release of the agent does not swallow it (agents v0.8 - v0.10 did
+  ignore a `409` of their `PATCH`). Re-running a job with the same parents is not affected.
 - Any other non-2xx status is an `HttpException` as well; `4xx` are not retried.
 - `5xx` and `IOException` are retried with back-off, `atum.dispatcher.http.retry.max-retries` (default `3`, i.e. up to 4
   attempts, the `POST` included). That is safe because the server-side `POST` is idempotent; the retries can put the
@@ -130,7 +132,7 @@ Multi-parent sub-contexts therefore require a server that includes the three dat
 `runs/V0.10.0.3__update_partitioning_parent.sql`) and the matching v2 endpoint support.
 
 Single-parent behavior, public signatures, and decoding of previously produced JSON (field absent -> empty list)
-are unchanged for callers of `AtumAgent` and `AtumContext` (the Phase 10 signature check found only added overloads and
+are unchanged for callers of `AtumAgent` and `AtumContext` (a scripted signature comparison against v0.10.0 found only added overloads and
 nothing removed); the exceptions for library users are listed in "Upgrading from v0.10.x" below. The *encoded* JSON of
 `PartitioningSubmitV2DTO` now carries exactly `parentPartitioningIds` and `copyMeasureDefinitions` (besides `partitioning`
 and `author`) and no longer the singular `parentPartitioningId`; `copyMeasureDefinitions` is `false` unless you use the

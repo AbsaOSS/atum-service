@@ -40,7 +40,7 @@ $$
 --
 --      The copies are applied according to the flags also when the link was already in place (the helper's
 --      "nothing to do" outcome is not an error here), so a repeated call is harmless:
---      - additional data (P8-Q1: the flag is kept, opt-in on this endpoint only, default true): copied with the
+--      - additional data (the flag is kept, opt-in on this endpoint only, default true): copied with the
 --        unchanged semantics, i.e. the parent's keys OVERWRITE the child's existing keys with the same name;
 --      - measure definitions: INSERT ... ON CONFLICT ON CONSTRAINT measure_definitions_unq DO NOTHING, so the child's
 --        own definitions win and a repeat is a no-op (not a unique violation).

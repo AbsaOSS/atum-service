@@ -65,9 +65,9 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
 --        (this includes a brand-new child with parents). The statements after the lock re-check under a fresh
 --        snapshot - sound ONLY under READ COMMITTED (Hikari default); do NOT set REPEATABLE READ/SERIALIZABLE
 --        anywhere. The lock must stay a standalone PERFORM (never inside a SELECT ... WHERE).
---      - No lock_timeout (P8-Q4, locked decision): a waiting writer holds a pool connection (Hikari max 10).
+--      - No lock_timeout (a deliberate decision): a waiting writer holds a pool connection (Hikari max 10).
 --        Accepted residual risk; slow-path calls are short and re-links of existing ancestors take the lock-free
---        fast path. To be documented in README/ADR in Phase 11.
+--        fast path. Documented in database/README.md and server/README.md.
 --      - The v1 path runs.create_partitioning does not take this lock; it links only a brand-new child (a leaf). It
 --        can race a concurrent link of its parent under a new ancestor and then miss that ancestor's flow (known
 --        limitation of the deprecated v1 path, see database/README.md).

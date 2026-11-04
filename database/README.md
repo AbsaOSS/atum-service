@@ -209,9 +209,9 @@ These are known and documented; they are not fixed by the 1.1 migrations.
 
 * The deprecated v1 functions `runs.create_partitioning` / `runs.create_partitioning_if_not_exists` are lock-free: a v1 create of a new child under P can race a concurrent v2 link of P under a new ancestor Q
   and then miss the flow of Q (the new child is a descendant of P but not a member of the flow of Q; D1 reports it). Only the brand-new child can be missed; no existing descendant is ever moved or lost
-  (Phase 8 review CR-01, narrowed because descendants are no longer propagated).
-* `runs.update_partitioning_parent` is executable by `PUBLIC` (no `REVOKE` in its migration; WR-01).
-* There is no guard against a transaction isolation level other than READ COMMITTED (WR-02): REPEATABLE READ and SERIALIZABLE callers are unsupported.
+  (narrowed because descendants are no longer propagated).
+* `runs.update_partitioning_parent` is executable by `PUBLIC` (no `REVOKE` in its migration).
+* There is no guard against a transaction isolation level other than READ COMMITTED: REPEATABLE READ and SERIALIZABLE callers are unsupported.
 * `flows._add_to_parent_flows` and `flows._create_flow` are executable by `PUBLIC` and neither take the advisory lock nor check for cycles (IN-05); never call them directly.
 * `runs.get_partitioning_ancestors` returns `has_more` as `NULL` only in its status `14` ("no rows") record. That record is returned for **any empty page**: a partitioning without ancestors (for example a root, also at `offset = 0`) or an `offset` past the last ancestor. A non-empty page computes `has_more` normally, whatever the `offset`. The server maps the `NULL` to `hasMore: false` (existing function, unchanged).
 * The not-found messages (status `41` / `42`) do not name the offending ids.

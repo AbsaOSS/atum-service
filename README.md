@@ -373,8 +373,9 @@ implicit val countryContext: AtumContext =
 
 By default the child partitioning is `parent ++ sub` (and overlapping keys are rejected). Pass
 `mergeWithParent = false` if the child should be identified only by `subPartitions`, while the lineage is still
-kept via flows. Note that in that case measures and additional data are not copied over from the parent if the
-child partitioning already existed.
+kept via flows. Note that measure definitions are copied from the parent only on explicit opt-in
+(`copyMeasureDefinitions = true`) and only when the child partitioning is newly created; additional data is never
+copied.
 
 #### 7. Additional data
 
