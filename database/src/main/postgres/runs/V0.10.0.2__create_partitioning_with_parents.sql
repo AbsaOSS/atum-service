@@ -94,7 +94,7 @@ BEGIN
         ORDER BY PID.id
     );
 
-    -- validate all parents before the first write (all-or-nothing)
+    -- check existence of all parents before the first write (all-or-nothing)
     PERFORM 1
     FROM unnest(_parent_ids) AS PID(id)
     WHERE NOT EXISTS (
@@ -108,8 +108,7 @@ BEGIN
 
     id_partitioning := NULL;
     created_by := NULL;
-    -- non-locking lookup: no FOR UPDATE (it would risk a lock-order inversion against the advisory lock
-    -- taken inside flows._link_to_parents)
+
     _child_id := runs._get_id_partitioning(i_partitioning, false);
     _child_created := false;
 
@@ -132,8 +131,8 @@ BEGIN
         END IF;
     END IF;
 
-    -- all linking (self-link / cycle / has-descendants rejection, lock-free fast path, global advisory lock) lives in
-    -- the shared helper; it writes nothing when it returns 32 or 33
+    -- all linking code (self-link / cycle / has-descendants rejection, lock-free fast path, global advisory lock)
+    -- lives in the shared helper; it writes nothing when it returns 32 or 33
     SELECT LTP.status, LTP.status_text
     FROM flows._link_to_parents(_child_id, _parent_ids, i_by_user) AS LTP
     INTO _link_status, _link_status_text;
@@ -174,6 +173,7 @@ BEGIN
             status := 12;
             status_text := 'Partitioning created with parent partitioning';
         END IF;
+    -- so the child partitioning (=i_partitioning) existed already
     ELSIF _link_status = 11 THEN
         status := 13;
         status_text := 'Partitioning parents registered';
@@ -185,8 +185,8 @@ BEGIN
     RETURN;
 END;
 $$
--- search_path is pinned (pg_catalog first, so built-in functions and operators cannot be shadowed). public is
--- required because the shipped flows._create_flow and the column defaults call public.global_id(), which
+-- search_path is pinned (pg_catalog first, so built-in functions and operators cannot be shadowed).
+-- public is required because the shipped flows._create_flow and the column defaults call public.global_id(), which
 -- resolves its sequence through the search_path of the running function; pg_temp is last so temporary
 -- objects cannot shadow. All other references in this function are schema-qualified.
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER

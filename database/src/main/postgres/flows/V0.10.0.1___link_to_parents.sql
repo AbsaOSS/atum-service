@@ -30,11 +30,11 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
 --      Used by runs.create_partitioning_with_parents and runs.update_partitioning_parent.
 --
 -- Closure-table invariant: members(F(A)) = {A} U descendants(A), where F(A) is the flow whose primary partitioning is A.
+--      To explain this in simple terms - flow is a downstream view.
 --      The ancestors of X are the primary partitionings of the flows containing X (excluding X).
 --      The invariant holds because only a leaf (a partitioning whose own flow has no other member) is ever linked
 --      under a NEW parent: nothing but the child itself has to join the flows of the parents. A partitioning with
 --      descendants is refused (status 33) instead of dragging its descendants into the flows of the new parents.
---      Data written by older versions of the service may violate the invariant; this function never repairs it.
 --
 -- Parameters:
 --      i_child_id              - id of the child partitioning (must already exist)
@@ -54,13 +54,11 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
 --      33 - The child already has descendants and a new link would be needed (it cannot be linked under new parents)
 --
 -- Notes:
+--      - Fast path: when every parent already has the child in its own flow, nothing is written and NO lock is taken.
 --      - Self-link is rejected BEFORE the fast path (the child is a member of its own flow and would otherwise look
 --        "already linked").
---      - Status 32 and 33 are always returned before the first write; fa-db commits first and inspects the status
---        afterwards, so every non-OK status MUST precede any write.
 --      - Leaf check (status 33) applies only to NEW links, it comes after the lock and the cycle check: a re-link of a
 --        child (even one with descendants) to parents that are already its ancestors stays a no-op (status 14).
---      - Fast path: when every parent already has the child in its own flow, nothing is written and NO lock is taken.
 --      - Lock: one global exclusive transaction-scoped advisory lock, taken only when the fast path does not apply
 --        (this includes a brand-new child with parents). The statements after the lock re-check under a fresh
 --        snapshot - sound ONLY under READ COMMITTED (Hikari default); do NOT set REPEATABLE READ/SERIALIZABLE
@@ -81,11 +79,15 @@ DECLARE
     _offending      BIGINT[];
     _rows           INTEGER;
 BEGIN
+    -- normalize parents: distinct, non-NULL, deterministic order
     _parent_ids := ARRAY(
-        SELECT DISTINCT PID.id FROM unnest(i_parent_ids) AS PID(id) WHERE PID.id IS NOT NULL ORDER BY PID.id
+        SELECT DISTINCT PID.id
+        FROM unnest(i_parent_ids) AS PID(id)
+        WHERE PID.id IS NOT NULL
+        ORDER BY PID.id
     );
 
-    -- self-link: the child is a member of its own flow and would pass the fast path; reject it first
+    -- self-link: the child is a member of its own flow, reject it
     IF i_child_id = ANY(_parent_ids) THEN
         status := 32;
         status_text := 'Parent partitioning would create a cycle: ' || i_child_id::TEXT;

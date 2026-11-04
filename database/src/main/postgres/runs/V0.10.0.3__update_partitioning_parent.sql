@@ -27,27 +27,24 @@ $$
 -------------------------------------------------------------------------------
 --
 -- Function: runs.update_partitioning_parent(5)
---      Update the Parent Partitioning for a given partitioning ID and copies measurements and additional data from parent.
+--      Update the Parent Partitioning for a given partitioning ID and copies measurements and additional data
+--      from parent to child. Order of work: validate (errs: 41, 42) -> link (errs: 32, 33) -> copy.
 --
---      The link is written by flows._link_to_parents, the routine shared with
---      runs.create_partitioning_with_parents: it rejects self-links, cycles and a child that already has descendants
---      (when a new link would be needed), serializes writers and adds the child (never its descendants) into every
---      flow containing the parent.
---
---      Order of work: validate (41, 42) -> link (32 on a cycle, 33 on descendants) -> copy. The link comes first
---      because fa-db commits the transaction before it inspects the status, so a non-OK status must be returned
---      before the first write (including the copies below).
+--      The link is written by flows._link_to_parents, the routine shared with runs.create_partitioning_with_parents:
+--      it rejects self-links, cycles and a child that already has descendants (when a new link would be needed),
+--      serializes writers and adds the child (never its descendants) into every flow containing the parent.
 --
 --      The copies are applied according to the flags also when the link was already in place (the helper's
 --      "nothing to do" outcome is not an error here), so a repeated call is harmless:
 --      - additional data (the flag is kept, opt-in on this endpoint only, default true): copied with the
---        unchanged semantics, i.e. the parent's keys OVERWRITE the child's existing keys with the same name;
+--        unchanged semantics, i.e. the parent's keys present in child OVERWRITE such conflicting values and store the
+--        old additional data into a history table;
 --      - measure definitions: INSERT ... ON CONFLICT ON CONSTRAINT measure_definitions_unq DO NOTHING, so the child's
 --        own definitions win and a repeat is a no-op (not a unique violation).
 --
 -- Parameters:
 --      i_id_partitioning                - id of the partitioning to be changed
---      i_id_parent_partitioning         - id of the new parent of the partitioning,
+--      i_id_parent_partitioning         - id of the new parent of the partitioning
 --      i_copy_measurements              - copies measurements from parent partitioning to child
 --      i_copy_additional_data           - copies additional data from parent partitioning to child
 --      i_by_user                        - user behind the change
