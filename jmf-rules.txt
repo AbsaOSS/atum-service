@@ -125,6 +125,8 @@
 *#apply$default$*(*)                                    id:case-apply-defaults
 *#$lessinit$greater$default$*(*)                        id:case-ctor-defaults
 *#productElement()                                      id:case-prod-element
+*#productElementName()                                  id:case-prod-element-name
+*#productElementNames()                                 id:case-prod-element-names
 *#productArity()                                        id:case-prod-arity
 *#productPrefix()                                       id:case-prod-prefix
 *#productIterator()                                     id:case-prod-iterator
@@ -144,6 +146,7 @@
 *$*#unapply(*)                                          id:comp-unapply
 *$*#toString(*)                                         id:comp-tostring
 *$*#readResolve(*)                                      id:comp-readresolve
+*$*#writeReplace(*)                                     id:comp-writereplace
 
 # anonymous class created by a macro expansion
 *$macro$*#$anonfun$inst$macro$*                         id:macro-inst
