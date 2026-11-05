@@ -49,6 +49,14 @@ class PartitioningSubmitV2DTOUnitTests extends AnyFunSuiteLike {
 
     val decoded = decode[PartitioningSubmitV2DTO](json)
     assert(decoded == Right(PartitioningSubmitV2DTO(partitioning, Seq(1L, 2L), "author", copyMeasureDefinitions = true)))
+
+    // access each field directly (not only via equals) so individual accessors are exercised too
+    decoded.foreach { dto =>
+      assert(dto.partitioning == partitioning)
+      assert(dto.parentPartitioningIds == Seq(1L, 2L))
+      assert(dto.author == "author")
+      assert(dto.copyMeasureDefinitions)
+    }
   }
 
   test("Decoder defaults copyMeasureDefinitions to false and parents to empty when absent") {

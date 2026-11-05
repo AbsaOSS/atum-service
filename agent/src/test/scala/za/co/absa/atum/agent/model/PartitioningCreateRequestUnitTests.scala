@@ -27,6 +27,12 @@ class PartitioningCreateRequestUnitTests extends AnyFunSuiteLike {
   test("Single-parent convenience factory wraps a defined parent into a one-element Seq") {
     val request = PartitioningCreateRequest(partitioning, Some(parent), "author")
     assert(request == PartitioningCreateRequest(partitioning, Seq(parent), "author", copyMeasureDefinitions = false))
+
+    // exercise individual field accessors directly, not only via equals
+    assert(request.partitioning == partitioning)
+    assert(request.parentPartitionings == Seq(parent))
+    assert(request.authorIfNew == "author")
+    assert(!request.copyMeasureDefinitions)
   }
 
   test("Single-parent convenience factory produces an empty Seq when there is no parent") {

@@ -122,6 +122,8 @@
 *#hashCode(*)                                           id:case-hashcode
 *#copy(*)                                               id:case-copy
 *#copy$default$*(*)                                     id:case-copy-defaults
+*#apply$default$*(*)                                    id:case-apply-defaults
+*#$lessinit$greater$default$*(*)                        id:case-ctor-defaults
 *#productElement()                                      id:case-prod-element
 *#productArity()                                        id:case-prod-arity
 *#productPrefix()                                       id:case-prod-prefix
