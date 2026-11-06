@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.v2.service
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.model.PaginatedResult
+import za.co.absa.atum.server.model.{CreationResult, PaginatedResult}
 import zio.IO
 import zio.macros.accessible
 
@@ -27,7 +27,7 @@ trait PartitioningService {
 
   def createPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
-  ): IO[ServiceError, PartitioningWithIdDTO]
+  ): IO[ServiceError, CreationResult[PartitioningWithIdDTO]]
 
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]]
 

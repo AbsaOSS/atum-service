@@ -17,6 +17,7 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
 import za.co.absa.atum.model.dto._
 
 /**
@@ -29,10 +30,10 @@ abstract class Dispatcher(config: Config) {
   /**
    *  This method is used to ensure the server knows the given partitioning.
    *  As a response the `AtumContext` is fetched from the server.
-   *  @param partitioning: PartitioningSubmitDTO to be used to ensure server knows the given partitioning.
+   *  @param partitioning: PartitioningCreateRequest to be used to ensure server knows the given partitioning.
    *  @return AtumContextDTO.
    */
-  protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO
+  protected[agent] def createPartitioning(partitioning: PartitioningCreateRequest): AtumContextDTO
 
   /**
    *  This method is used to save checkpoint to server.

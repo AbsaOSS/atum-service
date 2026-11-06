@@ -16,6 +16,21 @@ za.co.absa.atum.server.Main within your IDE). This deploys it to `localhost:8080
 sbt "server/runMain za.co.absa.atum.server.Main"
 ```
 
+### API v1 is deprecated
+
+All `/api/v1/*` endpoints are **deprecated** (flagged in Swagger) and behave exactly as in v0.10.0. Only agents up to
+v0.5.x use them; agents v0.6.0+ use API v2 (`POST /api/v2/partitionings`,
+`POST /api/v2/partitionings/{partitioningId}/checkpoints`). API v1 will be removed in a later release.
+
+A `POST /api/v2/partitionings` body in the v0.6 - v0.10 shape (`parentPartitioningId`, no `copyMeasureDefinitions`)
+still copies the parent's measure definitions to a newly created child, as before; otherwise the flag defaults to
+`false`.
+
+### Version compatibility
+
+**Always upgrade the server before the agents.** The server accepts what released agents send; a newer agent against an
+older server is to be avoided.
+
 ### REST API Reference
 
 The REST API exposes a Swagger Documentation UI which documents all the HTTP endpoints exposed.

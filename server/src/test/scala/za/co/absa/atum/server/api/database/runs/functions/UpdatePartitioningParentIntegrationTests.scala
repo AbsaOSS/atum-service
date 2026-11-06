@@ -21,7 +21,7 @@ import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
-import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio._
 import zio.interop.catz.asyncInstance
@@ -40,11 +40,27 @@ object UpdatePartitioningParentIntegrationTests extends ConfigProviderTest {
           updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
           result <- updatePartitioningParent(UpdatePartitioningParentArgs(1L, partitioningParentPatchDTO))
         } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Child Partitioning not found"))))
+      },
+      test("Returns Left (status 32) when an existing partitioning is linked under itself (self-link)") {
+        val partitioning = Seq(PartitionDTO("patchSelfKey", s"self-${java.util.UUID.randomUUID()}"))
+        for {
+          create <- ZIO.service[CreatePartitioningWithParents]
+          updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
+          created <- create(PartitioningSubmitV2DTO(partitioning, Seq.empty[Long], "author"))
+          id = created.toOption.get.data.id
+          result <- updatePartitioningParent(
+            UpdatePartitioningParentArgs(id, PartitioningParentPatchDTO(parentPartitioningId = id, author = "author"))
+          )
+        } yield assertTrue(result.left.exists {
+          case DataConflictException(status) => status.statusCode == 32
+          case _                             => false
+        })
       }
     ).provide(
+      CreatePartitioningWithParents.layer,
       UpdatePartitioningParent.layer,
       PostgresDatabaseProvider.layer,
-      TestTransactorProvider.layerWithRollback
+      TestTransactorProvider.layerWithSingleTransactionRollback
     )
   }
 
