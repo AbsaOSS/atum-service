@@ -25,10 +25,6 @@ import zio._
 import zio.interop.catz.asyncInstance
 import zio.test._
 
-// Thin smoke-test layer: proves the Scala/ZIO `fadb` wrapper around `runs.create_partitioning_with_parents`
-// correctly maps a successful row into the DTO and maps the two error-status families into their fadb
-// exception types. Exhaustive SQL-level behavior (idempotency, cycles, measure-copy semantics, NULL handling,
-// etc.) is already covered by `database.runs.CreatePartitioningWithParentsIntegrationTests`.
 object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest {
 
   private def uniquePartitioning(tag: String) =
@@ -56,7 +52,7 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           result <- create(uniquePartitioning("f"), Seq(Long.MaxValue))
         } yield assertTrue(result.left.exists {
           case DataNotFoundException(status) => status.statusCode == 41
-          case _                              => false
+          case _ => false
         })
       },
       test("Returns Left with DataConflictException when linking would create a cycle") {
@@ -68,7 +64,7 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           result <- create(keyC, Seq(p.toOption.get.data.id)) // would make C a child of its own descendant
         } yield assertTrue(result.left.exists {
           case DataConflictException(status) => status.statusCode == 32
-          case _                              => false
+          case _ => false
         })
       }
     ).provide(
