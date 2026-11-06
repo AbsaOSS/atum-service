@@ -76,9 +76,9 @@ or production host.
 
 The environment file `Atum-Service_LOCAL_env.postman_environment.json` points to `host=http://localhost:8080`.
 
-1. Start a PostgreSQL database and migrate it as described in 
-   [`database/README.md`](../database/README.md#resetting-a-development-database) (a database that already applied an 
-   earlier V0.10.0.x migration of the unreleased v1.1 work has to be reset first, `flywayClean` alone is not enough).
+1. Start a PostgreSQL database and migrate it as described in [`database/README.md`](../database/README.md#deployment).
+   A database that already applied an earlier migration has to be dropped and recreated first
+   (`flywayClean` alone is not enough).
 2. Start the server (see [`server/README.md`](../server/README.md)); `GET http://localhost:8080/health` has to answer `200`.
 3. Run Newman from this directory:
 

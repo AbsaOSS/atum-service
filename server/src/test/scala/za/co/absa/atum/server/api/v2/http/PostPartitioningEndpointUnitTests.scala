@@ -192,7 +192,7 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with TestData {
     ).provide(createPartitioningEndpointMockLayer)
 
     val realControllerSuite = suite("RealControllerDecoderSuite")(
-      test("Legacy JSON (parentPartitioningId) is decoded and reaches the service as parentPartitioningIds = [5]") {
+      test("Legacy JSON (parentPartitioningId) reaches the service as parentPartitioningIds = [5], copying measures") {
         for {
           response <- rawPost(bodyJson("legacyAuthor", ""","parentPartitioningId":5"""))
           received = receivedByService("legacyAuthor")
@@ -202,7 +202,7 @@ object PostPartitioningEndpointUnitTests extends ZIOSpecDefault with TestData {
           received.size == 1,
           received.head.parentPartitioningIds == Seq(5L),
           received.head.partitioning == partitioningDTO1,
-          !received.head.copyMeasureDefinitions
+          received.head.copyMeasureDefinitions
         )
       },
       test("Legacy numeric-string parentPartitioningId is decoded to [7]") {

@@ -559,18 +559,24 @@ class SerializationUtilsUnitTests extends AnyFlatSpecLike {
 
   private val v2Base = """"partitioning":[{"key":"k","value":"v"}],"author":"a""""
 
-  "PartitioningSubmitV2DTO" should "decode literal v0.10.0 bodies with copyMeasureDefinitions = false" in {
+  "PartitioningSubmitV2DTO" should "decode literal v0.10.0 bodies, copying measure definitions iff a parent is set" in {
     val bodies = Seq(
-      s"""{$v2Base,"parentPartitioningId":null}""" -> Seq.empty[Long],
-      s"""{$v2Base,"parentPartitioningId":5}""" -> Seq(5L),
-      s"""{$v2Base,"parentPartitioningId":"5"}""" -> Seq(5L),
-      s"""{$v2Base}""" -> Seq.empty[Long]
+      s"""{$v2Base,"parentPartitioningId":null}""" -> (Seq.empty[Long], false),
+      s"""{$v2Base,"parentPartitioningId":5}""" -> (Seq(5L), true),
+      s"""{$v2Base,"parentPartitioningId":"5"}""" -> (Seq(5L), true),
+      s"""{$v2Base}""" -> (Seq.empty[Long], false)
     )
-    bodies.foreach { case (json, expectedIds) =>
+    bodies.foreach { case (json, (expectedIds, expectedCopy)) =>
       val actual = json.as[PartitioningSubmitV2DTO]
       assert(actual.parentPartitioningIds == expectedIds, json)
-      assert(!actual.copyMeasureDefinitions, json)
+      assert(actual.copyMeasureDefinitions == expectedCopy, json)
     }
+  }
+
+  "PartitioningSubmitV2DTO" should "let an explicit copyMeasureDefinitions override the legacy default" in {
+    val legacyWithFalse = s"""{$v2Base,"parentPartitioningId":5,"copyMeasureDefinitions":false}"""
+    assert(!legacyWithFalse.as[PartitioningSubmitV2DTO].copyMeasureDefinitions)
+    assert(!s"""{$v2Base,"parentPartitioningIds":[5]}""".as[PartitioningSubmitV2DTO].copyMeasureDefinitions)
   }
 
   "PartitioningSubmitV2DTO" should "decode the copyMeasureDefinitions flag: absent, null, true, false" in {

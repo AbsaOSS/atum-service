@@ -20,8 +20,11 @@ import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
 import za.co.absa.balta.classes.setter.CustomDBType
 
+import java.sql.{Connection, DriverManager, ResultSet}
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.{Properties, UUID}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
 /**
@@ -44,9 +47,10 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
   private val helperSignature = "flows._link_to_parents(bigint,bigint[],text)"
   private val cycleText = "Parent partitioning would create a cycle"
 
-  private def partitioningOf(name: String): JsonBString = JsonBString(
+  private def partitioningJson(name: String): String =
     s"""{"version":1,"keys":["lk"],"keysToValuesMap":{"lk":"$name"}}"""
-  )
+
+  private def partitioningOf(name: String): JsonBString = JsonBString(partitioningJson(name))
 
   private def uniq(prefix: String): String = s"$prefix-${UUID.randomUUID()}"
 
@@ -486,5 +490,86 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     assert(status == 11)
     assert(ancestorIds(x) == Set(n))
     assert(advisoryLocksHeld() == 1)
+  }
+
+  // Unlike the tests above, this one needs two real sessions, so it commits its data through own connections and
+  // deletes it at the end (the DBTestSuite transaction would hide uncommitted data from the second session).
+  test("a retry that waited for the lock stays a no-op (14) although the child got linked and a descendant meanwhile") {
+    val props = new Properties()
+    val in = getClass.getResourceAsStream("/database.properties")
+    try props.load(in)
+    finally in.close()
+    def connect(): Connection = DriverManager.getConnection(
+      props.getProperty("test.jdbc.url"),
+      props.getProperty("test.jdbc.username"),
+      props.getProperty("test.jdbc.password")
+    )
+    def single[T](conn: Connection, sql: String)(f: ResultSet => T): T = {
+      val statement = conn.createStatement()
+      try {
+        val rs = statement.executeQuery(sql)
+        assert(rs.next())
+        f(rs)
+      } finally statement.close()
+    }
+    def create(conn: Connection, name: String): Long = single(
+      conn,
+      s"SELECT id_partitioning FROM $fncCreatePartitioning('${partitioningJson(name)}'::JSONB, 'Seeder', NULL)"
+    )(_.getLong(1))
+    def linkOn(conn: Connection, child: Long, parent: Long): Int =
+      single(conn, s"SELECT status FROM $fncLink($child, ARRAY[$parent]::BIGINT[], 'Linker')")(_.getInt(1))
+
+    val writer = connect()
+    val retry = connect()
+    var created = Seq.empty[Long]
+    try {
+      val p = create(writer, uniq("p"))
+      val c = create(writer, uniq("c"))
+      val d = create(writer, uniq("d"))
+      created = Seq(p, c, d)
+      val retryPid = single(retry, "SELECT pg_backend_pid()")(_.getInt(1))
+      single(retry, "SELECT set_config('statement_timeout', '60s', false)")(_ => ())
+
+      writer.setAutoCommit(false)
+      single(writer, "SELECT pg_advisory_xact_lock(hashtextextended('atum.flows.link_to_parents', 0))")(_ => ())
+
+      // the retry misses the lock-free fast path (C is not under P yet) and blocks on the lock
+      val pendingRetry = Future(linkOn(retry, c, p))(ExecutionContext.global)
+      val deadline = 30.seconds.fromNow
+      def retryWaits: Boolean = single(
+        writer,
+        s"SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND NOT granted AND pid = $retryPid"
+      )(_.getLong(1) == 1)
+      while (!retryWaits) {
+        assert(deadline.hasTimeLeft(), "the retry never waited for the advisory lock")
+        Thread.sleep(50)
+      }
+
+      // meanwhile: C gets linked under P and D under C (the lock is re-entrant for the writer's session)
+      assert(linkOn(writer, c, p) == 11)
+      assert(linkOn(writer, d, c) == 11)
+      writer.commit()
+
+      assert(Await.result(pendingRetry, 60.seconds) == 14)
+    } finally {
+      if (!writer.getAutoCommit) {
+        writer.rollback()
+        writer.setAutoCommit(true)
+      }
+      if (created.nonEmpty) {
+        val idList = created.mkString(",")
+        val statement = writer.createStatement()
+        try {
+          statement.executeUpdate(
+            s"DELETE FROM flows.partitioning_to_flow WHERE fk_partitioning IN ($idList) OR fk_flow IN " +
+              s"(SELECT id_flow FROM flows.flows WHERE fk_primary_partitioning IN ($idList))"
+          )
+          statement.executeUpdate(s"DELETE FROM flows.flows WHERE fk_primary_partitioning IN ($idList)")
+          statement.executeUpdate(s"DELETE FROM runs.partitionings WHERE id_partitioning IN ($idList)")
+        } finally statement.close()
+      }
+      retry.close()
+      writer.close()
+    }
   }
 }

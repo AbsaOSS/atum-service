@@ -22,6 +22,10 @@ All `/api/v1/*` endpoints are **deprecated** (flagged in Swagger) and behave exa
 v0.5.x use them; agents v0.6.0+ use API v2 (`POST /api/v2/partitionings`,
 `POST /api/v2/partitionings/{partitioningId}/checkpoints`). API v1 will be removed in a later release.
 
+A `POST /api/v2/partitionings` body in the v0.6 - v0.10 shape (`parentPartitioningId`, no `copyMeasureDefinitions`)
+still copies the parent's measure definitions to a newly created child, as before; otherwise the flag defaults to
+`false`.
+
 ### Version compatibility
 
 **Always upgrade the server before the agents.** The server accepts what released agents send; a newer agent against an

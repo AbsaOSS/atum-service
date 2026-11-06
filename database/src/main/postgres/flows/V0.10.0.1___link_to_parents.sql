@@ -55,6 +55,8 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
 --
 -- Notes:
 --      - Fast path: when every parent already has the child in its own flow, nothing is written and NO lock is taken.
+--        The same check is repeated under the lock, so a call that waited for a concurrent writer which linked the
+--        child meanwhile still returns 14 (idempotent retries).
 --      - Self-link is rejected BEFORE the fast path (the child is a member of its own flow and would otherwise look
 --        "already linked").
 --      - Leaf check (status 33) applies only to NEW links, it comes after the lock and the cycle check: a re-link of a
@@ -65,10 +67,10 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
 --        anywhere. The lock must stay a standalone PERFORM (never inside a SELECT ... WHERE).
 --      - No lock_timeout (a deliberate decision): a waiting writer holds a pool connection (Hikari max 10).
 --        Accepted residual risk; slow-path calls are short and re-links of existing ancestors take the lock-free
---        fast path. Documented in database/README.md and server/README.md.
+--        fast path.
 --      - The v1 path runs.create_partitioning does not take this lock; it links only a brand-new child (a leaf). It
 --        can race a concurrent link of its parent under a new ancestor and then miss that ancestor's flow (known
---        limitation of the deprecated v1 path, see database/README.md).
+--        limitation of the deprecated v1 path).
 --      - Callers must not hold a FOR UPDATE row lock when calling this function (lock-order inversion vs. the
 --        advisory lock).
 --
@@ -113,6 +115,23 @@ BEGIN
     -- slow path: one global exclusive transaction-scoped lock. READ COMMITTED only: every statement below gets a
     -- fresh snapshot, so what a concurrent writer committed before releasing the lock is visible here.
     PERFORM pg_advisory_xact_lock(hashtextextended('atum.flows.link_to_parents', 0));
+
+    -- no-op re-check under the lock: a concurrent writer may have linked the child to every parent while this call
+    -- waited (e.g. an idempotent retry), it must stay a no-op even if the child meanwhile got descendants
+    IF NOT EXISTS (
+        SELECT 1
+        FROM unnest(_parent_ids) AS PID(id)
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM flows.flows F
+            INNER JOIN flows.partitioning_to_flow PTF ON PTF.fk_flow = F.id_flow
+            WHERE F.fk_primary_partitioning = PID.id AND PTF.fk_partitioning = i_child_id
+        )
+    ) THEN
+        status := 14;
+        status_text := 'Nothing has changed';
+        RETURN;
+    END IF;
 
     -- cycle check (also the post-lock re-check): is a parent a member of the child's flow?
     _offending := ARRAY(

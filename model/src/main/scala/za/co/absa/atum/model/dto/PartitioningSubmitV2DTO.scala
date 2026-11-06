@@ -26,7 +26,9 @@ import io.circe.syntax._
  *  @param parentPartitioningIds  ids of the parent partitionings to link (0..N)
  *  @param author                 author stored if the partitioning is newly created
  *  @param copyMeasureDefinitions opt-in: copy the parents' measure definitions to a NEWLY created partitioning.
- *                                Absent or `null` in JSON means `false`.
+ *                                Absent or `null` in JSON means `false`, except for a legacy body (agents v0.6-v0.10)
+ *                                with a non-null `parentPartitioningId`: there it means `true`, the behaviour those
+ *                                agents rely on.
  */
 case class PartitioningSubmitV2DTO(
   partitioning: PartitioningDTO,
@@ -59,7 +61,8 @@ object PartitioningSubmitV2DTO {
       partitioning,
       (legacyParent.toSeq ++ parents.getOrElse(Seq.empty)).distinct,
       author,
-      copyMeasureDefinitions.getOrElse(false)
+      // legacy agents never send the flag; the current encoder always sends it
+      copyMeasureDefinitions.getOrElse(legacyParent.isDefined)
     )
   }
 
