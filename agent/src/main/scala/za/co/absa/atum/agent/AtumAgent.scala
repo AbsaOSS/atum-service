@@ -227,11 +227,11 @@ trait AtumAgent {
   ): AtumContext = {
     require(parentAtumContexts.nonEmpty, "At least one parent AtumContext is required to create a sub-context.")
 
-    val distinctParents = parentAtumContexts.map(_.atumPartitions).distinct // just in case
+    val distinctParents = parentAtumContexts.map(_.atumPartitions.toPartitioningDTO).distinct
 
     val partitioningDTO = PartitioningCreateRequest(
       subPartitions.toPartitioningDTO,
-      distinctParents.map(_.toPartitioningDTO),
+      distinctParents,
       this.currentUser,
       copyMeasureDefinitions
     )
