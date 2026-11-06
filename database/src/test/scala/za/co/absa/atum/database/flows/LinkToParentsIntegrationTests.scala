@@ -25,11 +25,11 @@ import java.util.UUID
 import scala.util.Random
 
 /**
- *  Helper-level tests of `flows._link_to_parents` (LINEAGE-03..06).
+ *  Helper-level tests of `flows._link_to_parents`.
  *
  *  Test-design pitfall: the advisory lock is transaction-scoped and `DBTestSuite` runs the whole test body in a
- *  single transaction (rolled back at the end). Once ANY slow-path call has happened in a test, the lock count of
- *  the session stays 1 until the rollback. Therefore:
+ *  single transaction (rolled back at the end). Once ANY slow-path (check the DB function) call has happened in a test,
+ *  the lock count of the session stays 1 until the rollback. Therefore:
  *   - every fixture graph is seeded WITHOUT the helper (`runs.create_partitioning` of the v1 path takes no lock),
  *   - all `advisoryLocksHeld() == 0` assertions precede the first slow-path `_link_to_parents` call of a test,
  *   - the slow-lock test asserts `== 1` as its very last step.

@@ -57,18 +57,18 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   ): IO[ErrorResponse, (StatusCode, SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
     // dedupe here as well: the cap must apply to DISTINCT ids whoever calls the controller (the decoder and the SQL
     // dedupe too, the SQL one being the authoritative one for what is stored)
-    val distinctIds = partitioningSubmitDTO.parentPartitioningIds.distinct
+    val distinctParentIds = partitioningSubmitDTO.parentPartitioningIds.distinct
     for {
-      _ <- ZIO.when(distinctIds.size > PartitioningControllerImpl.MaxParents)(
+      _ <- ZIO.when(distinctParentIds.size > PartitioningControllerImpl.MaxParents)(
         ZIO.fail(
           BadRequestResponse(
-            s"Too many parent partitionings: ${distinctIds.size}, " +
+            s"Too many parent partitionings: ${distinctParentIds.size}, " +
               s"maximum allowed is ${PartitioningControllerImpl.MaxParents}"
           )
         )
       )
       result <- serviceCall[CreationResult[PartitioningWithIdDTO], CreationResult[PartitioningWithIdDTO]](
-        partitioningService.createPartitioning(partitioningSubmitDTO.copy(parentPartitioningIds = distinctIds))
+        partitioningService.createPartitioning(partitioningSubmitDTO.copy(parentPartitioningIds = distinctParentIds))
       )
       response = SingleSuccessResponse(result.data)
       status = result match {

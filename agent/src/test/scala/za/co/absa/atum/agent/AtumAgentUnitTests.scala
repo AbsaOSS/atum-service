@@ -31,6 +31,10 @@ import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 
 class AtumAgentUnitTests extends AnyFunSuiteLike {
 
+  // ---- Part 1: construction/wiring tests ------------------------------------------------------
+  // Exercise the real `AtumAgent` object/`fromConfig` with real dispatchers (built from config).
+  // These verify context identity/caching, dispatcher-factory selection and currentUser resolution.
+
   test("AtumAgent creates AtumContext(s) as expected") {
     val atumAgent = AtumAgent
     val atumPartitions = AtumPartitions("abc" -> "def")
@@ -96,10 +100,7 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       case _                    => fail("Expected ConsoleDispatcher")
     }
 
-    AtumAgent.dispatcherFromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 0
-    ))) match {
+    AtumAgent.dispatcherFromConfig(captureConfig(Map("atum.dispatcher.capture.capture-limit" -> 0))) match {
       case _: CapturingDispatcher => info("CapturingDispatcher created successfully")
       case _                      => fail("Expected CapturingDispatcher")
     }
@@ -137,10 +138,7 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       private var recordedAuthorsInternal: Vector[String] = Vector.empty
 
       override val dispatcher: CapturingDispatcher =
-        AtumAgent.dispatcherFromConfig(configOf(Map(
-          "atum.dispatcher.type" -> "capture",
-          "atum.dispatcher.capture.capture-limit" -> 10
-        ))).asInstanceOf[CapturingDispatcher]
+        AtumAgent.dispatcherFromConfig(captureConfig()).asInstanceOf[CapturingDispatcher]
 
       override private[agent] def currentUser: String = userName
 
@@ -174,14 +172,8 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
   test("AtumAgent.fromConfig creates independent agent instances with separate context stores") {
     val sharedPartitioning = AtumPartitions("domain" -> "one")
 
-    val configA = configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10
-    ))
-    val configB = configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10
-    ))
+    val configA = captureConfig()
+    val configB = captureConfig()
 
     val agentA = AtumAgent.fromConfig(configA)
     val agentB = AtumAgent.fromConfig(configB)
@@ -201,44 +193,26 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
   }
 
   test("currentUser falls back to the JVM user when atum.author is not set") {
-    val agent = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10
-    )))
+    val agent = AtumAgent.fromConfig(captureConfig())
 
     assert(agent.currentUser == System.getProperty("user.name"))
   }
 
   test("currentUser uses atum.author from config when set (trimmed)") {
-    val agent = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10,
-      "atum.author" -> "  my-application  "
-    )))
+    val agent = AtumAgent.fromConfig(captureConfig(Map("atum.author" -> "  my-application  ")))
 
     assert(agent.currentUser == "my-application")
   }
 
   test("currentUser falls back to the JVM user when atum.author is blank") {
-    val agent = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10,
-      "atum.author" -> "   "
-    )))
+    val agent = AtumAgent.fromConfig(captureConfig(Map("atum.author" -> "   ")))
 
     assert(agent.currentUser == System.getProperty("user.name"))
   }
 
   test("currentUser is resolved independently per config-backed agent") {
-    val agentA = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10,
-      "atum.author" -> "alice"
-    )))
-    val agentB = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10
-    )))
+    val agentA = AtumAgent.fromConfig(captureConfig(Map("atum.author" -> "alice")))
+    val agentB = AtumAgent.fromConfig(captureConfig())
 
     assert(agentA.currentUser == "alice")
     assert(agentB.currentUser == System.getProperty("user.name"))
@@ -253,10 +227,7 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       // a custom agent that does NOT override currentUser -> relies on the cached trait default
       val agent = new AtumAgent {
         override val dispatcher: CapturingDispatcher =
-          AtumAgent.dispatcherFromConfig(configOf(Map(
-            "atum.dispatcher.type" -> "capture",
-            "atum.dispatcher.capture.capture-limit" -> 10
-          ))).asInstanceOf[CapturingDispatcher]
+          AtumAgent.dispatcherFromConfig(captureConfig()).asInstanceOf[CapturingDispatcher]
       }
 
       // first access resolves and caches the identity
@@ -277,6 +248,11 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       ConfigFactory.invalidateCaches()
     }
   }
+
+  // ---- Part 2: dispatch-argument verification --------------------------------------------------
+  // Uses a Mockito-mocked Dispatcher + ArgumentCaptor instead of CapturingDispatcher so these tests
+  // assert the exact PartitioningCreateRequest per overload (strict call counts, no casts), without
+  // coupling to CapturingDispatcher's own internals (capture-limit eviction, etc.).
 
   private class MockedDispatcherAgent extends AtumAgent {
     override val dispatcher: Dispatcher = mock(classOf[Dispatcher])
@@ -537,5 +513,13 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       acc.withValue(configKey, configValue)
     }
   }
+
+  // Shared defaults for the recurring "capture dispatcher with limit 10" config used across Part 1 tests.
+  private def captureConfig(overrides: Map[String, Any] = Map.empty): Config = configOf(
+    Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    ) ++ overrides
+  )
 
 }

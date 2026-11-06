@@ -55,53 +55,29 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
+  // ---- Part 1: original single-scenario test ------------------------------------------------------------------
+  // Legacy style, predates the helper set used by Part 2 below. `addMeasure`/`addAd` (defined in Part 2) are
+  // reused here since they already capture this exact fixture-row shape; no new duplication is added.
+
+  private def createPartitioning(p: JsonBString, author: String): Long =
+    function(createPartitioningFn)
+      .setParam("i_partitioning", p)
+      .setParam("i_by_user", author)
+      .execute { queryResult =>
+        queryResult.next().getLong("id_partitioning").get
+      }
+
   //Data Preparation Step
   def dataPreparation(): (Long, Long, Long) = {
     val nonExistentID = 9999L
 
-    val parentPartitioningIDTest = function(createPartitioningFn)
-      .setParam("i_partitioning", parentPartitioning)
-      .setParam("i_by_user", "Albert Einstein")
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
+    val parentPartitioningIDTest = createPartitioning(parentPartitioning, "Albert Einstein")
+    val childPartitioningIDTest = createPartitioning(partitioning, "Albert Einstein")
 
-    val childPartitioningIDTest = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning)
-      .setParam("i_by_user", "Albert Einstein")
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
-
-    table("runs.additional_data").insert(
-      add("fk_partitioning", parentPartitioningIDTest)
-        .add("created_by", "Joseph")
-        .add("ad_name", "ad_1")
-        .add("ad_value", "This is the additional data for Joseph")
-    )
-
-    table("runs.additional_data").insert(
-      add("fk_partitioning", parentPartitioningIDTest)
-        .add("created_by", "Joseph")
-        .add("ad_name", "ad_2")
-        .add("ad_value", "This is the additional data for Joseph")
-    )
-
-    table("runs.measure_definitions").insert(
-      add("fk_partitioning", parentPartitioningIDTest)
-        .add("created_by", "Joseph")
-        .add("measure_name", "measure1")
-        .add("measured_columns", CustomDBType("""{"col1"}""", "TEXT[]"))
-    )
-
-    table("runs.measure_definitions").insert(
-      add("fk_partitioning", parentPartitioningIDTest)
-        .add("created_by", "Joseph")
-        .add("measure_name", "measure2")
-        .add("measured_columns", CustomDBType("""{"col2"}""", "TEXT[]"))
-    )
+    addAd(parentPartitioningIDTest, "ad_1", "This is the additional data for Joseph")
+    addAd(parentPartitioningIDTest, "ad_2", "This is the additional data for Joseph")
+    addMeasure(parentPartitioningIDTest, "measure1", """{"col1"}""")
+    addMeasure(parentPartitioningIDTest, "measure2", """{"col2"}""")
 
     (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest)
   }
@@ -169,7 +145,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
       }
   }
 
-  // ---- shared linking routine, cycle rejection, copy policy (Phase 8, plan 08-03) ------------------------------
+  // ---- Part 2: shared linking routine, cycle rejection, copy policy ---------------------------------------------
   //
   // Test-design pitfall: the advisory lock taken by `flows._link_to_parents` is transaction-scoped and `DBTestSuite`
   // runs the whole test body in one transaction (rolled back at the end). After ANY slow-path call the lock count of
@@ -472,7 +448,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     )
   }
 
-  // ---- copy flags: additional data stays opt-in on PATCH (P8-Q1) ---------------------------------------------
+  // ---- copy flags: additional data stays opt-in on PATCH ---------------------------------------------
 
   test("Flags (true, false) copy the measure definitions but not the additional data") {
     val parent = seedParentWithData("flags-tf-parent")

@@ -16,13 +16,13 @@
 
 package za.co.absa.atum.database.runs
 
+import io.circe.Json
 import io.circe.parser.parse
 import za.co.absa.balta.DBTestSuite
-import za.co.absa.balta.classes.JsonBString
+import za.co.absa.balta.classes.{JsonBString, QueryResultRow}
 import za.co.absa.balta.classes.setter.CustomDBType
 
 import scala.collection.mutable
-import scala.util.control.Breaks.{break, breakable}
 
 class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
 
@@ -157,6 +157,48 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
       |""".stripMargin
   )
 
+  // ---- Part 1: single-parent lineage ----------------------------------------------------------------------------
+  // Older style: setup/assertion boilerplate is repeated inline per call. The helpers below only remove that
+  // repetition; Part 2 further below ("Multi-parent lineage") established this helper-based style for new tests.
+
+  private def createPartitioning(
+    partitioning: JsonBString,
+    author: String,
+    parentPartitioning: Option[JsonBString] = None
+  ): Long = {
+    val call = function(createPartitioningFn)
+      .setParam("i_partitioning", partitioning)
+      .setParam("i_by_user", author)
+    val withParent = parentPartitioning.fold(call)(call.setParam("i_parent_partitioning", _))
+    withParent.execute { queryResult =>
+      queryResult.next().getLong("id_partitioning").get
+    }
+  }
+
+  private def addToParentFlows(parentId: Long, childId: Long, author: String): Unit =
+    function(addToParentFlowsFn)
+      .setParam("i_fk_parent_partitioning", parentId)
+      .setParam("i_fk_partitioning", childId)
+      .setParam("i_by_user", author)
+      .execute(_.next())
+
+  private def assertAncestorRow(
+    row: QueryResultRow,
+    expectedId: Long,
+    expectedPartitioning: Json,
+    expectedAuthor: String
+  ): Unit = {
+    val returnedPartitioning = row.getJsonB("partitioning").get
+    val returnedPartitioningParsed = parse(returnedPartitioning.value)
+      .getOrElse(fail("Failed to parse returned partitioning"))
+
+    assert(row.getInt("status").contains(10))
+    assert(row.getString("status_text").contains("OK"))
+    assert(row.getLong("ancestor_id").contains(expectedId))
+    assert(returnedPartitioningParsed == expectedPartitioning)
+    assert(row.getString("author").contains(expectedAuthor))
+  }
+
   // Testing for return of the Ancestors for a given Partition ID
   //
   //  1(Grandma)  2(Grandpa)
@@ -169,90 +211,19 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
   test("Returns Ancestors for a given Partition ID"){
 
     //Data Preparation Step Start ------------------------------------------------------------------------------------
-    val partitioningID1 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning1)
-      .setParam("i_by_user", "Grandma")
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
+    val partitioningID1 = createPartitioning(partitioning1, "Grandma")
+    val partitioningID2 = createPartitioning(partitioning2, "Grandpa")
+    val partitioningID3 = createPartitioning(partitioning3, "Mother", Some(partitioning1))
+    val partitioningID4 = createPartitioning(partitioning4, "Father", Some(partitioning2))
+    val partitioningID5 = createPartitioning(partitioning5, "Son", Some(partitioning3))
 
-    val partitioningID2 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning2)
-      .setParam("i_by_user", "Grandpa")
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
+    addToParentFlows(partitioningID4, partitioningID5, "Son")
 
-    val partitioningID3 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning3)
-      .setParam("i_by_user", "Mother")
-      .setParam("i_parent_partitioning", partitioning1)
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
+    val partitioningID6 = createPartitioning(partitioning6, "Daughter")
+    val partitioningID7 = createPartitioning(partitioning7, "Granddaughter", Some(partitioning6))
+    val partitioningID8 = createPartitioning(partitioning8, "Grandson", Some(partitioning5))
 
-    val partitioningID4 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning4)
-      .setParam("i_by_user", "Father")
-      .setParam("i_parent_partitioning", partitioning2)
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
-
-    val partitioningID5 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning5)
-      .setParam("i_by_user", "Son")
-      .setParam("i_parent_partitioning", partitioning3)
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
-
-    function(addToParentFlowsFn)
-      .setParam("i_fk_parent_partitioning", partitioningID4)
-      .setParam("i_fk_partitioning", partitioningID5)
-      .setParam("i_by_user", "Son")
-      .execute { queryResult =>
-        queryResult.next()
-      }
-
-    val partitioningID6 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning6)
-      .setParam("i_by_user", "Daughter")
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
-
-    val partitioningID7 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning7)
-      .setParam("i_by_user", "Granddaughter")
-      .setParam("i_parent_partitioning", partitioning6)
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
-
-    val partitioningID8 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning8)
-      .setParam("i_by_user", "Grandson")
-      .setParam("i_parent_partitioning", partitioning5)
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
-
-    function(addToParentFlowsFn)
-      .setParam("i_fk_parent_partitioning", partitioningID7)
-      .setParam("i_fk_partitioning", partitioningID8)
-      .setParam("i_by_user", "Grandson")
-      .execute { queryResult =>
-        queryResult.next()
-      }
+    addToParentFlows(partitioningID7, partitioningID8, "Grandson")
 
     //Used Linked Hash Map to keep structure and order
     val resultsMapFor5 = mutable.LinkedHashMap(
@@ -278,16 +249,7 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID3)
       .execute { queryResult =>
-        val row = queryResult.next()
-        val returnedPartitioning = row.getJsonB("partitioning").get
-        val returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID1))
-        assert(returnedPartitioningParsed == expectedPartitioning1)
-        assert(row.getString("author").contains("Grandma"))
+        assertAncestorRow(queryResult.next(), partitioningID1, expectedPartitioning1, "Grandma")
         assert(!queryResult.hasNext)
       }
 
@@ -295,22 +257,9 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID5)
       .execute { queryResult =>
-        for ((k, v) <- resultsMapFor5) {
+        for ((author, (id, expected)) <- resultsMapFor5) {
           assert(queryResult.hasNext)
-
-          val row = queryResult.next()
-          val returnedPartitioning = row.getJsonB("partitioning").get
-          val returnedPartitioningParsed = parse(returnedPartitioning.value)
-            .getOrElse(fail("Failed to parse returned partitioning"))
-          val expectedPartitioningId = v._1
-          val expectedPartitioning = v._2
-          val expectedAuthor = k
-
-          assert(row.getInt("status").contains(10))
-          assert(row.getString("status_text").contains("OK"))
-          assert(row.getLong("ancestor_id").contains(expectedPartitioningId))
-          assert(returnedPartitioningParsed == expectedPartitioning)
-          assert(row.getString("author").contains(expectedAuthor))
+          assertAncestorRow(queryResult.next(), id, expected, author)
         }
         assert(!queryResult.hasNext)
       }
@@ -319,16 +268,7 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID7)
       .execute { queryResult =>
-        val row = queryResult.next()
-        val returnedPartitioning = row.getJsonB("partitioning").get
-        val returnedPartitioningParsed = parse(returnedPartitioning.value)
-          .getOrElse(fail("Failed to parse returned partitioning"))
-
-        assert(row.getInt("status").contains(10))
-        assert(row.getString("status_text").contains("OK"))
-        assert(row.getLong("ancestor_id").contains(partitioningID6))
-        assert(returnedPartitioningParsed == expectedPartitioning6)
-        assert(row.getString("author").contains("Daughter"))
+        assertAncestorRow(queryResult.next(), partitioningID6, expectedPartitioning6, "Daughter")
         assert(!queryResult.hasNext)
       }
 
@@ -336,22 +276,9 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID8)
       .execute { queryResult =>
-        for ((k, v) <- resultsMapFor8) {
+        for ((author, (id, expected)) <- resultsMapFor8) {
           assert(queryResult.hasNext)
-
-          val row = queryResult.next()
-          val returnedPartitioning = row.getJsonB("partitioning").get
-          val returnedPartitioningParsed = parse(returnedPartitioning.value)
-            .getOrElse(fail("Failed to parse returned partitioning"))
-          val expectedPartitioningId = v._1
-          val expectedPartitioning = v._2
-          val expectedAuthor = k
-
-          assert(row.getInt("status").contains(10))
-          assert(row.getString("status_text").contains("OK"))
-          assert(row.getLong("ancestor_id").contains(expectedPartitioningId))
-          assert(returnedPartitioningParsed == expectedPartitioning)
-          assert(row.getString("author").contains(expectedAuthor))
+          assertAncestorRow(queryResult.next(), id, expected, author)
         }
         assert(!queryResult.hasNext)
       }
@@ -375,13 +302,7 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
   //Second Failure Test: Ancestor Partitioning not found
   test("Ancestor Partitioning not found") {
 
-    val partitioningID1 = function(createPartitioningFn)
-      .setParam("i_partitioning", partitioning1)
-      .setParam("i_by_user", "Grandma")
-      .execute { queryResult =>
-        val row = queryResult.next()
-        row.getLong("id_partitioning").get
-      }
+    val partitioningID1 = createPartitioning(partitioning1, "Grandma")
 
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID1)
@@ -394,7 +315,7 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
       }
   }
 
-  // ---- Multi-parent lineage (LINEAGE-01) ------------------------------------------------------------------------
+  // ---- Multi-parent lineage ------------------------------------------------------------------------
 
   private val createMultiFn = "runs.create_partitioning_with_parents"
   private val createPlainFn = "runs.create_partitioning"

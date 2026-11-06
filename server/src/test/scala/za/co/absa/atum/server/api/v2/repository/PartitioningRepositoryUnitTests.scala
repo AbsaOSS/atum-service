@@ -18,8 +18,6 @@ package za.co.absa.atum.server.api.v2.repository
 
 import org.mockito.Mockito.{mock, mockingDetails, times, verify, when}
 import za.co.absa.atum.model.dto.{
-  AdditionalDataDTO,
-  AdditionalDataItemDTO,
   AdditionalDataItemV2DTO,
   PartitioningParentPatchDTO,
   PartitioningSubmitV2DTO,
@@ -37,7 +35,7 @@ import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
-import za.co.absa.atum.server.model.database.{AdditionalDataItemFromDB, CreatedPartitioningFromDB, PartitioningForDB}
+import za.co.absa.atum.server.model.database.{AdditionalDataItemFromDB, PartitioningForDB}
 import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
@@ -58,7 +56,12 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val createdId = partitioningWithIdDTO1.id
 
   private def createdRow(code: Int, text: String, createdBy: String) =
-    ZIO.right(Row(FunctionStatus(code, text), CreatedPartitioningFromDB(createdId, createdBy, code == 11 || code == 12)))
+    ZIO.right(
+      Row(
+        FunctionStatus(code, text),
+        CreatePartitioningWithParents.DBResult(createdId, createdBy, code == 11 || code == 12)
+      )
+    )
 
   private def expected(createdBy: String): PartitioningWithIdDTO =
     PartitioningWithIdDTO(createdId, partitioningDTO1, createdBy)
@@ -189,22 +192,21 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   private val getFlowPartitioningsMock = mock(classOf[GetFlowPartitionings])
 
-  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(1L, 10, 0L))
-    ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult1)))))
-  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(2L, 10, 0L))
-  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult2)))))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(1L, 10, 0L)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult1)))))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(2L, 10, 0L)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getFlowPartitioningsResult2)))))
   when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(0L, 10, 0L)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Flow not found"))))
-  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(3L, 10, 0L))
-    ).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getFlowPartitioningsMock.apply(GetFlowPartitioningsArgs(3L, 10, 0L)))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getFlowPartitioningsMockLayer = ZLayer.succeed(getFlowPartitioningsMock)
 
   // Create Partitioning Mocks
   private val getPartitioningMainFlowMock = mock(classOf[GetPartitioningMainFlow])
 
-  when(getPartitioningMainFlowMock.apply(1L)).thenReturn(
-    ZIO.right(Row(FunctionStatus(0, "success"), Some(flowDTO1))))
+  when(getPartitioningMainFlowMock.apply(1L)).thenReturn(ZIO.right(Row(FunctionStatus(0, "success"), Some(flowDTO1))))
   when(getPartitioningMainFlowMock.apply(2L))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
   when(getPartitioningMainFlowMock.apply(3L))
@@ -216,13 +218,13 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   // Update Parent Partitioning Mocks
   private val updatePartitioningParentMock = mock(classOf[UpdatePartitioningParent])
 
-  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(1L ,partitioningParentPatchDTO1)))
+  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(1L, partitioningParentPatchDTO1)))
     .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK"), ())))
-  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(1L,partitioningParentPatchDTO5)))
+  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(1L, partitioningParentPatchDTO5)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(42, "Parent Partitioning not found"))))
-  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(0L,partitioningParentPatchDTO1)))
+  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(0L, partitioningParentPatchDTO1)))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Child Partitioning not found"))))
-  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(3L,partitioningParentPatchDTO1)))
+  when(updatePartitioningParentMock.apply(UpdatePartitioningParentArgs(3L, partitioningParentPatchDTO1)))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   private val cyclePatchDTO = PartitioningParentPatchDTO(parentPartitioningId = 5L, author = "cycle-author")
@@ -250,12 +252,11 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   // Get Ancestors By Id Mocks
   private val getPartitioningAncestorsMock = mock(classOf[GetPartitioningAncestors])
 
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1L, 10, 0L))
-  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult1)))))
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1111L, 10, 0L))
-  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult2)))))
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(3333L, 10, 0L))
-  ).thenReturn(
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1L, 10, 0L)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult1)))))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(1111L, 10, 0L)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult2)))))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(3333L, 10, 0L))).thenReturn(
     ZIO.right(
       Seq(
         Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult1)),
@@ -263,8 +264,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       )
     )
   )
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(4444L, 10, 0L))
-  ).thenReturn(
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(4444L, 10, 0L))).thenReturn(
     ZIO.right(
       Seq(
         Row(FunctionStatus(10, "OK"), Some(getPartitioningAncestorsResult1HasMore)),
@@ -272,16 +272,15 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       )
     )
   )
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(9999L, 10, 0L))
-  ).thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(8888L, 10, 0L))
-  ).thenReturn(ZIO.fail(new Exception("boom!")))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(9999L, 10, 0L)))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(8888L, 10, 0L)))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
   // existing partitioning WITHOUT ancestors: the wrapper yields a status-14 row without data (see
   // GetPartitioningAncestorsIntegrationTests, which pins that through the real wrapper), or no rows at all
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(5555L, 10, 0L))
-  ).thenReturn(ZIO.right(Seq(Row(FunctionStatus(14, "OK"), None))))
-  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(6666L, 10, 0L))
-  ).thenReturn(ZIO.right(Seq.empty))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(5555L, 10, 0L)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(14, "OK"), None))))
+  when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(6666L, 10, 0L))).thenReturn(ZIO.right(Seq.empty))
 
   private val getPartitioningAncestorsMockLayer = ZLayer.succeed(getPartitioningAncestorsMock)
 
@@ -559,22 +558,23 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
       suite("UpdatePartitioningParentSuite")(
         test("Returns expected Right with Unit") {
           for {
-            result <- PartitioningRepository.updatePartitioningParent(1L,partitioningParentPatchDTO1)
+            result <- PartitioningRepository.updatePartitioningParent(1L, partitioningParentPatchDTO1)
           } yield assertTrue(result == ())
         },
         test("Returns expected NotFoundDatabaseError") {
-          assertZIO(PartitioningRepository.updatePartitioningParent(1L,partitioningParentPatchDTO5).exit)(
+          assertZIO(PartitioningRepository.updatePartitioningParent(1L, partitioningParentPatchDTO5).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         },
         test("Returns expected NotFoundDatabaseError") {
-          assertZIO(PartitioningRepository.updatePartitioningParent(0L,partitioningParentPatchDTO1).exit)(
+          assertZIO(PartitioningRepository.updatePartitioningParent(0L, partitioningParentPatchDTO1).exit)(
             failsWithA[NotFoundDatabaseError]
           )
         },
         test("Returns expected GeneralDatabaseError") {
-          assertZIO(PartitioningRepository.updatePartitioningParent(3L,partitioningParentPatchDTO1).exit)(
-            failsWithA[GeneralDatabaseError])
+          assertZIO(PartitioningRepository.updatePartitioningParent(3L, partitioningParentPatchDTO1).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
         },
         test("Status 32 (cycle) maps to ConflictDatabaseError and logs exactly one PATCH WARN") {
           for {

@@ -17,7 +17,7 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.Row
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{mock, never, times, verify, when}
@@ -33,8 +33,25 @@ import za.co.absa.atum.agent.model.PartitioningCreateRequest
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO}
 import za.co.absa.atum.model.types.basic._
+import za.co.absa.spark.commons.test.SparkTestBase
 
-class AtumContextUnitTests extends AnyFlatSpec with Matchers {
+class AtumContextUnitTests extends AnyFlatSpec with Matchers with SparkTestBase {
+
+  // ---- Part 1: AtumContext/checkpoint tests -----------------------------------------------------
+  // `agent` is just a passive sink here (checkpoint construction logic lives in AtumContext), so
+  // mocking `AtumAgent` directly is enough; no real AtumAgent/Dispatcher logic needs to run.
+
+  private def mockAgentWithAuthor(author: String = "authorTest"): AtumAgent = {
+    val agent = mock(classOf[AtumAgent])
+    when(agent.currentUser).thenReturn(author)
+    agent
+  }
+
+  private def capturedCheckpoint(mockAgent: AtumAgent, invocationCount: Int = 1): CheckpointDTO = {
+    val captor = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent, times(invocationCount)).saveCheckpoint(captor.capture())
+    captor.getValue
+  }
 
   "withMeasureAddedOrOverwritten" should "add a new measure if not exists, overwrite it otherwise" in {
 
@@ -68,23 +85,15 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint; including it's properties" in {
-    val mockAgent = mock(classOf[AtumAgent])
+    val authorTest = "authorTest"
+    val mockAgent = mockAgentWithAuthor(authorTest)
 
     val checkpointProperties = Some(Map("prop1" -> "val1", "prop2" -> "val2"))
-
-    val authorTest = "authorTest"
-    when(mockAgent.currentUser).thenReturn(authorTest)
 
     val atumPartitions = AtumPartitions("foo2" -> "bar")
 
     val atumContext = new AtumContext(atumPartitions, mockAgent)
       .addMeasure(RecordCount())
-
-    val spark = SparkSession.builder()
-      .master("local")
-      .config("spark.driver.host", "localhost")
-      .config("spark.ui.enabled", "false")
-      .getOrCreate()
 
     import spark.implicits._
 
@@ -93,9 +102,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     atumContext.createCheckpoint("testCheckpoint", df, checkpointProperties)
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent).saveCheckpoint(argument.capture())
-    val value: CheckpointDTO = argument.getValue
+    val value = capturedCheckpoint(mockAgent)
     assert(value.name == "testCheckpoint")
     assert(value.author == authorTest)
     assert(value.partitioning == atumPartitions.toPartitioningDTO)
@@ -105,12 +112,10 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data; including it's properties" in {
-    val mockAgent = mock(classOf[AtumAgent])
+    val authorTest = "authorTest"
+    val mockAgent = mockAgentWithAuthor(authorTest)
 
     val checkpointProperties = Some(Map("prop1" -> "val1", "prop2" -> "val2"))
-
-    val authorTest = "authorTest"
-    when(mockAgent.currentUser).thenReturn(authorTest)
 
     val atumPartitions = AtumPartitions("key" -> "value")
     val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
@@ -125,9 +130,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
       checkpointName = "name", measurements = measurements, properties = checkpointProperties
     )
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent).saveCheckpoint(argument.capture())
-    val value: CheckpointDTO = argument.getValue
+    val value = capturedCheckpoint(mockAgent)
 
     assert(value.name == "name")
     assert(value.author == authorTest)
@@ -139,20 +142,12 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
-    val mockAgent = mock(classOf[AtumAgent])
-
     val authorTest = "authorTest"
-    when(mockAgent.currentUser).thenReturn(authorTest)
+    val mockAgent = mockAgentWithAuthor(authorTest)
 
     val atumPartitions = AtumPartitions("foo2" -> "bar")
     implicit val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
       .addMeasure(RecordCount())
-
-    val spark = SparkSession.builder()
-      .master("local")
-      .config("spark.driver.host", "localhost")
-      .config("spark.ui.enabled", "false")
-      .getOrCreate()
 
     val rdd = spark.sparkContext.parallelize(
       Seq(
@@ -171,9 +166,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     val df = spark.createDataFrame(rdd, schema)
       .createCheckpoint("checkPointNameCount")
 
-    val argumentFirst = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent, times(1)).saveCheckpoint(argumentFirst.capture())
-    val valueFirst: CheckpointDTO = argumentFirst.getValue
+    val valueFirst = capturedCheckpoint(mockAgent)
 
     assert(valueFirst.name == "checkPointNameCount")
     assert(valueFirst.author == authorTest)
@@ -185,9 +178,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     when(mockAgent.currentUser).thenReturn(authorTest + "Another")  // maybe a process changed the author / current user
     df.createCheckpoint("checkPointNameSum")
 
-    val argumentSecond = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent, times(2)).saveCheckpoint(argumentSecond.capture())
-    val valueSecond: CheckpointDTO = argumentSecond.getValue
+    val valueSecond = capturedCheckpoint(mockAgent, invocationCount = 2)
 
     assert(valueSecond.name == "checkPointNameSum")
     assert(valueSecond.author == authorTest + "Another")
@@ -211,7 +202,6 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "DatasetWrapper.createCheckpoint" should "create a checkpoint with properties" in {
-    val spark = SparkSession.builder().master("local").appName("test").getOrCreate()
     import spark.implicits._
 
     val df = Seq((1, "a"), (2, "b")).toDF("id", "value")
@@ -230,15 +220,16 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     import AtumContext._
     df.createCheckpoint("testCheckpoint", properties)
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent).saveCheckpoint(argument.capture())
-    val value: CheckpointDTO = argument.getValue
+    val value = capturedCheckpoint(mockAgent)
 
     value.name shouldBe "testCheckpoint"
     value.properties shouldBe properties
   }
 
-  // ---- subPartitionContext and the copyMeasureDefinitions flag ----
+  // ---- Part 2: subPartitionContext and the copyMeasureDefinitions flag ---------------------------
+  // Here the behaviour under test (subPartitionContext's merge/dedup logic) lives in AtumAgent's own
+  // trait default, invoked transitively from AtumContext. Mocking AtumAgent itself would bypass that
+  // real logic, so only the terminal Dispatcher dependency is mocked and a real AtumAgent is used.
 
   private class RecordingAgent extends AtumAgent {
     override val dispatcher: Dispatcher = mock(classOf[Dispatcher])
