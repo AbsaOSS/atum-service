@@ -52,7 +52,7 @@ object CreatePartitioningWithParents {
     } yield new CreatePartitioningWithParents()(Runs, dbProvider.dbEngine)
   }
 
-  private case class DBResult(
+  case class DBResult(
     id: Long,
     createdBy: String,
     wasCreated: Boolean

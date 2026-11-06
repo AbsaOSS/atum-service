@@ -16,66 +16,31 @@
 
 package za.co.absa.atum.server.api.database.runs.functions
 
-import doobie.Transactor
-import doobie.implicits._
 import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitV2DTO}
 import za.co.absa.atum.server.ConfigProviderTest
+import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
-import za.co.absa.atum.server.api.{TestData, TestTransactorProvider}
-import za.co.absa.atum.server.model.database.PartitioningForDB
 import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
 import zio._
-import zio.interop.catz._
+import zio.interop.catz.asyncInstance
 import zio.test._
 
-object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest with TestData {
-
-  private val SeededMeasureName = "seededCount"
+// Thin smoke-test layer: proves the Scala/ZIO `fadb` wrapper around `runs.create_partitioning_with_parents`
+// correctly maps a successful row into the DTO and maps the two error-status families into their fadb
+// exception types. Exhaustive SQL-level behavior (idempotency, cycles, measure-copy semantics, NULL handling,
+// etc.) is already covered by `database.runs.CreatePartitioningWithParentsIntegrationTests`.
+object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest {
 
   private def uniquePartitioning(tag: String) =
     Seq(PartitionDTO("withParentsKey", s"$tag-${java.util.UUID.randomUUID()}"))
 
-  private def create(
-    partitioning: Seq[PartitionDTO],
-    parents: Seq[Long],
-    author: String = "author",
-    copy: Boolean = false
-  ) =
-    ZIO.serviceWithZIO[CreatePartitioningWithParents](
-      _(PartitioningSubmitV2DTO(partitioning, parents, author, copyMeasureDefinitions = copy))
-    )
+  private def create(partitioning: Seq[PartitionDTO], parents: Seq[Long], author: String = "author") =
+    ZIO.serviceWithZIO[CreatePartitioningWithParents](_(PartitioningSubmitV2DTO(partitioning, parents, author)))
 
-  /** Creates a brand new, parentless partitioning and returns its id. */
-  private def createNew(tag: String) =
-    create(uniquePartitioning(tag), Seq.empty[Long]).map(_.toOption.get.data.id)
-
-  /** Ids of the ancestors of the given partitioning, read through the real `GetPartitioningAncestors` wrapper. */
-  private def ancestorIds(partitioningId: Long) =
-    ZIO.serviceWithZIO[GetPartitioningAncestors](_(GetPartitioningAncestorsArgs(partitioningId, 100, 0L))).map {
-      result => result.toOption.get.flatMap(_.data).map(_.id)
-    }
-
-  private def measureNames(partitioningId: Long) =
-    ZIO.serviceWithZIO[GetPartitioningMeasuresById](_(partitioningId)).map { result =>
-      result.toOption.get.flatMap(_.data.measureName)
-    }
-
-  private def getPartitioning(partitioning: Seq[PartitionDTO]) =
-    ZIO.serviceWithZIO[GetPartitioning](_(PartitioningForDB.fromSeqPartitionDTO(partitioning)))
-
-  /** Seeds one measure definition directly on the shared single-transaction connection (rolled back at the end). */
-  private def seedMeasure(partitioningId: Long) =
-    ZIO.serviceWithZIO[Transactor[Task]] { xa =>
-      sql"""INSERT INTO runs.measure_definitions
-              (fk_partitioning, measure_name, measured_columns, created_by, created_at)
-            VALUES ($partitioningId, $SeededMeasureName, ARRAY['col1'], 'seed', now())""".update.run.transact(xa)
-    }
-
-  override def spec: Spec[Unit with TestEnvironment with Scope, Any] = {
+  override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("CreatePartitioningWithParentsSuite")(
-      test("T-a: new partitioning with 0 parents -> status 11, id and requester as created_by") {
+      test("New partitioning with 0 parents -> status 11, id and requester stored as created_by") {
         for {
           result <- create(uniquePartitioning("a"), Seq.empty[Long], author = "requesterA")
         } yield assertTrue(
@@ -86,122 +51,31 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           result.toOption.get.data.wasCreated
         )
       },
-      test("T-c: same call again -> status 14, same id, STORED created_by even with a different requester") {
-        val key = uniquePartitioning("c")
+      test("Returns Left with DataNotFoundException as an unknown parent is not in the database") {
         for {
-          first <- create(key, Seq.empty[Long], author = "firstAuthor")
-          second <- create(key, Seq.empty[Long], author = "otherRequester")
-        } yield assertTrue(
-          first.isRight,
-          second.isRight,
-          first.toOption.get.functionStatus.statusCode == 11,
-          second.toOption.get.functionStatus.statusCode == 14,
-          second.toOption.get.data.id == first.toOption.get.data.id,
-          second.toOption.get.data.createdBy == "firstAuthor",
-          first.toOption.get.data.wasCreated,
-          !second.toOption.get.data.wasCreated
-        )
+          result <- create(uniquePartitioning("f"), Seq(Long.MaxValue))
+        } yield assertTrue(result.left.exists {
+          case DataNotFoundException(status) => status.statusCode == 41
+          case _                              => false
+        })
       },
-      test("T-d: existing child + NEW parent -> status 13, same id, parent visible in ancestors (DB-02)") {
-        val childKey = uniquePartitioning("dChild")
-        for {
-          child <- create(childKey, Seq.empty[Long])
-          parent <- createNew("dParent")
-          childId = child.toOption.get.data.id
-          before <- ancestorIds(childId)
-          linked <- create(childKey, Seq(parent), author = "otherRequester")
-          after <- ancestorIds(childId)
-        } yield assertTrue(
-          linked.isRight,
-          linked.toOption.get.functionStatus.statusCode == 13,
-          linked.toOption.get.data.id == childId,
-          linked.toOption.get.data.createdBy == "author",
-          before.isEmpty,
-          after == Seq(parent)
-        )
-      },
-      test("T-f: unknown parent -> Left status 41 and nothing is written") {
-        val key = uniquePartitioning("fChild")
-        for {
-          result <- create(key, Seq(Long.MaxValue))
-          stored <- getPartitioning(key)
-        } yield assertTrue(
-          result.left.exists {
-            case DataNotFoundException(status) => status.statusCode == 41
-            case _                             => false
-          },
-          stored.left.exists {
-            case DataNotFoundException(status) => status.statusCode == 41
-            case _                             => false
-          }
-        )
-      },
-      test("T-g: cycle -> Left status 32 and ancestors unchanged") {
-        val keyC = uniquePartitioning("gC")
+      test("Returns Left with DataConflictException when linking would create a cycle") {
+        val keyC = uniquePartitioning("g")
         for {
           c <- create(keyC, Seq.empty[Long])
           cId = c.toOption.get.data.id
           p <- create(uniquePartitioning("gP"), Seq(cId)) // P is a child of C
-          pId = p.toOption.get.data.id
-          result <- create(keyC, Seq(pId)) // would make C a child of its own descendant
-          ancestorsOfC <- ancestorIds(cId)
-          ancestorsOfP <- ancestorIds(pId)
-        } yield assertTrue(
-          p.toOption.get.functionStatus.statusCode == 12,
-          result.left.exists {
-            case DataConflictException(status) => status.statusCode == 32
-            case _                             => false
-          },
-          ancestorsOfC.isEmpty,
-          ancestorsOfP == Seq(cId)
-        )
-      },
-      test("T-g2: existing partitioning with descendants + NEW parent -> Left status 33 (conflict), nothing written") {
-        val keyC = uniquePartitioning("g2C")
-        for {
-          c <- create(keyC, Seq.empty[Long])
-          cId = c.toOption.get.data.id
-          p <- create(uniquePartitioning("g2P"), Seq(cId))
-          pId = p.toOption.get.data.id
-          n <- createNew("g2N")
-          _ <- seedMeasure(n)
-          result <- create(keyC, Seq(n), copy = true)
-          ancestorsOfC <- ancestorIds(cId)
-          ancestorsOfP <- ancestorIds(pId)
-          measuresOfC <- measureNames(cId)
-          relinked <- create(keyC, Seq.empty[Long])
-        } yield assertTrue(
-          result.left.exists {
-            case DataConflictException(status) => status.statusCode == 33
-            case _                             => false
-          },
-          ancestorsOfC.isEmpty,
-          ancestorsOfP == Seq(cId),
-          measuresOfC.isEmpty,
-          relinked.toOption.get.functionStatus.statusCode == 14
-        )
-      },
-      test("T-j1: flag true -> NEW child receives the parent's measure definition") {
-        for {
-          parent <- createNew("mdTrueParent")
-          _ <- seedMeasure(parent)
-          child <- create(uniquePartitioning("mdTrueChild"), Seq(parent), copy = true)
-          measures <- measureNames(child.toOption.get.data.id)
-        } yield assertTrue(
-          child.isRight,
-          child.toOption.get.functionStatus.statusCode == 12,
-          measures == Seq(SeededMeasureName)
-        )
+          result <- create(keyC, Seq(p.toOption.get.data.id)) // would make C a child of its own descendant
+        } yield assertTrue(result.left.exists {
+          case DataConflictException(status) => status.statusCode == 32
+          case _                              => false
+        })
       }
     ).provide(
       CreatePartitioningWithParents.layer,
-      GetPartitioningAncestors.layer,
-      GetPartitioningMeasuresById.layer,
-      GetPartitioning.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithSingleTransactionRollback
-    ) @@ TestAspect.sequential
-
+    )
   }
 
 }
