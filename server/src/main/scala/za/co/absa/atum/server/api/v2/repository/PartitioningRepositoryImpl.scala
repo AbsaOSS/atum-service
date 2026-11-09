@@ -25,9 +25,10 @@ import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAddition
 import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
+import za.co.absa.atum.server.api.exception.DatabaseError.{ConflictDatabaseError, GeneralDatabaseError}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.atum.server.model._
+import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
 import za.co.absa.atum.server.model.database.{
   AdditionalDataItemFromDB,
   MeasureFromDB,
@@ -38,7 +39,7 @@ import zio._
 import zio.interop.catz.asyncInstance
 
 class PartitioningRepositoryImpl(
-  createPartitioningFn: CreatePartitioning,
+  createPartitioningWithParentsFn: CreatePartitioningWithParents,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
@@ -54,13 +55,12 @@ class PartitioningRepositoryImpl(
 
   override def createPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
-  ): IO[DatabaseError, PartitioningWithIdDTO] = {
-    for {
-      result <- dbSingleResultCallWithStatus(
-        createPartitioningFn(partitioningSubmitDTO),
-        "createPartitioning"
-      )
-    } yield PartitioningWithIdDTO(result, partitioningSubmitDTO.partitioning, partitioningSubmitDTO.author)
+  ): IO[DatabaseError, CreationResult[PartitioningWithIdDTO]] = {
+    dbSingleResultCallWithStatus(createPartitioningWithParentsFn(partitioningSubmitDTO), "createPartitioning")
+      .map { created =>
+        val result = PartitioningWithIdDTO(created.id, partitioningSubmitDTO.partitioning, created.createdBy)
+        if (created.wasCreated) Created(result) else Existing(result)
+      }
   }
 
   override def createOrUpdateAdditionalData(
@@ -168,7 +168,14 @@ class PartitioningRepositoryImpl(
     dbSingleResultCallWithStatus(
       updatePartitioningParentFn(UpdatePartitioningParentArgs(partitioningId, partitioningParentPatchDTO)),
       "updatePartitioningParent"
-    )
+    ).tapError {
+      case ConflictDatabaseError(message) =>
+        ZIO.logWarning(
+          s"PATCH /ancestors rejected for partitioning $partitioningId " +
+            s"(parent ${partitioningParentPatchDTO.parentPartitioningId}) - conflict (cycle or descendants): $message"
+        )
+      case _ => ZIO.unit
+    }
   }
 
   override def getPartitioningAncestors(
@@ -197,7 +204,7 @@ class PartitioningRepositoryImpl(
 
 object PartitioningRepositoryImpl {
   val layer: URLayer[
-    CreatePartitioning
+    CreatePartitioningWithParents
       with GetPartitioningMeasures
       with CreateOrUpdateAdditionalData
       with GetPartitioningAdditionalData
@@ -211,7 +218,7 @@ object PartitioningRepositoryImpl {
     PartitioningRepository
   ] = ZLayer {
     for {
-      createPartitioning <- ZIO.service[CreatePartitioning]
+      createPartitioningWithParents <- ZIO.service[CreatePartitioningWithParents]
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
@@ -223,7 +230,7 @@ object PartitioningRepositoryImpl {
       updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
       getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
     } yield new PartitioningRepositoryImpl(
-      createPartitioning,
+      createPartitioningWithParents,
       getPartitioningMeasures,
       createOrUpdateAdditionalData,
       getPartitioningAdditionalData,
