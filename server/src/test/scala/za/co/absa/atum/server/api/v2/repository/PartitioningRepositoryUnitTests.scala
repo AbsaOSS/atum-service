@@ -24,7 +24,7 @@ import za.co.absa.atum.model.dto.{
   PartitioningWithIdDTO
 }
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
+import za.co.absa.atum.server.api.database.flows.functions.{GetDirectParents, GetFlowPartitionings}
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
@@ -283,6 +283,10 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(6666L, 10, 0L))).thenReturn(ZIO.right(Seq.empty))
 
   private val getPartitioningAncestorsMockLayer = ZLayer.succeed(getPartitioningAncestorsMock)
+
+  // Get Direct Parents Mocks
+  private val getDirectParentsMock = mock(classOf[GetDirectParents])
+  private val getDirectParentsMockLayer = ZLayer.succeed(getDirectParentsMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -662,7 +666,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     getFlowPartitioningsMockLayer,
     getPartitioningMainFlowMockLayer,
     updatePartitioningParentMockLayer,
-    getPartitioningAncestorsMockLayer
+    getPartitioningAncestorsMockLayer,
+    getDirectParentsMockLayer
   )
 
 }

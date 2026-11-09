@@ -19,6 +19,7 @@ package za.co.absa.atum.server.api.v2.repository
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.common.repository.BaseRepository
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
+import za.co.absa.atum.server.api.database.flows.functions.GetDirectParents.GetDirectParentsResult
 import za.co.absa.atum.server.api.database.flows.functions._
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
@@ -49,7 +50,8 @@ class PartitioningRepositoryImpl(
   getFlowPartitioningsFn: GetFlowPartitionings,
   getPartitioningMainFlowFn: GetPartitioningMainFlow,
   updatePartitioningParentFn: UpdatePartitioningParent,
-  getPartitioningAncestorsFn: GetPartitioningAncestors
+  getPartitioningAncestorsFn: GetPartitioningAncestors,
+  getDirectParentsFn: GetDirectParents
 ) extends PartitioningRepository
     with BaseRepository {
 
@@ -200,6 +202,18 @@ class PartitioningRepositoryImpl(
       }
   }
 
+  override def getPartitioningParents(partitioningId: Long): IO[DatabaseError, Seq[ParentPartitioningDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getDirectParentsFn(partitioningId),
+      "getPartitioningParents"
+    ).map(_.flatten)
+      .flatMap { parentResults =>
+        ZIO
+          .fromEither(GetDirectParentsResult.resultsToParentPartitioningDTOs(parentResults))
+          .mapError(error => GeneralDatabaseError(error.getMessage))
+      }
+  }
+
 }
 
 object PartitioningRepositoryImpl {
@@ -214,7 +228,8 @@ object PartitioningRepositoryImpl {
       with GetFlowPartitionings
       with GetPartitioningMainFlow
       with UpdatePartitioningParent
-      with GetPartitioningAncestors,
+      with GetPartitioningAncestors
+      with GetDirectParents,
     PartitioningRepository
   ] = ZLayer {
     for {
@@ -229,6 +244,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
       updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
       getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
+      getDirectParents <- ZIO.service[GetDirectParents]
     } yield new PartitioningRepositoryImpl(
       createPartitioningWithParents,
       getPartitioningMeasures,
@@ -240,7 +256,8 @@ object PartitioningRepositoryImpl {
       getFlowPartitionings,
       getPartitioningMainFlow,
       updatePartitioningParent,
-      getPartitioningAncestors
+      getPartitioningAncestors,
+      getDirectParents
     )
   }
 

@@ -119,6 +119,13 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def getPartitioningParents(partitioningId: Long): IO[ServiceError, Seq[ParentPartitioningDTO]] = {
+    repositoryCall(
+      partitioningRepository.getPartitioningParents(partitioningId),
+      "getPartitioningParents"
+    )
+  }
+
 }
 
 object PartitioningServiceImpl {

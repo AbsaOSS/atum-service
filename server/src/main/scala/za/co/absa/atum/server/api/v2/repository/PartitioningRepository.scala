@@ -68,4 +68,6 @@ trait PartitioningRepository {
     offset: Long
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
 
+  def getPartitioningParents(partitioningId: Long): IO[DatabaseError, Seq[ParentPartitioningDTO]]
+
 }

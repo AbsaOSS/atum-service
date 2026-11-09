@@ -14,6 +14,49 @@
  * limitations under the License.
  */
 
+-------------------------------------------------------------------------------
+-- Migration: V0.10.0.3__link_to_parents_with_edges.sql
+-- Purpose: Modify _link_to_parents to dual-write to both edges and flows tables
+--
+-- Changes:
+--   - Adds INSERT to flows.partitioning_edges (explicit parent-child relationships)
+--   - Keeps existing INSERT to flows.partitioning_to_flow (transitive closure)
+--   - Edge insert happens FIRST (fail fast on constraint violations)
+--   - Both inserts are idempotent (ON CONFLICT DO NOTHING)
+--   - Same transaction ensures atomicity
+--
+-- Behavior:
+--   - Status 11 returned if ANY rows written (edges or flows)
+--   - Status 14 returned if NOTHING written (fully idempotent retry)
+--   - Edge constraints (no self-loops, FKs) checked before flow writes
+--
+-- Inherited invariants (unchanged from V0.10.0.1 - do NOT regress these):
+--   - Status codes: 11 linked, 14 nothing-to-do, 32 cycle/self-link, 33 child-has-descendants.
+--   - Closure invariant: members(F(A)) = {A} U descendants(A). Only a leaf is ever linked under a
+--     new parent; a child with descendants is refused (33) rather than dragging them along.
+--   - Fast path (no lock) when every parent already has the child in its own primary flow; the same
+--     check is repeated under the lock so idempotent retries that waited on a concurrent writer still
+--     return 14. Self-link is rejected (32) before the fast path.
+--   - Concurrency: one global transaction-scoped advisory lock, taken only on the slow path. Sound
+--     ONLY under READ COMMITTED (Hikari default) - do NOT set REPEATABLE READ / SERIALIZABLE, and keep
+--     the lock a standalone PERFORM. No lock_timeout is set (deliberate; callers must not hold a
+--     FOR UPDATE row lock when calling this function - lock-order inversion vs. the advisory lock).
+--
+-- CHANGED failure mode (vs V0.10.0.1) - a non-existent parent id now raises an FK violation on the
+--   edge insert and aborts the transaction, where the old flows-only path silently ignored it and
+--   returned 14. Callers that previously tolerated stale/unknown parent ids must validate parents
+--   exist (or map the FK violation to a clean 4xx) rather than surfacing a 500.
+--
+-- Edge coverage is FORWARD ONLY, and this is intentional (no backfill planned). Edges are written
+--   only by this v2 path; the deprecated v1 runs.create_partitioning links via _add_to_parent_flows
+--   and writes none, and pre-v0.11.0 relationships have none. The fast path short-circuits on closure
+--   membership before the edge insert, so re-linking does NOT back-fill (status 14), and direct
+--   parentage cannot be reconstructed from the closure anyway (it does not distinguish direct from
+--   transitive). GET /parents is therefore empty for v1-created and pre-upgrade lineage by design:
+--   lineage is opt-in and only accrues once data producers are configured for it on the Atum agent
+--   (partitioning 'map' construction/reconstruction).
+-------------------------------------------------------------------------------
+
 CREATE OR REPLACE FUNCTION flows._link_to_parents(
     IN  i_child_id          BIGINT,
     IN  i_parent_ids        BIGINT[],
@@ -21,65 +64,12 @@ CREATE OR REPLACE FUNCTION flows._link_to_parents(
     OUT status              INTEGER,
     OUT status_text         TEXT
 ) RETURNS record AS
--------------------------------------------------------------------------------
---
--- Function: flows._link_to_parents(3)
---      The single place that links an (existing) child partitioning under one or more parent partitionings:
---      it rejects self-links, cycles and partitionings that already have descendants, serializes writers with one
---      global advisory lock and adds the child (only the child) to every flow that contains a parent.
---      Used by runs.create_partitioning_with_parents and runs.update_partitioning_parent.
---
--- Closure-table invariant: members(F(A)) = {A} U descendants(A), where F(A) is the flow whose primary partitioning is A.
---      To explain this in simple terms - flow is a downstream view.
---      The ancestors of X are the primary partitionings of the flows containing X (excluding X).
---      The invariant holds because only a leaf (a partitioning whose own flow has no other member) is ever linked
---      under a NEW parent: nothing but the child itself has to join the flows of the parents. A partitioning with
---      descendants is refused (status 33) instead of dragging its descendants into the flows of the new parents.
---
--- Parameters:
---      i_child_id              - id of the child partitioning (must already exist)
---      i_parent_ids            - ids of the parent partitionings (must already exist); NULL elements and duplicates
---                                are ignored, an empty or NULL array means "no parents"
---      i_by_user               - user to be stored as the author of the newly created flow memberships
---
--- Returns:
---      status                  - Status code
---      status_text             - Status text (for status 32 it names the offending partitioning ids, comma separated,
---                                for status 33 the id of the child)
---
--- Status codes:
---      11 - Links written
---      14 - Nothing to do (every parent is already a direct or transitive ancestor, or there are no parents)
---      32 - A parent is the child itself or one of its descendants (the link would create a cycle)
---      33 - The child already has descendants and a new link would be needed (it cannot be linked under new parents)
---
--- Notes:
---      - Fast path: when every parent already has the child in its own flow, nothing is written and NO lock is taken.
---        The same check is repeated under the lock, so a call that waited for a concurrent writer which linked the
---        child meanwhile still returns 14 (idempotent retries).
---      - Self-link is rejected BEFORE the fast path (the child is a member of its own flow and would otherwise look
---        "already linked").
---      - Leaf check (status 33) applies only to NEW links, it comes after the lock and the cycle check: a re-link of a
---        child (even one with descendants) to parents that are already its ancestors stays a no-op (status 14).
---      - Lock: one global exclusive transaction-scoped advisory lock, taken only when the fast path does not apply
---        (this includes a brand-new child with parents). The statements after the lock re-check under a fresh
---        snapshot - sound ONLY under READ COMMITTED (Hikari default); do NOT set REPEATABLE READ/SERIALIZABLE
---        anywhere. The lock must stay a standalone PERFORM (never inside a SELECT ... WHERE).
---      - No lock_timeout (a deliberate decision): a waiting writer holds a pool connection (Hikari max 10).
---        Accepted residual risk; slow-path calls are short and re-links of existing ancestors take the lock-free
---        fast path.
---      - The v1 path runs.create_partitioning does not take this lock; it links only a brand-new child (a leaf). It
---        can race a concurrent link of its parent under a new ancestor and then miss that ancestor's flow (known
---        limitation of the deprecated v1 path).
---      - Callers must not hold a FOR UPDATE row lock when calling this function (lock-order inversion vs. the
---        advisory lock).
---
--------------------------------------------------------------------------------
 $$
 DECLARE
     _parent_ids     BIGINT[];
     _offending      BIGINT[];
-    _rows           INTEGER;
+    _rows_edges     INTEGER;
+    _rows_flows     INTEGER;
 BEGIN
     -- normalize parents: distinct, non-NULL, deterministic order
     _parent_ids := ARRAY(
@@ -160,15 +150,28 @@ BEGIN
         RETURN;
     END IF;
 
-    -- every flow containing a parent receives the child (a leaf)
+    -- =========================================================================
+    -- DUAL WRITE: Insert into both edges and flows tables
+    -- =========================================================================
+
+    -- 1. INSERT EDGES FIRST (NEW): Explicit parent→child relationships
+    --    This fails fast on constraint violations (no self-loops, valid FKs)
+    INSERT INTO flows.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
+    SELECT i_child_id, PID.id, i_by_user
+    FROM unnest(_parent_ids) AS PID(id)
+    ON CONFLICT (fk_child_partitioning, fk_parent_partitioning) DO NOTHING;
+    GET DIAGNOSTICS _rows_edges = ROW_COUNT;
+
+    -- 2. INSERT FLOWS (EXISTING): Transitive closure (child joins all ancestor flows)
     INSERT INTO flows.partitioning_to_flow (fk_flow, fk_partitioning, created_by)
     SELECT DISTINCT PPTF.fk_flow, i_child_id, i_by_user
     FROM unnest(_parent_ids) AS PID(id)
     INNER JOIN flows.partitioning_to_flow PPTF ON PPTF.fk_partitioning = PID.id
     ON CONFLICT DO NOTHING;
-    GET DIAGNOSTICS _rows = ROW_COUNT;
+    GET DIAGNOSTICS _rows_flows = ROW_COUNT;
 
-    IF _rows > 0 THEN
+    -- Return status based on whether ANY writes occurred
+    IF _rows_edges > 0 OR _rows_flows > 0 THEN
         status := 11;
         status_text := 'Partitioning linked to parents';
     ELSE

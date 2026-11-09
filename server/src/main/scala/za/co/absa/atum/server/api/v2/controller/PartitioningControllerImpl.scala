@@ -164,6 +164,16 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def getPartitioningParents(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[ParentPartitioningDTO], Seq[ParentPartitioningDTO]](
+        partitioningService.getPartitioningParents(partitioningId)
+      )
+    )
+  }
+
 }
 
 object PartitioningControllerImpl {

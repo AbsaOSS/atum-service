@@ -64,4 +64,6 @@ trait PartitioningService {
     limit: Int,
     offset: Long
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningParents(partitioningId: Long): IO[ServiceError, Seq[ParentPartitioningDTO]]
 }

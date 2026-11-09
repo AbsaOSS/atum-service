@@ -71,4 +71,8 @@ trait PartitioningController {
     offset: Long
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
 
+  def getPartitioningParents(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]]
+
 }
