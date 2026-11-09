@@ -21,6 +21,7 @@ import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.ResultValueType
+import za.co.absa.atum.server.api.database.flows.functions.GetDirectParents.GetDirectParentsResult
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
 import za.co.absa.atum.server.model.database._
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
@@ -113,6 +114,42 @@ trait TestData {
 
   protected val getPartitioningAncestorsResult2NoMore: GetPartitioningAncestorsResult =
     getPartitioningAncestorsResult2.copy(hasMore = false)
+
+  // Direct parents fixtures
+  protected val timestamp1: ZonedDateTime = ZonedDateTime.parse("2026-11-09T16:00:00Z")
+  protected val timestamp2: ZonedDateTime = ZonedDateTime.parse("2026-11-09T16:15:00Z")
+
+  protected val getDirectParentsResult1: GetDirectParentsResult = GetDirectParentsResult(
+    id = partitioningFromDB1.id,
+    partitioningJson = partitioningAsJson,
+    author = partitioningFromDB1.author,
+    linkedBy = "linker1",
+    linkedAt = timestamp1
+  )
+
+  protected val getDirectParentsResult2: GetDirectParentsResult = GetDirectParentsResult(
+    id = partitioningFromDB2.id,
+    partitioningJson = partitioningAsJson,
+    author = partitioningFromDB2.author,
+    linkedBy = "linker2",
+    linkedAt = timestamp2
+  )
+
+  protected val parentPartitioningDTO1: ParentPartitioningDTO = ParentPartitioningDTO(
+    id = partitioningFromDB1.id,
+    partitioning = partitioningDTO1,
+    author = partitioningFromDB1.author,
+    linkedBy = Some("linker1"),
+    linkedAt = Some(timestamp1)
+  )
+
+  protected val parentPartitioningDTO2: ParentPartitioningDTO = ParentPartitioningDTO(
+    id = partitioningFromDB2.id,
+    partitioning = partitioningDTO1,
+    author = partitioningFromDB1.author,
+    linkedBy = Some("linker2"),
+    linkedAt = Some(timestamp2)
+  )
 
   // Partitioning with ID DTO
   protected val partitioningWithIdDTO1: PartitioningWithIdDTO = PartitioningWithIdDTO(

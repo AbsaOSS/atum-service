@@ -286,6 +286,23 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
 
   // Get Direct Parents Mocks
   private val getDirectParentsMock = mock(classOf[GetDirectParents])
+
+  when(getDirectParentsMock.apply(1L))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(11, "OK"), Some(getDirectParentsResult1)))))
+  when(getDirectParentsMock.apply(3333L)).thenReturn(
+    ZIO.right(
+      Seq(
+        Row(FunctionStatus(11, "OK"), Some(getDirectParentsResult1)),
+        Row(FunctionStatus(11, "OK"), Some(getDirectParentsResult2))
+      )
+    )
+  )
+  when(getDirectParentsMock.apply(6666L)).thenReturn(ZIO.right(Seq.empty))
+  when(getDirectParentsMock.apply(9999L))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+  when(getDirectParentsMock.apply(8888L))
+    .thenReturn(ZIO.fail(new Exception("boom!")))
+
   private val getDirectParentsMockLayer = ZLayer.succeed(getDirectParentsMock)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -649,6 +666,33 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected GeneralDatabaseError") {
           assertZIO(PartitioningRepository.getPartitioningAncestors(8888L, 10, 0L).exit)(
+            failsWithA[GeneralDatabaseError]
+          )
+        }
+      ),
+      suite("GetDirectParentsSuite")(
+        test("Returns direct parent for partitioning") {
+          for {
+            result <- PartitioningRepository.getPartitioningParents(1L)
+          } yield assertTrue(result == Seq(parentPartitioningDTO1))
+        },
+        test("Returns multiple direct parents for partitioning") {
+          for {
+            result <- PartitioningRepository.getPartitioningParents(3333L)
+          } yield assertTrue(result == Seq(parentPartitioningDTO1, parentPartitioningDTO2))
+        },
+        test("No rows at all -> empty Seq") {
+          for {
+            result <- PartitioningRepository.getPartitioningParents(6666L)
+          } yield assertTrue(result.isEmpty)
+        },
+        test("Returns expected NotFoundDatabaseError when partitioning not found") {
+          assertZIO(PartitioningRepository.getPartitioningParents(9999L).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        },
+        test("Returns expected GeneralDatabaseError on DB failure") {
+          assertZIO(PartitioningRepository.getPartitioningParents(8888L).exit)(
             failsWithA[GeneralDatabaseError]
           )
         }

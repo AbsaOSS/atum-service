@@ -15,7 +15,7 @@
  */
 
 -------------------------------------------------------------------------------
--- Migration: V0.10.0.1__partitioning_edges.ddl
+-- Migration: V0.10.0.5__partitioning_edges.ddl
 -- Purpose: Create explicit parent-child edge table for direct lineage tracking
 --
 -- Context:

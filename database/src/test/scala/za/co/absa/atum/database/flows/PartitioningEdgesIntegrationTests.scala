@@ -219,6 +219,28 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
     assert(parentsC.length == 1 && parentsC.head._1 == b, "C's parent should be B")
   }
 
+  test("linking leaf directly to an existing transitive ancestor records the edge") {
+    // A → B → C
+    val a = seed(uniq("A"))
+    val b = seed(uniq("B"))
+    link(b, ids(Seq(a)))
+    val c = seed(uniq("C"))
+    link(c, ids(Seq(b)))
+
+    // Now link C directly to A as well (C is already in A's flow via B)
+    val (status, _) = link(c, ids(Seq(a)))
+    assert(status == 11, "linking C directly to transitive ancestor A should succeed")
+
+    // Verify C now has 2 direct edges (to B and to A)
+    val edges = countEdges(c)
+    assert(edges == 2, s"C should have 2 edges, got $edges")
+
+    val parentsC = getDirectParents(c).sortBy(_._1)
+    assert(parentsC.length == 2, s"C should have 2 direct parents, got ${parentsC.length}")
+    val expectedParents = Seq(a, b).sorted
+    assert(parentsC.map(_._1) == expectedParents, s"C's parents should be $expectedParents")
+  }
+
   test("edge table respects foreign key constraints") {
     val a = seed(uniq("A"))
     val nonExistentParent = 999999999L

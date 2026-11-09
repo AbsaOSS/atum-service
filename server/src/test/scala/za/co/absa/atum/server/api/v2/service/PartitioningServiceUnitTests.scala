@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.v2.service
 
 import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.PartitioningWithIdDTO
+import za.co.absa.atum.model.dto.{ParentPartitioningDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
@@ -118,6 +118,15 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningAncestors(8888L, 1, 1L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
   when(partitioningRepositoryMock.getPartitioningAncestors(9999L, 1, 1L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+
+  when(partitioningRepositoryMock.getPartitioningParents(1111L))
+    .thenReturn(ZIO.succeed(Seq.empty[ParentPartitioningDTO]))
+  when(partitioningRepositoryMock.getPartitioningParents(5555L))
+    .thenReturn(ZIO.succeed(Seq(parentPartitioningDTO1, parentPartitioningDTO2)))
+  when(partitioningRepositoryMock.getPartitioningParents(8888L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getPartitioningParents(9999L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
@@ -362,6 +371,28 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected GeneralServiceError") {
           assertZIO(PartitioningService.patchPartitioningParent(2L, partitioningParentPatchDTO1).exit)(
             failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningParentsSuite")(
+        test("Returns empty Seq when partitioning has no parents") {
+          for {
+            result <- PartitioningService.getPartitioningParents(1111L)
+          } yield assertTrue(result.isEmpty)
+        },
+        test("Returns all parents for partitioning") {
+          for {
+            result <- PartitioningService.getPartitioningParents(5555L)
+          } yield assertTrue(result == Seq(parentPartitioningDTO1, parentPartitioningDTO2))
+        },
+        test("Returns expected GeneralServiceError when repository fails with GeneralDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningParents(8888L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        },
+        test("Returns expected NotFoundServiceError when repository fails with NotFoundDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningParents(9999L).exit)(
+            failsWithA[NotFoundServiceError]
           )
         }
       )

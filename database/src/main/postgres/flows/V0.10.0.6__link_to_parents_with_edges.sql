@@ -15,7 +15,7 @@
  */
 
 -------------------------------------------------------------------------------
--- Migration: V0.10.0.3__link_to_parents_with_edges.sql
+-- Migration: V0.10.0.6__link_to_parents_with_edges.sql
 -- Purpose: Modify _link_to_parents to dual-write to both edges and flows tables
 --
 -- Changes:
@@ -34,9 +34,9 @@
 --   - Status codes: 11 linked, 14 nothing-to-do, 32 cycle/self-link, 33 child-has-descendants.
 --   - Closure invariant: members(F(A)) = {A} U descendants(A). Only a leaf is ever linked under a
 --     new parent; a child with descendants is refused (33) rather than dragging them along.
---   - Fast path (no lock) when every parent already has the child in its own primary flow; the same
---     check is repeated under the lock so idempotent retries that waited on a concurrent writer still
---     return 14. Self-link is rejected (32) before the fast path.
+--   - Fast path (no lock) when every parent already has both a direct edge to the child and the child
+--     in its primary flow; the same check is repeated under the lock so idempotent retries that waited
+--     on a concurrent writer still return 14. Self-link is rejected (32) before the fast path.
 --   - Concurrency: one global transaction-scoped advisory lock, taken only on the slow path. Sound
 --     ONLY under READ COMMITTED (Hikari default) - do NOT set REPEATABLE READ / SERIALIZABLE, and keep
 --     the lock a standalone PERFORM. No lock_timeout is set (deliberate; callers must not hold a
@@ -49,12 +49,10 @@
 --
 -- Edge coverage is FORWARD ONLY, and this is intentional (no backfill planned). Edges are written
 --   only by this v2 path; the deprecated v1 runs.create_partitioning links via _add_to_parent_flows
---   and writes none, and pre-v0.11.0 relationships have none. The fast path short-circuits on closure
---   membership before the edge insert, so re-linking does NOT back-fill (status 14), and direct
---   parentage cannot be reconstructed from the closure anyway (it does not distinguish direct from
---   transitive). GET /parents is therefore empty for v1-created and pre-upgrade lineage by design:
---   lineage is opt-in and only accrues once data producers are configured for it on the Atum agent
---   (partitioning 'map' construction/reconstruction).
+--   and writes none, and pre-v0.11.0 relationships have none. Direct parentage cannot be reconstructed
+--   from the closure alone (it does not distinguish direct from transitive). GET /parents is therefore
+--   empty for v1-created and pre-upgrade lineage by design: lineage is opt-in and only accrues once
+--   data producers are configured for it on the Atum agent (partitioning 'map' construction/reconstruction).
 -------------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION flows._link_to_parents(
@@ -86,11 +84,15 @@ BEGIN
         RETURN;
     END IF;
 
-    -- fast path (no lock): every parent already has the child in its own (primary) flow, i.e. is an ancestor
+    -- fast path (no lock): every parent already has both a direct edge to child AND child in its primary flow
     IF NOT EXISTS (
         SELECT 1
         FROM unnest(_parent_ids) AS PID(id)
         WHERE NOT EXISTS (
+            SELECT 1
+            FROM flows.partitioning_edges E
+            WHERE E.fk_child_partitioning = i_child_id AND E.fk_parent_partitioning = PID.id
+        ) OR NOT EXISTS (
             SELECT 1
             FROM flows.flows F
             INNER JOIN flows.partitioning_to_flow PTF ON PTF.fk_flow = F.id_flow
@@ -112,6 +114,10 @@ BEGIN
         SELECT 1
         FROM unnest(_parent_ids) AS PID(id)
         WHERE NOT EXISTS (
+            SELECT 1
+            FROM flows.partitioning_edges E
+            WHERE E.fk_child_partitioning = i_child_id AND E.fk_parent_partitioning = PID.id
+        ) OR NOT EXISTS (
             SELECT 1
             FROM flows.flows F
             INNER JOIN flows.partitioning_to_flow PTF ON PTF.fk_flow = F.id_flow
