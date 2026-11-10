@@ -245,13 +245,11 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
     val a = seed(uniq("A"))
     val nonExistentParent = 999999999L
 
-    // Try to link to non-existent parent - should fail at database level
-    try {
+    // Try to link to non-existent parent - should fail with FK violation
+    val ex = intercept[java.sql.SQLException] {
       link(a, ids(Seq(nonExistentParent)))
-      fail("should have thrown exception for non-existent parent")
-    } catch {
-      case _: Exception => // Expected - FK constraint violation
     }
+    assert(ex.getSQLState == "23503", s"expected SQLSTATE 23503 (FK violation), got ${ex.getSQLState}")
   }
 
   test("self-loop constraint prevents A→A edges") {
