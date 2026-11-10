@@ -25,7 +25,7 @@ import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.ParentPartitioningDTO
 import za.co.absa.atum.model.envelopes.SuccessResponse.MultiSuccessResponse
-import za.co.absa.atum.model.envelopes.{InternalServerErrorResponse, NotFoundErrorResponse}
+import za.co.absa.atum.model.envelopes.{GeneralErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.v2.controller.PartitioningController
 import za.co.absa.atum.server.api.v2.http.Endpoints.getPartitioningParentsEndpoint
@@ -64,6 +64,12 @@ object GetPartitioningParentsEndpointUnitTests extends ZIOSpecDefault with TestD
         InternalServerErrorResponse("internal server error")
       )
     )
+  when(partitioningControllerMock.getPartitioningParents(6666L))
+    .thenReturn(
+      ZIO.fail(
+        GeneralErrorResponse("error")
+      )
+    )
 
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
@@ -76,7 +82,7 @@ object GetPartitioningParentsEndpointUnitTests extends ZIOSpecDefault with TestD
       .thenRunLogic()
       .backend()
 
-    suite("GetParentsEndpointSuite")(
+    suite("GetPartitioningParentsEndpointSuite")(
       test("Returns an expected empty MultiSuccessResponse when partitioning has no parents") {
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/1111/parents")
@@ -141,6 +147,18 @@ object GetPartitioningParentsEndpointUnitTests extends ZIOSpecDefault with TestD
         val statusCode = response.map(_.code)
 
         assertZIO(statusCode)(equalTo(StatusCode.InternalServerError))
+      },
+      test("Returns a BadRequest for a general error") {
+        val request = basicRequest
+          .get(uri"https://test.com/api/v2/partitionings/6666/parents")
+          .response(asJson[GeneralErrorResponse])
+
+        val response = request
+          .send(backendStub)
+
+        val statusCode = response.map(_.code)
+
+        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
       }
     )
 
