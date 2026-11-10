@@ -135,6 +135,24 @@ trait TestData {
     linkedAt = timestamp2
   )
 
+  // Expected ParentPartitioningDTOs resulting from the getDirectParentsResult1/2 fixtures above
+  // (used by PartitioningRepositoryUnitTests, which exercises the DB-row -> DTO conversion)
+  protected val directParentDTO1: ParentPartitioningDTO = ParentPartitioningDTO(
+    id = getDirectParentsResult1.id,
+    partitioning = partitioningDTO1,
+    author = getDirectParentsResult1.author,
+    linkedBy = Some(getDirectParentsResult1.linkedBy),
+    linkedAt = Some(getDirectParentsResult1.linkedAt)
+  )
+
+  protected val directParentDTO2: ParentPartitioningDTO = ParentPartitioningDTO(
+    id = getDirectParentsResult2.id,
+    partitioning = partitioningDTO1,
+    author = getDirectParentsResult2.author,
+    linkedBy = Some(getDirectParentsResult2.linkedBy),
+    linkedAt = Some(getDirectParentsResult2.linkedAt)
+  )
+
   // Partitioning with ID DTO
   protected val partitioningWithIdDTO1: PartitioningWithIdDTO = PartitioningWithIdDTO(
     id = partitioningFromDB1.id,

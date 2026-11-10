@@ -674,12 +674,12 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
         test("Returns direct parent for partitioning") {
           for {
             result <- PartitioningRepository.getPartitioningParents(1L)
-          } yield assertTrue(result == Seq(parentPartitioningDTO1))
+          } yield assertTrue(result == Seq(directParentDTO1))
         },
         test("Returns multiple direct parents for partitioning") {
           for {
             result <- PartitioningRepository.getPartitioningParents(3333L)
-          } yield assertTrue(result == Seq(parentPartitioningDTO1, parentPartitioningDTO2))
+          } yield assertTrue(result == Seq(directParentDTO1, directParentDTO2))
         },
         test("No rows at all -> empty Seq") {
           for {
