@@ -90,4 +90,5 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = pg_catalog, public, pg_temp;
 
 ALTER FUNCTION flows.get_direct_parents(BIGINT) OWNER TO atum_owner;
-GRANT EXECUTE ON FUNCTION flows.get_direct_parents(BIGINT) TO atum_owner;
+REVOKE EXECUTE ON FUNCTION flows.get_direct_parents(BIGINT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION flows.get_direct_parents(BIGINT) TO atum_user;
