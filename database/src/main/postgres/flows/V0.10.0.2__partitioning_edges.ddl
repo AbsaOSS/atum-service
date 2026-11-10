@@ -59,8 +59,7 @@ CREATE TABLE flows.partitioning_edges
 -- duplicate the PK index and add write/storage cost.
 --
 -- "Who are the children of X?" (WHERE fk_parent_partitioning = X, impact analysis) is NOT a
--- prefix of the PK, so it needs its own index. This index also backs the ON DELETE CASCADE
--- that fires on fk_parent_partitioning when a parent partitioning is removed.
+-- prefix of the PK, so it needs its own index.
 CREATE INDEX partitioning_edges_parent_idx ON flows.partitioning_edges(fk_parent_partitioning);
 
 ALTER TABLE flows.partitioning_edges OWNER TO atum_owner;

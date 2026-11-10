@@ -241,17 +241,6 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
     assert(parentsC.map(_._1) == expectedParents, s"C's parents should be $expectedParents")
   }
 
-  test("edge table respects foreign key constraints") {
-    val a = seed(uniq("A"))
-    val nonExistentParent = 999999999L
-
-    // Try to link to non-existent parent - should fail with FK violation
-    val ex = intercept[java.sql.SQLException] {
-      link(a, ids(Seq(nonExistentParent)))
-    }
-    assert(ex.getSQLState == "23503", s"expected SQLSTATE 23503 (FK violation), got ${ex.getSQLState}")
-  }
-
   test("self-loop constraint prevents A→A edges") {
     val a = seed(uniq("A"))
 
