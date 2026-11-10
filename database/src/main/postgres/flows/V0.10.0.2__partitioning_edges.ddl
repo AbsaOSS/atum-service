@@ -63,6 +63,7 @@ CREATE TABLE flows.partitioning_edges
 CREATE INDEX partitioning_edges_parent_idx ON flows.partitioning_edges(fk_parent_partitioning);
 
 ALTER TABLE flows.partitioning_edges OWNER TO atum_owner;
+GRANT SELECT ON flows.partitioning_edges TO atum_reader;
 
 COMMENT ON TABLE flows.partitioning_edges IS
 'Explicit parent->child edges for direct lineage relationships.
