@@ -25,8 +25,8 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import za.co.absa.atum.agent.dispatcher.{HttpDispatcher, HttpRetry}
 
 import io.circe.parser.decode
-import za.co.absa.atum.model.dto.PartitioningWithIdDTO
-import za.co.absa.atum.model.envelopes.SuccessResponse.PaginatedResponse
+import za.co.absa.atum.model.dto.{ChildPartitioningDTO, LineageGraphDTO, ParentPartitioningDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 
 import sttp.capabilities
 import sttp.client3._
@@ -34,10 +34,11 @@ import sttp.client3.okhttp.OkHttpSyncBackend
 import sttp.model.Uri
 import scala.collection.immutable.ListMap
 import za.co.absa.atum.agent.exception.AtumAgentException.HttpException
-import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 
-/** Mimics the slice of `java.net.http.HttpHeaders` these tests need. Top-level (not nested in the test class) so
- *  the synthesized case class equality doesn't need an outer-instance check. */
+/**
+ *  Mimics the slice of `java.net.http.HttpHeaders` these tests need. Top-level (not nested in the test class) so
+ *  the synthesized case class equality doesn't need an outer-instance check.
+ */
 private final case class CompatHeaders(values: Seq[(String, String)]) {
   def firstValue(name: String): java.util.Optional[String] =
     java.util.Optional.ofNullable(values.collectFirst { case (k, v) if k.equalsIgnoreCase(name) => v }.orNull)
@@ -61,8 +62,8 @@ class AgentServerCompatibilityTests extends DBTestSuite {
   private def httpCall(method: String, path: String, jsonBody: Option[String] = None): CompatResponse = {
     val uri = Uri.unsafeParse(s"$serverUrl$path")
     val base = (method match {
-      case "GET"   => basicRequest.get(uri)
-      case "POST"  => basicRequest.post(uri)
+      case "GET" => basicRequest.get(uri)
+      case "POST" => basicRequest.post(uri)
       case "PATCH" => basicRequest.patch(uri)
     }).header("Content-Type", "application/json")
     val withBody = jsonBody.fold(base)(base.body(_))
@@ -90,13 +91,13 @@ class AgentServerCompatibilityTests extends DBTestSuite {
   )
 
   /**
-   * Runs the full agent -> server flow for the given `agent` and `partitioning` and asserts that the
-   * server persisted everything correctly.
+   *  Runs the full agent -> server flow for the given `agent` and `partitioning` and asserts that the
+   *  server persisted everything correctly.
    *
-   * Every DB assertion is scoped to the partitioning created by this flow (via `fk_partitioning`), so
-   * multiple compatibility tests can run against the same shared database without their writes
-   * interfering with each other's assertions. Note: the agent writes go through the server on its own
-   * DB connection and are therefore committed (not rolled back by balta between tests).
+   *  Every DB assertion is scoped to the partitioning created by this flow (via `fk_partitioning`), so
+   *  multiple compatibility tests can run against the same shared database without their writes
+   *  interfering with each other's assertions. Note: the agent writes go through the server on its own
+   *  DB connection and are therefore committed (not rolled back by balta between tests).
    */
   private def verifyAgentServerCompatibility(agent: AtumAgent, partitioning: ListMap[String, String]): Unit = {
     val spark = SparkSession
@@ -234,7 +235,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     // The factory must have selected the HTTP dispatcher based on the custom config.
     agent.dispatcher match {
       case _: HttpDispatcher => // expected
-      case other             => fail(s"Expected an HttpDispatcher, but got ${other.getClass.getName}")
+      case other => fail(s"Expected an HttpDispatcher, but got ${other.getClass.getName}")
     }
 
     // The custom retry values must have been read from the config and must differ from the defaults,
@@ -308,7 +309,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     assert(response.statusCode() == 200, s"unexpected response: ${response.body()}")
     val ancestorIds = decode[PaginatedResponse[PartitioningWithIdDTO]](response.body()) match {
       case Right(parsed) => parsed.data.map(_.id)
-      case Left(error)   => fail(s"cannot decode ancestors response: $error")
+      case Left(error) => fail(s"cannot decode ancestors response: $error")
     }
     assert(ancestorIds.toSet == Set(idA, idB))
     assert(ancestorIds.size == 2)
@@ -335,6 +336,50 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     assert(childFlows.contains(flowA))
     assert(childFlows.contains(flowB))
     assert(childFlows.distinct.size == childFlows.size, "no duplicate (fk_flow, fk_partitioning) links")
+
+    // DIRECT PARENTS: new endpoint verification
+    val parentsResponse = httpCall("GET", s"/api/v2/partitionings/$childId/parents")
+    assert(parentsResponse.statusCode() == 200, s"unexpected response: ${parentsResponse.body()}")
+    val directParents = decode[MultiSuccessResponse[ParentPartitioningDTO]](parentsResponse.body()) match {
+      case Right(parsed) => parsed.data
+      case Left(error) => fail(s"cannot decode direct parents response: $error")
+    }
+    assert(directParents.size == 2)
+    assert(directParents.map(_.id).toSet == Set(idA, idB))
+    assert(directParents.forall(_.linkedBy.isDefined))
+    assert(directParents.forall(_.linkedAt.isDefined))
+
+    // LINEAGE EDGES: database verification
+    assert(table("flows.partitioning_edges").count(s"fk_child_partitioning = $childId") == 2)
+    val parentEdgeIds = table("flows.partitioning_edges").where(s"fk_child_partitioning = $childId") { result =>
+      var ids = Vector.empty[Long]
+      while (result.hasNext) {
+        ids = ids :+ result.next().getLong("fk_parent_partitioning").get
+      }
+      ids
+    }
+    assert(parentEdgeIds.toSet == Set(idA, idB))
+    assert(parentEdgeIds.contains(idA) && parentEdgeIds.contains(idB))
+
+    // DIRECT CHILDREN: endpoint verification (idA's child must be childId)
+    val childrenResponse = httpCall("GET", s"/api/v2/partitionings/$idA/children")
+    assert(childrenResponse.statusCode() == 200, s"unexpected response: ${childrenResponse.body()}")
+    val directChildren = decode[MultiSuccessResponse[ChildPartitioningDTO]](childrenResponse.body()) match {
+      case Right(parsed) => parsed.data
+      case Left(error) => fail(s"cannot decode direct children response: $error")
+    }
+    assert(directChildren.exists(_.id == childId))
+
+    // LINEAGE GRAPH: endpoint verification
+    val lineageResponse = httpCall("GET", s"/api/v2/partitionings/$childId/lineage")
+    assert(lineageResponse.statusCode() == 200, s"unexpected response: ${lineageResponse.body()}")
+    val lineageGraph = decode[SingleSuccessResponse[LineageGraphDTO]](lineageResponse.body()) match {
+      case Right(parsed) => parsed.data
+      case Left(error) => fail(s"cannot decode lineage graph response: $error")
+    }
+    assert(lineageGraph.primaryPartitioningId == childId)
+    assert(lineageGraph.nodes.map(_.id).toSet.contains(childId))
+    assert(lineageGraph.edges.size >= 2)
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -364,10 +409,10 @@ class AgentServerCompatibilityTests extends DBTestSuite {
   private val v11ParentAuthor = s"compat-parent-author-$v11Run"
 
   private def v11JsonEscape(value: String): String = value.flatMap {
-    case '"'           => "\\\""
-    case '\\'          => "\\\\"
+    case '"' => "\\\""
+    case '\\' => "\\\\"
     case c if c < ' ' => "\\" + "u" + "%04x".format(c.toInt)
-    case c             => c.toString
+    case c => c.toString
   }
 
   private def v11SqlEscape(value: String): String = value.replace("'", "''")
@@ -434,11 +479,17 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     val keyValues = partitioning
       .map { case (k, v) => s"""{"key":"${v11JsonEscape(k)}","value":"${v11JsonEscape(v)}"}""" }
       .mkString("[", ",", "]")
-    s"""{"partitioning":$keyValues,"parentPartitioningIds":${parentIds.mkString("[", ",", "]")},"author":"${v11JsonEscape(author)}"}"""
+    s"""{"partitioning":$keyValues,"parentPartitioningIds":${parentIds.mkString(
+        "[",
+        ",",
+        "]"
+      )},"author":"${v11JsonEscape(author)}"}"""
   }
 
-  /** Persists a `count` measure definition (no measured columns, like the agent's RecordCount) with a REST checkpoint
-   * written by `author`; the definition is created by that checkpoint, so its `created_by` is `author`. */
+  /**
+   *  Persists a `count` measure definition (no measured columns, like the agent's RecordCount) with a REST checkpoint
+   *  written by `author`; the definition is created by that checkpoint, so its `created_by` is `author`.
+   */
   private def v11CreateCountCheckpointViaRest(partitioningId: Long, author: String): Unit = {
     val body =
       s"""{"id":"${java.util.UUID.randomUUID()}","name":"v11ParentCheckpoint","author":"${v11JsonEscape(author)}",""" +
@@ -455,7 +506,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
   private def v11Decode(response: CompatResponse): PartitioningWithIdDTO =
     decode[SingleSuccessResponse[PartitioningWithIdDTO]](response.body()) match {
       case Right(parsed) => parsed.data
-      case Left(error)   => fail(s"cannot decode create-partitioning response: $error, body: ${response.body()}")
+      case Left(error) => fail(s"cannot decode create-partitioning response: $error, body: ${response.body()}")
     }
 
   private def v11AncestorIds(partitioningId: Long): Seq[Long] = {
@@ -463,7 +514,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     assert(response.statusCode() == 200, s"unexpected response: ${response.body()}")
     decode[PaginatedResponse[PartitioningWithIdDTO]](response.body()) match {
       case Right(parsed) => parsed.data.map(_.id)
-      case Left(error)   => fail(s"cannot decode ancestors response: $error")
+      case Left(error) => fail(s"cannot decode ancestors response: $error")
     }
   }
 

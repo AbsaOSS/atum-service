@@ -70,4 +70,17 @@ trait PartitioningRepository {
 
   def getPartitioningParents(partitioningId: Long): IO[DatabaseError, Seq[ParentPartitioningDTO]]
 
+  def getPartitioningChildren(partitioningId: Long): IO[DatabaseError, Seq[ChildPartitioningDTO]]
+
+  def linkPartitioningToParents(
+    partitioningId: Long,
+    submitDTO: PartitioningParentsSubmitDTO
+  ): IO[DatabaseError, Unit]
+
+  def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[DatabaseError, LineageGraphDTO]
+
 }

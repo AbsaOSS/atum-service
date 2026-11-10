@@ -50,7 +50,13 @@ import za.co.absa.atum.server.api.v2.repository.{
   FlowRepositoryImpl => FlowRepositoryImplV2
 }
 
-import za.co.absa.atum.server.api.database.flows.functions.{GetDirectParents, GetFlowCheckpoints, GetFlowPartitionings}
+import za.co.absa.atum.server.api.database.flows.functions.{
+  GetDirectChildren,
+  GetDirectParents,
+  GetFlowCheckpoints,
+  GetFlowPartitionings,
+  GetPartitioningLineageGraph
+}
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.database.{PostgresDatabaseProvider, TransactorProvider}
 import za.co.absa.atum.server.config.JvmMonitoringConfig
@@ -107,6 +113,9 @@ object Main extends ZIOAppDefault {
           UpdatePartitioningParent.layer,
           GetPartitioningAncestors.layer,
           GetDirectParents.layer,
+          GetDirectChildren.layer,
+          LinkPartitioningToParents.layer,
+          GetPartitioningLineageGraph.layer,
           GetCheckpointProperties.layer,
           PostgresDatabaseProvider.layer,
           TransactorProvider.layer,

@@ -72,7 +72,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
       response = SingleSuccessResponse(result.data)
       status = result match {
-        case Created(_)  => StatusCode.Created
+        case Created(_) => StatusCode.Created
         case Existing(_) => StatusCode.Ok
       }
       uri <- createRootAnchoredResourcePath(Seq(V2Paths.Partitionings, result.data.id.toString), apiVersion = 2)
@@ -174,9 +174,72 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def getPartitioningChildren(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ChildPartitioningDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[ChildPartitioningDTO], Seq[ChildPartitioningDTO]](
+        partitioningService.getPartitioningChildren(partitioningId)
+      )
+    )
+  }
+
+  override def postPartitioningParents(
+    partitioningId: Long,
+    submitDTO: PartitioningParentsSubmitDTO
+  ): IO[ErrorResponse, Unit] = {
+    val distinctParentIds = submitDTO.parentPartitioningIds.distinct
+    for {
+      _ <- ZIO.when(submitDTO.author.trim.isEmpty)(
+        ZIO.fail(BadRequestResponse("author must not be blank"))
+      )
+      _ <- ZIO.when(distinctParentIds.isEmpty)(
+        ZIO.fail(BadRequestResponse("parentPartitioningIds must not be empty"))
+      )
+      _ <- ZIO.when(distinctParentIds.size > PartitioningControllerImpl.MaxParents)(
+        ZIO.fail(
+          BadRequestResponse(
+            s"Too many parent partitionings: ${distinctParentIds.size}, " +
+              s"maximum allowed is ${PartitioningControllerImpl.MaxParents}"
+          )
+        )
+      )
+      _ <- serviceCall[Unit, Unit](
+        partitioningService.linkPartitioningToParents(
+          partitioningId,
+          submitDTO.copy(parentPartitioningIds = distinctParentIds)
+        ),
+        _ => ()
+      )
+    } yield ()
+  }
+
+  override def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: Option[String],
+    depth: Option[Int]
+  ): IO[ErrorResponse, SingleSuccessResponse[LineageGraphDTO]] = {
+    val dir = direction.map(_.trim.toLowerCase).getOrElse("both")
+    val d = depth.getOrElse(5)
+    for {
+      _ <- ZIO.when(!Set("both", "upstream", "downstream").contains(dir))(
+        ZIO.fail(BadRequestResponse(s"Invalid direction '$dir'. Allowed values: 'both', 'upstream', 'downstream'."))
+      )
+      _ <- ZIO.when(d < 1 || d > 20)(
+        ZIO.fail(BadRequestResponse(s"Depth $d out of range. Allowed range is 1 to 20."))
+      )
+      response <- mapToSingleSuccessResponse(
+        serviceCall[LineageGraphDTO, LineageGraphDTO](
+          partitioningService.getPartitioningLineageGraph(partitioningId, dir, d)
+        )
+      )
+    } yield response
+  }
+
 }
 
 object PartitioningControllerImpl {
+
   /** Maximum number of DISTINCT parent ids accepted by `POST /partitionings` (more is answered with 400). */
   val MaxParents = 100
 

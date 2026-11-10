@@ -109,10 +109,10 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   }
 
   override def getPartitioningAncestors(
-     partitioningId: Long,
-     limit: Int,
-     offset: Long
-   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
     repositoryCall(
       partitioningRepository.getPartitioningAncestors(partitioningId, limit, offset),
       "getPartitioningAncestors"
@@ -123,6 +123,34 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     repositoryCall(
       partitioningRepository.getPartitioningParents(partitioningId),
       "getPartitioningParents"
+    )
+  }
+
+  override def getPartitioningChildren(partitioningId: Long): IO[ServiceError, Seq[ChildPartitioningDTO]] = {
+    repositoryCall(
+      partitioningRepository.getPartitioningChildren(partitioningId),
+      "getPartitioningChildren"
+    )
+  }
+
+  override def linkPartitioningToParents(
+    partitioningId: Long,
+    submitDTO: PartitioningParentsSubmitDTO
+  ): IO[ServiceError, Unit] = {
+    repositoryCall(
+      partitioningRepository.linkPartitioningToParents(partitioningId, submitDTO),
+      "linkPartitioningToParents"
+    )
+  }
+
+  override def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ServiceError, LineageGraphDTO] = {
+    repositoryCall(
+      partitioningRepository.getPartitioningLineageGraph(partitioningId, direction, depth),
+      "getPartitioningLineageGraph"
     )
   }
 

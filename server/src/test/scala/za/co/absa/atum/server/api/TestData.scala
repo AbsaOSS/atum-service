@@ -21,8 +21,10 @@ import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.ResultValueType
+import za.co.absa.atum.server.api.database.flows.functions.GetDirectChildren.GetDirectChildrenResult
 import za.co.absa.atum.server.api.database.flows.functions.GetDirectParents.GetDirectParentsResult
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
+import za.co.absa.atum.server.api.database.flows.functions.GetPartitioningLineageGraph.LineageGraphResult
 import za.co.absa.atum.server.model.database._
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 
@@ -180,6 +182,106 @@ trait TestData {
     linkedBy = Some("linker2"),
     linkedAt = Some(ZonedDateTime.parse("2023-01-02T11:00:00Z"))
   )
+
+  protected val getDirectChildrenResult1: GetDirectChildrenResult = GetDirectChildrenResult(
+    id = partitioningFromDB1.id,
+    partitioningJson = partitioningAsJson,
+    author = partitioningFromDB1.author,
+    linkedBy = "linker1",
+    linkedAt = timestamp1
+  )
+
+  protected val getDirectChildrenResult2: GetDirectChildrenResult = GetDirectChildrenResult(
+    id = partitioningFromDB2.id,
+    partitioningJson = partitioningAsJson,
+    author = partitioningFromDB2.author,
+    linkedBy = "linker2",
+    linkedAt = timestamp2
+  )
+
+  protected val directChildDTO1: ChildPartitioningDTO = ChildPartitioningDTO(
+    id = getDirectChildrenResult1.id,
+    partitioning = partitioningDTO1,
+    author = getDirectChildrenResult1.author,
+    linkedBy = Some(getDirectChildrenResult1.linkedBy),
+    linkedAt = Some(getDirectChildrenResult1.linkedAt)
+  )
+
+  protected val directChildDTO2: ChildPartitioningDTO = ChildPartitioningDTO(
+    id = getDirectChildrenResult2.id,
+    partitioning = partitioningDTO1,
+    author = getDirectChildrenResult2.author,
+    linkedBy = Some(getDirectChildrenResult2.linkedBy),
+    linkedAt = Some(getDirectChildrenResult2.linkedAt)
+  )
+
+  protected val childPartitioningDTO1: ChildPartitioningDTO = ChildPartitioningDTO(
+    id = 1L,
+    partitioning = partitioningDTO1,
+    author = "author1",
+    linkedBy = Some("linker1"),
+    linkedAt = Some(ZonedDateTime.parse("2023-01-01T10:00:00Z"))
+  )
+  protected val childPartitioningDTO2: ChildPartitioningDTO = ChildPartitioningDTO(
+    id = 2L,
+    partitioning = partitioningDTO2,
+    author = "author2",
+    linkedBy = Some("linker2"),
+    linkedAt = Some(ZonedDateTime.parse("2023-01-02T11:00:00Z"))
+  )
+
+  protected val partitioningParentsSubmitDTO1: PartitioningParentsSubmitDTO = PartitioningParentsSubmitDTO(
+    parentPartitioningIds = Seq(1L, 2L),
+    author = "author1",
+    copyMeasureDefinitions = Some(true)
+  )
+
+  protected val lineageEdgeDTO1: LineageEdgeDTO = LineageEdgeDTO(
+    parentPartitioningId = 1L,
+    childPartitioningId = 2L,
+    linkedBy = Some("linker1"),
+    linkedAt = Some(timestamp1)
+  )
+
+  protected val lineageGraphDTO1: LineageGraphDTO = LineageGraphDTO(
+    primaryPartitioningId = 2L,
+    depth = 5,
+    direction = "both",
+    nodes = Seq(partitioningWithIdDTO1, partitioningWithIdDTO2),
+    edges = Seq(lineageEdgeDTO1)
+  )
+
+  protected val lineageGraphResultJson: Json = parser
+    .parse(
+      s"""{
+       |  "primaryPartitioningId": 2,
+       |  "depth": 5,
+       |  "direction": "both",
+       |  "nodes": [
+       |    {
+       |      "id": ${partitioningFromDB1.id},
+       |      "partitioning": ${partitioningAsJson.noSpaces},
+       |      "author": "${partitioningFromDB1.author}"
+       |    },
+       |    {
+       |      "id": ${partitioningFromDB2.id},
+       |      "partitioning": ${partitioningAsJson.noSpaces},
+       |      "author": "${partitioningFromDB2.author}"
+       |    }
+       |  ],
+       |  "edges": [
+       |    {
+       |      "parentPartitioningId": 1,
+       |      "childPartitioningId": 2,
+       |      "linkedBy": "linker1",
+       |      "linkedAt": "${timestamp1.toString}"
+       |    }
+       |  ]
+       |}""".stripMargin
+    )
+    .getOrElse(Json.Null)
+
+  protected val lineageGraphResult1: LineageGraphResult = LineageGraphResult(lineageGraphResultJson)
 
   // PartitioningSubmitDTO with different author
   protected val partitioningSubmitDTO2: PartitioningSubmitDTO =

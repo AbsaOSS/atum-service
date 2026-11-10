@@ -856,9 +856,291 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Act: get parent partitionings - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    const expectedPartitioningId = pm.collectionVariables.get(\"partitioning_id\");",
+                  "",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\").with.lengthOf(1);",
+                  "    pm.expect(jsonData.data[0].id).to.eql(expectedPartitioningId);",
+                  "    pm.expect(jsonData.data[0].linkedBy).to.be.a(\"string\");",
+                  "    pm.expect(jsonData.data[0].linkedAt).to.be.a(\"string\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/parents",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioningChild_id}}",
+                "parents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: get child partitionings - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    const expectedChildId = pm.collectionVariables.get(\"partitioningChild_id\");",
+                  "",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\").with.lengthOf(1);",
+                  "    pm.expect(jsonData.data[0].id).to.eql(expectedChildId);",
+                  "    pm.expect(jsonData.data[0].linkedBy).to.be.a(\"string\");",
+                  "    pm.expect(jsonData.data[0].linkedAt).to.be.a(\"string\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/children",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioning_id}}",
+                "children"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: get partitioning lineage graph - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    const primaryId = pm.collectionVariables.get(\"partitioningChild_id\");",
+                  "",
+                  "    pm.expect(jsonData.data.primaryPartitioningId).to.eql(primaryId);",
+                  "    pm.expect(jsonData.data.depth).to.eql(5);",
+                  "    pm.expect(jsonData.data.direction).to.eql(\"both\");",
+                  "    pm.expect(jsonData.data.nodes).to.be.an(\"array\");",
+                  "    pm.expect(jsonData.data.edges).to.be.an(\"array\");",
+                  "    pm.expect(jsonData.data.edges.length).to.be.at.least(1);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/lineage?direction=both&depth=5",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioningChild_id}}",
+                "lineage"
+              ],
+              "query": [
+                {
+                  "key": "direction",
+                  "value": "both"
+                },
+                {
+                  "key": "depth",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: link partitioning to parents - 204",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"parentPartitioningIds\": [{{partitioning_id}}],\n    \"author\": \"api_tester\",\n    \"copyMeasureDefinitions\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/parents",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioningChild_id}}",
+                "parents"
+              ]
+            }
+          },
+          "response": []
         }
       ],
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioningChild_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/ancestors",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioningChild_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/parents\n    \n- GET:/api/v2/partitionings/{partitioning_id}/children\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/lineage\n    \n- POST:/api/v2/partitionings/{partitioningChild_id}/parents",
       "event": [
         {
           "listen": "prerequest",

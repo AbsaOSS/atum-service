@@ -46,6 +46,8 @@ object ApiPaths {
     final val MainFlow = "main-flow"
     final val Ancestors = "ancestors"
     final val Parents = "parents"
+    final val Children = "children"
+    final val Lineage = "lineage"
 
   }
 

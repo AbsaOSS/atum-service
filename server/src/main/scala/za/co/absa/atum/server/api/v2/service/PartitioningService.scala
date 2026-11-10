@@ -66,4 +66,17 @@ trait PartitioningService {
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
 
   def getPartitioningParents(partitioningId: Long): IO[ServiceError, Seq[ParentPartitioningDTO]]
+
+  def getPartitioningChildren(partitioningId: Long): IO[ServiceError, Seq[ChildPartitioningDTO]]
+
+  def linkPartitioningToParents(
+    partitioningId: Long,
+    submitDTO: PartitioningParentsSubmitDTO
+  ): IO[ServiceError, Unit]
+
+  def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ServiceError, LineageGraphDTO]
 }

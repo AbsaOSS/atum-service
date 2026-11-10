@@ -23,20 +23,23 @@ import za.co.absa.balta.classes.setter.CustomDBType
 import java.util.UUID
 
 /**
- * Integration tests for the explicit lineage edges feature.
+ *  Integration tests for the explicit lineage edges feature.
  *
- * Tests verify:
- * 1. Edges are written alongside flows when linking partitionings
- * 2. Direct parent queries return correct results
- * 3. Idempotent linking doesn't duplicate edges
- * 4. Cycle detection still works with edges table
- * 5. Enrichment of ancestor/descendant queries with relationship types
+ *  Tests verify:
+ *  1. Edges are written alongside flows when linking partitionings
+ *  2. Direct parent queries return correct results
+ *  3. Idempotent linking doesn't duplicate edges
+ *  4. Cycle detection still works with edges table
+ *  5. Enrichment of ancestor/descendant queries with relationship types
  */
 class PartitioningEdgesIntegrationTests extends DBTestSuite {
 
   private val fncLink = "flows._link_to_parents"
   private val fncCreatePartitioning = "runs.create_partitioning"
   private val fncGetDirectParents = "flows.get_direct_parents"
+  private val fncGetDirectChildren = "flows.get_direct_children"
+  private val fncLinkPartitioningToParents = "runs.link_partitioning_to_parents"
+  private val fncGetPartitioningLineageGraph = "flows.get_partitioning_lineage_graph"
 
   private def partitioningJson(name: String): String =
     s"""{"version":1,"keys":["lk"],"keysToValuesMap":{"lk":"$name"}}"""
@@ -47,6 +50,17 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
 
   private def ids(xs: Seq[Any]): CustomDBType =
     CustomDBType(xs.map(x => if (x == null) "NULL" else x.toString).mkString("{", ",", "}"), "BIGINT[]")
+
+  private def queryBoolean(sql: String): Boolean = {
+    val statement = dbConnection.connection.createStatement()
+    try {
+      val rs = statement.executeQuery(sql)
+      assert(rs.next())
+      rs.getBoolean(1)
+    } finally {
+      statement.close()
+    }
+  }
 
   /** Seeds a partitioning via the v1 path (no edges written in v1 path) */
   private def seed(name: String, parent: Option[Long] = None): Long = {
@@ -79,12 +93,14 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
 
   private def countEdges(child: Long): Int = {
     table("flows.partitioning_edges")
-      .count(add("fk_child_partitioning", child)).toInt
+      .count(add("fk_child_partitioning", child))
+      .toInt
   }
 
   private def countFlowMemberships(partitioningId: Long): Int = {
     table("flows.partitioning_to_flow")
-      .count(add("fk_partitioning", partitioningId)).toInt
+      .count(add("fk_partitioning", partitioningId))
+      .toInt
   }
 
   private def getDirectParents(childId: Long): Seq[(Long, String)] = {
@@ -98,6 +114,24 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
           if (status == 11) {
             row.getLong("parent_id").foreach { parentId =>
               results += ((parentId, row.getString("parent_author").getOrElse("unknown")))
+            }
+          }
+        }
+        results.toSeq
+      }
+  }
+
+  private def getDirectChildren(parentId: Long): Seq[(Long, String)] = {
+    function(fncGetDirectChildren)
+      .setParam("i_partitioning_id", parentId)
+      .execute { qr =>
+        val results = scala.collection.mutable.ArrayBuffer[(Long, String)]()
+        while (qr.hasNext) {
+          val row = qr.next()
+          val status = row.getInt("status").get
+          if (status == 11) {
+            row.getLong("child_id").foreach { childId =>
+              results += ((childId, row.getString("child_author").getOrElse("unknown")))
             }
           }
         }
@@ -253,5 +287,160 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
     val selfLoops = table("flows.partitioning_edges")
       .count(s"fk_child_partitioning = $a AND fk_parent_partitioning = $a")
     assert(selfLoops == 0, "should have no self-loop edge")
+  }
+
+  test("privileges: flows.get_direct_parents executable by atum_owner and atum_user only") {
+    val sig = "flows.get_direct_parents(bigint)"
+    assert(queryBoolean(s"SELECT has_function_privilege('atum_owner', '$sig', 'EXECUTE')"))
+    assert(queryBoolean(s"SELECT has_function_privilege('atum_user', '$sig', 'EXECUTE')"))
+    assert(!queryBoolean(s"SELECT has_function_privilege('public', '$sig', 'EXECUTE')"))
+    assert(!queryBoolean(s"SELECT has_function_privilege('atum_reader', '$sig', 'EXECUTE')"))
+  }
+
+  test("privileges: atum_reader has SELECT on flows.partitioning_edges") {
+    assert(queryBoolean("SELECT has_table_privilege('atum_reader', 'flows.partitioning_edges', 'SELECT')"))
+  }
+
+  test("get_direct_children returns children for a parent partitioning") {
+    val p = seed(uniq("Parent"))
+    val c1 = seed(uniq("Child1"))
+    val c2 = seed(uniq("Child2"))
+
+    link(c1, ids(Seq(p)))
+    link(c2, ids(Seq(p)))
+
+    val children = getDirectChildren(p).sortBy(_._1)
+    assert(children.length == 2, s"Parent should have 2 children, got ${children.length}")
+    assert(children.map(_._1) == Seq(c1, c2).sorted, s"Children should be $c1, $c2")
+  }
+
+  test("get_direct_children returns empty seq when partitioning has no children") {
+    val p = seed(uniq("Leaf"))
+    val children = getDirectChildren(p)
+    assert(children.isEmpty, "Leaf should have 0 children")
+  }
+
+  test("get_direct_children returns 41 for non-existent partitioning") {
+    function(fncGetDirectChildren)
+      .setParam("i_partitioning_id", 999999999L)
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        val status = row.getInt("status").get
+        assert(status == 41, s"should return status 41 (not found), got $status")
+      }
+  }
+
+  test("runs.link_partitioning_to_parents successfully links child to parents") {
+    val p1 = seed(uniq("P1"))
+    val p2 = seed(uniq("P2"))
+    val child = seed(uniq("Child"))
+
+    function(fncLinkPartitioningToParents)
+      .setParam("i_id_partitioning", child)
+      .setParam("i_parent_partitioning_ids", ids(Seq(p1, p2)))
+      .setParam("i_by_user", "MultiLinker")
+      .setParam("i_copy_measure_definitions", false)
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        val status = row.getInt("status").get
+        assert(status == 11, s"should return status 11 (OK), got $status")
+      }
+
+    val parents = getDirectParents(child).sortBy(_._1)
+    assert(parents.length == 2, s"Child should have 2 parents, got ${parents.length}")
+    assert(parents.map(_._1) == Seq(p1, p2).sorted)
+  }
+
+  test("runs.link_partitioning_to_parents returns 41 when child does not exist") {
+    val p = seed(uniq("P"))
+    function(fncLinkPartitioningToParents)
+      .setParam("i_id_partitioning", 999999999L)
+      .setParam("i_parent_partitioning_ids", ids(Seq(p)))
+      .setParam("i_by_user", "MultiLinker")
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        val status = row.getInt("status").get
+        assert(status == 41, s"should return status 41, got $status")
+      }
+  }
+
+  test("runs.link_partitioning_to_parents returns 42 when parent does not exist") {
+    val child = seed(uniq("Child"))
+    function(fncLinkPartitioningToParents)
+      .setParam("i_id_partitioning", child)
+      .setParam("i_parent_partitioning_ids", ids(Seq(999999999L)))
+      .setParam("i_by_user", "MultiLinker")
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        val status = row.getInt("status").get
+        assert(status == 42, s"should return status 42, got $status")
+      }
+  }
+
+  test("flows.get_partitioning_lineage_graph returns unified nodes and edges") {
+    val a = seed(uniq("GraphA"))
+    val b = seed(uniq("GraphB"))
+    val c = seed(uniq("GraphC"))
+
+    link(b, ids(Seq(a)))
+    link(c, ids(Seq(b)))
+
+    function(fncGetPartitioningLineageGraph)
+      .setParam("i_partitioning_id", b)
+      .setParam("i_direction", "both")
+      .setParam("i_max_depth", 5)
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        val status = row.getInt("status").get
+        assert(status == 11, s"should return status 11, got $status")
+        val graphJson = row.getString("lineage_graph").get
+        assert(graphJson.contains(s""""primaryPartitioningId": $b"""))
+        assert(graphJson.contains(s""""id": $a"""))
+        assert(graphJson.contains(s""""id": $b"""))
+        assert(graphJson.contains(s""""id": $c"""))
+        assert(graphJson.contains(""""edges": ["""))
+      }
+  }
+
+  test("flows.get_partitioning_lineage_graph returns 41 for non-existent partitioning") {
+    function(fncGetPartitioningLineageGraph)
+      .setParam("i_partitioning_id", 999999999L)
+      .setParam("i_direction", "both")
+      .setParam("i_max_depth", 5)
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        val status = row.getInt("status").get
+        assert(status == 41, s"should return status 41, got $status")
+      }
+  }
+
+  test("privileges: flows.get_direct_children executable by atum_owner and atum_user only") {
+    val sig = "flows.get_direct_children(bigint)"
+    assert(queryBoolean(s"SELECT has_function_privilege('atum_owner', '$sig', 'EXECUTE')"))
+    assert(queryBoolean(s"SELECT has_function_privilege('atum_user', '$sig', 'EXECUTE')"))
+    assert(!queryBoolean(s"SELECT has_function_privilege('public', '$sig', 'EXECUTE')"))
+    assert(!queryBoolean(s"SELECT has_function_privilege('atum_reader', '$sig', 'EXECUTE')"))
+  }
+
+  test("privileges: runs.link_partitioning_to_parents executable by atum_owner and atum_user only") {
+    val sig = "runs.link_partitioning_to_parents(bigint, bigint[], text, boolean)"
+    assert(queryBoolean(s"SELECT has_function_privilege('atum_owner', '$sig', 'EXECUTE')"))
+    assert(queryBoolean(s"SELECT has_function_privilege('atum_user', '$sig', 'EXECUTE')"))
+    assert(!queryBoolean(s"SELECT has_function_privilege('public', '$sig', 'EXECUTE')"))
+    assert(!queryBoolean(s"SELECT has_function_privilege('atum_reader', '$sig', 'EXECUTE')"))
+  }
+
+  test("privileges: flows.get_partitioning_lineage_graph executable by atum_owner and atum_user only") {
+    val sig = "flows.get_partitioning_lineage_graph(bigint, text, integer)"
+    assert(queryBoolean(s"SELECT has_function_privilege('atum_owner', '$sig', 'EXECUTE')"))
+    assert(queryBoolean(s"SELECT has_function_privilege('atum_user', '$sig', 'EXECUTE')"))
+    assert(!queryBoolean(s"SELECT has_function_privilege('public', '$sig', 'EXECUTE')"))
+    assert(!queryBoolean(s"SELECT has_function_privilege('atum_reader', '$sig', 'EXECUTE')"))
   }
 }
