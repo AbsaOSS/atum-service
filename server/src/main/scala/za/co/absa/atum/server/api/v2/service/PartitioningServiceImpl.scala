@@ -20,7 +20,7 @@ import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.common.service.BaseService
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.v2.repository.PartitioningRepository
-import za.co.absa.atum.server.model.PaginatedResult
+import za.co.absa.atum.server.model.{CreationResult, PaginatedResult}
 import zio._
 
 class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
@@ -29,7 +29,7 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
 
   override def createPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
-  ): IO[ServiceError, PartitioningWithIdDTO] = {
+  ): IO[ServiceError, CreationResult[PartitioningWithIdDTO]] = {
     repositoryCall(
       partitioningRepository.createPartitioning(partitioningSubmitDTO),
       "createPartitioning"

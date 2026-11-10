@@ -19,6 +19,7 @@ package za.co.absa.atum.server.api.v2.controller
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.ErrorResponse
 import za.co.absa.atum.model.envelopes.SuccessResponse._
+import sttp.model.StatusCode
 import zio.IO
 import zio.macros.accessible
 
@@ -27,7 +28,7 @@ trait PartitioningController {
 
   def postPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
-  ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)]
+  ): IO[ErrorResponse, (StatusCode, SingleSuccessResponse[PartitioningWithIdDTO], String)]
 
   def getPartitioningAdditionalData(
     partitioningId: Long

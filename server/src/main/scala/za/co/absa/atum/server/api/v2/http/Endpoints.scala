@@ -89,16 +89,17 @@ object Endpoints extends BaseEndpoints {
   val postPartitioningEndpoint: PublicEndpoint[
     PartitioningSubmitV2DTO,
     ErrorResponse,
-    (SingleSuccessResponse[PartitioningWithIdDTO], String),
+    (StatusCode, SingleSuccessResponse[PartitioningWithIdDTO], String),
     Any
   ] = {
     apiV2.post
       .in(V2Paths.Partitionings)
       .in(jsonBody[PartitioningSubmitV2DTO])
-      .out(statusCode(StatusCode.Created))
+      .out(statusCode)
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .out(header[String]("Location"))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
   val getPartitioningAdditionalDataEndpoint

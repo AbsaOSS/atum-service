@@ -25,7 +25,7 @@ import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowCheckpoints.GetFlowCheckpointsArgs
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
 import za.co.absa.atum.server.api.database.runs.functions.{
-  CreatePartitioning,
+  CreatePartitioningWithParents,
   GetPartitioningMainFlow,
   WriteCheckpointV2
 }
@@ -43,13 +43,13 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
   private val checkpointName = "Data written"
   private val firstStartTime = ZonedDateTime.parse("2026-01-01T00:00:00Z")
 
-  private def createPartitioning: ZIO[CreatePartitioning, Throwable, Long] =
+  private def createPartitioning: ZIO[CreatePartitioningWithParents, Throwable, Long] =
     ZIO
-      .serviceWithZIO[CreatePartitioning](
+      .serviceWithZIO[CreatePartitioningWithParents](
         _(PartitioningSubmitV2DTO(Seq(PartitionDTO("key", UUID.randomUUID().toString)), None, "author"))
       )
       .flatMap(ZIO.fromEither(_))
-      .map(_.data)
+      .map(_.data.id)
 
   private def getMainFlowId(partitioningId: Long): ZIO[GetPartitioningMainFlow, Throwable, Long] =
     ZIO
@@ -164,7 +164,7 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
       }
     ).provide(
       GetFlowCheckpoints.layer,
-      CreatePartitioning.layer,
+      CreatePartitioningWithParents.layer,
       GetPartitioningMainFlow.layer,
       WriteCheckpointV2.layer,
       PostgresDatabaseProvider.layer,

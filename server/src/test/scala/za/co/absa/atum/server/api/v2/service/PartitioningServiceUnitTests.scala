@@ -23,6 +23,7 @@ import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
 import za.co.absa.atum.server.api.v2.repository.PartitioningRepository
+import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import zio._
 import zio.test.Assertion.failsWithA
@@ -33,11 +34,19 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   private val partitioningRepositoryMock = mock(classOf[PartitioningRepository])
 
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO1))
-    .thenReturn(ZIO.succeed(PartitioningWithIdDTO(1L, Seq.empty, "author")))
+    .thenReturn(ZIO.succeed(Created(PartitioningWithIdDTO(1L, Seq.empty, "author"))))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOExistingAuthor))
+    .thenReturn(ZIO.succeed(Existing(PartitioningWithIdDTO(1L, Seq.empty, "stored-author"))))
+  // a conflict is a cycle or descendants ("already exists" is a success, see CreationResult.Existing)
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO2))
-    .thenReturn(ZIO.fail(ConflictDatabaseError("Partitioning already exists")))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("Partitioning parent link would create a cycle")))
   when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTO3))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("parent not found")))
+  when(partitioningRepositoryMock.createPartitioning(partitioningSubmitV2DTOMultiParentCycle))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("cycle")))
 
   when(partitioningRepositoryMock.createOrUpdateAdditionalData(1L, additionalDataPatchDTO1))
     .thenReturn(ZIO.succeed(additionalDataDTO1))
@@ -104,6 +113,8 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
   when(partitioningRepositoryMock.getPartitioningAncestors(2222L, 1, 1L))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningRepositoryMock.getPartitioningAncestors(5555L, 10, 0L))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2))))
   when(partitioningRepositoryMock.getPartitioningAncestors(8888L, 1, 1L))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
   when(partitioningRepositoryMock.getPartitioningAncestors(9999L, 1, 1L))
@@ -115,23 +126,44 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
 
     suite("PartitioningServiceSuite")(
       suite("CreatePartitioningSuite")(
-        test("Returns expected Right with PartitioningWithIdDTO") {
+        test("Passes Created(PartitioningWithIdDTO) through") {
           for {
             result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO1)
-          } yield assertTrue(result == PartitioningWithIdDTO(1L, Seq.empty, "author"))
+          } yield assertTrue(result == Created(PartitioningWithIdDTO(1L, Seq.empty, "author")))
+        },
+        test("Passes Existing(PartitioningWithIdDTO) through (not turned into Created)") {
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTOExistingAuthor)
+          } yield assertTrue(result == Existing(PartitioningWithIdDTO(1L, Seq.empty, "stored-author")))
         },
         test("Returns expected ConflictServiceError") {
           for {
             result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO2).exit
           } yield assertTrue(
             result == Exit.fail(
-              ConflictServiceError("Failed to perform 'createPartitioning': Partitioning already exists")
+              ConflictServiceError(
+                "Failed to perform 'createPartitioning': Partitioning parent link would create a cycle"
+              )
             )
           )
         },
         test("Returns expected GeneralServiceError") {
-          assertZIO(PartitioningService.createPartitioning(partitioningSubmitV2DTO3).exit)(
-            failsWithA[GeneralServiceError]
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTO3).exit
+          } yield assertTrue(result == Exit.fail(GeneralServiceError("Failed to perform 'createPartitioning': boom!")))
+        },
+        test("Multi-parent NotFoundDatabaseError maps to NotFoundServiceError") {
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentNotFound).exit
+          } yield assertTrue(
+            result == Exit.fail(NotFoundServiceError("Failed to perform 'createPartitioning': parent not found"))
+          )
+        },
+        test("Multi-parent cycle ConflictDatabaseError maps to ConflictServiceError") {
+          for {
+            result <- PartitioningService.createPartitioning(partitioningSubmitV2DTOMultiParentCycle).exit
+          } yield assertTrue(
+            result == Exit.fail(ConflictServiceError("Failed to perform 'createPartitioning': cycle"))
           )
         }
       ),
@@ -286,6 +318,11 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           for {
             result <- PartitioningService.getPartitioningAncestors(2222L, 1, 1L)
           } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns all ancestors of a multi-parent child unchanged") {
+          for {
+            result <- PartitioningService.getPartitioningAncestors(5555L, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2)))
         },
         test("Returns expected GeneralServiceError when database error occurs") {
           assertZIO(PartitioningService.getPartitioningAncestors(8888L, 1, 1L).exit)(

@@ -122,7 +122,11 @@
 *#hashCode(*)                                           id:case-hashcode
 *#copy(*)                                               id:case-copy
 *#copy$default$*(*)                                     id:case-copy-defaults
+*#apply$default$*(*)                                    id:case-apply-defaults
+*#$lessinit$greater$default$*(*)                        id:case-ctor-defaults
 *#productElement()                                      id:case-prod-element
+*#productElementName()                                  id:case-prod-element-name
+*#productElementNames()                                 id:case-prod-element-names
 *#productArity()                                        id:case-prod-arity
 *#productPrefix()                                       id:case-prod-prefix
 *#productIterator()                                     id:case-prod-iterator
@@ -142,6 +146,7 @@
 *$*#unapply(*)                                          id:comp-unapply
 *$*#toString(*)                                         id:comp-tostring
 *$*#readResolve(*)                                      id:comp-readresolve
+*$*#writeReplace(*)                                     id:comp-writereplace
 
 # anonymous class created by a macro expansion
 *$macro$*#$anonfun$inst$macro$*                         id:macro-inst
@@ -182,6 +187,7 @@ za.co.absa.atum.server.api.v2.service.PartitioningService$#*
 za.co.absa.atum.server.implicits.SeqImplicits*#*
 za.co.absa.atum.model.envelopes.Pagination#*
 za.co.absa.atum.model.dto.PartitioningParentPatchDTO*#*
+za.co.absa.atum.server.model.database.CreatedPartitioningFromDB*#*
 za.co.absa.atum.model.ApiPaths*#*
 za.co.absa.atum.model.envelopes.ResponseEnvelope#*
 za.co.absa.atum.model.envelopes.StatusResponse#*

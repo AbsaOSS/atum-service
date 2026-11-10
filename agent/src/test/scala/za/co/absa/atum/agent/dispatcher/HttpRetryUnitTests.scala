@@ -176,14 +176,13 @@ class HttpRetryUnitTests extends AnyFlatSpec with Matchers with BeforeAndAfterEa
     verify(mockBackend, times(1)).send(any[Request[Either[String, String], capabilities.WebSockets]])
   }
 
-  it should "NOT retry on HTTP 404 (not found) and return None from getPartitioning" in {
+  it should "NOT retry on HTTP 404 (not found) and throw HttpException from getPartitioningId" in {
     when(mockBackend.send(any[Request[Either[String, String], capabilities.WebSockets]]))
       .thenReturn(notFoundResponse)
 
     val d = dispatcherWithConfig(configWithRetry(maxRetries = 3))
-    val result = d.getPartitioning(testPartitioningDTO)
 
-    result shouldBe None
+    an[HttpException] should be thrownBy d.getPartitioningId(testPartitioningDTO)
     // Exactly one send() call — no retry
     verify(mockBackend, times(1)).send(any[Request[Either[String, String], capabilities.WebSockets]])
   }

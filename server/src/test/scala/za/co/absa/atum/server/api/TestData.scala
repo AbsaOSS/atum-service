@@ -107,6 +107,13 @@ trait TestData {
     hasMore = true
   )
 
+  // Multi-parent ancestor fixtures (two distinct ancestors; hasMore variants of the above)
+  protected val getPartitioningAncestorsResult1HasMore: GetPartitioningAncestorsResult =
+    getPartitioningAncestorsResult1.copy(hasMore = true)
+
+  protected val getPartitioningAncestorsResult2NoMore: GetPartitioningAncestorsResult =
+    getPartitioningAncestorsResult2.copy(hasMore = false)
+
   // Partitioning with ID DTO
   protected val partitioningWithIdDTO1: PartitioningWithIdDTO = PartitioningWithIdDTO(
     id = partitioningFromDB1.id,
@@ -137,6 +144,31 @@ trait TestData {
 
   protected val partitioningSubmitV2DTO3: PartitioningSubmitV2DTO =
     partitioningSubmitV2DTO1.copy(author = "yetAnotherAuthor")
+
+  protected val partitioningSubmitV2DTOMultiParent: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "multiParentAuthor")
+
+  protected val partitioningSubmitV2DTOMultiParentDup: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L, 2L, 1L), author = "dupAuthor")
+
+  protected val partitioningSubmitV2DTOMultiParentNotFound: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "nf")
+
+  protected val partitioningSubmitV2DTOMultiParentCycle: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "cyc")
+
+  protected val partitioningSubmitV2DTOMultiParentBoom: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 2L), author = "boom")
+
+  // One dedicated fixture per repository scenario, so Mockito `times(1)` verifications stay exact
+  protected val partitioningSubmitV2DTOSingleParent: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(5L), author = "singleParentAuthor")
+
+  protected val partitioningSubmitV2DTODuplicateIds: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L, 1L, 2L), author = "duplicateIdsAuthor")
+
+  protected val partitioningSubmitV2DTOExistingAuthor: PartitioningSubmitV2DTO =
+    partitioningSubmitV2DTO1.copy(parentPartitioningIds = Seq(1L), author = "requester")
 
   // Flow
   protected val flowDTO1: FlowDTO = FlowDTO(
