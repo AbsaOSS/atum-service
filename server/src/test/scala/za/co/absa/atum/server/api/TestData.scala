@@ -135,22 +135,6 @@ trait TestData {
     linkedAt = timestamp2
   )
 
-  protected val parentPartitioningDTO1: ParentPartitioningDTO = ParentPartitioningDTO(
-    id = partitioningFromDB1.id,
-    partitioning = partitioningDTO1,
-    author = partitioningFromDB1.author,
-    linkedBy = Some("linker1"),
-    linkedAt = Some(timestamp1)
-  )
-
-  protected val parentPartitioningDTO2: ParentPartitioningDTO = ParentPartitioningDTO(
-    id = partitioningFromDB2.id,
-    partitioning = partitioningDTO1,
-    author = partitioningFromDB1.author,
-    linkedBy = Some("linker2"),
-    linkedAt = Some(timestamp2)
-  )
-
   // Partitioning with ID DTO
   protected val partitioningWithIdDTO1: PartitioningWithIdDTO = PartitioningWithIdDTO(
     id = partitioningFromDB1.id,
@@ -161,6 +145,22 @@ trait TestData {
     id = partitioningFromDB2.id,
     partitioning = partitioningDTO1,
     author = partitioningFromDB1.author
+  )
+
+  // Parent Partitioning DTO (for direct parents endpoint tests)
+  protected val parentPartitioningDTO1: ParentPartitioningDTO = ParentPartitioningDTO(
+    id = 1L,
+    partitioning = partitioningDTO1,
+    author = "author1",
+    linkedBy = Some("linker1"),
+    linkedAt = Some(ZonedDateTime.parse("2023-01-01T10:00:00Z"))
+  )
+  protected val parentPartitioningDTO2: ParentPartitioningDTO = ParentPartitioningDTO(
+    id = 2L,
+    partitioning = partitioningDTO2,
+    author = "author2",
+    linkedBy = Some("linker2"),
+    linkedAt = Some(ZonedDateTime.parse("2023-01-02T11:00:00Z"))
   )
 
   // PartitioningSubmitDTO with different author
