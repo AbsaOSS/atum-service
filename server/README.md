@@ -26,6 +26,15 @@ A `POST /api/v2/partitionings` body in the v0.6 - v0.10 shape (`parentPartitioni
 still copies the parent's measure definitions to a newly created child, as before; otherwise the flag defaults to
 `false`.
 
+When linking parent partitionings (via `POST /api/v2/partitionings` or `PATCH /api/v2/partitionings/{id}/ancestors`), the server enforces that only leaf partitionings (those with no existing descendants) can be linked under new parents, and rejects cyclic dependencies with an `HTTP 409 Conflict`.
+
+### Lineage & Provenance Endpoints (API v2)
+
+The server provides endpoints for inspecting and navigating dataset lineage:
+- `GET /api/v2/partitionings/{partitioningId}/parents`: Returns the direct (1-hop) parents of a partitioning along with edge audit metadata (`linkedBy`, `linkedAt`).
+- `GET /api/v2/partitionings/{partitioningId}/ancestors`: Returns all transitive ancestors of a partitioning with pagination (`limit`, `offset`).
+- `GET /api/v2/partitionings/{partitioningId}/main-flow`: Returns the main flow associated with the partitioning.
+
 ### Version compatibility
 
 **Always upgrade the server before the agents.** The server accepts what released agents send; a newer agent against an

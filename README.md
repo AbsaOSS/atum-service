@@ -3,7 +3,7 @@
 [![Build](https://github.com/AbsaOSS/atum-service/actions/workflows/build.yml/badge.svg)](https://github.com/AbsaOSS/atum-service/actions/workflows/build.yml)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
-![Java 11](https://img.shields.io/badge/Java_11-ED8B00?style=flat&logo=openjdk&logoColor=black)
+![Java 11, 17, 21](https://img.shields.io/badge/Java-11%20%7C%2017%20%7C%2021-ED8B00?style=flat&logo=openjdk&logoColor=black)
 
 | Atum Server                                                                                                                            | Atum Agent                                                                                                                                                                                                        | Atum Model                                                                                                                                                                                                 | Atum Reader                                                                                                                                                                                                  |
 |----------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -24,7 +24,7 @@
         - [Measure](#measure)
         - [Measurement](#measurement)
         - [Checkpoint](#checkpoint)
-        - [Data Flow](#data-flow)
+        - [Data Flow & Lineage](#data-flow--lineage)
     - [Usage](#usage)
         - [Atum Agent routines](#atum-agent-routines)
         - [Control measurement types](#control-measurement-types)
@@ -136,8 +136,7 @@ support for Spark 2.4. If you need the agent to work with Spark 2.4 follow these
 
 This module is a Scala client for applications reading metrics stored by the _Atum Service_. `FlowReader` and
 `PartitioningReader` resolve partitionings and retrieve checkpoint pages through the server's REST API.
-Applications control pagination; the Reader does not discover datasets from partial business keys or reconstruct
-the original parent-child lineage graph.
+Applications control pagination; direct parent-child lineage queries are served natively by the server's lineage endpoints.
 
 Reader features require a compatible server version. In particular, older servers can ignore checkpoint time-window
 parameters; using a newer Reader alone does not enable server-side filtering.
@@ -240,10 +239,11 @@ A `Checkpoint` is defined on the agent side, the server only accepts it.
 calculations of individual metrics are performed only after the `Checkpoint` operation is being called.
 We can even say, that `Checkpoint` is a result of particular `Measurements` (verb).
 
-### Data Flow
+### Data Flow & Lineage
 
 The journey of a dataset throughout various data transformations and pipelines. It captures the whole journey,
-even if it involves multiple applications or ETL pipelines.
+even if it involves multiple applications or ETL pipelines. Datasets can be linked to one or multiple parent
+partitionings to explicitly model direct upstream lineage relationships alongside the overall data flow.
 
 ## Usage
 
@@ -361,19 +361,28 @@ atumContext.createCheckpointOnProvidedData(
 )
 ```
 
-#### 6. Sub-contexts (sub-partitionings)
+#### 6. Sub-contexts (sub-partitionings & multiple parents)
 
-When a pipeline splits the data further (e.g. per country), a child context can be derived from the parent one.
-The parent-child relationship is recorded in the data store, which is what builds up the `Data Flow`:
+When a pipeline splits the data further (e.g. per country) or joins multiple inputs, a child context can be derived
+from one or more parent contexts. The parent-child relationships are recorded in the data store, building up the `Data Flow`
+and explicit upstream lineage:
 
 ```scala
+// Single parent derivation
 implicit val countryContext: AtumContext =
   atumContext.subPartitionContext(AtumPartitions("country" -> "SA"))
+
+// Multiple parents linked in one atomic call
+val mergedContext: AtumContext = AtumAgent.getOrCreateAtumSubContext(
+  childPartitions = AtumPartitions("dataset" -> "consolidated"),
+  parentContexts = Seq(parentCtxA, parentCtxB),
+  copyMeasureDefinitions = true // optional, server defaults to false
+)
 ```
 
-By default the child partitioning is `parent ++ sub` (and overlapping keys are rejected). Pass
-`mergeWithParent = false` if the child should be identified only by `subPartitions`, while the lineage is still
-kept via flows. Note that measure definitions are copied from the parent only on explicit opt-in
+By default for single-parent derivations the child partitioning is `parent ++ sub` (and overlapping keys are rejected).
+Pass `mergeWithParent = false` if the child should be identified only by `subPartitions`, while the lineage is still
+recorded. Note that measure definitions are copied from the parent(s) only on explicit opt-in
 (`copyMeasureDefinitions = true`) and only when the child partitioning is newly created; additional data is never
 copied.
 

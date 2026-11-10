@@ -12,11 +12,11 @@ Create multiple `AtumContext` with different control measures to be applied
 ### Option 1
 
 ```scala
-val atumContextInstanceWithRecordCount = AtumContext(processor = processor)
-  .withMeasureAdded(RecordCount(MockMeasureNames.recordCount1))
+import za.co.absa.atum.agent.model.AtumMeasure._
 
-val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
-  .withMeasureAdded(AbsSumOfValuesOfColumn(measuredColumn = "salary"))
+val atumContextWithMeasures = atumContext
+  .addMeasure(RecordCount())
+  .addMeasure(AbsSumOfValuesOfColumn("salary"))
 ```
 
 ### Option 2
@@ -116,16 +116,16 @@ Creating a sub-context resolves each parent id first with one `GET` (in the give
   same `POST` on the wire more than once.
 
 
-Control measures can also be overwritten, added or removed.
+Control measures can also be added or removed.
 
 ```scala
-    val atumContext1 = atumContext.withMeasureAdded(
-      Seq(RecordCount("id"), RecordCount("salary"))
-    )
+import za.co.absa.atum.agent.model.AtumMeasure._
 
-    val atumContextRemoved = atumContext1.withMeasureRemoved(RecordCount("id"))
-    assert(atumContextRemoved.measurements.size == 1)
-    assert(atumContextRemoved.measurements.head == RecordCount("salary"))
+val atumContext1 = atumContext
+  .addMeasure(RecordCount())
+  .addMeasure(DistinctRecordCount("salary"))
+
+val atumContextRemoved = atumContext1.removeMeasure(RecordCount())
 ```
 
 Set a checkpoint on a `Dataframe` with an `AtumContext` associated.
