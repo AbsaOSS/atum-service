@@ -211,17 +211,24 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     table("runs.additional_data").count()
   )
 
-  test("fast path: re-linking direct and transitive ancestors returns 14, writes nothing and takes no lock") {
+  test(
+    "fast path: re-linking an already-ancestor backfills only the missing edge (11 first time, 14 once present)," +
+      " writes no flow membership and takes no lock"
+  ) {
     val a = seed(uniq("a"))
     val b = seed(uniq("b"), Some(a))
     val c = seed(uniq("c"), Some(b))
     val before = counts()
 
+    // `a`/`b` were linked to their children only via the v1 path (seed), which never writes
+    // flows.partitioning_edges; each is already an ancestor through the closure, so the first
+    // re-link of each pair only backfills the missing direct edge (11), lock-free.
     val (status, _) = link(c, ids(Seq(a)))
-    assert(status == 14)
-    assert(link(c, ids(Seq(b)))._1 == 14)
+    assert(status == 11)
+    assert(link(c, ids(Seq(b)))._1 == 11)
+    // both edges (a-c, b-c) now exist and the closure already contains them: truly nothing left to do
     assert(link(c, ids(Seq(a, b)))._1 == 14)
-    assert(link(b, ids(Seq(a)))._1 == 14)
+    assert(link(b, ids(Seq(a)))._1 == 11)
 
     assert(counts() == before)
     assert(advisoryLocksHeld() == 0)
@@ -235,7 +242,9 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     assert(link(c, ids(Seq.empty))._1 == 14)
     assert(linkNull(c)._1 == 14)
     assert(link(c, ids(Seq(null)))._1 == 14)
-    assert(link(c, ids(Seq(null, a, a)))._1 == 14)
+    // `a` is a real (deduplicated) parent here and, like above, was only v1-linked (no edge yet), so this
+    // backfills the missing edge once (11), not a true no-op
+    assert(link(c, ids(Seq(null, a, a)))._1 == 11)
 
     assert(counts() == before)
     assert(advisoryLocksHeld() == 0)
@@ -348,7 +357,9 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
 
     assert(link(d, ids(Seq(b)))._1 == 11)
     assert(link(d, ids(Seq(e)))._1 == 11)
-    assert(link(d, ids(Seq(a, b, e)))._1 == 14)
+    // `a` is already a (transitive) ancestor of `d` at this point (via b and e), but has never gotten a direct
+    // edge, so this call backfills it (11), even though b's and e's edges already exist and are no-ops
+    assert(link(d, ids(Seq(a, b, e)))._1 == 11)
 
     assert(ancestorIds(d) == Set(a, b, e))
     assert(table("flows.partitioning_to_flow").count(add("fk_partitioning", d)) == 4)
@@ -391,14 +402,20 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     assert(flowMembers(n) == Set(n))
   }
 
-  test("re-linking a child with descendants to an ancestor it already has stays a lock-free no-op (14)") {
+  test(
+    "re-linking a child with descendants to an ancestor it already has backfills missing edges" +
+      " (11), lock-free"
+  ) {
     val a = seed(uniq("a"))
     val c = seed(uniq("c"), Some(a))
     val d = seed(uniq("d"), Some(c))
     val before = counts()
 
-    assert(link(c, ids(Seq(a)))._1 == 14)
-    assert(link(d, ids(Seq(a, c)))._1 == 14)
+    // a-c, a-d and c-d were all only established via the v1 path (closure only, no edges), so each of
+    // these re-links backfills missing edges (11) rather than being a true no-op; the closure is unaffected
+    // (a and c are already ancestors of their respective children) so no lock is taken either way
+    assert(link(c, ids(Seq(a)))._1 == 11)
+    assert(link(d, ids(Seq(a, c)))._1 == 11)
 
     assert(counts() == before)
     assert(flowMembers(a) == Set(a, c, d))

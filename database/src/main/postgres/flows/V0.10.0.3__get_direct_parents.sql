@@ -36,7 +36,7 @@ CREATE OR REPLACE FUNCTION flows.get_direct_parents(
 -- Returns:
 --      status              - Status code
 --      status_text         - Status text
---      parent_id           - ID of the parent partitioning
+--      parent_id           - ID of the parent partitioning, results are ordered by this
 --      parent_partitioning - Partitioning value (JSONB)
 --      parent_author       - Author who created the parent partitioning
 --      edge_created_by     - User who established the parent-child relationship
@@ -44,7 +44,7 @@ CREATE OR REPLACE FUNCTION flows.get_direct_parents(
 --
 -- Status codes (per returned row):
 --      11 - OK (the row carries one direct parent)
---      41 - Partitioning not found (single row, all parent_* columns NULL)
+--      41 - Partitioning not found
 --
 -- Row contract (mirrors flows.get_flow_partitionings):
 --      - Partitioning not found      -> exactly ONE row, status 41, parent_* columns NULL
@@ -52,16 +52,7 @@ CREATE OR REPLACE FUNCTION flows.get_direct_parents(
 --      - Partitioning has N parents  -> N rows, status 11 each, one direct parent per row
 --
 --      Callers MUST treat an empty result set as "exists, has no parents" (e.g. HTTP 200 with an
---      empty list), never as an error. Only a status-41 row means not-found. Do NOT assume at least
---      one row is always returned. The fa-db DoobieMultipleResultFunctionWithAggStatus layer handles
---      this shape (see server GetFlowPartitionings for the matching read pattern).
---
--- Notes:
---      - Served by the primary-key index (leading column fk_child_partitioning); no extra index needed.
---      - Results ordered by parent ID for deterministic output.
---
--- Usage:
---      SELECT * FROM flows.get_direct_parents(123);
+--      empty list), never as an error. Only a status-41 row means not-found.
 --
 -------------------------------------------------------------------------------
 $$
@@ -75,7 +66,7 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Set status for successful query (even if no parents exist)
+    -- Set status for successful query (not used if no parents exist actually)
     status := 11;
     status_text := 'OK';
 
@@ -89,8 +80,9 @@ BEGIN
         P.created_by,
         E.created_by,
         E.created_at
-    FROM flows.partitioning_edges E
-    INNER JOIN runs.partitionings P ON P.id_partitioning = E.fk_parent_partitioning
+    FROM flows.partitioning_edges AS E
+    JOIN runs.partitionings AS P
+      ON P.id_partitioning = E.fk_parent_partitioning
     WHERE E.fk_child_partitioning = i_partitioning_id
     ORDER BY P.id_partitioning;
 END;
@@ -99,8 +91,3 @@ SET search_path = pg_catalog, public, pg_temp;
 
 ALTER FUNCTION flows.get_direct_parents(BIGINT) OWNER TO atum_owner;
 GRANT EXECUTE ON FUNCTION flows.get_direct_parents(BIGINT) TO atum_owner;
-
-COMMENT ON FUNCTION flows.get_direct_parents(BIGINT) IS
-'Returns the direct (immediate) parents of a partitioning.
-Used by GET /api/v2/partitionings/{id}/parents endpoint.
-Returns empty set if partitioning has no parents (not an error).';
