@@ -20,7 +20,6 @@ import org.mockito.Mockito.{mock, mockingDetails, times, verify, when}
 import za.co.absa.atum.model.dto.{
   AdditionalDataItemV2DTO,
   PartitioningParentPatchDTO,
-  PartitioningParentsSubmitDTO,
   PartitioningSubmitV2DTO,
   PartitioningWithIdDTO
 }
@@ -35,8 +34,12 @@ import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.
 import za.co.absa.atum.server.api.database.flows.functions.GetPartitioningLineageGraph.GetPartitioningLineageGraphArgs
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants.{
+  GetPartitioningDescendantsArgs,
+  GetPartitioningDescendantsResult
+}
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
-import za.co.absa.atum.server.api.database.runs.functions.LinkPartitioningToParents.LinkPartitioningToParentsArgs
 import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
@@ -290,6 +293,23 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(14, "OK"), None))))
   when(getPartitioningAncestorsMock.apply(GetPartitioningAncestorsArgs(6666L, 10, 0L))).thenReturn(ZIO.right(Seq.empty))
 
+  // Get Descendants Mocks
+  private val getPartitioningDescendantsMock = mock(classOf[GetPartitioningDescendants])
+
+  private val descendantResult =
+    GetPartitioningDescendantsResult(1L, getPartitioningAncestorsResult1.partitioningJson, "author", hasMore = false)
+
+  when(getPartitioningDescendantsMock.apply(GetPartitioningDescendantsArgs(1L, 10, 0L)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(descendantResult)))))
+  when(getPartitioningDescendantsMock.apply(GetPartitioningDescendantsArgs(1111L, 10, 0L)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), Some(descendantResult.copy(hasMore = true))))))
+  when(getPartitioningDescendantsMock.apply(GetPartitioningDescendantsArgs(5555L, 10, 0L)))
+    .thenReturn(ZIO.right(Seq(Row(FunctionStatus(14, "OK"), None))))
+  when(getPartitioningDescendantsMock.apply(GetPartitioningDescendantsArgs(9999L, 10, 0L)))
+    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+
+  private val getPartitioningDescendantsMockLayer = ZLayer.succeed(getPartitioningDescendantsMock)
+
   private val getPartitioningAncestorsMockLayer = ZLayer.succeed(getPartitioningAncestorsMock)
 
   // Get Direct Parents Mocks
@@ -333,20 +353,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
   private val getDirectChildrenMockLayer = ZLayer.succeed(getDirectChildrenMock)
-
-  // Link Partitioning To Parents Mocks
-  private val linkPartitioningToParentsMock = mock(classOf[LinkPartitioningToParents])
-
-  when(linkPartitioningToParentsMock.apply(LinkPartitioningToParentsArgs(1L, partitioningParentsSubmitDTO1)))
-    .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK"), ())))
-  when(linkPartitioningToParentsMock.apply(LinkPartitioningToParentsArgs(9999L, partitioningParentsSubmitDTO1)))
-    .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Child partitioning not found"))))
-  when(linkPartitioningToParentsMock.apply(LinkPartitioningToParentsArgs(5L, partitioningParentsSubmitDTO1)))
-    .thenReturn(ZIO.left(DataConflictException(FunctionStatus(32, "Parent partitioning would create a cycle: 5"))))
-  when(linkPartitioningToParentsMock.apply(LinkPartitioningToParentsArgs(8888L, partitioningParentsSubmitDTO1)))
-    .thenReturn(ZIO.fail(new Exception("boom!")))
-
-  private val linkPartitioningToParentsMockLayer = ZLayer.succeed(linkPartitioningToParentsMock)
 
   // Get Partitioning Lineage Graph Mocks
   private val getPartitioningLineageGraphMock = mock(classOf[GetPartitioningLineageGraph])
@@ -677,6 +683,28 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           } yield assert(exit)(failsWithA[GeneralDatabaseError]) && assertTrue(warnings.isEmpty)
         }
       ),
+      suite("GetPartitioningDescendantsSuite")(
+        test("Returns expected ResultNoMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningRepository.getPartitioningDescendants(1L, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected ResultHasMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningRepository.getPartitioningDescendants(1111L, 10, 0L)
+          } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("No descendants (status 14) -> empty ResultNoMore") {
+          for {
+            result <- PartitioningRepository.getPartitioningDescendants(5555L, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
+        },
+        test("Status 41 -> NotFoundDatabaseError") {
+          assertZIO(PartitioningRepository.getPartitioningDescendants(9999L, 10, 0L).exit)(
+            failsWithA[NotFoundDatabaseError]
+          )
+        }
+      ),
       suite("GetPartitioningAncestorsSuite")(
         test("Returns expected ResultNoMore[PartitioningWithIdDTO]") {
           for {
@@ -774,28 +802,6 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
-      suite("LinkPartitioningToParentsSuite")(
-        test("Status 11 -> succeeds") {
-          for {
-            result <- PartitioningRepository.linkPartitioningToParents(1L, partitioningParentsSubmitDTO1)
-          } yield assertTrue(result == ())
-        },
-        test("Status 41 -> NotFoundDatabaseError") {
-          assertZIO(PartitioningRepository.linkPartitioningToParents(9999L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[NotFoundDatabaseError]
-          )
-        },
-        test("Status 32 -> ConflictDatabaseError") {
-          assertZIO(PartitioningRepository.linkPartitioningToParents(5L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[ConflictDatabaseError]
-          )
-        },
-        test("DB failure -> GeneralDatabaseError") {
-          assertZIO(PartitioningRepository.linkPartitioningToParents(8888L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[GeneralDatabaseError]
-          )
-        }
-      ),
       suite("GetPartitioningLineageGraphSuite")(
         test("Status 11 -> returns LineageGraphDTO with nodes and edges") {
           for {
@@ -831,9 +837,9 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     getPartitioningMainFlowMockLayer,
     updatePartitioningParentMockLayer,
     getPartitioningAncestorsMockLayer,
+    getPartitioningDescendantsMockLayer,
     getDirectParentsMockLayer,
     getDirectChildrenMockLayer,
-    linkPartitioningToParentsMockLayer,
     getPartitioningLineageGraphMockLayer
   )
 

@@ -164,6 +164,20 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit,
+      offset,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.getPartitioningDescendants(partitioningId, limit, offset)
+      )
+    )
+  }
+
   override def getPartitioningParents(
     partitioningId: Long
   ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]] = {
@@ -182,36 +196,6 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
         partitioningService.getPartitioningChildren(partitioningId)
       )
     )
-  }
-
-  override def postPartitioningParents(
-    partitioningId: Long,
-    submitDTO: PartitioningParentsSubmitDTO
-  ): IO[ErrorResponse, Unit] = {
-    val distinctParentIds = submitDTO.parentPartitioningIds.distinct
-    for {
-      _ <- ZIO.when(submitDTO.author.trim.isEmpty)(
-        ZIO.fail(BadRequestResponse("author must not be blank"))
-      )
-      _ <- ZIO.when(distinctParentIds.isEmpty)(
-        ZIO.fail(BadRequestResponse("parentPartitioningIds must not be empty"))
-      )
-      _ <- ZIO.when(distinctParentIds.size > PartitioningControllerImpl.MaxParents)(
-        ZIO.fail(
-          BadRequestResponse(
-            s"Too many parent partitionings: ${distinctParentIds.size}, " +
-              s"maximum allowed is ${PartitioningControllerImpl.MaxParents}"
-          )
-        )
-      )
-      _ <- serviceCall[Unit, Unit](
-        partitioningService.linkPartitioningToParents(
-          partitioningId,
-          submitDTO.copy(parentPartitioningIds = distinctParentIds)
-        ),
-        _ => ()
-      )
-    } yield ()
   }
 
   override def getPartitioningLineageGraph(

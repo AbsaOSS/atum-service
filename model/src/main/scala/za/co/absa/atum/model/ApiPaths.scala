@@ -47,6 +47,7 @@ object ApiPaths {
     final val Ancestors = "ancestors"
     final val Parents = "parents"
     final val Children = "children"
+    final val Descendants = "descendants"
     final val Lineage = "lineage"
 
   }

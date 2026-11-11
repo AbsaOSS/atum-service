@@ -119,6 +119,17 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     )
   }
 
+  override def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
+    repositoryCall(
+      partitioningRepository.getPartitioningDescendants(partitioningId, limit, offset),
+      "getPartitioningDescendants"
+    )
+  }
+
   override def getPartitioningParents(partitioningId: Long): IO[ServiceError, Seq[ParentPartitioningDTO]] = {
     repositoryCall(
       partitioningRepository.getPartitioningParents(partitioningId),
@@ -130,16 +141,6 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     repositoryCall(
       partitioningRepository.getPartitioningChildren(partitioningId),
       "getPartitioningChildren"
-    )
-  }
-
-  override def linkPartitioningToParents(
-    partitioningId: Long,
-    submitDTO: PartitioningParentsSubmitDTO
-  ): IO[ServiceError, Unit] = {
-    repositoryCall(
-      partitioningRepository.linkPartitioningToParents(partitioningId, submitDTO),
-      "linkPartitioningToParents"
     )
   }
 

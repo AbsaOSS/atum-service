@@ -68,14 +68,15 @@ trait PartitioningRepository {
     offset: Long
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
 
+  def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]]
+
   def getPartitioningParents(partitioningId: Long): IO[DatabaseError, Seq[ParentPartitioningDTO]]
 
   def getPartitioningChildren(partitioningId: Long): IO[DatabaseError, Seq[ChildPartitioningDTO]]
-
-  def linkPartitioningToParents(
-    partitioningId: Long,
-    submitDTO: PartitioningParentsSubmitDTO
-  ): IO[DatabaseError, Unit]
 
   def getPartitioningLineageGraph(
     partitioningId: Long,

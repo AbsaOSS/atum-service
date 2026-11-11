@@ -38,7 +38,7 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
   private val fncCreatePartitioning = "runs.create_partitioning"
   private val fncGetDirectParents = "flows.get_direct_parents"
   private val fncGetDirectChildren = "flows.get_direct_children"
-  private val fncLinkPartitioningToParents = "runs.link_partitioning_to_parents"
+  private val fncGetDescendants = "runs.get_partitioning_descendants"
   private val fncGetPartitioningLineageGraph = "flows.get_partitioning_lineage_graph"
 
   private def partitioningJson(name: String): String =
@@ -331,53 +331,37 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
       }
   }
 
-  test("runs.link_partitioning_to_parents successfully links child to parents") {
-    val p1 = seed(uniq("P1"))
-    val p2 = seed(uniq("P2"))
+  test("get_partitioning_descendants returns all transitive descendants, excluding the partitioning itself") {
+    val root = seed(uniq("Root"))
     val child = seed(uniq("Child"))
+    val grandchild = seed(uniq("Grandchild"))
+    link(child, ids(Seq(root)))
+    link(grandchild, ids(Seq(child)))
 
-    function(fncLinkPartitioningToParents)
-      .setParam("i_id_partitioning", child)
-      .setParam("i_parent_partitioning_ids", ids(Seq(p1, p2)))
-      .setParam("i_by_user", "MultiLinker")
-      .setParam("i_copy_measure_definitions", false)
+    val rows = scala.collection.mutable.ListBuffer.empty[(Int, Option[Long])]
+    function(fncGetDescendants)
+      .setParam("i_id_partitioning", root)
       .execute { qr =>
-        assert(qr.hasNext)
-        val row = qr.next()
-        val status = row.getInt("status").get
-        assert(status == 11, s"should return status 11 (OK), got $status")
+        while (qr.hasNext) {
+          val row = qr.next()
+          rows += ((row.getInt("status").get, row.getLong("descendant_id")))
+        }
       }
-
-    val parents = getDirectParents(child).sortBy(_._1)
-    assert(parents.length == 2, s"Child should have 2 parents, got ${parents.length}")
-    assert(parents.map(_._1) == Seq(p1, p2).sorted)
+    assert(rows.map(_._1).forall(_ == 10))
+    assert(rows.flatMap(_._2).toSet == Set(child, grandchild))
   }
 
-  test("runs.link_partitioning_to_parents returns 41 when child does not exist") {
-    val p = seed(uniq("P"))
-    function(fncLinkPartitioningToParents)
+  test("get_partitioning_descendants returns status 14 for a leaf and 41 for a non-existent partitioning") {
+    val leaf = seed(uniq("Leaf"))
+    function(fncGetDescendants)
+      .setParam("i_id_partitioning", leaf)
+      .execute { qr =>
+        assert(qr.next().getInt("status").contains(14))
+      }
+    function(fncGetDescendants)
       .setParam("i_id_partitioning", 999999999L)
-      .setParam("i_parent_partitioning_ids", ids(Seq(p)))
-      .setParam("i_by_user", "MultiLinker")
       .execute { qr =>
-        assert(qr.hasNext)
-        val row = qr.next()
-        val status = row.getInt("status").get
-        assert(status == 41, s"should return status 41, got $status")
-      }
-  }
-
-  test("runs.link_partitioning_to_parents returns 42 when parent does not exist") {
-    val child = seed(uniq("Child"))
-    function(fncLinkPartitioningToParents)
-      .setParam("i_id_partitioning", child)
-      .setParam("i_parent_partitioning_ids", ids(Seq(999999999L)))
-      .setParam("i_by_user", "MultiLinker")
-      .execute { qr =>
-        assert(qr.hasNext)
-        val row = qr.next()
-        val status = row.getInt("status").get
-        assert(status == 42, s"should return status 42, got $status")
+        assert(qr.next().getInt("status").contains(41))
       }
   }
 
@@ -428,8 +412,8 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
     assert(!queryBoolean(s"SELECT has_function_privilege('atum_reader', '$sig', 'EXECUTE')"))
   }
 
-  test("privileges: runs.link_partitioning_to_parents executable by atum_owner and atum_user only") {
-    val sig = "runs.link_partitioning_to_parents(bigint, bigint[], text, boolean)"
+  test("privileges: runs.get_partitioning_descendants executable by atum_owner and atum_user only") {
+    val sig = "runs.get_partitioning_descendants(bigint, integer, bigint)"
     assert(queryBoolean(s"SELECT has_function_privilege('atum_owner', '$sig', 'EXECUTE')"))
     assert(queryBoolean(s"SELECT has_function_privilege('atum_user', '$sig', 'EXECUTE')"))
     assert(!queryBoolean(s"SELECT has_function_privilege('public', '$sig', 'EXECUTE')"))

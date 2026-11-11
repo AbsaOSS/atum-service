@@ -23,10 +23,10 @@ import za.co.absa.atum.server.api.database.flows.functions.GetDirectParents.GetD
 import za.co.absa.atum.server.api.database.flows.functions.GetDirectChildren.GetDirectChildrenResult
 import za.co.absa.atum.server.api.database.flows.functions.GetPartitioningLineageGraph.GetPartitioningLineageGraphArgs
 import za.co.absa.atum.server.api.database.flows.functions._
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.{GetPartitioningAncestorsArgs, GetPartitioningAncestorsResult}
+import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants.GetPartitioningDescendantsArgs
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
-import za.co.absa.atum.server.api.database.runs.functions.LinkPartitioningToParents.LinkPartitioningToParentsArgs
 import za.co.absa.atum.server.api.database.runs.functions._
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.{ConflictDatabaseError, GeneralDatabaseError}
@@ -54,9 +54,9 @@ class PartitioningRepositoryImpl(
   getPartitioningMainFlowFn: GetPartitioningMainFlow,
   updatePartitioningParentFn: UpdatePartitioningParent,
   getPartitioningAncestorsFn: GetPartitioningAncestors,
+  getPartitioningDescendantsFn: GetPartitioningDescendants,
   getDirectParentsFn: GetDirectParents,
   getDirectChildrenFn: GetDirectChildren,
-  linkPartitioningToParentsFn: LinkPartitioningToParents,
   getPartitioningLineageGraphFn: GetPartitioningLineageGraph
 ) extends PartitioningRepository
     with BaseRepository {
@@ -208,6 +208,28 @@ class PartitioningRepositoryImpl(
       }
   }
 
+  override def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(
+      getPartitioningDescendantsFn(GetPartitioningDescendantsArgs(partitioningId, limit, offset)),
+      "getPartitioningDescendants"
+    ).map(_.flatten)
+      .flatMap { partitioningResults =>
+        ZIO
+          .fromEither(PartitioningResult.resultsToPartitioningWithIdDTOs(partitioningResults))
+          .mapBoth(
+            error => GeneralDatabaseError(error.getMessage),
+            partitionings => {
+              if (partitioningResults.nonEmpty && partitioningResults.head.hasMore) ResultHasMore(partitionings)
+              else ResultNoMore(partitionings)
+            }
+          )
+      }
+  }
+
   override def getPartitioningParents(partitioningId: Long): IO[DatabaseError, Seq[ParentPartitioningDTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
       getDirectParentsFn(partitioningId),
@@ -230,22 +252,6 @@ class PartitioningRepositoryImpl(
           .fromEither(GetDirectChildrenResult.resultsToChildPartitioningDTOs(childResults))
           .mapError(error => GeneralDatabaseError(error.getMessage))
       }
-  }
-
-  override def linkPartitioningToParents(
-    partitioningId: Long,
-    submitDTO: PartitioningParentsSubmitDTO
-  ): IO[DatabaseError, Unit] = {
-    dbSingleResultCallWithStatus(
-      linkPartitioningToParentsFn(LinkPartitioningToParentsArgs(partitioningId, submitDTO)),
-      "linkPartitioningToParents"
-    ).tapError {
-      case ConflictDatabaseError(message) =>
-        ZIO.logWarning(
-          s"POST /parents rejected for partitioning $partitioningId - conflict (cycle or descendants): $message"
-        )
-      case _ => ZIO.unit
-    }
   }
 
   override def getPartitioningLineageGraph(
@@ -279,9 +285,9 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMainFlow
       with UpdatePartitioningParent
       with GetPartitioningAncestors
+      with GetPartitioningDescendants
       with GetDirectParents
       with GetDirectChildren
-      with LinkPartitioningToParents
       with GetPartitioningLineageGraph,
     PartitioningRepository
   ] = ZLayer {
@@ -297,9 +303,9 @@ object PartitioningRepositoryImpl {
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
       updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
       getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
+      getPartitioningDescendants <- ZIO.service[GetPartitioningDescendants]
       getDirectParents <- ZIO.service[GetDirectParents]
       getDirectChildren <- ZIO.service[GetDirectChildren]
-      linkPartitioningToParents <- ZIO.service[LinkPartitioningToParents]
       getPartitioningLineageGraph <- ZIO.service[GetPartitioningLineageGraph]
     } yield new PartitioningRepositoryImpl(
       createPartitioningWithParents,
@@ -313,9 +319,9 @@ object PartitioningRepositoryImpl {
       getPartitioningMainFlow,
       updatePartitioningParent,
       getPartitioningAncestors,
+      getPartitioningDescendants,
       getDirectParents,
       getDirectChildren,
-      linkPartitioningToParents,
       getPartitioningLineageGraph
     )
   }

@@ -21,8 +21,7 @@ import sttp.model.StatusCode
 import za.co.absa.atum.model.dto.{
   ChildPartitioningDTO,
   LineageGraphDTO,
-  ParentPartitioningDTO,
-  PartitioningParentsSubmitDTO
+  ParentPartitioningDTO
 }
 import za.co.absa.atum.model.envelopes.SuccessResponse.{MultiSuccessResponse, PaginatedResponse, SingleSuccessResponse}
 import za.co.absa.atum.model.envelopes._
@@ -157,15 +156,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
   when(partitioningServiceMock.getPartitioningChildren(9999L))
     .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
-
-  when(partitioningServiceMock.linkPartitioningToParents(1L, partitioningParentsSubmitDTO1))
-    .thenReturn(ZIO.unit)
-  when(partitioningServiceMock.linkPartitioningToParents(5L, partitioningParentsSubmitDTO1))
-    .thenReturn(ZIO.fail(ConflictServiceError("cycle")))
-  when(partitioningServiceMock.linkPartitioningToParents(9999L, partitioningParentsSubmitDTO1))
-    .thenReturn(ZIO.fail(NotFoundServiceError("Partitioning not found")))
-  when(partitioningServiceMock.linkPartitioningToParents(8888L, partitioningParentsSubmitDTO1))
-    .thenReturn(ZIO.fail(GeneralServiceError("boom!")))
 
   when(partitioningServiceMock.getPartitioningLineageGraph(2L, "both", 5))
     .thenReturn(ZIO.succeed(lineageGraphDTO1))
@@ -503,46 +493,6 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected NotFoundErrorResponse when service call fails with NotFoundServiceError") {
           assertZIO(PartitioningController.getPartitioningChildren(9999L).exit)(
             failsWithA[NotFoundErrorResponse]
-          )
-        }
-      ),
-      suite("PostPartitioningParentsSuite")(
-        test("Succeeds when linking valid parents") {
-          for {
-            result <- PartitioningController.postPartitioningParents(1L, partitioningParentsSubmitDTO1)
-          } yield assertTrue(result == ())
-        },
-        test("Fails with BadRequestErrorResponse when author is blank") {
-          val blankAuthorDTO = partitioningParentsSubmitDTO1.copy(author = "   ")
-          assertZIO(PartitioningController.postPartitioningParents(1L, blankAuthorDTO).exit)(
-            failsWithA[BadRequestResponse]
-          )
-        },
-        test("Fails with BadRequestErrorResponse when parentPartitioningIds is empty") {
-          val emptyDTO = partitioningParentsSubmitDTO1.copy(parentPartitioningIds = Seq.empty)
-          assertZIO(PartitioningController.postPartitioningParents(1L, emptyDTO).exit)(
-            failsWithA[BadRequestResponse]
-          )
-        },
-        test("Fails with BadRequestErrorResponse when more than MaxParents distinct IDs supplied") {
-          val tooManyDTO = partitioningParentsSubmitDTO1.copy(parentPartitioningIds = 1L to 101L)
-          assertZIO(PartitioningController.postPartitioningParents(1L, tooManyDTO).exit)(
-            failsWithA[BadRequestResponse]
-          )
-        },
-        test("Returns expected ConflictErrorResponse when cycle detected") {
-          assertZIO(PartitioningController.postPartitioningParents(5L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[ConflictErrorResponse]
-          )
-        },
-        test("Returns expected NotFoundErrorResponse when partitioning not found") {
-          assertZIO(PartitioningController.postPartitioningParents(9999L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[NotFoundErrorResponse]
-          )
-        },
-        test("Returns expected InternalServerErrorResponse on GeneralServiceError") {
-          assertZIO(PartitioningController.postPartitioningParents(8888L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[InternalServerErrorResponse]
           )
         }
       ),

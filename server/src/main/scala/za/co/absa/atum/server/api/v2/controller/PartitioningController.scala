@@ -70,6 +70,12 @@ trait PartitioningController {
     offset: Long
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
 
+  def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
+
   def getPartitioningParents(
     partitioningId: Long
   ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]]
@@ -77,11 +83,6 @@ trait PartitioningController {
   def getPartitioningChildren(
     partitioningId: Long
   ): IO[ErrorResponse, MultiSuccessResponse[ChildPartitioningDTO]]
-
-  def postPartitioningParents(
-    partitioningId: Long,
-    submitDTO: PartitioningParentsSubmitDTO
-  ): IO[ErrorResponse, Unit]
 
   def getPartitioningLineageGraph(
     partitioningId: Long,

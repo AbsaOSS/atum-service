@@ -230,12 +230,6 @@ trait TestData {
     linkedAt = Some(ZonedDateTime.parse("2023-01-02T11:00:00Z"))
   )
 
-  protected val partitioningParentsSubmitDTO1: PartitioningParentsSubmitDTO = PartitioningParentsSubmitDTO(
-    parentPartitioningIds = Seq(1L, 2L),
-    author = "author1",
-    copyMeasureDefinitions = Some(true)
-  )
-
   protected val lineageEdgeDTO1: LineageEdgeDTO = LineageEdgeDTO(
     parentPartitioningId = 1L,
     childPartitioningId = 2L,

@@ -109,6 +109,11 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.updatePartitioningParent(2L, partitioningParentPatchDTO1))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
+  when(partitioningRepositoryMock.getPartitioningDescendants(1111L, 10, 0L))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2))))
+  when(partitioningRepositoryMock.getPartitioningDescendants(9999L, 10, 0L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+
   when(partitioningRepositoryMock.getPartitioningAncestors(1111L, 1, 1L))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
   when(partitioningRepositoryMock.getPartitioningAncestors(2222L, 1, 1L))
@@ -137,15 +142,6 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
   when(partitioningRepositoryMock.getPartitioningChildren(9999L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
-
-  when(partitioningRepositoryMock.linkPartitioningToParents(1L, partitioningParentsSubmitDTO1))
-    .thenReturn(ZIO.unit)
-  when(partitioningRepositoryMock.linkPartitioningToParents(5L, partitioningParentsSubmitDTO1))
-    .thenReturn(ZIO.fail(ConflictDatabaseError("cycle")))
-  when(partitioningRepositoryMock.linkPartitioningToParents(9999L, partitioningParentsSubmitDTO1))
-    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
-  when(partitioningRepositoryMock.linkPartitioningToParents(8888L, partitioningParentsSubmitDTO1))
-    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.getPartitioningLineageGraph(2L, "both", 5))
     .thenReturn(ZIO.succeed(lineageGraphDTO1))
@@ -342,6 +338,18 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
+      suite("GetPartitioningDescendantsSuite")(
+        test("Returns all descendants unchanged") {
+          for {
+            result <- PartitioningService.getPartitioningDescendants(1111L, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2)))
+        },
+        test("Returns expected NotFoundServiceError when repository fails with NotFoundDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningDescendants(9999L, 10, 0L).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        }
+      ),
       suite("GetPartitioningAncestorsSuite")(
         test("Returns expected Right with ResultHasMore[PartitioningWithIdDTO]") {
           for {
@@ -440,28 +448,6 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         test("Returns expected NotFoundServiceError when repository fails with NotFoundDatabaseError") {
           assertZIO(PartitioningService.getPartitioningChildren(9999L).exit)(
             failsWithA[NotFoundServiceError]
-          )
-        }
-      ),
-      suite("LinkPartitioningToParentsSuite")(
-        test("Delegates link operation to repository successfully") {
-          for {
-            result <- PartitioningService.linkPartitioningToParents(1L, partitioningParentsSubmitDTO1)
-          } yield assertTrue(result == ())
-        },
-        test("Returns expected ConflictServiceError on conflict") {
-          assertZIO(PartitioningService.linkPartitioningToParents(5L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[ConflictServiceError]
-          )
-        },
-        test("Returns expected NotFoundServiceError when partitioning not found") {
-          assertZIO(PartitioningService.linkPartitioningToParents(9999L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[NotFoundServiceError]
-          )
-        },
-        test("Returns expected GeneralServiceError on GeneralDatabaseError") {
-          assertZIO(PartitioningService.linkPartitioningToParents(8888L, partitioningParentsSubmitDTO1).exit)(
-            failsWithA[GeneralServiceError]
           )
         }
       ),

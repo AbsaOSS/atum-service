@@ -269,6 +269,18 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
+  val getPartitioningDescendantsEndpoint: PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
+    PartitioningWithIdDTO
+  ], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Descendants)
+      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
+      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
   val getPartitioningParentsEndpoint
     : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO], Any] = {
     apiV2.get
@@ -284,16 +296,6 @@ object Endpoints extends BaseEndpoints {
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Children)
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[MultiSuccessResponse[ChildPartitioningDTO]])
-      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
-  }
-
-  val postPartitioningParentsEndpoint
-    : PublicEndpoint[(Long, PartitioningParentsSubmitDTO), ErrorResponse, Unit, Any] = {
-    apiV2.post
-      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Parents)
-      .in(jsonBody[PartitioningParentsSubmitDTO])
-      .out(statusCode(StatusCode.NoContent))
-      .errorOutVariantPrepend(conflictErrorOneOfVariant)
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
@@ -464,18 +466,18 @@ object Endpoints extends BaseEndpoints {
         PartitioningController.getPartitioningAncestors(partitioningId, limit, offset)
       }
     ),
-    createServerEndpoint(getPartitioningParentsEndpoint, PartitioningController.getPartitioningParents),
-    createServerEndpoint(getPartitioningChildrenEndpoint, PartitioningController.getPartitioningChildren),
     createServerEndpoint[
-      (Long, PartitioningParentsSubmitDTO),
+      (Long, Int, Long),
       ErrorResponse,
-      Unit
+      PaginatedResponse[PartitioningWithIdDTO]
     ](
-      postPartitioningParentsEndpoint,
-      { case (partitioningId: Long, submitDTO: PartitioningParentsSubmitDTO) =>
-        PartitioningController.postPartitioningParents(partitioningId, submitDTO)
+      getPartitioningDescendantsEndpoint,
+      { case (partitioningId: Long, limit: Int, offset: Long) =>
+        PartitioningController.getPartitioningDescendants(partitioningId, limit, offset)
       }
     ),
+    createServerEndpoint(getPartitioningParentsEndpoint, PartitioningController.getPartitioningParents),
+    createServerEndpoint(getPartitioningChildrenEndpoint, PartitioningController.getPartitioningChildren),
     createServerEndpoint[
       (Long, Option[String], Option[Int]),
       ErrorResponse,

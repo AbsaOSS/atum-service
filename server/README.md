@@ -36,9 +36,10 @@ The server provides endpoints for inspecting and navigating dataset lineage:
 
 - `GET /api/v2/partitionings/{partitioningId}/parents`: Returns the direct (1-hop) parents of a partitioning.
 - `GET /api/v2/partitionings/{partitioningId}/children`: Returns the direct (1-hop) children of a partitioning (downstream impact analysis).
-- `POST /api/v2/partitionings/{partitioningId}/parents`: Links an existing child partitioning under one or more parent partitionings atomically.
 - `GET /api/v2/partitionings/{partitioningId}/lineage`: Returns the complete lineage sub-graph (`nodes` + `edges`) centered on a partitioning (`?direction=both|upstream|downstream&depth=1..20`).
 - `GET /api/v2/partitionings/{partitioningId}/ancestors`: Returns all transitive ancestors of a partitioning.
+- `GET /api/v2/partitionings/{partitioningId}/descendants`: Returns all transitive descendants of a partitioning (members of its
+  main flow, excluding itself); a convenience for `main-flow` + `GET /api/v2/flows/{flowId}/partitionings`.
 - `GET /api/v2/partitionings/{partitioningId}/main-flow`: Returns the main flow associated with the partitioning.
 - `GET /api/v2/flows/{flowId}/partitionings`: Returns all partitionings belonging to a flow, i.e. its primary
   partitioning plus all of its transitive descendants, almost like a complement to:
