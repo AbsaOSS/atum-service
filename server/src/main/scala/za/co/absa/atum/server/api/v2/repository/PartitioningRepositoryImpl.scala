@@ -18,14 +18,14 @@ package za.co.absa.atum.server.api.v2.repository
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.common.repository.BaseRepository
-import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowPartitionings, GetPartitioningMainFlow}
+import za.co.absa.atum.server.api.database.flows.functions.{GetFlowCheckpoints, GetFlowPartitionings}
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
 import za.co.absa.atum.server.api.database.lineage.functions.{GetDirectChildren, GetDirectParents, GetPartitioningAncestors, GetPartitioningLineageGraph}
 import za.co.absa.atum.server.api.database.lineage.functions.GetDirectParents.GetDirectParentsResult
 import za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren.GetDirectChildrenResult
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph.GetPartitioningLineageGraphArgs
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.{GetPartitioningAncestorsArgs, GetPartitioningAncestorsResult}
-import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningWithParents, GetPartitioning, GetPartitioningAdditionalData, GetPartitioningById, GetPartitioningDescendants, GetPartitioningMeasures, GetPartitioningMeasuresById, UpdatePartitioningParent}
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningWithParents, GetPartitioning, GetPartitioningAdditionalData, GetPartitioningById, GetPartitioningDescendants, GetPartitioningMainFlow, GetPartitioningMeasures, GetPartitioningMeasuresById, UpdatePartitioningParent}
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants.GetPartitioningDescendantsArgs
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
