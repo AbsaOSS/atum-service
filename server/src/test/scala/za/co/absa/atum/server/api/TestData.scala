@@ -21,12 +21,12 @@ import io.circe.syntax.EncoderOps
 import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.server.api.database.flows.functions.GetDirectChildren.GetDirectChildrenResult
-import za.co.absa.atum.server.api.database.flows.functions.GetDirectParents.GetDirectParentsResult
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
-import za.co.absa.atum.server.api.database.flows.functions.GetPartitioningLineageGraph.LineageGraphResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren.GetDirectChildrenResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetDirectParents.GetDirectParentsResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph.LineageGraphResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 import za.co.absa.atum.server.model.database._
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 
 import java.time.ZonedDateTime
 import java.util.UUID
