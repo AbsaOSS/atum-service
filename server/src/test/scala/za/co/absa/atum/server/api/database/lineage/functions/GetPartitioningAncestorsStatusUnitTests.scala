@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database.runs.functions
+package za.co.absa.atum.server.api.database.lineage.functions
 
 import io.circe.Json
-import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
