@@ -53,7 +53,7 @@ CREATE OR REPLACE FUNCTION lineage.get_direct_children(
 --      - Partitioning has no children -> ZERO rows (empty set, success)
 --      - Partitioning has N children  -> N rows, status 11 each, one direct child per row
 --
--- Migrated from flows.get_direct_children in V0.11.0.5
+-- Migrated from flows.get_direct_children in V0.10.0.15
 -------------------------------------------------------------------------------
 $$
 BEGIN
@@ -97,6 +97,6 @@ COMMENT ON FUNCTION lineage.get_direct_children(BIGINT) IS
 'Returns the direct (immediate) children of a partitioning.
 Used by GET /api/v2/partitionings/{id}/children endpoint.
 Returns empty set if partitioning has no children (not an error).
-Migrated from flows.get_direct_children in V0.11.0.5';
+Migrated from flows.get_direct_children in V0.10.0.15';
 
 

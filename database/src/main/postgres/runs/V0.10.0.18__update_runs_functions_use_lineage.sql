@@ -333,7 +333,7 @@ REVOKE EXECUTE ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BI
 GRANT EXECUTE ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) TO atum_user;
 
 COMMENT ON FUNCTION runs.update_partitioning_parent(BIGINT, BIGINT, TEXT, BOOLEAN, BOOLEAN) IS
-'Updates parent-child lineage relationship. Now calls lineage.link_to_parents (updated in V0.11.0.8)';
+'Updates parent-child lineage relationship. Now calls lineage.link_to_parents (updated in V0.10.0.18)';
 
 COMMENT ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) IS
-'Creates partitioning with parent links. Now calls lineage.link_to_parents (updated in V0.11.0.8)';
+'Creates partitioning with parent links. Now calls lineage.link_to_parents (updated in V0.10.0.18)';

@@ -42,4 +42,4 @@ COMMENT ON TABLE lineage.partitioning_edges IS
 One row per direct dependency. Complements flows.partitioning_to_flow
 which stores the transitive closure.
 
-Migrated from flows.partitioning_edges in V0.11.0.2';
+Migrated from flows.partitioning_edges in V0.10.0.12';

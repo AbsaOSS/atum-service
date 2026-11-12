@@ -51,7 +51,7 @@ $$
 --      14 - OK (No Ancestors found, therefore no op)
 --      41 - Partitioning not found
 --
--- Migrated from runs.get_partitioning_ancestors in V0.11.0.7
+-- Migrated from runs.get_partitioning_ancestors in V0.10.0.17
 -------------------------------------------------------------------------------
 DECLARE
     _has_more BOOLEAN;
@@ -118,6 +118,6 @@ GRANT EXECUTE ON FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT
 
 COMMENT ON FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT) IS
 'Returns the ancestors of a partitioning using the transitive closure (flows.partitioning_to_flow).
-Migrated from runs.get_partitioning_ancestors in V0.11.0.7';
+Migrated from runs.get_partitioning_ancestors in V0.10.0.17';
 
 

@@ -56,7 +56,7 @@ CREATE OR REPLACE FUNCTION lineage.get_direct_parents(
 --      Callers MUST treat an empty result set as "exists, has no parents" (e.g. HTTP 200 with an
 --      empty list), never as an error. Only a status-41 row means not-found.
 --
--- Migrated from flows.get_direct_parents in V0.11.0.4
+-- Migrated from flows.get_direct_parents in V0.10.0.14
 -------------------------------------------------------------------------------
 $$
 BEGIN
@@ -99,6 +99,6 @@ GRANT EXECUTE ON FUNCTION lineage.get_direct_parents(BIGINT) TO atum_user;
 COMMENT ON FUNCTION lineage.get_direct_parents(BIGINT) IS
 'Returns the direct (immediate) parents of a partitioning.
 Used by GET /api/v2/partitionings/{id}/parents endpoint.
-Migrated from flows.get_direct_parents in V0.11.0.4';
+Migrated from flows.get_direct_parents in V0.10.0.14';
 
 

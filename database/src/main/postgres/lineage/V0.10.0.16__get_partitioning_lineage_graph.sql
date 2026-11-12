@@ -40,7 +40,7 @@ CREATE OR REPLACE FUNCTION lineage.get_partitioning_lineage_graph(
 --      status_text   - Status text
 --      lineage_graph - JSONB containing { primaryPartitioningId, depth, direction, nodes: [...], edges: [...] }
 --
--- Migrated from flows.get_partitioning_lineage_graph in V0.11.0.6
+-- Migrated from flows.get_partitioning_lineage_graph in V0.10.0.16
 -------------------------------------------------------------------------------
 $$
 DECLARE
@@ -165,6 +165,6 @@ GRANT EXECUTE ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, I
 COMMENT ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) IS
 'Returns the lineage graph (nodes + edges) for a partitioning.
 Used by GET /api/v2/partitionings/{id}/lineage endpoint.
-Migrated from flows.get_partitioning_lineage_graph in V0.11.0.6';
+Migrated from flows.get_partitioning_lineage_graph in V0.10.0.16';
 
 

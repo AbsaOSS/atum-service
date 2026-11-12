@@ -248,6 +248,6 @@ COMMENT ON FUNCTION lineage.link_to_parents(BIGINT, BIGINT[], TEXT) IS
 Maintains both the explicit edge table (lineage.partitioning_edges) and
 the transitive closure (flows.partitioning_to_flow).
 
-Migrated from flows._link_to_parents and made public in V0.11.0.3';
+Migrated from flows._link_to_parents and made public in V0.10.0.13';
 
 
