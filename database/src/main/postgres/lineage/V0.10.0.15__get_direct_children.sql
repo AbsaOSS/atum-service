@@ -14,46 +14,47 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION flows.get_direct_parents(
+-- Drop old version from flows schema
+DROP FUNCTION IF EXISTS flows.get_direct_children(BIGINT);
+
+CREATE OR REPLACE FUNCTION lineage.get_direct_children(
     IN  i_partitioning_id   BIGINT,
     OUT status              INTEGER,
     OUT status_text         TEXT,
-    OUT parent_id           BIGINT,
-    OUT parent_partitioning JSONB,
-    OUT parent_author       TEXT,
+    OUT child_id            BIGINT,
+    OUT child_partitioning  JSONB,
+    OUT child_author        TEXT,
     OUT edge_created_by     TEXT,
     OUT edge_created_at     TIMESTAMP WITH TIME ZONE
 ) RETURNS SETOF record AS
 -------------------------------------------------------------------------------
 --
--- Function: flows.get_direct_parents(1)
---      Returns the direct (immediate) parents of a partitioning.
---      Uses the flows.partitioning_edges table for fast indexed lookup.
+-- Function: lineage.get_direct_children(1)
+--      Returns the direct (immediate) 1-hop children of a partitioning (downstream impact analysis).
+--      Uses the lineage.partitioning_edges table with the partitioning_edges_parent_idx index.
 --
 -- Parameters:
---      i_partitioning_id - ID of the child partitioning
+--      i_partitioning_id - ID of the parent partitioning
 --
 -- Returns:
 --      status              - Status code
 --      status_text         - Status text
---      parent_id           - ID of the parent partitioning, results are ordered by this
---      parent_partitioning - Partitioning value (JSONB)
---      parent_author       - Author who created the parent partitioning
+--      child_id            - ID of the child partitioning, results are ordered by this
+--      child_partitioning  - Partitioning value (JSONB)
+--      child_author        - Author who created the child partitioning
 --      edge_created_by     - User who established the parent-child relationship
 --      edge_created_at     - When the parent-child relationship was established
 --
 -- Status codes (per returned row):
---      11 - OK (the row carries one direct parent)
+--      11 - OK (the row carries one direct child)
 --      41 - Partitioning not found
 --
--- Row contract (mirrors flows.get_flow_partitionings):
---      - Partitioning not found      -> exactly ONE row, status 41, parent_* columns NULL
---      - Partitioning has no parents -> ZERO rows (empty set, which IS success - not a status row)
---      - Partitioning has N parents  -> N rows, status 11 each, one direct parent per row
+-- Row contract:
+--      - Partitioning not found       -> exactly ONE row, status 41, child_* columns NULL
+--      - Partitioning has no children -> ZERO rows (empty set, success)
+--      - Partitioning has N children  -> N rows, status 11 each, one direct child per row
 --
---      Callers MUST treat an empty result set as "exists, has no parents" (e.g. HTTP 200 with an
---      empty list), never as an error. Only a status-41 row means not-found.
---
+-- Migrated from flows.get_direct_children in V0.11.0.5
 -------------------------------------------------------------------------------
 $$
 BEGIN
@@ -66,11 +67,11 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Set status for successful query (not used if no parents exist actually)
+    -- Set status for successful query
     status := 11;
     status_text := 'OK';
 
-    -- Return all direct parents
+    -- Return all direct children
     RETURN QUERY
     SELECT
         status,
@@ -80,15 +81,21 @@ BEGIN
         P.created_by,
         E.created_by,
         E.created_at
-    FROM flows.partitioning_edges AS E
+    FROM lineage.partitioning_edges AS E
     JOIN runs.partitionings AS P
-      ON P.id_partitioning = E.fk_parent_partitioning
-    WHERE E.fk_child_partitioning = i_partitioning_id
+      ON P.id_partitioning = E.fk_child_partitioning
+    WHERE E.fk_parent_partitioning = i_partitioning_id
     ORDER BY P.id_partitioning;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = pg_catalog, public, pg_temp;
 
-ALTER FUNCTION flows.get_direct_parents(BIGINT) OWNER TO atum_owner;
-REVOKE EXECUTE ON FUNCTION flows.get_direct_parents(BIGINT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION flows.get_direct_parents(BIGINT) TO atum_user;
+ALTER FUNCTION lineage.get_direct_children(BIGINT) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION lineage.get_direct_children(BIGINT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION lineage.get_direct_children(BIGINT) TO atum_user;
+
+COMMENT ON FUNCTION lineage.get_direct_children(BIGINT) IS
+'Returns the direct (immediate) children of a partitioning.
+Used by GET /api/v2/partitionings/{id}/children endpoint.
+Returns empty set if partitioning has no children (not an error).
+Migrated from flows.get_direct_children in V0.11.0.5';

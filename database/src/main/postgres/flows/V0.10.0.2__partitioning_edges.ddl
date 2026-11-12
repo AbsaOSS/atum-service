@@ -18,15 +18,14 @@
 -- Create explicit parent-child edge table for direct lineage tracking
 --
 -- Context:
---   The existing flows.partitioning_to_flow table stores the materialized
---   transitive closure (A + all descendants of A) which enables fast
---   checkpoint queries and downstream navigation. However, it cannot
---   distinguish direct parents from transitive ancestors.
+--   The existing flows.partitioning_to_flow table stores the materialized transitive closure (A + all descendants of A)
+--   which enables fast checkpoint queries and downstream navigation. However, it cannot distinguish direct parents
+--   from transitive ancestors.
 --
 --   This new table stores explicit parent->child edges, enabling:
---   - Direct parent queries (immediate upstream dependencies)
---   - Accurate lineage graph visualization
---   - Enrichment of ancestor/descendant queries with relationship types
+--    * Direct parent queries (immediate upstream dependencies)
+--    * Accurate lineage graph visualization
+--    * Enrichment of ancestor/descendant queries with relationship types
 --
 -- Storage:
 --   O(n) - one row per parent-child relationship

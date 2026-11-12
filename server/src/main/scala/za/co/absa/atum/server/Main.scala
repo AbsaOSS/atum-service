@@ -51,10 +51,13 @@ import za.co.absa.atum.server.api.v2.repository.{
 }
 
 import za.co.absa.atum.server.api.database.flows.functions.{
+  GetFlowCheckpoints,
+  GetFlowPartitionings
+}
+import za.co.absa.atum.server.api.database.lineage.functions.{
   GetDirectChildren,
   GetDirectParents,
-  GetFlowCheckpoints,
-  GetFlowPartitionings,
+  GetPartitioningAncestors,
   GetPartitioningLineageGraph
 }
 import za.co.absa.atum.server.api.database.runs.functions._

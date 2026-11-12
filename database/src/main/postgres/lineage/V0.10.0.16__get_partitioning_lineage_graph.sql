@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION flows.get_partitioning_lineage_graph(
+-- Drop old version from flows schema
+DROP FUNCTION IF EXISTS flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER);
+
+CREATE OR REPLACE FUNCTION lineage.get_partitioning_lineage_graph(
     IN  i_partitioning_id   BIGINT,
     IN  i_direction         TEXT DEFAULT 'both',
     IN  i_max_depth         INTEGER DEFAULT 5,
@@ -24,7 +27,7 @@ CREATE OR REPLACE FUNCTION flows.get_partitioning_lineage_graph(
 ) RETURNS record AS
 -------------------------------------------------------------------------------
 --
--- Function: flows.get_partitioning_lineage_graph(3)
+-- Function: lineage.get_partitioning_lineage_graph(3)
 --      Returns the complete lineage graph (nodes + edges) centered on a partitioning.
 --      Enables single-roundtrip lineage visualization without the N+1 query problem.
 --
@@ -38,6 +41,7 @@ CREATE OR REPLACE FUNCTION flows.get_partitioning_lineage_graph(
 --      status_text   - Status text
 --      lineage_graph - JSONB containing { primaryPartitioningId, depth, direction, nodes: [...], edges: [...] }
 --
+-- Migrated from flows.get_partitioning_lineage_graph in V0.11.0.6
 -------------------------------------------------------------------------------
 $$
 DECLARE
@@ -72,26 +76,26 @@ BEGIN
     WITH RECURSIVE upstream_edges AS (
         -- Base case: direct parents
         SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at, 1 AS depth
-        FROM flows.partitioning_edges E
+        FROM lineage.partitioning_edges E
         WHERE E.fk_child_partitioning = i_partitioning_id
           AND _direction IN ('both', 'upstream')
         UNION
         -- Recursive case: grandparents and beyond
         SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at, U.depth + 1
-        FROM flows.partitioning_edges E
+        FROM lineage.partitioning_edges E
         JOIN upstream_edges U ON E.fk_child_partitioning = U.fk_parent_partitioning
         WHERE U.depth < _max_depth
     ),
     downstream_edges AS (
         -- Base case: direct children
         SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at, 1 AS depth
-        FROM flows.partitioning_edges E
+        FROM lineage.partitioning_edges E
         WHERE E.fk_parent_partitioning = i_partitioning_id
           AND _direction IN ('both', 'downstream')
         UNION
         -- Recursive case: grandchildren and beyond
         SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at, D.depth + 1
-        FROM flows.partitioning_edges E
+        FROM lineage.partitioning_edges E
         JOIN downstream_edges D ON E.fk_parent_partitioning = D.fk_child_partitioning
         WHERE D.depth < _max_depth
     ),
@@ -155,10 +159,11 @@ END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = pg_catalog, public, pg_temp;
 
-ALTER FUNCTION flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) OWNER TO atum_owner;
-REVOKE EXECUTE ON FUNCTION flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) TO atum_user;
+ALTER FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) TO atum_user;
 
-COMMENT ON FUNCTION flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) IS
+COMMENT ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) IS
 'Returns the lineage graph (nodes + edges) for a partitioning.
-Used by GET /api/v2/partitionings/{id}/lineage endpoint.';
+Used by GET /api/v2/partitionings/{id}/lineage endpoint.
+Migrated from flows.get_partitioning_lineage_graph in V0.11.0.6';
