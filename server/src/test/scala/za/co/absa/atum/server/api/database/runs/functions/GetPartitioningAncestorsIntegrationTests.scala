@@ -29,7 +29,7 @@ import zio.test.{Spec, TestEnvironment, TestAspect, assertTrue}
 import zio.interop.catz.asyncInstance
 
 /**
- *  Runs the REAL `GetPartitioningAncestors` fa-db wrapper against `runs.get_partitioning_ancestors`.
+ *  Runs the REAL `GetPartitioningAncestors` fa-db wrapper against `lineage.get_partitioning_ancestors`.
  *  Status contract: 10 (one row per ancestor), 14 (existing partitioning WITHOUT ancestors: one row with all data
  *  columns NULL), 41 (unknown partitioning). Plain fa-db 0.7.0 failed with "Status is OK but data is missing" on
  *  the 14 row; the wrapper now yields it as a row without data. All tests share one rolled-back transaction.

@@ -33,38 +33,23 @@ The following `runs` schema functions were updated to call `lineage.link_to_pare
 - `runs.update_partitioning_parent`
 - `runs.create_partitioning_with_parents`
 
-## Backward Compatibility
+## Direct Cutover (No Backward Compatibility Wrappers)
 
-**All old function names continue to work via wrapper functions.** You have until **v0.13.0** to migrate your code.
+> [!NOTE]
+> **Single Database Deployment**: The Atum server and database are always deployed together against a single database instance. For simplicity and clean architecture, **no backward-compatibility wrappers** are maintained.
 
-### Wrapper Functions Provided
-
-- `flows._link_to_parents` → delegates to `lineage.link_to_parents`
-- `flows.get_direct_parents` → delegates to `lineage.get_direct_parents`
-- `flows.get_direct_children` → delegates to `lineage.get_direct_children`
-- `flows.get_partitioning_lineage_graph` → delegates to `lineage.get_partitioning_lineage_graph`
-- `runs.get_partitioning_ancestors` → delegates to `lineage.get_partitioning_ancestors`
-
-All wrappers will be removed in v0.13.0.
+The deprecated functions in `flows` and `runs` are dropped upon migration:
+- `flows._link_to_parents` → dropped (replaced by `lineage.link_to_parents`)
+- `flows.get_direct_parents` → dropped (replaced by `lineage.get_direct_parents`)
+- `flows.get_direct_children` → dropped (replaced by `lineage.get_direct_children`)
+- `flows.get_partitioning_lineage_graph` → dropped (replaced by `lineage.get_partitioning_lineage_graph`)
+- `runs.get_partitioning_ancestors` → dropped (replaced by `lineage.get_partitioning_ancestors`)
 
 ## For Database Users
 
-### Immediate Action Required
-
-**None.** The migration is backward compatible. All existing queries continue to work.
-
-### Recommended Actions (Before v0.13.0)
-
-Update function calls to use the new schema:
+All queries and direct database callers must call the `lineage` schema directly:
 
 ```sql
--- OLD
-SELECT * FROM flows.get_direct_parents(123);
-SELECT * FROM flows.get_direct_children(123);
-SELECT * FROM flows.get_partitioning_lineage_graph(123, 'both', 5);
-SELECT * FROM runs.get_partitioning_ancestors(123, 10, 0);
-
--- NEW
 SELECT * FROM lineage.get_direct_parents(123);
 SELECT * FROM lineage.get_direct_children(123);
 SELECT * FROM lineage.get_partitioning_lineage_graph(123, 'both', 5);
@@ -73,7 +58,7 @@ SELECT * FROM lineage.get_partitioning_ancestors(123, 10, 0);
 
 ## For Application Developers
 
-### Scala Package Updates (Target: v0.12.0)
+### Scala Package Updates (Completed in v0.11.0)
 
 Update import paths:
 
@@ -130,13 +115,12 @@ The advisory lock name in `lineage.link_to_parents` remains `'atum.flows.link_to
 
 **No performance impact expected.** All queries use the same indexes and execution plans as before.
 
-## Deprecation Timeline
+## Release Alignment
 
-| Version | Action |
-|---------|--------|
-| **v0.11.0** (now) | Lineage schema created, backward compatibility wrappers provided |
-| **v0.12.0** (target) | Application code updated to use lineage schema |
-| **v0.13.0** (future) | Deprecated wrapper functions removed from flows/runs schemas |
+| Component | Target Version | Status |
+|-----------|----------------|--------|
+| Database `lineage` schema | **v0.11.0** | Complete — old functions dropped, direct cutover to `lineage` |
+| Server `lineage` bindings | **v0.11.0** | Complete — `za.co.absa.atum.server.api.database.lineage.functions` |
 
 ## Verification
 
@@ -153,8 +137,14 @@ WHERE tablename = 'partitioning_edges' AND schemaname = 'lineage';
 -- Verify new functions work
 SELECT * FROM lineage.get_direct_parents(123);
 
--- Verify backward compatibility
-SELECT * FROM flows.get_direct_parents(123);  -- Should delegate to lineage
+-- Verify old functions are dropped (should return 0 rows)
+SELECT proname FROM pg_proc
+WHERE proname IN ('get_direct_parents', 'get_direct_children', 'get_partitioning_lineage_graph', '_link_to_parents')
+  AND pronamespace = 'flows'::regnamespace;
+
+SELECT proname FROM pg_proc
+WHERE proname = 'get_partitioning_ancestors'
+  AND pronamespace = 'runs'::regnamespace;
 
 -- Test runs functions still work
 SELECT * FROM runs.update_partitioning_parent(456, 123, 'test', false, false);
@@ -195,4 +185,4 @@ The `lineage` schema represents the source of truth for partitioning relationshi
 
 **Migration Author**: Database Team  
 **Migration Date**: 2026-11-12  
-**Target Completion**: v0.12.0 (Scala updates), v0.13.0 (cleanup)
+**Target Completion**: v0.11.0 (Direct cutover)

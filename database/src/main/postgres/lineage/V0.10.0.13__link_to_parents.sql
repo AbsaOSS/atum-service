@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
--- Backward compatibility wrapper for flows._link_to_parents provided at the end of this file
+DROP FUNCTION IF EXISTS flows._link_to_parents(BIGINT, BIGINT[], TEXT);
 
 -------------------------------------------------------------------------------
 -- Link a child partitioning under one or more parent partitionings, maintaining both the transitive closure
@@ -250,30 +250,4 @@ the transitive closure (flows.partitioning_to_flow).
 
 Migrated from flows._link_to_parents and made public in V0.11.0.3';
 
--------------------------------------------------------------------------------
--- Backward compatibility wrapper for flows._link_to_parents
--------------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION flows._link_to_parents(
-    IN  i_child_id          BIGINT,
-    IN  i_parent_ids        BIGINT[],
-    IN  i_by_user           TEXT,
-    OUT status              INTEGER,
-    OUT status_text         TEXT
-) RETURNS record AS
-$$
-BEGIN
-    SELECT ltp.status, ltp.status_text
-    FROM lineage.link_to_parents(i_child_id, i_parent_ids, i_by_user) AS ltp
-    INTO status, status_text;
-    RETURN;
-END;
-$$
-LANGUAGE plpgsql VOLATILE SECURITY DEFINER
-SET search_path = pg_catalog, public, pg_temp;
 
-ALTER FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) OWNER TO atum_owner;
-REVOKE EXECUTE ON FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) TO atum_owner, atum_user;
-
-COMMENT ON FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) IS
-'Deprecated wrapper: delegates to lineage.link_to_parents(BIGINT, BIGINT[], TEXT). Will be removed in v0.13.0.';

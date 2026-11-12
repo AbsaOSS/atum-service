@@ -37,7 +37,7 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
 
   private val fncCreatePartitioning = "runs.create_partitioning"
   private val fncCreateWithParents = "runs.create_partitioning_with_parents"
-  private val fncGetAncestors = "runs.get_partitioning_ancestors"
+  private val fncGetAncestors = "lineage.get_partitioning_ancestors"
   private val signature = "runs.create_partitioning_with_parents(jsonb,text,bigint[],boolean)"
 
   private val cycleText = "Parent partitioning would create a cycle"

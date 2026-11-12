@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
--- Backward compatibility wrapper for flows.get_direct_children provided at the end of this file
+DROP FUNCTION IF EXISTS flows.get_direct_children(BIGINT);
 
 CREATE OR REPLACE FUNCTION lineage.get_direct_children(
     IN  i_partitioning_id   BIGINT,
@@ -99,30 +99,4 @@ Used by GET /api/v2/partitionings/{id}/children endpoint.
 Returns empty set if partitioning has no children (not an error).
 Migrated from flows.get_direct_children in V0.11.0.5';
 
--------------------------------------------------------------------------------
--- Backward compatibility wrapper for flows.get_direct_children
--------------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION flows.get_direct_children(
-    IN  i_partitioning_id   BIGINT,
-    OUT status              INTEGER,
-    OUT status_text         TEXT,
-    OUT child_id            BIGINT,
-    OUT child_partitioning  JSONB,
-    OUT child_author        TEXT,
-    OUT edge_created_by     TEXT,
-    OUT edge_created_at     TIMESTAMP WITH TIME ZONE
-) RETURNS SETOF record AS
-$$
-BEGIN
-    RETURN QUERY
-    SELECT * FROM lineage.get_direct_children(i_partitioning_id);
-END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER
-SET search_path = pg_catalog, public, pg_temp;
 
-ALTER FUNCTION flows.get_direct_children(BIGINT) OWNER TO atum_owner;
-REVOKE EXECUTE ON FUNCTION flows.get_direct_children(BIGINT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION flows.get_direct_children(BIGINT) TO atum_user;
-
-COMMENT ON FUNCTION flows.get_direct_children(BIGINT) IS
-'Deprecated wrapper: delegates to lineage.get_direct_children(BIGINT). Will be removed in v0.13.0.';
