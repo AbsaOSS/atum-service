@@ -24,16 +24,11 @@ import za.co.absa.atum.model.dto.{
   PartitioningWithIdDTO
 }
 import za.co.absa.atum.server.api.TestData
-import za.co.absa.atum.server.api.database.flows.functions.{
-  GetDirectChildren,
-  GetDirectParents,
-  GetFlowPartitionings,
-  GetPartitioningLineageGraph
-}
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
-import za.co.absa.atum.server.api.database.flows.functions.GetPartitioningLineageGraph.GetPartitioningLineageGraphArgs
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
+import za.co.absa.atum.server.api.database.lineage.functions.{GetDirectChildren, GetDirectParents, GetPartitioningAncestors, GetPartitioningLineageGraph}
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph.GetPartitioningLineageGraphArgs
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants
 import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants.{
   GetPartitioningDescendantsArgs,
