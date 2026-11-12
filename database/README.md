@@ -32,3 +32,18 @@ to remove them or
 sbt flywayBaseline 
 ```
 to set the current state as the baseline.
+
+## Schema Organization
+
+The database is organized into three main schemas:
+
+- **`runs`**: Core partitioning and checkpoint operations, measure definitions, additional data
+- **`flows`**: Transitive closure (`partitioning_to_flow`) and flow-based queries (`get_flow_partitionings`, `get_flow_checkpoints`)
+- **`lineage`**: Edge-based lineage operations (source of truth):
+  - `partitioning_edges` table (direct parent-child relationships)
+  - `link_to_parents` (multi-parent linking with cycle/leaf checks)
+  - `get_direct_parents`, `get_direct_children` (1-hop navigation)
+  - `get_partitioning_lineage_graph` (sub-graph for visualization)
+  - `get_partitioning_ancestors` (transitive ancestors)
+
+The `lineage` schema serves as the source of truth for partitioning relationships, while `flows` maintains derived/cached data for efficient transitive queries.
