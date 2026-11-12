@@ -1,6 +1,6 @@
 # Atum Service
 
-Atum Service records verifiable evidence that data stays complete and unchanged as it moves through Apache Spark pipelines, and tracks where every dataset came from.
+Atum Service records verifiable consistency evidence that data stays complete and unchanged as it moves through Apache Spark pipelines, and tracks where every dataset came from.
 
 ---
 
@@ -16,7 +16,7 @@ At points you choose (called *checkpoints*), Atum calculates a few control figur
 - **totals** of important amounts,
 - **fingerprints** of key columns, which change if even one value in the column changes.
 
-These figures are stored centrally. Compare them between two checkpoints: if they match, the data passed through intact. If they don't, you know which step changed it.
+These figures are stored centrally. Compare them between two checkpoints: if they match, the data is consistent for those measures. If they don't, you know which step changed it. Matching figures are evidence, not proof that every record is unchanged.
 
 Atum also records **lineage**: which datasets were produced from which. You can follow any dataset back to its sources and forward through the pipeline.
 
@@ -50,7 +50,7 @@ flowchart LR
 **Key benefits:**
 
 - **Regulatory compliance.** Regulated industries, banking under BCBS 239 for example, must demonstrate data accuracy, completeness and traceability. Atum provides that evidence for every run.
-- **Proof that data was not altered.** Column fingerprints and totals show that critical values passed through a pipeline unchanged.
+- **Evidence that data was not altered.** Matching column fingerprints and totals are consistency evidence that critical values passed through a pipeline unchanged. They do not prove that every individual record is unchanged, because changes that preserve the figures, such as swapping balances between accounts, would go undetected.
 - **Full traceability.** Lineage shows where each dataset came from and what was derived from it, across applications and teams.
 - **Faster root-cause analysis.** When a figure is wrong, the checkpoint where it changed points straight to the faulty step.
 - **Safer development.** Developers see immediately whether a code change drops, duplicates or alters records.
@@ -120,10 +120,10 @@ The measures below answer both. Combining several of them on the same data makes
 | **Absolute sum of values** | Changes that a plain total would miss because positive and negative changes cancel out | Debits and credits |
 | **Sum of truncated values** | Changes to the whole-number part of values, ignoring rounding noise in decimals | Amounts that are legitimately rounded or converted |
 | **Absolute sum of truncated values** | Both of the above combined | Signed amounts with rounding |
-| **Column fingerprint** (sum of hashes) | Any change to any value in a column, including text, IDs and dates | Proving key identifiers were not altered |
+| **Column fingerprint** (sum of hashes) | Any change to any value in a column, including text, IDs and dates | Evidence that key identifiers were not altered |
 | **Provided figures** | Discrepancies against figures known from elsewhere | Record counts from a source file trailer or a source system |
 
-**How the fingerprint works.** Atum converts every value in the column into a short code (a CRC32 hash) and adds the codes together. If any single value changes, the total almost always changes too. The data does not need to be stored or compared row by row. Matching fingerprints at the start and end of a pipeline are strong evidence that the column arrived unchanged.
+**How the fingerprint works.** Atum converts every value in the column into a short code (a CRC32 hash) and adds the codes together. If any single value changes, the total almost always changes too. The data does not need to be stored or compared row by row. Matching fingerprints at the start and end of a pipeline are strong evidence that the column's values arrived unchanged, but not proof that they stay attached to the right records.
 
 ```mermaid
 flowchart LR
@@ -142,7 +142,7 @@ flowchart LR
     A3 -.compare.- B3
 ```
 
-*Same count, same total, same fingerprint: the data arrived complete and unaltered.*
+*Same count, same total, same fingerprint: consistent evidence that the data arrived complete and unaltered for these measures.*
 
 Totals are calculated with overflow protection, so very large amounts are never silently wrapped around. Numbers stored as text are also supported.
 
@@ -172,7 +172,7 @@ What Atum supports:
 - **Flexible identification.** A child can extend its parent's label (for example *CRM, 2024-01-01, country = ZA*) or have a label of its own, and stays linked either way.
 - **Optional inheritance of measures.** A newly created child can take over its parents' measures, so the same checks continue downstream automatically.
 
-With lineage, you can follow a single figure in a final report back through every step and source that contributed to it. Each step comes with its control figures.
+With lineage, you can trace a dataset back through the datasets it was derived from, and read the recorded control figures for each of them. Atum does not record which individual rows or values contributed to a particular figure.
 
 ---
 
