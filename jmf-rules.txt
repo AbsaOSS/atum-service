@@ -187,13 +187,13 @@ za.co.absa.atum.server.api.v2.service.PartitioningService$#*
 za.co.absa.atum.server.implicits.SeqImplicits*#*
 za.co.absa.atum.server.api.database.lineage.Lineage*#*
 za.co.absa.atum.server.api.database.lineage.functions.GetDirectParents#*
-za.co.absa.atum.server.api.database.lineage.functions.GetDirectParents$*layer*
+za.co.absa.atum.server.api.database.lineage.functions.GetDirectParents$*#*layer*
 za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren#*
-za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren$*layer*
+za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren$*#*layer*
 za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph#*
-za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph$*layer*
+za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph$*#*layer*
 za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants#*
-za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants$*layer*
+za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants$*#*layer*
 za.co.absa.atum.model.envelopes.Pagination#*
 za.co.absa.atum.model.dto.PartitioningParentPatchDTO*#*
 za.co.absa.atum.model.dto.ParentPartitioningDTO*#*
