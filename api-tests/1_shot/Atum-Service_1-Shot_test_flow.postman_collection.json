@@ -464,6 +464,81 @@
           "response": []
         },
         {
+          "name": "Act: partitionings (get by id) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const expectedId = pm.collectionVariables.get(\"partitioning_id\");",
+                  "    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+                  "    const expectedAuthor = pm.collectionVariables.get(\"partitioning_author\");",
+                  "",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"][\"id\"]).to.eql(expectedId);",
+                  "    pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+                  "    pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioning_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Act: createPartitioning (retrieve) - 200",
           "event": [
             {
@@ -529,7 +604,7 @@
           "response": []
         }
       ],
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- POST:/api/v1/createPartitioning",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioning_id}\n    \n",
       "auth": {
         "type": "noauth"
       },
@@ -1153,7 +1228,7 @@
           "response": []
         }
       ],
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioningChild_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/parents\n    \n- GET:/api/v2/partitionings/{partitioning_id}/children\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/lineage\n    \n",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioningChild_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/parents\n    \n- GET:/api/v2/partitionings/{partitioning_id}/children\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/lineage\n    \n- GET:/api/v2/partitionings/{partitioning_id}/descendants\n    \n",
       "event": [
         {
           "listen": "prerequest",
