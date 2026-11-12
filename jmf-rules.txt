@@ -189,10 +189,8 @@ za.co.absa.atum.model.envelopes.Pagination#*
 za.co.absa.atum.model.dto.PartitioningParentPatchDTO*#*
 za.co.absa.atum.model.dto.ParentPartitioningDTO*#*
 za.co.absa.atum.model.dto.ChildPartitioningDTO*#*
-za.co.absa.atum.model.dto.PartitioningParentsSubmitDTO*#*
 za.co.absa.atum.model.dto.LineageEdgeDTO*#*
 za.co.absa.atum.model.dto.LineageGraphDTO*#*
-za.co.absa.atum.server.model.database.CreatedPartitioningFromDB*#*
 za.co.absa.atum.model.ApiPaths*#*
 za.co.absa.atum.model.envelopes.ResponseEnvelope#*
 za.co.absa.atum.model.envelopes.StatusResponse#*

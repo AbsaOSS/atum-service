@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
--- Drop old version from flows schema
-DROP FUNCTION IF EXISTS flows._link_to_parents(BIGINT, BIGINT[], TEXT);
+-- Backward compatibility wrapper for flows._link_to_parents provided at the end of this file
 
 -------------------------------------------------------------------------------
 -- Link a child partitioning under one or more parent partitionings, maintaining both the transitive closure
@@ -49,6 +48,8 @@ DROP FUNCTION IF EXISTS flows._link_to_parents(BIGINT, BIGINT[], TEXT);
 --      14 - Nothing has changed (fully idempotent retry)
 --      32 - Parent partitioning would create a cycle
 --      33 - Partitioning already has descendants and cannot be linked under new parents
+--      41 - Child partitioning not found
+--      42 - Parent partitioning not found
 --
 -- Fast path (no lock): every requested parent is already an ancestor via the closure; only missing
 --   lineage.partitioning_edges rows are backfilled (idempotent, ON CONFLICT DO NOTHING).
@@ -84,6 +85,26 @@ BEGIN
         WHERE PID.id IS NOT NULL
         ORDER BY PID.id
     );
+
+    -- check child partitioning exists
+    PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_child_id;
+    IF NOT FOUND THEN
+        status := 41;
+        status_text := 'Child partitioning not found';
+        RETURN;
+    END IF;
+
+    -- check existence of all parents
+    PERFORM 1
+    FROM unnest(_parent_ids) AS PID(id)
+    WHERE NOT EXISTS (
+        SELECT 1 FROM runs.partitionings P WHERE P.id_partitioning = PID.id
+    );
+    IF FOUND THEN
+        status := 42;
+        status_text := 'Parent partitioning not found';
+        RETURN;
+    END IF;
 
     -- self-link: the child is a member of its own flow, reject it
     IF i_child_id = ANY(_parent_ids) THEN
@@ -228,3 +249,31 @@ Maintains both the explicit edge table (lineage.partitioning_edges) and
 the transitive closure (flows.partitioning_to_flow).
 
 Migrated from flows._link_to_parents and made public in V0.11.0.3';
+
+-------------------------------------------------------------------------------
+-- Backward compatibility wrapper for flows._link_to_parents
+-------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION flows._link_to_parents(
+    IN  i_child_id          BIGINT,
+    IN  i_parent_ids        BIGINT[],
+    IN  i_by_user           TEXT,
+    OUT status              INTEGER,
+    OUT status_text         TEXT
+) RETURNS record AS
+$$
+BEGIN
+    SELECT ltp.status, ltp.status_text
+    FROM lineage.link_to_parents(i_child_id, i_parent_ids, i_by_user) AS ltp
+    INTO status, status_text;
+    RETURN;
+END;
+$$
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp;
+
+ALTER FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) TO atum_owner, atum_user;
+
+COMMENT ON FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) IS
+'Deprecated wrapper: delegates to lineage.link_to_parents(BIGINT, BIGINT[], TEXT). Will be removed in v0.13.0.';

@@ -75,7 +75,7 @@ object GetPartitioningAncestors {
    *  Status check first (a non-OK status such as 41 becomes a `StatusException`), then the row; an OK row without
    *  data (status 14, no ancestors) becomes `None` instead of failing.
    */
-  private[functions] def statusExceptionOrRow(
+  private[database] def statusExceptionOrRow(
     checkStatus: FunctionStatus => Option[StatusException],
     statusWithData: Row[Option[Option[GetPartitioningAncestorsResult]]]
   ): FailedOrRow[Option[GetPartitioningAncestorsResult]] =

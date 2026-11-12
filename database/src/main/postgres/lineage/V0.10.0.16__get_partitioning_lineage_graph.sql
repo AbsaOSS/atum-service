@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
--- Drop old version from flows schema
-DROP FUNCTION IF EXISTS flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER);
+-- Backward compatibility wrapper for flows.get_partitioning_lineage_graph provided at the end of this file
 
 CREATE OR REPLACE FUNCTION lineage.get_partitioning_lineage_graph(
     IN  i_partitioning_id   BIGINT,
@@ -167,3 +166,31 @@ COMMENT ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER
 'Returns the lineage graph (nodes + edges) for a partitioning.
 Used by GET /api/v2/partitionings/{id}/lineage endpoint.
 Migrated from flows.get_partitioning_lineage_graph in V0.11.0.6';
+
+-------------------------------------------------------------------------------
+-- Backward compatibility wrapper for flows.get_partitioning_lineage_graph
+-------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION flows.get_partitioning_lineage_graph(
+    IN  i_partitioning_id   BIGINT,
+    IN  i_direction         TEXT DEFAULT 'both',
+    IN  i_max_depth         INTEGER DEFAULT 5,
+    OUT status              INTEGER,
+    OUT status_text         TEXT,
+    OUT lineage_graph       JSONB
+) RETURNS record AS
+$$
+BEGIN
+    SELECT lg.status, lg.status_text, lg.lineage_graph
+    FROM lineage.get_partitioning_lineage_graph(i_partitioning_id, i_direction, i_max_depth) AS lg
+    INTO status, status_text, lineage_graph;
+    RETURN;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp;
+
+ALTER FUNCTION flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) TO atum_user;
+
+COMMENT ON FUNCTION flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) IS
+'Deprecated wrapper: delegates to lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER). Will be removed in v0.13.0.';

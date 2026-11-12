@@ -64,5 +64,32 @@ class PartitioningResultUnitTests extends AnyFunSuiteLike {
     assert(dto.partitioning.contains(PartitionDTO("key1", "val1")))
     assert(dto.partitioning.contains(PartitionDTO("key2", "val2")))
   }
+
+  test("resultsToPartitioningWithIdDTOs should handle keys missing from keysToValuesMap gracefully") {
+    val jsonStr =
+      """
+        |{
+        |  "version": 1,
+        |  "keys": ["key1", "missingKey"],
+        |  "keysToValuesMap": {
+        |    "key1": "val1"
+        |  }
+        |}
+        |""".stripMargin
+
+    val json = parse(jsonStr).getOrElse(Json.Null)
+    val result = new TestPartitioningResult(101L, json, "test.user")
+
+    val output = PartitioningResult.resultsToPartitioningWithIdDTOs(Seq(result))
+
+    assert(output.isRight)
+    val dtoSeq = output.toOption.get
+    assert(dtoSeq.size == 1)
+    val dto = dtoSeq.head
+
+    assert(dto.id == 101L)
+    assert(dto.partitioning.contains(PartitionDTO("key1", "val1")))
+    assert(dto.partitioning.contains(PartitionDTO("missingKey", "")))
+  }
 }
 

@@ -20,7 +20,8 @@ import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitV2DTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio.{Scope, ZIO}

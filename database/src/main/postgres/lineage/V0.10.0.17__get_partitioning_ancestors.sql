@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
--- Drop old version from runs schema
-DROP FUNCTION IF EXISTS runs.get_partitioning_ancestors(BIGINT, INT, BIGINT);
+-- Backward compatibility wrapper for runs.get_partitioning_ancestors provided at the end of this file
 
 CREATE OR REPLACE FUNCTION lineage.get_partitioning_ancestors(
     IN i_id_partitioning BIGINT,
@@ -109,12 +108,43 @@ BEGIN
 
 END;
 $$
-    LANGUAGE plpgsql VOLATILE
-                     SECURITY DEFINER;
+    LANGUAGE plpgsql STABLE
+                     SECURITY DEFINER
+                     SET search_path = pg_catalog, public, pg_temp;
 
 ALTER FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT) TO atum_user;
 
 COMMENT ON FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT) IS
 'Returns the ancestors of a partitioning using the transitive closure (flows.partitioning_to_flow).
 Migrated from runs.get_partitioning_ancestors in V0.11.0.7';
+
+-------------------------------------------------------------------------------
+-- Backward compatibility wrapper for runs.get_partitioning_ancestors
+-------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION runs.get_partitioning_ancestors(
+    IN i_id_partitioning BIGINT,
+    IN i_limit INT DEFAULT 10,
+    IN i_offset BIGINT DEFAULT 0,
+    OUT status INTEGER,
+    OUT status_text TEXT,
+    OUT ancestor_id BIGINT,
+    OUT partitioning JSONB,
+    OUT author TEXT,
+    OUT has_more BOOLEAN
+) RETURNS SETOF record AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT * FROM lineage.get_partitioning_ancestors(i_id_partitioning, i_limit, i_offset);
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp;
+
+ALTER FUNCTION runs.get_partitioning_ancestors(BIGINT, INT, BIGINT) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION runs.get_partitioning_ancestors(BIGINT, INT, BIGINT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION runs.get_partitioning_ancestors(BIGINT, INT, BIGINT) TO atum_user;
+
+COMMENT ON FUNCTION runs.get_partitioning_ancestors(BIGINT, INT, BIGINT) IS
+'Deprecated wrapper: delegates to lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT). Will be removed in v0.13.0.';

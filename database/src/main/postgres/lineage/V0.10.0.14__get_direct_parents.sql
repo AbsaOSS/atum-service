@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
--- Drop old version from flows schema
-DROP FUNCTION IF EXISTS flows.get_direct_parents(BIGINT);
+-- Backward compatibility wrapper for flows.get_direct_parents provided at the end of this file
 
 CREATE OR REPLACE FUNCTION lineage.get_direct_parents(
     IN  i_partitioning_id   BIGINT,
@@ -101,3 +100,31 @@ COMMENT ON FUNCTION lineage.get_direct_parents(BIGINT) IS
 'Returns the direct (immediate) parents of a partitioning.
 Used by GET /api/v2/partitionings/{id}/parents endpoint.
 Migrated from flows.get_direct_parents in V0.11.0.4';
+
+-------------------------------------------------------------------------------
+-- Backward compatibility wrapper for flows.get_direct_parents
+-------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION flows.get_direct_parents(
+    IN  i_partitioning_id   BIGINT,
+    OUT status              INTEGER,
+    OUT status_text         TEXT,
+    OUT parent_id           BIGINT,
+    OUT parent_partitioning JSONB,
+    OUT parent_author       TEXT,
+    OUT edge_created_by     TEXT,
+    OUT edge_created_at     TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF record AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT * FROM lineage.get_direct_parents(i_partitioning_id);
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp;
+
+ALTER FUNCTION flows.get_direct_parents(BIGINT) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION flows.get_direct_parents(BIGINT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION flows.get_direct_parents(BIGINT) TO atum_user;
+
+COMMENT ON FUNCTION flows.get_direct_parents(BIGINT) IS
+'Deprecated wrapper: delegates to lineage.get_direct_parents(BIGINT). Will be removed in v0.13.0.';

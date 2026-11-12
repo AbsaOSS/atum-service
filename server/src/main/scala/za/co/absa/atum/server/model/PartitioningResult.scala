@@ -28,7 +28,7 @@ abstract class PartitioningResult(id: Long, partitioning: Json, author: String) 
      ): Either[DecodingFailure, PartitioningWithIdDTO] = {
     decoder.decodeJson(partitioning).map { partitioningForDB =>
       val partitioningDTO = partitioningForDB.keys.map { key =>
-        PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
+        PartitionDTO(key, partitioningForDB.keysToValuesMap.getOrElse(key, ""))
       }
       PartitioningWithIdDTO(id, partitioningDTO, author)
     }

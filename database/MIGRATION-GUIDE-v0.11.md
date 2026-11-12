@@ -4,6 +4,9 @@
 
 Version 0.11.0 introduces a new `lineage` schema that consolidates partitioning lineage operations previously scattered across `flows` and `runs` schemas. This migration creates better semantic boundaries and positions the codebase for eventual retirement of the flows schema.
 
+> [!NOTE]
+> **Flyway Migration Versioning**: The migration scripts for this release are numbered in the `V0.10.0.x` range (specifically `V0.10.0.1` through `V0.10.0.18`, e.g. `V0.10.0.11__lineage_schema.ddl` through `V0.10.0.18__update_runs_functions_use_lineage.sql`) and are delivered as part of the v0.11.0 service release.
+
 ## What Changed
 
 ### New Schema
@@ -170,7 +173,7 @@ GRANT USAGE ON SCHEMA lineage TO your_role;
 
 **Solution**: Verify migration completed successfully:
 ```sql
-SELECT * FROM flyway_schema_history WHERE version LIKE '0.11.0%';
+SELECT * FROM flyway_schema_history WHERE version LIKE '0.10.0.%';
 ```
 
 ### Issue: Tests failing after upgrade
@@ -180,7 +183,7 @@ SELECT * FROM flyway_schema_history WHERE version LIKE '0.11.0%';
 ## Support
 
 For questions or issues related to this migration:
-1. Check the migration status: `SELECT * FROM flyway_schema_history WHERE version = '0.11.0.11';`
+1. Check the migration status: `SELECT * FROM flyway_schema_history WHERE version = '0.10.0.11';`
 2. Review database logs for migration errors
 3. Report issues at: https://github.com/absa-group/atum-service/issues
 
