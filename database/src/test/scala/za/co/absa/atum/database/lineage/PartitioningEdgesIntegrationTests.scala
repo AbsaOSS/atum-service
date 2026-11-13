@@ -40,7 +40,7 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
   private val fncCreatePartitioning = "runs.create_partitioning"
   private val fncGetDirectParents = "lineage.get_direct_parents"
   private val fncGetDirectChildren = "lineage.get_direct_children"
-  private val fncGetDescendants = "runs.get_partitioning_descendants"
+  private val fncGetDescendants = "lineage.get_partitioning_descendants"
   private val fncGetPartitioningLineageGraph = "lineage.get_partitioning_lineage_graph"
 
   private def partitioningJson(name: String): String =
@@ -414,8 +414,8 @@ class PartitioningEdgesIntegrationTests extends DBTestSuite {
     assert(!queryBoolean(s"SELECT has_function_privilege('atum_reader', '$sig', 'EXECUTE')"))
   }
 
-  test("privileges: runs.get_partitioning_descendants executable by atum_owner and atum_user only") {
-    val sig = "runs.get_partitioning_descendants(bigint, integer, bigint)"
+  test("privileges: lineage.get_partitioning_descendants executable by atum_owner and atum_user only") {
+    val sig = "lineage.get_partitioning_descendants(bigint, integer, bigint)"
     assert(queryBoolean(s"SELECT has_function_privilege('atum_owner', '$sig', 'EXECUTE')"))
     assert(queryBoolean(s"SELECT has_function_privilege('atum_user', '$sig', 'EXECUTE')"))
     assert(!queryBoolean(s"SELECT has_function_privilege('public', '$sig', 'EXECUTE')"))
