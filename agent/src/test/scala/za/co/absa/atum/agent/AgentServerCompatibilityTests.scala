@@ -350,8 +350,8 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     assert(directParents.forall(_.linkedAt.isDefined))
 
     // LINEAGE EDGES: database verification
-    assert(table("flows.partitioning_edges").count(s"fk_child_partitioning = $childId") == 2)
-    val parentEdgeIds = table("flows.partitioning_edges").where(s"fk_child_partitioning = $childId") { result =>
+    assert(table("lineage.partitioning_edges").count(s"fk_child_partitioning = $childId") == 2)
+    val parentEdgeIds = table("lineage.partitioning_edges").where(s"fk_child_partitioning = $childId") { result =>
       var ids = Vector.empty[Long]
       while (result.hasNext) {
         ids = ids :+ result.next().getLong("fk_parent_partitioning").get
