@@ -16,7 +16,7 @@
 
 -------------------------------------------------------------------------------
 -- Link a child partitioning under one or more parent partitionings, maintaining both the transitive closure
---   (table flows.partitioning_to_flow) and the explicit direct-parentage edges (table flows.partitioning_edges)
+--   (table flows.partitioning_to_flow) and the explicit direct-parentage edges (table lineage.partitioning_edges)
 --   used to answer "who are the direct parents of X" without walking the whole closure.
 --
 -- Closure invariant: members(F(A)) = {A} U descendants(A), where F(A) is the flow whose primary partitioning is A.
@@ -40,20 +40,22 @@
 --      14 - Nothing has changed (fully idempotent retry)
 --      32 - Parent partitioning would create a cycle
 --      33 - Partitioning already has descendants and cannot be linked under new parents
+--      41 - Child partitioning not found
+--      42 - Parent partitioning not found
 --
 -- Fast path (no lock): every requested parent is already an ancestor via the closure; only missing
---   flows.partitioning_edges rows are backfilled (idempotent, ON CONFLICT DO NOTHING).
+--   lineage.partitioning_edges rows are backfilled (idempotent, ON CONFLICT DO NOTHING).
 --
 -- Slow path (1 global transaction-scoped advisory lock): taken only when at least 1 requested parent is genuinely new;
 --   re-checks ancestry under the lock (an idempotent retry may have been satisfied by a concurrent writer
 --   while waiting) and then runs the cycle check, the leaf/descendants check, and finally the dual write
---   to both flows.partitioning_edges and flows.partitioning_to_flow.
+--   to both lineage.partitioning_edges and flows.partitioning_to_flow.
 --   Important: designed under READ COMMITTED (Hikari default) - do NOT set REPEATABLE READ / SERIALIZABLE,
 --   and keep the lock a standalone PERFORM. No lock_timeout is set (deliberate; callers must not hold a
 --   FOR UPDATE row lock when calling this function - lock-order inversion vs. the advisory lock).
 -------------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION flows._link_to_parents(
+CREATE OR REPLACE FUNCTION lineage.link_to_parents(
     IN  i_child_id          BIGINT,
     IN  i_parent_ids        BIGINT[],
     IN  i_by_user           TEXT,
@@ -75,6 +77,26 @@ BEGIN
         WHERE PID.id IS NOT NULL
         ORDER BY PID.id
     );
+
+    -- check child partitioning exists
+    PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_child_id;
+    IF NOT FOUND THEN
+        status := 41;
+        status_text := 'Child partitioning not found';
+        RETURN;
+    END IF;
+
+    -- check existence of all parents
+    PERFORM 1
+    FROM unnest(_parent_ids) AS PID(id)
+    WHERE NOT EXISTS (
+        SELECT 1 FROM runs.partitionings P WHERE P.id_partitioning = PID.id
+    );
+    IF FOUND THEN
+        status := 42;
+        status_text := 'Parent partitioning not found';
+        RETURN;
+    END IF;
 
     -- self-link: the child is a member of its own flow, reject it
     IF i_child_id = ANY(_parent_ids) THEN
@@ -98,7 +120,7 @@ BEGIN
     -- fast path (no lock): every parent is already an ancestor; only a missing direct edge may need to
     -- be backfilled (see migration header for why this can never touch the closure, no lock required)
     IF cardinality(_new_parents) = 0 THEN
-        INSERT INTO flows.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
+        INSERT INTO lineage.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
         SELECT i_child_id, PID.id, i_by_user
         FROM unnest(_parent_ids) AS PID(id)
         ON CONFLICT (fk_child_partitioning, fk_parent_partitioning) DO NOTHING;
@@ -132,7 +154,7 @@ BEGIN
         )
     );
     IF cardinality(_new_parents) = 0 THEN
-        INSERT INTO flows.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
+        INSERT INTO lineage.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
         SELECT i_child_id, PID.id, i_by_user
         FROM unnest(_parent_ids) AS PID(id)
         ON CONFLICT (fk_child_partitioning, fk_parent_partitioning) DO NOTHING;
@@ -181,7 +203,7 @@ BEGIN
     -- =========================================================================
 
     -- 1. INSERT EDGES FIRST (NEW): Explicit parent->child relationships
-    INSERT INTO flows.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
+    INSERT INTO lineage.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
     SELECT i_child_id, PID.id, i_by_user
     FROM unnest(_parent_ids) AS PID(id)
     ON CONFLICT (fk_child_partitioning, fk_parent_partitioning) DO NOTHING;
@@ -209,6 +231,15 @@ $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER
 SET search_path = pg_catalog, public, pg_temp;
 
-ALTER FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) OWNER TO atum_owner;
-REVOKE EXECUTE ON FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION flows._link_to_parents(BIGINT, BIGINT[], TEXT) TO atum_owner;
+ALTER FUNCTION lineage.link_to_parents(BIGINT, BIGINT[], TEXT) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION lineage.link_to_parents(BIGINT, BIGINT[], TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION lineage.link_to_parents(BIGINT, BIGINT[], TEXT) TO atum_user;
+
+COMMENT ON FUNCTION lineage.link_to_parents(BIGINT, BIGINT[], TEXT) IS
+'Link a child partitioning to one or more parent partitionings.
+Maintains both the explicit edge table (lineage.partitioning_edges) and
+the transitive closure (flows.partitioning_to_flow).
+
+Migrated from flows._link_to_parents and made public in V0.10.0.13';
+
+

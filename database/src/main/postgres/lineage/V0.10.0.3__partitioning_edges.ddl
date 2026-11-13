@@ -36,7 +36,7 @@
 --   - Transitive queries (ancestors/descendants): Use flows + edges enrichment
 -------------------------------------------------------------------------------
 
-CREATE TABLE flows.partitioning_edges
+CREATE TABLE lineage.partitioning_edges
 (
     fk_child_partitioning  BIGINT NOT NULL,
     fk_parent_partitioning BIGINT NOT NULL,
@@ -59,24 +59,24 @@ CREATE TABLE flows.partitioning_edges
 --
 -- "Who are the children of X?" (WHERE fk_parent_partitioning = X, impact analysis) is NOT a
 -- prefix of the PK, so it needs its own index.
-CREATE INDEX partitioning_edges_parent_idx ON flows.partitioning_edges(fk_parent_partitioning);
+CREATE INDEX partitioning_edges_parent_idx ON lineage.partitioning_edges(fk_parent_partitioning);
 
-ALTER TABLE flows.partitioning_edges OWNER TO atum_owner;
-GRANT SELECT ON flows.partitioning_edges TO atum_reader;
+ALTER TABLE lineage.partitioning_edges OWNER TO atum_owner;
+GRANT SELECT ON lineage.partitioning_edges TO atum_reader;
 
-COMMENT ON TABLE flows.partitioning_edges IS
+COMMENT ON TABLE lineage.partitioning_edges IS
 'Explicit parent->child edges for direct lineage relationships.
 One row per direct dependency. Complements flows.partitioning_to_flow
 which stores the transitive closure.';
 
-COMMENT ON COLUMN flows.partitioning_edges.fk_child_partitioning IS
+COMMENT ON COLUMN lineage.partitioning_edges.fk_child_partitioning IS
 'The child partitioning (derived from parents)';
 
-COMMENT ON COLUMN flows.partitioning_edges.fk_parent_partitioning IS
+COMMENT ON COLUMN lineage.partitioning_edges.fk_parent_partitioning IS
 'The parent partitioning (source/input)';
 
-COMMENT ON COLUMN flows.partitioning_edges.created_by IS
+COMMENT ON COLUMN lineage.partitioning_edges.created_by IS
 'User who established this parent-child relationship';
 
-COMMENT ON COLUMN flows.partitioning_edges.created_at IS
+COMMENT ON COLUMN lineage.partitioning_edges.created_at IS
 'When this parent-child relationship was established';

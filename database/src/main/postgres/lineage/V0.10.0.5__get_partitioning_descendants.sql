@@ -33,6 +33,10 @@ $$
 --      members of the flows the partitioning is primary for, excluding the partitioning itself.
 --      Downstream counterpart of runs.get_partitioning_ancestors.
 --
+-- Note: this function does not use edges, i.e. it only uses flows, but it is expected that Flows will be retired and
+--  only edges will be used later on. Also, logically speaking, this is still lineage functionality, so keeping it
+--  under this schema was decided.
+--
 -- Parameters:
 --      i_id_partitioning   - id that we're asking the descendants for
 --      i_limit             - (optional) maximum number of partitionings to return, default is 10

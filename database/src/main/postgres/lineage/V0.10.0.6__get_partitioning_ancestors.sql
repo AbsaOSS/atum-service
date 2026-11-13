@@ -33,6 +33,10 @@ $$
 -- Function: lineage.get_partitioning_ancestors(3)
 --      Returns the ids and partitionings of the ancestors of the given partition id.
 --
+-- Note: this function does not use edges, i.e. it only uses flows, but it is expected that Flows will be retired and
+--  only edges will be used later on. Also, logically speaking, this is still lineage functionality, so keeping it
+--  under this schema was decided.
+--
 -- Parameters:
 --      i_id_partitioning   - id that we're asking the Ancestors for
 --      i_limit             - (optional) maximum number of partitionings to return, default is 10
