@@ -37,7 +37,7 @@ $$
 --      parents are linked to it (if they are not linked yet) and the id and the STORED author (created_by) of the
 --      existing partitioning are returned, never the caller.
 --
---      Linking (new and existing partitioning alike) is delegated to lineage._link_to_parents: a self-link or a
+--      Linking (new and existing partitioning alike) is delegated to lineage.link_to_parents: a self-link or a
 --      cycle is rejected with status 32 and an existing partitioning that already has descendants is refused with
 --      status 33 (a link that is not needed yet is no error, see below) before anything is written; when every
 --      parent is already an ancestor the call takes a lock-free fast path; otherwise it takes the global advisory
@@ -138,7 +138,7 @@ BEGIN
     -- all linking code (self-link / cycle / has-descendants rejection, lock-free fast path, global advisory lock)
     -- lives in the shared helper; it writes nothing when it returns 32 or 33
     SELECT LTP.status, LTP.status_text
-    FROM lineage._link_to_parents(_child_id, _parent_ids, i_by_user) AS LTP
+    FROM lineage.link_to_parents(_child_id, _parent_ids, i_by_user) AS LTP
     INTO _link_status, _link_status_text;
 
     IF _link_status IN (32, 33) THEN
