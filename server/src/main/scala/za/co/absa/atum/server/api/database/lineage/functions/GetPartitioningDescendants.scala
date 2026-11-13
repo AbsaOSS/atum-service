@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database.runs.functions
+package za.co.absa.atum.server.api.database.lineage.functions
 
 import cats.MonadError
 import doobie.implicits.toSqlInterpolator
 import io.circe.Json
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants._
+import za.co.absa.atum.server.api.database.lineage.Lineage
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningDescendants._
 import za.co.absa.atum.server.model.PartitioningResult
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.{DoobieEngine, DoobieQueryWithStatus}
@@ -84,6 +84,6 @@ object GetPartitioningDescendants {
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningDescendants] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new GetPartitioningDescendants()(Runs, dbProvider.dbEngine)
+    } yield new GetPartitioningDescendants()(Lineage, dbProvider.dbEngine)
   }
 }

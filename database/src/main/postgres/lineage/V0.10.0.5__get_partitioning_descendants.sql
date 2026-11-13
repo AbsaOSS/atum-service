@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION runs.get_partitioning_descendants(
+CREATE OR REPLACE FUNCTION lineage.get_partitioning_descendants(
     IN i_id_partitioning BIGINT,
     IN i_limit INT DEFAULT 10,
     IN i_offset BIGINT DEFAULT 0,
@@ -28,14 +28,14 @@ CREATE OR REPLACE FUNCTION runs.get_partitioning_descendants(
 $$
 -------------------------------------------------------------------------------
 --
--- Function: runs.get_partitioning_descendants(3)
+-- Function: lineage.get_partitioning_descendants(3)
 --      Returns the ids and partitionings of all (transitive) descendants of the given partitioning, i.e. all
 --      members of the flows the partitioning is primary for, excluding the partitioning itself.
---      Downstream counterpart of runs.get_partitioning_ancestors.
+--      Downstream counterpart of lineage.get_partitioning_ancestors.
 --
 -- Note: this function does not use edges, i.e. it only uses flows, but it is expected that Flows will be retired and
---  only edges will be used later on. Also, logically speaking, this is still lineage functionality, so keeping it
---  under this schema was decided.
+--  only edges will be used later on. Also, logically speaking, this is lineage functionality, so keeping it
+--  in the lineage schema for consistency with get_partitioning_ancestors.
 --
 -- Parameters:
 --      i_id_partitioning   - id that we're asking the descendants for
@@ -112,6 +112,6 @@ $$
                      SECURITY DEFINER
                      SET search_path = pg_catalog, public, pg_temp;
 
-ALTER FUNCTION runs.get_partitioning_descendants(BIGINT, INT, BIGINT) OWNER TO atum_owner;
-REVOKE EXECUTE ON FUNCTION runs.get_partitioning_descendants(BIGINT, INT, BIGINT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION runs.get_partitioning_descendants(BIGINT, INT, BIGINT) TO atum_user;
+ALTER FUNCTION lineage.get_partitioning_descendants(BIGINT, INT, BIGINT) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION lineage.get_partitioning_descendants(BIGINT, INT, BIGINT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION lineage.get_partitioning_descendants(BIGINT, INT, BIGINT) TO atum_user;

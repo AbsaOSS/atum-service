@@ -58,6 +58,7 @@ import za.co.absa.atum.server.api.database.lineage.functions.{
   GetDirectChildren,
   GetDirectParents,
   GetPartitioningAncestors,
+  GetPartitioningDescendants,
   GetPartitioningLineageGraph
 }
 import za.co.absa.atum.server.api.database.runs.functions._

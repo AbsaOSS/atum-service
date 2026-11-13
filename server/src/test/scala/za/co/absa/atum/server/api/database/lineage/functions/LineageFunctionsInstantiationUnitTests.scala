@@ -19,8 +19,6 @@ package za.co.absa.atum.server.api.database.lineage.functions
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.atum.server.api.database.lineage.Lineage
-import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningDescendants
 
 class LineageFunctionsInstantiationUnitTests extends AnyFlatSpec with Matchers {
 
@@ -47,7 +45,7 @@ class LineageFunctionsInstantiationUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "GetPartitioningDescendants" should "instantiate without DB and provide expected fieldsToSelect" in {
-    val f = new GetPartitioningDescendants()(Runs, null)
+    val f = new GetPartitioningDescendants()(Lineage, null)
     f.fieldsToSelect should contain allOf (
       "descendant_id",
       "partitioning",
