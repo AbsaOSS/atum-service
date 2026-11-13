@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database.runs.functions
+package za.co.absa.atum.server.api.database.lineage.functions
 
 import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitV2DTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
+import za.co.absa.atum.server.api.database.runs.functions.CreatePartitioningWithParents
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio.{Scope, ZIO}
@@ -28,7 +29,7 @@ import zio.test.{Spec, TestEnvironment, TestAspect, assertTrue}
 import zio.interop.catz.asyncInstance
 
 /**
- *  Runs the REAL `GetPartitioningAncestors` fa-db wrapper against `runs.get_partitioning_ancestors`.
+ *  Runs the REAL `GetPartitioningAncestors` fa-db wrapper against `lineage.get_partitioning_ancestors`.
  *  Status contract: 10 (one row per ancestor), 14 (existing partitioning WITHOUT ancestors: one row with all data
  *  columns NULL), 41 (unknown partitioning). Plain fa-db 0.7.0 failed with "Status is OK but data is missing" on
  *  the 14 row; the wrapper now yields it as a row without data. All tests share one rolled-back transaction.

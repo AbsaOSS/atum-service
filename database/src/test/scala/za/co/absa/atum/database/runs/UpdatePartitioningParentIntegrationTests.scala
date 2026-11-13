@@ -283,7 +283,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   )
 
   private def ancestorIds(id: Long): Set[Long] = {
-    function("runs.get_partitioning_ancestors")
+    function("lineage.get_partitioning_ancestors")
       .setParam("i_id_partitioning", id)
       .execute { qr =>
         Iterator

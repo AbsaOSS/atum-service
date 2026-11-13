@@ -21,7 +21,7 @@
     - `1_shot/Atum-Service_1-Shot_test_flow.postman_collection.json` (the only collection in this directory)
         - A **flow** collection: its folders run in sequence from the top to the bottom, each folder is one named test
           with its own preparations.
-        - Covers the health endpoints, the v2 partitioning, ancestors, additional data, checkpoint and flow endpoints,
+        - Covers the health endpoints, the v2 partitioning, ancestors, lineage (parents, children, graph), additional data, checkpoint and flow endpoints,
           and the deprecated v1 `createPartitioning` / `createCheckpoint` calls.
 
 ## Backup

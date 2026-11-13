@@ -37,7 +37,7 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
 
   private val fncCreatePartitioning = "runs.create_partitioning"
   private val fncCreateWithParents = "runs.create_partitioning_with_parents"
-  private val fncGetAncestors = "runs.get_partitioning_ancestors"
+  private val fncGetAncestors = "lineage.get_partitioning_ancestors"
   private val signature = "runs.create_partitioning_with_parents(jsonb,text,bigint[],boolean)"
 
   private val cycleText = "Parent partitioning would create a cycle"
@@ -503,7 +503,13 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     assert(measureCount(c) == 0)
   }
 
-  test("An existing child with descendants stays a no-op (14) when every parent is already its ancestor") {
+  test(
+    "An existing child with descendants backfills the missing edge to an already-ancestor parent (13), lock-free"
+  ) {
+    // `a` was linked to `c` only via the v1 path (seed), which never writes flows.partitioning_edges; `a` is
+    // already an ancestor of `c` through the closure, so re-registering it here only backfills the missing
+    // direct edge (status 13: parents registered) - it does not touch flows.partitioning_to_flow and is
+    // lock-free, regardless of `c` already having the descendant `d`.
     val a = seed(lineage("A"))
     val c = seed(lineage("C"), Some(a))
     val d = seed(lineage("D"), Some(c))
@@ -511,7 +517,7 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
 
     val again = createMulti(lineage("C"), ids(Seq(a)))
 
-    assert(again.status == 14)
+    assert(again.status == 13)
     assert(again.id.contains(c))
     assert(fourTableCounts() == before)
     assert(ancestorIds(d) == Set(a, c))

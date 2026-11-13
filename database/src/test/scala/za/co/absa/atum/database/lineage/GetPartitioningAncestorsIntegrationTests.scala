@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.database.runs
+package za.co.absa.atum.database.lineage
 
 import io.circe.Json
 import io.circe.parser.parse
@@ -24,9 +24,14 @@ import za.co.absa.balta.classes.setter.CustomDBType
 
 import scala.collection.mutable
 
+/**
+ * Integration tests for lineage.get_partitioning_ancestors
+ *
+ * Migrated from runs.get_partitioning_ancestors to lineage.get_partitioning_ancestors in v0.11.0
+ */
 class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
 
-  private val getAncestorsFn = "runs.get_partitioning_ancestors"
+  private val getAncestorsFn = "lineage.get_partitioning_ancestors"
   private val createPartitioningFn = "runs.create_partitioning_if_not_exists"
 
   private val addToParentFlowsFn = "flows._add_to_parent_flows"
@@ -248,6 +253,8 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     //Test 1 Ancestor
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID3)
+      .setParamNull("i_limit")
+      .setParamNull("i_offset")
       .execute { queryResult =>
         assertAncestorRow(queryResult.next(), partitioningID1, expectedPartitioning1, "Grandma")
         assert(!queryResult.hasNext)
@@ -256,6 +263,8 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     //Test Multiple Ancestors
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID5)
+      .setParamNull("i_limit")
+      .setParamNull("i_offset")
       .execute { queryResult =>
         for ((author, (id, expected)) <- resultsMapFor5) {
           assert(queryResult.hasNext)
@@ -267,6 +276,8 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     //TEST Separate flow for Ancestors Partitions
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID7)
+      .setParamNull("i_limit")
+      .setParamNull("i_offset")
       .execute { queryResult =>
         assertAncestorRow(queryResult.next(), partitioningID6, expectedPartitioning6, "Daughter")
         assert(!queryResult.hasNext)
@@ -275,6 +286,8 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
     //TEST ALL flows for Ancestors Partitions
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID8)
+      .setParamNull("i_limit")
+      .setParamNull("i_offset")
       .execute { queryResult =>
         for ((author, (id, expected)) <- resultsMapFor8) {
           assert(queryResult.hasNext)
@@ -290,6 +303,8 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
 
     function(getAncestorsFn)
       .setParam("i_id_partitioning", nonExistentID)
+      .setParamNull("i_limit")
+      .setParamNull("i_offset")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -306,6 +321,8 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
 
     function(getAncestorsFn)
       .setParam("i_id_partitioning", partitioningID1)
+      .setParamNull("i_limit")
+      .setParamNull("i_offset")
       .execute { queryResult =>
         assert(queryResult.hasNext)
         val row = queryResult.next()
@@ -390,6 +407,8 @@ class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
 
     function(getAncestorsFn)
       .setParam("i_id_partitioning", child)
+      .setParamNull("i_limit")
+      .setParamNull("i_offset")
       .execute { qr =>
         val expected = Seq((p1, "two-p1", "Parent1"), (p2, "two-p2", "Parent2")).sortBy(_._1)
         expected.foreach { case (id, name, author) =>

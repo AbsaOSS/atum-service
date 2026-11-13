@@ -26,6 +26,25 @@ A `POST /api/v2/partitionings` body in the v0.6 - v0.10 shape (`parentPartitioni
 still copies the parent's measure definitions to a newly created child, as before; otherwise the flag defaults to
 `false`.
 
+When linking parent partitionings (via `POST /api/v2/partitionings` or `PATCH /api/v2/partitionings/{id}/ancestors`),
+the server enforces that only leaf partitionings (those with no existing descendants) can be linked under new parents,
+and rejects cyclic dependencies with an `HTTP 409 Conflict`.
+
+### Lineage & Provenance Endpoints (API v2)
+
+The server provides endpoints for inspecting and navigating dataset lineage:
+
+- `GET /api/v2/partitionings/{partitioningId}/parents`: Returns the direct (1-hop) parents of a partitioning.
+- `GET /api/v2/partitionings/{partitioningId}/children`: Returns the direct (1-hop) children of a partitioning (downstream impact analysis).
+- `GET /api/v2/partitionings/{partitioningId}/lineage`: Returns the complete lineage sub-graph (`nodes` + `edges`) centered on a partitioning (`?direction=both|upstream|downstream&depth=1..20`).
+- `GET /api/v2/partitionings/{partitioningId}/ancestors`: Returns all transitive ancestors of a partitioning.
+- `GET /api/v2/partitionings/{partitioningId}/descendants`: Returns all transitive descendants of a partitioning (members of its
+  main flow, excluding itself); a convenience for `main-flow` + `GET /api/v2/flows/{flowId}/partitionings`.
+- `GET /api/v2/partitionings/{partitioningId}/main-flow`: Returns the main flow associated with the partitioning.
+- `GET /api/v2/flows/{flowId}/partitionings`: Returns all partitionings belonging to a flow, i.e. its primary
+  partitioning plus all of its transitive descendants, almost like a complement to:
+  `GET /api/v2/partitionings/{partitioningId}/ancestors`.
+
 ### Version compatibility
 
 **Always upgrade the server before the agents.** The server accepts what released agents send; a newer agent against an
@@ -62,7 +81,7 @@ apply.
 When monitoring enabled, the application exposes `http://localhost:8080/metrics`
 and/or `http://localhost:8080/zio-metrics` endpoints which can be scraped by Prometheus.
 For testing purposes there is [docker-compose.yml](./docker-compose.yml) file which can be used to start up dockerized
-Prometheus and Grafana instances. Prometheus scraping configs are defined in [prometheus.yml](./prometheus.yml) file. 
+Prometheus and Grafana instances. Prometheus scraping configs are defined in [prometheus.yml](./prometheus.yml) file.
 
 # Build & run docker image
 

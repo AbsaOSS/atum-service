@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.server.api.database.runs.functions
+package za.co.absa.atum.server.api.database.lineage.functions
 
 import cats.MonadError
 import doobie.implicits.toSqlInterpolator
 import io.circe.Json
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
-import za.co.absa.atum.server.api.database.runs.Runs
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
+import za.co.absa.atum.server.api.database.lineage.Lineage
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors._
 import za.co.absa.atum.server.model.PartitioningResult
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.{DoobieEngine, DoobieQueryWithStatus}
@@ -33,6 +33,8 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio.{Task, URLayer, ZIO, ZLayer}
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
+// Returns the ancestors of a partitioning using the transitive closure (flows.partitioning_to_flow).
+// Migrated from runs.get_partitioning_ancestors to lineage.get_partitioning_ancestors in v0.11.0
 class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningAncestorsArgs, Option[
       GetPartitioningAncestorsResult
@@ -73,7 +75,7 @@ object GetPartitioningAncestors {
    *  Status check first (a non-OK status such as 41 becomes a `StatusException`), then the row; an OK row without
    *  data (status 14, no ancestors) becomes `None` instead of failing.
    */
-  private[functions] def statusExceptionOrRow(
+  private[database] def statusExceptionOrRow(
     checkStatus: FunctionStatus => Option[StatusException],
     statusWithData: Row[Option[Option[GetPartitioningAncestorsResult]]]
   ): FailedOrRow[Option[GetPartitioningAncestorsResult]] =
@@ -84,6 +86,6 @@ object GetPartitioningAncestors {
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningAncestors] = ZLayer {
     for {
       dbProvider <- ZIO.service[PostgresDatabaseProvider]
-    } yield new GetPartitioningAncestors()(Runs, dbProvider.dbEngine)
+    } yield new GetPartitioningAncestors()(Lineage, dbProvider.dbEngine)
   }
 }

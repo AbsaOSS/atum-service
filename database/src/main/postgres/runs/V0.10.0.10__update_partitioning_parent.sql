@@ -14,6 +14,136 @@
  * limitations under the License.
  */
 
+-------------------------------------------------------------------------------
+-- Update runs functions to call lineage.link_to_parents
+--
+-- Changes:
+--   runs.update_partitioning_parent: flows._link_to_parents -> lineage.link_to_parents
+--   runs.create_partitioning_with_parents: flows._link_to_parents -> lineage.link_to_parents
+--
+-- Both function bodies remain identical except for the schema reference change.
+-------------------------------------------------------------------------------
+
+-- 1. Update runs.update_partitioning_parent
+CREATE OR REPLACE FUNCTION runs.update_partitioning_parent(
+    IN i_id_partitioning          BIGINT,
+    IN i_id_parent_partitioning   BIGINT,
+    IN i_by_user                  TEXT,
+    IN i_copy_measurements        BOOLEAN DEFAULT true,
+    IN i_copy_additional_data     BOOLEAN DEFAULT true,
+    OUT status                    INTEGER,
+    OUT status_text               TEXT
+) RETURNS record AS
+$$
+-------------------------------------------------------------------------------
+--
+-- Function: runs.update_partitioning_parent(5)
+--      Update the Parent Partitioning for a given partitioning ID and copies measurements and additional data
+--      from parent to child. Order of work: validate (errs: 41, 42) -> link (errs: 32, 33) -> copy.
+--
+--      The link is written by lineage.link_to_parents, the routine shared with runs.create_partitioning_with_parents:
+--      it rejects self-links, cycles and a child that already has descendants (when a new link would be needed),
+--      serializes writers and adds the child (never its descendants) into every flow containing the parent.
+--
+--      The copies are applied according to the flags also when the link was already in place (the helper's
+--      "nothing to do" outcome is not an error here), so a repeated call is harmless:
+--      - additional data (the flag is kept, opt-in on this endpoint only, default true): copied with the
+--        unchanged semantics, i.e. the parent's keys present in child OVERWRITE such conflicting values and store the
+--        old additional data into a history table;
+--      - measure definitions: INSERT ... ON CONFLICT ON CONSTRAINT measure_definitions_unq DO NOTHING, so the child's
+--        own definitions win and a repeat is a no-op (not a unique violation).
+--
+-- Parameters:
+--      i_id_partitioning                - id of the partitioning to be changed
+--      i_id_parent_partitioning         - id of the new parent of the partitioning
+--      i_copy_measurements              - copies measurements from parent partitioning to child
+--      i_copy_additional_data           - copies additional data from parent partitioning to child
+--      i_by_user                        - user behind the change
+--
+-- Returns:
+--      status              - Status code
+--      status_text         - Status message
+--
+-- Status codes:
+--      11 - OK
+--      32 - The parent is the child itself or one of its descendants (the link would create a cycle);
+--           the status text names the offending partitioning id(s); nothing is written
+--      33 - The partitioning already has descendants and the parent is not yet its ancestor (it cannot be linked
+--           under a new parent); nothing is written (no copies either)
+--      41 - Child Partitioning not found
+--      42 - Parent Partitioning not found
+--
+-------------------------------------------------------------------------------
+DECLARE
+    _additional_data    HSTORE;
+    _link_status        INTEGER;
+    _link_status_text   TEXT;
+BEGIN
+
+    --Check for child partitioning
+    PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_id_partitioning;
+    IF NOT FOUND THEN
+        status := 41;
+        status_text := 'Child Partitioning not found';
+        RETURN;
+    END IF;
+
+    --Check for parent partitioning
+    PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_id_parent_partitioning;
+    IF NOT FOUND THEN
+        status := 42;
+        status_text := 'Parent Partitioning not found';
+        RETURN;
+    END IF;
+
+    --Link FIRST: a self-link, a cycle (32) or a child with descendants (33) returns before anything is written
+    -- CHANGED: flows._link_to_parents -> lineage.link_to_parents
+    SELECT LTP.status, LTP.status_text
+    FROM lineage.link_to_parents(i_id_partitioning, ARRAY[i_id_parent_partitioning], i_by_user) AS LTP
+    INTO _link_status, _link_status_text;
+    IF _link_status IN (32, 33) THEN
+        status := _link_status;
+        status_text := _link_status_text;
+        RETURN;
+    END IF;
+
+    --IF i_copy_additional_data is true,
+    --THEN copy additional data of parent to child
+    IF i_copy_additional_data THEN
+        SELECT
+            hstore(array_agg(PAD.ad_name), array_agg(PAD.ad_value)) AS Additional_Data
+        FROM
+            runs.get_partitioning_additional_data(i_id_parent_partitioning) AS PAD
+        INTO
+            _additional_data;
+        PERFORM 1 FROM runs.create_or_update_additional_data(i_id_partitioning, _additional_data, i_by_user);
+    END IF;
+
+    --IF i_copy_measurements is true,
+    --THEN copy measurements of parent to child (the child's own definitions win)
+    IF i_copy_measurements THEN
+        INSERT INTO runs.measure_definitions (fk_partitioning, measure_name, measured_columns, created_by)
+        SELECT i_id_partitioning, PMI.measure_name, PMI.measured_columns, i_by_user
+        FROM
+            runs.get_partitioning_measures_by_id(i_id_parent_partitioning) AS PMI
+        ON CONFLICT ON CONSTRAINT measure_definitions_unq DO NOTHING;
+    END IF;
+
+    status := 11;
+    status_text := 'OK';
+    RETURN;
+
+END;
+$$
+    LANGUAGE plpgsql VOLATILE SECURITY DEFINER
+    SET search_path = pg_catalog, public, pg_temp;
+
+ALTER FUNCTION runs.update_partitioning_parent(BIGINT, BIGINT, TEXT, BOOLEAN, BOOLEAN) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION runs.update_partitioning_parent(BIGINT, BIGINT, TEXT, BOOLEAN, BOOLEAN) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION runs.update_partitioning_parent(BIGINT, BIGINT, TEXT, BOOLEAN, BOOLEAN) TO atum_user;
+
+
+-- 2. Update runs.create_partitioning_with_parents
 CREATE OR REPLACE FUNCTION runs.create_partitioning_with_parents(
     IN  i_partitioning              JSONB,
     IN  i_by_user                   TEXT,
@@ -37,7 +167,7 @@ $$
 --      parents are linked to it (if they are not linked yet) and the id and the STORED author (created_by) of the
 --      existing partitioning are returned, never the caller.
 --
---      Linking (new and existing partitioning alike) is delegated to flows._link_to_parents: a self-link or a
+--      Linking (new and existing partitioning alike) is delegated to lineage.link_to_parents: a self-link or a
 --      cycle is rejected with status 32 and an existing partitioning that already has descendants is refused with
 --      status 33 (a link that is not needed yet is no error, see below) before anything is written; when every
 --      parent is already an ancestor the call takes a lock-free fast path; otherwise it takes the global advisory
@@ -137,8 +267,9 @@ BEGIN
 
     -- all linking code (self-link / cycle / has-descendants rejection, lock-free fast path, global advisory lock)
     -- lives in the shared helper; it writes nothing when it returns 32 or 33
+    -- CHANGED: flows._link_to_parents -> lineage.link_to_parents
     SELECT LTP.status, LTP.status_text
-    FROM flows._link_to_parents(_child_id, _parent_ids, i_by_user) AS LTP
+    FROM lineage.link_to_parents(_child_id, _parent_ids, i_by_user) AS LTP
     INTO _link_status, _link_status_text;
 
     IF _link_status IN (32, 33) THEN
@@ -200,3 +331,9 @@ SET search_path = pg_catalog, public, pg_temp;
 ALTER FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) OWNER TO atum_owner;
 REVOKE EXECUTE ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) TO atum_user;
+
+COMMENT ON FUNCTION runs.update_partitioning_parent(BIGINT, BIGINT, TEXT, BOOLEAN, BOOLEAN) IS
+'Updates parent-child lineage relationship. Now calls lineage.link_to_parents (updated in V0.10.0.18)';
+
+COMMENT ON FUNCTION runs.create_partitioning_with_parents(JSONB, TEXT, BIGINT[], BOOLEAN) IS
+'Creates partitioning with parent links. Now calls lineage.link_to_parents (updated in V0.10.0.18)';

@@ -64,11 +64,30 @@ trait PartitioningController {
     partitioningParentPatchDTO: PartitioningParentPatchDTO
   ): IO[ErrorResponse, Unit]
 
-
   def getPartitioningAncestors(
     partitioningId: Long,
     limit: Int,
     offset: Long
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
+
+  def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
+
+  def getPartitioningParents(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]]
+
+  def getPartitioningChildren(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ChildPartitioningDTO]]
+
+  def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: Option[String],
+    depth: Option[Int]
+  ): IO[ErrorResponse, SingleSuccessResponse[LineageGraphDTO]]
 
 }
