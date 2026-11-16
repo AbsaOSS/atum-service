@@ -17,21 +17,10 @@
 -------------------------------------------------------------------------------
 -- Create lineage schema for partitioning parent-child relationships
 --
--- Context:
---   Lineage functionality was initially developed in flows and runs schemas.
---   This migration consolidates lineage-specific objects into a dedicated
---   schema for better semantic organization and clearer boundaries.
---
--- Objects to be migrated here:
---   - flows.partitioning_edges table (direct parent-child edges)
---   - flows._link_to_parents function (made public as link_to_parents)
---   - flows.get_direct_parents, get_direct_children, get_partitioning_lineage_graph
---   - runs.get_partitioning_ancestors
---
 -- Design:
 --   The lineage schema holds the source of truth for partitioning relationships.
---   Edges are explicit and forward-only. The flows schema will eventually be retired, with lineage as the primary
---   relationship tracking mechanism.
+--   Edges are explicit and forward-only. The flows schema will eventually be retired,
+--   with lineage as the primary relationship tracking mechanism.
 -------------------------------------------------------------------------------
 
 CREATE SCHEMA IF NOT EXISTS lineage;
