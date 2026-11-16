@@ -32,7 +32,6 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 
 // Returns the complete lineage graph (nodes + edges) for a partitioning.
-// Migrated from flows.get_partitioning_lineage_graph to lineage.get_partitioning_lineage_graph in v0.11.0
 class GetPartitioningLineageGraph(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieSingleResultFunctionWithStatus[GetPartitioningLineageGraphArgs, Option[LineageGraphResult], Task](
       args =>

@@ -40,8 +40,6 @@ import java.time.ZonedDateTime
 // the DB function returns zero rows when the partitioning exists but has no parents (-> empty Seq, success),
 // and a single status-41 row when the partitioning does not exist (-> StatusException -> NotFound in the
 // repository layer). No pagination: direct parents are few and the DB function returns them all.
-//
-// Migrated from flows.get_direct_parents to lineage.get_direct_parents in v0.11.0
 class GetDirectParents(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[Long, Option[GetDirectParentsResult], Task](
       partitioningId => Seq(fr"$partitioningId")

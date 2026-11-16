@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-DROP FUNCTION IF EXISTS flows.get_direct_parents(BIGINT);
-
 CREATE OR REPLACE FUNCTION lineage.get_direct_parents(
     IN  i_partitioning_id   BIGINT,
     OUT status              INTEGER,
@@ -97,8 +95,4 @@ REVOKE EXECUTE ON FUNCTION lineage.get_direct_parents(BIGINT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION lineage.get_direct_parents(BIGINT) TO atum_user;
 
 COMMENT ON FUNCTION lineage.get_direct_parents(BIGINT) IS
-'Returns the direct (immediate) parents of a partitioning.
-Used by GET /api/v2/partitionings/{id}/parents endpoint.
-Migrated from flows.get_direct_parents in V0.10.0.14';
-
-
+'Returns the direct (immediate) parents of a partitioning.';

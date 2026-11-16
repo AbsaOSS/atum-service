@@ -32,7 +32,6 @@ import java.util.UUID
  *  4. Cycle detection still works with edges table
  *  5. Enrichment of ancestor/descendant queries with relationship types
  *
- *  Migrated from flows package to lineage package in v0.11.0
  */
 class PartitioningEdgesIntegrationTests extends DBTestSuite {
 

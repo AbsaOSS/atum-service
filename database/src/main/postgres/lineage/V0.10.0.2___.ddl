@@ -30,8 +30,7 @@
 --
 -- Design:
 --   The lineage schema holds the source of truth for partitioning relationships.
---   Edges are explicit and forward-only (v0.11.0+, no historical backfill).
---   The flows schema will eventually be retired, with lineage as the primary
+--   Edges are explicit and forward-only. The flows schema will eventually be retired, with lineage as the primary
 --   relationship tracking mechanism.
 -------------------------------------------------------------------------------
 

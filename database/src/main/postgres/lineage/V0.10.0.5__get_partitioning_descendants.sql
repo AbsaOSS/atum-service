@@ -115,3 +115,6 @@ $$
 ALTER FUNCTION lineage.get_partitioning_descendants(BIGINT, INT, BIGINT) OWNER TO atum_owner;
 REVOKE EXECUTE ON FUNCTION lineage.get_partitioning_descendants(BIGINT, INT, BIGINT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION lineage.get_partitioning_descendants(BIGINT, INT, BIGINT) TO atum_user;
+
+COMMENT ON FUNCTION lineage.get_partitioning_descendants(BIGINT, INT, BIGINT) IS
+'Returns the descendants of a partitioning using the transitive closure (flows.partitioning_to_flow).';

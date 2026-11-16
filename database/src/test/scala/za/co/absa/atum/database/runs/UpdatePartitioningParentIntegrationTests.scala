@@ -315,25 +315,25 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     assert(ancestorIds(c) == Set(a, b))
   }
 
-  test("Child missing: 41 and nothing is written (both flags true)") {
+  test("Child missing: 42 and nothing is written (both flags true)") {
     val parent = seedParentWithData("missing-child")
     val before = fourTableCounts()
 
     val result = patch(unknownId, parent, copyMeasurements = true, copyAdditionalData = true)
 
-    assert(result.status == 41)
+    assert(result.status == 42)
     assert(result.statusText == "Child Partitioning not found")
     assert(fourTableCounts() == before)
     assert(advisoryLocksHeld() == 0)
   }
 
-  test("Parent missing: 42 and nothing is written (both flags true)") {
+  test("Parent missing: 41 and nothing is written (both flags true)") {
     val child = seed("missing-parent")
     val before = fourTableCounts()
 
     val result = patch(child, unknownId, copyMeasurements = true, copyAdditionalData = true)
 
-    assert(result.status == 42)
+    assert(result.status == 41)
     assert(result.statusText == "Parent Partitioning not found")
     assert(fourTableCounts() == before)
     assert(advisoryLocksHeld() == 0)

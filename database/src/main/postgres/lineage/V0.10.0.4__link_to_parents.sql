@@ -40,8 +40,8 @@
 --      14 - Nothing has changed (fully idempotent retry)
 --      32 - Parent partitioning would create a cycle
 --      33 - Partitioning already has descendants and cannot be linked under new parents
---      41 - Child partitioning not found
---      42 - Parent partitioning not found
+--      41 - Parent partitioning not found
+--      42 - Child partitioning not found
 --
 -- Fast path (no lock): every requested parent is already an ancestor via the closure; only missing
 --   lineage.partitioning_edges rows are backfilled (idempotent, ON CONFLICT DO NOTHING).
@@ -81,20 +81,23 @@ BEGIN
     -- check child partitioning exists
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_child_id;
     IF NOT FOUND THEN
-        status := 41;
-        status_text := 'Child partitioning not found';
+        status := 42;
+        status_text := 'Child partitioning not found: ' || i_child_id::TEXT;
         RETURN;
     END IF;
 
-    -- check existence of all parents
-    PERFORM 1
-    FROM unnest(_parent_ids) AS PID(id)
-    WHERE NOT EXISTS (
-        SELECT 1 FROM runs.partitionings P WHERE P.id_partitioning = PID.id
+    -- check existence of all parents, reporting every missing id
+    _offending := ARRAY(
+        SELECT PID.id
+        FROM unnest(_parent_ids) AS PID(id)
+        WHERE NOT EXISTS (
+            SELECT 1 FROM runs.partitionings P WHERE P.id_partitioning = PID.id
+        )
+        ORDER BY PID.id
     );
-    IF FOUND THEN
-        status := 42;
-        status_text := 'Parent partitioning not found';
+    IF cardinality(_offending) > 0 THEN
+        status := 41;
+        status_text := 'Parent partitioning not found: ' || array_to_string(_offending, ',');
         RETURN;
     END IF;
 
@@ -117,42 +120,29 @@ BEGIN
         )
     );
 
-    -- fast path (no lock): every parent is already an ancestor; only a missing direct edge may need to
-    -- be backfilled (see migration header for why this can never touch the closure, no lock required)
-    IF cardinality(_new_parents) = 0 THEN
-        INSERT INTO lineage.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
-        SELECT i_child_id, PID.id, i_by_user
-        FROM unnest(_parent_ids) AS PID(id)
-        ON CONFLICT (fk_child_partitioning, fk_parent_partitioning) DO NOTHING;
-        GET DIAGNOSTICS _rows_edges = ROW_COUNT;
+    -- slow path: only entered when at least 1 requested parent is genuinely new. One global exclusive
+    -- transaction-scoped lock. READ COMMITTED only: every statement below gets a fresh snapshot, so what
+    -- a concurrent writer committed before releasing the lock is visible here.
+    IF cardinality(_new_parents) > 0 THEN
+        PERFORM pg_advisory_xact_lock(hashtextextended('atum.flows.link_to_parents', 0));
 
-        IF _rows_edges > 0 THEN
-            status := 11;
-            status_text := 'Partitioning linked to parents';
-        ELSE
-            status := 14;
-            status_text := 'Nothing has changed';
-        END IF;
-        RETURN;
+        -- re-check under the lock (ancestor-only, as above): a concurrent writer may have linked the
+        -- child to every parent while this call waited (e.g. an idempotent retry); it must fall through
+        -- to the backfill-only path below even if the child meanwhile got descendants
+        _new_parents := ARRAY(
+            SELECT PID.id
+            FROM unnest(_parent_ids) AS PID(id)
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM flows.flows F
+                INNER JOIN flows.partitioning_to_flow PTF ON PTF.fk_flow = F.id_flow
+                WHERE F.fk_primary_partitioning = PID.id AND PTF.fk_partitioning = i_child_id
+            )
+        );
     END IF;
 
-    -- slow path: one global exclusive transaction-scoped lock. READ COMMITTED only: every statement below gets a
-    -- fresh snapshot, so what a concurrent writer committed before releasing the lock is visible here.
-    PERFORM pg_advisory_xact_lock(hashtextextended('atum.flows.link_to_parents', 0));
-
-    -- no-op re-check under the lock (ancestor-only, as above): a concurrent writer may have linked the
-    -- child to every parent while this call waited (e.g. an idempotent retry); it must stay on the
-    -- lock-free-equivalent edge-backfill-only path even if the child meanwhile got descendants
-    _new_parents := ARRAY(
-        SELECT PID.id
-        FROM unnest(_parent_ids) AS PID(id)
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM flows.flows F
-            INNER JOIN flows.partitioning_to_flow PTF ON PTF.fk_flow = F.id_flow
-            WHERE F.fk_primary_partitioning = PID.id AND PTF.fk_partitioning = i_child_id
-        )
-    );
+    -- fast path (lock-free) or lock-satisfied no-op: every parent is already an ancestor; only a missing
+    -- direct edge may need to be backfilled (see migration header for why this can never touch the closure)
     IF cardinality(_new_parents) = 0 THEN
         INSERT INTO lineage.partitioning_edges (fk_child_partitioning, fk_parent_partitioning, created_by)
         SELECT i_child_id, PID.id, i_by_user
@@ -238,8 +228,4 @@ GRANT EXECUTE ON FUNCTION lineage.link_to_parents(BIGINT, BIGINT[], TEXT) TO atu
 COMMENT ON FUNCTION lineage.link_to_parents(BIGINT, BIGINT[], TEXT) IS
 'Link a child partitioning to one or more parent partitionings.
 Maintains both the explicit edge table (lineage.partitioning_edges) and
-the transitive closure (flows.partitioning_to_flow).
-
-Migrated from flows._link_to_parents and made public in V0.10.0.13';
-
-
+the transitive closure (flows.partitioning_to_flow).';

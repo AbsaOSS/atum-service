@@ -37,7 +37,6 @@ import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 import java.time.ZonedDateTime
 
 // Direct (immediate) children of a partitioning, from lineage.partitioning_edges.
-// Migrated from flows.get_direct_children to lineage.get_direct_children in v0.11.0
 class GetDirectChildren(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[Long, Option[GetDirectChildrenResult], Task](partitioningId =>
       Seq(fr"$partitioningId")

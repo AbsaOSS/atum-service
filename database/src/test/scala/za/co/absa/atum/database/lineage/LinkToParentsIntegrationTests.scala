@@ -36,8 +36,6 @@ import scala.util.Random
  *   - every fixture graph is seeded WITHOUT the helper (`runs.create_partitioning` of the v1 path takes no lock),
  *   - all `advisoryLocksHeld() == 0` assertions precede the first slow-path `link_to_parents` call of a test,
  *   - the slow-lock test asserts `== 1` as its very last step.
- *
- *  Migrated from flows._link_to_parents to lineage.link_to_parents in v0.11.0
  */
 class LinkToParentsIntegrationTests extends DBTestSuite {
 

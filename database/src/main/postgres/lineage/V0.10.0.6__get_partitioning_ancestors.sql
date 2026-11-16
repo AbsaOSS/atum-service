@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-DROP FUNCTION IF EXISTS runs.get_partitioning_ancestors(BIGINT, INT, BIGINT);
-
 CREATE OR REPLACE FUNCTION lineage.get_partitioning_ancestors(
     IN i_id_partitioning BIGINT,
     IN i_limit INT DEFAULT 10,
@@ -121,7 +119,4 @@ REVOKE EXECUTE ON FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGIN
 GRANT EXECUTE ON FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT) TO atum_user;
 
 COMMENT ON FUNCTION lineage.get_partitioning_ancestors(BIGINT, INT, BIGINT) IS
-'Returns the ancestors of a partitioning using the transitive closure (flows.partitioning_to_flow).
-Migrated from runs.get_partitioning_ancestors in V0.10.0.17';
-
-
+'Returns the ancestors of a partitioning using the transitive closure (flows.partitioning_to_flow).';

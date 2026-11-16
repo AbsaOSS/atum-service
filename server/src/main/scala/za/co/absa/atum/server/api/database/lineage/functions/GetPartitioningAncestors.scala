@@ -34,7 +34,6 @@ import zio.{Task, URLayer, ZIO, ZLayer}
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
 
 // Returns the ancestors of a partitioning using the transitive closure (flows.partitioning_to_flow).
-// Migrated from runs.get_partitioning_ancestors to lineage.get_partitioning_ancestors in v0.11.0
 class GetPartitioningAncestors(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
     extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningAncestorsArgs, Option[
       GetPartitioningAncestorsResult

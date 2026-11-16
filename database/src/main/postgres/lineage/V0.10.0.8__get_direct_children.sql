@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-DROP FUNCTION IF EXISTS flows.get_direct_children(BIGINT);
-
 CREATE OR REPLACE FUNCTION lineage.get_direct_children(
     IN  i_partitioning_id   BIGINT,
     OUT status              INTEGER,
@@ -95,8 +93,4 @@ GRANT EXECUTE ON FUNCTION lineage.get_direct_children(BIGINT) TO atum_user;
 
 COMMENT ON FUNCTION lineage.get_direct_children(BIGINT) IS
 'Returns the direct (immediate) children of a partitioning.
-Used by GET /api/v2/partitionings/{id}/children endpoint.
-Returns empty set if partitioning has no children (not an error).
-Migrated from flows.get_direct_children in V0.10.0.15';
-
-
+Returns empty set if partitioning has no children (not an error).';

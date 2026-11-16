@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-DROP FUNCTION IF EXISTS flows.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER);
-
 CREATE OR REPLACE FUNCTION lineage.get_partitioning_lineage_graph(
     IN  i_partitioning_id   BIGINT,
     IN  i_direction         TEXT DEFAULT 'both',
@@ -163,8 +161,4 @@ REVOKE EXECUTE ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, 
 GRANT EXECUTE ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) TO atum_user;
 
 COMMENT ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) IS
-'Returns the lineage graph (nodes + edges) for a partitioning.
-Used by GET /api/v2/partitionings/{id}/lineage endpoint.
-Migrated from flows.get_partitioning_lineage_graph in V0.10.0.16';
-
-
+'Returns the lineage graph (nodes + edges) for a partitioning.';

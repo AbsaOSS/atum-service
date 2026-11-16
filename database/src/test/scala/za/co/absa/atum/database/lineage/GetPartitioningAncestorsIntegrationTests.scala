@@ -26,8 +26,6 @@ import scala.collection.mutable
 
 /**
  * Integration tests for lineage.get_partitioning_ancestors
- *
- * Migrated from runs.get_partitioning_ancestors to lineage.get_partitioning_ancestors in v0.11.0
  */
 class GetPartitioningAncestorsIntegrationTests extends DBTestSuite {
 
