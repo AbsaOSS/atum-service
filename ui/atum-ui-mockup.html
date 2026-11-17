@@ -2,1287 +2,1994 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Atum · Audit Workbench</title>
+<title>Atum · Lineage &amp; Control Measures</title>
 <style>
-:root{
-  --bg:#f3f5f8;--panel:#fff;--line:#e3e8ef;--line2:#eef1f5;--text:#111827;--sub:#4b5563;--muted:#6b7280;
-  --pri:#0b5cad;--pri-50:#eaf2fb;--pri-100:#d3e4f7;--navy:#0c1a2e;
-  --amber:#b45309;--amber-50:#fff7e6;--amber-100:#fde7b0;
-  --green:#15803d;--green-50:#eafaf0;--green-100:#bbf7d0;
-  --purple:#6d28d9;--purple-50:#f5f3ff;--purple-100:#ddd6fe;
-  --mono:"SF Mono",Menlo,Consolas,monospace;
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-subtle: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --sidebar-bg: #0f172a;
+  --sidebar-hover: #1e293b;
+  --primary: #0f4c81;
+  --primary-hover: #0c3d69;
+  --primary-bg: #eff6ff;
+  --primary-border: #93c5fd;
+  --success: #15803d;
+  --warn: #b45309;
+  --warn-bg: #fffbeb;
+  --warn-border: #f59e0b;
+  --mono: "SF Mono", "JetBrains Mono", "Ubuntu Sans Mono", Menlo, Consolas, monospace;
+  --sans: "Inter", "Ubuntu Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-*{box-sizing:border-box}
-body{margin:0;font:13px/1.45 Inter,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
-button,select,input{font:inherit}
-/* header */
-.hdr{height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px 0 0;gap:14px;position:sticky;top:0;z-index:20}
-.brand{width:64px;height:56px;background:var(--navy);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;flex:none}
-.brand span{color:#f0b429}
-.product{font-weight:650;font-size:15px;white-space:nowrap}.product small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:-2px}
-.search{flex:0 1 420px;margin-left:12px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:0 10px;height:34px;background:#f9fafb}
-.search input{border:0;background:transparent;outline:none;width:100%;min-width:0}
-.search kbd{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px;background:#fff}
-.hright{margin-left:auto;display:flex;align-items:center;gap:10px}
-.winpill{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:0 10px;height:34px;background:#fff;font-size:12px}
-.winpill select{border:0;background:transparent;font-weight:600;color:var(--text);outline:none;cursor:pointer}
-.btn{height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:0 11px;cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:6px;font-weight:500;font-size:12px;white-space:nowrap}
-.btn:hover{background:#f9fafb;border-color:#cbd5e1}
-.btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}.btn.primary:hover{background:#094c90}
-.btn.sm{height:26px;padding:0 8px;font-size:11.5px}
-/* shell */
-.app{display:flex;min-height:calc(100vh - 56px - 28px)}
-.rail{width:64px;background:var(--navy);display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:6px;flex:none}
-.rail a{width:50px;height:48px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#93a3bd;cursor:pointer;font-size:9.5px;gap:3px;text-align:center}
-.rail a svg{width:18px;height:18px}
-.rail a:hover{background:#16273f;color:#fff}.rail a.on{background:#1b3a63;color:#fff;box-shadow:inset 3px 0 #f0b429}
-.content{flex:1;min-width:0;padding:16px 20px 24px}
-/* page head */
-.crumbs{font-size:12px;color:var(--muted)}.crumbs a{color:var(--pri);cursor:pointer}.crumbs b{color:var(--sub);font-weight:500}
-.phead{display:flex;align-items:flex-start;gap:16px;margin:4px 0 12px;flex-wrap:wrap}
-.phead h1{font-size:19px;margin:0;font-weight:650;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-.chip{font-family:var(--mono);font-size:11px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 7px;color:var(--sub);display:inline-flex;align-items:center;gap:4px}
-.chip b{color:var(--text);font-weight:600}
-.chip.tog{cursor:pointer}.chip.tog:hover{border-color:var(--pri)}
-.chip.off{opacity:.45;text-decoration:line-through;background:#f8fafc}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
-.seg button{border:0;background:transparent;height:28px;padding:0 10px;cursor:pointer;color:var(--sub);font-size:12px}
-.seg button+button{border-left:1px solid var(--line)}.seg button.on{background:var(--pri-50);color:var(--pri);font-weight:600}
-/* kpis */
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 14px}
-.kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-.kpi .v{font-size:21px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
-.kpi .s{font-size:11.5px;color:var(--sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* grid & panels */
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 450px;gap:14px;align-items:start}
-@media (max-width:1180px){.grid{grid-template-columns:1fr}}
-.panel{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.inspector-panel{position:sticky;top:72px;max-height:calc(100vh - 96px);display:flex;flex-direction:column}
-.inspector-scroll{overflow-y:auto;flex:1}
-.ph{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line2);min-height:44px;flex-wrap:wrap}
-.ph h2{font-size:13px;margin:0;font-weight:650}.ph .sub{color:var(--muted);font-size:12px}
-.ph .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
-.badge{font-size:11px;font-weight:600;border-radius:10px;padding:1px 8px;white-space:nowrap;background:#f1f5f9;color:var(--sub);border:1px solid var(--line);display:inline-flex;align-items:center;gap:4px}
-.badge.warn{background:var(--amber-50);color:var(--amber);border-color:var(--amber-100)}
-.badge.ok{background:var(--green-50);color:var(--green);border-color:var(--green-100)}
-.badge.manual{background:var(--purple-50);color:var(--purple);border-color:var(--purple-100)}
-.badge.pri{background:var(--pri-50);color:var(--pri);border-color:var(--pri-100)}
-.appchip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.appchip b{font-weight:600}
-/* graph */
-.graph-wrap{overflow-x:auto;padding:6px 8px 0}
-.node{cursor:pointer}.node:hover .card{stroke:#64748b}
-.edge-hit{cursor:pointer}.edge-hit:hover path.evis{stroke-width:3}
-.exp-btn{cursor:pointer}.exp-btn:hover circle{fill:var(--pri);stroke:var(--pri)}.exp-btn:hover text{fill:#fff}
-.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);padding:8px 14px;border-top:1px solid var(--line2);flex-wrap:wrap;align-items:center}
-/* timeline */
-.tl{display:flex;align-items:flex-start;padding:14px 14px 10px;overflow-x:auto;gap:4px}
-.st{flex:1;min-width:130px;text-align:center;position:relative;cursor:pointer;padding:0 6px 6px;border-radius:6px}
-.st:hover .c{box-shadow:0 0 0 4px var(--pri-100)}
-.st:before{content:"";position:absolute;top:8px;left:0;right:0;height:2px;background:var(--line)}
-.st:first-child:before{left:50%}.st:last-child:before{right:50%}.st:only-child:before{display:none}
-.c{width:18px;height:18px;border-radius:50%;margin:0 auto 6px;position:relative;background:#fff;border:2px solid #94a3b8}
-.st.on .c{border-color:var(--pri);background:var(--pri);box-shadow:0 0 0 4px var(--pri-100)}
-.st b{font-weight:600}.st .t{font-family:var(--mono);font-size:11px;color:var(--muted)}
-/* tables */
-.tbl-wrap{overflow-x:auto;width:100%}
-table{border-collapse:collapse;width:100%}
-th,td{padding:7px 10px;border-bottom:1px solid var(--line2);text-align:left;white-space:nowrap;font-size:12px;vertical-align:top}
-td.wrap{white-space:normal}
-th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;background:#fafbfc}
-.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11.5px}
-td.chg{background:var(--amber-50);color:var(--amber);font-weight:600}
-td.okcell{background:var(--green-50);color:var(--green);font-weight:600}
-th.cpsel{color:var(--pri);box-shadow:inset 0 -2px var(--pri)}
-.muted{color:var(--muted)}
-th.sort{cursor:pointer}th.sort:hover{color:var(--text)}
-tr.click{cursor:pointer}tr.click:hover td{background:#f8fafc}tr.selrow td{background:var(--pri-50)}
-/* inspector */
-.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px;flex:none;background:#fff}
-.tabs button{border:0;background:none;padding:11px 10px;cursor:pointer;color:var(--sub);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:12px}
-.tabs button.on{color:var(--pri);border-bottom-color:var(--pri);font-weight:600}
-.alert{display:flex;gap:8px;background:var(--amber-50);border:1px solid var(--amber-100);color:#7c3a06;border-radius:6px;padding:8px 10px;font-size:12px;margin:10px 14px}
-.info{display:flex;gap:8px;background:#f8fafc;border:1px solid var(--line);color:var(--sub);border-radius:6px;padding:8px 10px;font-size:12px;margin:10px 14px}
-.okbox{display:flex;gap:8px;background:var(--green-50);border:1px solid var(--green-100);color:#14532d;border-radius:6px;padding:8px 10px;font-size:12px;margin:10px 14px}
-dl.kv{display:grid;grid-template-columns:135px 1fr;margin:0;padding:4px 14px 10px}
-dl.kv dt{color:var(--muted);font-size:11.5px;padding:5px 0;border-bottom:1px solid var(--line2)}
-dl.kv dd{margin:0;padding:5px 0;border-bottom:1px solid var(--line2);font-family:var(--mono);font-size:11.5px;word-break:break-word}
-.sec{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;padding:12px 14px 2px;display:flex;align-items:center;justify-content:space-between}
-.rel{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line2);cursor:pointer;font-size:12px}
-.rel:hover{background:#f8fafc}.rel .arrow{color:var(--muted);margin-left:auto}
-/* search builder */
-.qbuilder{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;background:#fafbfc;border-bottom:1px solid var(--line2);align-items:center}
-.qbuilder input{height:28px;border:1px solid var(--line);border-radius:5px;padding:0 8px;font-size:12px;font-family:var(--mono);background:#fff}
-.qurl{padding:6px 14px;font-family:var(--mono);font-size:11px;color:var(--sub);background:#f8fafc;border-bottom:1px solid var(--line2);word-break:break-all}
-.pager{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:var(--muted);font-size:12px;border-top:1px solid var(--line2)}
-/* modal */
-.modal-bg{position:fixed;inset:0;background:rgba(12,26,46,.45);display:flex;align-items:center;justify-content:center;z-index:50}
-.modal{background:#fff;border-radius:10px;width:min(720px,92vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden}
-.modal pre{margin:0;padding:12px 14px;background:#0f172a;color:#e2e8f0;font-family:var(--mono);font-size:11.5px;overflow:auto;max-height:52vh}
-/* status bar */
-.status{height:28px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 16px;font-size:11px;color:var(--muted)}
-.status .dotg{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:5px}
-.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;font-size:11px;padding:6px 9px;border-radius:5px;display:none;font-family:var(--mono);z-index:40;white-space:pre;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:420px}
-.hidden{display:none!important}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 400 13px/1.45 var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+button, select, input { font: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── App Shell with Left Sidebar ── */
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 176px;
+  background: var(--sidebar-bg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  border-right: 1px solid #1e293b;
+}
+.brand {
+  height: 52px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  user-select: none;
+}
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #be123c 0%, #881337 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  flex: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.brand-text { display: flex; flex-direction: column; }
+.brand-name { font-weight: 600; font-size: 14px; line-height: 1.15; }
+.brand-sub { font-size: 11px; color: #94a3b8; }
+
+.side-nav {
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.side-link {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #cbd5e1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+.side-link svg { width: 16px; height: 16px; flex: none; opacity: 0.85; }
+.side-link:hover { background: var(--sidebar-hover); color: #fff; }
+.side-link.active {
+  background: #1e293b;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 #38bdf8;
+}
+.side-count {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.12);
+  color: #e2e8f0;
+  font-weight: 600;
+}
+.side-footer {
+  margin-top: auto;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ── Main Area & Topbar ── */
+.main-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.topbar {
+  height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.crumbs {
+  font-size: 14px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.crumbs a {
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+.crumbs a:hover { color: var(--primary); }
+.crumbs strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.control-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 0 10px;
+  height: 32px;
+  font-size: 12.5px;
+}
+.control-pill span { color: var(--text-muted); }
+.control-pill select {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn:hover:not(:disabled) { background: var(--surface-subtle); }
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-sm { height: 27px; padding: 0 9px; font-size: 12px; font-weight: 400; }
+
+.container {
+  padding: 14px 20px 24px;
+  max-width: 1360px;
+}
+
+/* ── 3 Focused KPI Cards ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.kpi-card.clickable { cursor: pointer; }
+.kpi-card.clickable:hover { border-color: var(--primary); box-shadow: 0 2px 6px rgba(15, 76, 129, 0.08); }
+.kpi-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.kpi-val {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 2px 0 1px;
+}
+.kpi-sub { font-size: 12px; color: var(--text-muted); }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.card-toolbar {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fcfdff;
+}
+.toolbar-meta { font-size: 12px; color: var(--text-muted); }
+
+/* ── Status & Producer Indicators ("Quiet when OK, loud when not") ── */
+.badge-shift {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--warn-bg);
+  color: var(--warn);
+  border: 1px solid var(--warn-border);
+  white-space: nowrap;
+}
+.status-consistent {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.status-consistent svg {
+  color: var(--success);
+  flex: none;
+}
+.prod-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.prod-monogram {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+/* ── Filter Bar (Datasets) ── */
+.filter-bar {
+  padding: 10px 16px;
+  background: #fcfdff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.search-input {
+  flex: 0 1 280px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 0 10px;
+  height: 32px;
+}
+.search-input input { border: 0; outline: none; width: 100%; font-size: 12.5px; background: transparent; }
+.pill-group {
+  display: inline-flex;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  padding: 2px;
+  border-radius: 6px;
+  gap: 2px;
+}
+.pill-btn {
+  border: 0;
+  background: transparent;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pill-btn.active {
+  background: #fff;
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  padding: 8px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+th {
+  background: #f8fafc;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+tr.row-link { cursor: pointer; transition: background 0.1s; }
+tr.row-link:hover td { background: #f8fafc; }
+tr.row-link:hover .row-chevron { color: var(--primary); transform: translateX(2px); }
+tr.row-selected td { background: var(--primary-bg); }
+tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
+.row-chevron {
+  color: var(--text-muted);
+  font-weight: 600;
+  display: inline-block;
+  transition: transform 0.12s, color 0.12s;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mono-id {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.cell-changed {
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-weight: 600;
+}
+.delta-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--warn);
+  line-height: 1.15;
+}
+
+/* ── Lineage Graph Canvas ── */
+.lineage-canvas {
+  background: radial-gradient(#cbd5e1 1px, transparent 1px) 0 0 / 18px 18px #fcfdff;
+  padding: 8px 12px;
+  overflow-x: auto;
+}
+.resize-handle {
+  height: 7px;
+  background: #f8fafc;
+  border-top: 1px solid var(--border);
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.resize-handle::after {
+  content: "";
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+.resize-handle:hover::after { background: var(--primary); }
+.node-group { cursor: pointer; transition: opacity 0.15s; }
+.node-group:hover .node-box { stroke: var(--primary); }
+.collapsed-chain {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  background: #fcfdff;
+  flex-wrap: wrap;
+}
+.chain-pill {
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+}
+.chain-pill.active {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Inspector Header & Tabs ── */
+.inspector-head {
+  padding: 10px 16px 0;
+  background: #fcfdff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.inspector-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+.inspector-title h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+.subtabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.subtab {
+  border: 0;
+  background: transparent;
+  padding: 7px 12px 9px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+.subtab:hover { color: var(--text); }
+.subtab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.callout {
+  padding: 7px 16px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.callout-warn { background: var(--warn-bg); color: #78350f; }
+.callout-ok { background: #f8fafc; color: var(--text-secondary); }
+
+/* ── Metadata Layout ── */
+.meta-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #fcfdff;
+}
+.meta-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.meta-card-head {
+  padding: 7px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.meta-card table th, .meta-card table td {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.meta-card table tr:last-child td { border-bottom: 0; }
+.key-idx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+.sec-heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 6px;
+}
+.prop-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-right: 4px;
+  color: var(--text-secondary);
+}
+.copy-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: 5px;
+}
+.copy-btn:hover { color: var(--primary); border-color: var(--primary); }
+
+/* ── Modal (Audit Evidence Report) ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 20px;
+}
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  width: min(900px, 95vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.modal-body { padding: 16px 20px; overflow-y: auto; }
+.modal-footer {
+  padding: 10px 20px;
+  background: #f8fafc;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.evidence-box {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 14px;
+  background: #f8fafc;
+}
+.code-block {
+  margin: 0;
+  padding: 14px 16px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: var(--mono);
+  font-size: 12px;
+  border-radius: 7px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.hidden { display: none !important; }
+@media print {
+  .sidebar, .topbar, #lineageView, #catalogView, .modal-backdrop .btn, #modalModeGroup { display: none !important; }
+  .modal-backdrop { position: static; background: none; padding: 0; }
+  .modal { box-shadow: none; width: 100%; max-height: none; }
+}
 </style>
 </head>
 <body>
-<header class="hdr">
-  <div class="brand">A<span>●</span></div>
-  <div class="product">Atum <small>Audit Workbench · API v2</small></div>
-  <label class="search">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input id="quickFilter" placeholder="Filter by key, value, partitioning ID, or author...">
-    <kbd>/</kbd>
-  </label>
-  <div class="hright">
-    <div class="winpill" title="Checkpoint process_start_time window [from, to)">
-      <span class="muted">Window:</span>
-      <select id="winPreset">
-        <option value="24h">Last 24h (fixed to)</option>
-        <option value="7d" selected>Last 7d (fixed to)</option>
-        <option value="14d">Last 14d (fixed to)</option>
-        <option value="open">Since 7d ago (to omitted → +∞)</option>
-      </select>
-    </div>
-    <button class="btn" id="exportBtn">Export Audit Snapshot</button>
-  </div>
-</header>
 
-<div class="app">
-  <nav class="rail">
-    <a data-tab="discover" title="Discover partitionings (GET /partitionings/search)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Discover
-    </a>
-    <a data-tab="lineage" title="Lineage & Reconciliation">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 6c5 0 4 6 9 6M7.5 18c5 0 4-6 9-6"/></svg>Lineage
-    </a>
-    <a data-tab="flow" title="Flow Timeline (GET /flows/{flowId}/checkpoints)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h14"/><circle cx="18" cy="12" r="2"/></svg>Flow
-    </a>
-  </nav>
-
-  <main class="content">
-    <div class="crumbs" id="crumbs"></div>
-    <div class="phead">
-      <div style="min-width:0">
-        <h1 id="title"></h1>
-        <div class="chips" id="chips"></div>
+<div class="shell">
+  <!-- LEFT NAVIGATION SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand" id="brandHome" tabindex="0" role="button">
+      <div class="brand-mark">A</div>
+      <div class="brand-text">
+        <span class="brand-name">Atum</span>
+        <span class="brand-sub">Lineage &amp; Controls</span>
       </div>
     </div>
 
-    <section class="kpis" id="kpis"></section>
+    <nav class="side-nav">
+      <button class="side-link" data-view="catalog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="10" x2="9" y2="20"/></svg>
+        Datasets
+        <span class="side-count" id="navDatasetCount">7</span>
+      </button>
+      <button class="side-link" data-view="lineage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 6c5 0 4 6 9 6M7.5 18c5 0 4-6 9-6"/></svg>
+        Lineage
+      </button>
+    </nav>
 
-    <!-- DISCOVER VIEW (GET /api/v2/partitionings/search) -->
-    <section id="discoverView" class="panel hidden">
-      <div class="ph">
-        <h2>Partitioning discovery</h2>
-        <span class="sub">GET /api/v2/partitionings/search · distinct partitioning IDs</span>
-        <div class="r">
-          <label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
-            <input type="checkbox" id="lazyCpToggle" checked> Lazy-load latest checkpoint (visible page)
-          </label>
-          <label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
-            <input type="checkbox" id="latestFirstToggle" checked> <code>latest-first=true</code>
-          </label>
-        </div>
-      </div>
-      <div class="qbuilder">
-        <span class="muted" style="font-size:11.5px;font-weight:600">KEYS CONTAINMENT:</span>
-        <div id="keyChips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-        <input id="addKeyInput" placeholder="key" style="width:110px">
-        <input id="addValInput" placeholder="exact value" style="width:180px">
-        <button class="btn sm" id="addKeyBtn">+ Add key</button>
-        <button class="btn sm" id="presetGlueBtn" title="Example: filter Glue/Hive catalog table across dates">Preset: catalog_path</button>
-        <button class="btn sm" id="presetDateBtn" title="Example: filter logical date">Preset: info_date=2026-11-11</button>
-        <button class="btn sm" id="clearKeysBtn">Clear keys</button>
-      </div>
-      <div class="qurl" id="searchUrlPreview"></div>
-      <div id="openUpperWarn" class="alert hidden" style="margin:10px 14px">
-        <span>⚠</span>
-        <div><b>Upper bound <code>to</code> is omitted:</b> <code>runs.search_partitionings</code> evaluates <code>[from, +∞)</code>, so future-dated or clock-skewed checkpoints also qualify. Select a fixed <code>to</code> window for reproducible audits.</div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr>
-            <th>ID</th><th>Ordered partitioning keys</th><th>Author</th><th>Source type</th><th>Latest checkpoint (lazy)</th><th>UI hint</th>
-          </tr></thead>
-          <tbody id="discoverBody"></tbody>
-        </table>
-      </div>
-      <div class="pager">
-        <span id="discoverPageInfo"></span>
-        <div style="display:flex;gap:8px">
-          <button class="btn sm" id="discPrev">‹ Prev</button>
-          <button class="btn sm" id="discNext">Next ›</button>
-        </div>
-      </div>
-    </section>
+    <div class="side-footer">
+      <div>Atum Service v0.11</div>
+      <div>Environment: Production</div>
+    </div>
+  </aside>
 
-    <!-- LINEAGE & RECONCILIATION VIEW -->
-    <div id="lineageView" class="grid">
-      <div class="stack">
-        <section class="panel">
-          <div class="ph">
-            <h2>Lineage graph</h2>
-            <span class="sub" id="graphSub"></span>
-            <div class="r">
-              <span class="sub">Direction</span>
-              <div class="seg"><button data-dir="upstream">Upstream</button><button data-dir="downstream">Downstream</button><button data-dir="both">Both</button></div>
-              <span class="sub">Depth</span>
-              <div class="seg"><button data-depth="1">1</button><button data-depth="2">2</button><button data-depth="3">3</button><button data-depth="5">5</button></div>
+  <!-- MAIN CONTENT COLUMN -->
+  <div class="main-col">
+    <header class="topbar">
+      <div class="crumbs" id="topbarCrumbs"></div>
+
+      <div class="topbar-right">
+        <div class="control-pill">
+          <span>Window:</span>
+          <select id="windowSelect">
+            <option value="24h">Last 24 hours</option>
+            <option value="7d" selected>Last 7 days</option>
+            <option value="month">Current month</option>
+            <option value="30d">Last 30 days</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="exportReportBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Audit Evidence Report
+        </button>
+      </div>
+    </header>
+
+    <main class="container">
+
+      <!-- ================================================================= -->
+      <!-- VIEW 1: DATASETS DIRECTORY                                        -->
+      <!-- ================================================================= -->
+      <div id="catalogView" class="hidden">
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <section class="card">
+          <div class="filter-bar">
+            <label class="search-input">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="searchInput" placeholder="Filter by dataset or partitioning key...">
+            </label>
+
+            <div class="control-pill">
+              <span>Producer:</span>
+              <select id="prodSelect">
+                <option value="all">All producers (4)</option>
+                <option value="AqueDuct">AqueDuct</option>
+                <option value="Unify">Unify</option>
+                <option value="Mainframe Bridge">Mainframe Bridge</option>
+                <option value="RefData">RefData</option>
+              </select>
+            </div>
+
+            <div class="pill-group" id="statusFilterGroup" style="margin-left:auto">
+              <button class="pill-btn active" data-st="all">All datasets</button>
+              <button class="pill-btn" data-st="consistent">Consistent</button>
+              <button class="pill-btn" data-st="changed">Measure Shift</button>
             </div>
           </div>
-          <div id="legacyBanner" class="alert hidden"></div>
-          <div id="truncBanner" class="alert hidden"></div>
-          <div class="graph-wrap">
-            <svg id="graph" width="100%" viewBox="0 0 800 360" style="display:block;min-width:680px"></svg>
-          </div>
-          <div class="legend">
-            <span>Click a <b>node</b> to inspect checkpoints &amp; sibling trend</span>
-            <span>Click an <b>edge</b> to inspect <code>linkedBy</code>/<code>linkedAt</code> &amp; parent→child handoff diff</span>
-            <span><span class="badge warn">⚠</span> UI hint: measure differs</span>
-            <span><span class="badge pri">+</span> Expandable boundary node</span>
-            <button class="btn sm" id="toggleClosureBtn" style="margin-left:auto">Flow closure</button>
-          </div>
-        </section>
 
-        <section class="panel hidden" id="legacyClosurePanel">
-          <div class="ph">
-            <h2>Flow closure (<code>ancestors</code> &amp; <code>descendants</code>)</h2>
-            <span class="sub">Authoritative transitive membership from <code>flows.partitioning_to_flow</code> (covers pre-v0.11.0 links)</span>
-            <div class="r"><button class="btn sm" id="hideClosureBtn">Hide</button></div>
-          </div>
-          <div class="tbl-wrap">
+          <div class="table-wrap">
             <table>
-              <thead><tr><th>Relation</th><th>ID</th><th>Partitioning</th><th>Author</th></tr></thead>
-              <tbody id="closureBody"></tbody>
+              <thead>
+                <tr>
+                  <th>Dataset &amp; partitioning key</th>
+                  <th>Producer</th>
+                  <th>Info date / version</th>
+                  <th>Latest checkpoint</th>
+                  <th class="num">Record count</th>
+                  <th>Status</th>
+                  <th style="width:28px"></th>
+                </tr>
+              </thead>
+              <tbody id="catalogTableBody"></tbody>
             </table>
           </div>
         </section>
+      </div>
 
-        <section class="panel">
-          <div class="ph">
-            <h2>Checkpoints</h2>
-            <span class="sub" id="cpSub"></span>
-            <div class="r" id="cpNameFilterWrap"></div>
+      <!-- ================================================================= -->
+      <!-- VIEW 2: LINEAGE & INSPECTOR                                       -->
+      <!-- ================================================================= -->
+      <div id="lineageView">
+        <!-- Lineage Graph Panel (Collapsible & Resizable) -->
+        <section class="card">
+          <div class="card-toolbar">
+            <span class="toolbar-meta" id="lineageSummaryText"></span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="control-pill" style="height:27px;font-size:12px;padding:0 8px">
+                <span>Graph metric:</span>
+                <select id="graphMetricSelect">
+                  <option value="count" selected>Record count (All rows)</option>
+                  <option value="sum_amount">Sum of amount</option>
+                  <option value="distinct_cust">Distinct customer_id</option>
+                  <option value="hash_tx">Hash integrity of tx_id</option>
+                </select>
+              </div>
+              <div class="pill-group" id="scopeGroup">
+                <button class="pill-btn active" data-scope="full">Full graph</button>
+                <button class="pill-btn" data-scope="direct">Direct neighbors (1 hop)</button>
+              </div>
+              <button class="btn btn-sm" id="collapseGraphBtn">Collapse graph</button>
+            </div>
           </div>
-          <div class="tl" id="timeline"></div>
+
+          <div class="lineage-canvas" id="graphCanvasWrap">
+            <svg id="lineageSvg" width="100%" viewBox="0 0 1120 220" style="display:block;min-width:860px;height:210px"></svg>
+          </div>
+          <div class="resize-handle" id="graphResizeHandle" title="Drag to resize lineage graph height"></div>
+          <div class="collapsed-chain hidden" id="collapsedChainBar"></div>
+        </section>
+
+        <!-- Bottom Inspector: Prominent Selected Dataset Title + Tabs -->
+        <section class="card" style="margin-bottom:0">
+          <div class="inspector-head">
+            <div class="inspector-title" id="inspectorTitle"></div>
+            <div class="subtabs">
+              <button class="subtab active" data-subtab="measures">Control Measures</button>
+              <button class="subtab" data-subtab="cross">Cross-Dataset Comparison</button>
+              <button class="subtab" data-subtab="metadata">Metadata &amp; Properties</button>
+              <button class="subtab" data-subtab="trend">Historical Runs</button>
+            </div>
+          </div>
+
+          <div id="inspectorContent"></div>
         </section>
       </div>
 
-      <aside class="panel inspector-panel">
-        <div class="tabs" id="itabs">
-          <button data-it="meas">Measurements</button>
-          <button data-it="edge">Edge Handoff</button>
-          <button data-it="trend">Sibling Trend</button>
-          <button data-it="meta">Metadata</button>
-        </div>
-        <div class="inspector-scroll" id="inspector"></div>
-      </aside>
-    </div>
-
-    <!-- FLOW TIMELINE VIEW (GET /flows/{flowId}/checkpoints) -->
-    <section id="flowView" class="panel hidden">
-      <div class="ph">
-        <h2>Flow checkpoint waterfall</h2>
-        <span class="sub" id="flowSub"></span>
-        <div class="r">
-          <input id="flowCpName" placeholder="checkpoint-name (exact)" style="height:28px;border:1px solid var(--line);border-radius:5px;padding:0 8px;font-size:12px">
-          <input id="flowPropFilter" placeholder="property, e.g. executionID=run-42" style="height:28px;border:1px solid var(--line);border-radius:5px;padding:0 8px;font-size:12px;font-family:var(--mono)">
-        </div>
-      </div>
-      <div class="info" style="margin:10px 14px">
-        <span>ℹ</span>
-        <div>Single paginated query (<code>GET /api/v2/flows/{flowId}/checkpoints</code>) covering the focal partitioning and all downstream descendants—no N+1 per-node calls.</div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr>
-            <th>Process start</th><th>Partitioning</th><th>Checkpoint</th><th>Author / Mode</th><th>Properties</th><th>Measurements</th>
-          </tr></thead>
-          <tbody id="flowBody"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+    </main>
+  </div>
 </div>
 
-<footer class="status">
-  <span><span class="dotg"></span>Atum Server v0.11.0 · API v2</span>
-  <span id="statusSel"></span>
-  <span style="margin-left:auto" id="refreshed"></span>
-</footer>
-
-<div class="tip" id="tip"></div>
-<div class="modal-bg hidden" id="exportModal">
+<!-- AUDIT EVIDENCE REPORT MODAL -->
+<div class="modal-backdrop hidden" id="reportModal">
   <div class="modal">
-    <div class="ph">
-      <h2>Audit Snapshot Manifest</h2>
-      <span class="sub">Reproducible scope &amp; live-pagination completeness record (ADR 02 §3)</span>
-      <div class="r"><button class="btn sm" id="closeModal">Close</button></div>
+    <div class="card-toolbar" style="padding:12px 20px">
+      <div>
+        <strong style="font-size:15px">Audit Evidence Report</strong>
+        <div class="toolbar-meta">Reproducible lineage &amp; control measure sign-off package</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="pill-group" id="modalModeGroup">
+          <button class="pill-btn active" data-mmode="summary">Summary</button>
+          <button class="pill-btn" data-mmode="technical">Technical details</button>
+        </div>
+        <button class="btn btn-sm" id="exportCsvBtn">Export CSV</button>
+        <button class="btn btn-sm btn-primary" id="downloadPdfBtn">Download PDF</button>
+        <button class="btn btn-sm" id="closeModalBtn">Close</button>
+      </div>
     </div>
-    <pre id="exportJson"></pre>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <span id="modalProvenance">Generated: 2026-11-17 19:20 UTC · Window: Last 7 days (2026-11-04 to 2026-11-11 UTC) · Requested by: Internal Audit (audit-readonly)</span>
+      <span id="exportToast" style="color:var(--primary);font-weight:600"></span>
+    </div>
   </div>
 </div>
 
 <script>
-// ---------- Realistic mock store aligned with Atum v0.11.0 DTOs ----------
-// Mix of:
-//  - Non-catalog external REST-pushed source (measuredByAtumAgent: false)
-//  - Glue/Hive catalog_path + info_date ingest (AqueDuct) & curate (Unify)
-//  - Infrequently updated reference data WITHOUT info_date (ref_version)
-//  - Legacy pre-v0.11.0 partitioning (no edges in lineage.partitioning_edges, only flow closure)
+// ─── Producer Vector Icons ──────────────────────────────────────────────────
+const SYS_ICONS = {
+  "AqueDuct": '<rect width="24" height="24" rx="5.5" fill="#5B0E31"/><text x="12.4" y="16.6" text-anchor="middle" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-style="italic" font-weight="600" font-size="12.5" fill="#fff">Aq</text><path d="M4.5 19.6h15" stroke="#fff" stroke-opacity=".55" stroke-width="1" stroke-linecap="round"/>',
+  "Unify": '<circle cx="12" cy="12" r="12" fill="#5B0E31"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8.6 11v3.1a3.4 3.4 0 0 0 6.8 0V9.6M15.4 9.6v7.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polygon points="7.28,4.47 8.43,6.21 10.50,5.90 9.19,7.54 10.13,9.41 8.17,8.67 6.68,10.14 6.77,8.05 4.92,7.09 6.93,6.53" fill="#fff"/>',
+  "Mainframe Bridge": '<rect width="24" height="24" rx="6" fill="#4f46e5"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">MB</text>',
+  "RefData": '<rect width="24" height="24" rx="6" fill="#0f766e"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">RF</text>'
+};
+const sysSvg = (sys, s = 15) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex:none">${SYS_ICONS[sys] || ""}</svg>`;
+const prodBadge = name => `<span class="prod-badge">${sysSvg(name, 15)} ${esc(name)}</span>`;
 
-const NOW_ISO = "2026-11-11T12:00:00Z";
-const DATES = ["2026-11-05","2026-11-06","2026-11-07","2026-11-08","2026-11-09","2026-11-10","2026-11-11"];
-const hashSum = (seed, n) => String(Math.round(n * 2147483647 * (1 + (seed % 89) / 7919)));
-
-const PART_LIST = [
-  // Non-Spark upstream system pushing via REST API directly
+// ─── Domain Data ────────────────────────────────────────────────────────────
+const DATASETS = [
   {
     id: 2000000010448101,
-    shortName: "Core Banking Payments EOD",
-    author: "mainframe-bridge-svc",
-    mainFlowId: 3000000000101001,
-    partitioning: [{key:"system",value:"core_banking"},{key:"feed",value:"payments_eod"},{key:"info_date",value:"2026-11-11"}],
-    additionalData: [{key:"transport",value:"sftp-csv",author:"mainframe-bridge-svc"}],
-    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]}],
+    name: "Core Banking Payments EOD",
+    asset: "system=core_banking · feed=payments_eod",
+    producer: "Mainframe Bridge",
+    authorId: "mainframe-bridge-svc",
+    infoDate: "2026-11-11",
+    partitioning: [
+      { key: "system", value: "core_banking" },
+      { key: "feed", value: "payments_eod" },
+      { key: "info_date", value: "2026-11-11" }
+    ],
+    additionalData: [
+      { key: "transport", value: "sftp-csv", author: "mainframe-bridge-svc" },
+      { key: "source_region", value: "za-jnb-1", author: "mainframe-bridge-svc" }
+    ],
+    measures: [
+      { key: "count", label: "Record count (All rows)", isNumeric: true },
+      { key: "sum_amount", label: "Sum of amount", isNumeric: true }
+    ],
     checkpoints: [
-      {id:"11111111-1111-4111-8111-000000000101", name:"Source Extract", author:"mainframe-bridge-svc", measuredByAtumAgent:false,
-       processStartTime:"2026-11-11T04:55:00Z", processEndTime:"2026-11-11T04:55:01Z",
-       properties:{executionID:"eod-20261111", source:"mainframe"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1204331",valueType:"Long"}, supportValues:{}}},
-         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98415881.96",valueType:"BigDecimal"}, supportValues:{currency:"ZAR"}}}
-       ]}
+      {
+        id: "11111111-1111-4111-8111-000000000101",
+        name: "Source Extract",
+        startTime: "2026-11-11 04:55:00 UTC",
+        endTime: "2026-11-11 04:55:01 UTC",
+        measuredByAgent: false,
+        properties: { executionID: "eod-20261111", format: "fixed-width" },
+        values: { count: 1204331, sum_amount: 98415881.96 }
+      }
     ]
   },
-  // Glue/Hive catalog ingest (AqueDuct)
   {
-    id: 2000000010448201,
-    shortName: "aq_crm_customers",
-    author: "aqueduct",
-    mainFlowId: 3000000000102001,
-    partitioning: [{key:"catalog_path",value:"edla_prod_raw.aq_crm_customers"},{key:"info_date",value:"2026-11-11"}],
-    additionalData: [{key:"source_system",value:"CRM",author:"aqueduct"}],
-    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sumOfHashes",measuredColumns:["customer_id"]}],
+    id: 2000000010000049,
+    name: "ISO 3166 Countries",
+    asset: "edla_prod_ref.iso3166_countries",
+    producer: "RefData",
+    authorId: "refdata-steward",
+    infoDate: "2026-Q4",
+    partitioning: [
+      { key: "catalog_path", value: "edla_prod_ref.iso3166_countries" },
+      { key: "ref_version", value: "2026-Q4" }
+    ],
+    additionalData: [
+      { key: "cadence", value: "quarterly", author: "refdata-steward" }
+    ],
+    measures: [
+      { key: "count", label: "Record count (All rows)", isNumeric: true },
+      { key: "distinct_iso", label: "Distinct iso_code", isNumeric: true }
+    ],
     checkpoints: [
-      {id:"22222222-2222-4222-8222-000000000201", name:"Written", author:"aqueduct", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T05:30:02Z", processEndTime:"2026-11-11T05:30:41Z",
-       properties:{executionID:"aq-901"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"84801",valueType:"Long"}, supportValues:{}}},
-         {measure:{measureName:"sumOfHashes",measuredColumns:["customer_id"]}, result:{mainValue:{value:hashSum(11,84801),valueType:"Long"}, supportValues:{}}}
-       ]}
+      {
+        id: "33333333-3333-4333-8333-000000000049",
+        name: "Published",
+        startTime: "2026-10-02 08:15:00 UTC",
+        endTime: "2026-10-02 08:15:04 UTC",
+        measuredByAgent: true,
+        properties: { release: "2026-Q4" },
+        values: { count: 249, distinct_iso: 249 }
+      }
     ]
   },
   {
     id: 2000000010448202,
-    shortName: "aq_core_payments",
-    author: "aqueduct",
-    mainFlowId: 3000000000102002,
-    partitioning: [{key:"catalog_path",value:"edla_prod_raw.aq_core_payments"},{key:"info_date",value:"2026-11-11"}],
-    additionalData: [{key:"catalog",value:"aws-glue",author:"aqueduct"}],
-    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]},{measureName:"sumOfHashes",measuredColumns:["tx_id"]}],
+    name: "Core Payments (Raw)",
+    asset: "edla_prod_raw.aq_core_payments",
+    producer: "AqueDuct",
+    authorId: "aqueduct",
+    infoDate: "2026-11-11",
+    partitioning: [
+      { key: "catalog_path", value: "edla_prod_raw.aq_core_payments" },
+      { key: "info_date", value: "2026-11-11" }
+    ],
+    additionalData: [
+      { key: "catalog_provider", value: "aws-glue", author: "aqueduct" }
+    ],
+    measures: [
+      { key: "count", label: "Record count (All rows)", isNumeric: true },
+      { key: "sum_amount", label: "Sum of amount", isNumeric: true },
+      { key: "hash_tx", label: "Hash integrity of tx_id", isHash: true }
+    ],
     checkpoints: [
-      {id:"22222222-2222-4222-8222-000000000202", name:"Written", author:"aqueduct", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T05:50:20Z", processEndTime:"2026-11-11T05:58:02Z",
-       properties:{executionID:"aq-902"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1204331",valueType:"Long"}, supportValues:{}}},
-         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98415881.96",valueType:"BigDecimal"}, supportValues:{}}},
-         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1204331),valueType:"Long"}, supportValues:{}}}
-       ]}
+      {
+        id: "22222222-2222-4222-8222-000000000202",
+        name: "Written",
+        startTime: "2026-11-11 05:50:20 UTC",
+        endTime: "2026-11-11 05:58:02 UTC",
+        measuredByAgent: true,
+        properties: { executionID: "aq-902" },
+        values: { count: 1204331, sum_amount: 98415881.96, hash_tx: "8194029184012" }
+      }
     ]
   },
-  // Infrequently updated reference data (NO info_date!)
   {
-    id: 2000000010000049,
-    shortName: "iso3166_countries",
-    author: "refdata-steward",
-    mainFlowId: 3000000000000049,
-    partitioning: [{key:"catalog_path",value:"edla_prod_ref.iso3166_countries"},{key:"ref_version",value:"2026-Q4"}],
-    additionalData: [{key:"cadence",value:"quarterly",author:"refdata-steward"}],
-    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"distinctCount",measuredColumns:["iso_code"]}],
+    id: 2000000010448201,
+    name: "CRM Customers (Raw)",
+    asset: "edla_prod_raw.aq_crm_customers",
+    producer: "AqueDuct",
+    authorId: "aqueduct",
+    infoDate: "2026-11-11",
+    partitioning: [
+      { key: "catalog_path", value: "edla_prod_raw.aq_crm_customers" },
+      { key: "info_date", value: "2026-11-11" }
+    ],
+    additionalData: [
+      { key: "source_system", value: "CRM", author: "aqueduct" }
+    ],
+    measures: [
+      { key: "count", label: "Record count (All rows)", isNumeric: true },
+      { key: "distinct_cust", label: "Distinct customer_id", isNumeric: true }
+    ],
     checkpoints: [
-      {id:"33333333-3333-4333-8333-000000000049", name:"Published", author:"refdata-steward", measuredByAtumAgent:true,
-       processStartTime:"2026-10-02T08:15:00Z", processEndTime:"2026-10-02T08:15:04Z",
-       properties:{release:"2026-Q4"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"249",valueType:"Long"}, supportValues:{}}},
-         {measure:{measureName:"distinctCount",measuredColumns:["iso_code"]}, result:{mainValue:{value:"249",valueType:"Long"}, supportValues:{}}}
-       ]}
+      {
+        id: "22222222-2222-4222-8222-000000000201",
+        name: "Written",
+        startTime: "2026-11-11 05:30:02 UTC",
+        endTime: "2026-11-11 05:30:41 UTC",
+        measuredByAgent: true,
+        properties: { executionID: "aq-901" },
+        values: { count: 84801, distinct_cust: 84801 }
+      }
     ]
   },
-  // Curated joined table (Unify) — reconstructs parents from catalog & joins 3 parents + has a same-name re-run!
   {
     id: 2000000010448528,
-    shortName: "un_customer_payments",
-    author: "unify",
-    mainFlowId: 3000000000123456,
-    partitioning: [{key:"catalog_path",value:"edla_prod_curated.un_customer_payments"},{key:"info_date",value:"2026-11-11"}],
-    additionalData: [{key:"join_keys",value:"customer_id,country_code",author:"unify"}],
-    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]},{measureName:"sumOfHashes",measuredColumns:["tx_id"]}],
+    name: "Customer Payments",
+    asset: "edla_prod_curated.un_customer_payments",
+    producer: "Unify",
+    authorId: "unify",
+    infoDate: "2026-11-11",
+    partitioning: [
+      { key: "catalog_path", value: "edla_prod_curated.un_customer_payments" },
+      { key: "info_date", value: "2026-11-11" }
+    ],
+    additionalData: [
+      { key: "join_keys", value: "customer_id,country_code", author: "unify" },
+      { key: "catalog_provider", value: "aws-glue", author: "unify" },
+      { key: "spark_version", value: "3.5.1", author: "unify" }
+    ],
+    measures: [
+      { key: "count", label: "Record count (All rows)", isNumeric: true },
+      { key: "sum_amount", label: "Sum of amount", isNumeric: true, isDecimal: true },
+      { key: "sum_fee", label: "Sum of fee_amount", isNumeric: true, isDecimal: true },
+      { key: "distinct_cust", label: "Distinct customer_id", isNumeric: true },
+      { key: "hash_tx", label: "Hash integrity of tx_id", isHash: true }
+    ],
     checkpoints: [
-      {id:"41ea35cd-6398-42ed-b6d3-a8d613176501", name:"Input", author:"unify", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T06:12:01Z", processEndTime:"2026-11-11T06:12:40Z",
-       properties:{executionID:"un-441", stage:"read"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1204331",valueType:"Long"}, supportValues:{}}},
-         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98415881.96",valueType:"BigDecimal"}, supportValues:{}}},
-         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1204331),valueType:"Long"}, supportValues:{}}}
-       ]},
-      {id:"41ea35cd-6398-42ed-b6d3-a8d613176502", name:"Joined", author:"unify", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T06:18:41Z", processEndTime:"2026-11-11T06:19:07Z",
-       properties:{executionID:"un-441", stage:"transform"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1203998",valueType:"Long"}, supportValues:{dropped:"333"}}},
-         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}},
-         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1203998),valueType:"Long"}, supportValues:{}}}
-       ]},
-      {id:"41ea35cd-6398-42ed-b6d3-a8d613176503", name:"Written", author:"unify", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T06:20:30Z", processEndTime:"2026-11-11T06:21:12Z",
-       properties:{executionID:"un-441", stage:"publish"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1203998",valueType:"Long"}, supportValues:{}}},
-         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}},
-         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1203998),valueType:"Long"}, supportValues:{}}}
-       ]},
-      {id:"41ea35cd-6398-42ed-b6d3-a8d613176504", name:"Written", author:"unify", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T07:05:10Z", processEndTime:"2026-11-11T07:05:49Z",
-       properties:{executionID:"un-442-rerun", stage:"publish"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1203998",valueType:"Long"}, supportValues:{}}},
-         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}},
-         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1203998),valueType:"Long"}, supportValues:{}}}
-       ]}
+      {
+        id: "41ea35cd-6398-42ed-b6d3-a8d613176501",
+        name: "Input",
+        startTime: "2026-11-11 06:12:01 UTC",
+        endTime: "2026-11-11 06:12:40 UTC",
+        measuredByAgent: true,
+        properties: { executionID: "un-441", step: "catalog-read" },
+        values: {
+          count: 1204331,
+          sum_amount: 98415881.96,
+          sum_fee: 1412090.10,
+          distinct_cust: 84801,
+          hash_tx: "8194029184012"
+        }
+      },
+      {
+        id: "41ea35cd-6398-42ed-b6d3-a8d613176502",
+        name: "Joined",
+        startTime: "2026-11-11 06:18:41 UTC",
+        endTime: "2026-11-11 06:19:07 UTC",
+        measuredByAgent: true,
+        properties: { executionID: "un-441", step: "inner-join", dropped_rows: "333" },
+        values: {
+          count: 1203998,
+          sum_amount: 98388669.76,
+          sum_fee: 1411640.55,
+          distinct_cust: 84801,
+          hash_tx: "8191764019284"
+        }
+      },
+      {
+        id: "41ea35cd-6398-42ed-b6d3-a8d613176503",
+        name: "Written",
+        startTime: "2026-11-11 06:20:30 UTC",
+        endTime: "2026-11-11 06:21:12 UTC",
+        measuredByAgent: true,
+        properties: { executionID: "un-441", step: "catalog-write" },
+        values: {
+          count: 1203998,
+          sum_amount: 98388669.76,
+          sum_fee: 1411640.55,
+          distinct_cust: 84801,
+          hash_tx: "8191764019284"
+        }
+      }
+    ],
+    history: [
+      { date: "2026-11-05", id: 2000000010444901, count: 1201300, amount: 98168204.79, status: "Consistent" },
+      { date: "2026-11-06", id: 2000000010445501, count: 1196610, amount: 97784934.97, status: "Consistent" },
+      { date: "2026-11-07", id: 2000000010446101, count: 1242870, amount: 101565225.43, status: "Consistent" },
+      { date: "2026-11-08", id: 2000000010446701, count: 611902,  amount: 50003591.20, status: "Consistent" },
+      { date: "2026-11-09", id: 2000000010447301, count: 598190,  amount: 48883069.87, status: "Consistent" },
+      { date: "2026-11-10", id: 2000000010447901, count: 1251590, amount: 102277802.14, status: "Consistent" },
+      { date: "2026-11-11", id: 2000000010448528, count: 1203998, amount: 98388669.76, status: "Measure Shift" }
     ]
   },
-  // Downstream publish tables (Unify)
   {
     id: 2000000010448601,
-    shortName: "un_revenue_by_country",
-    author: "unify",
-    mainFlowId: 3000000000123601,
-    partitioning: [{key:"catalog_path",value:"edla_prod_publish.un_revenue_by_country"},{key:"info_date",value:"2026-11-11"}],
+    name: "Revenue by Country",
+    asset: "edla_prod_publish.un_revenue_by_country",
+    producer: "Unify",
+    authorId: "unify",
+    infoDate: "2026-11-11",
+    partitioning: [
+      { key: "catalog_path", value: "edla_prod_publish.un_revenue_by_country" },
+      { key: "info_date", value: "2026-11-11" }
+    ],
     additionalData: [],
-    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]}],
+    measures: [
+      { key: "count", label: "Record count (All rows)", isNumeric: true },
+      { key: "sum_amount", label: "Sum of amount", isNumeric: true, isDecimal: true }
+    ],
     checkpoints: [
-      {id:"55555555-5555-4555-8555-000000000601", name:"Input", author:"unify", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T06:40:05Z", processEndTime:"2026-11-11T06:40:31Z",
-       properties:{executionID:"un-510"},
-       measurements:[{measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}}]},
-      {id:"55555555-5555-4555-8555-000000000602", name:"Written", author:"unify", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T06:42:10Z", processEndTime:"2026-11-11T06:42:12Z",
-       properties:{executionID:"un-510"},
-       measurements:[
-         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"181",valueType:"Long"}, supportValues:{}}},
-         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}}
-       ]}
+      {
+        id: "55555555-5555-4555-8555-000000000601",
+        name: "Input",
+        startTime: "2026-11-11 06:40:05 UTC",
+        endTime: "2026-11-11 06:40:31 UTC",
+        measuredByAgent: true,
+        properties: { executionID: "un-510" },
+        values: { sum_amount: 98388669.76 }
+      },
+      {
+        id: "55555555-5555-4555-8555-000000000602",
+        name: "Written",
+        startTime: "2026-11-11 06:42:10 UTC",
+        endTime: "2026-11-11 06:42:12 UTC",
+        measuredByAgent: true,
+        properties: { executionID: "un-510" },
+        values: { count: 181, sum_amount: 98388669.76 }
+      }
     ]
   },
   {
     id: 2000000010448602,
-    shortName: "un_customer_360",
-    author: "unify",
-    mainFlowId: 3000000000123602,
-    partitioning: [{key:"catalog_path",value:"edla_prod_publish.un_customer_360"},{key:"info_date",value:"2026-11-11"}],
+    name: "Customer 360",
+    asset: "edla_prod_publish.un_customer_360",
+    producer: "Unify",
+    authorId: "unify",
+    infoDate: "2026-11-11",
+    partitioning: [
+      { key: "catalog_path", value: "edla_prod_publish.un_customer_360" },
+      { key: "info_date", value: "2026-11-11" }
+    ],
     additionalData: [],
-    measureDefs: [{measureName:"count",measuredColumns:[]}],
+    measures: [
+      { key: "count", label: "Record count (All rows)", isNumeric: true },
+      { key: "sum_amount", label: "Sum of amount", isNumeric: true, isDecimal: true }
+    ],
     checkpoints: [
-      {id:"66666666-6666-4666-8666-000000000603", name:"Written", author:"unify", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T06:45:44Z", processEndTime:"2026-11-11T06:46:30Z",
-       properties:{executionID:"un-511"},
-       measurements:[{measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"84801",valueType:"Long"}, supportValues:{}}}]}
-    ]
-  },
-  // Sibling date partitionings for un_customer_payments (demonstrates key-drop search trend!)
-  ...[
-    ["2026-11-10", 2000000010447901, 1251590, "102277802.14"],
-    ["2026-11-09", 2000000010447301, 598190,  "48883069.87"],
-    ["2026-11-08", 2000000010446701, 611902,  "50003591.20"],
-    ["2026-11-07", 2000000010446101, 1242870, "101565225.43"],
-    ["2026-11-06", 2000000010445501, 1196610, "97784934.97"],
-    ["2026-11-05", 2000000010444901, 1201300, "98168204.79"]
-  ].map(([dt, pid, cnt, amt]) => ({
-    id: pid, shortName: "un_customer_payments", author: "unify", mainFlowId: pid + 1000000000000000,
-    partitioning: [{key:"catalog_path",value:"edla_prod_curated.un_customer_payments"},{key:"info_date",value:dt}],
-    additionalData: [], measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]}],
-    checkpoints: [{
-      id: `41ea35cd-6398-42ed-b6d3-${dt.replaceAll("-","")}0001`, name:"Written", author:"unify", measuredByAtumAgent:true,
-      processStartTime:`${dt}T06:21:00Z`, processEndTime:`${dt}T06:21:40Z`, properties:{executionID:`un-${dt}`},
-      measurements:[
-        {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:String(cnt),valueType:"Long"}, supportValues:{}}},
-        {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:amt,valueType:"BigDecimal"}, supportValues:{}}}
-      ]
-    }]
-  })),
-  // Registered partitioning WITHOUT any checkpoints yet (visible in key-only search!)
-  {
-    id: 2000000010448999,
-    shortName: "aq_pending_staging",
-    author: "aqueduct",
-    mainFlowId: 3000000000123999,
-    partitioning: [{key:"catalog_path",value:"edla_prod_raw.aq_crm_customers"},{key:"info_date",value:"2026-11-12"}],
-    additionalData: [{key:"status",value:"registered-before-run",author:"aqueduct"}],
-    measureDefs: [{measureName:"count",measuredColumns:[]}],
-    checkpoints: []
-  },
-  // Legacy pre-v0.11.0 partitioning (NO explicit edges, only flow closure!)
-  {
-    id: 2000000009000111,
-    shortName: "legacy_gl_reconciliation",
-    author: "legacy-etl",
-    mainFlowId: 3000000000000111,
-    partitioning: [{key:"catalog_path",value:"edla_prod_publish.legacy_gl_reconciliation"},{key:"info_date",value:"2026-11-11"}],
-    additionalData: [{key:"note",value:"linked via v0.10.0 server (closure only)",author:"legacy-etl"}],
-    measureDefs: [{measureName:"count",measuredColumns:[]}],
-    legacyAncestors: [2000000010448202, 2000000010448101],
-    checkpoints: [
-      {id:"77777777-7777-4777-8777-000000000111", name:"Reconciled", author:"legacy-etl", measuredByAtumAgent:true,
-       processStartTime:"2026-11-11T07:15:00Z", processEndTime:"2026-11-11T07:15:18Z",
-       properties:{executionID:"leg-11"},
-       measurements:[{measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1203998",valueType:"Long"}, supportValues:{}}}]}
+      {
+        id: "66666666-6666-4666-8666-000000000603",
+        name: "Written",
+        startTime: "2026-11-11 06:45:44 UTC",
+        endTime: "2026-11-11 06:46:30 UTC",
+        measuredByAgent: true,
+        properties: { executionID: "un-511" },
+        values: { count: 84801, sum_amount: 98388669.76 }
+      }
     ]
   }
 ];
 
 const EDGES = [
-  {parentPartitioningId:2000000010448101, childPartitioningId:2000000010448202, linkedBy:"aqueduct", linkedAt:"2026-11-11T05:49:10Z"},
-  {parentPartitioningId:2000000010448201, childPartitioningId:2000000010448528, linkedBy:"unify", linkedAt:"2026-11-11T06:11:50Z"},
-  {parentPartitioningId:2000000010448202, childPartitioningId:2000000010448528, linkedBy:"unify", linkedAt:"2026-11-11T06:11:50Z"},
-  {parentPartitioningId:2000000010000049, childPartitioningId:2000000010448528, linkedBy:"unify", linkedAt:"2026-11-11T06:11:50Z"},
-  {parentPartitioningId:2000000010448528, childPartitioningId:2000000010448601, linkedBy:"unify", linkedAt:"2026-11-11T06:39:55Z"},
-  {parentPartitioningId:2000000010448528, childPartitioningId:2000000010448602, linkedBy:"unify", linkedAt:"2026-11-11T06:40:40Z"},
-  {parentPartitioningId:2000000010448201, childPartitioningId:2000000010448602, linkedBy:"unify", linkedAt:"2026-11-11T06:40:40Z"}
+  { from: 2000000010448101, to: 2000000010448202 },
+  { from: 2000000010448202, to: 2000000010448528 },
+  { from: 2000000010448201, to: 2000000010448528 },
+  { from: 2000000010000049, to: 2000000010448528 },
+  { from: 2000000010448528, to: 2000000010448601 },
+  { from: 2000000010448528, to: 2000000010448602 },
+  { from: 2000000010448201, to: 2000000010448602 }
 ];
 
-const byId = Object.fromEntries(PART_LIST.map(p => [p.id, p]));
+const byId = Object.fromEntries(DATASETS.map(d => [d.id, d]));
 
-const APPS = {
-  "aqueduct": {name:"AqueDuct", art:'<rect width="24" height="24" rx="5.5" fill="#5B0E31"/><text x="12.4" y="16.6" text-anchor="middle" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-style="italic" font-weight="500" font-size="12.5" letter-spacing="-.4" fill="#fff">Aq</text><path d="M4.5 19.6h15" stroke="#fff" stroke-opacity=".55" stroke-width="1" stroke-linecap="round"/>'},
-  "unify":    {name:"Unify",    art:'<circle cx="12" cy="12" r="12" fill="#5B0E31"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8.6 11v3.1a3.4 3.4 0 0 0 6.8 0V9.6M15.4 9.6v7.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polygon points="7.28,4.47 8.43,6.21 10.50,5.90 9.19,7.54 10.13,9.41 8.17,8.67 6.68,10.14 6.77,8.05 4.92,7.09 6.93,6.53" fill="#fff"/>'},
-  "mainframe-bridge-svc": {name:"Mainframe Bridge", art:'<rect width="24" height="24" rx="6" fill="#6d28d9"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">MB</text>'},
-  "refdata-steward":      {name:"RefData",          art:'<rect width="24" height="24" rx="6" fill="#0f766e"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">RF</text>'},
-  "legacy-etl":           {name:"Legacy ETL",       art:'<rect width="24" height="24" rx="6" fill="#64748b"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">LE</text>'}
+// ─── State ──────────────────────────────────────────────────────────────────
+const STATE = {
+  view: "lineage",
+  selectedId: 2000000010448528,
+  subtab: "measures",
+  scope: "full",
+  graphMetric: "count",
+  graphCollapsed: false,
+  windowPreset: "7d",
+  searchQuery: "",
+  prodFilter: "all",
+  statusFilter: "all",
+  modalMode: "summary"
 };
 
-// ---------- State ----------
-const S = {
-  tab: "lineage",
-  selId: 2000000010448528,
-  selEdge: null, // {parentPartitioningId, childPartitioningId}
-  cpIdx: 0,
-  dir: "both",
-  depth: 2,
-  it: "meas",
-  quickFilter: "",
-  winPreset: "7d",
-  searchKeys: {info_date:"2026-11-11"},
-  latestFirst: true,
-  lazyCp: true,
-  discOffset: 0,
-  discLimit: 10,
-  droppedKeys: new Set(), // for Sibling Trend key-drop
-  trendMetric: "count()",
-  flowCpName: "",
-  flowPropFilter: "",
-  expandedNodes: new Set(),
-  cpNameFilter: "",
-  showClosure: false
-};
-
-// ---------- Helpers ----------
 const $ = id => document.getElementById(id);
-const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
-const b64url = obj => btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replaceAll("+","-").replaceAll("/","_");
-const partMap = p => Object.fromEntries(p.partitioning.map(kv => [kv.key, kv.value]));
-const measureKey = m => `${m.measureName}(${m.measuredColumns.join(",")})`;
-const appInfo = author => APPS[author] || {name:author, art:`<rect width="24" height="24" rx="6" fill="#475569"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${esc(author.slice(0,2).toUpperCase())}</text>`};
-const appSvg = (author, s=16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex:none">${appInfo(author).art}</svg>`;
-const appChip = (author, s=16) => `<span class="appchip" title="${esc(author)}">${appSvg(author,s)}<b>${esc(appInfo(author).name)}</b></span>`;
-const fmtTime = iso => iso ? iso.slice(11,19) + "Z" : "–";
-const fmtVal = tv => {
-  if (!tv) return "–";
-  if (tv.valueType === "Long") { const n = Number(tv.value); return Number.isFinite(n) ? (n >= 1e12 ? n.toExponential(4) : n.toLocaleString("en-US")) : tv.value; }
-  if (tv.valueType === "BigDecimal" || tv.valueType === "Double") { const n = Number(tv.value); return Number.isFinite(n) ? n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : tv.value; }
-  return tv.value;
+const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+const fmtNum = (val, isDecimal) => {
+  if (val === undefined || val === null) return "—";
+  if (typeof val === "number") {
+    return isDecimal
+      ? val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : val.toLocaleString("en-US");
+  }
+  return String(val);
 };
+const fmtShortHash = s => {
+  const str = String(s ?? "");
+  return str.length > 9 ? `${str.slice(0, 4)}…${str.slice(-4)}` : str;
+};
+const fmtShortUuid = u => `${u.slice(0, 8)}…${u.slice(-4)}`;
 
-function windowBounds() {
-  const now = new Date(NOW_ISO);
-  if (S.winPreset === "24h") return {from: new Date(now - 86400e3).toISOString(), to: NOW_ISO};
-  if (S.winPreset === "7d")  return {from: new Date(now - 7*86400e3).toISOString(), to: NOW_ISO};
-  if (S.winPreset === "14d") return {from: new Date(now - 14*86400e3).toISOString(), to: NOW_ISO};
-  return {from: new Date(now - 7*86400e3).toISOString(), to: null};
-}
-
-function inWindow(iso, wb) {
-  return (!wb.from || iso >= wb.from) && (!wb.to || iso < wb.to);
-}
-
-function changedMeasuresOf(p) {
-  const cps = p.checkpoints, out = new Set();
-  const keys = [...new Set(cps.flatMap(c => c.measurements.map(m => measureKey(m.measure))))];
-  keys.forEach(k => {
-    const vals = cps.map(c => c.measurements.find(m => measureKey(m.measure) === k)?.result.mainValue.value).filter(v => v !== undefined);
-    if (vals.length > 1 && new Set(vals).size > 1) out.add(k);
+function changedMeasuresCount(d) {
+  let changed = 0;
+  d.measures.forEach(m => {
+    const vals = d.checkpoints.map(cp => cp.values[m.key]).filter(v => v !== undefined);
+    if (vals.length > 1 && new Set(vals).size > 1) changed++;
   });
-  return out;
+  return changed;
 }
 
-function edgeHandoffDiffs(edge) {
-  const parent = byId[edge.parentPartitioningId], child = byId[edge.childPartitioningId];
-  const pCp = parent?.checkpoints.at(-1), cCp = child?.checkpoints[0];
-  if (!pCp || !cCp) return [];
-  const pMap = Object.fromEntries(pCp.measurements.map(m => [measureKey(m.measure), m.result]));
-  const cMap = Object.fromEntries(cCp.measurements.map(m => [measureKey(m.measure), m.result]));
-  const shared = Object.keys(pMap).filter(k => k in cMap);
-  return shared.map(k => {
-    const pv = pMap[k].mainValue, cv = cMap[k].mainValue;
-    const same = pv.value === cv.value;
-    const diffNum = (pv.valueType !== "String" && cv.valueType !== "String") ? Number(cv.value) - Number(pv.value) : null;
-    return {key:k, pRes:pMap[k], cRes:cMap[k], same, diffNum, pCp, cCp};
+const checkIconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+function statusDisplayHtml(hasShift) {
+  if (hasShift) return `<span class="badge-shift">⚠ Measure Shift</span>`;
+  return `<span class="status-consistent">${checkIconSvg} Consistent</span>`;
+}
+
+// Compute connected path (ancestors + descendants) of the selected node for path highlighting
+function computeConnectedPath(focalId) {
+  const connectedNodes = new Set([focalId]);
+  const connectedEdges = new Set();
+  const walkUp = id => {
+    EDGES.forEach((e, idx) => {
+      if (e.to === id) {
+        connectedEdges.add(idx);
+        if (!connectedNodes.has(e.from)) { connectedNodes.add(e.from); walkUp(e.from); }
+      }
+    });
+  };
+  const walkDown = id => {
+    EDGES.forEach((e, idx) => {
+      if (e.from === id) {
+        connectedEdges.add(idx);
+        if (!connectedNodes.has(e.to)) { connectedNodes.add(e.to); walkDown(e.to); }
+      }
+    });
+  };
+  walkUp(focalId);
+  walkDown(focalId);
+  return { connectedNodes, connectedEdges };
+}
+
+// ─── Navigation & Breadcrumb Topbar ─────────────────────────────────────────
+function renderNav() {
+  document.querySelectorAll(".side-link").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.view === STATE.view);
   });
-}
-
-// ---------- Simulated GET /lineage?direction=&depth= BFS ----------
-function computeSubgraph(focalId, dir, depth) {
-  const upSet = new Set(), downSet = new Set();
-  const effectiveDepth = S.expandedNodes.has(focalId) ? Math.min(20, depth + 2) : depth;
-  if (dir === "both" || dir === "upstream") {
-    upSet.add(focalId);
-    let frontier = [focalId];
-    for (let d = 0; d < effectiveDepth && frontier.length; d++) {
-      const next = [];
-      EDGES.filter(e => frontier.includes(e.childPartitioningId)).forEach(e => {
-        if (!upSet.has(e.parentPartitioningId)) { upSet.add(e.parentPartitioningId); next.push(e.parentPartitioningId); }
-      });
-      frontier = next;
-    }
+  const focal = byId[STATE.selectedId];
+  if (STATE.view === "catalog") {
+    $("topbarCrumbs").innerHTML = `<strong>Datasets</strong>`;
+  } else {
+    $("topbarCrumbs").innerHTML = `<a id="crumbDatasets">Datasets</a> <span>›</span> <a id="crumbLineage">Lineage</a> <span>›</span> <strong>${esc(focal.name)}</strong>`;
+    $("crumbDatasets").onclick = () => { STATE.view = "catalog"; render(); };
   }
-  if (dir === "both" || dir === "downstream") {
-    downSet.add(focalId);
-    let frontier = [focalId];
-    for (let d = 0; d < effectiveDepth && frontier.length; d++) {
-      const next = [];
-      EDGES.filter(e => frontier.includes(e.parentPartitioningId)).forEach(e => {
-        if (!downSet.has(e.childPartitioningId)) { downSet.add(e.childPartitioningId); next.push(e.childPartitioningId); }
+  $("catalogView").classList.toggle("hidden", STATE.view !== "catalog");
+  $("lineageView").classList.toggle("hidden", STATE.view !== "lineage");
+}
+
+// ─── View 1: Datasets Directory ─────────────────────────────────────────────
+function renderCatalog() {
+  if (STATE.view !== "catalog") return;
+
+  const total = DATASETS.length;
+  const consistentCount = DATASETS.filter(d => changedMeasuresCount(d) === 0).length;
+  const shiftedCount = total - consistentCount;
+  const winLabel = $("windowSelect").selectedOptions[0].text;
+
+  $("kpiGrid").innerHTML = `
+    <div class="kpi-card clickable" data-kpi-filter="all">
+      <div class="kpi-label">Active datasets (${esc(winLabel)})</div>
+      <div class="kpi-val">${total}</div>
+      <div class="kpi-sub">${consistentCount} consistent · ${shiftedCount} with Measure Shift</div>
+    </div>
+    <div class="kpi-card clickable" data-kpi-filter="changed" style="${shiftedCount > 0 ? "border-left:3px solid var(--warn-border)" : ""}">
+      <div class="kpi-label">Measure Shift</div>
+      <div class="kpi-val" style="color:var(--warn)">${shiftedCount}</div>
+      <div class="kpi-sub">Customer Payments (Joined step) · Click to filter</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Last ingestion</div>
+      <div class="kpi-val">2026-11-11 06:46 UTC</div>
+      <div class="kpi-sub">Customer 360 · Unify</div>
+    </div>
+  `;
+  $("kpiGrid").querySelectorAll("[data-kpi-filter]").forEach(card => {
+    card.onclick = () => {
+      STATE.statusFilter = card.dataset.kpiFilter;
+      document.querySelectorAll("#statusFilterGroup .pill-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.st === STATE.statusFilter);
       });
-      frontier = next;
-    }
-  }
-  const nodeIds = new Set([focalId, ...upSet, ...downSet]);
-  const nodes = [...nodeIds].map(id => byId[id]);
-  const edges = EDGES.filter(e => nodeIds.has(e.parentPartitioningId) && nodeIds.has(e.childPartitioningId));
-  const expUp = [...nodeIds].filter(id => EDGES.some(e => e.childPartitioningId === id && !nodeIds.has(e.parentPartitioningId)));
-  const expDown = [...nodeIds].filter(id => EDGES.some(e => e.parentPartitioningId === id && !nodeIds.has(e.childPartitioningId)));
-  return {primaryPartitioningId:focalId, depth, direction:dir, nodes, edges, truncated:false, expandableUpstreamNodeIds:expUp, expandableDownstreamNodeIds:expDown};
-}
+      renderCatalog();
+    };
+  });
 
-// ---------- Closure (flows.partitioning_to_flow) simulation ----------
-function computeClosure(focalId) {
-  const ancestors = new Set(), descendants = new Set();
-  const p = byId[focalId];
-  if (p.legacyAncestors) p.legacyAncestors.forEach(a => ancestors.add(a));
-  const walkUp = id => EDGES.filter(e => e.childPartitioningId === id).forEach(e => { if (!ancestors.has(e.parentPartitioningId)) { ancestors.add(e.parentPartitioningId); walkUp(e.parentPartitioningId); }});
-  const walkDn = id => EDGES.filter(e => e.parentPartitioningId === id).forEach(e => { if (!descendants.has(e.childPartitioningId)) { descendants.add(e.childPartitioningId); walkDn(e.childPartitioningId); }});
-  walkUp(focalId); walkDn(focalId);
-  return {ancestors:[...ancestors].map(id=>byId[id]), descendants:[...descendants].map(id=>byId[id])};
-}
-
-// ---------- Simulated GET /api/v2/partitionings/search ----------
-function runSearch() {
-  const wb = windowBounds();
-  const hasKeys = Object.keys(S.searchKeys).length > 0;
-  let rows = PART_LIST.filter(p => {
-    const pm = partMap(p);
-    for (const [k,v] of Object.entries(S.searchKeys)) if (pm[k] !== v) return false;
-    if (!hasKeys || S.winPreset !== "open") {
-      // when keys are empty we must use time window; when keys are set, user can still inspect matching checkpoints
-      if (!hasKeys && !p.checkpoints.some(c => inWindow(c.processStartTime, wb))) return false;
-    }
-    if (S.quickFilter.trim()) {
-      const q = S.quickFilter.trim().toLowerCase();
-      const hay = `${p.id} ${p.shortName} ${p.author} ${p.partitioning.map(x=>`${x.key}=${x.value}`).join(" ")}`.toLowerCase();
-      if (!hay.includes(q)) return false;
+  const rows = DATASETS.filter(d => {
+    if (STATE.prodFilter !== "all" && d.producer !== STATE.prodFilter) return false;
+    if (STATE.statusFilter === "consistent" && changedMeasuresCount(d) > 0) return false;
+    if (STATE.statusFilter === "changed" && changedMeasuresCount(d) === 0) return false;
+    if (STATE.searchQuery.trim()) {
+      const q = STATE.searchQuery.trim().toLowerCase();
+      if (!`${d.name} ${d.asset} ${d.producer}`.toLowerCase().includes(q)) return false;
     }
     return true;
   });
-  rows.sort((a,b) => S.latestFirst ? b.id - a.id : a.id - b.id);
-  const page = rows.slice(S.discOffset, S.discOffset + S.discLimit);
-  return {data:page, total:rows.length, hasMore: S.discOffset + S.discLimit < rows.length};
-}
 
-// ---------- Renderers ----------
-function renderChrome() {
-  const p = byId[S.selId];
-  document.querySelectorAll(".rail a").forEach(a => a.classList.toggle("on", a.dataset.tab === S.tab));
-  $("discoverView").classList.toggle("hidden", S.tab !== "discover");
-  $("lineageView").classList.toggle("hidden", S.tab !== "lineage");
-  $("flowView").classList.toggle("hidden", S.tab !== "flow");
-  document.querySelectorAll("[data-dir]").forEach(b => b.classList.toggle("on", b.dataset.dir === S.dir));
-  document.querySelectorAll("[data-depth]").forEach(b => b.classList.toggle("on", Number(b.dataset.depth) === S.depth));
-  document.querySelectorAll("[data-it]").forEach(b => b.classList.toggle("on", b.dataset.it === S.it));
-
-  if (S.tab === "discover") {
-    $("crumbs").innerHTML = `<b>Partitioning Discovery</b>`;
-    $("title").innerHTML = `Discover Partitionings <span class="badge">GET /api/v2/partitionings/search</span>`;
-    $("chips").innerHTML = `<span class="chip">Window: <b>${S.winPreset}</b></span><span class="chip">Order: <b>id ${S.latestFirst?"DESC":"ASC"}</b></span>`;
-  } else if (S.tab === "lineage") {
-    const ch = changedMeasuresOf(p);
-    $("crumbs").innerHTML = `<a data-go="discover">Discover</a> / <b>#${p.id} · ${esc(p.shortName)}</b>`;
-    $("title").innerHTML = `${esc(p.shortName)} <span class="badge pri">ID ${p.id}</span> ${appChip(p.author, 16)} ${ch.size?`<span class="badge warn">⚠ ${p.checkpoints.length} cp</span>`:`<span class="badge">${p.checkpoints.length} cp</span>`}`;
-    $("chips").innerHTML = p.partitioning.map(kv => `<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("");
-  } else {
-    $("crumbs").innerHTML = `<a data-go="discover">Discover</a> / <a data-go="lineage">#${p.id}</a> / <b>Main Flow #${p.mainFlowId}</b>`;
-    $("title").innerHTML = `Flow #${p.mainFlowId} Waterfall <span class="badge">primary: ${esc(p.shortName)}</span>`;
-    $("chips").innerHTML = p.partitioning.map(kv => `<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("");
+  $("catalogTableBody").innerHTML = rows.map(d => {
+    const last = d.checkpoints.at(-1);
+    const hasShift = changedMeasuresCount(d) > 0;
+    return `
+      <tr class="row-link ${d.id === STATE.selectedId ? "row-selected" : ""} ${hasShift ? "row-shift" : ""}"
+          data-open-id="${d.id}" tabindex="0" role="button">
+        <td>
+          <div style="font-weight:600;color:var(--text)">${esc(d.name)}</div>
+          <div class="mono-id">${esc(d.asset)}</div>
+        </td>
+        <td>${prodBadge(d.producer)}</td>
+        <td style="white-space:nowrap">${esc(d.infoDate)}</td>
+        <td style="white-space:nowrap">${esc(last.name)} <span style="color:var(--text-muted)">(${d.checkpoints.length})</span></td>
+        <td class="num" style="font-weight:600">${fmtNum(last.values.count)}</td>
+        <td>${statusDisplayHtml(hasShift)}</td>
+        <td style="text-align:right"><span class="row-chevron" title="Inspect Lineage">›</span></td>
+      </tr>
+    `;
+  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px">
+    <div style="font-weight:600;color:var(--text);margin-bottom:4px">No matching datasets</div>
+    <div style="margin-bottom:10px">No datasets in the active window match your current filter criteria.</div>
+    <button class="btn btn-sm" id="resetFiltersBtn">Reset filters</button>
+  </td></tr>`;
+  if ($("resetFiltersBtn")) {
+    $("resetFiltersBtn").onclick = () => {
+      STATE.searchQuery = ""; STATE.prodFilter = "all"; STATE.statusFilter = "all";
+      $("searchInput").value = ""; $("prodSelect").value = "all";
+      document.querySelectorAll("#statusFilterGroup .pill-btn").forEach(b => b.classList.toggle("active", b.dataset.st === "all"));
+      renderCatalog();
+    };
   }
-  document.querySelectorAll("[data-go]").forEach(a => a.onclick = () => { S.tab = a.dataset.go; render(); });
-  $("statusSel").textContent = `Focal partitioning: ${p.id} (${p.shortName}) · mainFlow: ${p.mainFlowId}`;
-  $("refreshed").textContent = `Simulated v0.11.0 snapshot (${NOW_ISO})`;
-}
 
-function renderKpis() {
-  const p = byId[S.selId];
-  const k = (l,v,s) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
-  if (S.tab === "discover") {
-    const res = runSearch();
-    const noCp = res.data.filter(x => !x.checkpoints.length).length;
-    const manual = res.data.filter(x => x.checkpoints.some(c => !c.measuredByAtumAgent)).length;
-    $("kpis").innerHTML =
-      k("Matching partitionings", res.total, `showing ${res.data.length} on page (hasMore=${res.hasMore})`) +
-      k("Without checkpoints", noCp, "included in key-only search") +
-      k("External / manual source", manual, "measuredByAtumAgent = false") +
-      k("Search endpoint", "O(1) key GIN", "runs.search_partitionings");
-  } else if (S.tab === "lineage") {
-    const g = computeSubgraph(S.selId, S.dir, S.depth);
-    const clo = computeClosure(S.selId);
-    const edgeDrifts = g.edges.filter(e => edgeHandoffDiffs(e).some(d => !d.same)).length;
-    const nodeDrifts = g.nodes.filter(n => changedMeasuresOf(n).size).length;
-    const expTotal = new Set([...g.expandableUpstreamNodeIds, ...g.expandableDownstreamNodeIds]).size;
-    $("kpis").innerHTML =
-      k("Graph nodes / edges", `${g.nodes.length} / ${g.edges.length}`, `${g.direction} · depth ${g.depth} · ${expTotal} expandable`) +
-      k("Intra-node drift", `<span style="color:${nodeDrifts?"var(--amber)":"var(--green)"}">${nodeDrifts}</span>`, "partitionings with checkpoint diffs") +
-      k("Edge handoff drift", `<span style="color:${edgeDrifts?"var(--amber)":"var(--green)"}">${edgeDrifts}</span>`, "parent→child measure mismatches") +
-      k("Flow closure size", clo.ancestors.length + clo.descendants.length + 1, `${clo.ancestors.length} ancestors · ${clo.descendants.length} descendants`);
-  } else {
-    const clo = computeClosure(S.selId);
-    const members = [p, ...clo.descendants];
-    const cps = members.flatMap(m => m.checkpoints);
-    $("kpis").innerHTML =
-      k("Main flow ID", p.mainFlowId, `GET /flows/${p.mainFlowId}/checkpoints`) +
-      k("Flow members", members.length, "primary + all downstream descendants") +
-      k("Total checkpoints", cps.length, "fetched in single paginated flow query") +
-      k("Manual checkpoints", cps.filter(c=>!c.measuredByAtumAgent).length, "measuredByAtumAgent = false");
-  }
-}
-
-function renderDiscover() {
-  if (S.tab !== "discover") return;
-  const wb = windowBounds();
-  $("openUpperWarn").classList.toggle("hidden", S.winPreset !== "open");
-  $("keyChips").innerHTML = Object.entries(S.searchKeys).map(([k,v]) =>
-    `<span class="chip">${esc(k)}=<b>${esc(v)}</b> <a data-rmkey="${esc(k)}" style="cursor:pointer;color:var(--muted);margin-left:3px">×</a></span>`
-  ).join("") || `<span class="muted" style="font-size:11.5px">none (activity-only search)</span>`;
-  $("keyChips").querySelectorAll("[data-rmkey]").forEach(a => a.onclick = () => { delete S.searchKeys[a.dataset.rmkey]; S.discOffset = 0; render(); });
-
-  const qp = [`limit=${S.discLimit}`, `offset=${S.discOffset}`, `latest-first=${S.latestFirst}`];
-  if (Object.keys(S.searchKeys).length) qp.push(`keys=${b64url(S.searchKeys)}`);
-  if (Object.keys(S.searchKeys).length === 0 || S.winPreset !== "open") { qp.push(`from=${wb.from}`); if (wb.to) qp.push(`to=${wb.to}`); }
-  else { qp.push(`from=${wb.from}`); }
-  $("searchUrlPreview").textContent = `GET /api/v2/partitionings/search?${qp.join("&")}`;
-
-  const res = runSearch();
-  $("discoverBody").innerHTML = res.data.map(p => {
-    const last = p.checkpoints.at(-1);
-    const ch = changedMeasuresOf(p);
-    const hasManual = p.checkpoints.some(c => !c.measuredByAtumAgent);
-    const hasEdges = EDGES.some(e => e.childPartitioningId === p.id || e.parentPartitioningId === p.id);
-    const srcTag = hasManual ? `<span class="badge manual">REST / manual</span>` : (!hasEdges && p.legacyAncestors ? `<span class="badge warn">pre-v0.11.0 closure</span>` : `<span class="badge">Spark agent</span>`);
-    const cpCell = !S.lazyCp ? `<span class="muted">lazy off</span>`
-      : (!last ? `<span class="muted">0 checkpoints</span>`
-        : `<span style="font-family:var(--mono);font-size:11px">${esc(last.name)} · ${last.processStartTime.slice(0,16)}Z</span>`);
-    const hint = !last ? `<span class="badge">no runs</span>`
-      : (ch.size ? `<span class="badge warn">⚠ ${ch.size} measure drift</span>` : `<span class="badge ok">equal</span>`);
-    return `<tr class="click ${p.id===S.selId?"selrow":""}" data-open="${p.id}">
-      <td style="font-family:var(--mono);font-size:11px">${p.id}</td>
-      <td class="wrap"><div style="display:flex;gap:4px;flex-wrap:wrap">${p.partitioning.map(kv=>`<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("")}</div></td>
-      <td>${appChip(p.author, 15)}</td>
-      <td>${srcTag}</td>
-      <td>${cpCell}</td>
-      <td>${hint}</td>
-    </tr>`;
-  }).join("") || `<tr><td colspan="6" class="muted">No partitionings match the search filter.</td></tr>`;
-
-  $("discoverBody").querySelectorAll("[data-open]").forEach(r => r.onclick = () => {
-    S.selId = Number(r.dataset.open); S.selEdge = null; S.cpIdx = Math.max(0, byId[S.selId].checkpoints.length - 1);
-    S.droppedKeys.clear(); S.tab = "lineage"; render();
+  $("catalogTableBody").querySelectorAll("[data-open-id]").forEach(tr => {
+    const openRow = () => {
+      STATE.selectedId = Number(tr.dataset.openId);
+      STATE.view = "lineage";
+      render();
+    };
+    tr.onclick = openRow;
+    tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openRow(); } };
   });
-  $("discoverPageInfo").textContent = `Showing ${res.data.length} of ${res.total} · offset=${S.discOffset} · hasMore=${res.hasMore}`;
-  $("discPrev").disabled = S.discOffset === 0;
-  $("discNext").disabled = !res.hasMore;
 }
 
-function renderGraph() {
-  if (S.tab !== "lineage") return;
-  const g = computeSubgraph(S.selId, S.dir, S.depth);
-  const p = byId[S.selId];
-  $("graphSub").textContent = `GET /api/v2/partitionings/${S.selId}/lineage?direction=${S.dir}&depth=${S.depth}`;
+// ─── View 2: Lineage Graph & Inspector ──────────────────────────────────────
+function renderLineage() {
+  if (STATE.view !== "lineage") return;
+  const focal = byId[STATE.selectedId];
+  const { connectedNodes, connectedEdges } = computeConnectedPath(focal.id);
 
-  const isLegacyNoEdges = g.edges.length === 0 && (p.legacyAncestors?.length || 0) > 0;
-  $("legacyBanner").classList.toggle("hidden", !isLegacyNoEdges);
-  if (isLegacyNoEdges) {
-    $("legacyBanner").innerHTML = `<span>⚠</span><div><b>No explicit edges recorded for this partitioning</b> (created before v0.11.0). <code>GET .../lineage</code> returns only the focal node; see the <b>Flow closure fallback</b> table below for transitive ancestors/descendants.</div>`;
-  }
-  $("truncBanner").classList.toggle("hidden", !g.truncated);
+  const visibleNodes = STATE.scope === "direct"
+    ? DATASETS.filter(d => d.id === focal.id || EDGES.some(e => (e.from === focal.id && e.to === d.id) || (e.to === focal.id && e.from === d.id)))
+    : DATASETS;
+  const visibleIds = new Set(visibleNodes.map(d => d.id));
+  const visibleEdges = EDGES.map((e, idx) => ({ ...e, idx })).filter(e => visibleIds.has(e.from) && visibleIds.has(e.to));
 
-  // Layered DAG layout with barycenter ordering & clean routing for skip-column edges
-  const rank = new Map();
-  const nodesIds = g.nodes.map(n => n.id);
-  nodesIds.forEach(id => rank.set(id, 0));
-  for (let i = 0; i < nodesIds.length; i++) {
-    g.edges.forEach(e => {
-      const r = (rank.get(e.parentPartitioningId) || 0) + 1;
-      if (r > (rank.get(e.childPartitioningId) || 0)) rank.set(e.childPartitioningId, r);
+  $("lineageSummaryText").textContent = `${visibleNodes.length} datasets · ${visibleEdges.length} links · Highlighting active path for ${focal.name}`;
+  $("collapseGraphBtn").textContent = STATE.graphCollapsed ? "Expand graph" : "Collapse graph";
+  $("graphCanvasWrap").classList.toggle("hidden", STATE.graphCollapsed);
+  $("collapsedChainBar").classList.toggle("hidden", !STATE.graphCollapsed);
+
+  if (STATE.graphCollapsed) {
+    const parents = EDGES.filter(e => e.to === focal.id).map(e => byId[e.from]);
+    const children = EDGES.filter(e => e.from === focal.id).map(e => byId[e.to]);
+    $("collapsedChainBar").innerHTML = `
+      <span style="color:var(--text-muted)">Upstream:</span>
+      ${parents.length ? parents.map(p => `<span class="chain-pill" data-pick="${p.id}">${esc(p.name)}</span>`).join("") : '<span style="color:var(--text-muted)">None</span>'}
+      <span>→</span>
+      <span class="chain-pill active">${esc(focal.name)}</span>
+      <span>→</span>
+      <span style="color:var(--text-muted)">Downstream:</span>
+      ${children.length ? children.map(c => `<span class="chain-pill" data-pick="${c.id}">${esc(c.name)}</span>`).join("") : '<span style="color:var(--text-muted)">None</span>'}
+    `;
+    $("collapsedChainBar").querySelectorAll("[data-pick]").forEach(el => {
+      el.onclick = () => { STATE.selectedId = Number(el.dataset.pick); render(); };
+    });
+  } else {
+    // Topological layout
+    const rank = new Map();
+    visibleNodes.forEach(n => rank.set(n.id, 0));
+    for (let i = 0; i < visibleNodes.length; i++) {
+      visibleEdges.forEach(e => {
+        const r = (rank.get(e.from) || 0) + 1;
+        if (r > (rank.get(e.to) || 0)) rank.set(e.to, r);
+      });
+    }
+    visibleNodes.forEach(n => {
+      if (rank.get(n.id) === 0) {
+        const childRanks = visibleEdges.filter(e => e.from === n.id).map(e => rank.get(e.to));
+        if (childRanks.length && Math.min(...childRanks) > 1) rank.set(n.id, Math.min(...childRanks) - 1);
+      }
+    });
+
+    const cols = new Map();
+    visibleNodes.forEach(n => {
+      const r = rank.get(n.id);
+      if (!cols.has(r)) cols.set(r, []);
+      cols.get(r).push(n);
+    });
+    const sortedRanks = [...cols.keys()].sort((a, b) => a - b);
+
+    const W = 232, H = 64, YG = 10, XG = 48, PAD_X = 16;
+    const svgW = 1120, svgH = 220;
+    const pos = {};
+
+    sortedRanks.forEach((r, cIdx) => {
+      const colNodes = cols.get(r);
+      const totalH = colNodes.length * H + Math.max(0, colNodes.length - 1) * YG;
+      const startY = (svgH - totalH) / 2;
+      colNodes.forEach((n, idx) => {
+        pos[n.id] = { x: PAD_X + cIdx * (W + XG), y: startY + idx * (H + YG), col: cIdx };
+      });
+    });
+
+    let svg = `<defs>
+      <marker id="arrActive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#0f4c81"/>
+      </marker>
+      <marker id="arrMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#cbd5e1"/>
+      </marker>
+      <filter id="cardShadow" x="-8%" y="-8%" width="116%" height="124%">
+        <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.05"/>
+      </filter>
+    </defs>`;
+
+    // Edges: Highlight active connected path in primary blue, plus "=" handoff badge when parent exit == child entry for active graphMetric
+    const gm = STATE.graphMetric;
+    visibleEdges.forEach(e => {
+      const a = pos[e.from], b = pos[e.to];
+      if (!a || !b) return;
+      const isOnPath = connectedEdges.has(e.idx);
+      const x1 = a.x + W, y1 = a.y + H / 2;
+      const x2 = b.x, y2 = b.y + H / 2;
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const span = b.col - a.col;
+      const dPath = span > 1
+        ? `M${x1},${y1} C${x1 + 50},${svgH - 4} ${x2 - 50},${svgH - 4} ${x2 - 2},${y2}`
+        : `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2 - 2},${y2}`;
+      const pExit = byId[e.from].checkpoints.at(-1)?.values[gm];
+      const cEntry = byId[e.to].checkpoints[0]?.values[gm];
+      const handoffMatched = pExit !== undefined && cEntry !== undefined && pExit === cEntry;
+      const bx = mx, by = span > 1 ? (0.125 * y1 + 0.75 * (svgH - 4) + 0.125 * y2) : my;
+
+      svg += `<path d="${dPath}" fill="none" stroke="${isOnPath ? "#0f4c81" : "#cbd5e1"}" stroke-width="${isOnPath ? "2" : "1.4"}" marker-end="url(#${isOnPath ? "arrActive" : "arrMuted"})"/>`;
+      if (handoffMatched && isOnPath) {
+        svg += `<g transform="translate(${bx},${by})" title="Parent exit equals child entry">
+          <circle r="7.5" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+          <text y="3.2" text-anchor="middle" font-size="9.5" font-weight="600" fill="#15803d">=</text>
+        </g>`;
+      }
+    });
+
+    // Nodes: dynamically project the selected graphMetric (Entry -> Exit if shifted)
+    const fmtMetricOnCard = (val, key) => {
+      if (val === undefined || val === null) return null;
+      if (key === "count") return `${fmtNum(val)} rows`;
+      if (key === "sum_amount") return fmtNum(val, true);
+      if (key === "distinct_cust") return `${fmtNum(val)} customers`;
+      if (key === "hash_tx") return `hash ${fmtShortHash(val)}`;
+      return String(val);
+    };
+
+    visibleNodes.forEach(n => {
+      const { x, y } = pos[n.id];
+      const isSel = n.id === STATE.selectedId;
+      const isOnPath = connectedNodes.has(n.id);
+      const hasShift = changedMeasuresCount(n) > 0;
+      const firstVal = n.checkpoints[0]?.values[gm];
+      const lastVal = n.checkpoints.at(-1)?.values[gm];
+      const metricShifted = firstVal !== undefined && lastVal !== undefined && firstVal !== lastVal;
+      let metricLine;
+      if (firstVal === undefined && lastVal === undefined) {
+        metricLine = "— (not measured)";
+      } else if (metricShifted) {
+        metricLine = gm === "count"
+          ? `${fmtNum(firstVal)} → ${fmtNum(lastVal)} rows`
+          : (gm === "sum_amount" ? `${fmtNum(firstVal, true)} → ${fmtNum(lastVal, true)}` : `${fmtShortHash(firstVal)} → ${fmtShortHash(lastVal)}`);
+      } else {
+        metricLine = fmtMetricOnCard(lastVal ?? firstVal, gm);
+      }
+
+      svg += `
+        <g class="node-group" data-node-id="${n.id}" tabindex="0" role="button"
+           opacity="${isOnPath ? "1" : "0.52"}" filter="url(#cardShadow)">
+          <rect class="node-box" x="${x}" y="${y}" width="${W}" height="${H}" rx="7"
+                fill="${isSel ? "#eff6ff" : "#ffffff"}"
+                stroke="${isSel ? "#0f4c81" : (hasShift ? "#f59e0b" : "#cbd5e1")}"
+                stroke-width="${isSel ? "2" : "1.2"}"/>
+          ${hasShift ? `<rect x="${x}" y="${y}" width="4" height="${H}" rx="2" fill="#f59e0b"/>` : ""}
+
+          <text x="${x + 12}" y="${y + 20}" font-size="12.5" font-weight="600" fill="#0f172a">${esc(n.name)}</text>
+          <text x="${x + W - 12}" y="${y + 19}" text-anchor="end" font-size="11.5" font-weight="600" fill="${hasShift ? "#b45309" : "#15803d"}">${hasShift ? "⚠" : "✓"}</text>
+
+          <g transform="translate(${x + 12},${y + 26.5})">${sysSvg(n.producer, 13)}</g>
+          <text x="${x + 29}" y="${y + 37}" font-size="11" fill="#64748b">${esc(n.producer)} · ${esc(n.infoDate)}</text>
+          <text x="${x + 12}" y="${y + 53}" font-size="11" fill="${metricShifted ? "#b45309" : (lastVal === undefined && firstVal === undefined ? "#94a3b8" : "#334155")}" font-weight="${metricShifted ? "600" : "400"}">${esc(metricLine)}</text>
+        </g>
+      `;
+    });
+
+    $("lineageSvg").innerHTML = svg;
+    $("lineageSvg").querySelectorAll(".node-group").forEach(el => {
+      const selectNode = () => { STATE.selectedId = Number(el.dataset.nodeId); render(); };
+      el.onclick = selectNode;
+      el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectNode(); } };
     });
   }
-  const cols = new Map();
-  g.nodes.forEach(n => { const r = rank.get(n.id); if (!cols.has(r)) cols.set(r, []); cols.get(r).push(n); });
-  const sortedRanks = [...cols.keys()].sort((a,b)=>a-b);
-  // 2-pass barycenter sweep (right-to-left then left-to-right) to minimize edge crossings
-  const rowIndex = new Map();
-  sortedRanks.forEach(r => cols.get(r).forEach((n, idx) => rowIndex.set(n.id, idx)));
-  for (let pass = 0; pass < 2; pass++) {
-    for (let i = sortedRanks.length - 2; i >= 0; i--) {
-      const arr = cols.get(sortedRanks[i]);
-      arr.sort((a,b) => {
-        const ca = g.edges.filter(e=>e.parentPartitioningId===a.id).map(e=>rowIndex.get(e.childPartitioningId)??0);
-        const cb = g.edges.filter(e=>e.parentPartitioningId===b.id).map(e=>rowIndex.get(e.childPartitioningId)??0);
-        const ba = ca.length ? ca.reduce((s,v)=>s+v,0)/ca.length : 99;
-        const bb = cb.length ? cb.reduce((s,v)=>s+v,0)/cb.length : 99;
-        return ba - bb || a.id - b.id;
-      });
-      arr.forEach((n, idx) => rowIndex.set(n.id, idx));
-    }
-    for (let i = 1; i < sortedRanks.length; i++) {
-      const arr = cols.get(sortedRanks[i]);
-      arr.sort((a,b) => {
-        const pa = g.edges.filter(e=>e.childPartitioningId===a.id).map(e=>rowIndex.get(e.parentPartitioningId)??0);
-        const pb = g.edges.filter(e=>e.childPartitioningId===b.id).map(e=>rowIndex.get(e.parentPartitioningId)??0);
-        const ba = pa.length ? pa.reduce((s,v)=>s+v,0)/pa.length : 99;
-        const bb = pb.length ? pb.reduce((s,v)=>s+v,0)/pb.length : 99;
-        return ba - bb || a.id - b.id;
-      });
-      arr.forEach((n, idx) => rowIndex.set(n.id, idx));
-    }
-  }
 
-  const maxCols = Math.max(1, ...sortedRanks.map(x => x + 1));
-  const maxRows = Math.max(1, ...[...cols.values()].map(a => a.length));
-  const W = 192, H = 76, XG = 64, YG = 26, PAD = 28;
-  const svgW = Math.max(760, PAD*2 + maxCols*W + (maxCols-1)*XG);
-  const svgH = Math.max(260, PAD*2 + maxRows*H + (maxRows-1)*YG);
-  const pos = {};
-  sortedRanks.forEach(r => {
-    const arr = cols.get(r);
-    const colH = arr.length*H + (arr.length-1)*YG;
-    const y0 = (svgH - colH)/2;
-    arr.forEach((n, rIdx) => { pos[n.id] = {x: PAD + r*(W+XG), y: y0 + rIdx*(H+YG)}; });
-  });
-
-  $("graph").setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
-  let svg = `<defs>
-    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#94a3b8"/></marker>
-    <marker id="arrHot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#0b5cad"/></marker>
-    <marker id="arrWarn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#b45309"/></marker>
-    <filter id="sh" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-opacity=".08"/></filter>
-  </defs><g font-family="Inter,-apple-system,Helvetica">`;
-
-  g.edges.forEach((e, idx) => {
-    const a = pos[e.parentPartitioningId], b = pos[e.childPartitioningId];
-    const x1 = a.x + W, y1 = a.y + H/2, x2 = b.x, y2 = b.y + H/2, mx = (x1+x2)/2;
-    const colSpan = (rank.get(e.childPartitioningId) || 0) - (rank.get(e.parentPartitioningId) || 0);
-    const isSel = S.selEdge && S.selEdge.parentPartitioningId === e.parentPartitioningId && S.selEdge.childPartitioningId === e.childPartitioningId;
-    const diffs = edgeHandoffDiffs(e);
-    const hasDrift = diffs.some(d => !d.same);
-    const stroke = isSel ? "#0b5cad" : (hasDrift ? "#b45309" : "#94a3b8");
-    const marker = isSel ? "arrHot" : (hasDrift ? "arrWarn" : "arr");
-    let dPath, badgeX = mx, badgeY = (y1+y2)/2;
-    if (colSpan > 1) {
-      const arcY = Math.min(y1, y2) < svgH/2 ? 12 : svgH - 12;
-      dPath = `M${x1},${y1} C${x1+40},${arcY} ${x2-40},${arcY} ${x2-2},${y2}`;
-      badgeY = 0.125*y1 + 0.75*arcY + 0.125*y2;
-    } else {
-      dPath = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2-2},${y2}`;
-    }
-    svg += `<g class="edge-hit" data-edge="${idx}">
-      <path d="${dPath}" stroke="transparent" stroke-width="14" fill="none"/>
-      <path class="evis" d="${dPath}" stroke="${stroke}" stroke-width="${isSel?2.6:(hasDrift?2:1.5)}" fill="none" marker-end="url(#${marker})"/>
-      ${hasDrift ? `<g transform="translate(${badgeX},${badgeY})"><circle r="8" fill="#fff7e6" stroke="#b45309" stroke-width="1.2"/><text y="3.5" text-anchor="middle" font-size="10" font-weight="700" fill="#b45309">Δ</text></g>` : ""}
-    </g>`;
-  });
-
-  const expUpSet = new Set(g.expandableUpstreamNodeIds);
-  const expDnSet = new Set(g.expandableDownstreamNodeIds);
-
-  g.nodes.forEach(n => {
-    const {x, y} = pos[n.id];
-    const sel = n.id === S.selId && !S.selEdge;
-    const ch = changedMeasuresOf(n).size > 0;
-    const lastCp = n.checkpoints.at(-1);
-    const rc = lastCp?.measurements.find(m => m.measure.measureName === "count")?.result.mainValue.value;
-    const subKey = n.partitioning.find(kv => kv.key === "info_date" || kv.key === "ref_version");
-    const subText = `${appInfo(n.author).name}${subKey ? " · " + subKey.value : ""}`;
-    const titleTrunc = n.shortName.length > 22 ? n.shortName.slice(0,21) + "…" : n.shortName;
-    const manual = n.checkpoints.some(c => !c.measuredByAtumAgent);
-    svg += `<g class="node" data-nid="${n.id}" filter="url(#sh)">
-      <rect class="card" x="${x}" y="${y}" width="${W}" height="${H}" rx="7" fill="${sel?"#eaf2fb":"#fff"}" stroke="${sel?"#0b5cad":"#d5dce6"}" stroke-width="${sel?2:1}"/>
-      <text x="${x+12}" y="${y+20}" font-size="12" font-weight="650" fill="#111827">${esc(titleTrunc)}</text>
-      <g transform="translate(${x+12},${y+27})">${appSvg(n.author, 13)}</g>
-      <text x="${x+29}" y="${y+37}" font-size="11" fill="#4b5563">${esc(subText)}</text>
-      <text x="${x+12}" y="${y+59}" font-size="11" font-family="SF Mono,Menlo,monospace" fill="#374151">${rc ? Number(rc).toLocaleString("en-US")+" rows" : (n.checkpoints.length ? n.checkpoints.length+" cp" : "no checkpoints")}</text>
-      <g transform="translate(${x+W-10},${y+55})">
-        <rect x="${ch?-54:-34}" y="-11" width="${ch?54:34}" height="17" rx="8.5" fill="${ch?"#fff7e6":(manual?"#f5f3ff":"#f1f5f9")}" stroke="${ch?"#fde7b0":(manual?"#ddd6fe":"#e3e8ef")}"/>
-        <text x="${ch?-27:-17}" y="1" text-anchor="middle" font-size="10" font-weight="600" fill="${ch?"#b45309":(manual?"#6d28d9":"#4b5563")}">${ch?"⚠ ":""}${n.checkpoints.length} cp</text>
-      </g>`;
-    if (expUpSet.has(n.id)) {
-      svg += `<g class="exp-btn" data-exp="${n.id}" transform="translate(${x},${y+H/2})"><circle r="8" fill="#eaf2fb" stroke="#0b5cad"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="700" fill="#0b5cad">+</text></g>`;
-    }
-    if (expDnSet.has(n.id)) {
-      svg += `<g class="exp-btn" data-exp="${n.id}" transform="translate(${x+W},${y+H/2})"><circle r="8" fill="#eaf2fb" stroke="#0b5cad"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="700" fill="#0b5cad">+</text></g>`;
-    }
-    svg += `</g>`;
-  });
-
-  $("graph").innerHTML = svg + "</g>";
-  $("graph").querySelectorAll(".node").forEach(el => {
-    const n = byId[Number(el.dataset.nid)];
-    el.onclick = () => { S.selId = n.id; S.selEdge = null; S.cpIdx = Math.max(0, n.checkpoints.length - 1); S.droppedKeys.clear(); render(); };
-    el.onmousemove = ev => tip(ev, `ID: ${n.id}\n${n.partitioning.map(kv=>`${kv.key}=${kv.value}`).join("\n")}\nauthor: ${n.author}`);
-    el.onmouseleave = hideTip;
-  });
-  $("graph").querySelectorAll(".exp-btn").forEach(el => {
-    el.onclick = ev => { ev.stopPropagation(); S.expandedNodes.add(Number(el.dataset.exp)); S.depth = Math.min(20, S.depth + 1); render(); };
-    el.onmousemove = ev => { ev.stopPropagation(); tip(ev, "Node has parents/children outside current sub-graph\nClick + to expand depth"); };
-    el.onmouseleave = hideTip;
-  });
-  $("graph").querySelectorAll(".edge-hit").forEach(el => {
-    const e = g.edges[Number(el.dataset.edge)];
-    el.onclick = ev => { ev.stopPropagation(); S.selEdge = e; S.it = "edge"; render(); };
-    el.onmousemove = ev => {
-      const diffs = edgeHandoffDiffs(e);
-      const summary = diffs.length ? diffs.map(d => `${d.key}: ${d.same ? "match" : "Δ " + d.diffNum}`).join("\n") : "No overlapping measure keys";
-      tip(ev, `Edge ${e.parentPartitioningId} → ${e.childPartitioningId}\nlinkedBy: ${e.linkedBy} @ ${e.linkedAt}\n${summary}`);
-    };
-    el.onmouseleave = hideTip;
-  });
-
-  // Legacy closure table (auto-shown for edge-less legacy partitionings, or toggled manually)
-  const clo = computeClosure(S.selId);
-  const cloRows = [
-    ...clo.ancestors.map(a => ({rel:"Ancestor (upstream flow)", item:a})),
-    ...clo.descendants.map(d => ({rel:"Descendant (downstream flow)", item:d}))
-  ];
-  $("toggleClosureBtn").textContent = `${S.showClosure || isLegacyNoEdges ? "Hide" : "Show"} flow closure (${cloRows.length})`;
-  $("legacyClosurePanel").classList.toggle("hidden", !(S.showClosure || isLegacyNoEdges));
-  $("closureBody").innerHTML = cloRows.map(r => `<tr class="click" data-cid="${r.item.id}">
-    <td><span class="badge">${r.rel}</span></td>
-    <td style="font-family:var(--mono);font-size:11px">${r.item.id}</td>
-    <td class="wrap"><div style="display:flex;gap:4px;flex-wrap:wrap">${r.item.partitioning.map(kv=>`<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("")}</div></td>
-    <td>${appChip(r.item.author, 14)}</td>
-  </tr>`).join("") || `<tr><td colspan="4" class="muted">No ancestors or descendants in flow closure.</td></tr>`;
-  $("closureBody").querySelectorAll("[data-cid]").forEach(r => r.onclick = () => {
-    S.selId = Number(r.dataset.cid); S.selEdge = null; S.cpIdx = Math.max(0, byId[S.selId].checkpoints.length - 1); render();
-  });
+  renderInspector(focal);
 }
 
-function renderTimeline() {
-  if (S.tab !== "lineage") return;
-  const p = byId[S.selId];
-  const cps = p.checkpoints.filter(c => !S.cpNameFilter || c.name === S.cpNameFilter);
-  const names = [...new Set(p.checkpoints.map(c => c.name))];
-  $("cpSub").textContent = `${p.shortName} · ${p.checkpoints.length} captured`;
-  $("cpNameFilterWrap").innerHTML = names.length > 1 ? `<select id="cpNameSel" style="height:26px;border:1px solid var(--line);border-radius:5px;font-size:11.5px;padding:0 6px"><option value="">All names</option>${names.map(n=>`<option ${n===S.cpNameFilter?"selected":""}>${esc(n)}</option>`).join("")}</select>` : "";
-  if ($("cpNameSel")) $("cpNameSel").onchange = e => { S.cpNameFilter = e.target.value; S.cpIdx = 0; render(); };
+// ─── Bottom Inspector ───────────────────────────────────────────────────────
+function renderInspector(focal) {
+  const hasShift = changedMeasuresCount(focal) > 0;
+  $("inspectorTitle").innerHTML = `
+    <h2>${esc(focal.name)}</h2>
+    ${prodBadge(focal.producer)}
+    ${statusDisplayHtml(hasShift)}
+  `;
 
-  if (!cps.length) {
-    $("timeline").innerHTML = `<div class="muted" style="padding:6px 0">No checkpoints recorded for this partitioning yet.</div>`;
-    return;
-  }
-  if (S.cpIdx >= cps.length) S.cpIdx = cps.length - 1;
-  $("timeline").innerHTML = cps.map((c, i) => `
-    <div class="st ${i===S.cpIdx?"on":""}" data-ci="${i}">
-      <div class="c"></div>
-      <b>${esc(c.name)}</b>
-      <div class="t">${fmtTime(c.processStartTime)} · ${c.measuredByAtumAgent ? "agent" : '<span style="color:var(--purple)">manual</span>'}</div>
-      <div class="t">${c.properties?.executionID ? esc(c.properties.executionID) : c.measurements.length+" measures"}</div>
-    </div>`).join("");
-  $("timeline").querySelectorAll(".st").forEach(el => el.onclick = () => { S.cpIdx = Number(el.dataset.ci); S.selEdge = null; if (S.it === "edge") S.it = "meas"; render(); });
-}
+  document.querySelectorAll(".subtab").forEach(b => {
+    b.classList.toggle("active", b.dataset.subtab === STATE.subtab);
+  });
 
-function renderInspector() {
-  if (S.tab !== "lineage") return;
-  const p = byId[S.selId], cps = p.checkpoints, c = cps[S.cpIdx];
-  let h = "";
+  if (STATE.subtab === "measures") {
+    const chCount = changedMeasuresCount(focal);
+    const calloutHtml = chCount > 0
+      ? `<div class="callout callout-warn">
+           <strong>⚠ Measure Shift:</strong>
+           <span>${chCount} of ${focal.measures.length} control measures shifted at checkpoint <b>2. Joined</b> on ${esc(focal.name)}.</span>
+         </div>`
+      : `<div class="callout callout-ok">
+           <span>All ${focal.measures.length} control measures remained consistent across checkpoints on <b>${esc(focal.name)}</b>.</span>
+         </div>`;
 
-  if (S.it === "meas") {
-    if (!cps.length) {
-      h = `<div class="info"><span>ℹ</span><div>This partitioning is registered with ${p.measureDefs.length} measure definition(s), but no checkpoints have been captured yet.</div></div>`;
-    } else {
-      const mKeys = [...new Set(cps.flatMap(cp => cp.measurements.map(m => measureKey(m.measure))))];
-      const changed = changedMeasuresOf(p);
-      h += `<div class="tbl-wrap"><table><thead><tr><th>Measure</th>${cps.map((cp, i) => `<th class="num ${i===S.cpIdx?"cpsel":""}">${esc(cp.name)}<div class="muted" style="font-size:10px;font-weight:400">${fmtTime(cp.processStartTime)}</div></th>`).join("")}</tr></thead><tbody>`;
-      mKeys.forEach(mk => {
-        const firstVal = cps.find(cp => cp.measurements.some(m => measureKey(m.measure) === mk))?.measurements.find(m => measureKey(m.measure) === mk)?.result.mainValue.value;
-        h += `<tr><td style="font-family:var(--mono);font-size:11.5px">${esc(mk)}</td>`;
-        cps.forEach(cp => {
-          const item = cp.measurements.find(m => measureKey(m.measure) === mk);
-          if (!item) { h += `<td class="num muted">–</td>`; return; }
-          const diff = item.result.mainValue.value !== firstVal;
-          const sup = Object.entries(item.result.supportValues || {}).map(([k,v])=>`${k}=${typeof v==="object"?v.value:v}`).join(", ");
-          h += `<td class="num ${diff?"chg":""}" title="${esc(item.result.mainValue.value)} (${item.result.mainValue.valueType})${sup?" | "+sup:""}">${esc(fmtVal(item.result.mainValue))}${sup?`<div class="muted" style="font-size:10px">${esc(sup)}</div>`:""}</td>`;
-        });
-        h += `</tr>`;
-      });
-      h += `</tbody></table></div>`;
-      h += changed.size
-        ? `<div class="alert"><span>⚠</span><div><b>${[...changed].join(", ")}</b> differ across checkpoints (same-name re-runs are kept distinct by checkpoint ID).</div></div>`
-        : `<div class="okbox"><span>✓</span><div>All overlapping measures match across checkpoints on this partitioning.</div></div>`;
-    }
-  }
+    const cpHeaders = focal.checkpoints.map((cp, idx) => `
+      <th class="num">
+        <div style="color:var(--text);font-size:12px">${idx + 1}. ${esc(cp.name)}</div>
+        <div style="font-weight:400;font-size:11px;color:var(--text-muted)">${esc(cp.startTime.slice(11))}</div>
+      </th>
+    `).join("");
 
-  if (S.it === "edge") {
-    const g = computeSubgraph(S.selId, "both", 1);
-    const activeEdge = S.selEdge || g.edges[0];
-    if (!activeEdge) {
-      h = `<div class="info"><span>ℹ</span><div>No explicit edges connected to this partitioning. (Pre-v0.11.0 links exist only in flow membership.)</div></div>`;
-    } else {
-      const parent = byId[activeEdge.parentPartitioningId], child = byId[activeEdge.childPartitioningId];
-      const diffs = edgeHandoffDiffs(activeEdge);
-      h += `<div class="sec">Selected edge</div>
-        <dl class="kv">
-          <dt>parent → child</dt><dd>#${parent.id} (${esc(parent.shortName)}) → #${child.id} (${esc(child.shortName)})</dd>
-          <dt>linkedBy</dt><dd>${appChip(activeEdge.linkedBy, 14)}</dd>
-          <dt>linkedAt</dt><dd>${activeEdge.linkedAt}</dd>
-        </dl>
-        <div class="sec">Boundary key reconstruction</div>
-        <div style="padding:6px 14px;font-size:11.5px">
-          <div class="muted" style="margin-bottom:4px">Parent keys (${esc(parent.author)}):</div>
-          <div style="margin-bottom:8px">${parent.partitioning.map(kv=>`<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join(" ")}</div>
-          <div class="muted" style="margin-bottom:4px">Child keys (${esc(child.author)}):</div>
-          <div>${child.partitioning.map(kv=>`<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join(" ")}</div>
-        </div>
-        <div class="sec">Cross-stage handoff comparison (UI hint)</div>`;
-      if (!diffs.length) {
-        h += `<div class="info"><span>ℹ</span><div>No overlapping <code>(measureName, measuredColumns)</code> between parent's last checkpoint and child's first checkpoint.</div></div>`;
-      } else {
-        h += `<div class="tbl-wrap"><table><thead><tr><th>Measure</th><th class="num">Parent (${esc(diffs[0].pCp.name)})</th><th class="num">Child (${esc(diffs[0].cCp.name)})</th><th class="num">Delta</th></tr></thead><tbody>`;
-        diffs.forEach(d => {
-          h += `<tr><td style="font-family:var(--mono);font-size:11px">${esc(d.key)}</td>
-            <td class="num">${esc(fmtVal(d.pRes.mainValue))}</td>
-            <td class="num ${d.same?"okcell":"chg"}">${esc(fmtVal(d.cRes.mainValue))}</td>
-            <td class="num">${d.same ? "0 ✓" : (d.diffNum !== null ? d.diffNum.toLocaleString("en-US") : "diff")}</td></tr>`;
-        });
-        h += `</tbody></table></div>`;
-      }
-      if (g.edges.length > 1) {
-        h += `<div class="sec">Other 1-hop edges around focal node</div>`;
-        g.edges.forEach(e => {
-          const pn = byId[e.parentPartitioningId], cn = byId[e.childPartitioningId];
-          h += `<div class="rel" data-pick-edge="${e.parentPartitioningId}:${e.childPartitioningId}"><span>${esc(pn.shortName)} → ${esc(cn.shortName)}</span><span class="arrow">inspect ›</span></div>`;
-        });
-      }
-    }
-  }
+    // Step-to-step comparison: only highlight the exact cell where value changed vs previous checkpoint!
+    const measureRows = focal.measures.map(m => {
+      const vals = focal.checkpoints.map(cp => cp.values[m.key]).filter(v => v !== undefined);
+      const rowHasShift = vals.length > 1 && new Set(vals).size > 1;
 
-  if (S.it === "trend") {
-    // Schema-agnostic key-drop search!
-    if (S.trendAutoForId !== S.selId && p.partitioning.length > 1) {
-      S.trendAutoForId = S.selId;
-      S.droppedKeys.clear();
-      const autoKey = p.partitioning.find(kv => ["info_date","ref_version","date"].includes(kv.key)) || p.partitioning.at(-1);
-      if (autoKey) S.droppedKeys.add(autoKey.key);
-    }
-    const kept = Object.fromEntries(p.partitioning.filter(kv => !S.droppedKeys.has(kv.key)).map(kv => [kv.key, kv.value]));
-    const siblings = Object.keys(kept).length
-      ? PART_LIST.filter(x => { const xm = partMap(x); return Object.entries(kept).every(([k,v]) => xm[k] === v); }).sort((a,b) => a.id - b.id)
-      : [p];
-    const allMetricKeys = [...new Set(siblings.flatMap(s => s.checkpoints.flatMap(cp => cp.measurements.map(m => measureKey(m.measure)))))];
-    if (!allMetricKeys.includes(S.trendMetric) && allMetricKeys.length) S.trendMetric = allMetricKeys[0];
+      const cpCells = focal.checkpoints.map((cp, idx) => {
+        const v = cp.values[m.key];
+        if (v === undefined) return `<td class="num" style="color:var(--text-muted)">—</td>`;
+        const prevVal = idx > 0 ? focal.checkpoints[idx - 1].values[m.key] : undefined;
+        const shiftedHere = prevVal !== undefined && v !== prevVal;
 
-    h += `<div class="info"><span>ℹ</span><div>Uncheck a key below (e.g. <code>info_date</code> or <code>ref_version</code>) to search sibling partitionings via <code>/partitionings/search?keys=...</code> — works for any partitioning schema.</div></div>
-      <div style="padding:0 14px 10px;display:flex;gap:6px;flex-wrap:wrap">
-        ${p.partitioning.map(kv => `<span class="chip tog ${S.droppedKeys.has(kv.key)?"off":""}" data-tkey="${esc(kv.key)}">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("")}
+        let displayVal = m.isHash ? `<span class="mono-id" title="Full hash: ${esc(v)}">${esc(fmtShortHash(v))}</span>` : fmtNum(v, m.isDecimal);
+        let deltaHtml = "";
+        if (shiftedHere) {
+          if (m.isNumeric && typeof v === "number" && typeof prevVal === "number") {
+            const diff = v - prevVal;
+            const sign = diff > 0 ? "+" : "−";
+            deltaHtml = `<span class="delta-sub">${sign}${fmtNum(Math.abs(diff), m.isDecimal)}</span>`;
+          } else {
+            deltaHtml = `<span class="delta-sub">recomputed</span>`;
+          }
+        }
+        return `<td class="num ${shiftedHere ? "cell-changed" : ""}">${displayVal}${deltaHtml}</td>`;
+      }).join("");
+
+      return `
+        <tr>
+          <td style="font-weight:600">${esc(m.label)}</td>
+          ${cpCells}
+          <td>${statusDisplayHtml(rowHasShift)}</td>
+        </tr>
+      `;
+    }).join("");
+
+    $("inspectorContent").innerHTML = `
+      ${calloutHtml}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Control measure</th>
+              ${cpHeaders}
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${measureRows}</tbody>
+        </table>
       </div>
-      <div class="qurl">GET /api/v2/partitionings/search?keys=${Object.keys(kept).length ? b64url(kept) : "<select at least 1 key>"}</div>`;
+    `;
+  } else if (STATE.subtab === "cross") {
+    // Tab 2: Lineage-wide Cross-Dataset Control Comparison (Synced with active measure, 6 fixed columns)
+    const allMeasures = [
+      { key: "count", label: "Record count (All rows)", isNumeric: true },
+      { key: "sum_amount", label: "Sum of amount", isNumeric: true, isDecimal: true },
+      { key: "sum_fee", label: "Sum of fee_amount", isNumeric: true, isDecimal: true },
+      { key: "distinct_cust", label: "Distinct customer_id", isNumeric: true },
+      { key: "hash_tx", label: "Hash integrity of tx_id", isHash: true }
+    ];
+    const mObj = allMeasures.find(m => m.key === STATE.graphMetric) || allMeasures[0];
+    const mk = mObj.key;
 
-    if (!Object.keys(kept).length) {
-      h += `<div class="alert"><span>⚠</span><div>At least one non-empty key (or a <code>from</code> time bound) is required by <code>/partitionings/search</code> (returns HTTP 400 otherwise).</div></div>`;
-    } else {
-      const ptsData = siblings.map(s => {
-        const raw = s.checkpoints.at(-1)?.measurements.find(m => measureKey(m.measure) === S.trendMetric)?.result.mainValue;
-        const num = raw && raw.valueType !== "String" ? Number(raw.value) : null;
-        return {s, raw, num};
-      });
-      const nums = ptsData.filter(d => Number.isFinite(d.num)).map(d => d.num);
-      let spark = "";
-      if (nums.length > 1) {
-        const sw = 400, sh = 54, lo = Math.min(...nums), hi = Math.max(...nums);
-        const sx = i => 16 + i*(sw-32)/(ptsData.length-1);
-        const sy = v => hi === lo ? sh/2 : (sh-10) - (v-lo)/(hi-lo)*(sh-20);
-        const validPts = ptsData.map((d,i) => Number.isFinite(d.num) ? `${sx(i).toFixed(1)},${sy(d.num).toFixed(1)}` : null).filter(Boolean).join(" ");
-        spark = `<div style="padding:8px 14px 4px"><svg width="100%" viewBox="0 0 ${sw} ${sh}" style="background:#fafbfc;border:1px solid var(--line2);border-radius:6px">
-          <polyline fill="none" stroke="#0b5cad" stroke-width="1.8" points="${validPts}"/>
-          ${ptsData.map((d,i) => Number.isFinite(d.num) ? `<circle cx="${sx(i).toFixed(1)}" cy="${sy(d.num).toFixed(1)}" r="${d.s.id===S.selId?4:2.6}" fill="${d.s.id===S.selId?"#0b5cad":"#fff"}" stroke="#0b5cad" stroke-width="1.5"/>` : "").join("")}
-        </svg></div>`;
+    const fmtCellVal = val => {
+      if (val === undefined || val === null) return "—";
+      if (mObj.isHash) return `<span class="mono-id" title="${esc(val)}">${esc(fmtShortHash(val))}</span>`;
+      return fmtNum(val, mObj.isDecimal);
+    };
+
+    const crossRows = DATASETS.map(d => {
+      const isSel = d.id === STATE.selectedId;
+      const firstCp = d.checkpoints[0], lastCp = d.checkpoints.at(-1);
+      const entryVal = firstCp?.values[mk];
+      const exitVal = lastCp?.values[mk];
+      const measured = entryVal !== undefined || exitVal !== undefined;
+      const shiftedInternally = entryVal !== undefined && exitVal !== undefined && entryVal !== exitVal;
+
+      // Check upstream parent handoffs for this measure
+      const parentEdges = EDGES.filter(e => e.to === d.id);
+      const parentsWithMeasure = parentEdges
+        .map(e => byId[e.from])
+        .filter(p => p.checkpoints.at(-1)?.values[mk] !== undefined);
+
+      let handoffHtml = `<span style="color:var(--text-muted)">— (Source root)</span>`;
+      if (!measured) {
+        handoffHtml = `<span style="color:var(--text-muted)">Not measured</span>`;
+      } else if (parentsWithMeasure.length > 0 && entryVal !== undefined) {
+        const matchedParent = parentsWithMeasure.find(p => p.checkpoints.at(-1).values[mk] === entryVal);
+        if (matchedParent) {
+          handoffHtml = `<span class="status-consistent">${checkIconSvg} Matches ${esc(matchedParent.name)}</span>`;
+        } else {
+          handoffHtml = `<span style="color:var(--text-muted)">Transformed on read</span>`;
+        }
+      } else if (parentEdges.length > 0) {
+        handoffHtml = `<span style="color:var(--text-muted)">Not on parent</span>`;
       }
-      h += `<div class="sec">Sibling runs (${siblings.length}) <select id="trendMetSel" style="height:24px;border:1px solid var(--line);border-radius:4px;font-size:11px;text-transform:none;letter-spacing:0">${allMetricKeys.map(k=>`<option ${k===S.trendMetric?"selected":""}>${esc(k)}</option>`).join("")}</select></div>${spark}`;
-      h += `<div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Varying key(s)</th><th class="num">${esc(S.trendMetric)}</th></tr></thead><tbody>`;
-      ptsData.forEach(({s, raw}) => {
-        const vary = s.partitioning.filter(kv => !(kv.key in kept)).map(kv => `${kv.key}=${kv.value}`).join(", ") || "exact";
-        h += `<tr class="click ${s.id===S.selId?"selrow":""}" data-sib="${s.id}">
-          <td style="font-family:var(--mono);font-size:11px">${s.id}</td>
-          <td style="font-family:var(--mono);font-size:11px">${esc(vary)}</td>
-          <td class="num">${fmtVal(raw)}</td>
-        </tr>`;
-      });
-      h += `</tbody></table></div>`;
-    }
-  }
 
-  if (S.it === "meta") {
-    h += `<div class="sec">Partitioning (PartitioningWithIdDTO)</div>
-      <dl class="kv">
-        <dt>id</dt><dd>${p.id}</dd>
-        <dt>author</dt><dd>${appChip(p.author, 15)}</dd>
-        <dt>mainFlowId</dt><dd>${p.mainFlowId}</dd>
-        ${p.partitioning.map(kv => `<dt>key: ${esc(kv.key)}</dt><dd>${esc(kv.value)}</dd>`).join("")}
-      </dl>
-      <div class="sec">Registered measure definitions (GET .../measures)</div>
-      <dl class="kv">${p.measureDefs.map(m => `<dt>${esc(m.measureName)}</dt><dd>[${m.measuredColumns.map(esc).join(", ")}]</dd>`).join("")}</dl>
-      <div class="sec">Additional data (GET .../additional-data, lazy)</div>
-      <dl class="kv">${p.additionalData.length ? p.additionalData.map(ad => `<dt>${esc(ad.key)}</dt><dd>${esc(ad.value)} <span class="muted">(${esc(ad.author)})</span></dd>`).join("") : `<dt>–</dt><dd class="muted">none</dd>`}</dl>`;
-    if (c) {
-      h += `<div class="sec">Selected checkpoint (CheckpointV2DTO)</div>
-        <dl class="kv">
-          <dt>id</dt><dd>${c.id}</dd>
-          <dt>name</dt><dd>${esc(c.name)}</dd>
-          <dt>author</dt><dd>${esc(c.author)}</dd>
-          <dt>measuredByAtumAgent</dt><dd>${c.measuredByAtumAgent ? "true (Spark agent)" : '<span style="color:var(--purple);font-weight:600">false (REST / external)</span>'}</dd>
-          <dt>processStartTime</dt><dd>${c.processStartTime}</dd>
-          <dt>processEndTime</dt><dd>${c.processEndTime}</dd>
-          <dt>properties</dt><dd>${c.properties ? Object.entries(c.properties).map(([k,v])=>`${esc(k)}=${esc(v)}`).join("<br>") : "null"}</dd>
-        </dl>`;
-    }
-  }
+      let exitDeltaHtml = "";
+      if (shiftedInternally) {
+        if (mObj.isNumeric && typeof exitVal === "number" && typeof entryVal === "number") {
+          const diff = exitVal - entryVal;
+          const sign = diff > 0 ? "+" : "−";
+          exitDeltaHtml = `<span class="delta-sub">${sign}${fmtNum(Math.abs(diff), mObj.isDecimal)} (at Joined)</span>`;
+        } else {
+          exitDeltaHtml = `<span class="delta-sub">recomputed</span>`;
+        }
+      }
 
-  $("inspector").innerHTML = h;
-  $("inspector").querySelectorAll("[data-tkey]").forEach(el => el.onclick = () => {
-    S.trendTouched = true;
-    const k = el.dataset.tkey; if (S.droppedKeys.has(k)) S.droppedKeys.delete(k); else S.droppedKeys.add(k); render();
-  });
-  if ($("trendMetSel")) $("trendMetSel").onchange = e => { S.trendMetric = e.target.value; render(); };
-  $("inspector").querySelectorAll("[data-sib]").forEach(el => el.onclick = () => {
-    S.selId = Number(el.dataset.sib); S.cpIdx = Math.max(0, byId[S.selId].checkpoints.length - 1); render();
-  });
-  $("inspector").querySelectorAll("[data-pick-edge]").forEach(el => el.onclick = () => {
-    const [pid, cid] = el.dataset.pickEdge.split(":").map(Number);
-    S.selEdge = EDGES.find(e => e.parentPartitioningId === pid && e.childPartitioningId === cid); render();
-  });
+      return `
+        <tr class="row-link ${isSel ? "row-selected" : ""} ${shiftedInternally ? "row-shift" : ""}" data-cross-id="${d.id}" tabindex="0" role="button">
+          <td style="font-weight:600;white-space:nowrap">
+            ${esc(d.name)}
+            ${isSel ? '<span style="color:var(--primary);font-size:11px;font-weight:600;margin-left:4px">(Selected)</span>' : ""}
+          </td>
+          <td>${prodBadge(d.producer)}</td>
+          <td class="num">
+            ${entryVal !== undefined ? fmtCellVal(entryVal) : '<span style="color:var(--text-muted)">—</span>'}
+          </td>
+          <td class="num ${shiftedInternally ? "cell-changed" : ""}">
+            ${exitVal !== undefined ? `${fmtCellVal(exitVal)}${exitDeltaHtml}` : '<span style="color:var(--text-muted)">—</span>'}
+          </td>
+          <td>${handoffHtml}</td>
+          <td>${!measured ? '<span style="color:var(--text-muted)">—</span>' : statusDisplayHtml(shiftedInternally)}</td>
+        </tr>
+      `;
+    }).join("");
+
+    $("inspectorContent").innerHTML = `
+      <div class="callout callout-ok" style="justify-content:space-between">
+        <span>Comparing <b>${esc(mObj.label)}</b> across all datasets in the lineage graph.</span>
+        <div class="pill-group" id="crossMetricGroup">
+          ${allMeasures.map(m => `<button class="pill-btn ${m.key === mk ? "active" : ""}" data-cm="${m.key}">${esc(m.label)}</button>`).join("")}
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Dataset</th>
+              <th>Producer</th>
+              <th class="num">Entry (First cp)</th>
+              <th class="num">Exit (Last cp)</th>
+              <th>Upstream handoff</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${crossRows}</tbody>
+        </table>
+      </div>
+    `;
+    $("inspectorContent").querySelectorAll("[data-cm]").forEach(btn => {
+      btn.onclick = () => {
+        STATE.graphMetric = btn.dataset.cm;
+        if ($("graphMetricSelect")) $("graphMetricSelect").value = STATE.graphMetric;
+        renderLineage();
+      };
+    });
+    $("inspectorContent").querySelectorAll("[data-cross-id]").forEach(tr => {
+      const pick = () => { STATE.selectedId = Number(tr.dataset.crossId); render(); };
+      tr.onclick = pick;
+      tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } };
+    });
+  } else if (STATE.subtab === "metadata") {
+    const partKeysRows = focal.partitioning.map((kv, i) => `
+      <tr>
+        <td style="width:150px;color:var(--text-secondary);font-weight:600">
+          <span class="key-idx">${i + 1}</span>${esc(kv.key)}
+        </td>
+        <td style="font-family:var(--mono)">${esc(kv.value)}</td>
+      </tr>
+    `).join("");
+
+    const partMetaRows = focal.additionalData.length
+      ? focal.additionalData.map(ad => `
+          <tr>
+            <td style="width:140px;color:var(--text-secondary);font-weight:600">${esc(ad.key)}</td>
+            <td style="font-family:var(--mono)">${esc(ad.value)}</td>
+            <td style="color:var(--text-muted);text-align:right">${esc(ad.author)}</td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:14px">No partitioning metadata registered</td></tr>`;
+
+    const cpMetaRows = focal.checkpoints.map((cp, idx) => {
+      const propsHtml = Object.entries(cp.properties || {}).map(([k, v]) =>
+        `<span class="prop-chip">${esc(k)}=<b>${esc(v)}</b></span>`
+      ).join("") || "—";
+
+      return `
+        <tr>
+          <td style="font-weight:600;white-space:nowrap">${idx + 1}. ${esc(cp.name)}</td>
+          <td style="white-space:nowrap">
+            <span class="mono-id" title="${esc(cp.id)}">${esc(fmtShortUuid(cp.id))}</span>
+            <button class="copy-btn" data-copy="${esc(cp.id)}" title="Copy full UUID">Copy</button>
+          </td>
+          <td style="white-space:nowrap">${esc(cp.startTime)}</td>
+          <td style="white-space:nowrap">${esc(cp.endTime)}</td>
+          <td style="white-space:nowrap">${cp.measuredByAgent ? "Atum Agent" : "External API"}</td>
+          <td>${propsHtml}</td>
+        </tr>
+      `;
+    }).join("");
+
+    $("inspectorContent").innerHTML = `
+      <div class="meta-top">
+        <div class="meta-card">
+          <div class="meta-card-head">
+            <span>Partitioning Keys (Ordered)</span>
+            <span style="font-weight:400;color:var(--text-muted)">
+              ID <span class="mono-id">#${focal.id}</span> · Author: <strong style="color:var(--text-secondary)">${esc(focal.authorId)}</strong>
+              <button class="copy-btn" data-copy="${focal.id}" title="Copy Partitioning ID">Copy</button>
+            </span>
+          </div>
+          <table>
+            <thead><tr><th>Key</th><th>Value</th></tr></thead>
+            <tbody>${partKeysRows}</tbody>
+          </table>
+        </div>
+
+        <div class="meta-card">
+          <div class="meta-card-head">
+            <span>Partitioning Metadata</span>
+            <span style="font-weight:400;color:var(--text-muted)">${focal.additionalData.length} registered</span>
+          </div>
+          <table>
+            <thead><tr><th>Key</th><th>Value</th><th style="text-align:right">Author</th></tr></thead>
+            <tbody>${partMetaRows}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Checkpoint</th>
+              <th>Checkpoint UUID</th>
+              <th>Process start</th>
+              <th>Process end</th>
+              <th>Capture method</th>
+              <th>Checkpoint properties</th>
+            </tr>
+          </thead>
+          <tbody>${cpMetaRows}</tbody>
+        </table>
+      </div>
+    `;
+    $("inspectorContent").querySelectorAll("[data-copy]").forEach(btn => {
+      btn.onclick = () => {
+        navigator.clipboard?.writeText(btn.dataset.copy);
+        btn.textContent = "Copied";
+        setTimeout(() => { btn.textContent = "Copy"; }, 1200);
+      };
+    });
+  } else {
+    // Tab 3: Historical Runs with SVG trend sparkline + clickable run selection
+    const hist = focal.history || [
+      { date: focal.infoDate, id: focal.id, count: focal.checkpoints.at(-1).values.count, amount: focal.checkpoints.at(-1).values.sum_amount, status: "Consistent" }
+    ];
+    const activeDate = STATE.selectedHistDate || focal.infoDate;
+    const maxCount = Math.max(...hist.map(h => h.count || 1));
+    const minCount = Math.min(...hist.map(h => h.count || 0));
+
+    let sparkHtml = "";
+    if (hist.length > 1) {
+      const sw = 820, sh = 54;
+      const sx = i => 24 + i * (sw - 48) / (hist.length - 1);
+      const sy = v => maxCount === minCount ? sh / 2 : (sh - 12) - ((v - minCount) / (maxCount - minCount)) * (sh - 24);
+      const pts = hist.map((h, i) => `${sx(i).toFixed(1)},${sy(h.count).toFixed(1)}`).join(" ");
+      sparkHtml = `
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);background:#fcfdff;display:flex;align-items:center;gap:16px">
+          <div style="font-size:12px;color:var(--text-muted);white-space:nowrap">7-day record count trend</div>
+          <svg width="100%" viewBox="0 0 ${sw} ${sh}" style="max-height:54px;display:block">
+            <polyline fill="none" stroke="#0f4c81" stroke-width="1.8" points="${pts}"/>
+            ${hist.map((h, i) => {
+              const sel = h.date === activeDate;
+              const isShift = h.status === "Measure Shift";
+              return `<circle cx="${sx(i).toFixed(1)}" cy="${sy(h.count).toFixed(1)}" r="${sel ? 4.5 : 3}"
+                              fill="${isShift ? "#f59e0b" : (sel ? "#0f4c81" : "#fff")}"
+                              stroke="${isShift ? "#b45309" : "#0f4c81"}" stroke-width="1.6"/>`;
+            }).join("")}
+          </svg>
+        </div>
+      `;
+    }
+
+    $("inspectorContent").innerHTML = `
+      ${sparkHtml}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Info date / version</th>
+              <th style="width:220px">Relative volume</th>
+              <th class="num">Record count</th>
+              <th class="num">Sum of amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${hist.slice().reverse().map(h => {
+              const isCur = h.date === activeDate;
+              const isShift = h.status === "Measure Shift";
+              const pct = Math.max(8, Math.round(((h.count || 0) / maxCount) * 100));
+              return `
+                <tr class="row-link ${isCur ? "row-selected" : ""}" data-hist-date="${esc(h.date)}" tabindex="0" role="button" title="Partitioning #${h.id}">
+                  <td style="font-weight:${isCur ? "600" : "400"}">${esc(h.date)} ${isCur ? '<span style="color:var(--primary);font-size:11.5px;margin-left:6px">(Selected)</span>' : ""}</td>
+                  <td>
+                    <div style="background:#e2e8f0;height:8px;border-radius:4px;overflow:hidden">
+                      <div style="width:${pct}%;height:100%;background:${isShift ? "#f59e0b" : "#0f4c81"}"></div>
+                    </div>
+                  </td>
+                  <td class="num" style="font-weight:600">${fmtNum(h.count)}</td>
+                  <td class="num">${fmtNum(h.amount, true)}</td>
+                  <td>${statusDisplayHtml(isShift)}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+    $("inspectorContent").querySelectorAll("[data-hist-date]").forEach(tr => {
+      const pick = () => { STATE.selectedHistDate = tr.dataset.histDate; renderInspector(focal); };
+      tr.onclick = pick;
+      tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } };
+    });
+  }
 }
 
-function renderFlowView() {
-  if (S.tab !== "flow") return;
-  const p = byId[S.selId], clo = computeClosure(S.selId);
-  const members = [p, ...clo.descendants];
-  const wb = windowBounds();
-  $("flowSub").textContent = `mainFlow #${p.mainFlowId} · ${members.length} partitioning(s) · window [${wb.from.slice(0,10)}, ${wb.to ? wb.to.slice(0,10) : "+∞"})`;
-  let items = members.flatMap(m => m.checkpoints.map(c => ({part:m, cp:c})));
-  items = items.filter(({cp}) => inWindow(cp.processStartTime, wb));
-  if (S.flowCpName.trim()) items = items.filter(({cp}) => cp.name === S.flowCpName.trim());
-  if (S.flowPropFilter.includes("=")) {
-    const [pk, pv] = S.flowPropFilter.split("=");
-    items = items.filter(({cp}) => cp.properties && cp.properties[pk.trim()] === pv.trim());
-  }
-  items.sort((a,b) => b.cp.processStartTime.localeCompare(a.cp.processStartTime));
+// ─── Audit Evidence Modal ───────────────────────────────────────────────────
+function renderModal() {
+  const focal = byId[STATE.selectedId];
+  const last = focal.checkpoints.at(-1);
 
-  $("flowBody").innerHTML = items.map(({part, cp}) => `
-    <tr class="click" data-fp="${part.id}">
-      <td style="font-family:var(--mono);font-size:11px">${cp.processStartTime}</td>
-      <td><b>${esc(part.shortName)}</b> <span class="muted" style="font-family:var(--mono);font-size:10.5px">#${part.id}</span></td>
-      <td><b>${esc(cp.name)}</b></td>
-      <td>${appChip(cp.author, 14)} ${cp.measuredByAtumAgent ? "" : `<span class="badge manual">manual</span>`}</td>
-      <td style="font-family:var(--mono);font-size:11px">${cp.properties ? Object.entries(cp.properties).map(([k,v])=>`${esc(k)}=${esc(v)}`).join(" ") : "–"}</td>
-      <td class="wrap" style="font-family:var(--mono);font-size:11px">${cp.measurements.map(m => `${esc(measureKey(m.measure))}=${esc(fmtVal(m.result.mainValue))}`).join(" · ")}</td>
-    </tr>`).join("") || `<tr><td colspan="6" class="muted">No checkpoints in this flow matching the active window/filters.</td></tr>`;
-  $("flowBody").querySelectorAll("[data-fp]").forEach(r => r.onclick = () => { S.selId = Number(r.dataset.fp); S.tab = "lineage"; render(); });
+  document.querySelectorAll("#modalModeGroup .pill-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.mmode === STATE.modalMode);
+  });
+
+  if (STATE.modalMode === "summary") {
+    $("modalBody").innerHTML = `
+      <div class="evidence-grid">
+        <div class="evidence-box">
+          <div class="kpi-label">Selected dataset</div>
+          <div style="font-size:15px;font-weight:600;margin-top:2px">${esc(focal.name)}</div>
+          <div class="mono-id" style="margin-top:2px">${focal.partitioning.map(kv => `${esc(kv.key)}=${esc(kv.value)}`).join(" · ")}</div>
+        </div>
+        <div class="evidence-box">
+          <div class="kpi-label">Producer &amp; status</div>
+          <div style="font-size:15px;font-weight:600;margin-top:2px">${esc(focal.producer)} · ${changedMeasuresCount(focal) > 0 ? "Measure Shift" : "Consistent"}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Record count: ${fmtNum(last.values.count)} · Checkpoints: ${focal.checkpoints.length}</div>
+        </div>
+      </div>
+
+      <div class="sec-heading">Datasets in lineage graph</div>
+      <table style="border:1px solid var(--border)">
+        <thead>
+          <tr><th>Dataset</th><th>Producer</th><th>Info date</th><th class="num">Checkpoints</th><th class="num">Record count</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          ${DATASETS.map(d => {
+            const c = d.checkpoints.at(-1);
+            return `<tr>
+              <td style="font-weight:600">${esc(d.name)}</td>
+              <td>${esc(d.producer)}</td>
+              <td>${esc(d.infoDate)}</td>
+              <td class="num">${d.checkpoints.length}</td>
+              <td class="num">${fmtNum(c.values.count)}</td>
+              <td>${statusDisplayHtml(changedMeasuresCount(d) > 0)}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  } else {
+    const trace = {
+      partitioningId: focal.id,
+      partitioningKeys: focal.partitioning,
+      apiEndpointsUsed: [
+        `GET /api/v2/partitionings/search?keys=${btoa(JSON.stringify(Object.fromEntries(focal.partitioning.map(x => [x.key, x.value]))))}`,
+        `GET /api/v2/partitionings/${focal.id}/lineage?direction=both&depth=3`,
+        `GET /api/v2/partitionings/${focal.id}/checkpoints?include-properties=true`,
+        `GET /api/v2/partitionings/${focal.id}/additional-data`
+      ]
+    };
+    $("modalBody").innerHTML = `<pre class="code-block">${esc(JSON.stringify(trace, null, 2))}</pre>`;
+  }
 }
 
 function render() {
-  renderChrome();
-  renderKpis();
-  renderDiscover();
-  renderGraph();
-  renderTimeline();
-  renderInspector();
-  renderFlowView();
+  renderNav();
+  renderCatalog();
+  renderLineage();
 }
 
-// ---------- Wiring ----------
-document.querySelectorAll(".rail a").forEach(a => a.onclick = () => { S.tab = a.dataset.tab; render(); });
-document.querySelectorAll("[data-dir]").forEach(b => b.onclick = () => { S.dir = b.dataset.dir; render(); });
-document.querySelectorAll("[data-depth]").forEach(b => b.onclick = () => { S.depth = Number(b.dataset.depth); render(); });
-document.querySelectorAll("[data-it]").forEach(b => b.onclick = () => { S.it = b.dataset.it; render(); });
-$("winPreset").onchange = e => { S.winPreset = e.target.value; S.discOffset = 0; render(); };
-$("quickFilter").oninput = e => { S.quickFilter = e.target.value; S.discOffset = 0; if (S.tab !== "discover") S.tab = "discover"; render(); };
-$("lazyCpToggle").onchange = e => { S.lazyCp = e.target.checked; render(); };
-$("latestFirstToggle").onchange = e => { S.latestFirst = e.target.checked; S.discOffset = 0; render(); };
-$("addKeyBtn").onclick = () => {
-  const k = $("addKeyInput").value.trim(), v = $("addValInput").value.trim();
-  if (k) { S.searchKeys[k] = v; $("addKeyInput").value = ""; $("addValInput").value = ""; S.discOffset = 0; render(); }
-};
-$("presetGlueBtn").onclick = () => { S.searchKeys = {catalog_path:"edla_prod_curated.un_customer_payments"}; S.discOffset = 0; render(); };
-$("presetDateBtn").onclick = () => { S.searchKeys = {info_date:"2026-11-11"}; S.discOffset = 0; render(); };
-$("clearKeysBtn").onclick = () => { S.searchKeys = {}; S.discOffset = 0; render(); };
-$("toggleClosureBtn").onclick = () => { S.showClosure = !S.showClosure; render(); };
-$("hideClosureBtn").onclick = () => { S.showClosure = false; render(); };
-$("discPrev").onclick = () => { S.discOffset = Math.max(0, S.discOffset - S.discLimit); render(); };
-$("discNext").onclick = () => { S.discOffset += S.discLimit; render(); };
-$("flowCpName").oninput = e => { S.flowCpName = e.target.value; renderFlowView(); };
-$("flowPropFilter").oninput = e => { S.flowPropFilter = e.target.value; renderFlowView(); };
-$("exportBtn").onclick = () => {
-  const p = byId[S.selId], wb = windowBounds(), res = runSearch(), g = computeSubgraph(S.selId, S.dir, S.depth);
-  $("exportJson").textContent = JSON.stringify({
-    exportedAt: new Date().toISOString(),
-    completenessWarning: "Live pagination (non-snapshot); concurrent inserts or late checkpoints can shift pages.",
-    activeTab: S.tab,
-    window: {from: wb.from, to: wb.to || null},
-    focalPartitioning: {id: p.id, mainFlowId: p.mainFlowId, partitioning: p.partitioning, author: p.author},
-    lineageGraphSummary: {direction: g.direction, depth: g.depth, nodes: g.nodes.length, edges: g.edges.length, truncated: g.truncated},
-    discoveryQuery: {keys: S.searchKeys, totalMatched: res.total, pageSize: S.discLimit, offset: S.discOffset, hasMore: res.hasMore}
-  }, null, 2);
-  $("exportModal").classList.remove("hidden");
-};
-$("closeModal").onclick = () => $("exportModal").classList.add("hidden");
-document.addEventListener("keydown", e => {
-  if (e.key === "/" && e.target.tagName !== "INPUT") { e.preventDefault(); $("quickFilter").focus(); }
-  if (e.key === "Escape") $("exportModal").classList.add("hidden");
+// ─── Event Wiring ───────────────────────────────────────────────────────────
+$("brandHome").onclick = () => { STATE.view = "catalog"; render(); };
+document.querySelectorAll(".side-link").forEach(btn => {
+  btn.onclick = () => { STATE.view = btn.dataset.view; render(); };
 });
-function tip(e, text) { const t = $("tip"); t.style.display = "block"; t.textContent = text; t.style.left = Math.min(window.innerWidth-320, e.clientX+14)+"px"; t.style.top = (e.clientY+14)+"px"; }
-function hideTip() { $("tip").style.display = "none"; }
+$("windowSelect").onchange = e => { STATE.windowPreset = e.target.value; render(); };
+$("graphMetricSelect").onchange = e => { STATE.graphMetric = e.target.value; renderLineage(); };
+$("searchInput").oninput = e => { STATE.searchQuery = e.target.value; renderCatalog(); };
+$("prodSelect").onchange = e => { STATE.prodFilter = e.target.value; renderCatalog(); };
 
-// Hash routing for screenshots / deep links: #discover | #lineage/<id>/<it> | #flow/<id>
-const parts = location.hash.slice(1).split("/");
-if (["discover","lineage","flow"].includes(parts[0])) S.tab = parts[0];
-if (parts[1] && byId[Number(parts[1])]) S.selId = Number(parts[1]);
-if (parts[2] && ["meas","edge","trend","meta"].includes(parts[2])) S.it = parts[2];
-if (S.tab === "lineage" && !S.selEdge) S.cpIdx = Math.max(0, byId[S.selId].checkpoints.length - 1);
-if (S.it === "edge") S.selEdge = EDGES.find(e => e.childPartitioningId === S.selId || e.parentPartitioningId === S.selId) || null;
+document.querySelectorAll("#statusFilterGroup .pill-btn").forEach(btn => {
+  btn.onclick = () => {
+    STATE.statusFilter = btn.dataset.st;
+    document.querySelectorAll("#statusFilterGroup .pill-btn").forEach(b => b.classList.toggle("active", b === btn));
+    renderCatalog();
+  };
+});
+document.querySelectorAll("#scopeGroup .pill-btn").forEach(btn => {
+  btn.onclick = () => {
+    STATE.scope = btn.dataset.scope;
+    document.querySelectorAll("#scopeGroup .pill-btn").forEach(b => b.classList.toggle("active", b === btn));
+    renderLineage();
+  };
+});
+$("collapseGraphBtn").onclick = () => {
+  STATE.graphCollapsed = !STATE.graphCollapsed;
+  $("graphResizeHandle").classList.toggle("hidden", STATE.graphCollapsed);
+  renderLineage();
+};
+(() => {
+  let startY = 0, startH = 210, dragging = false;
+  const handle = $("graphResizeHandle"), svgEl = $("lineageSvg");
+  handle.addEventListener("mousedown", e => {
+    dragging = true; startY = e.clientY;
+    startH = svgEl.getBoundingClientRect().height;
+    e.preventDefault();
+  });
+  window.addEventListener("mousemove", e => {
+    if (!dragging) return;
+    const nextH = Math.max(130, Math.min(360, startH + (e.clientY - startY)));
+    svgEl.style.height = nextH + "px";
+  });
+  window.addEventListener("mouseup", () => { dragging = false; });
+})();
+document.querySelectorAll(".subtab").forEach(btn => {
+  btn.onclick = () => { STATE.subtab = btn.dataset.subtab; renderInspector(byId[STATE.selectedId]); };
+});
+
+$("exportReportBtn").onclick = () => {
+  STATE.modalMode = "summary";
+  $("exportToast").textContent = "";
+  renderModal();
+  $("reportModal").classList.remove("hidden");
+};
+$("closeModalBtn").onclick = () => $("reportModal").classList.add("hidden");
+$("downloadPdfBtn").onclick = () => {
+  $("exportToast").textContent = "✓ Opening PDF print dialog";
+  window.print();
+};
+$("exportCsvBtn").onclick = () => {
+  const csv = ["Dataset,Producer,InfoDate,Checkpoints,RecordCount,Status"].concat(
+    DATASETS.map(d => `"${d.name}","${d.producer}","${d.infoDate}",${d.checkpoints.length},${d.checkpoints.at(-1).values.count || 0},"${changedMeasuresCount(d) > 0 ? "Measure Shift" : "Consistent"}"`)
+  ).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "atum-audit-evidence.csv";
+  a.click();
+  $("exportToast").textContent = "✓ Downloaded atum-audit-evidence.csv";
+};
+document.querySelectorAll("#modalModeGroup .pill-btn").forEach(btn => {
+  btn.onclick = () => { STATE.modalMode = btn.dataset.mmode; renderModal(); };
+});
+
+if (location.hash === "#catalog") STATE.view = "catalog";
+if (location.hash === "#cross") { STATE.view = "lineage"; STATE.subtab = "cross"; STATE.graphMetric = "sum_amount"; $("graphMetricSelect").value = "sum_amount"; }
+if (location.hash === "#metadata") { STATE.view = "lineage"; STATE.subtab = "metadata"; }
+if (location.hash === "#trend") { STATE.view = "lineage"; STATE.subtab = "trend"; }
+if (location.hash === "#report") { STATE.view = "lineage"; $("exportReportBtn").click(); }
 render();
 </script>
 </body>
