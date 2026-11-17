@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Atum · Data Quality Explorer</title>
+<style>
+:root{
+  --bg:#f3f5f8;--panel:#fff;--line:#e3e8ef;--line2:#eef1f5;--text:#111827;--sub:#4b5563;--muted:#8a94a6;
+  --pri:#0b5cad;--pri-50:#eaf2fb;--pri-100:#d3e4f7;--navy:#0c1a2e;
+  --amber:#b45309;--amber-50:#fff7e6;--amber-100:#fde7b0;--green:#15803d;--green-50:#eafaf0;
+  --raw:#64748b;--normalized:#0f766e;--joined:#4338ca;--curated:#7e22ce;
+  --mono:"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font:13px/1.45 Inter,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,select,input{font:inherit}
+/* header */
+.hdr{height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px 0 0;gap:16px;position:sticky;top:0;z-index:5}
+.brand{width:60px;height:56px;background:var(--navy);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px}
+.brand span{color:#f0b429}
+.product{font-weight:600;font-size:15px}.product small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:-2px}
+.env{font-size:10.5px;font-weight:700;letter-spacing:.6px;padding:2px 8px;border-radius:4px;background:#fdecec;color:#b91c1c;border:1px solid #f8caca}
+.search{flex:0 1 460px;margin-left:24px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:0 10px;height:34px;background:#f9fafb}
+.search input{border:0;background:transparent;outline:none;width:100%}
+.search kbd{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px;background:#fff}
+.hright{margin-left:auto;display:flex;align-items:center;gap:14px}
+.datepick{display:flex;align-items:center;border:1px solid var(--line);border-radius:6px;height:34px;overflow:hidden}
+.datepick button{border:0;background:#fff;width:30px;height:100%;cursor:pointer;color:var(--sub)}
+.datepick button:hover{background:#f3f4f6}.datepick button:disabled{color:#d1d5db;cursor:default;background:#fff}
+.datepick span{padding:0 10px;font-weight:600;border-left:1px solid var(--line);border-right:1px solid var(--line);height:100%;display:flex;align-items:center;gap:6px}
+.icon-btn{width:34px;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--sub);cursor:pointer}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--pri);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+/* shell */
+.app{display:flex;min-height:calc(100vh - 56px - 28px)}
+.rail{width:60px;background:var(--navy);display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:4px}
+.rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#93a3bd;cursor:pointer;font-size:9.5px;gap:2px}
+.rail a svg{width:18px;height:18px}
+.rail a:hover{background:#16273f;color:#fff}.rail a.on{background:#1b3a63;color:#fff;box-shadow:inset 3px 0 #f0b429}
+.content{flex:1;min-width:0;padding:16px 20px 20px}
+/* page head */
+.crumbs{font-size:12px;color:var(--muted)}.crumbs a{color:var(--pri);cursor:pointer}.crumbs b{color:var(--sub);font-weight:500}
+.phead{display:flex;align-items:flex-end;gap:16px;margin:4px 0 14px}
+.phead h1{font-size:20px;margin:0;font-weight:650;display:flex;align-items:center;gap:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{font-family:var(--mono);font-size:11px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:1px 7px;color:var(--sub)}
+.chip b{color:var(--text);font-weight:600}
+.actions{margin-left:auto;display:flex;gap:8px}
+.btn{height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:0 12px;cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:6px;font-weight:500}
+.btn:hover{background:#f9fafb;border-color:#cbd5e1}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}.btn.primary:hover{background:#094c90}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
+.seg button{border:0;background:transparent;height:28px;padding:0 10px;cursor:pointer;color:var(--sub);font-size:12px}
+.seg button+button{border-left:1px solid var(--line)}.seg button.on{background:var(--pri-50);color:var(--pri);font-weight:600}
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.kpi .v{font-size:22px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:11.5px;color:var(--sub)}
+/* grid */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:14px;align-items:start}
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line2);min-height:44px}
+.ph h2{font-size:13px;margin:0;font-weight:600}.ph .sub{color:var(--muted);font-size:12px}
+.ph .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pb{padding:12px 14px}
+.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+.badge{font-size:11px;font-weight:600;border-radius:10px;padding:1px 8px;white-space:nowrap;background:#f1f5f9;color:var(--sub);border:1px solid var(--line)}
+.badge.warn{background:var(--amber-50);color:var(--amber);border-color:var(--amber-100)}
+.badge.ok{background:var(--green-50);color:var(--green);border-color:#c6efd4}
+.appchip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.appchip b{font-weight:600}
+/* graph */
+.node{cursor:pointer}.node:hover .card{stroke:#94a3b8}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);padding:8px 14px;border-top:1px solid var(--line2);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+/* timeline */
+.tl{display:flex;align-items:flex-start;padding:14px 14px 10px}
+.st{flex:1;text-align:center;position:relative;cursor:pointer;padding:0 4px 6px;border-radius:6px}
+.st:hover .c{box-shadow:0 0 0 4px var(--pri-100)}
+.st:before{content:"";position:absolute;top:8px;left:0;right:0;height:2px;background:var(--line)}
+.st:first-child:before{left:50%}.st:last-child:before{right:50%}.st:only-child:before{display:none}
+.c{width:18px;height:18px;border-radius:50%;margin:0 auto 6px;position:relative;background:#fff;border:2px solid #94a3b8}
+.st.on .c{border-color:var(--pri);background:var(--pri);box-shadow:0 0 0 4px var(--pri-100)}
+.st b{font-weight:600}.st .t{font-family:var(--mono);font-size:11px;color:var(--muted)}
+/* tables */
+table{border-collapse:collapse;width:100%}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line2);text-align:left;white-space:nowrap;font-size:12px}
+th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;background:#fafbfc}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11.5px}
+td.chg{background:var(--amber-50);color:var(--amber);font-weight:600}
+th.cpsel{color:var(--pri);box-shadow:inset 0 -2px var(--pri)}
+.muted{color:var(--muted)}
+th.sort{cursor:pointer}th.sort:hover{color:var(--text)}
+.trend td{padding:3px 10px}.trend tr.row{cursor:pointer}.trend tr.row:hover td{background:#f8fafc}.trend tr.selrow td{background:var(--pri-50)}
+.dstable tr.r{cursor:pointer}.dstable tr.r:hover td{background:#f8fafc}
+/* inspector */
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px}
+.tabs button{border:0;background:none;padding:11px 10px;cursor:pointer;color:var(--sub);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--pri);border-bottom-color:var(--pri);font-weight:600}
+.alert{display:flex;gap:8px;background:var(--amber-50);border:1px solid var(--amber-100);color:#7c3a06;border-radius:6px;padding:8px 10px;font-size:12px;margin:12px 14px}
+.info{display:flex;gap:8px;background:#f8fafc;border:1px solid var(--line);color:var(--sub);border-radius:6px;padding:8px 10px;font-size:12px;margin:12px 14px}
+dl.kv{display:grid;grid-template-columns:140px 1fr;margin:0;padding:6px 14px 12px}
+dl.kv dt{color:var(--muted);font-size:12px;padding:6px 0;border-bottom:1px solid var(--line2)}
+dl.kv dd{margin:0;padding:6px 0;border-bottom:1px solid var(--line2);font-family:var(--mono);font-size:11.5px;word-break:break-all}
+.sec{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;padding:12px 14px 0}
+.rel{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line2);cursor:pointer}
+.rel:hover{background:#f8fafc}.rel .arrow{color:var(--muted);margin-left:auto}
+.link{color:var(--pri);cursor:pointer}
+/* status bar */
+.status{height:28px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 16px;font-size:11px;color:var(--muted)}
+.status .dotg{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:5px}
+.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;font-size:11px;padding:6px 9px;border-radius:5px;display:none;font-family:var(--mono);z-index:9;white-space:pre;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast{position:fixed;right:20px;bottom:44px;background:var(--navy);color:#fff;padding:10px 14px;border-radius:6px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:.2s;z-index:10}
+.toast.show{opacity:1;transform:none}
+.hidden{display:none!important}
+.pager{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="brand">A<span>●</span></div>
+  <div class="product">Atum <small>Data Quality Explorer</small></div>
+  <label class="search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="search" placeholder="Search datasets or partitioning, e.g. entity=transactions">
+    <kbd>/</kbd>
+  </label>
+  <div class="hright">
+    <div class="datepick" title="Business date (← / →)">
+      <button id="prevDay">‹</button>
+      <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="dateLabel" style="border:0;padding:0"></span></span>
+      <button id="nextDay">›</button>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="rail">
+    <a data-tab="lineage" title="Lineage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 6c5 0 4 6 9 6M7.5 18c5 0 4-6 9-6"/></svg>Lineage</a>
+    <a data-tab="datasets" title="Datasets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Datasets</a>
+  </nav>
+
+  <main class="content">
+    <div class="crumbs" id="crumbs"></div>
+    <div class="phead">
+      <div>
+        <h1 id="title"></h1>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+
+    <section class="kpis" id="kpis"></section>
+
+    <!-- LINEAGE VIEW -->
+    <div id="lineageView" class="grid">
+
+      <div class="stack">
+        <section class="panel">
+          <div class="ph"><h2>Lineage graph</h2>
+            <div class="r">
+              <span class="sub">Direction</span>
+              <div class="seg"><button data-dir="up">Upstream</button><button data-dir="down">Downstream</button><button data-dir="both">Both</button></div>
+              <span class="sub" style="margin-left:6px">Depth</span>
+              <div class="seg"><button data-depth="direct">Direct</button><button data-depth="all">All</button></div>
+            </div>
+          </div>
+          <svg id="graph" width="100%" viewBox="0 0 760 350" style="display:block;padding:6px 8px 0"></svg>
+          <div class="legend">
+            <span>⚠ UI hint: a measured value differs between checkpoints · cp = checkpoints</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="ph"><h2>Checkpoints</h2><span class="sub" id="cpSub"></span></div>
+          <div class="tl" id="timeline"></div>
+        </section>
+
+        <section class="panel trend">
+          <div class="ph"><h2>Trend across the lineage</h2><span class="sub">last checkpoint per day · click a day or a dataset</span>
+            <div class="r"><span class="sub">Metric</span>
+              <select id="metric" style="height:28px;border:1px solid var(--line);border-radius:5px;background:#fff;padding:0 6px"><option>Record count</option><option>Σ amount</option></select></div>
+          </div>
+          <table style="table-layout:fixed">
+            <col style="width:22%"><col style="width:48%"><col style="width:15%"><col style="width:15%">
+            <thead><tr><th>Dataset</th><th>04 Nov → 11 Nov</th><th class="num" id="trendDateHdr"></th><th class="num">vs prev. day</th></tr></thead>
+            <tbody id="trendBody"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <aside class="panel">
+        <div class="tabs" id="itabs">
+          <button data-it="meas">Measurements</button><button data-it="meta">Metadata</button>
+        </div>
+        <div id="inspector"></div>
+      </aside>
+    </div>
+
+    <!-- DATASETS VIEW -->
+    <section id="datasetsView" class="panel hidden">
+      <div class="ph"><h2>All datasets</h2><span class="sub" id="dsDate"></span></div>
+      <table class="dstable">
+        <thead><tr>
+          <th class="sort" data-sort="name">Dataset</th><th>Partitioning</th><th class="sort" data-sort="tool">Tool</th>
+          <th class="sort num" data-sort="cps">Checkpoints</th><th class="sort num" data-sort="rc">Record count</th><th>Last checkpoint</th><th>UI hint</th></tr></thead>
+        <tbody id="dsBody"></tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<footer class="status">
+  <span><span class="dotg"></span>Atum Server v0.11.0 · API v2</span>
+  <span id="statusSel"></span>
+  <span style="margin-left:auto" id="refreshed"></span>
+</footer>
+
+<div class="tip" id="tip"></div>
+
+<script>
+// ---------- mock data (what Atum would have captured) ----------
+const DATES = ["2026-11-04","2026-11-05","2026-11-06","2026-11-07","2026-11-08","2026-11-09","2026-11-10","2026-11-11"];
+const CUST = [84102,84230,84391,84477,84512,84530,84688,84801];
+const TX   = [1189220,1201554,1196870,1243101,612044,598311,1251870,1204331];
+const JOIN = [1188950,1201300,1196610,1242870,611902,598190,1251590,1203998];
+const CTRY = Array(8).fill(249);
+const REV  = [196,197,196,198,171,169,197,181];
+const AVG_AMOUNT = 81.7183;
+
+const hashSum = (seed, n) => Math.round(n * 2147483647 * (1 + (seed % 89) / 7919));
+const amount = n => Math.round(n * AVG_AMOUNT * 100) / 100;
+
+const DS = [
+  {id:"cust_raw",  name:"Customers", stage:"raw", format:"CSV", tool:"Aqueduct", author:"ingestion-svc", x:10,  y:30,  parents:[],
+   part:{source:"crm",entity:"customers",stage:"raw"}, extra:{source_system:"CRM", file:"customers_{date}.csv", owner:"crm-team"},
+   cps:d=>[{name:"Loaded", t:["05:30:02","05:30:41"], m:{"Record count":CUST[d],"Σ hash(customer_id)":hashSum(11,CUST[d])}}]},
+  {id:"tx_raw",    name:"Transactions", stage:"raw", format:"CSV", tool:"Aqueduct", author:"ingestion-svc", x:10, y:150, parents:[],
+   part:{source:"core-banking",entity:"transactions",stage:"raw"}, extra:{source_system:"Core banking", file:"tx_{date}.csv.gz", owner:"payments-team"},
+   cps:d=>[{name:"Loaded", t:["05:31:10","05:34:55"], m:{"Record count":TX[d],"Σ amount":amount(TX[d]),"Σ hash(tx_id)":hashSum(23,TX[d])}}]},
+  {id:"ctry_raw",  name:"Countries", stage:"raw", format:"CSV", tool:"Aqueduct", author:"ingestion-svc", x:10, y:270, parents:[],
+   part:{source:"ref-data",entity:"countries",stage:"raw"}, extra:{source_system:"Reference data", file:"iso3166.csv", owner:"ref-data-team"},
+   cps:d=>[{name:"Loaded", t:["05:30:00","05:30:03"], m:{"Record count":CTRY[d],"Σ hash(iso_code)":hashSum(37,CTRY[d])}}]},
+  {id:"cust_norm", name:"Customers", stage:"normalized", format:"parquet", tool:"Aqueduct", author:"ingestion-svc", x:200, y:30, parents:["cust_raw"],
+   part:{entity:"customers",stage:"normalized"}, extra:{format:"parquet", schema_version:"3", owner:"crm-team"},
+   cps:d=>[{name:"Written", t:["05:48:12","05:49:30"], m:{"Record count":CUST[d],"Σ hash(customer_id)":hashSum(11,CUST[d])}}]},
+  {id:"tx_norm",   name:"Transactions", stage:"normalized", format:"parquet", tool:"Aqueduct", author:"ingestion-svc", x:200, y:150, parents:["tx_raw"],
+   part:{entity:"transactions",stage:"normalized"}, extra:{format:"parquet", schema_version:"7", owner:"payments-team"},
+   cps:d=>[{name:"Written", t:["05:50:20","05:58:02"], m:{"Record count":TX[d],"Σ amount":amount(TX[d]),"Σ hash(tx_id)":hashSum(23,TX[d])}}]},
+  {id:"ctry_norm", name:"Countries", stage:"normalized", format:"parquet", tool:"Aqueduct", author:"ingestion-svc", x:200, y:270, parents:["ctry_raw"],
+   part:{entity:"countries",stage:"normalized"}, extra:{format:"parquet", owner:"ref-data-team"},
+   cps:d=>[{name:"Written", t:["05:47:00","05:47:04"], m:{"Record count":CTRY[d],"Σ hash(iso_code)":hashSum(37,CTRY[d])}}]},
+  {id:"joined",    name:"Customer transactions", stage:"joined", format:"parquet", tool:"Unify", author:"curation-svc", x:390, y:150, parents:["cust_norm","tx_norm","ctry_norm"],
+   part:{entity:"customer_transactions",stage:"joined"}, extra:{format:"parquet", join:"transactions ⋈ customers ⋈ countries", owner:"retail-data-team"},
+   cps:d=>[
+     {name:"Input",   t:["06:12:01","06:12:40"], m:{"Record count":TX[d],  "Σ amount":amount(TX[d]),  "Σ hash(tx_id)":hashSum(23,TX[d])}},
+     {name:"Joined",  t:["06:18:41","06:19:07"], m:{"Record count":JOIN[d],"Σ amount":amount(JOIN[d]),"Σ hash(tx_id)":hashSum(23,JOIN[d])}},
+     {name:"Written", t:["06:20:30","06:21:12"], m:{"Record count":JOIN[d],"Σ amount":amount(JOIN[d]),"Σ hash(tx_id)":hashSum(23,JOIN[d])}}]},
+  {id:"rev",       name:"Revenue by country", stage:"curated", format:"parquet", tool:"Unify", author:"curation-svc", x:580, y:70, parents:["joined"],
+   part:{entity:"revenue_by_country",stage:"curated"}, extra:{format:"parquet", aggregation:"sum(amount) group by country", owner:"finance-bi"},
+   cps:d=>[
+     {name:"Input",   t:["06:40:05","06:40:31"], m:{"Σ amount":amount(JOIN[d])}},
+     {name:"Written", t:["06:42:10","06:42:12"], m:{"Record count":REV[d],"Σ revenue":amount(JOIN[d])}}]},
+  {id:"c360",      name:"Customer 360", stage:"curated", format:"parquet", tool:"Unify", author:"curation-svc", x:580, y:230, parents:["joined"],
+   part:{entity:"customer_360",stage:"curated"}, extra:{format:"parquet", grain:"one row per customer", owner:"retail-data-team"},
+   cps:d=>[
+     {name:"Input",   t:["06:41:00","06:41:20"], m:{"Record count":CUST[d]}},
+     {name:"Written", t:["06:45:44","06:46:30"], m:{"Record count":CUST[d],"Σ hash(customer_id)":hashSum(11,CUST[d])}}]},
+];
+const byId = Object.fromEntries(DS.map(d => [d.id, d]));
+const children = id => DS.filter(d => d.parents.includes(id)).map(d => d.id);
+
+
+</script>
+<script>
+// ---------- state ----------
+const STAGE_COLOR = {raw:"#64748b", normalized:"#0f766e", joined:"#4338ca", curated:"#7e22ce"};
+const STAGES = ["raw","normalized","joined","curated"];
+const S = {sel:"joined", day:7, cp:1, dir:"both", depth:"all", tab:"lineage", it:"meas", q:"", metric:"Record count", sort:null, asc:true};
+const OWNER = d => d.extra.owner || "–";
+// author -> application; icons redrawn as 24x24 SVG from the AqueDuct / Unify brand logos
+const APPS = {
+  "ingestion-svc": {name:"AqueDuct", color:"#5B0E31", art:'<rect width="24" height="24" rx="5.5" fill="#5B0E31"/><text x="12.4" y="16.6" text-anchor="middle" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-style="italic" font-weight="500" font-size="12.5" letter-spacing="-.4" fill="#fff">Aq</text><path d="M4.5 19.6h15" stroke="#fff" stroke-opacity=".55" stroke-width="1" stroke-linecap="round"/>'},
+  "curation-svc":  {name:"Unify", color:"#5B0E31", art:'<circle cx="12" cy="12" r="12" fill="#5B0E31"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8.6 11v3.1a3.4 3.4 0 0 0 6.8 0V9.6M15.4 9.6v7.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polygon points="7.28,4.47 8.43,6.21 10.50,5.90 9.19,7.54 10.13,9.41 8.17,8.67 6.68,10.14 6.77,8.05 4.92,7.09 6.93,6.53" fill="#fff"/>'},
+};
+const app = d => APPS[d.author] || {name:d.author, color:"#64748b", path:""};
+const appSvg = (a, s = 16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex:none">${a.art || `<rect width="24" height="24" rx="6" fill="${a.color}"/>`}</svg>`;
+const appChip = (d, s = 16, extra = "") => { const a = app(d); return `<span class="appchip" title="${a.name} · ${d.author}">${appSvg(a, s)}<b>${a.name}</b>${extra}</span>`; };
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const fmtDate = (i, long) => new Date(DATES[i]+"T00:00:00").toLocaleDateString("en-GB", long ? {weekday:"short",day:"2-digit",month:"short",year:"numeric"} : {day:"2-digit",month:"short"});
+const fmtNum = v => v == null ? "–" : Number.isInteger(v) ? v.toLocaleString("en-US") : v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtShort = v => v >= 1e12 ? (v/1e15).toFixed(4) + "e15" : fmtNum(v);
+const fmtCompact = v => v == null ? "–" : v >= 1e6 ? (v/1e6).toFixed(2)+"M" : v >= 1e4 ? (v/1e3).toFixed(1)+"k" : fmtNum(v);
+const partObj = d => ({...d.part, date:DATES[S.day]});
+const partStr = (d, sep=" · ") => Object.entries(partObj(d)).map(([k,v]) => `${k}=${v}`).join(sep);
+const label = d => `${d.name} · ${d.stage}`;
+const cpsOf = (d, day=S.day) => d.cps(day);
+const metricOf = (d, day, m=S.metric) => { const cps = d.cps(day); for (let i = cps.length-1; i >= 0; i--) { if (m in cps[i].m) return cps[i].m[m]; if (m==="Σ amount" && "Σ revenue" in cps[i].m) return cps[i].m["Σ revenue"]; } return null; };
+const recordCount = (d, day) => metricOf(d, day, "Record count");
+const cpId = (d, i) => { let h = 2166136261; for (const ch of d.id+DATES[S.day]+i) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); const x = (h>>>0).toString(16).padStart(8,"0"); return `${x}-${x.slice(0,4)}-4${x.slice(1,4)}-a${x.slice(4,7)}-${x}${x.slice(0,4)}`; };
+function changedMeasures(d, day = S.day) {
+  const cps = d.cps(day), out = new Set();
+  new Set(cps.flatMap(c => Object.keys(c.m))).forEach(n => { const v = cps.filter(c => n in c.m).map(c => c.m[n]); if (v.length > 1 && new Set(v).size > 1) out.add(n); });
+  return out;
+}
+const matches = d => {
+  const q = S.q.trim().toLowerCase();
+  if (q && !(label(d) + " " + partStr(d) + " " + d.tool + " " + OWNER(d)).toLowerCase().includes(q)) return false;
+  return true;
+};
+function related(id) {
+  const set = new Set([id]);
+  const walk = next => { let f = [id], depth = 0; while (f.length && (S.depth === "all" || depth < 1)) { f = f.flatMap(next).filter(x => !set.has(x)); f.forEach(x => set.add(x)); depth++; } };
+  if (S.dir !== "down") walk(x => byId[x].parents);
+  if (S.dir !== "up") walk(children);
+  return set;
+}
+function select(id) { S.sel = id; S.cp = Math.min(1, cpsOf(byId[id]).length-1); render(); }
+const badge = d => { const ch = changedMeasures(d).size > 0, n = cpsOf(d).length; return `<span class="badge ${ch?"warn":""}">${ch?"⚠ ":""}${n} cp</span>`; };
+const stageDot = () => "";
+
+// ---------- URL state (deep links) ----------
+function writeHash() { history.replaceState(null, "", `#${S.tab}/${S.sel}/${DATES[S.day]}`); }
+function readHash() { const [tab, sel, date] = location.hash.slice(1).split("/"); if (tab === "lineage" || tab === "datasets") S.tab = tab; if (byId[sel]) S.sel = sel; const i = DATES.indexOf(date); if (i >= 0) S.day = i; }
+
+// ---------- renderers ----------
+function renderChrome() {
+  const d = byId[S.sel];
+  $("dateLabel").textContent = fmtDate(S.day, true);
+  $("prevDay").disabled = S.day === 0; $("nextDay").disabled = S.day === DATES.length-1;
+  document.querySelectorAll(".rail a").forEach(a => a.classList.toggle("on", a.dataset.tab === S.tab));
+  $("lineageView").classList.toggle("hidden", S.tab !== "lineage");
+  $("datasetsView").classList.toggle("hidden", S.tab !== "datasets");
+  document.querySelectorAll("[data-dir]").forEach(b => b.classList.toggle("on", b.dataset.dir === S.dir));
+  document.querySelectorAll("[data-depth]").forEach(b => b.classList.toggle("on", b.dataset.depth === S.depth));
+  document.querySelectorAll("[data-it]").forEach(b => b.classList.toggle("on", b.dataset.it === S.it));
+  if (S.tab === "lineage") {
+    $("crumbs").innerHTML = `<a data-go="datasets">Datasets</a> / <b>${label(d)}</b>`;
+    $("title").innerHTML = `${d.name} <span class="muted" style="font-weight:400">(${d.stage})</span> ${badge(d)}`;
+    $("chips").innerHTML = Object.entries(partObj(d)).map(([k,v]) => `<span class="chip">${k}=<b>${v}</b></span>`).join("");
+  } else {
+    $("crumbs").innerHTML = `<b>Datasets</b>`;
+    $("title").innerHTML = `All datasets`;
+    $("chips").innerHTML = `<span class="chip">date=<b>${DATES[S.day]}</b></span><span class="chip">${DS.length} datasets</span>`;
+  }
+  document.querySelectorAll("[data-go]").forEach(a => a.onclick = () => { S.tab = a.dataset.go; render(); });
+  $("statusSel").textContent = S.tab === "lineage" ? `Selected: ${label(d)} · ${partStr(d)}` : "";
+  $("refreshed").textContent = `Data as of ${fmtDate(S.day, true)} · Last refreshed ${new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}`;
+}
+
+function renderKpis() {
+  const scope = S.tab === "lineage" ? [...related(S.sel)].map(id => byId[id]) : DS;
+  const cps = scope.reduce((a,d) => a + cpsOf(d).length, 0);
+  const changed = scope.filter(d => changedMeasures(d).size);
+  const latest = scope.flatMap(d => cpsOf(d).map(c => c.t[1])).sort().at(-1);
+  const d = byId[S.sel], rc = recordCount(d, S.day), prev = S.day ? recordCount(d, S.day-1) : null;
+  const delta = prev ? (rc-prev)/prev*100 : null;
+  const k = (l,v,s) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  $("kpis").innerHTML =
+    k(S.tab==="lineage"?"Datasets in view":"Datasets", scope.length, S.tab==="lineage" ? `${S.dir} · ${S.depth} lineage of ${d.name}` : "registered partitionings") +
+    k("Checkpoints captured", cps, `on ${fmtDate(S.day, true)} · last at ${latest}`) +
+    k("Datasets with value changes", `<span style="color:${changed.length?"var(--amber)":"var(--green)"}">${changed.length}</span>`, changed.length ? changed.map(x => x.name).join(", ") : "all measures equal across checkpoints") +
+    (S.tab==="lineage"
+      ? k(`Record count · ${d.name}`, fmtNum(rc), delta===null ? "no previous day" : `<span style="color:${Math.abs(delta)>5?"var(--amber)":"var(--sub)"}">${delta>=0?"▲":"▼"} ${Math.abs(delta).toFixed(1)}%</span> vs ${fmtDate(S.day-1)}`)
+      : k("Datasets without checkpoints", DS.filter(x => !cpsOf(x).length).length, `on ${fmtDate(S.day, true)}`));
+}
+
+function renderGraph() {
+  const W = 170, H = 70, rel = related(S.sel);
+  let s = `<defs><marker id="a" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#94a3b8"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-opacity=".08"/></filter></defs>
+    <g font-size="12" font-family="Inter,-apple-system,Helvetica">`;
+  DS.forEach(c => c.parents.forEach(p => {
+    const a = byId[p], on = rel.has(p) && rel.has(c.id), hot = on && (p === S.sel || c.id === S.sel);
+    const x1 = a.x+W, y1 = a.y+H/2+2, x2 = c.x, y2 = c.y+H/2+2, m = (x1+x2)/2;
+    s += `<path d="M${x1},${y1} C${m},${y1} ${m},${y2} ${x2-2},${y2}" stroke="${hot?"#0b5cad":"#a3aec0"}" stroke-width="${hot?2:1.5}" fill="none" marker-end="url(#a)" opacity="${on?1:.15}"/>`;
+  }));
+  DS.forEach(d => {
+    const sel = d.id === S.sel, ch = changedMeasures(d).size > 0, op = rel.has(d.id) && matches(d) ? 1 : .28, y = d.y + 2;
+    const rc = recordCount(d, S.day);
+    s += `<g class="node" data-id="${d.id}" opacity="${op}" filter="url(#sh)">
+      <rect class="card" x="${d.x}" y="${y}" width="${W}" height="${H}" rx="6" fill="${sel?"#eaf2fb":"#fff"}" stroke="${sel?"#0b5cad":"#d5dce6"}" stroke-width="${sel?2:1}"/>
+      <text x="${d.x+14}" y="${y+20}" font-weight="650" fill="#111827">${d.name}</text>
+      <g transform="translate(${d.x+14},${y+27})">${appSvg(app(d),13)}</g><text x="${d.x+32}" y="${y+37}" fill="#6b7280" font-size="11">${app(d).name} · ${d.format}</text>
+      <text x="${d.x+14}" y="${y+57}" fill="#374151" font-size="11" font-family="SF Mono,Menlo,monospace">${fmtCompact(rc)} rows</text>
+      <g transform="translate(${d.x+W-10},${y+52})">
+        <rect x="${ch?-58:-36}" y="-11" width="${ch?58:36}" height="17" rx="8.5" fill="${ch?"#fff7e6":"#f1f5f9"}" stroke="${ch?"#fde7b0":"#e3e8ef"}"/>
+        <text x="${ch?-29:-18}" y="1.5" text-anchor="middle" font-size="10.5" font-weight="600" fill="${ch?"#b45309":"#4b5563"}">${ch?"⚠ ":""}${cpsOf(d).length} cp</text></g></g>`;
+  });
+  $("graph").innerHTML = s + "</g>";
+  $("graph").querySelectorAll(".node").forEach(n => {
+    const d = byId[n.dataset.id];
+    n.onclick = () => select(d.id);
+    n.onmousemove = e => tip(e, `${label(d)}\n${partStr(d)}\nrecord count: ${fmtNum(recordCount(d, S.day))}\napplication: ${app(d).name} (${d.author})\ncheckpoints: ${cpsOf(d).map(c=>c.name).join(", ")}`);
+    n.onmouseleave = hideTip;
+  });
+}
+
+function renderTimeline() {
+  const d = byId[S.sel], cps = cpsOf(d);
+  $("cpSub").textContent = `${d.name} (${d.stage}) · ${fmtDate(S.day, true)} · ${cps.length} captured`;
+  $("timeline").innerHTML = cps.map((c,i) => `<div class="st ${i===S.cp?"on":""}" data-i="${i}"><div class="c"></div><b>${c.name}</b><div class="t" style="display:flex;gap:5px;align-items:center;justify-content:center">${c.t[1]} · ${appSvg(app(d),12)} ${app(d).name}</div><div class="t">${Object.keys(c.m).length} measures</div></div>`).join("");
+  $("timeline").querySelectorAll(".st").forEach(e => e.onclick = () => { S.cp = +e.dataset.i; render(); });
+}
+
+function renderInspector() {
+  const d = byId[S.sel], cps = cpsOf(d), c = cps[S.cp], changed = changedMeasures(d);
+  let h = "";
+  if (S.it === "meas") {
+    const names = [...new Set(cps.flatMap(c => Object.keys(c.m)))];
+    h += `<table><tr><th>Measure</th>${cps.map((c,i) => `<th class="num ${i===S.cp?"cpsel":""}">${c.name}</th>`).join("")}</tr>`;
+    names.forEach(n => {
+      const first = cps.find(c => n in c.m).m[n];
+      h += `<tr><td>${n}</td>${cps.map(c => n in c.m ? `<td class="num ${c.m[n]!==first?"chg":""}" title="${fmtNum(c.m[n])}">${fmtShort(c.m[n])}</td>` : `<td class="num muted">–</td>`).join("")}</tr>`;
+    });
+    h += `</table>`;
+    h += changed.size
+      ? `<div class="alert"><span>⚠</span><div><b>${[...changed].join(", ")}</b> ${changed.size>1?"differ":"differs"} between checkpoints.<div class="muted" style="font-size:11px;margin-top:2px">Simple UI check (equal / not equal). Atum only stores measurements; it does not compare them.</div></div></div>`
+      : `<div class="info"><span>ℹ</span><div>${cps.length > 1 ? "Measures present in several checkpoints are equal." : "Single checkpoint — nothing to compare within this dataset."}</div></div>`;
+  }
+  if (S.it === "meta") {
+    const cols = [...new Set(Object.keys(c.m).map(n => (n.match(/\((.+)\)/) || n.match(/Σ (\w+)/) || [,"*"])[1]))].filter(x => x !== "*");
+    h += `<div class="sec">Partitioning</div><dl class="kv">${Object.entries(partObj(d)).map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
+      <div class="sec">Partitioning metadata</div><dl class="kv">${Object.entries(d.extra).map(([k,v]) => `<dt>${k}</dt><dd>${String(v).replace("{date}", DATES[S.day])}</dd>`).join("")}
+      <dt>author</dt><dd>${appChip(d, 16, ` <span class="muted">${d.author}</span>`)}</dd></dl>
+      <div class="sec">Checkpoint metadata · ${c.name} <span style="font-weight:400;text-transform:none;letter-spacing:0">(select on the timeline)</span></div><dl class="kv">
+      <dt>checkpoint id</dt><dd>${cpId(d, S.cp)}</dd><dt>name</dt><dd>${c.name}</dd><dt>author</dt><dd>${appChip(d, 16, ` <span class="muted">${d.author}</span>`)}</dd>
+      <dt>process start</dt><dd>${DATES[S.day]} ${c.t[0]}</dd><dt>process end</dt><dd>${DATES[S.day]} ${c.t[1]}</dd>
+      <dt>measured columns</dt><dd>${cols.join(", ") || "– (record count only)"}</dd><dt>measures</dt><dd>${Object.keys(c.m).join("<br>")}</dd>
+      <dt>agent</dt><dd>atum-agent-spark3 0.11.0</dd></dl>`;
+  }
+  $("inspector").innerHTML = h;
+  $("inspector").querySelectorAll("[data-id]").forEach(e => e.onclick = () => select(e.dataset.id));
+  $("inspector").querySelectorAll("[data-cp]").forEach(e => e.onclick = () => { S.cp = +e.dataset.cp; render(); });
+}
+
+function renderTrend() {
+  const SW = 390, X = i => 24 + i*(SW-48)/7;
+  $("trendDateHdr").textContent = fmtDate(S.day);
+  let rows = DS.filter(matches).map(d => {
+    const v = DATES.map((_,i) => metricOf(d,i));
+    const head = `<td><span style="display:inline-flex;align-items:center;gap:6px">${stageDot(d.stage)}<b style="font-weight:550">${d.name}</b></span> <span class="muted" style="font-size:11px">${d.stage}</span></td>`;
+    if (v.some(x => x == null)) return `<tr class="row ${d.id===S.sel?"selrow":""}" data-id="${d.id}">${head}<td class="muted" style="font-size:11px">not measured</td><td class="num muted">–</td><td></td></tr>`;
+    const lo = Math.min(...v), hi = Math.max(...v), Y = x => hi === lo ? 13 : 22 - (x-lo)/(hi-lo)*18;
+    const pts = v.map((x,i) => `${X(i)},${Y(x).toFixed(1)}`).join(" ");
+    const area = `${X(0)},26 ${pts} ${X(7)},26`;
+    const col = "#0b5cad";
+    const dots = v.map((x,i) => `<circle class="pt" data-i="${i}" data-v="${x}" cx="${X(i)}" cy="${Y(x).toFixed(1)}" r="${i===S.day?4:2.4}" fill="${i===S.day?"#0b5cad":"#fff"}" stroke="${i===S.day?"#fff":col}" stroke-width="1.5" style="cursor:pointer"/>`).join("");
+    const cur = v[S.day], prev = S.day ? v[S.day-1] : null, delta = prev ? (cur-prev)/prev*100 : null;
+    const pill = delta === null ? `<span class="badge">n/a</span>` : `<span class="badge ${Math.abs(delta)>5?"warn":""}">${delta>=0?"▲":"▼"} ${Math.abs(delta).toFixed(1)}%</span>`;
+    return `<tr class="row ${d.id===S.sel?"selrow":""}" data-id="${d.id}">${head}
+      <td><svg width="${SW}" height="26" viewBox="0 0 ${SW} 26"><rect x="${X(S.day)-9}" y="0" width="18" height="26" rx="3" fill="#d3e4f7" opacity=".55"/>
+      <polygon points="${area}" fill="${col}" opacity=".07"/><polyline fill="none" stroke="${col}" stroke-width="1.6" points="${pts}"/>${dots}</svg></td>
+      <td class="num">${fmtNum(cur)}</td><td class="num">${pill}</td></tr>`;
+  }).join("");
+  rows += `<tr><td></td><td><svg width="${SW}" height="14" viewBox="0 0 ${SW} 14">${DATES.map((_,i) =>
+    `<text class="ax" data-i="${i}" x="${X(i)}" y="11" text-anchor="middle" font-size="10" font-family="SF Mono,Menlo,monospace" style="cursor:pointer" fill="${i===S.day?"#0b5cad":"#8a94a6"}" font-weight="${i===S.day?700:400}">${fmtDate(i)}</text>`).join("")}</svg></td><td></td><td></td></tr>`;
+  $("trendBody").innerHTML = rows;
+  $("trendBody").querySelectorAll("tr.row").forEach(r => r.onclick = () => select(r.dataset.id));
+  $("trendBody").querySelectorAll(".pt, .ax").forEach(p => {
+    p.onclick = e => { e.stopPropagation(); S.day = +p.dataset.i; render(); };
+    if (p.classList.contains("pt")) { p.onmousemove = e => tip(e, `${fmtDate(+p.dataset.i, true)}\n${S.metric}: ${fmtNum(+p.dataset.v)}`); p.onmouseleave = hideTip; }
+  });
+}
+
+function renderDatasets() {
+  $("dsDate").textContent = `as of ${fmtDate(S.day, true)}`;
+  const key = {name:d=>label(d), tool:d=>d.tool, cps:d=>cpsOf(d).length, rc:d=>recordCount(d,S.day)}[S.sort];
+  const list = !key ? DS.filter(matches) : DS.filter(matches).sort((a,b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * (S.asc ? 1 : -1));
+  document.querySelectorAll("th.sort").forEach(th => { th.textContent = th.textContent.replace(/ [▲▼]$/, ""); if (th.dataset.sort === S.sort) th.textContent += S.asc ? " ▲" : " ▼"; });
+  $("dsBody").innerHTML = list.map(d => {
+    const cps = cpsOf(d), ch = changedMeasures(d);
+    return `<tr class="r" data-id="${d.id}"><td><span style="display:inline-flex;gap:6px;align-items:center">${stageDot(d.stage)}<b style="font-weight:550">${label(d)}</b></span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--sub)">${partStr(d)}</td><td>${appChip(d)}</td>
+      <td class="num">${cps.length}</td><td class="num">${fmtNum(recordCount(d,S.day))}</td><td style="font-family:var(--mono);font-size:11px">${cps.at(-1).name} · ${cps.at(-1).t[1]}</td>
+      <td>${ch.size?`<span class="badge warn">⚠ ${[...ch].join(", ")}</span>`:`<span class="badge ok">equal</span>`}</td></tr>`;
+  }).join("") || `<tr><td colspan="7" class="muted">No dataset matches the search.</td></tr>`;
+  $("dsBody").querySelectorAll("tr.r").forEach(r => r.onclick = () => { S.tab = "lineage"; select(r.dataset.id); });
+}
+
+function render() { renderChrome(); renderKpis(); renderGraph(); renderTimeline(); renderInspector(); renderTrend(); renderDatasets(); writeHash(); }
+
+// ---------- tooltip ----------
+function tip(e, text) { const t = $("tip"); t.style.display = "block"; t.textContent = text; t.style.left = e.clientX+14+"px"; t.style.top = e.clientY+14+"px"; }
+function hideTip() { $("tip").style.display = "none"; }
+
+
+// ---------- wiring ----------
+document.querySelectorAll("[data-dir]").forEach(b => b.onclick = () => { S.dir = b.dataset.dir; render(); });
+document.querySelectorAll("[data-depth]").forEach(b => b.onclick = () => { S.depth = b.dataset.depth; render(); });
+document.querySelectorAll("[data-it]").forEach(b => b.onclick = () => { S.it = b.dataset.it; render(); });
+document.querySelectorAll(".rail a").forEach(a => a.onclick = () => { S.tab = a.dataset.tab; render(); });
+document.querySelectorAll("th.sort").forEach(th => th.onclick = () => { S.asc = S.sort === th.dataset.sort ? !S.asc : true; S.sort = th.dataset.sort; render(); });
+$("prevDay").onclick = () => { if (S.day > 0) { S.day--; render(); } };
+$("nextDay").onclick = () => { if (S.day < DATES.length-1) { S.day++; render(); } };
+$("search").oninput = e => { S.q = e.target.value; render(); };
+$("search").onkeydown = e => { if (e.key === "Enter") { const m = DS.find(matches); if (m) select(m.id); } };
+$("metric").onchange = e => { S.metric = e.target.value; render(); };
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && e.target.tagName !== "INPUT") { e.preventDefault(); $("search").focus(); return; }
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (e.key === "ArrowLeft") $("prevDay").click();
+  if (e.key === "ArrowRight") $("nextDay").click();
+});
+window.addEventListener("hashchange", () => { readHash(); render(); });
+readHash();
+render();
+</script>
+</body>
+</html>
