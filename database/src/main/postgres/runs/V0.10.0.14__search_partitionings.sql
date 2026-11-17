@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-DROP FUNCTION IF EXISTS runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ);
-
 CREATE OR REPLACE FUNCTION runs.search_partitionings(
     IN i_limit INT DEFAULT 10,
     IN i_offset BIGINT DEFAULT 0,
