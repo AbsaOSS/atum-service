@@ -194,6 +194,9 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
   when(partitioningServiceMock.searchPartitionings(
     4, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
   )).thenReturn(ZIO.fail(GeneralServiceError("search unavailable")))
+  when(partitioningServiceMock.searchPartitionings(
+    5, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+  )).thenReturn(ZIO.fail(ErrorInDataServiceError("invalid search parameters")))
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     suite("PartitioningControllerSuite")(
@@ -231,6 +234,11 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
           assertZIO(PartitioningController.searchPartitionings(
             4, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
           ).exit)(failsWithA[InternalServerErrorResponse])
+        },
+        test("Maps ErrorInDataServiceError to ErrorInDataErrorResponse") {
+          assertZIO(PartitioningController.searchPartitionings(
+            5, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+          ).exit)(failsWithA[ErrorInDataErrorResponse])
         }
       ),
       suite("CreatePartitioningSuite")(

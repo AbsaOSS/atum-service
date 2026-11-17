@@ -43,7 +43,7 @@ import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.atum.server.model.database.{AdditionalDataItemFromDB, PartitioningForDB}
-import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException}
+import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException, ErrorInDataException}
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio._
 import zio.interop.catz.asyncInstance
@@ -374,6 +374,8 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
     latestFirst = None
   )
   when(searchPartitioningsMock.apply(fractionalSearchArgs)).thenReturn(ZIO.right(searchRows))
+  when(searchPartitioningsMock.apply(combinedSearchArgs.copy(limit = 9, latestFirst = None)))
+    .thenReturn(ZIO.left(ErrorInDataException(FunctionStatus(51, "i_limit must be between 1 and 1000"))))
 
   private val searchPartitioningsMockLayer = ZLayer.succeed(searchPartitioningsMock)
 
@@ -497,6 +499,11 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
           assertZIO(PartitioningRepository.searchPartitionings(
             6, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
           ).exit)(failsWithA[NotFoundDatabaseError])
+        },
+        test("Maps status 51 ErrorInDataException to ErrorInDataDatabaseError") {
+          assertZIO(PartitioningRepository.searchPartitionings(
+            9, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+          ).exit)(failsWithA[ErrorInDataDatabaseError])
         }
       ),
       suite("CreatePartitioningSuite")(

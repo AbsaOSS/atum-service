@@ -17,7 +17,6 @@ package za.co.absa.atum.database.runs
 
 import io.circe.Json
 import io.circe.parser.parse
-import org.postgresql.util.PSQLException
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.{DBFunction, JsonBString}
 
@@ -270,6 +269,16 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
     assertPage(query(from = Some(toTime)), Seq.empty)
   }
 
+  private def assertErrorStatus51(search: DBFunction, expectedPrefix: String): Unit = {
+    search.execute { rows =>
+      assert(rows.hasNext)
+      val row = rows.next()
+      assert(row.getInt("status").contains(51))
+      assert(row.getString("status_text").exists(_.startsWith(expectedPrefix)))
+      assert(!rows.hasNext)
+    }
+  }
+
   Seq[(String, () => DBFunction, String)](
     ("NULL limit", () => query(keys = pagingKeys, limit = None), "i_limit"),
     ("zero limit", () => query(keys = pagingKeys, limit = Some(0)), "i_limit"),
@@ -282,10 +291,8 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
     ("no filters", () => function(searchFn), "At least one"),
     ("empty keys without time", () => query(keys = Some(JsonBString("{}"))), "At least one")
   ).foreach { case (description, invalidQuery, message) =>
-    test(s"Rejects $description with invalid_parameter_value") {
-      val error = intercept[PSQLException](invalidQuery().execute(_ => ()))
-      assert(error.getSQLState == "22023")
-      assert(error.getMessage.startsWith(s"ERROR: $message"))
+    test(s"Rejects $description with status 51") {
+      assertErrorStatus51(invalidQuery(), message)
     }
   }
 
@@ -294,12 +301,11 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
     """{"key":42}""", """{"key":true}""", """{"key":null}""",
     """{"key":[]}""", """{"key":{}}""", """{"valid":"value","invalid":42}"""
   ).foreach { invalidKeys =>
-    test(s"Rejects non-string-map keys $invalidKeys even with a time filter") {
-      val error = intercept[PSQLException](
-        query(keys = Some(JsonBString(invalidKeys)), from = Some(fromTime)).execute(_ => ())
+    test(s"Rejects non-string-map keys $invalidKeys even with a time filter with status 51") {
+      assertErrorStatus51(
+        query(keys = Some(JsonBString(invalidKeys)), from = Some(fromTime)),
+        "i_keys must be a JSON object of string values"
       )
-      assert(error.getSQLState == "22023")
-      assert(error.getMessage.startsWith("ERROR: i_keys must be a JSON object of string values"))
     }
   }
 }

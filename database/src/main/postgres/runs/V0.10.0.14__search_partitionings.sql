@@ -35,7 +35,7 @@ $$
 --
 -- Returns original partitioning envelopes ordered by ID (ascending by default, or descending when i_latest_first is
 -- true), status 11/OK, and paging metadata. No matches (including offsets past the end) return no rows.
--- Invalid direct-call arguments raise invalid_parameter_value (SQLSTATE 22023).
+-- Invalid direct-call arguments return status 51 with a descriptive status_text.
 --
 -- Additive migration: rollback can drop this function after callers are removed;
 -- the supporting indexes can be dropped concurrently without changing data.
@@ -48,30 +48,42 @@ DECLARE
     _time_predicates TEXT := '';
 BEGIN
     IF i_limit IS NULL OR i_limit < 1 OR i_limit > 1000 THEN
-        RAISE EXCEPTION 'i_limit must be between 1 and 1000 and must not be NULL'
-            USING ERRCODE = '22023';
+        status := 51;
+        status_text := 'i_limit must be between 1 and 1000 and must not be NULL';
+        RETURN NEXT;
+        RETURN;
     END IF;
     IF i_offset IS NULL OR i_offset < 0 THEN
-        RAISE EXCEPTION 'i_offset must be nonnegative and must not be NULL'
-            USING ERRCODE = '22023';
+        status := 51;
+        status_text := 'i_offset must be nonnegative and must not be NULL';
+        RETURN NEXT;
+        RETURN;
     END IF;
     IF i_keys IS NOT NULL THEN
         IF jsonb_typeof(i_keys) <> 'object' THEN
-            RAISE EXCEPTION 'i_keys must be a JSON object of string values'
-                USING ERRCODE = '22023';
+            status := 51;
+            status_text := 'i_keys must be a JSON object of string values';
+            RETURN NEXT;
+            RETURN;
         END IF;
         IF EXISTS (SELECT 1 FROM jsonb_each(i_keys) K WHERE jsonb_typeof(K.value) <> 'string') THEN
-            RAISE EXCEPTION 'i_keys must be a JSON object of string values'
-                USING ERRCODE = '22023';
+            status := 51;
+            status_text := 'i_keys must be a JSON object of string values';
+            RETURN NEXT;
+            RETURN;
         END IF;
     END IF;
     IF i_from_time IS NOT NULL AND i_to_time IS NOT NULL AND i_from_time >= i_to_time THEN
-        RAISE EXCEPTION 'i_from_time must be earlier than i_to_time'
-            USING ERRCODE = '22023';
+        status := 51;
+        status_text := 'i_from_time must be earlier than i_to_time';
+        RETURN NEXT;
+        RETURN;
     END IF;
     IF _keys IS NULL AND i_from_time IS NULL AND i_to_time IS NULL THEN
-        RAISE EXCEPTION 'At least one key/value or checkpoint time bound is required'
-            USING ERRCODE = '22023';
+        status := 51;
+        status_text := 'At least one key/value or checkpoint time bound is required';
+        RETURN NEXT;
+        RETURN;
     END IF;
 
     -- Dynamic SQL (RETURN QUERY EXECUTE with $query$ tagged dollar-quoting inside $$) is used so PostgreSQL

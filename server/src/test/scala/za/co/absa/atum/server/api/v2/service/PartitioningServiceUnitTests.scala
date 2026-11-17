@@ -173,6 +173,9 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData with Pa
   when(partitioningRepositoryMock.searchPartitionings(
     5, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
   )).thenReturn(ZIO.fail(NotFoundDatabaseError("search function failure")))
+  when(partitioningRepositoryMock.searchPartitionings(
+    6, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+  )).thenReturn(ZIO.fail(ErrorInDataDatabaseError("invalid search parameters")))
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -216,6 +219,11 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData with Pa
           assertZIO(PartitioningService.searchPartitionings(
             5, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
           ).exit)(failsWithA[NotFoundServiceError])
+        },
+        test("Maps ErrorInDataDatabaseError to ErrorInDataServiceError") {
+          assertZIO(PartitioningService.searchPartitionings(
+            6, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+          ).exit)(failsWithA[ErrorInDataServiceError])
         }
       ),
       suite("CreatePartitioningSuite")(

@@ -23,7 +23,7 @@ import sttp.client3.UriContext
 import sttp.model.{StatusCode, Uri}
 import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.model.envelopes.SuccessResponse.{PaginatedResponse, SingleSuccessResponse}
-import za.co.absa.atum.model.envelopes.{InternalServerErrorResponse, Pagination}
+import za.co.absa.atum.model.envelopes.{ErrorInDataErrorResponse, InternalServerErrorResponse, Pagination}
 import za.co.absa.atum.server.api.PartitioningSearchTestData
 import za.co.absa.atum.server.api.v2.controller.PartitioningController
 import zio.test._
@@ -186,6 +186,17 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
       } yield assertTrue(
         response._1 == StatusCode.InternalServerError,
         decode[InternalServerErrorResponse](response._2) == Right(error)
+      )
+    },
+    test("Surfaces ErrorInDataErrorResponse as Conflict") {
+      val controller = mock(classOf[PartitioningController])
+      val error = ErrorInDataErrorResponse("invalid search parameters", searchRequestId)
+      when(controller.searchPartitionings(10, 0L, Some(searchKeys), None, None, None)).thenReturn(ZIO.fail(error))
+      for {
+        response <- PartitioningSearchTestSupport.get(withParams(Seq("keys" -> encodedKeys)), controller)
+      } yield assertTrue(
+        response._1 == StatusCode.Conflict,
+        decode[ErrorInDataErrorResponse](response._2) == Right(error)
       )
     },
     test("Published OpenAPI documentation includes the search endpoint") {

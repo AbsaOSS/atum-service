@@ -320,6 +320,7 @@ object Endpoints extends BaseEndpoints {
       )
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
+      .errorOutVariantPrepend(errorInDataOneOfVariant)
   }
 
   val getPartitioningMeasuresEndpoint: PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
