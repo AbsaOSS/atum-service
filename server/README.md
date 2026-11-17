@@ -16,6 +16,17 @@ za.co.absa.atum.server.Main within your IDE). This deploys it to `localhost:8080
 sbt "server/runMain za.co.absa.atum.server.Main"
 ```
 
+### API v1 is deprecated
+
+All `/api/v1/*` endpoints are **deprecated** (flagged in Swagger) and behave exactly as in v0.10.0. Only agents up to
+v0.5.x use them; agents v0.6.0+ use API v2 (`POST /api/v2/partitionings`,
+`POST /api/v2/partitionings/{partitioningId}/checkpoints`). API v1 will be removed in a later release.
+
+### Version compatibility
+
+**Always upgrade the server before the agents.** The server accepts what released agents send; a newer agent against an
+older server is to be avoided.
+
 ### REST API Reference
 
 The REST API exposes a Swagger Documentation UI which documents all the HTTP endpoints exposed.
@@ -23,16 +34,20 @@ It can be found at **{REST_API_HOST}/docs/** (e.g. `http://localhost:8080/docs/`
 
 ### Observability metrics
 
-Optionally you can run server with monitoring that collects metrics about http communication and/or jvm/zio
-runtime. `intervalInSeconds` parameter refers to frequency of data collection from its runtime environment.
-Monitoring of http communication is based on intercepting of http calls therefore `intervalInSeconds` parameter does not
-apply.
+Optionally you can run server with monitoring that collects metrics about http communication, Hikari database
+connection pool, and/or jvm/zio runtime. `intervalInSeconds` parameter refers to frequency of data collection from its
+runtime environment. Monitoring of http communication and Hikari is not interval-based, therefore `intervalInSeconds`
+parameter does not apply.
 
 ```
 {
   monitoring {
     # monitoring of http communication
     http {
+      enabled=true
+    }
+    # monitoring of database via Hikari
+    hikari {
       enabled=true
     }
     # monitoring of jvm and zio
@@ -44,10 +59,11 @@ apply.
 }
 ```
 
-When monitoring enabled, the application exposes `http://localhost:8080/metrics`
-and/or `http://localhost:8080/zio-metrics` endpoints which can be scraped by Prometheus.
+When monitoring is enabled, the application exposes `http://localhost:8080/metrics`,
+`http://localhost:8080/hikari-metrics`, and/or `http://localhost:8080/zio-metrics` endpoints which can be scraped by
+Prometheus.
 For testing purposes there is [docker-compose.yml](./docker-compose.yml) file which can be used to start up dockerized
-Prometheus and Grafana instances. Prometheus scraping configs are defined in [prometheus.yml](./prometheus.yml) file. 
+Prometheus and Grafana instances. Prometheus scraping configs are defined in [prometheus.yml](./prometheus.yml) file.
 
 # Build & run docker image
 

@@ -17,6 +17,7 @@
 package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
 import za.co.absa.atum.model.dto._
 
 import java.util.concurrent.atomic.AtomicReference
@@ -136,10 +137,10 @@ class CapturingDispatcher(config: Config) extends Dispatcher(config) {
    *  This method is used to ensure the server knows the given partitioning.
    *  As a response the `AtumContext` is fetched from the server.
    *
-   *  @param partitioning  : PartitioningSubmitDTO to be used to ensure server knows the given partitioning.
+   *  @param partitioning  : PartitioningCreateRequest to be used to ensure server knows the given partitioning.
    *  @return AtumContextDTO.
    */
-  override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
+  override protected[agent] def createPartitioning(partitioning: PartitioningCreateRequest): AtumContextDTO = {
     val result = AtumContextDTO(partitioning.partitioning)
     captureFunctionCall(partitioning, result)
   }

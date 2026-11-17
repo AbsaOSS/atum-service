@@ -23,7 +23,7 @@ import io.circe.syntax._
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs
 import za.co.absa.atum.server.api.database.runs.functions.SearchPartitionings._
-import za.co.absa.atum.server.model.PartitioningResult
+import za.co.absa.atum.server.model.{HasMore, PartitioningResult}
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
@@ -63,6 +63,7 @@ object SearchPartitionings {
 
   case class SearchPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
       extends PartitioningResult(id, partitioningJson, author)
+      with HasMore
 
   val layer: URLayer[PostgresDatabaseProvider, SearchPartitionings] = ZLayer {
     for {

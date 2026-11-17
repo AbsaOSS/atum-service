@@ -16,32 +16,46 @@
 
 package za.co.absa.atum.server.api.v2.repository
 
+import io.circe.DecodingFailure
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.common.repository.BaseRepository
+import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings._
-import za.co.absa.atum.server.api.database.flows.functions._
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors._
+import za.co.absa.atum.server.api.database.lineage.functions.{
+  GetDirectChildren,
+  GetDirectParents,
+  GetPartitioningAncestors,
+  GetPartitioningDescendants,
+  GetPartitioningLineageGraph
+}
+import za.co.absa.atum.server.api.database.lineage.functions.GetDirectParents.GetDirectParentsResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren.GetDirectChildrenResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph.GetPartitioningLineageGraphArgs
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningDescendants.GetPartitioningDescendantsArgs
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningWithParents, GetPartitioning, GetPartitioningAdditionalData, GetPartitioningById, GetPartitioningMainFlow, GetPartitioningMeasures, GetPartitioningMeasuresById, SearchPartitionings, UpdatePartitioningParent}
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
-import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
 import za.co.absa.atum.server.api.database.runs.functions.SearchPartitionings.SearchPartitioningsArgs
-import za.co.absa.atum.server.api.database.runs.functions._
+import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
 import za.co.absa.atum.server.api.exception.DatabaseError
-import za.co.absa.atum.server.api.exception.DatabaseError.GeneralDatabaseError
+import za.co.absa.atum.server.api.exception.DatabaseError.{ConflictDatabaseError, GeneralDatabaseError}
 import za.co.absa.atum.server.model.PaginatedResult.{ResultHasMore, ResultNoMore}
 import za.co.absa.atum.server.model._
+import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
 import za.co.absa.atum.server.model.database.{
   AdditionalDataItemFromDB,
   MeasureFromDB,
   PartitioningForDB,
   PartitioningFromDB
 }
+import za.co.absa.db.fadb.status.FailedOrRows
 import zio._
 import zio.interop.catz.asyncInstance
 
 import java.time.ZonedDateTime
 
 class PartitioningRepositoryImpl(
-  createPartitioningFn: CreatePartitioning,
+  createPartitioningWithParentsFn: CreatePartitioningWithParents,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
   createOrUpdateAdditionalDataFn: CreateOrUpdateAdditionalData,
   getPartitioningAdditionalDataFn: GetPartitioningAdditionalData,
@@ -52,19 +66,25 @@ class PartitioningRepositoryImpl(
   getPartitioningMainFlowFn: GetPartitioningMainFlow,
   updatePartitioningParentFn: UpdatePartitioningParent,
   getPartitioningAncestorsFn: GetPartitioningAncestors,
-  searchPartitioningsFn: SearchPartitionings
+  searchPartitioningsFn: SearchPartitionings,
+  getPartitioningDescendantsFn: GetPartitioningDescendants,
+  getDirectParentsFn: GetDirectParents,
+  getDirectChildrenFn: GetDirectChildren,
+  getPartitioningLineageGraphFn: GetPartitioningLineageGraph
 ) extends PartitioningRepository
     with BaseRepository {
 
   override def createPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
-  ): IO[DatabaseError, PartitioningWithIdDTO] = {
-    for {
-      result <- dbSingleResultCallWithStatus(
-        createPartitioningFn(partitioningSubmitDTO),
-        "createPartitioning"
-      )
-    } yield PartitioningWithIdDTO(result, partitioningSubmitDTO.partitioning, partitioningSubmitDTO.author)
+  ): IO[DatabaseError, CreationResult[PartitioningWithIdDTO]] = {
+    dbSingleResultCallWithStatus(createPartitioningWithParentsFn(partitioningSubmitDTO), "createPartitioning")
+      .flatMap {
+        case Some(CreatePartitioningWithParents.DBResult(id, createdBy, wasCreated)) =>
+          val result = PartitioningWithIdDTO(id, partitioningSubmitDTO.partitioning, createdBy)
+          ZIO.succeed(if (wasCreated) Created(result) else Existing(result))
+        case None =>
+          ZIO.fail(GeneralDatabaseError("Unexpected error."))
+      }
   }
 
   override def createOrUpdateAdditionalData(
@@ -77,12 +97,17 @@ class PartitioningRepositoryImpl(
     ).map(AdditionalDataItemFromDB.toSeqAdditionalDataItemV2DTO)
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] = {
-    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresFn(partitioning), "getPartitioningMeasures")
-      .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
-        MeasureDTO(measureName.get, measuredColumns.get)
+  private def decodeMeasures(
+    dbCall: Task[FailedOrRows[Option[MeasureFromDB]]]
+  ): IO[DatabaseError, Seq[MeasureDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(dbCall, "getPartitioningMeasures")
+      .map(_.flatten.map { case MeasureFromDB(measureName, measuredColumns) =>
+        MeasureDTO(measureName, measuredColumns)
       })
   }
+
+  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] =
+    decodeMeasures(getPartitioningMeasuresFn(partitioning))
 
   override def getPartitioningAdditionalData(partitioningId: Long): IO[DatabaseError, Seq[AdditionalDataItemV2DTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
@@ -97,12 +122,8 @@ class PartitioningRepositoryImpl(
     )
   }
 
-  override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
-    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresByIdFn(partitioningId), "getPartitioningMeasures")
-      .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
-        MeasureDTO(measureName.get, measuredColumns.get)
-      })
-  }
+  override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] =
+    decodeMeasures(getPartitioningMeasuresByIdFn(partitioningId))
 
   override def getPartitioning(
     partitioning: PartitioningDTO
@@ -129,21 +150,10 @@ class PartitioningRepositoryImpl(
 
     if (emptyWindow) ZIO.succeed(ResultNoMore(Seq.empty))
     else {
-      dbMultipleResultCallWithAggregatedStatus(
+      decodePaginatedPartitionings(
         searchPartitioningsFn(SearchPartitioningsArgs(limit, offset, keys, databaseFrom, databaseTo)),
         "searchPartitionings"
-      ).map(_.flatten)
-        .flatMap { partitioningResults =>
-          ZIO
-            .fromEither(PartitioningResult.resultsToPartitioningWithIdDTOs(partitioningResults))
-            .mapBoth(
-              error => GeneralDatabaseError(error.getMessage),
-              partitionings => {
-                if (partitioningResults.headOption.exists(_.hasMore)) ResultHasMore(partitionings)
-                else ResultNoMore(partitionings)
-              }
-            )
-        }
+      )
     }
   }
 
@@ -161,25 +171,19 @@ class PartitioningRepositoryImpl(
         val decodingResult = partitioning.as[PartitioningForDB]
         decodingResult.fold(
           error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
-          partitioningForDB => {
-            val partitioningDTO: PartitioningDTO = partitioningForDB.keys.map { key =>
-              PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-            }
-            ZIO.succeed(PartitioningWithIdDTO(id, partitioningDTO, author))
-          }
+          partitioningForDB =>
+            ZIO.succeed(PartitioningWithIdDTO(id, partitioningForDB.toPartitioningDTO, author))
         )
       case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
     }
   }
-  override def getFlowPartitionings(
-    flowId: Long,
-    limit: Int,
-    offset: Long
+
+  private def decodePaginatedPartitionings[R <: PartitioningResult with HasMore](
+    dbCall: Task[FailedOrRows[Option[R]]],
+    operationName: String
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
-    dbMultipleResultCallWithAggregatedStatus(
-      getFlowPartitioningsFn(GetFlowPartitioningsArgs(flowId, limit, offset)),
-      "getFlowPartitionings"
-    ).map(_.flatten)
+    dbMultipleResultCallWithAggregatedStatus(dbCall, operationName)
+      .map(_.flatten)
       .flatMap { partitioningResults =>
         ZIO
           .fromEither(PartitioningResult.resultsToPartitioningWithIdDTOs(partitioningResults))
@@ -192,6 +196,16 @@ class PartitioningRepositoryImpl(
           )
       }
   }
+
+  override def getFlowPartitionings(
+    flowId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] =
+    decodePaginatedPartitionings(
+      getFlowPartitioningsFn(GetFlowPartitioningsArgs(flowId, limit, offset)),
+      "getFlowPartitionings"
+    )
 
   override def getPartitioningMainFlow(partitioningId: Long): IO[DatabaseError, FlowDTO] = {
     dbSingleResultCallWithStatus(
@@ -206,40 +220,89 @@ class PartitioningRepositoryImpl(
   override def updatePartitioningParent(
     partitioningId: Long,
     partitioningParentPatchDTO: PartitioningParentPatchDTO
-    ): IO[DatabaseError, Unit] = {
+  ): IO[DatabaseError, Unit] = {
     dbSingleResultCallWithStatus(
       updatePartitioningParentFn(UpdatePartitioningParentArgs(partitioningId, partitioningParentPatchDTO)),
       "updatePartitioningParent"
-    )
+    ).tapError {
+      case ConflictDatabaseError(message) =>
+        ZIO.logWarning(
+          s"PATCH /ancestors rejected for partitioning $partitioningId " +
+            s"(parent ${partitioningParentPatchDTO.parentPartitioningId}) - conflict (cycle or descendants): $message"
+        )
+      case _ => ZIO.unit
+    }
   }
 
   override def getPartitioningAncestors(
-     partitioningId: Long,
-     limit: Int,
-     offset: Long
-   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
-    dbMultipleResultCallWithAggregatedStatus(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] =
+    decodePaginatedPartitionings(
       getPartitioningAncestorsFn(GetPartitioningAncestorsArgs(partitioningId, limit, offset)),
       "getPartitioningAncestors"
-    ).map(_.flatten)
-      .flatMap { partitioningResults =>
+    )
+
+  override def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] =
+    decodePaginatedPartitionings(
+      getPartitioningDescendantsFn(GetPartitioningDescendantsArgs(partitioningId, limit, offset)),
+      "getPartitioningDescendants"
+    )
+
+  private def decodeDirectPartitioningLinks[R, D](
+    dbCall: Task[FailedOrRows[Option[R]]],
+    operationName: String,
+    decode: Seq[R] => Either[DecodingFailure, Seq[D]]
+  ): IO[DatabaseError, Seq[D]] = {
+    dbMultipleResultCallWithAggregatedStatus(dbCall, operationName)
+      .map(_.flatten)
+      .flatMap { results =>
         ZIO
-          .fromEither(PartitioningResult.resultsToPartitioningWithIdDTOs(partitioningResults))
-          .mapBoth(
-            error => GeneralDatabaseError(error.getMessage),
-            partitionings => {
-              if (partitioningResults.nonEmpty && partitioningResults.head.hasMore) ResultHasMore(partitionings)
-              else ResultNoMore(partitionings)
-            }
-          )
+          .fromEither(decode(results))
+          .mapError(error => GeneralDatabaseError(error.getMessage))
       }
+  }
+
+  override def getPartitioningParents(partitioningId: Long): IO[DatabaseError, Seq[ParentPartitioningDTO]] =
+    decodeDirectPartitioningLinks(
+      getDirectParentsFn(partitioningId),
+      "getPartitioningParents",
+      GetDirectParentsResult.resultsToParentPartitioningDTOs
+    )
+
+  override def getPartitioningChildren(partitioningId: Long): IO[DatabaseError, Seq[ChildPartitioningDTO]] =
+    decodeDirectPartitioningLinks(
+      getDirectChildrenFn(partitioningId),
+      "getPartitioningChildren",
+      GetDirectChildrenResult.resultsToChildPartitioningDTOs
+    )
+
+  override def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[DatabaseError, LineageGraphDTO] = {
+    dbSingleResultCallWithStatus(
+      getPartitioningLineageGraphFn(GetPartitioningLineageGraphArgs(partitioningId, direction, depth)),
+      "getPartitioningLineageGraph"
+    ).flatMap {
+      case Some(result) =>
+        ZIO.fromEither(result.toLineageGraphDTO).mapError(err => GeneralDatabaseError(err.getMessage))
+      case None =>
+        ZIO.fail(GeneralDatabaseError("Unexpected error."))
+    }
   }
 
 }
 
 object PartitioningRepositoryImpl {
   val layer: URLayer[
-    CreatePartitioning
+    CreatePartitioningWithParents
       with GetPartitioningMeasures
       with CreateOrUpdateAdditionalData
       with GetPartitioningAdditionalData
@@ -250,11 +313,15 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMainFlow
       with UpdatePartitioningParent
       with GetPartitioningAncestors
-      with SearchPartitionings,
+      with SearchPartitionings
+      with GetPartitioningDescendants
+      with GetDirectParents
+      with GetDirectChildren
+      with GetPartitioningLineageGraph,
     PartitioningRepository
   ] = ZLayer {
     for {
-      createPartitioning <- ZIO.service[CreatePartitioning]
+      createPartitioningWithParents <- ZIO.service[CreatePartitioningWithParents]
       getPartitioningMeasures <- ZIO.service[GetPartitioningMeasures]
       createOrUpdateAdditionalData <- ZIO.service[CreateOrUpdateAdditionalData]
       getPartitioningAdditionalData <- ZIO.service[GetPartitioningAdditionalData]
@@ -266,8 +333,12 @@ object PartitioningRepositoryImpl {
       updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
       getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
       searchPartitionings <- ZIO.service[SearchPartitionings]
+      getPartitioningDescendants <- ZIO.service[GetPartitioningDescendants]
+      getDirectParents <- ZIO.service[GetDirectParents]
+      getDirectChildren <- ZIO.service[GetDirectChildren]
+      getPartitioningLineageGraph <- ZIO.service[GetPartitioningLineageGraph]
     } yield new PartitioningRepositoryImpl(
-      createPartitioning,
+      createPartitioningWithParents,
       getPartitioningMeasures,
       createOrUpdateAdditionalData,
       getPartitioningAdditionalData,
@@ -278,7 +349,11 @@ object PartitioningRepositoryImpl {
       getPartitioningMainFlow,
       updatePartitioningParent,
       getPartitioningAncestors,
-      searchPartitionings
+      searchPartitionings,
+      getPartitioningDescendants,
+      getDirectParents,
+      getDirectChildren,
+      getPartitioningLineageGraph
     )
   }
 

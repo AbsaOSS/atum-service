@@ -98,3 +98,6 @@ utils/resources/*.conf
 .planning/
 .skills/
 graphify-out/
+
+# GSD local project guide (kept out of the OSS repo)
+copilot-instructions.md

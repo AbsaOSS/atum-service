@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.v2.service
 
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.server.api.exception.ServiceError
-import za.co.absa.atum.server.model.PaginatedResult
+import za.co.absa.atum.server.model.{CreationResult, PaginatedResult}
 import zio.IO
 import zio.macros.accessible
 
@@ -29,7 +29,7 @@ trait PartitioningService {
 
   def createPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
-  ): IO[ServiceError, PartitioningWithIdDTO]
+  ): IO[ServiceError, CreationResult[PartitioningWithIdDTO]]
 
   def getPartitioningMeasures(partitioning: PartitioningDTO): IO[ServiceError, Seq[MeasureDTO]]
 
@@ -74,4 +74,20 @@ trait PartitioningService {
     limit: Int,
     offset: Long
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningParents(partitioningId: Long): IO[ServiceError, Seq[ParentPartitioningDTO]]
+
+  def getPartitioningChildren(partitioningId: Long): IO[ServiceError, Seq[ChildPartitioningDTO]]
+
+  def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ServiceError, LineageGraphDTO]
 }

@@ -21,24 +21,30 @@ import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsArgs
-import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioning, GetPartitioningMainFlow}
+import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningWithParents, GetPartitioningMainFlow}
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio.{Scope, ZIO}
-import zio.test.{Spec, TestEnvironment, assertTrue}
+import zio.test.{Spec, TestAspect, TestEnvironment, assertTrue}
 import zio.interop.catz.asyncInstance
 
 import java.util.UUID
 
 object GetFlowPartitioningsIntegrationTests extends ConfigProviderTest {
 
-  private def createPartitioning(parentId: Option[Long]): ZIO[CreatePartitioning, Throwable, Long] =
+  private def createPartitioning(parentId: Option[Long]): ZIO[CreatePartitioningWithParents, Throwable, Long] =
     ZIO
-      .serviceWithZIO[CreatePartitioning](
-        _(PartitioningSubmitV2DTO(Seq(PartitionDTO("page", UUID.randomUUID().toString)), parentId, "Pagination author"))
+      .serviceWithZIO[CreatePartitioningWithParents](
+        _(
+          PartitioningSubmitV2DTO(
+            Seq(PartitionDTO("page", UUID.randomUUID().toString)),
+            parentId.toSeq,
+            "Pagination author"
+          )
+        )
       )
       .flatMap(ZIO.fromEither(_))
-      .map(_.data)
+      .flatMap(row => ZIO.getOrFail(row.data.map(_.id)))
 
   private def getPage(flowId: Long, offset: Long): ZIO[GetFlowPartitionings, Throwable, Seq[(Long, Boolean)]] =
     ZIO
@@ -75,10 +81,10 @@ object GetFlowPartitioningsIntegrationTests extends ConfigProviderTest {
           beyondEndPage.isEmpty
         )
       }
-    )
+    ) @@ TestAspect.sequential
   }.provide(
     GetFlowPartitionings.layer,
-    CreatePartitioning.layer,
+    CreatePartitioningWithParents.layer,
     GetPartitioningMainFlow.layer,
     PostgresDatabaseProvider.layer,
     TestTransactorProvider.layerWithSingleTransactionRollback

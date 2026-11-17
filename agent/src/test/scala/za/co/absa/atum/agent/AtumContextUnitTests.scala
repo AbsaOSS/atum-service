@@ -17,18 +17,41 @@
 package za.co.absa.atum.agent
 
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.Row
 import org.mockito.ArgumentCaptor
-import org.mockito.Mockito.{mock, times, verify, when}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{mock, never, times, verify, when}
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.atum.agent.dispatcher.Dispatcher
+import za.co.absa.atum.agent.exception.AtumAgentException.PartitioningUpdateException
 import za.co.absa.atum.agent.model.AtumMeasure.{DistinctRecordCount, RecordCount, SumOfValuesOfColumn}
 import za.co.absa.atum.agent.model.{Measure, MeasureResult, MeasurementBuilder, UnknownMeasure}
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
 import za.co.absa.atum.model.ResultValueType
-import za.co.absa.atum.model.dto.CheckpointDTO
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO}
 import za.co.absa.atum.model.types.basic._
+import za.co.absa.spark.commons.test.SparkTestBase
 
-class AtumContextUnitTests extends AnyFlatSpec with Matchers {
+class AtumContextUnitTests extends AnyFlatSpec with Matchers with SparkTestBase {
+
+  // ---- Part 1: AtumContext/checkpoint tests -----------------------------------------------------
+  // `agent` is just a passive sink here (checkpoint construction logic lives in AtumContext), so
+  // mocking `AtumAgent` directly is enough; no real AtumAgent/Dispatcher logic needs to run.
+
+  private def mockAgentWithAuthor(author: String = "authorTest"): AtumAgent = {
+    val agent = mock(classOf[AtumAgent])
+    when(agent.currentUser).thenReturn(author)
+    agent
+  }
+
+  private def capturedCheckpoint(mockAgent: AtumAgent, invocationCount: Int = 1): CheckpointDTO = {
+    val captor = ArgumentCaptor.forClass(classOf[CheckpointDTO])
+    verify(mockAgent, times(invocationCount)).saveCheckpoint(captor.capture())
+    captor.getValue
+  }
 
   "withMeasureAddedOrOverwritten" should "add a new measure if not exists, overwrite it otherwise" in {
 
@@ -62,23 +85,15 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint; including it's properties" in {
-    val mockAgent = mock(classOf[AtumAgent])
+    val authorTest = "authorTest"
+    val mockAgent = mockAgentWithAuthor(authorTest)
 
     val checkpointProperties = Some(Map("prop1" -> "val1", "prop2" -> "val2"))
-
-    val authorTest = "authorTest"
-    when(mockAgent.currentUser).thenReturn(authorTest)
 
     val atumPartitions = AtumPartitions("foo2" -> "bar")
 
     val atumContext = new AtumContext(atumPartitions, mockAgent)
       .addMeasure(RecordCount())
-
-    val spark = SparkSession.builder()
-      .master("local")
-      .config("spark.driver.host", "localhost")
-      .config("spark.ui.enabled", "false")
-      .getOrCreate()
 
     import spark.implicits._
 
@@ -87,9 +102,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
 
     atumContext.createCheckpoint("testCheckpoint", df, checkpointProperties)
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent).saveCheckpoint(argument.capture())
-    val value: CheckpointDTO = argument.getValue
+    val value = capturedCheckpoint(mockAgent)
     assert(value.name == "testCheckpoint")
     assert(value.author == authorTest)
     assert(value.partitioning == atumPartitions.toPartitioningDTO)
@@ -99,12 +112,10 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "createCheckpointOnProvidedData" should "create a Checkpoint on provided data; including it's properties" in {
-    val mockAgent = mock(classOf[AtumAgent])
+    val authorTest = "authorTest"
+    val mockAgent = mockAgentWithAuthor(authorTest)
 
     val checkpointProperties = Some(Map("prop1" -> "val1", "prop2" -> "val2"))
-
-    val authorTest = "authorTest"
-    when(mockAgent.currentUser).thenReturn(authorTest)
 
     val atumPartitions = AtumPartitions("key" -> "value")
     val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
@@ -119,9 +130,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
       checkpointName = "name", measurements = measurements, properties = checkpointProperties
     )
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent).saveCheckpoint(argument.capture())
-    val value: CheckpointDTO = argument.getValue
+    val value = capturedCheckpoint(mockAgent)
 
     assert(value.name == "name")
     assert(value.author == authorTest)
@@ -133,20 +142,12 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "createCheckpoint" should "take measurements and create a Checkpoint, multiple measure changes" in {
-    val mockAgent = mock(classOf[AtumAgent])
-
     val authorTest = "authorTest"
-    when(mockAgent.currentUser).thenReturn(authorTest)
+    val mockAgent = mockAgentWithAuthor(authorTest)
 
     val atumPartitions = AtumPartitions("foo2" -> "bar")
     implicit val atumContext: AtumContext = new AtumContext(atumPartitions, mockAgent)
       .addMeasure(RecordCount())
-
-    val spark = SparkSession.builder()
-      .master("local")
-      .config("spark.driver.host", "localhost")
-      .config("spark.ui.enabled", "false")
-      .getOrCreate()
 
     val rdd = spark.sparkContext.parallelize(
       Seq(
@@ -165,9 +166,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     val df = spark.createDataFrame(rdd, schema)
       .createCheckpoint("checkPointNameCount")
 
-    val argumentFirst = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent, times(1)).saveCheckpoint(argumentFirst.capture())
-    val valueFirst: CheckpointDTO = argumentFirst.getValue
+    val valueFirst = capturedCheckpoint(mockAgent)
 
     assert(valueFirst.name == "checkPointNameCount")
     assert(valueFirst.author == authorTest)
@@ -179,9 +178,7 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     when(mockAgent.currentUser).thenReturn(authorTest + "Another")  // maybe a process changed the author / current user
     df.createCheckpoint("checkPointNameSum")
 
-    val argumentSecond = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent, times(2)).saveCheckpoint(argumentSecond.capture())
-    val valueSecond: CheckpointDTO = argumentSecond.getValue
+    val valueSecond = capturedCheckpoint(mockAgent, invocationCount = 2)
 
     assert(valueSecond.name == "checkPointNameSum")
     assert(valueSecond.author == authorTest + "Another")
@@ -205,7 +202,6 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
   }
 
   "DatasetWrapper.createCheckpoint" should "create a checkpoint with properties" in {
-    val spark = SparkSession.builder().master("local").appName("test").getOrCreate()
     import spark.implicits._
 
     val df = Seq((1, "a"), (2, "b")).toDF("id", "value")
@@ -224,12 +220,116 @@ class AtumContextUnitTests extends AnyFlatSpec with Matchers {
     import AtumContext._
     df.createCheckpoint("testCheckpoint", properties)
 
-    val argument = ArgumentCaptor.forClass(classOf[CheckpointDTO])
-    verify(mockAgent).saveCheckpoint(argument.capture())
-    val value: CheckpointDTO = argument.getValue
+    val value = capturedCheckpoint(mockAgent)
 
     value.name shouldBe "testCheckpoint"
     value.properties shouldBe properties
+  }
+
+  // ---- Part 2: subPartitionContext and the copyMeasureDefinitions flag ---------------------------
+  // Here the behaviour under test (subPartitionContext's merge/dedup logic) lives in AtumAgent's own
+  // trait default, invoked transitively from AtumContext. Mocking AtumAgent itself would bypass that
+  // real logic, so only the terminal Dispatcher dependency is mocked and a real AtumAgent is used.
+
+  private class RecordingAgent extends AtumAgent {
+    override val dispatcher: Dispatcher = mock(classOf[Dispatcher])
+    override private[agent] def currentUser: String = "sub-context-user"
+
+    when(dispatcher.createPartitioning(any[PartitioningCreateRequest])).thenAnswer(new Answer[AtumContextDTO] {
+      override def answer(invocation: InvocationOnMock): AtumContextDTO =
+        AtumContextDTO(invocation.getArgument[PartitioningCreateRequest](0).partitioning)
+    })
+
+    def captured(): PartitioningCreateRequest = {
+      val captor = ArgumentCaptor.forClass(classOf[PartitioningCreateRequest])
+      verify(dispatcher, times(1)).createPartitioning(captor.capture())
+      captor.getValue
+    }
+
+    def neverDispatched(): Unit =
+      verify(dispatcher, never()).createPartitioning(any[PartitioningCreateRequest])
+  }
+
+  private val parentPartitions = AtumPartitions("p" -> "1")
+  private val childPartitions = AtumPartitions("c" -> "2")
+
+  private def parentContext(agent: AtumAgent): AtumContext = new AtumContext(parentPartitions, agent)
+
+  private val subPartitionRows: Seq[(String, AtumContext => AtumContext, Boolean, Boolean)] = Seq(
+    ("1-arg", c => c.subPartitionContext(childPartitions), false, true),
+    (
+      "2-arg mergeWithParent = false",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = false),
+      false,
+      false
+    ),
+    ("2-arg mergeWithParent = true", c => c.subPartitionContext(childPartitions, mergeWithParent = true), false, true),
+    (
+      "3-arg merge = true, copy = true",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = true, copyMeasureDefinitions = true),
+      true,
+      true
+    ),
+    (
+      "3-arg merge = false, copy = true",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = false, copyMeasureDefinitions = true),
+      true,
+      false
+    ),
+    (
+      "3-arg merge = true, copy = false",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = true, copyMeasureDefinitions = false),
+      false,
+      true
+    ),
+    (
+      "3-arg merge = false, copy = false",
+      c => c.subPartitionContext(childPartitions, mergeWithParent = false, copyMeasureDefinitions = false),
+      false,
+      false
+    )
+  )
+
+  subPartitionRows.foreach { case (name, call, expectedFlag, expectedMerged) =>
+    "subPartitionContext" should s"send copyMeasureDefinitions = $expectedFlag with one dispatch ($name)" in {
+      val agent = new RecordingAgent
+      val parent = parentContext(agent)
+
+      val child = call(parent)
+
+      val dto = agent.captured()
+      dto.copyMeasureDefinitions shouldBe expectedFlag
+      dto.parentPartitionings shouldBe Seq(parentPartitions.toPartitioningDTO)
+      val expectedChild = if (expectedMerged) parentPartitions ++ childPartitions else childPartitions
+      dto.partitioning shouldBe expectedChild.toPartitioningDTO
+      child.atumPartitions shouldBe expectedChild
+    }
+  }
+
+  it should "throw PartitioningUpdateException on key overlap with merge = true, copy = true, without dispatching" in {
+    val agent = new RecordingAgent
+    val parent = parentContext(agent)
+
+    an[PartitioningUpdateException] should be thrownBy {
+      parent.subPartitionContext(AtumPartitions("p" -> "other"), mergeWithParent = true, copyMeasureDefinitions = true)
+    }
+    agent.neverDispatched()
+  }
+
+  it should "not throw on key overlap with merge = false, copy = true" in {
+    val agent = new RecordingAgent
+    val parent = parentContext(agent)
+    val overlapping = AtumPartitions("p" -> "other")
+
+    val child = parent.subPartitionContext(overlapping, mergeWithParent = false, copyMeasureDefinitions = true)
+
+    agent.captured().copyMeasureDefinitions shouldBe true
+    child.atumPartitions shouldBe overlapping
+  }
+
+  it should "expose only the $default$2 getter for subPartitionContext (no default on the new overload)" in {
+    classOf[AtumContext].getMethods.map(_.getName).filter(_.startsWith("subPartitionContext$default")).toSet shouldBe
+      Set("subPartitionContext$default$2")
   }
 
 }

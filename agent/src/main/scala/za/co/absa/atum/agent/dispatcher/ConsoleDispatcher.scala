@@ -18,6 +18,7 @@ package za.co.absa.atum.agent.dispatcher
 
 import com.typesafe.config.Config
 import za.co.absa.atum.agent.core.Logging
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
 import za.co.absa.atum.model.dto._
 
 /**
@@ -27,7 +28,7 @@ class ConsoleDispatcher(config: Config) extends Dispatcher(config) with Logging 
 
   log.info("using console dispatcher")
 
-  override protected[agent] def createPartitioning(partitioning: PartitioningSubmitDTO): AtumContextDTO = {
+  override protected[agent] def createPartitioning(partitioning: PartitioningCreateRequest): AtumContextDTO = {
     println(s"Fetching AtumContext using ConsoleDispatcher with partitioning $partitioning")
     AtumContextDTO(partitioning = partitioning.partitioning)
   }

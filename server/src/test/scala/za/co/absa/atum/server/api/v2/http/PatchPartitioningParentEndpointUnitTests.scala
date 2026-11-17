@@ -19,18 +19,16 @@ package za.co.absa.atum.server.api.v2.http
 import org.mockito.Mockito.{mock, when}
 import sttp.client3.circe._
 import sttp.client3.testing.SttpBackendStub
-import sttp.client3.{UriContext, basicRequest}
-import sttp.model.StatusCode
+import sttp.client3.{UriContext, asString, basicRequest}
+import sttp.model.{MediaType, StatusCode}
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, RichZEndpoint}
 import za.co.absa.atum.model.dto.PartitioningParentPatchDTO
-import za.co.absa.atum.model.envelopes.SuccessResponse.SingleSuccessResponse
 import za.co.absa.atum.model.envelopes.{ConflictErrorResponse, GeneralErrorResponse, InternalServerErrorResponse, NotFoundErrorResponse}
 import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.v2.controller.PartitioningController
 import za.co.absa.atum.server.api.v2.http.Endpoints.patchPartitioningParentEndpoint
-import zio.test.Assertion.equalTo
-import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
+import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue}
 import zio.{Scope, ZIO, ZLayer}
 
 object PatchPartitioningParentEndpointUnitTests extends ZIOSpecDefault with TestData {
@@ -38,7 +36,7 @@ object PatchPartitioningParentEndpointUnitTests extends ZIOSpecDefault with Test
   private val partitioningControllerMock: PartitioningController = mock(classOf[PartitioningController])
 
   when(partitioningControllerMock.patchPartitioningParent(1L, partitioningParentPatchDTO1))
-    .thenReturn(ZIO.succeed(SingleSuccessResponse(partitioningParentPatchDTO1, uuid1)))
+    .thenReturn(ZIO.unit)
   when(partitioningControllerMock.patchPartitioningParent(1L, partitioningParentPatchDTO2))
     .thenReturn(ZIO.fail(GeneralErrorResponse("error")))
   when(partitioningControllerMock.patchPartitioningParent(1L, partitioningParentPatchDTO3))
@@ -51,9 +49,7 @@ object PatchPartitioningParentEndpointUnitTests extends ZIOSpecDefault with Test
   private val partitioningControllerMockLayer = ZLayer.succeed(partitioningControllerMock)
 
   private val patchPartitioningParentEndpointLogic = patchPartitioningParentEndpoint
-    .zServerLogic({ case (partitioningId: Long, partitioningParentPatchDTO: PartitioningParentPatchDTO) =>
-      PartitioningController.patchPartitioningParent(partitioningId, partitioningParentPatchDTO)
-    })
+    .zServerLogic((PartitioningController.patchPartitioningParent _).tupled)
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     val backendStub = TapirStubInterpreter(SttpBackendStub.apply(new RIOMonadError[PartitioningController]))
@@ -61,55 +57,74 @@ object PatchPartitioningParentEndpointUnitTests extends ZIOSpecDefault with Test
       .thenRunLogic()
       .backend()
 
-    val request = basicRequest
+    val baseRequest = basicRequest
       .patch(uri"https://test.com/api/v2/partitionings/1/ancestors")
-      .response(asJson[SingleSuccessResponse[PartitioningParentPatchDTO]])
 
     suite("PatchPartitioningParentEndpointUnitTests")(
-      test("Returns expected PartitioningParentPatchDTO") {
-        val response = request
-          .body(partitioningParentPatchDTO1)
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-        assertZIO(statusCode)(equalTo(StatusCode.NoContent))
+      test("Returns 204 NoContent with empty body") {
+        for {
+          response <- baseRequest
+            .body(partitioningParentPatchDTO1)
+            .response(asString)
+            .send(backendStub)
+        } yield assertTrue(
+          response.code == StatusCode.NoContent,
+          response.body == Right("")
+        )
       },
-      test("Returns expected BadRequest") {
-        val response = request
-          .body(partitioningParentPatchDTO2)
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+      test("Returns 400 BadRequest when copyMeasurements and copyAdditionalData are omitted") {
+        for {
+          response <- baseRequest
+            .contentType(MediaType.ApplicationJson)
+            .body("""{"parentPartitioningId": 1, "author": "author"}""")
+            .response(asString)
+            .send(backendStub)
+        } yield assertTrue(response.code == StatusCode.BadRequest)
       },
-      test("Returns expected InternalServerError") {
-        val response = request
-          .body(partitioningParentPatchDTO3)
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.InternalServerError))
+      test("Returns expected BadRequest with decoded GeneralErrorResponse") {
+        for {
+          response <- baseRequest
+            .body(partitioningParentPatchDTO2)
+            .response(asJsonAlways[GeneralErrorResponse])
+            .send(backendStub)
+        } yield assertTrue(
+          response.code == StatusCode.BadRequest,
+          response.body.map(_.message) == Right("error")
+        )
       },
-      test("Returns expected ConflictError") {
-        val response = request
-          .body(partitioningParentPatchDTO4)
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.Conflict))
+      test("Returns expected InternalServerError with decoded InternalServerErrorResponse") {
+        for {
+          response <- baseRequest
+            .body(partitioningParentPatchDTO3)
+            .response(asJsonAlways[InternalServerErrorResponse])
+            .send(backendStub)
+        } yield assertTrue(
+          response.code == StatusCode.InternalServerError,
+          response.body.map(_.message) == Right("error")
+        )
       },
-      test("Returns expected NotFound") {
-        val response = request
-          .patch(uri"https://test.com/api/v2/partitionings/0/ancestors")
-          .body(partitioningParentPatchDTO4)
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.NotFound))
+      test("Returns expected ConflictError with decoded ConflictErrorResponse") {
+        for {
+          response <- baseRequest
+            .body(partitioningParentPatchDTO4)
+            .response(asJsonAlways[ConflictErrorResponse])
+            .send(backendStub)
+        } yield assertTrue(
+          response.code == StatusCode.Conflict,
+          response.body.map(_.message) == Right("error")
+        )
+      },
+      test("Returns expected NotFound with decoded NotFoundErrorResponse") {
+        for {
+          response <- basicRequest
+            .patch(uri"https://test.com/api/v2/partitionings/0/ancestors")
+            .body(partitioningParentPatchDTO4)
+            .response(asJsonAlways[NotFoundErrorResponse])
+            .send(backendStub)
+        } yield assertTrue(
+          response.code == StatusCode.NotFound,
+          response.body.map(_.message) == Right("Child Partitioning not found")
+        )
       }
     )
   }.provide(

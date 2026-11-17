@@ -83,12 +83,9 @@ object CheckpointItemWithPartitioningFromDB {
     checkpointItems: Seq[CheckpointItemWithPartitioningFromDB]
   ): Either[Throwable, PartitioningWithIdDTO] = {
     checkpointItems.head.partitioning.as[PartitioningForDB].map { partitioningForDB =>
-      val partitioningDTO = partitioningForDB.keys.map { key =>
-        PartitionDTO(key, partitioningForDB.keysToValuesMap(key))
-      }
       PartitioningWithIdDTO(
         id = checkpointItems.head.idPartitioning,
-        partitioning = partitioningDTO,
+        partitioning = partitioningForDB.toPartitioningDTO,
         author = checkpointItems.head.partitioningAuthor
       )
     }

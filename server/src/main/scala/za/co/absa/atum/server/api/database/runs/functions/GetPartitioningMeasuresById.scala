@@ -30,9 +30,9 @@ import za.co.absa.atum.server.api.database.DoobieImplicits.Sequence.get
 import za.co.absa.atum.server.model.database.MeasureFromDB
 
 class GetPartitioningMeasuresById(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-  extends DoobieMultipleResultFunctionWithAggStatus[Long, MeasureFromDB, Task](values =>
-    Seq(fr"${values}")
-  ) with StandardStatusHandling with ByFirstErrorStatusAggregator {
+    extends DoobieMultipleResultFunctionWithAggStatus[Long, Option[MeasureFromDB], Task](values =>
+      Seq(fr"$values")
+    ) with StandardStatusHandling with ByFirstErrorStatusAggregator {
 
   override def fieldsToSelect: Seq[String] = super.fieldsToSelect ++ Seq("measure_name", "measured_columns")
 }

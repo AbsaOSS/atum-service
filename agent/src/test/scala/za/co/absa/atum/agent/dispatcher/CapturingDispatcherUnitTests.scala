@@ -19,7 +19,8 @@ package za.co.absa.atum.agent.dispatcher
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitionDTO, PartitioningDTO, PartitioningSubmitDTO}
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
+import za.co.absa.atum.model.dto.{AtumContextDTO, CheckpointDTO, PartitionDTO, PartitioningDTO}
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -53,8 +54,8 @@ class CapturingDispatcherUnitTests extends AnyWordSpec with Matchers {
   private def createPartitionSubmit(
     partition: PartitioningDTO,
     parent: Option[PartitioningDTO] = None
-  ): PartitioningSubmitDTO = {
-    PartitioningSubmitDTO(
+  ): PartitioningCreateRequest = {
+    PartitioningCreateRequest(
       partitioning = partition,
       parentPartitioning = parent,
       authorIfNew = "another author"
@@ -107,6 +108,39 @@ class CapturingDispatcherUnitTests extends AnyWordSpec with Matchers {
       dispatcher.captures.size shouldBe 3
       dispatcher.clear()
       dispatcher.captures.size shouldBe 0
+    }
+
+    "captures the PartitioningCreateRequest carrier as the createPartitioning input" in {
+      val freshDispatcher = new CapturingDispatcher(config(10))
+      val request =
+        PartitioningCreateRequest(partitioning2, Seq(partitioning1, createPartition("k9" -> "v9")), "author-x")
+
+      val result = freshDispatcher.createPartitioning(request)
+
+      result shouldBe AtumContextDTO(partitioning2)
+      freshDispatcher.captures.size shouldBe 1
+      val captured = freshDispatcher.captures.head
+      captured.functionName shouldBe nameOf(freshDispatcher.createPartitioning _)
+      captured.input.asInstanceOf[AnyRef] shouldBe a[PartitioningCreateRequest]
+      captured.input.asInstanceOf[PartitioningCreateRequest].parentPartitionings should have size 2
+      captured.input.asInstanceOf[PartitioningCreateRequest].authorIfNew shouldBe "author-x"
+      freshDispatcher.contains(nameOf(freshDispatcher.createPartitioning _), request) shouldBe true
+      freshDispatcher.contains(nameOf(freshDispatcher.createPartitioning _), request, result) shouldBe true
+    }
+
+    "carries the copyMeasureDefinitions flag through createPartitioning" in {
+      val freshDispatcher = new CapturingDispatcher(config(10))
+      val optedIn =
+        PartitioningCreateRequest(partitioning2, Seq(partitioning1), "author-x", copyMeasureDefinitions = true)
+      val viaFactory = PartitioningCreateRequest(partitioning2, Some(partitioning1), "author-x")
+
+      freshDispatcher.createPartitioning(optedIn)
+      freshDispatcher.createPartitioning(viaFactory)
+
+      freshDispatcher.captures.size shouldBe 2
+      freshDispatcher.captures.head.input.asInstanceOf[PartitioningCreateRequest].copyMeasureDefinitions shouldBe true
+      freshDispatcher.captures(1).input.asInstanceOf[PartitioningCreateRequest].copyMeasureDefinitions shouldBe false
+      viaFactory.copyMeasureDefinitions shouldBe false
     }
   }
 

@@ -22,11 +22,14 @@ import io.circe.generic.semiauto._
 case class PartitioningParentPatchDTO(
   parentPartitioningId: Long,
   author: String,
-  copyMeasurements: Boolean = true,
-  copyAdditionalData: Boolean = true
+  copyMeasurements: Boolean,
+  copyAdditionalData: Boolean
 )
 
 object PartitioningParentPatchDTO {
+  def apply(parentPartitioningId: Long, author: String): PartitioningParentPatchDTO =
+    new PartitioningParentPatchDTO(parentPartitioningId, author, copyMeasurements = true, copyAdditionalData = true)
+
   implicit val decodePartitioningParentPatchDTO: Decoder[PartitioningParentPatchDTO] = deriveDecoder
   implicit val encodePartitioningParentPatchDTO: Encoder[PartitioningParentPatchDTO] = deriveEncoder
 }

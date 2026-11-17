@@ -17,13 +17,23 @@
 package za.co.absa.atum.agent
 
 import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{mock, never, times, verify, when}
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
+import org.mockito.ArgumentCaptor
 import org.scalatest.funsuite.AnyFunSuiteLike
-import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, HttpDispatcher}
+import za.co.absa.atum.agent.dispatcher.{CapturingDispatcher, ConsoleDispatcher, Dispatcher, HttpDispatcher}
 import za.co.absa.atum.agent.exception.AtumAgentException.PartitioningUpdateException
-import za.co.absa.atum.model.dto.PartitioningSubmitDTO
-import za.co.absa.atum.model.types.basic.AtumPartitions
+import za.co.absa.atum.agent.model.PartitioningCreateRequest
+import za.co.absa.atum.model.dto.AtumContextDTO
+import za.co.absa.atum.model.types.basic.{AtumPartitions, AtumPartitionsOps}
 
 class AtumAgentUnitTests extends AnyFunSuiteLike {
+
+  // ---- Part 1: construction/wiring tests ------------------------------------------------------
+  // Exercise the real `AtumAgent` object/`fromConfig` with real dispatchers (built from config).
+  // These verify context identity/caching, dispatcher-factory selection and currentUser resolution.
 
   test("AtumAgent creates AtumContext(s) as expected") {
     val atumAgent = AtumAgent
@@ -90,10 +100,7 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       case _                    => fail("Expected ConsoleDispatcher")
     }
 
-    AtumAgent.dispatcherFromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 0
-    ))) match {
+    AtumAgent.dispatcherFromConfig(captureConfig(Map("atum.dispatcher.capture.capture-limit" -> 0))) match {
       case _: CapturingDispatcher => info("CapturingDispatcher created successfully")
       case _                      => fail("Expected CapturingDispatcher")
     }
@@ -131,10 +138,7 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       private var recordedAuthorsInternal: Vector[String] = Vector.empty
 
       override val dispatcher: CapturingDispatcher =
-        AtumAgent.dispatcherFromConfig(configOf(Map(
-          "atum.dispatcher.type" -> "capture",
-          "atum.dispatcher.capture.capture-limit" -> 10
-        ))).asInstanceOf[CapturingDispatcher]
+        AtumAgent.dispatcherFromConfig(captureConfig()).asInstanceOf[CapturingDispatcher]
 
       override private[agent] def currentUser: String = userName
 
@@ -168,14 +172,8 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
   test("AtumAgent.fromConfig creates independent agent instances with separate context stores") {
     val sharedPartitioning = AtumPartitions("domain" -> "one")
 
-    val configA = configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10
-    ))
-    val configB = configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10
-    ))
+    val configA = captureConfig()
+    val configB = captureConfig()
 
     val agentA = AtumAgent.fromConfig(configA)
     val agentB = AtumAgent.fromConfig(configB)
@@ -195,44 +193,26 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
   }
 
   test("currentUser falls back to the JVM user when atum.author is not set") {
-    val agent = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10
-    )))
+    val agent = AtumAgent.fromConfig(captureConfig())
 
     assert(agent.currentUser == System.getProperty("user.name"))
   }
 
   test("currentUser uses atum.author from config when set (trimmed)") {
-    val agent = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10,
-      "atum.author" -> "  my-application  "
-    )))
+    val agent = AtumAgent.fromConfig(captureConfig(Map("atum.author" -> "  my-application  ")))
 
     assert(agent.currentUser == "my-application")
   }
 
   test("currentUser falls back to the JVM user when atum.author is blank") {
-    val agent = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10,
-      "atum.author" -> "   "
-    )))
+    val agent = AtumAgent.fromConfig(captureConfig(Map("atum.author" -> "   ")))
 
     assert(agent.currentUser == System.getProperty("user.name"))
   }
 
   test("currentUser is resolved independently per config-backed agent") {
-    val agentA = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10,
-      "atum.author" -> "alice"
-    )))
-    val agentB = AtumAgent.fromConfig(configOf(Map(
-      "atum.dispatcher.type" -> "capture",
-      "atum.dispatcher.capture.capture-limit" -> 10
-    )))
+    val agentA = AtumAgent.fromConfig(captureConfig(Map("atum.author" -> "alice")))
+    val agentB = AtumAgent.fromConfig(captureConfig())
 
     assert(agentA.currentUser == "alice")
     assert(agentB.currentUser == System.getProperty("user.name"))
@@ -247,10 +227,7 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       // a custom agent that does NOT override currentUser -> relies on the cached trait default
       val agent = new AtumAgent {
         override val dispatcher: CapturingDispatcher =
-          AtumAgent.dispatcherFromConfig(configOf(Map(
-            "atum.dispatcher.type" -> "capture",
-            "atum.dispatcher.capture.capture-limit" -> 10
-          ))).asInstanceOf[CapturingDispatcher]
+          AtumAgent.dispatcherFromConfig(captureConfig()).asInstanceOf[CapturingDispatcher]
       }
 
       // first access resolves and caches the identity
@@ -272,6 +249,263 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
     }
   }
 
+  // ---- Part 2: dispatch-argument verification --------------------------------------------------
+  // Uses a Mockito-mocked Dispatcher + ArgumentCaptor instead of CapturingDispatcher so these tests
+  // assert the exact PartitioningCreateRequest per overload (strict call counts, no casts), without
+  // coupling to CapturingDispatcher's own internals (capture-limit eviction, etc.).
+
+  private class MockedDispatcherAgent extends AtumAgent {
+    override val dispatcher: Dispatcher = mock(classOf[Dispatcher])
+    override private[agent] def currentUser: String = "multi-parent-user"
+
+    def parent(partitions: AtumPartitions): AtumContext =
+      AtumContext.fromDTO(AtumContextDTO(partitions.toPartitioningDTO), this)
+
+    def stubDispatcher(): Unit =
+      when(dispatcher.createPartitioning(any[PartitioningCreateRequest])).thenAnswer(new Answer[AtumContextDTO] {
+        override def answer(invocation: InvocationOnMock): AtumContextDTO =
+          AtumContextDTO(invocation.getArgument[PartitioningCreateRequest](0).partitioning)
+      })
+
+    def captured(): PartitioningCreateRequest = {
+      val captor = ArgumentCaptor.forClass(classOf[PartitioningCreateRequest])
+      verify(dispatcher, times(1)).createPartitioning(captor.capture())
+      captor.getValue
+    }
+  }
+
+  private val mp1 = AtumPartitions("p" -> "1")
+  private val mp2 = AtumPartitions("p" -> "2")
+  private val mp3 = AtumPartitions("p" -> "3")
+  private val mpChild = AtumPartitions("child" -> "c")
+
+  test("multi-parent getOrCreateAtumSubContext dispatches once with all parents and child identity only") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+    val parents = Seq(mp1, mp2, mp3).map(agent.parent)
+
+    val child = agent.getOrCreateAtumSubContext(mpChild, parents)
+
+    val dto = agent.captured()
+    assert(dto.parentPartitionings == Seq(mp1, mp2, mp3).map(_.toPartitioningDTO))
+    assert(dto.authorIfNew == "multi-parent-user")
+    assert(dto.partitioning == mpChild.toPartitioningDTO)
+    assert(child.atumPartitions == mpChild)
+    assert(child.agent == agent)
+  }
+
+  test("multi-parent getOrCreateAtumSubContext de-duplicates parents by partitions") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+    val parents = Seq(agent.parent(mp1), agent.parent(mp1), agent.parent(mp2))
+
+    agent.getOrCreateAtumSubContext(mpChild, parents)
+
+    assert(agent.captured().parentPartitionings == Seq(mp1, mp2).map(_.toPartitioningDTO))
+  }
+
+  test("multi-parent getOrCreateAtumSubContext rejects empty parents without dispatching") {
+    val agent = new MockedDispatcherAgent
+
+    intercept[IllegalArgumentException] {
+      agent.getOrCreateAtumSubContext(mpChild, Seq.empty)
+    }
+    verify(agent.dispatcher, never()).createPartitioning(any[PartitioningCreateRequest])
+  }
+
+  test("multi-parent getOrCreateAtumSubContext accepts a single-element Seq") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+
+    agent.getOrCreateAtumSubContext(mpChild, Seq(agent.parent(mp1)))
+
+    assert(agent.captured().parentPartitionings == Seq(mp1.toPartitioningDTO))
+  }
+
+  test("getOrCreateAtumContext dispatches a PartitioningCreateRequest with no parents and the current user") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+
+    agent.getOrCreateAtumContext(mpChild)
+
+    assert(agent.captured().parentPartitionings.isEmpty)
+    assert(agent.captured().authorIfNew == "multi-parent-user")
+  }
+
+  test("single-parent getOrCreateAtumSubContext dispatches a PartitioningCreateRequest with exactly that parent") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+    val subPartitions = AtumPartitions("s" -> "1")
+
+    agent.getOrCreateAtumSubContext(subPartitions, mergeWithParent = false)(agent.parent(mp1))
+
+    assert(agent.captured().parentPartitionings == Seq(mp1.toPartitioningDTO))
+    assert(agent.captured().partitioning == subPartitions.toPartitioningDTO)
+  }
+
+  // ---- copyMeasureDefinitions flag: pre-existing overloads send false, new overloads send what they are given ----
+
+  private val flagSub = AtumPartitions("s" -> "1")
+
+  private val flagRows: Seq[(String, MockedDispatcherAgent => Unit, Boolean)] = Seq(
+    ("getOrCreateAtumContext (root)", a => a.getOrCreateAtumContext(mpChild), false),
+    ("1-arg getOrCreateAtumSubContext", a => a.getOrCreateAtumSubContext(flagSub)(a.parent(mp1)), false),
+    (
+      "2-arg getOrCreateAtumSubContext mergeWithParent = true",
+      a => a.getOrCreateAtumSubContext(flagSub, mergeWithParent = true)(a.parent(mp1)),
+      false
+    ),
+    (
+      "2-arg getOrCreateAtumSubContext mergeWithParent = false",
+      a => a.getOrCreateAtumSubContext(flagSub, mergeWithParent = false)(a.parent(mp1)),
+      false
+    ),
+    (
+      "multi-parent 2-arg getOrCreateAtumSubContext (2 parents)",
+      a => a.getOrCreateAtumSubContext(mpChild, Seq(a.parent(mp1), a.parent(mp2))),
+      false
+    ),
+    (
+      "multi-parent 2-arg getOrCreateAtumSubContext (1 parent)",
+      a => a.getOrCreateAtumSubContext(mpChild, Seq(a.parent(mp1))),
+      false
+    ),
+    (
+      "3-arg getOrCreateAtumSubContext merge = true, copy = false",
+      a => a.getOrCreateAtumSubContext(flagSub, mergeWithParent = true, copyMeasureDefinitions = false)(a.parent(mp1)),
+      false
+    ),
+    (
+      "3-arg getOrCreateAtumSubContext merge = false, copy = false",
+      a => a.getOrCreateAtumSubContext(flagSub, mergeWithParent = false, copyMeasureDefinitions = false)(a.parent(mp1)),
+      false
+    ),
+    (
+      "3-arg getOrCreateAtumSubContext merge = true, copy = true",
+      a => a.getOrCreateAtumSubContext(flagSub, mergeWithParent = true, copyMeasureDefinitions = true)(a.parent(mp1)),
+      true
+    ),
+    (
+      "3-arg getOrCreateAtumSubContext merge = false, copy = true",
+      a => a.getOrCreateAtumSubContext(flagSub, mergeWithParent = false, copyMeasureDefinitions = true)(a.parent(mp1)),
+      true
+    ),
+    (
+      "multi-parent 3-arg copy = false",
+      a => a.getOrCreateAtumSubContext(mpChild, Seq(a.parent(mp1), a.parent(mp2)), copyMeasureDefinitions = false),
+      false
+    ),
+    (
+      "multi-parent 3-arg copy = true (2 parents)",
+      a => a.getOrCreateAtumSubContext(mpChild, Seq(a.parent(mp1), a.parent(mp2)), copyMeasureDefinitions = true),
+      true
+    ),
+    (
+      "multi-parent 3-arg copy = true (1 parent)",
+      a => a.getOrCreateAtumSubContext(mpChild, Seq(a.parent(mp1)), copyMeasureDefinitions = true),
+      true
+    )
+  )
+
+  flagRows.foreach { case (name, call, expectedFlag) =>
+    test(s"copyMeasureDefinitions is $expectedFlag with exactly one dispatch for: $name") {
+      val agent = new MockedDispatcherAgent
+      agent.stubDispatcher()
+
+      call(agent)
+
+      assert(agent.captured().copyMeasureDefinitions == expectedFlag)
+    }
+  }
+
+  test("3-arg single-parent overload with merge = true and copy = true: child is parent ++ sub, parent recorded") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+
+    val child = agent.getOrCreateAtumSubContext(flagSub, mergeWithParent = true, copyMeasureDefinitions = true)(
+      agent.parent(mp1)
+    )
+
+    val dto = agent.captured()
+    assert(dto.copyMeasureDefinitions)
+    assert(dto.partitioning == (mp1 ++ flagSub).toPartitioningDTO)
+    assert(dto.parentPartitionings == Seq(mp1.toPartitioningDTO))
+    assert(dto.authorIfNew == "multi-parent-user")
+    assert(child.atumPartitions == (mp1 ++ flagSub))
+  }
+
+  test("3-arg single-parent overload with merge = false and copy = true: child is sub only, parent recorded") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+
+    val child = agent.getOrCreateAtumSubContext(flagSub, mergeWithParent = false, copyMeasureDefinitions = true)(
+      agent.parent(mp1)
+    )
+
+    val dto = agent.captured()
+    assert(dto.copyMeasureDefinitions)
+    assert(dto.partitioning == flagSub.toPartitioningDTO)
+    assert(dto.parentPartitionings == Seq(mp1.toPartitioningDTO))
+    assert(child.atumPartitions == flagSub)
+  }
+
+  test("multi-parent 3-arg overload with copy = true keeps parent order, child identity and author") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+
+    val child = agent.getOrCreateAtumSubContext(
+      mpChild,
+      Seq(mp1, mp2, mp3).map(agent.parent),
+      copyMeasureDefinitions = true
+    )
+
+    val dto = agent.captured()
+    assert(dto.copyMeasureDefinitions)
+    assert(dto.parentPartitionings == Seq(mp1, mp2, mp3).map(_.toPartitioningDTO))
+    assert(dto.partitioning == mpChild.toPartitioningDTO)
+    assert(dto.authorIfNew == "multi-parent-user")
+    assert(child.atumPartitions == mpChild)
+  }
+
+  test("multi-parent 3-arg overload de-duplicates parents and still carries copy = true") {
+    val agent = new MockedDispatcherAgent
+    agent.stubDispatcher()
+    val parents = Seq(agent.parent(mp1), agent.parent(mp1), agent.parent(mp2))
+
+    agent.getOrCreateAtumSubContext(mpChild, parents, copyMeasureDefinitions = true)
+
+    val dto = agent.captured()
+    assert(dto.parentPartitionings == Seq(mp1, mp2).map(_.toPartitioningDTO))
+    assert(dto.copyMeasureDefinitions)
+  }
+
+  Seq(true, false).foreach { copy =>
+    test(s"multi-parent 3-arg overload rejects empty parents without dispatching (copy = $copy)") {
+      val agent = new MockedDispatcherAgent
+
+      intercept[IllegalArgumentException] {
+        agent.getOrCreateAtumSubContext(mpChild, Seq.empty, copy)
+      }
+      verify(agent.dispatcher, never()).createPartitioning(any[PartitioningCreateRequest])
+    }
+  }
+
+  private val defaultIndexRegex = """\$default\$(\d+)""".r
+
+  private def defaultIndexes(methodNames: Array[String], prefix: String): Set[String] =
+    methodNames
+      .filter(_.startsWith(prefix + "$default$"))
+      .flatMap(n => defaultIndexRegex.findFirstMatchIn(n).map(_.group(1)))
+      .toSet
+
+  test("getOrCreateAtumSubContext keeps only the $default$2 getter (no default on the new overloads)") {
+    val traitIdx = defaultIndexes(classOf[AtumAgent].getMethods.map(_.getName), "getOrCreateAtumSubContext")
+    val moduleIdx = defaultIndexes(AtumAgent.getClass.getMethods.map(_.getName), "getOrCreateAtumSubContext")
+
+    assert(traitIdx == Set("2"))
+    assert(moduleIdx == Set("2"))
+  }
+
   private def configOf(configValues: Map[String, Any]): Config = {
     val emptyConfig = ConfigFactory.empty()
     configValues.foldLeft(emptyConfig) { case (acc, (configKey, value)) =>
@@ -279,5 +513,13 @@ class AtumAgentUnitTests extends AnyFunSuiteLike {
       acc.withValue(configKey, configValue)
     }
   }
+
+  // Shared defaults for the recurring "capture dispatcher with limit 10" config used across Part 1 tests.
+  private def captureConfig(overrides: Map[String, Any] = Map.empty): Config = configOf(
+    Map(
+      "atum.dispatcher.type" -> "capture",
+      "atum.dispatcher.capture.capture-limit" -> 10
+    ) ++ overrides
+  )
 
 }

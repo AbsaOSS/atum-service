@@ -19,11 +19,13 @@ package za.co.absa.atum.server.api.v2.controller
 import za.co.absa.atum.model.ApiPaths.V2Paths
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.envelopes.SuccessResponse._
-import za.co.absa.atum.model.envelopes.{ErrorResponse, GeneralErrorResponse}
+import za.co.absa.atum.model.envelopes.{BadRequestResponse, ErrorResponse, GeneralErrorResponse}
 import za.co.absa.atum.model.utils.JsonSyntaxExtensions.JsonDeserializationSyntax
 import za.co.absa.atum.server.api.common.controller.BaseController
 import za.co.absa.atum.server.api.v2.service.PartitioningService
-import za.co.absa.atum.server.model.PaginatedResult
+import za.co.absa.atum.server.model.CreationResult.{Created, Existing}
+import za.co.absa.atum.server.model.{CreationResult, PaginatedResult}
+import sttp.model.StatusCode
 import zio._
 
 import java.time.ZonedDateTime
@@ -54,15 +56,29 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
   override def postPartitioning(
     partitioningSubmitDTO: PartitioningSubmitV2DTO
-  ): IO[ErrorResponse, (SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
+  ): IO[ErrorResponse, (StatusCode, SingleSuccessResponse[PartitioningWithIdDTO], String)] = {
+    // dedupe here as well: the cap must apply to DISTINCT ids whoever calls the controller (the decoder and the SQL
+    // dedupe too, the SQL one being the authoritative one for what is stored)
+    val distinctParentIds = partitioningSubmitDTO.parentPartitioningIds.distinct
     for {
-      response <- mapToSingleSuccessResponse(
-        serviceCall[PartitioningWithIdDTO, PartitioningWithIdDTO](
-          partitioningService.createPartitioning(partitioningSubmitDTO)
+      _ <- ZIO.when(distinctParentIds.size > PartitioningControllerImpl.MaxParents)(
+        ZIO.fail(
+          BadRequestResponse(
+            s"Too many parent partitionings: ${distinctParentIds.size}, " +
+              s"maximum allowed is ${PartitioningControllerImpl.MaxParents}"
+          )
         )
       )
-      uri <- createRootAnchoredResourcePath(Seq(V2Paths.Partitionings, response.data.id.toString), apiVersion = 2)
-    } yield (response, uri)
+      result <- serviceCall[CreationResult[PartitioningWithIdDTO], CreationResult[PartitioningWithIdDTO]](
+        partitioningService.createPartitioning(partitioningSubmitDTO.copy(parentPartitioningIds = distinctParentIds))
+      )
+      response = SingleSuccessResponse(result.data)
+      status = result match {
+        case Created(_) => StatusCode.Created
+        case Existing(_) => StatusCode.Ok
+      }
+      uri <- createRootAnchoredResourcePath(Seq(V2Paths.Partitionings, result.data.id.toString), apiVersion = 2)
+    } yield (status, response, uri)
   }
 
   override def patchPartitioningAdditionalData(
@@ -166,9 +182,59 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit,
+      offset,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.getPartitioningDescendants(partitioningId, limit, offset)
+      )
+    )
+  }
+
+  override def getPartitioningParents(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[ParentPartitioningDTO], Seq[ParentPartitioningDTO]](
+        partitioningService.getPartitioningParents(partitioningId)
+      )
+    )
+  }
+
+  override def getPartitioningChildren(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ChildPartitioningDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[ChildPartitioningDTO], Seq[ChildPartitioningDTO]](
+        partitioningService.getPartitioningChildren(partitioningId)
+      )
+    )
+  }
+
+  override def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ErrorResponse, SingleSuccessResponse[LineageGraphDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[LineageGraphDTO, LineageGraphDTO](
+        partitioningService.getPartitioningLineageGraph(partitioningId, direction, depth)
+      )
+    )
+  }
+
 }
 
 object PartitioningControllerImpl {
+
+  /** Maximum number of DISTINCT parent ids accepted by `POST /partitionings` (more is answered with 400). */
+  val MaxParents = 100
+
   val layer: URLayer[PartitioningService, PartitioningController] = ZLayer {
     for {
       partitioningService <- ZIO.service[PartitioningService]

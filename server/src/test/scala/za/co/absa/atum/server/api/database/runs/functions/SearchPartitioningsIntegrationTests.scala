@@ -30,6 +30,13 @@ import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.{PartitioningSearchTestData, TestTransactorProvider}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings
+import za.co.absa.atum.server.api.database.lineage.functions.{
+  GetDirectChildren,
+  GetDirectParents,
+  GetPartitioningAncestors,
+  GetPartitioningDescendants,
+  GetPartitioningLineageGraph
+}
 import za.co.absa.atum.server.api.database.runs.functions.SearchPartitionings.{SearchPartitioningsArgs, SearchPartitioningsResult}
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
 import za.co.absa.atum.server.api.v2.controller.PartitioningControllerImpl
@@ -72,7 +79,7 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
     name: String,
     kind: String = "main",
     reverseKeys: Boolean = false
-  ): ZIO[CreatePartitioning, Throwable, PartitioningWithIdDTO] = {
+  ): ZIO[CreatePartitioningWithParents, Throwable, PartitioningWithIdDTO] = {
     val original = Seq(
       PartitionDTO("source", source),
       PartitionDTO("kind", kind),
@@ -81,9 +88,10 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
     )
     val partitioning = if (reverseKeys) original.reverse else original
     val author = s"Search integration author: $name"
-    ZIO.serviceWithZIO[CreatePartitioning](_(PartitioningSubmitV2DTO(partitioning, None, author)))
+    ZIO.serviceWithZIO[CreatePartitioningWithParents](_(PartitioningSubmitV2DTO(partitioning, None, author)))
       .flatMap(ZIO.fromEither(_))
-      .map(row => PartitioningWithIdDTO(row.data, partitioning, author))
+      .flatMap(row => ZIO.fromOption(row.data).orElseFail(new IllegalStateException("Expected created partitioning id")))
+      .map(dbResult => PartitioningWithIdDTO(dbResult.id, partitioning, author))
   }
 
   private def writeCheckpoint(
@@ -106,7 +114,7 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
       .flatMap(ZIO.fromEither(_)).unit
   }
 
-  private val createFixture: ZIO[CreatePartitioning with WriteCheckpointV2, Throwable, Fixture] = for {
+  private val createFixture: ZIO[CreatePartitioningWithParents with WriteCheckpointV2, Throwable, Fixture] = for {
     withoutCheckpoint <- createPartitioning("without-checkpoints")
     historical <- createPartitioning("historical")
     atFrom <- createPartitioning("at-from", reverseKeys = true)
@@ -136,7 +144,7 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
 
   private def controller(search: SearchPartitionings): PartitioningControllerImpl = {
     val repository = new PartitioningRepositoryImpl(
-      mock(classOf[CreatePartitioning]),
+      mock(classOf[CreatePartitioningWithParents]),
       mock(classOf[GetPartitioningMeasures]),
       mock(classOf[CreateOrUpdateAdditionalData]),
       mock(classOf[GetPartitioningAdditionalData]),
@@ -147,7 +155,11 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
       mock(classOf[GetPartitioningMainFlow]),
       mock(classOf[UpdatePartitioningParent]),
       mock(classOf[GetPartitioningAncestors]),
-      search
+      search,
+      mock(classOf[GetPartitioningDescendants]),
+      mock(classOf[GetDirectParents]),
+      mock(classOf[GetDirectChildren]),
+      mock(classOf[GetPartitioningLineageGraph])
     )
     new PartitioningControllerImpl(new PartitioningServiceImpl(repository))
   }
@@ -288,7 +300,7 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
     }
   ).provide(
     SearchPartitionings.layer,
-    CreatePartitioning.layer,
+    CreatePartitioningWithParents.layer,
     WriteCheckpointV2.layer,
     PostgresDatabaseProvider.layer,
     TestTransactorProvider.layerWithSingleTransactionRollback
