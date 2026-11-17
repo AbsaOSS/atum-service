@@ -44,28 +44,6 @@ case class LineageGraphDTO(
 )
 
 object LineageGraphDTO {
-  implicit val encoder: Encoder[LineageGraphDTO] = deriveEncoder
-  implicit val decoder: Decoder[LineageGraphDTO] = Decoder.instance { c =>
-    for {
-      primaryPartitioningId <- c.downField("primaryPartitioningId").as[Long]
-      depth <- c.downField("depth").as[Int]
-      direction <- c.downField("direction").as[String]
-      nodes <- c.downField("nodes").as[Option[Seq[PartitioningWithIdDTO]]].map(_.getOrElse(Seq.empty))
-      edges <- c.downField("edges").as[Option[Seq[LineageEdgeDTO]]].map(_.getOrElse(Seq.empty))
-      truncated <- c.downField("truncated").as[Option[Boolean]].map(_.getOrElse(false))
-      expandableUpstreamNodeIds <-
-        c.downField("expandableUpstreamNodeIds").as[Option[Seq[Long]]].map(_.getOrElse(Seq.empty))
-      expandableDownstreamNodeIds <-
-        c.downField("expandableDownstreamNodeIds").as[Option[Seq[Long]]].map(_.getOrElse(Seq.empty))
-    } yield LineageGraphDTO(
-      primaryPartitioningId,
-      depth,
-      direction,
-      nodes,
-      edges,
-      truncated,
-      expandableUpstreamNodeIds,
-      expandableDownstreamNodeIds
-    )
-  }
+  implicit def encoder: Encoder[LineageGraphDTO] = deriveEncoder
+  implicit def decoder: Decoder[LineageGraphDTO] = deriveDecoder
 }
