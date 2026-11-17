@@ -93,12 +93,17 @@ class PartitioningRepositoryImpl(
     ).map(AdditionalDataItemFromDB.toSeqAdditionalDataItemV2DTO)
   }
 
-  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] = {
-    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresFn(partitioning), "getPartitioningMeasures")
-      .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
-        MeasureDTO(measureName.get, measuredColumns.get)
+  private def decodeMeasures(
+    dbCall: Task[FailedOrRows[Option[MeasureFromDB]]]
+  ): IO[DatabaseError, Seq[MeasureDTO]] = {
+    dbMultipleResultCallWithAggregatedStatus(dbCall, "getPartitioningMeasures")
+      .map(_.flatten.map { case MeasureFromDB(measureName, measuredColumns) =>
+        MeasureDTO(measureName, measuredColumns)
       })
   }
+
+  override def getPartitioningMeasures(partitioning: PartitioningDTO): IO[DatabaseError, Seq[MeasureDTO]] =
+    decodeMeasures(getPartitioningMeasuresFn(partitioning))
 
   override def getPartitioningAdditionalData(partitioningId: Long): IO[DatabaseError, Seq[AdditionalDataItemV2DTO]] = {
     dbMultipleResultCallWithAggregatedStatus(
@@ -113,12 +118,8 @@ class PartitioningRepositoryImpl(
     )
   }
 
-  override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] = {
-    dbMultipleResultCallWithAggregatedStatus(getPartitioningMeasuresByIdFn(partitioningId), "getPartitioningMeasures")
-      .map(_.map { case MeasureFromDB(measureName, measuredColumns) =>
-        MeasureDTO(measureName.get, measuredColumns.get)
-      })
-  }
+  override def getPartitioningMeasuresById(partitioningId: Long): IO[DatabaseError, Seq[MeasureDTO]] =
+    decodeMeasures(getPartitioningMeasuresByIdFn(partitioningId))
 
   override def getPartitioning(
     partitioning: PartitioningDTO

@@ -306,8 +306,8 @@ trait TestData {
   protected val measureDTO2: MeasureDTO = MeasureDTO("count2", Seq("col_A2", "col_B2"))
 
   // Measure from DB
-  protected val measureFromDB1: MeasureFromDB = MeasureFromDB(Some("count1"), Some(Seq("col_A1", "col_B1")))
-  protected val measureFromDB2: MeasureFromDB = MeasureFromDB(Some("count2"), Some(Seq("col_A2", "col_B2")))
+  protected val measureFromDB1: MeasureFromDB = MeasureFromDB("count1", Seq("col_A1", "col_B1"))
+  protected val measureFromDB2: MeasureFromDB = MeasureFromDB("count2", Seq("col_A2", "col_B2"))
 
   // Initial Additional Data
   protected val additionalDataDTO1: Seq[AdditionalDataItemV2DTO] = Seq(

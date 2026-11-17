@@ -146,7 +146,10 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(getPartitioningMeasuresMock.apply(partitioningDTO1))
     .thenReturn(
       ZIO.right(
-        Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2))
+        Seq(
+          Row(FunctionStatus(0, "success"), Option(measureFromDB1)),
+          Row(FunctionStatus(0, "success"), Option(measureFromDB2))
+        )
       )
     )
   when(getPartitioningMeasuresMock.apply(partitioningDTO2)).thenReturn(ZIO.fail(new Exception("boom!")))
@@ -182,7 +185,12 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   private val getPartitioningMeasuresV2Mock = mock(classOf[GetPartitioningMeasuresById])
 
   when(getPartitioningMeasuresV2Mock.apply(1L)).thenReturn(
-    ZIO.right(Seq(Row(FunctionStatus(0, "success"), measureFromDB1), Row(FunctionStatus(0, "success"), measureFromDB2)))
+    ZIO.right(
+      Seq(
+        Row(FunctionStatus(0, "success"), Option(measureFromDB1)),
+        Row(FunctionStatus(0, "success"), Option(measureFromDB2))
+      )
+    )
   )
   when(getPartitioningMeasuresV2Mock.apply(2L))
     .thenReturn(ZIO.left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
