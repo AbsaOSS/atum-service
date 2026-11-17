@@ -43,9 +43,11 @@ $$
 DECLARE
     _keys JSONB := nullif(i_keys, '{}'::JSONB);
     _latest_first BOOLEAN := coalesce(i_latest_first, FALSE);
-    _order_direction TEXT := CASE WHEN _latest_first THEN 'DESC' ELSE 'ASC' END;
-    _predicates TEXT := '';
-    _time_predicates TEXT := '';
+    _has_time BOOLEAN := (i_from_time IS NOT NULL OR i_to_time IS NOT NULL);
+    -- Sentinel bounds turn optional [from, to) filters into pure range predicates (no OR), keeping index scans
+    -- viable under cached generic plans (assumes checkpoints.process_start_time never stores +/-infinity).
+    _from TIMESTAMPTZ := coalesce(i_from_time, '-infinity'::TIMESTAMPTZ);
+    _to TIMESTAMPTZ := coalesce(i_to_time, 'infinity'::TIMESTAMPTZ);
 BEGIN
     IF i_limit IS NULL OR i_limit < 1 OR i_limit > 1000 THEN
         status := 51;
@@ -86,34 +88,28 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Dynamic SQL (RETURN QUERY EXECUTE with $query$ tagged dollar-quoting inside $$) is used so PostgreSQL
-    -- replans only the active predicates and ASC/DESC sort direction for index-ordered scans, instead of
-    -- caching a generic optional-filter plan. Only fixed fragments are concatenated; values stay bound via USING.
-    IF i_from_time IS NOT NULL THEN
-        _time_predicates := _time_predicates || ' AND C.process_start_time >= $4';
-    END IF;
-    IF i_to_time IS NOT NULL THEN
-        _time_predicates := _time_predicates || ' AND C.process_start_time < $5';
-    END IF;
-
+    -- Static IF/ELSIF branches (instead of dynamic RETURN QUERY EXECUTE/$query$ or a single IS NULL OR query)
+    -- keep SQL compile-time checked and readable while giving each access path (time-only, keys-only, keys+time)
+    -- its own plan. Trade-off: CASE-based ORDER BY (matching runs.get_partitioning_checkpoints) avoids duplicating
+    -- ASC/DESC queries, at the cost of sorting all key-matching rows before LIMIT on very broad key filters.
     IF _keys IS NULL THEN
         -- Scalar primary-key lookups prevent an ID-ordered merge join from scanning unrelated history.
         -- Exclude orphan checkpoints before paging; load full partitioning rows only for the selected IDs.
-        RETURN QUERY EXECUTE
-            $query$
+        RETURN QUERY
             WITH active_ids AS MATERIALIZED (
                 SELECT DISTINCT C.fk_partitioning
                 FROM runs.checkpoints C
-                WHERE TRUE
-            $query$ || _time_predicates || $query$
+                WHERE C.process_start_time >= _from
+                  AND C.process_start_time < _to
             ),
             page_ids AS MATERIALIZED (
                 SELECT A.fk_partitioning
                 FROM active_ids A
                 WHERE (SELECT P.id_partitioning FROM runs.partitionings P
                        WHERE P.id_partitioning = A.fk_partitioning) IS NOT NULL
-                ORDER BY A.fk_partitioning $query$ || _order_direction || $query$
-                LIMIT $1 + 1 OFFSET $2
+                ORDER BY CASE WHEN _latest_first THEN A.fk_partitioning END DESC,
+                         CASE WHEN NOT _latest_first THEN A.fk_partitioning END ASC
+                LIMIT i_limit + 1 OFFSET i_offset
             ),
             page_partitionings AS MATERIALIZED (
                 SELECT (SELECT P FROM runs.partitionings P
@@ -122,39 +118,51 @@ BEGIN
             )
             SELECT 11, 'OK'::TEXT, (P.partitioning_row).id_partitioning,
                    (P.partitioning_row).partitioning, (P.partitioning_row).created_by,
-                   count(*) OVER () > $1
+                   count(*) OVER () > i_limit
             FROM page_partitionings P
-            ORDER BY (P.partitioning_row).id_partitioning $query$ || _order_direction || $query$
-            LIMIT $1
-            $query$
-            USING i_limit, i_offset, _keys, i_from_time, i_to_time;
-        RETURN;
+            ORDER BY CASE WHEN _latest_first THEN (P.partitioning_row).id_partitioning END DESC,
+                     CASE WHEN NOT _latest_first THEN (P.partitioning_row).id_partitioning END ASC
+            LIMIT i_limit;
+    ELSIF NOT _has_time THEN
+        RETURN QUERY
+            WITH candidates AS MATERIALIZED (
+                SELECT P.id_partitioning, P.partitioning, P.created_by
+                FROM runs.partitionings P
+                WHERE (P.partitioning -> 'keysToValuesMap') @> _keys
+                ORDER BY CASE WHEN _latest_first THEN P.id_partitioning END DESC,
+                         CASE WHEN NOT _latest_first THEN P.id_partitioning END ASC
+                LIMIT i_limit + 1 OFFSET i_offset
+            )
+            SELECT 11, 'OK'::TEXT, C.id_partitioning, C.partitioning, C.created_by,
+                   count(*) OVER () > i_limit
+            FROM candidates C
+            ORDER BY CASE WHEN _latest_first THEN C.id_partitioning END DESC,
+                     CASE WHEN NOT _latest_first THEN C.id_partitioning END ASC
+            LIMIT i_limit;
+    ELSE
+        RETURN QUERY
+            WITH candidates AS MATERIALIZED (
+                SELECT P.id_partitioning, P.partitioning, P.created_by
+                FROM runs.partitionings P
+                WHERE (P.partitioning -> 'keysToValuesMap') @> _keys
+                  AND EXISTS (
+                      SELECT 1
+                      FROM runs.checkpoints C
+                      WHERE C.fk_partitioning = P.id_partitioning
+                        AND C.process_start_time >= _from
+                        AND C.process_start_time < _to
+                  )
+                ORDER BY CASE WHEN _latest_first THEN P.id_partitioning END DESC,
+                         CASE WHEN NOT _latest_first THEN P.id_partitioning END ASC
+                LIMIT i_limit + 1 OFFSET i_offset
+            )
+            SELECT 11, 'OK'::TEXT, C.id_partitioning, C.partitioning, C.created_by,
+                   count(*) OVER () > i_limit
+            FROM candidates C
+            ORDER BY CASE WHEN _latest_first THEN C.id_partitioning END DESC,
+                     CASE WHEN NOT _latest_first THEN C.id_partitioning END ASC
+            LIMIT i_limit;
     END IF;
-
-    _predicates := ' AND (P.partitioning -> ''keysToValuesMap'') @> $3';
-    IF _time_predicates <> '' THEN
-        _predicates := _predicates ||
-            ' AND EXISTS (SELECT 1 FROM runs.checkpoints C WHERE C.fk_partitioning = P.id_partitioning' ||
-            _time_predicates || ')';
-    END IF;
-
-    RETURN QUERY EXECUTE
-        $query$
-        WITH candidates AS MATERIALIZED (
-            SELECT P.id_partitioning, P.partitioning, P.created_by
-            FROM runs.partitionings P
-            WHERE TRUE
-        $query$ || _predicates || $query$
-            ORDER BY P.id_partitioning $query$ || _order_direction || $query$
-            LIMIT $1 + 1 OFFSET $2
-        )
-        SELECT 11, 'OK'::TEXT, C.id_partitioning, C.partitioning, C.created_by,
-               count(*) OVER () > $1
-        FROM candidates C
-        ORDER BY C.id_partitioning $query$ || _order_direction || $query$
-        LIMIT $1
-        $query$
-        USING i_limit, i_offset, _keys, i_from_time, i_to_time;
 END;
 $$
 LANGUAGE plpgsql STABLE SECURITY DEFINER
