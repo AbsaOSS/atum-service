@@ -8,11 +8,10 @@
 | **Affected components** | `server/`, `database/`; optional Scala application support in `reader/`                                                  |
 | **Implementation**      | Time filtering, partitioning search and edge-based lineage reads are implemented; grouping remains a producer convention |
 
-Checkpoint filtering spans [#488](https://github.com/AbsaOSS/atum-service/pull/488) and
-[#489](https://github.com/AbsaOSS/atum-service/pull/489). Partitioning search is
-[#493](https://github.com/AbsaOSS/atum-service/pull/493). Linking semantics and the explicit lineage edges are
-decided in [ADR 01](01-lineage-capability.md) (#496, #503); this ADR covers only how audit consumers read them.
-Deployment prerequisites are in §4.
+Checkpoint filtering was delivered in [#488](https://github.com/AbsaOSS/atum-service/pull/488) and partitioning search in
+[#493](https://github.com/AbsaOSS/atum-service/pull/493). Linking semantics and explicit lineage edges are decided in
+[ADR 01](01-lineage-capability.md) (#496, #503); this ADR covers how audit consumers read measurements, search
+partitionings, and navigate lineage.
 
 ---
 
@@ -23,185 +22,118 @@ A typical audit question is:
 > "For this dataset, show me the last 2 months of integrity measurements, which datasets they belong to,
 > and which upstream datasets produced them."
 
-These are distinct ideas:
+These are distinct concerns:
 
 1. **Measurements in a time window**, associated with their partitionings.
-2. **Discovery of the relevant partitionings**, including different dates, executions or upstream branches.
-3. **An input/output lineage**, eventually relevant to relationships between control measures.
+2. **Discovery of the relevant partitionings**, across dates, executions, or upstream branches.
+3. **An input/output lineage**, relevant when comparing control measures across stages.
 
-Recipe A delivers the first requirement **for an already identified scope**. Recipe B adds partitioning-first
-discovery by partial keys and/or checkpoint activity for audit and UI consumers that do not already know that
-scope. Note on the third requirement: a collection of measurements tagged with partitionings is not an exact lineage
-graph or proof that a particular source was consumed, it is just a flow membership.
+Recipe A covers (1) **for an already identified scope**. Recipe B adds partitioning-first discovery by partial keys
+and/or checkpoint activity for audit and UI consumers without a known flow. Note on (3): flow membership and declared
+edges record what producers submitted, not proof that a source dataset was actually consumed.
 
-Audit consumers are expected to integrate through the **server REST API**. The Scala Reader is an optional client
-for application code (system-to-system integration), not a prerequisite for audit consumption. As described in
-the [README](../README.md), Atum captures control measurements; consumers remain responsible for comparisons, validation
-and reporting.
+Audit consumers are expected to integrate through the **server REST API**. The Scala Reader (`reader/`) is an optional
+client for JVM applications, not a prerequisite. As described in the [README](../README.md), Atum captures control
+measurements; consumers remain responsible for comparisons, validation, and reporting.
 
 ---
 
 ## 2. What the model and API provide
 
-- **Partitioning identity is exact and ordered.** A partitioning identifies a dataset or subset of one. The API
-  represents it as an ordered array of `{key, value}` objects. Storage uses a different JSONB representation:
-  `{ "keys": [...], "version": 1, "keysToValuesMap": { ... } }`, with uniqueness over the whole value.
-  Neither the exact-lookup endpoint nor a checkpoint time filter searches for other matching partitionings.
-- **Flows store membership; edges store direct links.** Each partitioning created through the API gets its own main
-  flow. Every v2 linking path (`POST /api/v2/partitionings` with zero to many parents and `PATCH .../ancestors`) goes
-  through one database function, `lineage.link_to_parents`, which writes both the flow memberships and one explicit
-  edge per declared parent (`lineage.partitioning_edges`, from v0.11.0 on). It rejects a self-link or a cycle before
-  anything is
-  written (`409`). A newly created child is added to every flow that contains a parent. **Descendants are never
-  propagated**: linking an *existing* partitioning that already has descendants of its own under a new parent is
-  refused (`409`, nothing written), so only leaves are linked under new parents and the flow of `A` stays
-  `{A} ∪ descendants(A)` by construction (see [ADR 01](01-lineage-capability.md)). A redundant link (for example also
-  linking a grandparent) is a no-op, also for a partitioning that has descendants. `PATCH .../ancestors` adds
-  memberships; it does not remove the old parent's memberships. One global advisory lock is taken only when
-  something has to be written; re-linking an existing ancestor takes a lock-free fast path.
-- **Ancestors are not only top-level roots.** `GET /api/v2/partitionings/{id}/ancestors` returns the primary
-  partitionings of inherited flows, excluding the queried partitioning itself. Since intermediate partitionings
-  have main flows too, the response can include both intermediate ancestors and top-level roots. It does not mark
-  immediate parents or identify a unique root.
-- **Flow checkpoints are paginated measurements plus partitioning identity.**
-  `GET /api/v2/flows/{flowId}/checkpoints` returns one item per checkpoint, with nested measurements and a
-  `partitioning` containing its ID, ordered keys and author. The underlying SQL returns one row per measurement;
-  the server groups these rows into checkpoints. Neither representation includes parent-child edges.
-- **Direct links and graphs come from the edges.** `GET .../parents` and `GET .../children` return 1-hop neighbours
-  with who linked them and when; `GET .../descendants` is the paginated counterpart of `.../ancestors`;
-  `GET .../lineage?direction=&depth=` returns a bounded sub-graph (nodes and edges) in one request, with `truncated`
-  and "expandable" node ids when the traversal was cut short. Edges exist only for links written from v0.11.0 on.
-
-For a producer chain created in order:
+- **Partitioning identity is exact and ordered.** The API represents a partitioning as an ordered array of
+  `{key, value}` objects; storage uses `{ "keys": [...], "version": 1, "keysToValuesMap": { ... } }` with uniqueness
+  over the whole JSONB value. Exact lookup (`GET /api/v2/partitionings?partitioning=...`) and checkpoint time filters
+  do not search for other matching partitionings.
+- **Flows store transitive closure; edges store direct links.** Every partitioning gets its own main flow `F(A)`.
+  Under v0.11.0+ linking rules ([ADR 01](01-lineage-capability.md)), only leaf partitionings can be linked under new
+  parents (`409` otherwise), cycles are rejected (`409`), and `members(F(A)) = {A} ∪ descendants(A)` holds by
+  construction. For write-side guarantees, copy flags, advisory locking, and the deprecated v1 create race, see ADR 01
+  §2–§3 and §7.
+- **`ancestors` / `descendants` vs. `parents` / `children` / `lineage`.**
+  - `GET .../ancestors` and `.../descendants` read the flow closure (paginated, default `limit=10`): `ancestors` returns
+    all intermediate and root primary partitionings whose flows contain `X`, without marking direct parents or
+    identifying a unique root. Empty lists return `200` with `data: []`.
+  - `GET .../parents`, `.../children`, and `.../lineage?direction=&depth=` read explicit edges
+    (`lineage.partitioning_edges`, written from v0.11.0 onward) with `linkedBy`/`linkedAt` metadata.
+- **No backfill for pre-v0.11.0 data.** Links written by v0.6–v0.10 servers have no edges (unless a producer re-runs and
+  re-declares an already-known ancestor, which lazily backfills the missing edge) and may have incomplete descendant
+  membership from legacy `PATCH` calls. For pre-v0.11.0 links, `parents` and `children` return `[]` and `lineage`
+  returns only the focal node, while `ancestors` and `descendants` still read the closure.
+- **Checkpoints and flow partitionings.** `GET /api/v2/flows/{flowId}/checkpoints` returns paginated checkpoints with
+  nested measurements and `partitioning` (`id`, ordered keys, `author`) — no parent-child edges.
+  `GET /api/v2/flows/{flowId}/partitionings` lists membership without measurements (including members with no
+  checkpoints in the time window). Membership itself is not time-filtered.
 
 ```text
-Links established: A -> B -> C
-mainFlow(A): {A, B, C}
-mainFlow(B): {B, C}
-mainFlow(C): {C}
-ancestors(C): {A, B}  -- B is not a top-level root
+Links established in v0.11.0+: A -> B -> C
+  mainFlow(A): {A, B, C}     ancestors(C): {A, B}  (includes intermediate B)
+  mainFlow(B): {B, C}        parents(C):   {B}     (direct edge only; empty for pre-v0.11.0 links)
+  mainFlow(C): {C}
 ```
-
-With v0.11.0 the same chain also records the edges `A -> B` and `B -> C`, so `parents(C) = {B}`. For links written
-by earlier servers only the membership exists: their direct links cannot be recovered (a grandparent and a parent
-look the same in a flow), and `GET .../parents` returns an empty list for them even when `.../ancestors` does not.
-An edge records what the producer declared, not proof that the data was consumed.
-`GET /api/v2/flows/{flowId}/partitionings` lists membership without measurements; it is
-not a graph endpoint. Use it when the report must include members with no checkpoints in the selected window.
-Membership itself is not filtered or versioned by the checkpoint time window.
-
-### Linking guarantees and limits
-
-- **One idempotent create/link call.** `POST /api/v2/partitionings` takes zero to many parents (`parentPartitioningIds`,
-  at most 100 distinct). `201` = created, `200` = already existing (same body shape; the
-  stored `created_by` is returned), `404` = unknown parent, `409` = dependency cycle, or an existing partitioning that
-  already has descendants would get a new parent. Parent measure
-  definitions are copied only if `copyMeasureDefinitions` is `true` (default `false`, except legacy bodies with
-  `parentPartitioningId` and no flag, which default to `true`) and only when the call creates
-  a new partitioning; additional data is never copied by `POST`.
-- **`PATCH` copy flags.** On `PATCH .../ancestors` (both flags required) `copyAdditionalData: true` **overwrites** the
-  child's additional-data values for keys that also exist on the parent; `copyMeasurements: true` copies only the
-  definitions the child does not have yet (on a conflict the child's own definition wins).
-- **Sound for links created by v0.11.0.** Every linking path checks for cycles before writing and never propagates
-  descendants: a partitioning that already has descendants cannot be linked under a new parent (`409`), so a cycle
-  cannot be created and flow membership stays complete.
-- **No backfill.** Links written by earlier server versions (v0.6 to v0.10) did not add the existing descendants of the
-  child to the flows of the new parent, and they have no edges. Neither is repaired automatically, and no diagnostic
-  or repair tooling ships with the service; a fix is a DBA operation. A producer that re-runs and declares an
-  existing parent again does get the missing edge added.
-- **Ancestors are not direct parents.** The ancestors list holds the primary partitionings of all inherited flows,
-  intermediate ones included; immediate parents are not marked there. Use `GET .../parents` for them.
-  `GET .../ancestors` of a partitioning without ancestors returns `200` with an empty list.
-- **Known race with the deprecated v1 create.** The deprecated v1 create path takes no lock, so it can race a v2
-  re-link and miss the flow of a new ancestor of the parent (only the brand-new child can be missed). This is a
-  documented limitation (follow-up, see ADR 01 §8).
 
 ---
 
 ## 3. REST consumption recipes
 
-The two recipes serve different entry points:
-
-| Recipe                                         | Starting point                                                                  | Status                                                                  |
-|------------------------------------------------|---------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| **A: query a known scope**                     | An explicitly selected partitioning or a set of known partitionings             | Uses existing endpoints with §4's time filtering                        |
-| **B: discover partitionings, then drill down** | Partial partitioning keys and/or an activity window, without known partitioning | Uses the search endpoint; subsequent drill-down uses existing endpoints |
+| Recipe                                         | Starting point                                                           | Uses                                                      |
+|------------------------------------------------|--------------------------------------------------------------------------|-----------------------------------------------------------|
+| **A: query a known scope**                     | An explicitly selected partitioning ID, complete keys, or known flow     | Existing endpoints with §4 checkpoint time filtering      |
+| **B: discover partitionings, then drill down** | Partial partitioning keys and/or a checkpoint activity window (no IDs)   | `GET /api/v2/partitionings/search`, then Recipe A / graph |
 
 ### Recipe A: query a known scope
 
 #### Establish the scope first
 
-The consumer must know a partitioning ID, its **complete ordered keys**, or an externally resolved set of them.
+| Intended scope                          | API approach                                                                                                     | Limitation                                                                           |
+|-----------------------------------------|------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| One exact partitioning                  | `/partitionings/{id}/checkpoints`                                                                                | Excludes ancestors and descendants                                                   |
+| Membership of a known main flow         | Resolve `/partitionings/{id}/main-flow`, then `/flows/{flowId}/checkpoints`                                      | Includes all downstream members, potentially unrelated sibling branches              |
+| Target and its recorded ancestors only  | Exhaust `/partitionings/{id}/ancestors`, then query checkpoints per distinct ID                                  | Multiple requests; ancestors are not marked as direct or transitive                  |
+| Target and its direct inputs only       | `/partitionings/{id}/parents`, then checkpoints of target and each parent                                        | Empty for links written before v0.11.0                                               |
+| Upstream or downstream graph to a depth | `/partitionings/{id}/lineage?direction=upstream&depth=n`, then checkpoints per node                              | Edge-based (v0.11.0+ links); expand via `expandable*NodeIds` when `depth`/cap stops  |
+| All dates/executions for a business key | Search by partial keys, optionally narrowed by checkpoint activity (Recipe B)                                    | Exact key/value match only; no business-date range or automatic lineage resolution   |
 
-Choose the query according to the required scope:
+If whole upstream-root flows are wanted, discover **all** candidate roots rather than picking the first ancestor. Page
+`/ancestors` until reaching nodes with no ancestors (a target with no ancestors is itself a candidate root), tracking
+visited IDs. Remember that root flows can include sibling branches unrelated to the target, and pre-v0.11.0 links may
+have incomplete membership.
 
-| Intended scope                          | Existing API approach                                                                                             | Limitation                                                                 |
-|-----------------------------------------|-------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| One exact partitioning                  | `/partitionings/{id}/checkpoints`                                                                                 | Does not include ancestors or descendants                                  |
-| Membership of a known main flow         | Resolve `/partitionings/{id}/main-flow`, then `/flows/{flowId}/checkpoints`                                       | Includes all recorded members, potentially other downstream branches       |
-| Target and its recorded ancestors only  | Exhaust `/partitionings/{id}/ancestors`; query checkpoints for the target and each distinct returned partitioning | More requests; ancestors are not marked as direct or transitive            |
-| Target and its direct inputs only       | `/partitionings/{id}/parents`, then checkpoints of the target and each parent                                     | Empty for links written before v0.11.0                                     |
-| Upstream or downstream graph to a depth | `/partitionings/{id}/lineage?direction=upstream&depth=n`, then checkpoints per node                               | Edge-based (v0.11.0+ links); check `truncated` and the expandable node ids |
-| All dates/executions for a business key | Search by partial keys, optionally narrowed by checkpoint activity (Recipe B)                                     | Key equality only; no business-date range or automatic lineage resolution  |
+Where edges exist, `/lineage?direction=upstream` finds candidate roots as nodes with no incoming edges that are **not**
+in `expandableUpstreamNodeIds`, with two caveats: (1) if `depth` (max 20) or the 5,000-node cap cuts traversal, you must
+follow `expandableUpstreamNodeIds` to reach deeper roots; and (2) in a **mixed** chain where a v0.11.0+ link sits
+downstream of a pre-v0.11.0 link (which has no edge), `/lineage` stops at the older node without listing it as
+expandable, whereas `/ancestors` still includes the older upstream ancestors.
 
-If whole upstream-root flows are intentionally wanted, discover **all** candidate roots rather than choosing the
-first ancestor. Exhaust the paginated ancestor lists and inspect candidates' ancestors until roots with no recorded
-ancestors are reached; a target with no ancestors is itself a candidate root. Track visited IDs and report cycles or
-inconsistent membership rather than silently choosing a root. The result can contain multiple roots, and their flows
-can include sibling branches unrelated to the target. Links created before v0.11.0 can have incomplete membership (see
-"Linking guarantees and limits" in §2). Where edges exist, `/lineage?direction=upstream` gives the same roots
-in one request: they are the nodes without incoming edges that are not listed in `expandableUpstreamNodeIds`.
+When combining several flows or partitionings, deduplicate by checkpoint ID and merge in the desired checkpoint order;
+`limit`/`offset` apply per request, not globally.
 
-When combining several flows, deduplicate by checkpoint ID and merge using the requested checkpoint order.
-Each endpoint's `limit`/`offset` applies only to that query, not to the combined result.
+#### Worked example
 
-#### Worked example on a supporting server
-
-This example assumes the following complete partitioning has already been registered, and its downstream flow is
-the desired scope. It selects **measurement times**, not a range of `info_date` values.
+Assumes the partitioning below is registered and its downstream flow is the desired scope (filtering by **measurement
+times**, not `info_date`):
 
 ```json
-[
-  {
-    "key": "catalog_path",
-    "value": "edla_dev_cams_za_publish_rl.aq_eb_cams_tcsctot_qst_ah_tots"
-  },
-  {
-    "key": "info_date",
-    "value": "2026-06-01"
-  }
-]
+[{"key":"catalog_path","value":"edla_dev_cams_za_publish_rl.aq_eb_cams_tcsctot_qst_ah_tots"},{"key":"info_date","value":"2026-06-01"}]
 ```
 
-1. Encode that JSON as UTF-8, then **base64url**, preserving array order:
+1. Base64url-encode the UTF-8 JSON (preserving array order) and look up its ID:
 
 ```http
-GET /api/v2/partitionings?partitioning=W3sia2V5IjoiY2F0YWxvZ19wYXRoIiwidmFsdWUiOiJlZGxhX2Rldl9jYW1zX3phX3B1Ymxpc2hfcmwuYXFfZWJfY2Ftc190Y3NjdG90X3FzdF9haF90b3RzIn0seyJrZXkiOiJpbmZvX2RhdGUiLCJ2YWx1ZSI6IjIwMjYtMDctMDEifV0=
+GET /api/v2/partitionings?partitioning=W3sia2V5IjoiY2F0YWxvZ19wYXRoIiwidmFsdWUiOiJlZGxhX2Rldl9jYW1zX3phX3B1Ymxpc2hfcmwuYXFfZWJfY2Ftc190Y3NjdG90X3FzdF9haF90b3RzIn0seyJrZXkiOiJpbmZvX2RhdGUiLCJ2YWx1ZSI6IjIwMjYtMDYtMDEifV0=
 ```
-
-An illustrative response (IDs and authors depend on the stored data):
 
 ```json
 {
   "data": {
     "id": 2000000010448528,
-    "partitioning": [
-      {
-        "key": "catalog_path",
-        "value": "edla_dev_cams_za_publish_rl.aq_eb_cams_tcsctot_qst_ah_tots"
-      },
-      {
-        "key": "info_date",
-        "value": "2026-06-01"
-      }
-    ],
+    "partitioning": [{"key":"catalog_path","value":"edla_dev_cams_za_publish_rl.aq_eb_cams_tcsctot_qst_ah_tots"},{"key":"info_date","value":"2026-06-01"}],
     "author": "aqueduct"
   },
   "requestId": "29ce91a7-b668-41d2-a160-26402551fb0b"
 }
 ```
 
-2. Read **`data.id`**, then resolve its main flow:
+2. Resolve **`data.id`** to its main flow:
 
 ```http
 GET /api/v2/partitionings/2000000010448528/main-flow
@@ -209,23 +141,16 @@ GET /api/v2/partitionings/2000000010448528/main-flow
 
 ```json
 {
-  "data": {
-    "id": 3000000000123456,
-    "name": "Custom flow #3000000000123456",
-    "description": "",
-    "fromPattern": false
-  },
+  "data": { "id": 3000000000123456, "name": "Custom flow #3000000000123456", "description": "", "fromPattern": false },
   "requestId": "985ce60c-8a95-4390-a2fa-776c3e8f07c6"
 }
 ```
 
-3. Read the flow's **`data.id`**, choose fixed bounds once, and fetch pages:
+3. Page checkpoints with fixed bounds (`limit=100`, default is `10`):
 
 ```http
 GET /api/v2/flows/3000000000123456/checkpoints?limit=100&offset=0&from=2026-06-01T00:00:00Z&to=2026-08-01T00:00:00Z&latest-first=true
 ```
-
-Example final page containing one checkpoint:
 
 ```json
 {
@@ -239,75 +164,42 @@ Example final page containing one checkpoint:
       "processEndTime": "2026-06-01T08:00:01Z",
       "measurements": [
         {
-          "measure": {
-            "measureName": "count",
-            "measuredColumns": []
-          },
-          "result": {
-            "mainValue": {
-              "value": "105",
-              "valueType": "Long"
-            },
-            "supportValues": {}
-          }
+          "measure": { "measureName": "count", "measuredColumns": [] },
+          "result": { "mainValue": { "value": "105", "valueType": "Long" }, "supportValues": {} }
         }
       ],
       "partitioning": {
         "id": 2000000010448528,
-        "partitioning": [
-          {
-            "key": "catalog_path",
-            "value": "edla_dev_cams_za_publish_rl.aq_eb_cams_tcsctot_qst_ah_tots"
-          },
-          {
-            "key": "info_date",
-            "value": "2026-06-01"
-          }
-        ],
+        "partitioning": [{"key":"catalog_path","value":"edla_dev_cams_za_publish_rl.aq_eb_cams_tcsctot_qst_ah_tots"},{"key":"info_date","value":"2026-06-01"}],
         "author": "aqueduct"
       },
       "properties": null
     }
   ],
-  "pagination": {
-    "limit": 100,
-    "offset": 0,
-    "hasMore": false
-  },
+  "pagination": { "limit": 100, "offset": 0, "hasMore": false },
   "requestId": "5869a6b5-80b1-441f-ad48-286ab3bbf59b"
 }
 ```
 
-Process `data`; if `pagination.hasMore` is true, request the next page at
-`pagination.offset + pagination.limit`, retaining the same scope, filters and order. Stop when `hasMore` is false.
-This rule also applies to ancestor and flow-partitioning lists. Their default page size is 10, not "all".
-A failed request must leave the extraction explicitly incomplete, not be reported as an empty or complete result.
-
-Set `include-properties=true` only when checkpoint properties are needed, for example an execution identifier.
-Property filtering does not itself require properties to be returned. Properties add database work; see §4.
+Advance using `pagination.offset + pagination.limit` while `pagination.hasMore` is `true` (default `limit` across
+paginated endpoints is `10`). A failed request must mark the extraction incomplete rather than empty. Set
+`include-properties=true` only when checkpoint properties must be returned (property filtering does not require it, and
+enrichment adds database queries; see §4).
 
 ### Recipe B: partitioning discovery and drill-down
 
-The entry question is: "Show me partitionings with measurement activity in
-the last two weeks, then let me choose which ones to inspect." `GET /api/v2/partitionings/search` supports this
-query and optional partial-key filtering. This avoids needing a known flow and avoids
-returning a partitioning repeatedly merely because it has many checkpoints or belongs to several flows.
-
-This is discovery of distinct **Atum partitioning IDs**, not distinct business datasets. Different dates,
-currencies or executions can legitimately have different IDs. Collapsing these into a dataset-level row would
-require a separate grouping contract.
+`GET /api/v2/partitionings/search` discovers distinct **Atum partitioning IDs** (not collapsed business datasets) by
+partial keys and/or checkpoint activity without needing a known flow or repeating partitionings that have many
+checkpoints or flows.
 
 #### Meaning of the time window
 
-When a time bound is supplied, the criterion is **at least one checkpoint measured within the window**:
-return a partitioning once if any of its checkpoints satisfies `from <= process_start_time < to`.
-An old partitioning measured yesterday must qualify; a newly registered partitioning without a matching checkpoint
-must not. An empty activity result therefore does not establish that no partitionings were registered.
-Activity search needs `from`; `to` is optional. A paired window may span at most 365 days, and a one-sided `from`
-(meaning "since then, until now") must not be more than 365 days in the past. A key-only search has no
-checkpoint-activity requirement and can return partitionings without checkpoints.
-
-Other interpretations are not supported time filters and must remain distinct:
+When a time bound is supplied, a partitioning qualifies if **at least one checkpoint** satisfies
+`from <= process_start_time < to` (not only its latest-ever checkpoint; an old partitioning measured inside `[from, to)`
+qualifies even if newer checkpoints exist after `to`, and a newly registered partitioning with no checkpoint in the
+window does not). Omitting `to` leaves the upper bound unbounded (`+infinity`, not "until now"), so future-dated
+checkpoints also qualify; supply an explicit fixed `to` when an audit window must end at a chosen cutoff. A key-only
+search has no checkpoint requirement and includes partitionings without checkpoints.
 
 | Interpretation                      | Timestamp or dimension                     | What it answers                                                                             |
 |-------------------------------------|--------------------------------------------|---------------------------------------------------------------------------------------------|
@@ -316,139 +208,77 @@ Other interpretations are not supported time filters and must remain distinct:
 | Reported recently                   | Checkpoint `created_at`                    | Which partitionings had checkpoints reported to Atum in the period, including late reports? |
 | Business dates in the period        | A partition key such as `information_date` | Which dataset partitions represent that period, according to agreed producer semantics?     |
 
-For a historical window, eligibility must use **any matching checkpoint**, not the latest-ever checkpoint.
-A partitioning with one checkpoint inside the window and another after `to` still qualifies.
-The consumer chooses fixed bounds once and keeps them for subsequent pages and drill-down.
+#### Search contract and response
 
-#### Response
-
-The endpoint returns a `PaginatedResponse` containing the existing
-[`PartitioningWithIdDTO`](../model/src/main/scala/za/co/absa/atum/model/dto/PartitioningWithIdDTO.scala):
-`id`, `author` and `partitioning` (the public ordered array of key/value objects, not the storage JSONB envelope).
-These contents let a UI label each result without a second request per row. An IDs-and-authors-only response would
-usually defer necessary work to the consumer; a compact projection should be driven by an actual payload need.
-
-`author` means the partitioning's registration author, not necessarily the author of its recent checkpoints or
-its business owner.
-
-An optional future summary is `latestMatchingCheckpointTime`: the maximum process start time **among the
-checkpoints matching this query**, not the latest overall. It can explain why a result appears and support a
-recency-oriented list. It is not a field of the current DTO and would need an explicit response extension.
-It is not returned by search. Checkpoint counts and embedded measurements are also not part of the discovery response.
-
-#### Search request contract
+Returns `PaginatedResponse[PartitioningWithIdDTO]` ([`PartitioningWithIdDTO`](../model/src/main/scala/za/co/absa/atum/model/dto/PartitioningWithIdDTO.scala)):
+`id`, registration `author` (not necessarily the latest checkpoint author), and ordered `partitioning` array. Search does
+not return `latestMatchingCheckpointTime`, checkpoint counts, or measurements. No matches (or an offset past the end)
+returns HTTP `200` with `data: []` and `hasMore: false`, not `404`.
 
 | Parameter      | Meaning                                                                                                                                                                  |
 |----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `keys`         | Optional base64url-encoded UTF-8 JSON object of string values, e.g. `{"source":"CRM"}`. All supplied pairs must match; other keys are unconstrained                      |
-| `from`         | Inclusive lower bound on checkpoint process start time, as an ISO-8601 date-time with an offset; required whenever `to` is supplied; alone, at most 365 days in the past |
-| `to`           | Optional exclusive upper bound on the same timestamp; must be later than `from`, and the window must not exceed 365 days                                                 |
-| `latest-first` | Optional; `true` orders results by partitioning ID descending (most recently registered first), default `false` (ascending)                                              |
-| `limit`        | Page size, 1–1000; default 10                                                                                                                                            |
-| `offset`       | Nonnegative starting position; default 0                                                                                                                                 |
+| `keys`         | Optional base64url-encoded UTF-8 JSON object of string values, e.g. `{"source":"CRM"}`. Exact string matching; all supplied pairs must match; empty string is literal    |
+| `from`         | Inclusive lower bound on checkpoint `process_start_time` (ISO-8601 with offset); required if `to` is supplied; alone, at most 365 days in the past                      |
+| `to`           | Optional exclusive upper bound on `process_start_time`; must be later than `from`, and `to - from` must not exceed 365 days                                              |
+| `latest-first` | Optional; `true` orders by partitioning ID descending (roughly most recently registered, not checkpoint recency); default `false` (ascending)                            |
+| `limit`        | Page size, `1–1000` (default `10`)                                                                                                                                       |
+| `offset`       | Nonnegative starting position (default `0`)                                                                                                                              |
 
-At least one non-empty key filter or a `from` bound is required. A request with neither, with `to` but no `from`, or
-with only `keys={}` (encoded), returns HTTP 400. An empty key object combined with a time bound is valid and adds no
-key restriction.
-Malformed base64/JSON, non-string key values, NUL characters (`\u0000`) in keys or values, invalid date-times and
-invalid pagination also return HTTP 400.
-Empty string values are valid exact values, not wildcards.
-Checkpoint timestamps are stored at microsecond precision. Search preserves the half-open comparisons when
-nanosecond bounds are supplied; a valid window containing no representable timestamp returns an empty page.
+HTTP `400` is returned if neither a non-empty key filter nor `from` is provided (`keys={}` alone is rejected; `keys={}`
+with `from` is allowed), if `to` is given without `from`, if `from` alone is > 365 days old or `to - from` > 365 days,
+on malformed base64/JSON, non-string key values, NUL (`\u0000`) characters, invalid dates, or invalid pagination.
+Checkpoint timestamps are stored at microsecond precision; search preserves half-open comparisons for nanosecond bounds
+(ceiling both bounds to microseconds and returning an empty page if the rounded window is empty).
 
-For example, `eyJjYXRhbG9nX3BhdGgiOiJlZGxhX2Rldl9jYW1zX3phX3B1Ymxpc2hfcmwuYXFfZWJfY2Ftc190Y3NjdG90X3FzdF9haF90b3RzIn0=`
-encodes `{"catalog_path":"edla_dev_cams_za_publish_rl.aq_eb_cams_tcsctot_qst_ah_tots"}`:
+Example (`eyJjYXRhbG9nX3BhdGgiOiJlZGxhX2Rldl9jYW1zX3phX3B1Ymxpc2hfcmwuYXFfZWJfY2Ftc190Y3NjdG90X3FzdF9haF90b3RzIn0=`
+encodes `{"catalog_path":"edla_dev_cams_za_publish_rl.aq_eb_cams_tcsctot_qst_ah_tots"}`):
 
 ```http
 # Key-only discovery, including partitionings without checkpoints
-GET /api/v2/partitionings/search?keys=eyJjYXRhbG9nX3BhdGgiOiJlZGxhX2Rldl9jYW1zX3phX3B1Ymxpc2hfcmwuYXFfZWJfY2Ftc190Y3NjdG90X3FzdF9haF90b3RzIn0==&limit=100&offset=0
+GET /api/v2/partitionings/search?keys=eyJjYXRhbG9nX3BhdGgiOiJlZGxhX2Rldl9jYW1zX3phX3B1Ymxpc2hfcmwuYXFfZWJfY2Ftc190Y3NjdG90X3FzdF9haF90b3RzIn0=&limit=100&offset=0
 
 # Activity-only discovery, independent of partitioning registration time
 GET /api/v2/partitionings/search?from=2026-10-01T00:00:00Z&to=2026-10-15T00:00:00Z&limit=100&offset=0
 
-# Both filters: the key condition AND at least one matching checkpoint
+# Both filters (AND)
 GET /api/v2/partitionings/search?keys=eyJzb3VyY2UiOiJDUk0ifQ==&from=2026-10-01T00:00:00Z&to=2026-10-15T00:00:00Z&limit=100&offset=0
 ```
 
-Results are ordered by **partitioning ID** (ascending, or descending with `latest-first=true`), not by the latest
-checkpoint or business date. Descending ID order approximates "most recently registered first", since IDs are
-allocated in increasing order; it is not checkpoint recency.
-Advance using `pagination.offset + pagination.limit` while `pagination.hasMore` is true. No matches, including
-an offset beyond the result set, return HTTP 200 with empty `data` and `hasMore=false`, not HTTP 404.
+#### Interaction flow
 
-#### Interaction
+1. **Discover** via `/api/v2/partitionings/search` (results already include `id`, `author`, and `partitioning`, so do
+   not fetch `/partitionings/{id}` per row).
+2. **Inspect on selection** via `/api/v2/partitionings/{id}/checkpoints` with the same `from`/`to`.
+3. **Widen history explicitly** when the user asks for a broader window.
+4. **Explore flow or graph on demand** via `/partitionings/{id}/main-flow` (downstream context, can broaden scope),
+   `/ancestors`, or `/lineage` (start with small `depth` and expand via `expandable*NodeIds`).
 
-1. **Discover:** request a page from `/api/v2/partitionings/search` using keys, time bounds, or both.
-   The existing exact-lookup `GET /api/v2/partitionings?partitioning=...` contract is unchanged.
-2. **Inspect on selection:** request `/api/v2/partitionings/{id}/checkpoints` with the same `from` and `to`,
-   paging checkpoints independently. Measurements are already nested in each checkpoint.
-   Because the list includes the partitioning's contents, `/partitionings/{id}` is not normally needed just to
-   render the detail view. Fetching every result's details eagerly would defeat the UI's lazy-loading benefit.
-3. **Expand history explicitly:** let the user widen or remove the checkpoint window, making that scope change
-   visible rather than silently loading all history.
-4. **Explore related activity on demand:** resolve `/partitionings/{id}/main-flow`, then page its partitionings
-   or checkpoints. Main-flow membership is downstream context and can broaden the scope substantially;
-   `/partitionings/{id}/ancestors` is a separate option for upstream context. Membership lists themselves are not
-   time-filtered; a checkpoint timeline can retain the selected window. Present this as flow membership or a
-   related-activity timeline, not a parent-child graph or evidence of causality.
-5. **Show the graph on demand:** `/partitionings/{id}/lineage` (or `/parents` and `/children` for one hop) renders
-   the declared parent-child links. Start with a small depth and expand from `expandableUpstreamNodeIds` /
-   `expandableDownstreamNodeIds` rather than requesting the maximum depth. Lineage endpoints are not time-filtered.
+#### Query, pagination, and cost notes
 
-#### Query, pagination and cost requirements
-
-The database selects **qualifying partitionings before pagination**, returning at most `limit` results and using
-one extra qualifying partitioning to determine `hasMore`. It does not page checkpoint rows and deduplicate
-afterwards. Shared membership in multiple flows does not multiply discovery results.
-
-ID ordering provides a deterministic, unique order for unchanged results. Offset pagination matches existing
-endpoints. Activity search is bounded to at most 365 days. Even a two-week window can match many
-partitionings, so results remain paginated.
-
-The existing `(fk_partitioning, process_start_time)` index serves known-partitioning queries. A service-wide
-activity search has a different access pattern; search-specific index support is described in §4.
-Returning fewer entities does not by itself make the database query cheap. Keys are business filters, not access
-controls: search inherits the deployment's existing API visibility and adds no authorization boundary.
-
-This recipe is particularly useful for a UI that opens only selected results. It is not automatically the cheapest
-bulk audit extraction: retrieving measurements for 1,000 discovered partitionings still needs at least 1,000
-checkpoint requests, potentially with further pages. When the required scope is already a known flow, Recipe A
-may avoid that fan-out. A batch/export capability would be separate work.
-
-Activity-based discovery is also distinct from the key-containment search in §5. It finds partitionings with
-matching checkpoint activity, but does not resolve a business key or discover inactive grouping parents.
-Both capabilities share the search endpoint, with independent filters combined using AND.
+`runs.search_partitionings` selects distinct qualifying partitionings **before** pagination (`LIMIT i_limit + 1` for
+`hasMore`), so shared flows or multiple checkpoints never multiply results. Keys are business filters, not access
+controls: search inherits existing API visibility. For bulk extraction across 1,000+ discovered partitionings, Recipe B
+still requires one checkpoint query per partitioning; when a single known flow covers the scope, Recipe A avoids that
+fan-out.
 
 ### Shared time and consistency contract
 
-`from <= processStartTime < to` is a **measurement-time** window. The Agent's `createCheckpoint` sets the start
-immediately before computing measurements; manually submitted checkpoints can provide their own times.
-It is not necessarily the ETL job's start, the dataset's business date, or the database reporting time (`created_at`).
-For relative windows such as "last two weeks" or "last two months", the consumer must choose calendar/time-zone
-semantics and hold both bounds fixed across pages.
+`from <= processStartTime < to` is a **measurement-time** window (`AtumContext.createCheckpoint` captures start time
+right before measuring; manual checkpoints supply their own). Hold fixed bounds across all pages of a relative window.
 
-The current checkpoint endpoints provide **best-effort live pagination, not a point-in-time snapshot**. Their
-ordering is process start time (descending by default), then checkpoint UUID ascending. This makes ties deterministic
-for
-unchanged data, but concurrent matching inserts can still shift offsets and cause duplicates or omissions.
-Late reports can fall inside a fixed `from`/`to` window, and new flow memberships can change the selected set.
-Deduplication removes repeats; it cannot recover omissions.
+All paginated endpoints provide **best-effort live pagination, not a point-in-time snapshot**:
 
-Recipe B has the same live-data issue: late checkpoints can make an existing partitioning newly eligible between
-pages, shifting offsets even though IDs themselves do not change. Selecting distinct IDs does not freeze eligibility.
-
-For a repeatable, complete audit, a snapshot or an agreed finalization/watermark and late-arrival policy is a
-prerequisite not supplied by this API. Record the selected scope and bounds with the report. Cursor pagination
-could reduce shifting-boundary problems, but alone would not establish historical completeness.
+- Checkpoint endpoints order by `process_start_time` (desc by default) then checkpoint UUID ascending; search orders by
+  partitioning ID.
+- Concurrent inserts, late reports inside `[from, to)`, or new flow links can shift offsets between pages (causing
+  duplicates or omissions; deduplication removes repeats but cannot recover omissions).
+- A repeatable, complete audit requires an external snapshot or watermark/late-arrival policy, not provided by this API.
 
 ### Explicit fallback for older servers
 
-Before server-side time filtering, consumers could page latest-first and filter **individual checkpoints**:
-skip timestamps at or after the fixed upper bound, retain those within the window, and stop on the first timestamp
-below the lower bound. Do not discard a whole boundary page containing both matching and older checkpoints.
-This is a deliberate compatibility fallback with the same live-pagination limitations, not evidence that an older
-server honored `from`/`to`. It applies to querying an already known scope; it does not supply service-wide discovery
-on servers without the search endpoint.
+Against pre-v0.10.0 servers without `from`/`to`, page `latest-first=true` and filter individual checkpoints client-side:
+skip `>= to`, keep `[from, to)`, and stop on the first timestamp `< from` (do not discard a whole boundary page). This
+does not provide service-wide discovery where `/search` is absent.
 
 ---
 
@@ -456,32 +286,22 @@ on servers without the search endpoint.
 
 ### Server and Reader contract
 
-Both `/api/v2/flows/{flowId}/checkpoints` and `/api/v2/partitionings/{id}/checkpoints` accept optional `from` and
-`to` ISO-8601 date-times with offsets. The lower bound is inclusive and the upper bound exclusive. Either bound
-can be omitted; omitting both preserves the unbounded time scope. Malformed dates or `from >= to` return HTTP 400.
-`latest-first` is supported by both endpoints and defaults to latest first. `limit` is 1–1000 (default 10);
-`offset` is nonnegative (default 0). The partitioning **search** endpoint is stricter: it requires `from` whenever
-a time bound is used and limits the window (or a one-sided `from`) to 365 days.
-
-The database functions apply the same window to both checkpoint selection and the `has_more` calculation:
+Both `/api/v2/flows/{flowId}/checkpoints` and `/api/v2/partitionings/{id}/checkpoints` accept optional `from` and `to`
+(ISO-8601 date-times with offset; omitting both leaves time unbounded; malformed or `from >= to` returns HTTP `400`),
+`latest-first` (default `true`), `limit` (`1–1000`, default `10`), and `offset` (`>= 0`, default `0`). Unlike `/search`,
+checkpoint endpoints pass `from`/`to` directly to Postgres without sub-microsecond ceiling rounding.
 
 ```sql
-AND
-    (i_from_time IS NULL OR C.process_start_time >= i_from_time)
-    AND
-    (i_to_time IS NULL OR C.process_start_time < i_to_time)
+AND (i_from_time IS NULL OR C.process_start_time >= i_from_time)
+AND (i_to_time   IS NULL OR C.process_start_time <  i_to_time)
 ```
 
-`FlowReader` and `PartitioningReader` expose these options through `CheckpointFilter` in `getCheckpointsPage`.
-The reader resolves identifiers and returns one page; it does not discover business-key matches, select upstream
-roots, or collect all pages. No `getAllCheckpoints` helper is provided. Scala applications control their own paging;
-REST audit consumers do not need the Reader.
+`FlowReader` and `PartitioningReader` expose these through `CheckpointFilter` in `getCheckpointsPage` (applications
+manage their own paging; no `getAllCheckpoints` helper or Reader search method is provided).
 
 ### Partitioning search and deployment
 
-`GET /api/v2/partitionings/search` is a separate REST operation, backed by `runs.search_partitionings`.
-It combines optional key containment and checkpoint-time selection as specified in Recipe B. Search results reuse
-the public partitioning DTO; no Reader search helper or new UI is included.
+`GET /api/v2/partitionings/search` is backed by [`runs.search_partitionings`](../database/src/main/postgres/runs/V0.10.0.14__search_partitionings.sql):
 
 | Forward migration                                                                                                                                           | Purpose                                                                                                         |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
@@ -489,51 +309,32 @@ the public partitioning DTO; no Reader search helper or new UI is included.
 | [`V0.10.0.13__checkpoints_start_time_partitioning_index.ddl`](../database/src/main/postgres/runs/V0.10.0.13__checkpoints_start_time_partitioning_index.ddl) | Concurrent `(process_start_time, fk_partitioning)` index for selective service-wide activity windows            |
 | [`V0.10.0.14__search_partitionings.sql`](../database/src/main/postgres/runs/V0.10.0.14__search_partitionings.sql)                                           | Validated search function with distinct-ID ordering (either direction) and bounded page lookahead               |
 
-The existing partitioning-leading checkpoint index remains useful for known-partitioning searches. The new
-time-leading index provides another access path, not a guarantee of constant-cost discovery. Indexes also add
-storage and write overhead; monitor query plans against the deployment's actual data distribution.
-
-Deploy the forward search migrations before a server build exposing the endpoint. Existing lookup/checkpoint
-operations are not renamed or removed. Search is additive: reverting the server can leave its unused SQL function
-and indexes in place without changing stored data. If removing those database objects, first remove all server
-callers, then drop only the search function and its dedicated indexes; do not roll back unrelated migrations or
-edit previously applied migration files. If a concurrent index build fails, drop its invalid index concurrently,
-run `flywayRepair`, then rerun the migration; do not edit the migration file.
-`flywayRepair` is acceptable here only because it removes the failed history row of a migration that did not complete;
-never use it to silence a checksum mismatch (drop and recreate a development database instead).
-Concurrent index migrations include
-the affected index names.
+Deploy the forward search migrations before a server build exposing `/search`. Search is additive (a server rollback can
+leave the function and indexes unused; if a concurrent index build fails, follow the recovery instructions in the DDL
+header comments and [ADR 01 §7](01-lineage-capability.md#7-copy-policy-and-compatibility)).
 
 ### Index choice and performance limits
 
-The chosen index is a composite B-tree on `runs.checkpoints (fk_partitioning, process_start_time)`
-(`checkpoints_idx2`), built `CONCURRENTLY`. It supports time-range access within partitionings for both checkpoint
-endpoints. Property lookups additionally use `(fk_checkpoint, property_name)`. A BRIN index is not part of this
-implementation: physical ordering by client-supplied process time is not guaranteed for late/backfilled reports.
+Within known partitionings/flows, checkpoints use a composite B-tree `checkpoints_idx2` on
+`runs.checkpoints (fk_partitioning, process_start_time)` (built `CONCURRENTLY`), and property lookups use
+`(fk_checkpoint, property_name)`. BRIN was not chosen because physical ordering by client-supplied `process_start_time`
+is not guaranteed for late/backfilled reports.
 
-Fetching a page is **one HTTP request**, not necessarily one database query. With `include-properties=true`, the
-server retrieves properties separately per checkpoint; 100 returned checkpoints can mean one checkpoint retrieval
-plus 100 property retrievals. Bounds reduce the candidate set, but large flows, sorting, deep offsets and property
-enrichment still have costs.
-
-No end-to-end latency guarantee is established by this ADR. Capacity claims need reproducible data generation,
-PostgreSQL version/configuration, `EXPLAIN (ANALYZE, BUFFERS)`, page offset, filter selectivity, cache conditions
-and HTTP measurements with and without property enrichment. Unattached timing figures are not deployment evidence.
+Fetching a page is **one HTTP request**, not one database query: with `include-properties=true`, the server enriches
+each checkpoint separately (100 checkpoints = 1 checkpoint query + 100 property queries). No end-to-end latency SLO is
+asserted; benchmark representative flows, offsets, and `EXPLAIN (ANALYZE, BUFFERS)` plans before production rollout.
 
 ---
 
 ## 5. Partial parent lookup and optional grouping conventions
 
-Exact lookup only works when the submitted keys, values and key order identify an existing partitioning.
-Dropping `currency` from `{catalog_path, info_date, currency}` is valid **only if** the resulting
-`{catalog_path, info_date}` partitioning exists. It is not a wildcard query over all currencies.
-If only per-currency or per-date partitionings exist and their values are unknown, use containment search with the
-known key/value pairs or an external inventory. Search does not require the producer to register a grouping parent.
+Exact lookup requires matching keys, values, and key order. Dropping `currency` from `{catalog_path, info_date, currency}`
+works **only if** `{catalog_path, info_date}` was explicitly registered; it is not a wildcard. Without a grouping parent,
+use containment search (`keys`).
 
-### Grouping parent (sometimes called a rollup)
+### Grouping parent (rollup convention)
 
-A cooperating producer can register a grouping parent and create per-value children with the existing Agent API.
-This is an optional producer convention, not an automatically created representation:
+A cooperating producer can register a grouping parent and create per-value children via the Agent API:
 
 ```scala
 import za.co.absa.atum.agent.AtumAgent
@@ -546,71 +347,45 @@ val usd = rollup.subPartitionContext(AtumPartitions("currency" -> "USD"))
 val eur = rollup.subPartitionContext(AtumPartitions("currency" -> "EUR"))
 ```
 
-`mergeWithParent = true` makes each child's keys `parent ++ sub`. Consumers can resolve the grouping parent
-exactly and query **its** main flow to discover members and measurements. Other downstream members may also be
-present, so the consumer still needs a rule for selecting the intended currency/date partitionings.
-A group keyed by `info_date` does not automatically group other dates.
+`mergeWithParent = true` builds `parent ++ sub` (note: `AtumContext.subPartitionContext` throws
+`PartitioningUpdateException` on overlapping keys, whereas `AtumAgent.getOrCreateAtumSubContext` lets `sub` win).
+Consumers can resolve the grouping parent and query **its** main flow, bearing in mind that this creates **group
+membership, not aggregate measurements or sibling-to-downstream lineage**: whole-dataset measurements must be produced
+explicitly, and if `USD`, `EUR`, and consumer `C` all link to `R`, `USD`/`EUR` do not become ancestors of `C`.
 
-This establishes **group membership, not aggregate measurements or exact consumed-input lineage**. Whole-dataset
-measurements must be explicitly produced. If `USD`, `EUR` and consumer `C` all link to group `R`, they share
-`R`'s flow; `USD` and `EUR` do not become ancestors of `C` merely through that shared group.
-Where consumed-input ancestry matters, identify and link the actual input partitionings, subject to the membership
-limitations in §2. From v0.11.0 those links are also stored as direct edges with their author and time (ADR 01 §10);
-richer provenance (which job run, which columns) is not recorded.
+### Containment search mechanics
 
-### Containment search
-
-`runs.search_partitionings` matches `partitioning -> 'keysToValuesMap' @> i_keys`, with a `jsonb_path_ops` GIN index
-on that sub-object. The REST `keys` parameter is a base64url-encoded JSON object, not the ordered array used by exact
-lookup. Every supplied key/value pair must match; additional keys are allowed. Matching ignores the order of the
-supplied keys but preserves each result's original ordered partitioning contents. Partitionings that differ only
-in stored key order still have distinct IDs and are returned separately.
-
-This is exact string-value containment, not substring matching, wildcard matching or a business-date range query.
-Keys alone include matching partitionings without checkpoints; adding `from` or `to` requires at least one matching
-checkpoint as well. Unknown keys or values yield an empty result. An empty result does not prove that a source
-dataset is empty or that all source metadata has been registered.
-
-The existing model can add memberships under multiple parents, but search alone cannot determine those parents.
-The consumer must select the actual consumed set from zero, one or many matches. Automatic linkage and "latest"
-selection policies remain separate work; search does not arbitrarily choose one parent.
+`runs.search_partitionings` evaluates `(partitioning -> 'keysToValuesMap') @> i_keys` using the `jsonb_path_ops` GIN
+index. Matching ignores key order in `keys` while returning each partitioning's stored key order (partitionings
+differing only in key order keep distinct IDs and are returned separately). Search alone cannot resolve which
+matches were actually consumed as parents by a downstream job — the consumer or external inventory must select the
+consumed set.
 
 ---
 
 ## 6. Alternatives considered
 
-- **Partitioning-first discovery:** selected for browsing activity without a known scope (Recipe B). It avoids
-  duplicates from checkpoint multiplicity or overlapping flows, but does not replace known-scope queries or provide
-  a bulk extraction/snapshot protocol.
-- **Query each partitioning:** unnecessary fan-out when the required scope is exactly a flow's membership, but
-  appropriate when an explicitly selected set of ancestors/dates must be queried without including sibling branches.
-  Consumers must merge, deduplicate and order the results.
-- **Search via query parameters on `GET /api/v2/partitionings`:** rejected for v2. Filtering the collection
-  resource is the conventional REST shape, but this path already serves exact lookup (`?partitioning=`), returning
-  a single object or HTTP 404, and the Agent and Reader depend on that contract. Overloading it would make the
-  response shape depend on parameters (single object vs. paginated list) and be awkward to describe in OpenAPI;
-  converting it into a list is a breaking change for deployed clients. The separate `/search` operation is
-  additive, and it cannot be confused with `/{id}` because IDs are numeric. A future API version may unify both
-  as one filtered, paginated collection, with exact lookup as one filter.
-- **A dedicated graph endpoint:** delivered as `GET .../lineage` (ADR 01 §10.4). It returns structure only, no
-  measurements.
-- **A dedicated audit export endpoint:** deferred, not rejected as redundant. Consistent bulk exports of measurements
-  over a lineage need snapshot semantics that the live, paginated endpoints do not provide.
+- **Partitioning-first discovery (chosen for Recipe B):** avoids duplicates from checkpoints or overlapping flows without
+  changing existing endpoints, though it does not provide bulk snapshot exports.
+- **Query each partitioning:** avoids pulling sibling branches when an explicit set of ancestors/dates is needed, at the
+  cost of fan-out requests and client-side merge/deduplication.
+- **Overload `GET /api/v2/partitionings` with search parameters (rejected):** that path serves exact lookup
+  (`?partitioning=...`) returning a single object or `404`, which Agent and Reader depend on. Overloading it would vary
+  the response shape by parameter and break existing clients. `/search` is additive and unambiguous against numeric
+  `/{id}`.
+- **Dedicated graph endpoint:** delivered as `GET .../lineage` ([ADR 01 §10](01-lineage-capability.md#10-explicit-edges-and-the-lineage-schema-503-493));
+  returns structure only, no measurements.
+- **Dedicated audit export endpoint:** deferred (not rejected); consistent bulk exports require snapshot semantics that
+  live paginated endpoints do not provide.
 
 ---
 
-## 7. Consequences and open decisions
+## 7. Open consumer decisions
 
-| Question                                                                         | Position                                                                                                                                               |
-|----------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Which time does the implemented filter use?                                      | Checkpoint `process_start_time`, not dataset business date or `created_at`. Consumers must confirm this matches their report                           |
-| What does "recent partitionings" mean in Recipe B?                               | At least one checkpoint measured in the window. Registration time, reporting time and business dates are distinct semantics                            |
-| What does discovery return?                                                      | Paginated `id`, registration `author` and ordered partitioning contents; no latest-checkpoint summary                                                  |
-| What ordering and pagination are used?                                           | ID ascending, or descending with `latest-first=true`; limit 1–1000 (default 10), nonnegative offset (default 0); activity windows are at most 365 days |
-| Can search enumerate everything without a filter?                                | No: non-empty partial keys or a `from` bound are required; otherwise HTTP 400                                                                          |
-| How is a business dataset mapped to all relevant partitionings?                  | Search matches known partial keys; their business meaning, completeness and selection of the consumed set remain consumer/inventory responsibilities   |
-| Does the report want one partitioning, its ancestors, or whole downstream flows? | Consumer scope decision; these are different sets                                                                                                      |
-| Is best-effort live extraction sufficient?                                       | Must be explicit. A repeatable complete audit requires additional snapshot/finalization and late-arrival guarantees                                    |
-| Is the original parent-child graph required?                                     | Available for links written from v0.11.0 on (`/parents`, `/children`, `/lineage`); older links have membership only and cannot be backfilled           |
-| What performance is acceptable?                                                  | No SLO asserted; measure representative flow sizes, offsets and property enrichment before deployment                                                  |
-| Who can read audit data?                                                         | Authorization/read-only access policy is out of scope here and must be provided                                                                        |
+| Open question                               | Consumer / deployment responsibility                                                                        |
+|---------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| Does `process_start_time` match the report? | Confirm measurement time (rather than business date or `created_at`) fits the audit question                |
+| Which scope is required?                    | Decide per report between one partitioning, its ancestors/parents, or its full downstream flow              |
+| Is best-effort live pagination sufficient?  | A repeatable complete audit requires an external snapshot, watermark, or late-arrival policy                  |
+| What performance is acceptable?             | Benchmark representative flow sizes, offsets, search selectivity, and `include-properties=true` load        |
+| Who can read audit data?                    | Authentication, authorization, and read-only access policies are out of scope and must be provided externally |

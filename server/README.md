@@ -31,20 +31,22 @@ older server is to be avoided.
 schema and `runs.get_partitioning_ancestors` is dropped, so a v0.10.0 server binary does not work against a migrated
 database. Rolling the server back means restoring the database too.
 
-### Lineage endpoints
+### Lineage and discovery endpoints
 
 Partitionings are linked to their parents when they are created (`POST /api/v2/partitionings` with
 `parentPartitioningIds`) or afterwards (`PATCH /api/v2/partitionings/{id}/ancestors`, leaf partitionings only). Each
 link is stored both as flow membership (transitive) and as an explicit direct edge:
 
-| Endpoint (`/api/v2/partitionings/{id}/...`) | Returns                                                                   | Based on        |
-|---------------------------------------------|---------------------------------------------------------------------------|-----------------|
-| `parents`, `children`                       | Direct neighbours, with `linkedBy` / `linkedAt`                           | edges           |
-| `ancestors`, `descendants`                  | All transitive ancestors / descendants, paginated                         | flow membership |
-| `lineage?direction=both\|upstream\|downstream&depth=1..20` | Sub-graph (nodes + edges); `truncated` and expandable node ids if cut short | edges   |
+| Endpoint (`/api/v2/partitionings/...`)                              | Returns                                                                                                                      | Based on        |
+|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|-----------------|
+| `search?keys=&from=&to=&latest-first=`                              | Paginated distinct partitionings matching partial keys and/or checkpoint activity                                            | GIN + time idx  |
+| `{id}/parents`, `{id}/children`                                     | Direct neighbours, with `linkedBy` / `linkedAt`                                                                              | edges           |
+| `{id}/ancestors`, `{id}/descendants`                                | All transitive ancestors / descendants, paginated                                                                            | flow membership |
+| `{id}/lineage?direction=both\|upstream\|downstream&depth=1..20`     | Sub-graph (nodes + edges); `truncated=true` if the 5,000-node/direction cap hit, `expandable*NodeIds` for boundary nodes     | edges           |
 
-Edges exist only for links written from v0.11.0 on; for older links `parents`, `children` and `lineage` are empty
-while `ancestors` still answers. The design is in [ADR 01](../adrs/01-lineage-capability.md), the consumer view in
+Edges exist only for links written from v0.11.0 on; for older links `parents` and `children` are empty and `lineage`
+returns only the focal node, while `ancestors` and `descendants` still answer. The design is in
+[ADR 01](../adrs/01-lineage-capability.md), the consumer view in
 [ADR 02](../adrs/02-consumption-pattern-for-audits.md).
 
 ### REST API Reference

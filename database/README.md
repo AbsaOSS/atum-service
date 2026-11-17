@@ -39,13 +39,14 @@ The database is organized into three main schemas:
 
 - **`runs`**: Core partitioning, checkpoint, and measure definition operations along with their metadata, plus `search_partitionings` (key-subset and checkpoint time-window search, backed by `runs.partitionings` GIN and `runs.checkpoints` start-time indexes)
 - **`flows`**: Transitive closure (`partitioning_to_flow`) and flow-based queries (`get_flow_partitionings`, `get_flow_checkpoints`)
-- **`lineage`**: Edge-based lineage operations (source of truth):
+- **`lineage`**: Explicit direct-edge lineage operations (forward-only from v0.11.0):
   - `partitioning_edges` table (direct parent-child relationships)
-  - `link_to_parents` (multi-parent linking with cycle/leaf checks)
-  - `get_direct_parents`, `get_direct_children` (1-hop navigation)
-  - `get_partitioning_lineage_graph` (sub-graph for visualization)
-  - `get_partitioning_ancestors` (transitive ancestors traversal)
-  - `get_partitioning_descendants` (transitive descendants traversal)
+  - `link_to_parents` (multi-parent linking with cycle/leaf checks, dual-writing `partitioning_edges` and `partitioning_to_flow`)
+  - `get_direct_parents`, `get_direct_children` (1-hop navigation over edges)
+  - `get_partitioning_lineage_graph` (bounded sub-graph for visualization over edges)
+  - `get_partitioning_ancestors` (transitive ancestors traversal over `flows`)
+  - `get_partitioning_descendants` (transitive descendants traversal over `flows`)
 
-The `lineage` schema serves as the source of truth for partitioning relationships, while `flows` maintains 
-derived/cached data for efficient transitive queries.
+`flows.partitioning_to_flow` remains authoritative for transitive queries (`ancestors`, `descendants`, flow queries)
+and cycle/leaf checks, and is the only record for pre-v0.11.0 links (no backfill). `lineage.partitioning_edges`
+adds exact 1-hop parent-child links for v0.11.0+ writes (see [ADR 01](../adrs/01-lineage-capability.md)).
