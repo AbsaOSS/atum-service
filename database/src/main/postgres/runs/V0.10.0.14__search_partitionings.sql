@@ -29,14 +29,12 @@ CREATE OR REPLACE FUNCTION runs.search_partitionings(
 ) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
--- Searches partitionings by exact key/value containment and/or the existence of
--- any checkpoint in [i_from_time, i_to_time). Missing time bounds are unbounded.
--- Keys-only searches include partitionings without checkpoints. An empty keys
--- object is unconstrained, so at least one time bound is then required.
+-- Searches partitionings by exact key/value containment and/or the existence of any
+-- checkpoint in [i_from_time, i_to_time). Missing time bounds are unbounded. Keys-only searches include partitionings
+-- without checkpoints. An empty keys object is unconstrained, so at least one time bound is then required.
 --
--- Returns original partitioning envelopes ordered by ID (ascending by default,
--- or descending when i_latest_first is true), status 11/OK, and paging metadata.
--- No matches (including offsets past the end) return no rows.
+-- Returns original partitioning envelopes ordered by ID (ascending by default, or descending when i_latest_first is
+-- true), status 11/OK, and paging metadata. No matches (including offsets past the end) return no rows.
 -- Invalid direct-call arguments raise invalid_parameter_value (SQLSTATE 22023).
 --
 -- Additive migration: rollback can drop this function after callers are removed;
