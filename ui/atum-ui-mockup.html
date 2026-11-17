@@ -2,80 +2,84 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Atum · Data Quality Explorer</title>
+<title>Atum · Audit Workbench</title>
 <style>
 :root{
-  --bg:#f3f5f8;--panel:#fff;--line:#e3e8ef;--line2:#eef1f5;--text:#111827;--sub:#4b5563;--muted:#8a94a6;
+  --bg:#f3f5f8;--panel:#fff;--line:#e3e8ef;--line2:#eef1f5;--text:#111827;--sub:#4b5563;--muted:#6b7280;
   --pri:#0b5cad;--pri-50:#eaf2fb;--pri-100:#d3e4f7;--navy:#0c1a2e;
-  --amber:#b45309;--amber-50:#fff7e6;--amber-100:#fde7b0;--green:#15803d;--green-50:#eafaf0;
-  --raw:#64748b;--normalized:#0f766e;--joined:#4338ca;--curated:#7e22ce;
+  --amber:#b45309;--amber-50:#fff7e6;--amber-100:#fde7b0;
+  --green:#15803d;--green-50:#eafaf0;--green-100:#bbf7d0;
+  --purple:#6d28d9;--purple-50:#f5f3ff;--purple-100:#ddd6fe;
   --mono:"SF Mono",Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
 body{margin:0;font:13px/1.45 Inter,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
 button,select,input{font:inherit}
 /* header */
-.hdr{height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px 0 0;gap:16px;position:sticky;top:0;z-index:5}
-.brand{width:60px;height:56px;background:var(--navy);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px}
+.hdr{height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px 0 0;gap:14px;position:sticky;top:0;z-index:20}
+.brand{width:64px;height:56px;background:var(--navy);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;flex:none}
 .brand span{color:#f0b429}
-.product{font-weight:600;font-size:15px}.product small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:-2px}
-.env{font-size:10.5px;font-weight:700;letter-spacing:.6px;padding:2px 8px;border-radius:4px;background:#fdecec;color:#b91c1c;border:1px solid #f8caca}
-.search{flex:0 1 460px;margin-left:24px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:0 10px;height:34px;background:#f9fafb}
-.search input{border:0;background:transparent;outline:none;width:100%}
+.product{font-weight:650;font-size:15px;white-space:nowrap}.product small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:-2px}
+.search{flex:0 1 420px;margin-left:12px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:0 10px;height:34px;background:#f9fafb}
+.search input{border:0;background:transparent;outline:none;width:100%;min-width:0}
 .search kbd{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px;background:#fff}
-.hright{margin-left:auto;display:flex;align-items:center;gap:14px}
-.datepick{display:flex;align-items:center;border:1px solid var(--line);border-radius:6px;height:34px;overflow:hidden}
-.datepick button{border:0;background:#fff;width:30px;height:100%;cursor:pointer;color:var(--sub)}
-.datepick button:hover{background:#f3f4f6}.datepick button:disabled{color:#d1d5db;cursor:default;background:#fff}
-.datepick span{padding:0 10px;font-weight:600;border-left:1px solid var(--line);border-right:1px solid var(--line);height:100%;display:flex;align-items:center;gap:6px}
-.icon-btn{width:34px;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--sub);cursor:pointer}
-.avatar{width:32px;height:32px;border-radius:50%;background:var(--pri);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
-/* shell */
-.app{display:flex;min-height:calc(100vh - 56px - 28px)}
-.rail{width:60px;background:var(--navy);display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:4px}
-.rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#93a3bd;cursor:pointer;font-size:9.5px;gap:2px}
-.rail a svg{width:18px;height:18px}
-.rail a:hover{background:#16273f;color:#fff}.rail a.on{background:#1b3a63;color:#fff;box-shadow:inset 3px 0 #f0b429}
-.content{flex:1;min-width:0;padding:16px 20px 20px}
-/* page head */
-.crumbs{font-size:12px;color:var(--muted)}.crumbs a{color:var(--pri);cursor:pointer}.crumbs b{color:var(--sub);font-weight:500}
-.phead{display:flex;align-items:flex-end;gap:16px;margin:4px 0 14px}
-.phead h1{font-size:20px;margin:0;font-weight:650;display:flex;align-items:center;gap:10px}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-.chip{font-family:var(--mono);font-size:11px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:1px 7px;color:var(--sub)}
-.chip b{color:var(--text);font-weight:600}
-.actions{margin-left:auto;display:flex;gap:8px}
-.btn{height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:0 12px;cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:6px;font-weight:500}
+.hright{margin-left:auto;display:flex;align-items:center;gap:10px}
+.winpill{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:0 10px;height:34px;background:#fff;font-size:12px}
+.winpill select{border:0;background:transparent;font-weight:600;color:var(--text);outline:none;cursor:pointer}
+.btn{height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:0 11px;cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:6px;font-weight:500;font-size:12px;white-space:nowrap}
 .btn:hover{background:#f9fafb;border-color:#cbd5e1}
 .btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}.btn.primary:hover{background:#094c90}
+.btn.sm{height:26px;padding:0 8px;font-size:11.5px}
+/* shell */
+.app{display:flex;min-height:calc(100vh - 56px - 28px)}
+.rail{width:64px;background:var(--navy);display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:6px;flex:none}
+.rail a{width:50px;height:48px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#93a3bd;cursor:pointer;font-size:9.5px;gap:3px;text-align:center}
+.rail a svg{width:18px;height:18px}
+.rail a:hover{background:#16273f;color:#fff}.rail a.on{background:#1b3a63;color:#fff;box-shadow:inset 3px 0 #f0b429}
+.content{flex:1;min-width:0;padding:16px 20px 24px}
+/* page head */
+.crumbs{font-size:12px;color:var(--muted)}.crumbs a{color:var(--pri);cursor:pointer}.crumbs b{color:var(--sub);font-weight:500}
+.phead{display:flex;align-items:flex-start;gap:16px;margin:4px 0 12px;flex-wrap:wrap}
+.phead h1{font-size:19px;margin:0;font-weight:650;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{font-family:var(--mono);font-size:11px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 7px;color:var(--sub);display:inline-flex;align-items:center;gap:4px}
+.chip b{color:var(--text);font-weight:600}
+.chip.tog{cursor:pointer}.chip.tog:hover{border-color:var(--pri)}
+.chip.off{opacity:.45;text-decoration:line-through;background:#f8fafc}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
 .seg button{border:0;background:transparent;height:28px;padding:0 10px;cursor:pointer;color:var(--sub);font-size:12px}
 .seg button+button{border-left:1px solid var(--line)}.seg button.on{background:var(--pri-50);color:var(--pri);font-weight:600}
 /* kpis */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 14px}
 .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-.kpi .v{font-size:22px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
-.kpi .s{font-size:11.5px;color:var(--sub)}
-/* grid */
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:14px;align-items:start}
+.kpi .v{font-size:21px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:11.5px;color:var(--sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* grid & panels */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 450px;gap:14px;align-items:start}
+@media (max-width:1180px){.grid{grid-template-columns:1fr}}
 .panel{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.ph{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line2);min-height:44px}
-.ph h2{font-size:13px;margin:0;font-weight:600}.ph .sub{color:var(--muted);font-size:12px}
-.ph .r{margin-left:auto;display:flex;gap:8px;align-items:center}
-.pb{padding:12px 14px}
+.inspector-panel{position:sticky;top:72px;max-height:calc(100vh - 96px);display:flex;flex-direction:column}
+.inspector-scroll{overflow-y:auto;flex:1}
+.ph{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line2);min-height:44px;flex-wrap:wrap}
+.ph h2{font-size:13px;margin:0;font-weight:650}.ph .sub{color:var(--muted);font-size:12px}
+.ph .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .stack{display:flex;flex-direction:column;gap:14px;min-width:0}
-.badge{font-size:11px;font-weight:600;border-radius:10px;padding:1px 8px;white-space:nowrap;background:#f1f5f9;color:var(--sub);border:1px solid var(--line)}
+.badge{font-size:11px;font-weight:600;border-radius:10px;padding:1px 8px;white-space:nowrap;background:#f1f5f9;color:var(--sub);border:1px solid var(--line);display:inline-flex;align-items:center;gap:4px}
 .badge.warn{background:var(--amber-50);color:var(--amber);border-color:var(--amber-100)}
-.badge.ok{background:var(--green-50);color:var(--green);border-color:#c6efd4}
+.badge.ok{background:var(--green-50);color:var(--green);border-color:var(--green-100)}
+.badge.manual{background:var(--purple-50);color:var(--purple);border-color:var(--purple-100)}
+.badge.pri{background:var(--pri-50);color:var(--pri);border-color:var(--pri-100)}
 .appchip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.appchip b{font-weight:600}
 /* graph */
-.node{cursor:pointer}.node:hover .card{stroke:#94a3b8}
-.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);padding:8px 14px;border-top:1px solid var(--line2);flex-wrap:wrap}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.graph-wrap{overflow-x:auto;padding:6px 8px 0}
+.node{cursor:pointer}.node:hover .card{stroke:#64748b}
+.edge-hit{cursor:pointer}.edge-hit:hover path.evis{stroke-width:3}
+.exp-btn{cursor:pointer}.exp-btn:hover circle{fill:var(--pri);stroke:var(--pri)}.exp-btn:hover text{fill:#fff}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);padding:8px 14px;border-top:1px solid var(--line2);flex-wrap:wrap;align-items:center}
 /* timeline */
-.tl{display:flex;align-items:flex-start;padding:14px 14px 10px}
-.st{flex:1;text-align:center;position:relative;cursor:pointer;padding:0 4px 6px;border-radius:6px}
+.tl{display:flex;align-items:flex-start;padding:14px 14px 10px;overflow-x:auto;gap:4px}
+.st{flex:1;min-width:130px;text-align:center;position:relative;cursor:pointer;padding:0 6px 6px;border-radius:6px}
 .st:hover .c{box-shadow:0 0 0 4px var(--pri-100)}
 .st:before{content:"";position:absolute;top:8px;left:0;right:0;height:2px;background:var(--line)}
 .st:first-child:before{left:50%}.st:last-child:before{right:50%}.st:only-child:before{display:none}
@@ -83,67 +87,87 @@ button,select,input{font:inherit}
 .st.on .c{border-color:var(--pri);background:var(--pri);box-shadow:0 0 0 4px var(--pri-100)}
 .st b{font-weight:600}.st .t{font-family:var(--mono);font-size:11px;color:var(--muted)}
 /* tables */
+.tbl-wrap{overflow-x:auto;width:100%}
 table{border-collapse:collapse;width:100%}
-th,td{padding:7px 10px;border-bottom:1px solid var(--line2);text-align:left;white-space:nowrap;font-size:12px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line2);text-align:left;white-space:nowrap;font-size:12px;vertical-align:top}
+td.wrap{white-space:normal}
 th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;background:#fafbfc}
 .num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11.5px}
 td.chg{background:var(--amber-50);color:var(--amber);font-weight:600}
+td.okcell{background:var(--green-50);color:var(--green);font-weight:600}
 th.cpsel{color:var(--pri);box-shadow:inset 0 -2px var(--pri)}
 .muted{color:var(--muted)}
 th.sort{cursor:pointer}th.sort:hover{color:var(--text)}
-.trend td{padding:3px 10px}.trend tr.row{cursor:pointer}.trend tr.row:hover td{background:#f8fafc}.trend tr.selrow td{background:var(--pri-50)}
-.dstable tr.r{cursor:pointer}.dstable tr.r:hover td{background:#f8fafc}
+tr.click{cursor:pointer}tr.click:hover td{background:#f8fafc}tr.selrow td{background:var(--pri-50)}
 /* inspector */
-.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px}
-.tabs button{border:0;background:none;padding:11px 10px;cursor:pointer;color:var(--sub);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px;flex:none;background:#fff}
+.tabs button{border:0;background:none;padding:11px 10px;cursor:pointer;color:var(--sub);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:12px}
 .tabs button.on{color:var(--pri);border-bottom-color:var(--pri);font-weight:600}
-.alert{display:flex;gap:8px;background:var(--amber-50);border:1px solid var(--amber-100);color:#7c3a06;border-radius:6px;padding:8px 10px;font-size:12px;margin:12px 14px}
-.info{display:flex;gap:8px;background:#f8fafc;border:1px solid var(--line);color:var(--sub);border-radius:6px;padding:8px 10px;font-size:12px;margin:12px 14px}
-dl.kv{display:grid;grid-template-columns:140px 1fr;margin:0;padding:6px 14px 12px}
-dl.kv dt{color:var(--muted);font-size:12px;padding:6px 0;border-bottom:1px solid var(--line2)}
-dl.kv dd{margin:0;padding:6px 0;border-bottom:1px solid var(--line2);font-family:var(--mono);font-size:11.5px;word-break:break-all}
-.sec{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;padding:12px 14px 0}
-.rel{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line2);cursor:pointer}
+.alert{display:flex;gap:8px;background:var(--amber-50);border:1px solid var(--amber-100);color:#7c3a06;border-radius:6px;padding:8px 10px;font-size:12px;margin:10px 14px}
+.info{display:flex;gap:8px;background:#f8fafc;border:1px solid var(--line);color:var(--sub);border-radius:6px;padding:8px 10px;font-size:12px;margin:10px 14px}
+.okbox{display:flex;gap:8px;background:var(--green-50);border:1px solid var(--green-100);color:#14532d;border-radius:6px;padding:8px 10px;font-size:12px;margin:10px 14px}
+dl.kv{display:grid;grid-template-columns:135px 1fr;margin:0;padding:4px 14px 10px}
+dl.kv dt{color:var(--muted);font-size:11.5px;padding:5px 0;border-bottom:1px solid var(--line2)}
+dl.kv dd{margin:0;padding:5px 0;border-bottom:1px solid var(--line2);font-family:var(--mono);font-size:11.5px;word-break:break-word}
+.sec{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;padding:12px 14px 2px;display:flex;align-items:center;justify-content:space-between}
+.rel{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line2);cursor:pointer;font-size:12px}
 .rel:hover{background:#f8fafc}.rel .arrow{color:var(--muted);margin-left:auto}
-.link{color:var(--pri);cursor:pointer}
+/* search builder */
+.qbuilder{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;background:#fafbfc;border-bottom:1px solid var(--line2);align-items:center}
+.qbuilder input{height:28px;border:1px solid var(--line);border-radius:5px;padding:0 8px;font-size:12px;font-family:var(--mono);background:#fff}
+.qurl{padding:6px 14px;font-family:var(--mono);font-size:11px;color:var(--sub);background:#f8fafc;border-bottom:1px solid var(--line2);word-break:break-all}
+.pager{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:var(--muted);font-size:12px;border-top:1px solid var(--line2)}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(12,26,46,.45);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal{background:#fff;border-radius:10px;width:min(720px,92vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden}
+.modal pre{margin:0;padding:12px 14px;background:#0f172a;color:#e2e8f0;font-family:var(--mono);font-size:11.5px;overflow:auto;max-height:52vh}
 /* status bar */
 .status{height:28px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 16px;font-size:11px;color:var(--muted)}
 .status .dotg{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:5px}
-.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;font-size:11px;padding:6px 9px;border-radius:5px;display:none;font-family:var(--mono);z-index:9;white-space:pre;box-shadow:0 4px 12px rgba(0,0,0,.2)}
-.toast{position:fixed;right:20px;bottom:44px;background:var(--navy);color:#fff;padding:10px 14px;border-radius:6px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:.2s;z-index:10}
-.toast.show{opacity:1;transform:none}
+.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;font-size:11px;padding:6px 9px;border-radius:5px;display:none;font-family:var(--mono);z-index:40;white-space:pre;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:420px}
 .hidden{display:none!important}
-.pager{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
 <header class="hdr">
   <div class="brand">A<span>●</span></div>
-  <div class="product">Atum <small>Data Quality Explorer</small></div>
+  <div class="product">Atum <small>Audit Workbench · API v2</small></div>
   <label class="search">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input id="search" placeholder="Search datasets or partitioning, e.g. entity=transactions">
+    <input id="quickFilter" placeholder="Filter by key, value, partitioning ID, or author...">
     <kbd>/</kbd>
   </label>
   <div class="hright">
-    <div class="datepick" title="Business date (← / →)">
-      <button id="prevDay">‹</button>
-      <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="dateLabel" style="border:0;padding:0"></span></span>
-      <button id="nextDay">›</button>
+    <div class="winpill" title="Checkpoint process_start_time window [from, to)">
+      <span class="muted">Window:</span>
+      <select id="winPreset">
+        <option value="24h">Last 24h (fixed to)</option>
+        <option value="7d" selected>Last 7d (fixed to)</option>
+        <option value="14d">Last 14d (fixed to)</option>
+        <option value="open">Since 7d ago (to omitted → +∞)</option>
+      </select>
     </div>
+    <button class="btn" id="exportBtn">Export Audit Snapshot</button>
   </div>
 </header>
 
 <div class="app">
   <nav class="rail">
-    <a data-tab="lineage" title="Lineage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 6c5 0 4 6 9 6M7.5 18c5 0 4-6 9-6"/></svg>Lineage</a>
-    <a data-tab="datasets" title="Datasets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Datasets</a>
+    <a data-tab="discover" title="Discover partitionings (GET /partitionings/search)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Discover
+    </a>
+    <a data-tab="lineage" title="Lineage & Reconciliation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 6c5 0 4 6 9 6M7.5 18c5 0 4-6 9-6"/></svg>Lineage
+    </a>
+    <a data-tab="flow" title="Flow Timeline (GET /flows/{flowId}/checkpoints)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h14"/><circle cx="18" cy="12" r="2"/></svg>Flow
+    </a>
   </nav>
 
   <main class="content">
     <div class="crumbs" id="crumbs"></div>
     <div class="phead">
-      <div>
+      <div style="min-width:0">
         <h1 id="title"></h1>
         <div class="chips" id="chips"></div>
       </div>
@@ -151,60 +175,137 @@ dl.kv dd{margin:0;padding:6px 0;border-bottom:1px solid var(--line2);font-family
 
     <section class="kpis" id="kpis"></section>
 
-    <!-- LINEAGE VIEW -->
-    <div id="lineageView" class="grid">
+    <!-- DISCOVER VIEW (GET /api/v2/partitionings/search) -->
+    <section id="discoverView" class="panel hidden">
+      <div class="ph">
+        <h2>Partitioning discovery</h2>
+        <span class="sub">GET /api/v2/partitionings/search · distinct partitioning IDs</span>
+        <div class="r">
+          <label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="lazyCpToggle" checked> Lazy-load latest checkpoint (visible page)
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="latestFirstToggle" checked> <code>latest-first=true</code>
+          </label>
+        </div>
+      </div>
+      <div class="qbuilder">
+        <span class="muted" style="font-size:11.5px;font-weight:600">KEYS CONTAINMENT:</span>
+        <div id="keyChips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <input id="addKeyInput" placeholder="key" style="width:110px">
+        <input id="addValInput" placeholder="exact value" style="width:180px">
+        <button class="btn sm" id="addKeyBtn">+ Add key</button>
+        <button class="btn sm" id="presetGlueBtn" title="Example: filter Glue/Hive catalog table across dates">Preset: catalog_path</button>
+        <button class="btn sm" id="presetDateBtn" title="Example: filter logical date">Preset: info_date=2026-11-11</button>
+        <button class="btn sm" id="clearKeysBtn">Clear keys</button>
+      </div>
+      <div class="qurl" id="searchUrlPreview"></div>
+      <div id="openUpperWarn" class="alert hidden" style="margin:10px 14px">
+        <span>⚠</span>
+        <div><b>Upper bound <code>to</code> is omitted:</b> <code>runs.search_partitionings</code> evaluates <code>[from, +∞)</code>, so future-dated or clock-skewed checkpoints also qualify. Select a fixed <code>to</code> window for reproducible audits.</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>ID</th><th>Ordered partitioning keys</th><th>Author</th><th>Source type</th><th>Latest checkpoint (lazy)</th><th>UI hint</th>
+          </tr></thead>
+          <tbody id="discoverBody"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <span id="discoverPageInfo"></span>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" id="discPrev">‹ Prev</button>
+          <button class="btn sm" id="discNext">Next ›</button>
+        </div>
+      </div>
+    </section>
 
+    <!-- LINEAGE & RECONCILIATION VIEW -->
+    <div id="lineageView" class="grid">
       <div class="stack">
         <section class="panel">
-          <div class="ph"><h2>Lineage graph</h2>
+          <div class="ph">
+            <h2>Lineage graph</h2>
+            <span class="sub" id="graphSub"></span>
             <div class="r">
               <span class="sub">Direction</span>
-              <div class="seg"><button data-dir="up">Upstream</button><button data-dir="down">Downstream</button><button data-dir="both">Both</button></div>
-              <span class="sub" style="margin-left:6px">Depth</span>
-              <div class="seg"><button data-depth="direct">Direct</button><button data-depth="all">All</button></div>
+              <div class="seg"><button data-dir="upstream">Upstream</button><button data-dir="downstream">Downstream</button><button data-dir="both">Both</button></div>
+              <span class="sub">Depth</span>
+              <div class="seg"><button data-depth="1">1</button><button data-depth="2">2</button><button data-depth="3">3</button><button data-depth="5">5</button></div>
             </div>
           </div>
-          <svg id="graph" width="100%" viewBox="0 0 760 350" style="display:block;padding:6px 8px 0"></svg>
+          <div id="legacyBanner" class="alert hidden"></div>
+          <div id="truncBanner" class="alert hidden"></div>
+          <div class="graph-wrap">
+            <svg id="graph" width="100%" viewBox="0 0 800 360" style="display:block;min-width:680px"></svg>
+          </div>
           <div class="legend">
-            <span>⚠ UI hint: a measured value differs between checkpoints · cp = checkpoints</span>
+            <span>Click a <b>node</b> to inspect checkpoints &amp; sibling trend</span>
+            <span>Click an <b>edge</b> to inspect <code>linkedBy</code>/<code>linkedAt</code> &amp; parent→child handoff diff</span>
+            <span><span class="badge warn">⚠</span> UI hint: measure differs</span>
+            <span><span class="badge pri">+</span> Expandable boundary node</span>
+            <button class="btn sm" id="toggleClosureBtn" style="margin-left:auto">Flow closure</button>
+          </div>
+        </section>
+
+        <section class="panel hidden" id="legacyClosurePanel">
+          <div class="ph">
+            <h2>Flow closure (<code>ancestors</code> &amp; <code>descendants</code>)</h2>
+            <span class="sub">Authoritative transitive membership from <code>flows.partitioning_to_flow</code> (covers pre-v0.11.0 links)</span>
+            <div class="r"><button class="btn sm" id="hideClosureBtn">Hide</button></div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Relation</th><th>ID</th><th>Partitioning</th><th>Author</th></tr></thead>
+              <tbody id="closureBody"></tbody>
+            </table>
           </div>
         </section>
 
         <section class="panel">
-          <div class="ph"><h2>Checkpoints</h2><span class="sub" id="cpSub"></span></div>
-          <div class="tl" id="timeline"></div>
-        </section>
-
-        <section class="panel trend">
-          <div class="ph"><h2>Trend across the lineage</h2><span class="sub">last checkpoint per day · click a day or a dataset</span>
-            <div class="r"><span class="sub">Metric</span>
-              <select id="metric" style="height:28px;border:1px solid var(--line);border-radius:5px;background:#fff;padding:0 6px"><option>Record count</option><option>Σ amount</option></select></div>
+          <div class="ph">
+            <h2>Checkpoints</h2>
+            <span class="sub" id="cpSub"></span>
+            <div class="r" id="cpNameFilterWrap"></div>
           </div>
-          <table style="table-layout:fixed">
-            <col style="width:22%"><col style="width:48%"><col style="width:15%"><col style="width:15%">
-            <thead><tr><th>Dataset</th><th>04 Nov → 11 Nov</th><th class="num" id="trendDateHdr"></th><th class="num">vs prev. day</th></tr></thead>
-            <tbody id="trendBody"></tbody>
-          </table>
+          <div class="tl" id="timeline"></div>
         </section>
       </div>
 
-      <aside class="panel">
+      <aside class="panel inspector-panel">
         <div class="tabs" id="itabs">
-          <button data-it="meas">Measurements</button><button data-it="meta">Metadata</button>
+          <button data-it="meas">Measurements</button>
+          <button data-it="edge">Edge Handoff</button>
+          <button data-it="trend">Sibling Trend</button>
+          <button data-it="meta">Metadata</button>
         </div>
-        <div id="inspector"></div>
+        <div class="inspector-scroll" id="inspector"></div>
       </aside>
     </div>
 
-    <!-- DATASETS VIEW -->
-    <section id="datasetsView" class="panel hidden">
-      <div class="ph"><h2>All datasets</h2><span class="sub" id="dsDate"></span></div>
-      <table class="dstable">
-        <thead><tr>
-          <th class="sort" data-sort="name">Dataset</th><th>Partitioning</th><th class="sort" data-sort="tool">Tool</th>
-          <th class="sort num" data-sort="cps">Checkpoints</th><th class="sort num" data-sort="rc">Record count</th><th>Last checkpoint</th><th>UI hint</th></tr></thead>
-        <tbody id="dsBody"></tbody>
-      </table>
+    <!-- FLOW TIMELINE VIEW (GET /flows/{flowId}/checkpoints) -->
+    <section id="flowView" class="panel hidden">
+      <div class="ph">
+        <h2>Flow checkpoint waterfall</h2>
+        <span class="sub" id="flowSub"></span>
+        <div class="r">
+          <input id="flowCpName" placeholder="checkpoint-name (exact)" style="height:28px;border:1px solid var(--line);border-radius:5px;padding:0 8px;font-size:12px">
+          <input id="flowPropFilter" placeholder="property, e.g. executionID=run-42" style="height:28px;border:1px solid var(--line);border-radius:5px;padding:0 8px;font-size:12px;font-family:var(--mono)">
+        </div>
+      </div>
+      <div class="info" style="margin:10px 14px">
+        <span>ℹ</span>
+        <div>Single paginated query (<code>GET /api/v2/flows/{flowId}/checkpoints</code>) covering the focal partitioning and all downstream descendants—no N+1 per-node calls.</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Process start</th><th>Partitioning</th><th>Checkpoint</th><th>Author / Mode</th><th>Properties</th><th>Measurements</th>
+          </tr></thead>
+          <tbody id="flowBody"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 </div>
@@ -216,295 +317,972 @@ dl.kv dd{margin:0;padding:6px 0;border-bottom:1px solid var(--line2);font-family
 </footer>
 
 <div class="tip" id="tip"></div>
+<div class="modal-bg hidden" id="exportModal">
+  <div class="modal">
+    <div class="ph">
+      <h2>Audit Snapshot Manifest</h2>
+      <span class="sub">Reproducible scope &amp; live-pagination completeness record (ADR 02 §3)</span>
+      <div class="r"><button class="btn sm" id="closeModal">Close</button></div>
+    </div>
+    <pre id="exportJson"></pre>
+  </div>
+</div>
 
 <script>
-// ---------- mock data (what Atum would have captured) ----------
-const DATES = ["2026-11-04","2026-11-05","2026-11-06","2026-11-07","2026-11-08","2026-11-09","2026-11-10","2026-11-11"];
-const CUST = [84102,84230,84391,84477,84512,84530,84688,84801];
-const TX   = [1189220,1201554,1196870,1243101,612044,598311,1251870,1204331];
-const JOIN = [1188950,1201300,1196610,1242870,611902,598190,1251590,1203998];
-const CTRY = Array(8).fill(249);
-const REV  = [196,197,196,198,171,169,197,181];
-const AVG_AMOUNT = 81.7183;
+// ---------- Realistic mock store aligned with Atum v0.11.0 DTOs ----------
+// Mix of:
+//  - Non-catalog external REST-pushed source (measuredByAtumAgent: false)
+//  - Glue/Hive catalog_path + info_date ingest (AqueDuct) & curate (Unify)
+//  - Infrequently updated reference data WITHOUT info_date (ref_version)
+//  - Legacy pre-v0.11.0 partitioning (no edges in lineage.partitioning_edges, only flow closure)
 
-const hashSum = (seed, n) => Math.round(n * 2147483647 * (1 + (seed % 89) / 7919));
-const amount = n => Math.round(n * AVG_AMOUNT * 100) / 100;
+const NOW_ISO = "2026-11-11T12:00:00Z";
+const DATES = ["2026-11-05","2026-11-06","2026-11-07","2026-11-08","2026-11-09","2026-11-10","2026-11-11"];
+const hashSum = (seed, n) => String(Math.round(n * 2147483647 * (1 + (seed % 89) / 7919)));
 
-const DS = [
-  {id:"cust_raw",  name:"Customers", stage:"raw", format:"CSV", tool:"Aqueduct", author:"ingestion-svc", x:10,  y:30,  parents:[],
-   part:{source:"crm",entity:"customers",stage:"raw"}, extra:{source_system:"CRM", file:"customers_{date}.csv", owner:"crm-team"},
-   cps:d=>[{name:"Loaded", t:["05:30:02","05:30:41"], m:{"Record count":CUST[d],"Σ hash(customer_id)":hashSum(11,CUST[d])}}]},
-  {id:"tx_raw",    name:"Transactions", stage:"raw", format:"CSV", tool:"Aqueduct", author:"ingestion-svc", x:10, y:150, parents:[],
-   part:{source:"core-banking",entity:"transactions",stage:"raw"}, extra:{source_system:"Core banking", file:"tx_{date}.csv.gz", owner:"payments-team"},
-   cps:d=>[{name:"Loaded", t:["05:31:10","05:34:55"], m:{"Record count":TX[d],"Σ amount":amount(TX[d]),"Σ hash(tx_id)":hashSum(23,TX[d])}}]},
-  {id:"ctry_raw",  name:"Countries", stage:"raw", format:"CSV", tool:"Aqueduct", author:"ingestion-svc", x:10, y:270, parents:[],
-   part:{source:"ref-data",entity:"countries",stage:"raw"}, extra:{source_system:"Reference data", file:"iso3166.csv", owner:"ref-data-team"},
-   cps:d=>[{name:"Loaded", t:["05:30:00","05:30:03"], m:{"Record count":CTRY[d],"Σ hash(iso_code)":hashSum(37,CTRY[d])}}]},
-  {id:"cust_norm", name:"Customers", stage:"normalized", format:"parquet", tool:"Aqueduct", author:"ingestion-svc", x:200, y:30, parents:["cust_raw"],
-   part:{entity:"customers",stage:"normalized"}, extra:{format:"parquet", schema_version:"3", owner:"crm-team"},
-   cps:d=>[{name:"Written", t:["05:48:12","05:49:30"], m:{"Record count":CUST[d],"Σ hash(customer_id)":hashSum(11,CUST[d])}}]},
-  {id:"tx_norm",   name:"Transactions", stage:"normalized", format:"parquet", tool:"Aqueduct", author:"ingestion-svc", x:200, y:150, parents:["tx_raw"],
-   part:{entity:"transactions",stage:"normalized"}, extra:{format:"parquet", schema_version:"7", owner:"payments-team"},
-   cps:d=>[{name:"Written", t:["05:50:20","05:58:02"], m:{"Record count":TX[d],"Σ amount":amount(TX[d]),"Σ hash(tx_id)":hashSum(23,TX[d])}}]},
-  {id:"ctry_norm", name:"Countries", stage:"normalized", format:"parquet", tool:"Aqueduct", author:"ingestion-svc", x:200, y:270, parents:["ctry_raw"],
-   part:{entity:"countries",stage:"normalized"}, extra:{format:"parquet", owner:"ref-data-team"},
-   cps:d=>[{name:"Written", t:["05:47:00","05:47:04"], m:{"Record count":CTRY[d],"Σ hash(iso_code)":hashSum(37,CTRY[d])}}]},
-  {id:"joined",    name:"Customer transactions", stage:"joined", format:"parquet", tool:"Unify", author:"curation-svc", x:390, y:150, parents:["cust_norm","tx_norm","ctry_norm"],
-   part:{entity:"customer_transactions",stage:"joined"}, extra:{format:"parquet", join:"transactions ⋈ customers ⋈ countries", owner:"retail-data-team"},
-   cps:d=>[
-     {name:"Input",   t:["06:12:01","06:12:40"], m:{"Record count":TX[d],  "Σ amount":amount(TX[d]),  "Σ hash(tx_id)":hashSum(23,TX[d])}},
-     {name:"Joined",  t:["06:18:41","06:19:07"], m:{"Record count":JOIN[d],"Σ amount":amount(JOIN[d]),"Σ hash(tx_id)":hashSum(23,JOIN[d])}},
-     {name:"Written", t:["06:20:30","06:21:12"], m:{"Record count":JOIN[d],"Σ amount":amount(JOIN[d]),"Σ hash(tx_id)":hashSum(23,JOIN[d])}}]},
-  {id:"rev",       name:"Revenue by country", stage:"curated", format:"parquet", tool:"Unify", author:"curation-svc", x:580, y:70, parents:["joined"],
-   part:{entity:"revenue_by_country",stage:"curated"}, extra:{format:"parquet", aggregation:"sum(amount) group by country", owner:"finance-bi"},
-   cps:d=>[
-     {name:"Input",   t:["06:40:05","06:40:31"], m:{"Σ amount":amount(JOIN[d])}},
-     {name:"Written", t:["06:42:10","06:42:12"], m:{"Record count":REV[d],"Σ revenue":amount(JOIN[d])}}]},
-  {id:"c360",      name:"Customer 360", stage:"curated", format:"parquet", tool:"Unify", author:"curation-svc", x:580, y:230, parents:["joined"],
-   part:{entity:"customer_360",stage:"curated"}, extra:{format:"parquet", grain:"one row per customer", owner:"retail-data-team"},
-   cps:d=>[
-     {name:"Input",   t:["06:41:00","06:41:20"], m:{"Record count":CUST[d]}},
-     {name:"Written", t:["06:45:44","06:46:30"], m:{"Record count":CUST[d],"Σ hash(customer_id)":hashSum(11,CUST[d])}}]},
+const PART_LIST = [
+  // Non-Spark upstream system pushing via REST API directly
+  {
+    id: 2000000010448101,
+    shortName: "Core Banking Payments EOD",
+    author: "mainframe-bridge-svc",
+    mainFlowId: 3000000000101001,
+    partitioning: [{key:"system",value:"core_banking"},{key:"feed",value:"payments_eod"},{key:"info_date",value:"2026-11-11"}],
+    additionalData: [{key:"transport",value:"sftp-csv",author:"mainframe-bridge-svc"}],
+    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]}],
+    checkpoints: [
+      {id:"11111111-1111-4111-8111-000000000101", name:"Source Extract", author:"mainframe-bridge-svc", measuredByAtumAgent:false,
+       processStartTime:"2026-11-11T04:55:00Z", processEndTime:"2026-11-11T04:55:01Z",
+       properties:{executionID:"eod-20261111", source:"mainframe"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1204331",valueType:"Long"}, supportValues:{}}},
+         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98415881.96",valueType:"BigDecimal"}, supportValues:{currency:"ZAR"}}}
+       ]}
+    ]
+  },
+  // Glue/Hive catalog ingest (AqueDuct)
+  {
+    id: 2000000010448201,
+    shortName: "aq_crm_customers",
+    author: "aqueduct",
+    mainFlowId: 3000000000102001,
+    partitioning: [{key:"catalog_path",value:"edla_prod_raw.aq_crm_customers"},{key:"info_date",value:"2026-11-11"}],
+    additionalData: [{key:"source_system",value:"CRM",author:"aqueduct"}],
+    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sumOfHashes",measuredColumns:["customer_id"]}],
+    checkpoints: [
+      {id:"22222222-2222-4222-8222-000000000201", name:"Written", author:"aqueduct", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T05:30:02Z", processEndTime:"2026-11-11T05:30:41Z",
+       properties:{executionID:"aq-901"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"84801",valueType:"Long"}, supportValues:{}}},
+         {measure:{measureName:"sumOfHashes",measuredColumns:["customer_id"]}, result:{mainValue:{value:hashSum(11,84801),valueType:"Long"}, supportValues:{}}}
+       ]}
+    ]
+  },
+  {
+    id: 2000000010448202,
+    shortName: "aq_core_payments",
+    author: "aqueduct",
+    mainFlowId: 3000000000102002,
+    partitioning: [{key:"catalog_path",value:"edla_prod_raw.aq_core_payments"},{key:"info_date",value:"2026-11-11"}],
+    additionalData: [{key:"catalog",value:"aws-glue",author:"aqueduct"}],
+    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]},{measureName:"sumOfHashes",measuredColumns:["tx_id"]}],
+    checkpoints: [
+      {id:"22222222-2222-4222-8222-000000000202", name:"Written", author:"aqueduct", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T05:50:20Z", processEndTime:"2026-11-11T05:58:02Z",
+       properties:{executionID:"aq-902"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1204331",valueType:"Long"}, supportValues:{}}},
+         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98415881.96",valueType:"BigDecimal"}, supportValues:{}}},
+         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1204331),valueType:"Long"}, supportValues:{}}}
+       ]}
+    ]
+  },
+  // Infrequently updated reference data (NO info_date!)
+  {
+    id: 2000000010000049,
+    shortName: "iso3166_countries",
+    author: "refdata-steward",
+    mainFlowId: 3000000000000049,
+    partitioning: [{key:"catalog_path",value:"edla_prod_ref.iso3166_countries"},{key:"ref_version",value:"2026-Q4"}],
+    additionalData: [{key:"cadence",value:"quarterly",author:"refdata-steward"}],
+    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"distinctCount",measuredColumns:["iso_code"]}],
+    checkpoints: [
+      {id:"33333333-3333-4333-8333-000000000049", name:"Published", author:"refdata-steward", measuredByAtumAgent:true,
+       processStartTime:"2026-10-02T08:15:00Z", processEndTime:"2026-10-02T08:15:04Z",
+       properties:{release:"2026-Q4"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"249",valueType:"Long"}, supportValues:{}}},
+         {measure:{measureName:"distinctCount",measuredColumns:["iso_code"]}, result:{mainValue:{value:"249",valueType:"Long"}, supportValues:{}}}
+       ]}
+    ]
+  },
+  // Curated joined table (Unify) — reconstructs parents from catalog & joins 3 parents + has a same-name re-run!
+  {
+    id: 2000000010448528,
+    shortName: "un_customer_payments",
+    author: "unify",
+    mainFlowId: 3000000000123456,
+    partitioning: [{key:"catalog_path",value:"edla_prod_curated.un_customer_payments"},{key:"info_date",value:"2026-11-11"}],
+    additionalData: [{key:"join_keys",value:"customer_id,country_code",author:"unify"}],
+    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]},{measureName:"sumOfHashes",measuredColumns:["tx_id"]}],
+    checkpoints: [
+      {id:"41ea35cd-6398-42ed-b6d3-a8d613176501", name:"Input", author:"unify", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T06:12:01Z", processEndTime:"2026-11-11T06:12:40Z",
+       properties:{executionID:"un-441", stage:"read"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1204331",valueType:"Long"}, supportValues:{}}},
+         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98415881.96",valueType:"BigDecimal"}, supportValues:{}}},
+         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1204331),valueType:"Long"}, supportValues:{}}}
+       ]},
+      {id:"41ea35cd-6398-42ed-b6d3-a8d613176502", name:"Joined", author:"unify", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T06:18:41Z", processEndTime:"2026-11-11T06:19:07Z",
+       properties:{executionID:"un-441", stage:"transform"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1203998",valueType:"Long"}, supportValues:{dropped:"333"}}},
+         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}},
+         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1203998),valueType:"Long"}, supportValues:{}}}
+       ]},
+      {id:"41ea35cd-6398-42ed-b6d3-a8d613176503", name:"Written", author:"unify", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T06:20:30Z", processEndTime:"2026-11-11T06:21:12Z",
+       properties:{executionID:"un-441", stage:"publish"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1203998",valueType:"Long"}, supportValues:{}}},
+         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}},
+         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1203998),valueType:"Long"}, supportValues:{}}}
+       ]},
+      {id:"41ea35cd-6398-42ed-b6d3-a8d613176504", name:"Written", author:"unify", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T07:05:10Z", processEndTime:"2026-11-11T07:05:49Z",
+       properties:{executionID:"un-442-rerun", stage:"publish"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1203998",valueType:"Long"}, supportValues:{}}},
+         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}},
+         {measure:{measureName:"sumOfHashes",measuredColumns:["tx_id"]}, result:{mainValue:{value:hashSum(23,1203998),valueType:"Long"}, supportValues:{}}}
+       ]}
+    ]
+  },
+  // Downstream publish tables (Unify)
+  {
+    id: 2000000010448601,
+    shortName: "un_revenue_by_country",
+    author: "unify",
+    mainFlowId: 3000000000123601,
+    partitioning: [{key:"catalog_path",value:"edla_prod_publish.un_revenue_by_country"},{key:"info_date",value:"2026-11-11"}],
+    additionalData: [],
+    measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]}],
+    checkpoints: [
+      {id:"55555555-5555-4555-8555-000000000601", name:"Input", author:"unify", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T06:40:05Z", processEndTime:"2026-11-11T06:40:31Z",
+       properties:{executionID:"un-510"},
+       measurements:[{measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}}]},
+      {id:"55555555-5555-4555-8555-000000000602", name:"Written", author:"unify", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T06:42:10Z", processEndTime:"2026-11-11T06:42:12Z",
+       properties:{executionID:"un-510"},
+       measurements:[
+         {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"181",valueType:"Long"}, supportValues:{}}},
+         {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:"98388669.76",valueType:"BigDecimal"}, supportValues:{}}}
+       ]}
+    ]
+  },
+  {
+    id: 2000000010448602,
+    shortName: "un_customer_360",
+    author: "unify",
+    mainFlowId: 3000000000123602,
+    partitioning: [{key:"catalog_path",value:"edla_prod_publish.un_customer_360"},{key:"info_date",value:"2026-11-11"}],
+    additionalData: [],
+    measureDefs: [{measureName:"count",measuredColumns:[]}],
+    checkpoints: [
+      {id:"66666666-6666-4666-8666-000000000603", name:"Written", author:"unify", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T06:45:44Z", processEndTime:"2026-11-11T06:46:30Z",
+       properties:{executionID:"un-511"},
+       measurements:[{measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"84801",valueType:"Long"}, supportValues:{}}}]}
+    ]
+  },
+  // Sibling date partitionings for un_customer_payments (demonstrates key-drop search trend!)
+  ...[
+    ["2026-11-10", 2000000010447901, 1251590, "102277802.14"],
+    ["2026-11-09", 2000000010447301, 598190,  "48883069.87"],
+    ["2026-11-08", 2000000010446701, 611902,  "50003591.20"],
+    ["2026-11-07", 2000000010446101, 1242870, "101565225.43"],
+    ["2026-11-06", 2000000010445501, 1196610, "97784934.97"],
+    ["2026-11-05", 2000000010444901, 1201300, "98168204.79"]
+  ].map(([dt, pid, cnt, amt]) => ({
+    id: pid, shortName: "un_customer_payments", author: "unify", mainFlowId: pid + 1000000000000000,
+    partitioning: [{key:"catalog_path",value:"edla_prod_curated.un_customer_payments"},{key:"info_date",value:dt}],
+    additionalData: [], measureDefs: [{measureName:"count",measuredColumns:[]},{measureName:"sum",measuredColumns:["amount"]}],
+    checkpoints: [{
+      id: `41ea35cd-6398-42ed-b6d3-${dt.replaceAll("-","")}0001`, name:"Written", author:"unify", measuredByAtumAgent:true,
+      processStartTime:`${dt}T06:21:00Z`, processEndTime:`${dt}T06:21:40Z`, properties:{executionID:`un-${dt}`},
+      measurements:[
+        {measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:String(cnt),valueType:"Long"}, supportValues:{}}},
+        {measure:{measureName:"sum",measuredColumns:["amount"]}, result:{mainValue:{value:amt,valueType:"BigDecimal"}, supportValues:{}}}
+      ]
+    }]
+  })),
+  // Registered partitioning WITHOUT any checkpoints yet (visible in key-only search!)
+  {
+    id: 2000000010448999,
+    shortName: "aq_pending_staging",
+    author: "aqueduct",
+    mainFlowId: 3000000000123999,
+    partitioning: [{key:"catalog_path",value:"edla_prod_raw.aq_crm_customers"},{key:"info_date",value:"2026-11-12"}],
+    additionalData: [{key:"status",value:"registered-before-run",author:"aqueduct"}],
+    measureDefs: [{measureName:"count",measuredColumns:[]}],
+    checkpoints: []
+  },
+  // Legacy pre-v0.11.0 partitioning (NO explicit edges, only flow closure!)
+  {
+    id: 2000000009000111,
+    shortName: "legacy_gl_reconciliation",
+    author: "legacy-etl",
+    mainFlowId: 3000000000000111,
+    partitioning: [{key:"catalog_path",value:"edla_prod_publish.legacy_gl_reconciliation"},{key:"info_date",value:"2026-11-11"}],
+    additionalData: [{key:"note",value:"linked via v0.10.0 server (closure only)",author:"legacy-etl"}],
+    measureDefs: [{measureName:"count",measuredColumns:[]}],
+    legacyAncestors: [2000000010448202, 2000000010448101],
+    checkpoints: [
+      {id:"77777777-7777-4777-8777-000000000111", name:"Reconciled", author:"legacy-etl", measuredByAtumAgent:true,
+       processStartTime:"2026-11-11T07:15:00Z", processEndTime:"2026-11-11T07:15:18Z",
+       properties:{executionID:"leg-11"},
+       measurements:[{measure:{measureName:"count",measuredColumns:[]}, result:{mainValue:{value:"1203998",valueType:"Long"}, supportValues:{}}}]}
+    ]
+  }
 ];
-const byId = Object.fromEntries(DS.map(d => [d.id, d]));
-const children = id => DS.filter(d => d.parents.includes(id)).map(d => d.id);
 
+const EDGES = [
+  {parentPartitioningId:2000000010448101, childPartitioningId:2000000010448202, linkedBy:"aqueduct", linkedAt:"2026-11-11T05:49:10Z"},
+  {parentPartitioningId:2000000010448201, childPartitioningId:2000000010448528, linkedBy:"unify", linkedAt:"2026-11-11T06:11:50Z"},
+  {parentPartitioningId:2000000010448202, childPartitioningId:2000000010448528, linkedBy:"unify", linkedAt:"2026-11-11T06:11:50Z"},
+  {parentPartitioningId:2000000010000049, childPartitioningId:2000000010448528, linkedBy:"unify", linkedAt:"2026-11-11T06:11:50Z"},
+  {parentPartitioningId:2000000010448528, childPartitioningId:2000000010448601, linkedBy:"unify", linkedAt:"2026-11-11T06:39:55Z"},
+  {parentPartitioningId:2000000010448528, childPartitioningId:2000000010448602, linkedBy:"unify", linkedAt:"2026-11-11T06:40:40Z"},
+  {parentPartitioningId:2000000010448201, childPartitioningId:2000000010448602, linkedBy:"unify", linkedAt:"2026-11-11T06:40:40Z"}
+];
 
-</script>
-<script>
-// ---------- state ----------
-const STAGE_COLOR = {raw:"#64748b", normalized:"#0f766e", joined:"#4338ca", curated:"#7e22ce"};
-const STAGES = ["raw","normalized","joined","curated"];
-const S = {sel:"joined", day:7, cp:1, dir:"both", depth:"all", tab:"lineage", it:"meas", q:"", metric:"Record count", sort:null, asc:true};
-const OWNER = d => d.extra.owner || "–";
-// author -> application; icons redrawn as 24x24 SVG from the AqueDuct / Unify brand logos
+const byId = Object.fromEntries(PART_LIST.map(p => [p.id, p]));
+
 const APPS = {
-  "ingestion-svc": {name:"AqueDuct", color:"#5B0E31", art:'<rect width="24" height="24" rx="5.5" fill="#5B0E31"/><text x="12.4" y="16.6" text-anchor="middle" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-style="italic" font-weight="500" font-size="12.5" letter-spacing="-.4" fill="#fff">Aq</text><path d="M4.5 19.6h15" stroke="#fff" stroke-opacity=".55" stroke-width="1" stroke-linecap="round"/>'},
-  "curation-svc":  {name:"Unify", color:"#5B0E31", art:'<circle cx="12" cy="12" r="12" fill="#5B0E31"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8.6 11v3.1a3.4 3.4 0 0 0 6.8 0V9.6M15.4 9.6v7.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polygon points="7.28,4.47 8.43,6.21 10.50,5.90 9.19,7.54 10.13,9.41 8.17,8.67 6.68,10.14 6.77,8.05 4.92,7.09 6.93,6.53" fill="#fff"/>'},
+  "aqueduct": {name:"AqueDuct", art:'<rect width="24" height="24" rx="5.5" fill="#5B0E31"/><text x="12.4" y="16.6" text-anchor="middle" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-style="italic" font-weight="500" font-size="12.5" letter-spacing="-.4" fill="#fff">Aq</text><path d="M4.5 19.6h15" stroke="#fff" stroke-opacity=".55" stroke-width="1" stroke-linecap="round"/>'},
+  "unify":    {name:"Unify",    art:'<circle cx="12" cy="12" r="12" fill="#5B0E31"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8.6 11v3.1a3.4 3.4 0 0 0 6.8 0V9.6M15.4 9.6v7.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polygon points="7.28,4.47 8.43,6.21 10.50,5.90 9.19,7.54 10.13,9.41 8.17,8.67 6.68,10.14 6.77,8.05 4.92,7.09 6.93,6.53" fill="#fff"/>'},
+  "mainframe-bridge-svc": {name:"Mainframe Bridge", art:'<rect width="24" height="24" rx="6" fill="#6d28d9"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">MB</text>'},
+  "refdata-steward":      {name:"RefData",          art:'<rect width="24" height="24" rx="6" fill="#0f766e"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">RF</text>'},
+  "legacy-etl":           {name:"Legacy ETL",       art:'<rect width="24" height="24" rx="6" fill="#64748b"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">LE</text>'}
 };
-const app = d => APPS[d.author] || {name:d.author, color:"#64748b", path:""};
-const appSvg = (a, s = 16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex:none">${a.art || `<rect width="24" height="24" rx="6" fill="${a.color}"/>`}</svg>`;
-const appChip = (d, s = 16, extra = "") => { const a = app(d); return `<span class="appchip" title="${a.name} · ${d.author}">${appSvg(a, s)}<b>${a.name}</b>${extra}</span>`; };
 
-// ---------- helpers ----------
+// ---------- State ----------
+const S = {
+  tab: "lineage",
+  selId: 2000000010448528,
+  selEdge: null, // {parentPartitioningId, childPartitioningId}
+  cpIdx: 0,
+  dir: "both",
+  depth: 2,
+  it: "meas",
+  quickFilter: "",
+  winPreset: "7d",
+  searchKeys: {info_date:"2026-11-11"},
+  latestFirst: true,
+  lazyCp: true,
+  discOffset: 0,
+  discLimit: 10,
+  droppedKeys: new Set(), // for Sibling Trend key-drop
+  trendMetric: "count()",
+  flowCpName: "",
+  flowPropFilter: "",
+  expandedNodes: new Set(),
+  cpNameFilter: "",
+  showClosure: false
+};
+
+// ---------- Helpers ----------
 const $ = id => document.getElementById(id);
-const fmtDate = (i, long) => new Date(DATES[i]+"T00:00:00").toLocaleDateString("en-GB", long ? {weekday:"short",day:"2-digit",month:"short",year:"numeric"} : {day:"2-digit",month:"short"});
-const fmtNum = v => v == null ? "–" : Number.isInteger(v) ? v.toLocaleString("en-US") : v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtShort = v => v >= 1e12 ? (v/1e15).toFixed(4) + "e15" : fmtNum(v);
-const fmtCompact = v => v == null ? "–" : v >= 1e6 ? (v/1e6).toFixed(2)+"M" : v >= 1e4 ? (v/1e3).toFixed(1)+"k" : fmtNum(v);
-const partObj = d => ({...d.part, date:DATES[S.day]});
-const partStr = (d, sep=" · ") => Object.entries(partObj(d)).map(([k,v]) => `${k}=${v}`).join(sep);
-const label = d => `${d.name} · ${d.stage}`;
-const cpsOf = (d, day=S.day) => d.cps(day);
-const metricOf = (d, day, m=S.metric) => { const cps = d.cps(day); for (let i = cps.length-1; i >= 0; i--) { if (m in cps[i].m) return cps[i].m[m]; if (m==="Σ amount" && "Σ revenue" in cps[i].m) return cps[i].m["Σ revenue"]; } return null; };
-const recordCount = (d, day) => metricOf(d, day, "Record count");
-const cpId = (d, i) => { let h = 2166136261; for (const ch of d.id+DATES[S.day]+i) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); const x = (h>>>0).toString(16).padStart(8,"0"); return `${x}-${x.slice(0,4)}-4${x.slice(1,4)}-a${x.slice(4,7)}-${x}${x.slice(0,4)}`; };
-function changedMeasures(d, day = S.day) {
-  const cps = d.cps(day), out = new Set();
-  new Set(cps.flatMap(c => Object.keys(c.m))).forEach(n => { const v = cps.filter(c => n in c.m).map(c => c.m[n]); if (v.length > 1 && new Set(v).size > 1) out.add(n); });
+const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+const b64url = obj => btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replaceAll("+","-").replaceAll("/","_");
+const partMap = p => Object.fromEntries(p.partitioning.map(kv => [kv.key, kv.value]));
+const measureKey = m => `${m.measureName}(${m.measuredColumns.join(",")})`;
+const appInfo = author => APPS[author] || {name:author, art:`<rect width="24" height="24" rx="6" fill="#475569"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${esc(author.slice(0,2).toUpperCase())}</text>`};
+const appSvg = (author, s=16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex:none">${appInfo(author).art}</svg>`;
+const appChip = (author, s=16) => `<span class="appchip" title="${esc(author)}">${appSvg(author,s)}<b>${esc(appInfo(author).name)}</b></span>`;
+const fmtTime = iso => iso ? iso.slice(11,19) + "Z" : "–";
+const fmtVal = tv => {
+  if (!tv) return "–";
+  if (tv.valueType === "Long") { const n = Number(tv.value); return Number.isFinite(n) ? (n >= 1e12 ? n.toExponential(4) : n.toLocaleString("en-US")) : tv.value; }
+  if (tv.valueType === "BigDecimal" || tv.valueType === "Double") { const n = Number(tv.value); return Number.isFinite(n) ? n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : tv.value; }
+  return tv.value;
+};
+
+function windowBounds() {
+  const now = new Date(NOW_ISO);
+  if (S.winPreset === "24h") return {from: new Date(now - 86400e3).toISOString(), to: NOW_ISO};
+  if (S.winPreset === "7d")  return {from: new Date(now - 7*86400e3).toISOString(), to: NOW_ISO};
+  if (S.winPreset === "14d") return {from: new Date(now - 14*86400e3).toISOString(), to: NOW_ISO};
+  return {from: new Date(now - 7*86400e3).toISOString(), to: null};
+}
+
+function inWindow(iso, wb) {
+  return (!wb.from || iso >= wb.from) && (!wb.to || iso < wb.to);
+}
+
+function changedMeasuresOf(p) {
+  const cps = p.checkpoints, out = new Set();
+  const keys = [...new Set(cps.flatMap(c => c.measurements.map(m => measureKey(m.measure))))];
+  keys.forEach(k => {
+    const vals = cps.map(c => c.measurements.find(m => measureKey(m.measure) === k)?.result.mainValue.value).filter(v => v !== undefined);
+    if (vals.length > 1 && new Set(vals).size > 1) out.add(k);
+  });
   return out;
 }
-const matches = d => {
-  const q = S.q.trim().toLowerCase();
-  if (q && !(label(d) + " " + partStr(d) + " " + d.tool + " " + OWNER(d)).toLowerCase().includes(q)) return false;
-  return true;
-};
-function related(id) {
-  const set = new Set([id]);
-  const walk = next => { let f = [id], depth = 0; while (f.length && (S.depth === "all" || depth < 1)) { f = f.flatMap(next).filter(x => !set.has(x)); f.forEach(x => set.add(x)); depth++; } };
-  if (S.dir !== "down") walk(x => byId[x].parents);
-  if (S.dir !== "up") walk(children);
-  return set;
+
+function edgeHandoffDiffs(edge) {
+  const parent = byId[edge.parentPartitioningId], child = byId[edge.childPartitioningId];
+  const pCp = parent?.checkpoints.at(-1), cCp = child?.checkpoints[0];
+  if (!pCp || !cCp) return [];
+  const pMap = Object.fromEntries(pCp.measurements.map(m => [measureKey(m.measure), m.result]));
+  const cMap = Object.fromEntries(cCp.measurements.map(m => [measureKey(m.measure), m.result]));
+  const shared = Object.keys(pMap).filter(k => k in cMap);
+  return shared.map(k => {
+    const pv = pMap[k].mainValue, cv = cMap[k].mainValue;
+    const same = pv.value === cv.value;
+    const diffNum = (pv.valueType !== "String" && cv.valueType !== "String") ? Number(cv.value) - Number(pv.value) : null;
+    return {key:k, pRes:pMap[k], cRes:cMap[k], same, diffNum, pCp, cCp};
+  });
 }
-function select(id) { S.sel = id; S.cp = Math.min(1, cpsOf(byId[id]).length-1); render(); }
-const badge = d => { const ch = changedMeasures(d).size > 0, n = cpsOf(d).length; return `<span class="badge ${ch?"warn":""}">${ch?"⚠ ":""}${n} cp</span>`; };
-const stageDot = () => "";
 
-// ---------- URL state (deep links) ----------
-function writeHash() { history.replaceState(null, "", `#${S.tab}/${S.sel}/${DATES[S.day]}`); }
-function readHash() { const [tab, sel, date] = location.hash.slice(1).split("/"); if (tab === "lineage" || tab === "datasets") S.tab = tab; if (byId[sel]) S.sel = sel; const i = DATES.indexOf(date); if (i >= 0) S.day = i; }
+// ---------- Simulated GET /lineage?direction=&depth= BFS ----------
+function computeSubgraph(focalId, dir, depth) {
+  const upSet = new Set(), downSet = new Set();
+  const effectiveDepth = S.expandedNodes.has(focalId) ? Math.min(20, depth + 2) : depth;
+  if (dir === "both" || dir === "upstream") {
+    upSet.add(focalId);
+    let frontier = [focalId];
+    for (let d = 0; d < effectiveDepth && frontier.length; d++) {
+      const next = [];
+      EDGES.filter(e => frontier.includes(e.childPartitioningId)).forEach(e => {
+        if (!upSet.has(e.parentPartitioningId)) { upSet.add(e.parentPartitioningId); next.push(e.parentPartitioningId); }
+      });
+      frontier = next;
+    }
+  }
+  if (dir === "both" || dir === "downstream") {
+    downSet.add(focalId);
+    let frontier = [focalId];
+    for (let d = 0; d < effectiveDepth && frontier.length; d++) {
+      const next = [];
+      EDGES.filter(e => frontier.includes(e.parentPartitioningId)).forEach(e => {
+        if (!downSet.has(e.childPartitioningId)) { downSet.add(e.childPartitioningId); next.push(e.childPartitioningId); }
+      });
+      frontier = next;
+    }
+  }
+  const nodeIds = new Set([focalId, ...upSet, ...downSet]);
+  const nodes = [...nodeIds].map(id => byId[id]);
+  const edges = EDGES.filter(e => nodeIds.has(e.parentPartitioningId) && nodeIds.has(e.childPartitioningId));
+  const expUp = [...nodeIds].filter(id => EDGES.some(e => e.childPartitioningId === id && !nodeIds.has(e.parentPartitioningId)));
+  const expDown = [...nodeIds].filter(id => EDGES.some(e => e.parentPartitioningId === id && !nodeIds.has(e.childPartitioningId)));
+  return {primaryPartitioningId:focalId, depth, direction:dir, nodes, edges, truncated:false, expandableUpstreamNodeIds:expUp, expandableDownstreamNodeIds:expDown};
+}
 
-// ---------- renderers ----------
+// ---------- Closure (flows.partitioning_to_flow) simulation ----------
+function computeClosure(focalId) {
+  const ancestors = new Set(), descendants = new Set();
+  const p = byId[focalId];
+  if (p.legacyAncestors) p.legacyAncestors.forEach(a => ancestors.add(a));
+  const walkUp = id => EDGES.filter(e => e.childPartitioningId === id).forEach(e => { if (!ancestors.has(e.parentPartitioningId)) { ancestors.add(e.parentPartitioningId); walkUp(e.parentPartitioningId); }});
+  const walkDn = id => EDGES.filter(e => e.parentPartitioningId === id).forEach(e => { if (!descendants.has(e.childPartitioningId)) { descendants.add(e.childPartitioningId); walkDn(e.childPartitioningId); }});
+  walkUp(focalId); walkDn(focalId);
+  return {ancestors:[...ancestors].map(id=>byId[id]), descendants:[...descendants].map(id=>byId[id])};
+}
+
+// ---------- Simulated GET /api/v2/partitionings/search ----------
+function runSearch() {
+  const wb = windowBounds();
+  const hasKeys = Object.keys(S.searchKeys).length > 0;
+  let rows = PART_LIST.filter(p => {
+    const pm = partMap(p);
+    for (const [k,v] of Object.entries(S.searchKeys)) if (pm[k] !== v) return false;
+    if (!hasKeys || S.winPreset !== "open") {
+      // when keys are empty we must use time window; when keys are set, user can still inspect matching checkpoints
+      if (!hasKeys && !p.checkpoints.some(c => inWindow(c.processStartTime, wb))) return false;
+    }
+    if (S.quickFilter.trim()) {
+      const q = S.quickFilter.trim().toLowerCase();
+      const hay = `${p.id} ${p.shortName} ${p.author} ${p.partitioning.map(x=>`${x.key}=${x.value}`).join(" ")}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  rows.sort((a,b) => S.latestFirst ? b.id - a.id : a.id - b.id);
+  const page = rows.slice(S.discOffset, S.discOffset + S.discLimit);
+  return {data:page, total:rows.length, hasMore: S.discOffset + S.discLimit < rows.length};
+}
+
+// ---------- Renderers ----------
 function renderChrome() {
-  const d = byId[S.sel];
-  $("dateLabel").textContent = fmtDate(S.day, true);
-  $("prevDay").disabled = S.day === 0; $("nextDay").disabled = S.day === DATES.length-1;
+  const p = byId[S.selId];
   document.querySelectorAll(".rail a").forEach(a => a.classList.toggle("on", a.dataset.tab === S.tab));
+  $("discoverView").classList.toggle("hidden", S.tab !== "discover");
   $("lineageView").classList.toggle("hidden", S.tab !== "lineage");
-  $("datasetsView").classList.toggle("hidden", S.tab !== "datasets");
+  $("flowView").classList.toggle("hidden", S.tab !== "flow");
   document.querySelectorAll("[data-dir]").forEach(b => b.classList.toggle("on", b.dataset.dir === S.dir));
-  document.querySelectorAll("[data-depth]").forEach(b => b.classList.toggle("on", b.dataset.depth === S.depth));
+  document.querySelectorAll("[data-depth]").forEach(b => b.classList.toggle("on", Number(b.dataset.depth) === S.depth));
   document.querySelectorAll("[data-it]").forEach(b => b.classList.toggle("on", b.dataset.it === S.it));
-  if (S.tab === "lineage") {
-    $("crumbs").innerHTML = `<a data-go="datasets">Datasets</a> / <b>${label(d)}</b>`;
-    $("title").innerHTML = `${d.name} <span class="muted" style="font-weight:400">(${d.stage})</span> ${badge(d)}`;
-    $("chips").innerHTML = Object.entries(partObj(d)).map(([k,v]) => `<span class="chip">${k}=<b>${v}</b></span>`).join("");
+
+  if (S.tab === "discover") {
+    $("crumbs").innerHTML = `<b>Partitioning Discovery</b>`;
+    $("title").innerHTML = `Discover Partitionings <span class="badge">GET /api/v2/partitionings/search</span>`;
+    $("chips").innerHTML = `<span class="chip">Window: <b>${S.winPreset}</b></span><span class="chip">Order: <b>id ${S.latestFirst?"DESC":"ASC"}</b></span>`;
+  } else if (S.tab === "lineage") {
+    const ch = changedMeasuresOf(p);
+    $("crumbs").innerHTML = `<a data-go="discover">Discover</a> / <b>#${p.id} · ${esc(p.shortName)}</b>`;
+    $("title").innerHTML = `${esc(p.shortName)} <span class="badge pri">ID ${p.id}</span> ${appChip(p.author, 16)} ${ch.size?`<span class="badge warn">⚠ ${p.checkpoints.length} cp</span>`:`<span class="badge">${p.checkpoints.length} cp</span>`}`;
+    $("chips").innerHTML = p.partitioning.map(kv => `<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("");
   } else {
-    $("crumbs").innerHTML = `<b>Datasets</b>`;
-    $("title").innerHTML = `All datasets`;
-    $("chips").innerHTML = `<span class="chip">date=<b>${DATES[S.day]}</b></span><span class="chip">${DS.length} datasets</span>`;
+    $("crumbs").innerHTML = `<a data-go="discover">Discover</a> / <a data-go="lineage">#${p.id}</a> / <b>Main Flow #${p.mainFlowId}</b>`;
+    $("title").innerHTML = `Flow #${p.mainFlowId} Waterfall <span class="badge">primary: ${esc(p.shortName)}</span>`;
+    $("chips").innerHTML = p.partitioning.map(kv => `<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("");
   }
   document.querySelectorAll("[data-go]").forEach(a => a.onclick = () => { S.tab = a.dataset.go; render(); });
-  $("statusSel").textContent = S.tab === "lineage" ? `Selected: ${label(d)} · ${partStr(d)}` : "";
-  $("refreshed").textContent = `Data as of ${fmtDate(S.day, true)} · Last refreshed ${new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}`;
+  $("statusSel").textContent = `Focal partitioning: ${p.id} (${p.shortName}) · mainFlow: ${p.mainFlowId}`;
+  $("refreshed").textContent = `Simulated v0.11.0 snapshot (${NOW_ISO})`;
 }
 
 function renderKpis() {
-  const scope = S.tab === "lineage" ? [...related(S.sel)].map(id => byId[id]) : DS;
-  const cps = scope.reduce((a,d) => a + cpsOf(d).length, 0);
-  const changed = scope.filter(d => changedMeasures(d).size);
-  const latest = scope.flatMap(d => cpsOf(d).map(c => c.t[1])).sort().at(-1);
-  const d = byId[S.sel], rc = recordCount(d, S.day), prev = S.day ? recordCount(d, S.day-1) : null;
-  const delta = prev ? (rc-prev)/prev*100 : null;
+  const p = byId[S.selId];
   const k = (l,v,s) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
-  $("kpis").innerHTML =
-    k(S.tab==="lineage"?"Datasets in view":"Datasets", scope.length, S.tab==="lineage" ? `${S.dir} · ${S.depth} lineage of ${d.name}` : "registered partitionings") +
-    k("Checkpoints captured", cps, `on ${fmtDate(S.day, true)} · last at ${latest}`) +
-    k("Datasets with value changes", `<span style="color:${changed.length?"var(--amber)":"var(--green)"}">${changed.length}</span>`, changed.length ? changed.map(x => x.name).join(", ") : "all measures equal across checkpoints") +
-    (S.tab==="lineage"
-      ? k(`Record count · ${d.name}`, fmtNum(rc), delta===null ? "no previous day" : `<span style="color:${Math.abs(delta)>5?"var(--amber)":"var(--sub)"}">${delta>=0?"▲":"▼"} ${Math.abs(delta).toFixed(1)}%</span> vs ${fmtDate(S.day-1)}`)
-      : k("Datasets without checkpoints", DS.filter(x => !cpsOf(x).length).length, `on ${fmtDate(S.day, true)}`));
+  if (S.tab === "discover") {
+    const res = runSearch();
+    const noCp = res.data.filter(x => !x.checkpoints.length).length;
+    const manual = res.data.filter(x => x.checkpoints.some(c => !c.measuredByAtumAgent)).length;
+    $("kpis").innerHTML =
+      k("Matching partitionings", res.total, `showing ${res.data.length} on page (hasMore=${res.hasMore})`) +
+      k("Without checkpoints", noCp, "included in key-only search") +
+      k("External / manual source", manual, "measuredByAtumAgent = false") +
+      k("Search endpoint", "O(1) key GIN", "runs.search_partitionings");
+  } else if (S.tab === "lineage") {
+    const g = computeSubgraph(S.selId, S.dir, S.depth);
+    const clo = computeClosure(S.selId);
+    const edgeDrifts = g.edges.filter(e => edgeHandoffDiffs(e).some(d => !d.same)).length;
+    const nodeDrifts = g.nodes.filter(n => changedMeasuresOf(n).size).length;
+    const expTotal = new Set([...g.expandableUpstreamNodeIds, ...g.expandableDownstreamNodeIds]).size;
+    $("kpis").innerHTML =
+      k("Graph nodes / edges", `${g.nodes.length} / ${g.edges.length}`, `${g.direction} · depth ${g.depth} · ${expTotal} expandable`) +
+      k("Intra-node drift", `<span style="color:${nodeDrifts?"var(--amber)":"var(--green)"}">${nodeDrifts}</span>`, "partitionings with checkpoint diffs") +
+      k("Edge handoff drift", `<span style="color:${edgeDrifts?"var(--amber)":"var(--green)"}">${edgeDrifts}</span>`, "parent→child measure mismatches") +
+      k("Flow closure size", clo.ancestors.length + clo.descendants.length + 1, `${clo.ancestors.length} ancestors · ${clo.descendants.length} descendants`);
+  } else {
+    const clo = computeClosure(S.selId);
+    const members = [p, ...clo.descendants];
+    const cps = members.flatMap(m => m.checkpoints);
+    $("kpis").innerHTML =
+      k("Main flow ID", p.mainFlowId, `GET /flows/${p.mainFlowId}/checkpoints`) +
+      k("Flow members", members.length, "primary + all downstream descendants") +
+      k("Total checkpoints", cps.length, "fetched in single paginated flow query") +
+      k("Manual checkpoints", cps.filter(c=>!c.measuredByAtumAgent).length, "measuredByAtumAgent = false");
+  }
+}
+
+function renderDiscover() {
+  if (S.tab !== "discover") return;
+  const wb = windowBounds();
+  $("openUpperWarn").classList.toggle("hidden", S.winPreset !== "open");
+  $("keyChips").innerHTML = Object.entries(S.searchKeys).map(([k,v]) =>
+    `<span class="chip">${esc(k)}=<b>${esc(v)}</b> <a data-rmkey="${esc(k)}" style="cursor:pointer;color:var(--muted);margin-left:3px">×</a></span>`
+  ).join("") || `<span class="muted" style="font-size:11.5px">none (activity-only search)</span>`;
+  $("keyChips").querySelectorAll("[data-rmkey]").forEach(a => a.onclick = () => { delete S.searchKeys[a.dataset.rmkey]; S.discOffset = 0; render(); });
+
+  const qp = [`limit=${S.discLimit}`, `offset=${S.discOffset}`, `latest-first=${S.latestFirst}`];
+  if (Object.keys(S.searchKeys).length) qp.push(`keys=${b64url(S.searchKeys)}`);
+  if (Object.keys(S.searchKeys).length === 0 || S.winPreset !== "open") { qp.push(`from=${wb.from}`); if (wb.to) qp.push(`to=${wb.to}`); }
+  else { qp.push(`from=${wb.from}`); }
+  $("searchUrlPreview").textContent = `GET /api/v2/partitionings/search?${qp.join("&")}`;
+
+  const res = runSearch();
+  $("discoverBody").innerHTML = res.data.map(p => {
+    const last = p.checkpoints.at(-1);
+    const ch = changedMeasuresOf(p);
+    const hasManual = p.checkpoints.some(c => !c.measuredByAtumAgent);
+    const hasEdges = EDGES.some(e => e.childPartitioningId === p.id || e.parentPartitioningId === p.id);
+    const srcTag = hasManual ? `<span class="badge manual">REST / manual</span>` : (!hasEdges && p.legacyAncestors ? `<span class="badge warn">pre-v0.11.0 closure</span>` : `<span class="badge">Spark agent</span>`);
+    const cpCell = !S.lazyCp ? `<span class="muted">lazy off</span>`
+      : (!last ? `<span class="muted">0 checkpoints</span>`
+        : `<span style="font-family:var(--mono);font-size:11px">${esc(last.name)} · ${last.processStartTime.slice(0,16)}Z</span>`);
+    const hint = !last ? `<span class="badge">no runs</span>`
+      : (ch.size ? `<span class="badge warn">⚠ ${ch.size} measure drift</span>` : `<span class="badge ok">equal</span>`);
+    return `<tr class="click ${p.id===S.selId?"selrow":""}" data-open="${p.id}">
+      <td style="font-family:var(--mono);font-size:11px">${p.id}</td>
+      <td class="wrap"><div style="display:flex;gap:4px;flex-wrap:wrap">${p.partitioning.map(kv=>`<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("")}</div></td>
+      <td>${appChip(p.author, 15)}</td>
+      <td>${srcTag}</td>
+      <td>${cpCell}</td>
+      <td>${hint}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="6" class="muted">No partitionings match the search filter.</td></tr>`;
+
+  $("discoverBody").querySelectorAll("[data-open]").forEach(r => r.onclick = () => {
+    S.selId = Number(r.dataset.open); S.selEdge = null; S.cpIdx = Math.max(0, byId[S.selId].checkpoints.length - 1);
+    S.droppedKeys.clear(); S.tab = "lineage"; render();
+  });
+  $("discoverPageInfo").textContent = `Showing ${res.data.length} of ${res.total} · offset=${S.discOffset} · hasMore=${res.hasMore}`;
+  $("discPrev").disabled = S.discOffset === 0;
+  $("discNext").disabled = !res.hasMore;
 }
 
 function renderGraph() {
-  const W = 170, H = 70, rel = related(S.sel);
-  let s = `<defs><marker id="a" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#94a3b8"/></marker>
-    <filter id="sh" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-opacity=".08"/></filter></defs>
-    <g font-size="12" font-family="Inter,-apple-system,Helvetica">`;
-  DS.forEach(c => c.parents.forEach(p => {
-    const a = byId[p], on = rel.has(p) && rel.has(c.id), hot = on && (p === S.sel || c.id === S.sel);
-    const x1 = a.x+W, y1 = a.y+H/2+2, x2 = c.x, y2 = c.y+H/2+2, m = (x1+x2)/2;
-    s += `<path d="M${x1},${y1} C${m},${y1} ${m},${y2} ${x2-2},${y2}" stroke="${hot?"#0b5cad":"#a3aec0"}" stroke-width="${hot?2:1.5}" fill="none" marker-end="url(#a)" opacity="${on?1:.15}"/>`;
-  }));
-  DS.forEach(d => {
-    const sel = d.id === S.sel, ch = changedMeasures(d).size > 0, op = rel.has(d.id) && matches(d) ? 1 : .28, y = d.y + 2;
-    const rc = recordCount(d, S.day);
-    s += `<g class="node" data-id="${d.id}" opacity="${op}" filter="url(#sh)">
-      <rect class="card" x="${d.x}" y="${y}" width="${W}" height="${H}" rx="6" fill="${sel?"#eaf2fb":"#fff"}" stroke="${sel?"#0b5cad":"#d5dce6"}" stroke-width="${sel?2:1}"/>
-      <text x="${d.x+14}" y="${y+20}" font-weight="650" fill="#111827">${d.name}</text>
-      <g transform="translate(${d.x+14},${y+27})">${appSvg(app(d),13)}</g><text x="${d.x+32}" y="${y+37}" fill="#6b7280" font-size="11">${app(d).name} · ${d.format}</text>
-      <text x="${d.x+14}" y="${y+57}" fill="#374151" font-size="11" font-family="SF Mono,Menlo,monospace">${fmtCompact(rc)} rows</text>
-      <g transform="translate(${d.x+W-10},${y+52})">
-        <rect x="${ch?-58:-36}" y="-11" width="${ch?58:36}" height="17" rx="8.5" fill="${ch?"#fff7e6":"#f1f5f9"}" stroke="${ch?"#fde7b0":"#e3e8ef"}"/>
-        <text x="${ch?-29:-18}" y="1.5" text-anchor="middle" font-size="10.5" font-weight="600" fill="${ch?"#b45309":"#4b5563"}">${ch?"⚠ ":""}${cpsOf(d).length} cp</text></g></g>`;
+  if (S.tab !== "lineage") return;
+  const g = computeSubgraph(S.selId, S.dir, S.depth);
+  const p = byId[S.selId];
+  $("graphSub").textContent = `GET /api/v2/partitionings/${S.selId}/lineage?direction=${S.dir}&depth=${S.depth}`;
+
+  const isLegacyNoEdges = g.edges.length === 0 && (p.legacyAncestors?.length || 0) > 0;
+  $("legacyBanner").classList.toggle("hidden", !isLegacyNoEdges);
+  if (isLegacyNoEdges) {
+    $("legacyBanner").innerHTML = `<span>⚠</span><div><b>No explicit edges recorded for this partitioning</b> (created before v0.11.0). <code>GET .../lineage</code> returns only the focal node; see the <b>Flow closure fallback</b> table below for transitive ancestors/descendants.</div>`;
+  }
+  $("truncBanner").classList.toggle("hidden", !g.truncated);
+
+  // Layered DAG layout with barycenter ordering & clean routing for skip-column edges
+  const rank = new Map();
+  const nodesIds = g.nodes.map(n => n.id);
+  nodesIds.forEach(id => rank.set(id, 0));
+  for (let i = 0; i < nodesIds.length; i++) {
+    g.edges.forEach(e => {
+      const r = (rank.get(e.parentPartitioningId) || 0) + 1;
+      if (r > (rank.get(e.childPartitioningId) || 0)) rank.set(e.childPartitioningId, r);
+    });
+  }
+  const cols = new Map();
+  g.nodes.forEach(n => { const r = rank.get(n.id); if (!cols.has(r)) cols.set(r, []); cols.get(r).push(n); });
+  const sortedRanks = [...cols.keys()].sort((a,b)=>a-b);
+  // 2-pass barycenter sweep (right-to-left then left-to-right) to minimize edge crossings
+  const rowIndex = new Map();
+  sortedRanks.forEach(r => cols.get(r).forEach((n, idx) => rowIndex.set(n.id, idx)));
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = sortedRanks.length - 2; i >= 0; i--) {
+      const arr = cols.get(sortedRanks[i]);
+      arr.sort((a,b) => {
+        const ca = g.edges.filter(e=>e.parentPartitioningId===a.id).map(e=>rowIndex.get(e.childPartitioningId)??0);
+        const cb = g.edges.filter(e=>e.parentPartitioningId===b.id).map(e=>rowIndex.get(e.childPartitioningId)??0);
+        const ba = ca.length ? ca.reduce((s,v)=>s+v,0)/ca.length : 99;
+        const bb = cb.length ? cb.reduce((s,v)=>s+v,0)/cb.length : 99;
+        return ba - bb || a.id - b.id;
+      });
+      arr.forEach((n, idx) => rowIndex.set(n.id, idx));
+    }
+    for (let i = 1; i < sortedRanks.length; i++) {
+      const arr = cols.get(sortedRanks[i]);
+      arr.sort((a,b) => {
+        const pa = g.edges.filter(e=>e.childPartitioningId===a.id).map(e=>rowIndex.get(e.parentPartitioningId)??0);
+        const pb = g.edges.filter(e=>e.childPartitioningId===b.id).map(e=>rowIndex.get(e.parentPartitioningId)??0);
+        const ba = pa.length ? pa.reduce((s,v)=>s+v,0)/pa.length : 99;
+        const bb = pb.length ? pb.reduce((s,v)=>s+v,0)/pb.length : 99;
+        return ba - bb || a.id - b.id;
+      });
+      arr.forEach((n, idx) => rowIndex.set(n.id, idx));
+    }
+  }
+
+  const maxCols = Math.max(1, ...sortedRanks.map(x => x + 1));
+  const maxRows = Math.max(1, ...[...cols.values()].map(a => a.length));
+  const W = 192, H = 76, XG = 64, YG = 26, PAD = 28;
+  const svgW = Math.max(760, PAD*2 + maxCols*W + (maxCols-1)*XG);
+  const svgH = Math.max(260, PAD*2 + maxRows*H + (maxRows-1)*YG);
+  const pos = {};
+  sortedRanks.forEach(r => {
+    const arr = cols.get(r);
+    const colH = arr.length*H + (arr.length-1)*YG;
+    const y0 = (svgH - colH)/2;
+    arr.forEach((n, rIdx) => { pos[n.id] = {x: PAD + r*(W+XG), y: y0 + rIdx*(H+YG)}; });
   });
-  $("graph").innerHTML = s + "</g>";
-  $("graph").querySelectorAll(".node").forEach(n => {
-    const d = byId[n.dataset.id];
-    n.onclick = () => select(d.id);
-    n.onmousemove = e => tip(e, `${label(d)}\n${partStr(d)}\nrecord count: ${fmtNum(recordCount(d, S.day))}\napplication: ${app(d).name} (${d.author})\ncheckpoints: ${cpsOf(d).map(c=>c.name).join(", ")}`);
-    n.onmouseleave = hideTip;
+
+  $("graph").setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
+  let svg = `<defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#94a3b8"/></marker>
+    <marker id="arrHot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#0b5cad"/></marker>
+    <marker id="arrWarn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#b45309"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-opacity=".08"/></filter>
+  </defs><g font-family="Inter,-apple-system,Helvetica">`;
+
+  g.edges.forEach((e, idx) => {
+    const a = pos[e.parentPartitioningId], b = pos[e.childPartitioningId];
+    const x1 = a.x + W, y1 = a.y + H/2, x2 = b.x, y2 = b.y + H/2, mx = (x1+x2)/2;
+    const colSpan = (rank.get(e.childPartitioningId) || 0) - (rank.get(e.parentPartitioningId) || 0);
+    const isSel = S.selEdge && S.selEdge.parentPartitioningId === e.parentPartitioningId && S.selEdge.childPartitioningId === e.childPartitioningId;
+    const diffs = edgeHandoffDiffs(e);
+    const hasDrift = diffs.some(d => !d.same);
+    const stroke = isSel ? "#0b5cad" : (hasDrift ? "#b45309" : "#94a3b8");
+    const marker = isSel ? "arrHot" : (hasDrift ? "arrWarn" : "arr");
+    let dPath, badgeX = mx, badgeY = (y1+y2)/2;
+    if (colSpan > 1) {
+      const arcY = Math.min(y1, y2) < svgH/2 ? 12 : svgH - 12;
+      dPath = `M${x1},${y1} C${x1+40},${arcY} ${x2-40},${arcY} ${x2-2},${y2}`;
+      badgeY = 0.125*y1 + 0.75*arcY + 0.125*y2;
+    } else {
+      dPath = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2-2},${y2}`;
+    }
+    svg += `<g class="edge-hit" data-edge="${idx}">
+      <path d="${dPath}" stroke="transparent" stroke-width="14" fill="none"/>
+      <path class="evis" d="${dPath}" stroke="${stroke}" stroke-width="${isSel?2.6:(hasDrift?2:1.5)}" fill="none" marker-end="url(#${marker})"/>
+      ${hasDrift ? `<g transform="translate(${badgeX},${badgeY})"><circle r="8" fill="#fff7e6" stroke="#b45309" stroke-width="1.2"/><text y="3.5" text-anchor="middle" font-size="10" font-weight="700" fill="#b45309">Δ</text></g>` : ""}
+    </g>`;
+  });
+
+  const expUpSet = new Set(g.expandableUpstreamNodeIds);
+  const expDnSet = new Set(g.expandableDownstreamNodeIds);
+
+  g.nodes.forEach(n => {
+    const {x, y} = pos[n.id];
+    const sel = n.id === S.selId && !S.selEdge;
+    const ch = changedMeasuresOf(n).size > 0;
+    const lastCp = n.checkpoints.at(-1);
+    const rc = lastCp?.measurements.find(m => m.measure.measureName === "count")?.result.mainValue.value;
+    const subKey = n.partitioning.find(kv => kv.key === "info_date" || kv.key === "ref_version");
+    const subText = `${appInfo(n.author).name}${subKey ? " · " + subKey.value : ""}`;
+    const titleTrunc = n.shortName.length > 22 ? n.shortName.slice(0,21) + "…" : n.shortName;
+    const manual = n.checkpoints.some(c => !c.measuredByAtumAgent);
+    svg += `<g class="node" data-nid="${n.id}" filter="url(#sh)">
+      <rect class="card" x="${x}" y="${y}" width="${W}" height="${H}" rx="7" fill="${sel?"#eaf2fb":"#fff"}" stroke="${sel?"#0b5cad":"#d5dce6"}" stroke-width="${sel?2:1}"/>
+      <text x="${x+12}" y="${y+20}" font-size="12" font-weight="650" fill="#111827">${esc(titleTrunc)}</text>
+      <g transform="translate(${x+12},${y+27})">${appSvg(n.author, 13)}</g>
+      <text x="${x+29}" y="${y+37}" font-size="11" fill="#4b5563">${esc(subText)}</text>
+      <text x="${x+12}" y="${y+59}" font-size="11" font-family="SF Mono,Menlo,monospace" fill="#374151">${rc ? Number(rc).toLocaleString("en-US")+" rows" : (n.checkpoints.length ? n.checkpoints.length+" cp" : "no checkpoints")}</text>
+      <g transform="translate(${x+W-10},${y+55})">
+        <rect x="${ch?-54:-34}" y="-11" width="${ch?54:34}" height="17" rx="8.5" fill="${ch?"#fff7e6":(manual?"#f5f3ff":"#f1f5f9")}" stroke="${ch?"#fde7b0":(manual?"#ddd6fe":"#e3e8ef")}"/>
+        <text x="${ch?-27:-17}" y="1" text-anchor="middle" font-size="10" font-weight="600" fill="${ch?"#b45309":(manual?"#6d28d9":"#4b5563")}">${ch?"⚠ ":""}${n.checkpoints.length} cp</text>
+      </g>`;
+    if (expUpSet.has(n.id)) {
+      svg += `<g class="exp-btn" data-exp="${n.id}" transform="translate(${x},${y+H/2})"><circle r="8" fill="#eaf2fb" stroke="#0b5cad"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="700" fill="#0b5cad">+</text></g>`;
+    }
+    if (expDnSet.has(n.id)) {
+      svg += `<g class="exp-btn" data-exp="${n.id}" transform="translate(${x+W},${y+H/2})"><circle r="8" fill="#eaf2fb" stroke="#0b5cad"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="700" fill="#0b5cad">+</text></g>`;
+    }
+    svg += `</g>`;
+  });
+
+  $("graph").innerHTML = svg + "</g>";
+  $("graph").querySelectorAll(".node").forEach(el => {
+    const n = byId[Number(el.dataset.nid)];
+    el.onclick = () => { S.selId = n.id; S.selEdge = null; S.cpIdx = Math.max(0, n.checkpoints.length - 1); S.droppedKeys.clear(); render(); };
+    el.onmousemove = ev => tip(ev, `ID: ${n.id}\n${n.partitioning.map(kv=>`${kv.key}=${kv.value}`).join("\n")}\nauthor: ${n.author}`);
+    el.onmouseleave = hideTip;
+  });
+  $("graph").querySelectorAll(".exp-btn").forEach(el => {
+    el.onclick = ev => { ev.stopPropagation(); S.expandedNodes.add(Number(el.dataset.exp)); S.depth = Math.min(20, S.depth + 1); render(); };
+    el.onmousemove = ev => { ev.stopPropagation(); tip(ev, "Node has parents/children outside current sub-graph\nClick + to expand depth"); };
+    el.onmouseleave = hideTip;
+  });
+  $("graph").querySelectorAll(".edge-hit").forEach(el => {
+    const e = g.edges[Number(el.dataset.edge)];
+    el.onclick = ev => { ev.stopPropagation(); S.selEdge = e; S.it = "edge"; render(); };
+    el.onmousemove = ev => {
+      const diffs = edgeHandoffDiffs(e);
+      const summary = diffs.length ? diffs.map(d => `${d.key}: ${d.same ? "match" : "Δ " + d.diffNum}`).join("\n") : "No overlapping measure keys";
+      tip(ev, `Edge ${e.parentPartitioningId} → ${e.childPartitioningId}\nlinkedBy: ${e.linkedBy} @ ${e.linkedAt}\n${summary}`);
+    };
+    el.onmouseleave = hideTip;
+  });
+
+  // Legacy closure table (auto-shown for edge-less legacy partitionings, or toggled manually)
+  const clo = computeClosure(S.selId);
+  const cloRows = [
+    ...clo.ancestors.map(a => ({rel:"Ancestor (upstream flow)", item:a})),
+    ...clo.descendants.map(d => ({rel:"Descendant (downstream flow)", item:d}))
+  ];
+  $("toggleClosureBtn").textContent = `${S.showClosure || isLegacyNoEdges ? "Hide" : "Show"} flow closure (${cloRows.length})`;
+  $("legacyClosurePanel").classList.toggle("hidden", !(S.showClosure || isLegacyNoEdges));
+  $("closureBody").innerHTML = cloRows.map(r => `<tr class="click" data-cid="${r.item.id}">
+    <td><span class="badge">${r.rel}</span></td>
+    <td style="font-family:var(--mono);font-size:11px">${r.item.id}</td>
+    <td class="wrap"><div style="display:flex;gap:4px;flex-wrap:wrap">${r.item.partitioning.map(kv=>`<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("")}</div></td>
+    <td>${appChip(r.item.author, 14)}</td>
+  </tr>`).join("") || `<tr><td colspan="4" class="muted">No ancestors or descendants in flow closure.</td></tr>`;
+  $("closureBody").querySelectorAll("[data-cid]").forEach(r => r.onclick = () => {
+    S.selId = Number(r.dataset.cid); S.selEdge = null; S.cpIdx = Math.max(0, byId[S.selId].checkpoints.length - 1); render();
   });
 }
 
 function renderTimeline() {
-  const d = byId[S.sel], cps = cpsOf(d);
-  $("cpSub").textContent = `${d.name} (${d.stage}) · ${fmtDate(S.day, true)} · ${cps.length} captured`;
-  $("timeline").innerHTML = cps.map((c,i) => `<div class="st ${i===S.cp?"on":""}" data-i="${i}"><div class="c"></div><b>${c.name}</b><div class="t" style="display:flex;gap:5px;align-items:center;justify-content:center">${c.t[1]} · ${appSvg(app(d),12)} ${app(d).name}</div><div class="t">${Object.keys(c.m).length} measures</div></div>`).join("");
-  $("timeline").querySelectorAll(".st").forEach(e => e.onclick = () => { S.cp = +e.dataset.i; render(); });
+  if (S.tab !== "lineage") return;
+  const p = byId[S.selId];
+  const cps = p.checkpoints.filter(c => !S.cpNameFilter || c.name === S.cpNameFilter);
+  const names = [...new Set(p.checkpoints.map(c => c.name))];
+  $("cpSub").textContent = `${p.shortName} · ${p.checkpoints.length} captured`;
+  $("cpNameFilterWrap").innerHTML = names.length > 1 ? `<select id="cpNameSel" style="height:26px;border:1px solid var(--line);border-radius:5px;font-size:11.5px;padding:0 6px"><option value="">All names</option>${names.map(n=>`<option ${n===S.cpNameFilter?"selected":""}>${esc(n)}</option>`).join("")}</select>` : "";
+  if ($("cpNameSel")) $("cpNameSel").onchange = e => { S.cpNameFilter = e.target.value; S.cpIdx = 0; render(); };
+
+  if (!cps.length) {
+    $("timeline").innerHTML = `<div class="muted" style="padding:6px 0">No checkpoints recorded for this partitioning yet.</div>`;
+    return;
+  }
+  if (S.cpIdx >= cps.length) S.cpIdx = cps.length - 1;
+  $("timeline").innerHTML = cps.map((c, i) => `
+    <div class="st ${i===S.cpIdx?"on":""}" data-ci="${i}">
+      <div class="c"></div>
+      <b>${esc(c.name)}</b>
+      <div class="t">${fmtTime(c.processStartTime)} · ${c.measuredByAtumAgent ? "agent" : '<span style="color:var(--purple)">manual</span>'}</div>
+      <div class="t">${c.properties?.executionID ? esc(c.properties.executionID) : c.measurements.length+" measures"}</div>
+    </div>`).join("");
+  $("timeline").querySelectorAll(".st").forEach(el => el.onclick = () => { S.cpIdx = Number(el.dataset.ci); S.selEdge = null; if (S.it === "edge") S.it = "meas"; render(); });
 }
 
 function renderInspector() {
-  const d = byId[S.sel], cps = cpsOf(d), c = cps[S.cp], changed = changedMeasures(d);
+  if (S.tab !== "lineage") return;
+  const p = byId[S.selId], cps = p.checkpoints, c = cps[S.cpIdx];
   let h = "";
-  if (S.it === "meas") {
-    const names = [...new Set(cps.flatMap(c => Object.keys(c.m)))];
-    h += `<table><tr><th>Measure</th>${cps.map((c,i) => `<th class="num ${i===S.cp?"cpsel":""}">${c.name}</th>`).join("")}</tr>`;
-    names.forEach(n => {
-      const first = cps.find(c => n in c.m).m[n];
-      h += `<tr><td>${n}</td>${cps.map(c => n in c.m ? `<td class="num ${c.m[n]!==first?"chg":""}" title="${fmtNum(c.m[n])}">${fmtShort(c.m[n])}</td>` : `<td class="num muted">–</td>`).join("")}</tr>`;
-    });
-    h += `</table>`;
-    h += changed.size
-      ? `<div class="alert"><span>⚠</span><div><b>${[...changed].join(", ")}</b> ${changed.size>1?"differ":"differs"} between checkpoints.<div class="muted" style="font-size:11px;margin-top:2px">Simple UI check (equal / not equal). Atum only stores measurements; it does not compare them.</div></div></div>`
-      : `<div class="info"><span>ℹ</span><div>${cps.length > 1 ? "Measures present in several checkpoints are equal." : "Single checkpoint — nothing to compare within this dataset."}</div></div>`;
-  }
-  if (S.it === "meta") {
-    const cols = [...new Set(Object.keys(c.m).map(n => (n.match(/\((.+)\)/) || n.match(/Σ (\w+)/) || [,"*"])[1]))].filter(x => x !== "*");
-    h += `<div class="sec">Partitioning</div><dl class="kv">${Object.entries(partObj(d)).map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
-      <div class="sec">Partitioning metadata</div><dl class="kv">${Object.entries(d.extra).map(([k,v]) => `<dt>${k}</dt><dd>${String(v).replace("{date}", DATES[S.day])}</dd>`).join("")}
-      <dt>author</dt><dd>${appChip(d, 16, ` <span class="muted">${d.author}</span>`)}</dd></dl>
-      <div class="sec">Checkpoint metadata · ${c.name} <span style="font-weight:400;text-transform:none;letter-spacing:0">(select on the timeline)</span></div><dl class="kv">
-      <dt>checkpoint id</dt><dd>${cpId(d, S.cp)}</dd><dt>name</dt><dd>${c.name}</dd><dt>author</dt><dd>${appChip(d, 16, ` <span class="muted">${d.author}</span>`)}</dd>
-      <dt>process start</dt><dd>${DATES[S.day]} ${c.t[0]}</dd><dt>process end</dt><dd>${DATES[S.day]} ${c.t[1]}</dd>
-      <dt>measured columns</dt><dd>${cols.join(", ") || "– (record count only)"}</dd><dt>measures</dt><dd>${Object.keys(c.m).join("<br>")}</dd>
-      <dt>agent</dt><dd>atum-agent-spark3 0.11.0</dd></dl>`;
-  }
-  $("inspector").innerHTML = h;
-  $("inspector").querySelectorAll("[data-id]").forEach(e => e.onclick = () => select(e.dataset.id));
-  $("inspector").querySelectorAll("[data-cp]").forEach(e => e.onclick = () => { S.cp = +e.dataset.cp; render(); });
-}
 
-function renderTrend() {
-  const SW = 390, X = i => 24 + i*(SW-48)/7;
-  $("trendDateHdr").textContent = fmtDate(S.day);
-  let rows = DS.filter(matches).map(d => {
-    const v = DATES.map((_,i) => metricOf(d,i));
-    const head = `<td><span style="display:inline-flex;align-items:center;gap:6px">${stageDot(d.stage)}<b style="font-weight:550">${d.name}</b></span> <span class="muted" style="font-size:11px">${d.stage}</span></td>`;
-    if (v.some(x => x == null)) return `<tr class="row ${d.id===S.sel?"selrow":""}" data-id="${d.id}">${head}<td class="muted" style="font-size:11px">not measured</td><td class="num muted">–</td><td></td></tr>`;
-    const lo = Math.min(...v), hi = Math.max(...v), Y = x => hi === lo ? 13 : 22 - (x-lo)/(hi-lo)*18;
-    const pts = v.map((x,i) => `${X(i)},${Y(x).toFixed(1)}`).join(" ");
-    const area = `${X(0)},26 ${pts} ${X(7)},26`;
-    const col = "#0b5cad";
-    const dots = v.map((x,i) => `<circle class="pt" data-i="${i}" data-v="${x}" cx="${X(i)}" cy="${Y(x).toFixed(1)}" r="${i===S.day?4:2.4}" fill="${i===S.day?"#0b5cad":"#fff"}" stroke="${i===S.day?"#fff":col}" stroke-width="1.5" style="cursor:pointer"/>`).join("");
-    const cur = v[S.day], prev = S.day ? v[S.day-1] : null, delta = prev ? (cur-prev)/prev*100 : null;
-    const pill = delta === null ? `<span class="badge">n/a</span>` : `<span class="badge ${Math.abs(delta)>5?"warn":""}">${delta>=0?"▲":"▼"} ${Math.abs(delta).toFixed(1)}%</span>`;
-    return `<tr class="row ${d.id===S.sel?"selrow":""}" data-id="${d.id}">${head}
-      <td><svg width="${SW}" height="26" viewBox="0 0 ${SW} 26"><rect x="${X(S.day)-9}" y="0" width="18" height="26" rx="3" fill="#d3e4f7" opacity=".55"/>
-      <polygon points="${area}" fill="${col}" opacity=".07"/><polyline fill="none" stroke="${col}" stroke-width="1.6" points="${pts}"/>${dots}</svg></td>
-      <td class="num">${fmtNum(cur)}</td><td class="num">${pill}</td></tr>`;
-  }).join("");
-  rows += `<tr><td></td><td><svg width="${SW}" height="14" viewBox="0 0 ${SW} 14">${DATES.map((_,i) =>
-    `<text class="ax" data-i="${i}" x="${X(i)}" y="11" text-anchor="middle" font-size="10" font-family="SF Mono,Menlo,monospace" style="cursor:pointer" fill="${i===S.day?"#0b5cad":"#8a94a6"}" font-weight="${i===S.day?700:400}">${fmtDate(i)}</text>`).join("")}</svg></td><td></td><td></td></tr>`;
-  $("trendBody").innerHTML = rows;
-  $("trendBody").querySelectorAll("tr.row").forEach(r => r.onclick = () => select(r.dataset.id));
-  $("trendBody").querySelectorAll(".pt, .ax").forEach(p => {
-    p.onclick = e => { e.stopPropagation(); S.day = +p.dataset.i; render(); };
-    if (p.classList.contains("pt")) { p.onmousemove = e => tip(e, `${fmtDate(+p.dataset.i, true)}\n${S.metric}: ${fmtNum(+p.dataset.v)}`); p.onmouseleave = hideTip; }
+  if (S.it === "meas") {
+    if (!cps.length) {
+      h = `<div class="info"><span>ℹ</span><div>This partitioning is registered with ${p.measureDefs.length} measure definition(s), but no checkpoints have been captured yet.</div></div>`;
+    } else {
+      const mKeys = [...new Set(cps.flatMap(cp => cp.measurements.map(m => measureKey(m.measure))))];
+      const changed = changedMeasuresOf(p);
+      h += `<div class="tbl-wrap"><table><thead><tr><th>Measure</th>${cps.map((cp, i) => `<th class="num ${i===S.cpIdx?"cpsel":""}">${esc(cp.name)}<div class="muted" style="font-size:10px;font-weight:400">${fmtTime(cp.processStartTime)}</div></th>`).join("")}</tr></thead><tbody>`;
+      mKeys.forEach(mk => {
+        const firstVal = cps.find(cp => cp.measurements.some(m => measureKey(m.measure) === mk))?.measurements.find(m => measureKey(m.measure) === mk)?.result.mainValue.value;
+        h += `<tr><td style="font-family:var(--mono);font-size:11.5px">${esc(mk)}</td>`;
+        cps.forEach(cp => {
+          const item = cp.measurements.find(m => measureKey(m.measure) === mk);
+          if (!item) { h += `<td class="num muted">–</td>`; return; }
+          const diff = item.result.mainValue.value !== firstVal;
+          const sup = Object.entries(item.result.supportValues || {}).map(([k,v])=>`${k}=${typeof v==="object"?v.value:v}`).join(", ");
+          h += `<td class="num ${diff?"chg":""}" title="${esc(item.result.mainValue.value)} (${item.result.mainValue.valueType})${sup?" | "+sup:""}">${esc(fmtVal(item.result.mainValue))}${sup?`<div class="muted" style="font-size:10px">${esc(sup)}</div>`:""}</td>`;
+        });
+        h += `</tr>`;
+      });
+      h += `</tbody></table></div>`;
+      h += changed.size
+        ? `<div class="alert"><span>⚠</span><div><b>${[...changed].join(", ")}</b> differ across checkpoints (same-name re-runs are kept distinct by checkpoint ID).</div></div>`
+        : `<div class="okbox"><span>✓</span><div>All overlapping measures match across checkpoints on this partitioning.</div></div>`;
+    }
+  }
+
+  if (S.it === "edge") {
+    const g = computeSubgraph(S.selId, "both", 1);
+    const activeEdge = S.selEdge || g.edges[0];
+    if (!activeEdge) {
+      h = `<div class="info"><span>ℹ</span><div>No explicit edges connected to this partitioning. (Pre-v0.11.0 links exist only in flow membership.)</div></div>`;
+    } else {
+      const parent = byId[activeEdge.parentPartitioningId], child = byId[activeEdge.childPartitioningId];
+      const diffs = edgeHandoffDiffs(activeEdge);
+      h += `<div class="sec">Selected edge</div>
+        <dl class="kv">
+          <dt>parent → child</dt><dd>#${parent.id} (${esc(parent.shortName)}) → #${child.id} (${esc(child.shortName)})</dd>
+          <dt>linkedBy</dt><dd>${appChip(activeEdge.linkedBy, 14)}</dd>
+          <dt>linkedAt</dt><dd>${activeEdge.linkedAt}</dd>
+        </dl>
+        <div class="sec">Boundary key reconstruction</div>
+        <div style="padding:6px 14px;font-size:11.5px">
+          <div class="muted" style="margin-bottom:4px">Parent keys (${esc(parent.author)}):</div>
+          <div style="margin-bottom:8px">${parent.partitioning.map(kv=>`<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join(" ")}</div>
+          <div class="muted" style="margin-bottom:4px">Child keys (${esc(child.author)}):</div>
+          <div>${child.partitioning.map(kv=>`<span class="chip">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join(" ")}</div>
+        </div>
+        <div class="sec">Cross-stage handoff comparison (UI hint)</div>`;
+      if (!diffs.length) {
+        h += `<div class="info"><span>ℹ</span><div>No overlapping <code>(measureName, measuredColumns)</code> between parent's last checkpoint and child's first checkpoint.</div></div>`;
+      } else {
+        h += `<div class="tbl-wrap"><table><thead><tr><th>Measure</th><th class="num">Parent (${esc(diffs[0].pCp.name)})</th><th class="num">Child (${esc(diffs[0].cCp.name)})</th><th class="num">Delta</th></tr></thead><tbody>`;
+        diffs.forEach(d => {
+          h += `<tr><td style="font-family:var(--mono);font-size:11px">${esc(d.key)}</td>
+            <td class="num">${esc(fmtVal(d.pRes.mainValue))}</td>
+            <td class="num ${d.same?"okcell":"chg"}">${esc(fmtVal(d.cRes.mainValue))}</td>
+            <td class="num">${d.same ? "0 ✓" : (d.diffNum !== null ? d.diffNum.toLocaleString("en-US") : "diff")}</td></tr>`;
+        });
+        h += `</tbody></table></div>`;
+      }
+      if (g.edges.length > 1) {
+        h += `<div class="sec">Other 1-hop edges around focal node</div>`;
+        g.edges.forEach(e => {
+          const pn = byId[e.parentPartitioningId], cn = byId[e.childPartitioningId];
+          h += `<div class="rel" data-pick-edge="${e.parentPartitioningId}:${e.childPartitioningId}"><span>${esc(pn.shortName)} → ${esc(cn.shortName)}</span><span class="arrow">inspect ›</span></div>`;
+        });
+      }
+    }
+  }
+
+  if (S.it === "trend") {
+    // Schema-agnostic key-drop search!
+    if (S.trendAutoForId !== S.selId && p.partitioning.length > 1) {
+      S.trendAutoForId = S.selId;
+      S.droppedKeys.clear();
+      const autoKey = p.partitioning.find(kv => ["info_date","ref_version","date"].includes(kv.key)) || p.partitioning.at(-1);
+      if (autoKey) S.droppedKeys.add(autoKey.key);
+    }
+    const kept = Object.fromEntries(p.partitioning.filter(kv => !S.droppedKeys.has(kv.key)).map(kv => [kv.key, kv.value]));
+    const siblings = Object.keys(kept).length
+      ? PART_LIST.filter(x => { const xm = partMap(x); return Object.entries(kept).every(([k,v]) => xm[k] === v); }).sort((a,b) => a.id - b.id)
+      : [p];
+    const allMetricKeys = [...new Set(siblings.flatMap(s => s.checkpoints.flatMap(cp => cp.measurements.map(m => measureKey(m.measure)))))];
+    if (!allMetricKeys.includes(S.trendMetric) && allMetricKeys.length) S.trendMetric = allMetricKeys[0];
+
+    h += `<div class="info"><span>ℹ</span><div>Uncheck a key below (e.g. <code>info_date</code> or <code>ref_version</code>) to search sibling partitionings via <code>/partitionings/search?keys=...</code> — works for any partitioning schema.</div></div>
+      <div style="padding:0 14px 10px;display:flex;gap:6px;flex-wrap:wrap">
+        ${p.partitioning.map(kv => `<span class="chip tog ${S.droppedKeys.has(kv.key)?"off":""}" data-tkey="${esc(kv.key)}">${esc(kv.key)}=<b>${esc(kv.value)}</b></span>`).join("")}
+      </div>
+      <div class="qurl">GET /api/v2/partitionings/search?keys=${Object.keys(kept).length ? b64url(kept) : "<select at least 1 key>"}</div>`;
+
+    if (!Object.keys(kept).length) {
+      h += `<div class="alert"><span>⚠</span><div>At least one non-empty key (or a <code>from</code> time bound) is required by <code>/partitionings/search</code> (returns HTTP 400 otherwise).</div></div>`;
+    } else {
+      const ptsData = siblings.map(s => {
+        const raw = s.checkpoints.at(-1)?.measurements.find(m => measureKey(m.measure) === S.trendMetric)?.result.mainValue;
+        const num = raw && raw.valueType !== "String" ? Number(raw.value) : null;
+        return {s, raw, num};
+      });
+      const nums = ptsData.filter(d => Number.isFinite(d.num)).map(d => d.num);
+      let spark = "";
+      if (nums.length > 1) {
+        const sw = 400, sh = 54, lo = Math.min(...nums), hi = Math.max(...nums);
+        const sx = i => 16 + i*(sw-32)/(ptsData.length-1);
+        const sy = v => hi === lo ? sh/2 : (sh-10) - (v-lo)/(hi-lo)*(sh-20);
+        const validPts = ptsData.map((d,i) => Number.isFinite(d.num) ? `${sx(i).toFixed(1)},${sy(d.num).toFixed(1)}` : null).filter(Boolean).join(" ");
+        spark = `<div style="padding:8px 14px 4px"><svg width="100%" viewBox="0 0 ${sw} ${sh}" style="background:#fafbfc;border:1px solid var(--line2);border-radius:6px">
+          <polyline fill="none" stroke="#0b5cad" stroke-width="1.8" points="${validPts}"/>
+          ${ptsData.map((d,i) => Number.isFinite(d.num) ? `<circle cx="${sx(i).toFixed(1)}" cy="${sy(d.num).toFixed(1)}" r="${d.s.id===S.selId?4:2.6}" fill="${d.s.id===S.selId?"#0b5cad":"#fff"}" stroke="#0b5cad" stroke-width="1.5"/>` : "").join("")}
+        </svg></div>`;
+      }
+      h += `<div class="sec">Sibling runs (${siblings.length}) <select id="trendMetSel" style="height:24px;border:1px solid var(--line);border-radius:4px;font-size:11px;text-transform:none;letter-spacing:0">${allMetricKeys.map(k=>`<option ${k===S.trendMetric?"selected":""}>${esc(k)}</option>`).join("")}</select></div>${spark}`;
+      h += `<div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Varying key(s)</th><th class="num">${esc(S.trendMetric)}</th></tr></thead><tbody>`;
+      ptsData.forEach(({s, raw}) => {
+        const vary = s.partitioning.filter(kv => !(kv.key in kept)).map(kv => `${kv.key}=${kv.value}`).join(", ") || "exact";
+        h += `<tr class="click ${s.id===S.selId?"selrow":""}" data-sib="${s.id}">
+          <td style="font-family:var(--mono);font-size:11px">${s.id}</td>
+          <td style="font-family:var(--mono);font-size:11px">${esc(vary)}</td>
+          <td class="num">${fmtVal(raw)}</td>
+        </tr>`;
+      });
+      h += `</tbody></table></div>`;
+    }
+  }
+
+  if (S.it === "meta") {
+    h += `<div class="sec">Partitioning (PartitioningWithIdDTO)</div>
+      <dl class="kv">
+        <dt>id</dt><dd>${p.id}</dd>
+        <dt>author</dt><dd>${appChip(p.author, 15)}</dd>
+        <dt>mainFlowId</dt><dd>${p.mainFlowId}</dd>
+        ${p.partitioning.map(kv => `<dt>key: ${esc(kv.key)}</dt><dd>${esc(kv.value)}</dd>`).join("")}
+      </dl>
+      <div class="sec">Registered measure definitions (GET .../measures)</div>
+      <dl class="kv">${p.measureDefs.map(m => `<dt>${esc(m.measureName)}</dt><dd>[${m.measuredColumns.map(esc).join(", ")}]</dd>`).join("")}</dl>
+      <div class="sec">Additional data (GET .../additional-data, lazy)</div>
+      <dl class="kv">${p.additionalData.length ? p.additionalData.map(ad => `<dt>${esc(ad.key)}</dt><dd>${esc(ad.value)} <span class="muted">(${esc(ad.author)})</span></dd>`).join("") : `<dt>–</dt><dd class="muted">none</dd>`}</dl>`;
+    if (c) {
+      h += `<div class="sec">Selected checkpoint (CheckpointV2DTO)</div>
+        <dl class="kv">
+          <dt>id</dt><dd>${c.id}</dd>
+          <dt>name</dt><dd>${esc(c.name)}</dd>
+          <dt>author</dt><dd>${esc(c.author)}</dd>
+          <dt>measuredByAtumAgent</dt><dd>${c.measuredByAtumAgent ? "true (Spark agent)" : '<span style="color:var(--purple);font-weight:600">false (REST / external)</span>'}</dd>
+          <dt>processStartTime</dt><dd>${c.processStartTime}</dd>
+          <dt>processEndTime</dt><dd>${c.processEndTime}</dd>
+          <dt>properties</dt><dd>${c.properties ? Object.entries(c.properties).map(([k,v])=>`${esc(k)}=${esc(v)}`).join("<br>") : "null"}</dd>
+        </dl>`;
+    }
+  }
+
+  $("inspector").innerHTML = h;
+  $("inspector").querySelectorAll("[data-tkey]").forEach(el => el.onclick = () => {
+    S.trendTouched = true;
+    const k = el.dataset.tkey; if (S.droppedKeys.has(k)) S.droppedKeys.delete(k); else S.droppedKeys.add(k); render();
+  });
+  if ($("trendMetSel")) $("trendMetSel").onchange = e => { S.trendMetric = e.target.value; render(); };
+  $("inspector").querySelectorAll("[data-sib]").forEach(el => el.onclick = () => {
+    S.selId = Number(el.dataset.sib); S.cpIdx = Math.max(0, byId[S.selId].checkpoints.length - 1); render();
+  });
+  $("inspector").querySelectorAll("[data-pick-edge]").forEach(el => el.onclick = () => {
+    const [pid, cid] = el.dataset.pickEdge.split(":").map(Number);
+    S.selEdge = EDGES.find(e => e.parentPartitioningId === pid && e.childPartitioningId === cid); render();
   });
 }
 
-function renderDatasets() {
-  $("dsDate").textContent = `as of ${fmtDate(S.day, true)}`;
-  const key = {name:d=>label(d), tool:d=>d.tool, cps:d=>cpsOf(d).length, rc:d=>recordCount(d,S.day)}[S.sort];
-  const list = !key ? DS.filter(matches) : DS.filter(matches).sort((a,b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * (S.asc ? 1 : -1));
-  document.querySelectorAll("th.sort").forEach(th => { th.textContent = th.textContent.replace(/ [▲▼]$/, ""); if (th.dataset.sort === S.sort) th.textContent += S.asc ? " ▲" : " ▼"; });
-  $("dsBody").innerHTML = list.map(d => {
-    const cps = cpsOf(d), ch = changedMeasures(d);
-    return `<tr class="r" data-id="${d.id}"><td><span style="display:inline-flex;gap:6px;align-items:center">${stageDot(d.stage)}<b style="font-weight:550">${label(d)}</b></span></td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--sub)">${partStr(d)}</td><td>${appChip(d)}</td>
-      <td class="num">${cps.length}</td><td class="num">${fmtNum(recordCount(d,S.day))}</td><td style="font-family:var(--mono);font-size:11px">${cps.at(-1).name} · ${cps.at(-1).t[1]}</td>
-      <td>${ch.size?`<span class="badge warn">⚠ ${[...ch].join(", ")}</span>`:`<span class="badge ok">equal</span>`}</td></tr>`;
-  }).join("") || `<tr><td colspan="7" class="muted">No dataset matches the search.</td></tr>`;
-  $("dsBody").querySelectorAll("tr.r").forEach(r => r.onclick = () => { S.tab = "lineage"; select(r.dataset.id); });
+function renderFlowView() {
+  if (S.tab !== "flow") return;
+  const p = byId[S.selId], clo = computeClosure(S.selId);
+  const members = [p, ...clo.descendants];
+  const wb = windowBounds();
+  $("flowSub").textContent = `mainFlow #${p.mainFlowId} · ${members.length} partitioning(s) · window [${wb.from.slice(0,10)}, ${wb.to ? wb.to.slice(0,10) : "+∞"})`;
+  let items = members.flatMap(m => m.checkpoints.map(c => ({part:m, cp:c})));
+  items = items.filter(({cp}) => inWindow(cp.processStartTime, wb));
+  if (S.flowCpName.trim()) items = items.filter(({cp}) => cp.name === S.flowCpName.trim());
+  if (S.flowPropFilter.includes("=")) {
+    const [pk, pv] = S.flowPropFilter.split("=");
+    items = items.filter(({cp}) => cp.properties && cp.properties[pk.trim()] === pv.trim());
+  }
+  items.sort((a,b) => b.cp.processStartTime.localeCompare(a.cp.processStartTime));
+
+  $("flowBody").innerHTML = items.map(({part, cp}) => `
+    <tr class="click" data-fp="${part.id}">
+      <td style="font-family:var(--mono);font-size:11px">${cp.processStartTime}</td>
+      <td><b>${esc(part.shortName)}</b> <span class="muted" style="font-family:var(--mono);font-size:10.5px">#${part.id}</span></td>
+      <td><b>${esc(cp.name)}</b></td>
+      <td>${appChip(cp.author, 14)} ${cp.measuredByAtumAgent ? "" : `<span class="badge manual">manual</span>`}</td>
+      <td style="font-family:var(--mono);font-size:11px">${cp.properties ? Object.entries(cp.properties).map(([k,v])=>`${esc(k)}=${esc(v)}`).join(" ") : "–"}</td>
+      <td class="wrap" style="font-family:var(--mono);font-size:11px">${cp.measurements.map(m => `${esc(measureKey(m.measure))}=${esc(fmtVal(m.result.mainValue))}`).join(" · ")}</td>
+    </tr>`).join("") || `<tr><td colspan="6" class="muted">No checkpoints in this flow matching the active window/filters.</td></tr>`;
+  $("flowBody").querySelectorAll("[data-fp]").forEach(r => r.onclick = () => { S.selId = Number(r.dataset.fp); S.tab = "lineage"; render(); });
 }
 
-function render() { renderChrome(); renderKpis(); renderGraph(); renderTimeline(); renderInspector(); renderTrend(); renderDatasets(); writeHash(); }
+function render() {
+  renderChrome();
+  renderKpis();
+  renderDiscover();
+  renderGraph();
+  renderTimeline();
+  renderInspector();
+  renderFlowView();
+}
 
-// ---------- tooltip ----------
-function tip(e, text) { const t = $("tip"); t.style.display = "block"; t.textContent = text; t.style.left = e.clientX+14+"px"; t.style.top = e.clientY+14+"px"; }
+// ---------- Wiring ----------
+document.querySelectorAll(".rail a").forEach(a => a.onclick = () => { S.tab = a.dataset.tab; render(); });
+document.querySelectorAll("[data-dir]").forEach(b => b.onclick = () => { S.dir = b.dataset.dir; render(); });
+document.querySelectorAll("[data-depth]").forEach(b => b.onclick = () => { S.depth = Number(b.dataset.depth); render(); });
+document.querySelectorAll("[data-it]").forEach(b => b.onclick = () => { S.it = b.dataset.it; render(); });
+$("winPreset").onchange = e => { S.winPreset = e.target.value; S.discOffset = 0; render(); };
+$("quickFilter").oninput = e => { S.quickFilter = e.target.value; S.discOffset = 0; if (S.tab !== "discover") S.tab = "discover"; render(); };
+$("lazyCpToggle").onchange = e => { S.lazyCp = e.target.checked; render(); };
+$("latestFirstToggle").onchange = e => { S.latestFirst = e.target.checked; S.discOffset = 0; render(); };
+$("addKeyBtn").onclick = () => {
+  const k = $("addKeyInput").value.trim(), v = $("addValInput").value.trim();
+  if (k) { S.searchKeys[k] = v; $("addKeyInput").value = ""; $("addValInput").value = ""; S.discOffset = 0; render(); }
+};
+$("presetGlueBtn").onclick = () => { S.searchKeys = {catalog_path:"edla_prod_curated.un_customer_payments"}; S.discOffset = 0; render(); };
+$("presetDateBtn").onclick = () => { S.searchKeys = {info_date:"2026-11-11"}; S.discOffset = 0; render(); };
+$("clearKeysBtn").onclick = () => { S.searchKeys = {}; S.discOffset = 0; render(); };
+$("toggleClosureBtn").onclick = () => { S.showClosure = !S.showClosure; render(); };
+$("hideClosureBtn").onclick = () => { S.showClosure = false; render(); };
+$("discPrev").onclick = () => { S.discOffset = Math.max(0, S.discOffset - S.discLimit); render(); };
+$("discNext").onclick = () => { S.discOffset += S.discLimit; render(); };
+$("flowCpName").oninput = e => { S.flowCpName = e.target.value; renderFlowView(); };
+$("flowPropFilter").oninput = e => { S.flowPropFilter = e.target.value; renderFlowView(); };
+$("exportBtn").onclick = () => {
+  const p = byId[S.selId], wb = windowBounds(), res = runSearch(), g = computeSubgraph(S.selId, S.dir, S.depth);
+  $("exportJson").textContent = JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    completenessWarning: "Live pagination (non-snapshot); concurrent inserts or late checkpoints can shift pages.",
+    activeTab: S.tab,
+    window: {from: wb.from, to: wb.to || null},
+    focalPartitioning: {id: p.id, mainFlowId: p.mainFlowId, partitioning: p.partitioning, author: p.author},
+    lineageGraphSummary: {direction: g.direction, depth: g.depth, nodes: g.nodes.length, edges: g.edges.length, truncated: g.truncated},
+    discoveryQuery: {keys: S.searchKeys, totalMatched: res.total, pageSize: S.discLimit, offset: S.discOffset, hasMore: res.hasMore}
+  }, null, 2);
+  $("exportModal").classList.remove("hidden");
+};
+$("closeModal").onclick = () => $("exportModal").classList.add("hidden");
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && e.target.tagName !== "INPUT") { e.preventDefault(); $("quickFilter").focus(); }
+  if (e.key === "Escape") $("exportModal").classList.add("hidden");
+});
+function tip(e, text) { const t = $("tip"); t.style.display = "block"; t.textContent = text; t.style.left = Math.min(window.innerWidth-320, e.clientX+14)+"px"; t.style.top = (e.clientY+14)+"px"; }
 function hideTip() { $("tip").style.display = "none"; }
 
-
-// ---------- wiring ----------
-document.querySelectorAll("[data-dir]").forEach(b => b.onclick = () => { S.dir = b.dataset.dir; render(); });
-document.querySelectorAll("[data-depth]").forEach(b => b.onclick = () => { S.depth = b.dataset.depth; render(); });
-document.querySelectorAll("[data-it]").forEach(b => b.onclick = () => { S.it = b.dataset.it; render(); });
-document.querySelectorAll(".rail a").forEach(a => a.onclick = () => { S.tab = a.dataset.tab; render(); });
-document.querySelectorAll("th.sort").forEach(th => th.onclick = () => { S.asc = S.sort === th.dataset.sort ? !S.asc : true; S.sort = th.dataset.sort; render(); });
-$("prevDay").onclick = () => { if (S.day > 0) { S.day--; render(); } };
-$("nextDay").onclick = () => { if (S.day < DATES.length-1) { S.day++; render(); } };
-$("search").oninput = e => { S.q = e.target.value; render(); };
-$("search").onkeydown = e => { if (e.key === "Enter") { const m = DS.find(matches); if (m) select(m.id); } };
-$("metric").onchange = e => { S.metric = e.target.value; render(); };
-document.addEventListener("keydown", e => {
-  if (e.key === "/" && e.target.tagName !== "INPUT") { e.preventDefault(); $("search").focus(); return; }
-  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
-  if (e.key === "ArrowLeft") $("prevDay").click();
-  if (e.key === "ArrowRight") $("nextDay").click();
-});
-window.addEventListener("hashchange", () => { readHash(); render(); });
-readHash();
+// Hash routing for screenshots / deep links: #discover | #lineage/<id>/<it> | #flow/<id>
+const parts = location.hash.slice(1).split("/");
+if (["discover","lineage","flow"].includes(parts[0])) S.tab = parts[0];
+if (parts[1] && byId[Number(parts[1])]) S.selId = Number(parts[1]);
+if (parts[2] && ["meas","edge","trend","meta"].includes(parts[2])) S.it = parts[2];
+if (S.tab === "lineage" && !S.selEdge) S.cpIdx = Math.max(0, byId[S.selId].checkpoints.length - 1);
+if (S.it === "edge") S.selEdge = EDGES.find(e => e.childPartitioningId === S.selId || e.parentPartitioningId === S.selId) || null;
 render();
 </script>
 </body>
