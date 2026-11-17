@@ -227,6 +227,37 @@ class GetPartitioningLineageGraphResultUnitTests extends AnyFunSuiteLike {
     assert(dtoEither.isLeft)
   }
 
+  test("toLineageGraphDTO decodes truncated and expandable boundary node IDs when present") {
+    val json = parse(
+      """{
+        |  "primaryPartitioningId": 200,
+        |  "depth": 1,
+        |  "direction": "both",
+        |  "nodes": [],
+        |  "edges": [],
+        |  "truncated": true,
+        |  "expandableUpstreamNodeIds": [100],
+        |  "expandableDownstreamNodeIds": [300, 301]
+        |}""".stripMargin
+    ).getOrElse(fail("Invalid JSON"))
+
+    val dtoEither = LineageGraphResult(json).toLineageGraphDTO
+    assert(
+      dtoEither == Right(
+        LineageGraphDTO(
+          primaryPartitioningId = 200L,
+          depth = 1,
+          direction = "both",
+          nodes = Seq.empty,
+          edges = Seq.empty,
+          truncated = true,
+          expandableUpstreamNodeIds = Seq(100L),
+          expandableDownstreamNodeIds = Seq(300L, 301L)
+        )
+      )
+    )
+  }
+
   test("GetPartitioningLineageGraphArgs fields") {
     val args = GetPartitioningLineageGraphArgs(123L, "upstream", 2)
     assert(args.partitioningId == 123L)

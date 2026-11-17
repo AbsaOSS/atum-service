@@ -1,0 +1,173 @@
+/*
+ * Copyright 2021 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+CREATE OR REPLACE FUNCTION runs.search_partitionings(
+    IN i_limit INT DEFAULT 10,
+    IN i_offset BIGINT DEFAULT 0,
+    IN i_keys JSONB DEFAULT NULL,
+    IN i_from_time TIMESTAMPTZ DEFAULT NULL,
+    IN i_to_time TIMESTAMPTZ DEFAULT NULL,
+    IN i_latest_first BOOLEAN DEFAULT FALSE,
+    OUT status INTEGER,
+    OUT status_text TEXT,
+    OUT id BIGINT,
+    OUT partitioning JSONB,
+    OUT author TEXT,
+    OUT has_more BOOLEAN
+) RETURNS SETOF record AS
+$$
+-------------------------------------------------------------------------------
+-- Searches partitionings by exact key/value containment and/or the existence of any
+-- checkpoint in [i_from_time, i_to_time). Missing time bounds are unbounded. Keys-only searches include partitionings
+-- without checkpoints. An empty keys object is unconstrained, so at least one time bound is then required.
+--
+-- Returns original partitioning envelopes ordered by ID (ascending by default, or descending when i_latest_first is
+-- true), status 11/OK, and paging metadata. No matches (including offsets past the end) return no rows.
+-- Invalid direct-call arguments return status 51 with a descriptive status_text.
+--
+-- Additive migration: rollback can drop this function after callers are removed;
+-- the supporting indexes can be dropped concurrently without changing data.
+-------------------------------------------------------------------------------
+DECLARE
+    _keys JSONB := nullif(i_keys, '{}'::JSONB);
+    _latest_first BOOLEAN := coalesce(i_latest_first, FALSE);
+    _has_time BOOLEAN := (i_from_time IS NOT NULL OR i_to_time IS NOT NULL);
+    -- Sentinel bounds turn optional [from, to) filters into pure range predicates (no OR), keeping index scans
+    -- viable under cached generic plans (assumes checkpoints.process_start_time never stores +/-infinity).
+    _from TIMESTAMPTZ := coalesce(i_from_time, '-infinity'::TIMESTAMPTZ);
+    _to TIMESTAMPTZ := coalesce(i_to_time, 'infinity'::TIMESTAMPTZ);
+BEGIN
+    IF i_limit IS NULL OR i_limit < 1 OR i_limit > 1000 THEN
+        status := 51;
+        status_text := 'i_limit must be between 1 and 1000 and must not be NULL';
+        RETURN NEXT;
+        RETURN;
+    END IF;
+    IF i_offset IS NULL OR i_offset < 0 THEN
+        status := 51;
+        status_text := 'i_offset must be nonnegative and must not be NULL';
+        RETURN NEXT;
+        RETURN;
+    END IF;
+    IF i_keys IS NOT NULL THEN
+        IF jsonb_typeof(i_keys) <> 'object' THEN
+            status := 51;
+            status_text := 'i_keys must be a JSON object of string values';
+            RETURN NEXT;
+            RETURN;
+        END IF;
+        IF EXISTS (SELECT 1 FROM jsonb_each(i_keys) K WHERE jsonb_typeof(K.value) <> 'string') THEN
+            status := 51;
+            status_text := 'i_keys must be a JSON object of string values';
+            RETURN NEXT;
+            RETURN;
+        END IF;
+    END IF;
+    IF i_from_time IS NOT NULL AND i_to_time IS NOT NULL AND i_from_time >= i_to_time THEN
+        status := 51;
+        status_text := 'i_from_time must be earlier than i_to_time';
+        RETURN NEXT;
+        RETURN;
+    END IF;
+    IF _keys IS NULL AND i_from_time IS NULL AND i_to_time IS NULL THEN
+        status := 51;
+        status_text := 'At least one key/value or checkpoint time bound is required';
+        RETURN NEXT;
+        RETURN;
+    END IF;
+
+    -- Static IF/ELSIF branches (instead of dynamic RETURN QUERY EXECUTE/$query$ or a single IS NULL OR query)
+    -- keep SQL compile-time checked and readable while giving each access path (time-only, keys-only, keys+time)
+    -- its own plan. Trade-off: CASE-based ORDER BY (matching runs.get_partitioning_checkpoints) avoids duplicating
+    -- ASC/DESC queries, at the cost of sorting all key-matching rows before LIMIT on very broad key filters.
+    IF _keys IS NULL THEN
+        -- Scalar primary-key lookups prevent an ID-ordered merge join from scanning unrelated history.
+        -- Exclude orphan checkpoints before paging; load full partitioning rows only for the selected IDs.
+        RETURN QUERY
+            WITH active_ids AS MATERIALIZED (
+                SELECT DISTINCT C.fk_partitioning
+                FROM runs.checkpoints C
+                WHERE C.process_start_time >= _from
+                  AND C.process_start_time < _to
+            ),
+            page_ids AS MATERIALIZED (
+                SELECT A.fk_partitioning
+                FROM active_ids A
+                WHERE (SELECT P.id_partitioning FROM runs.partitionings P
+                       WHERE P.id_partitioning = A.fk_partitioning) IS NOT NULL
+                ORDER BY CASE WHEN _latest_first THEN A.fk_partitioning END DESC,
+                         CASE WHEN NOT _latest_first THEN A.fk_partitioning END ASC
+                LIMIT i_limit + 1 OFFSET i_offset
+            ),
+            page_partitionings AS MATERIALIZED (
+                SELECT (SELECT P FROM runs.partitionings P
+                        WHERE P.id_partitioning = I.fk_partitioning) AS partitioning_row
+                FROM page_ids I
+            )
+            SELECT 11, 'OK'::TEXT, (P.partitioning_row).id_partitioning,
+                   (P.partitioning_row).partitioning, (P.partitioning_row).created_by,
+                   count(*) OVER () > i_limit
+            FROM page_partitionings P
+            ORDER BY CASE WHEN _latest_first THEN (P.partitioning_row).id_partitioning END DESC,
+                     CASE WHEN NOT _latest_first THEN (P.partitioning_row).id_partitioning END ASC
+            LIMIT i_limit;
+    ELSIF NOT _has_time THEN
+        RETURN QUERY
+            WITH candidates AS MATERIALIZED (
+                SELECT P.id_partitioning, P.partitioning, P.created_by
+                FROM runs.partitionings P
+                WHERE (P.partitioning -> 'keysToValuesMap') @> _keys
+                ORDER BY CASE WHEN _latest_first THEN P.id_partitioning END DESC,
+                         CASE WHEN NOT _latest_first THEN P.id_partitioning END ASC
+                LIMIT i_limit + 1 OFFSET i_offset
+            )
+            SELECT 11, 'OK'::TEXT, C.id_partitioning, C.partitioning, C.created_by,
+                   count(*) OVER () > i_limit
+            FROM candidates C
+            ORDER BY CASE WHEN _latest_first THEN C.id_partitioning END DESC,
+                     CASE WHEN NOT _latest_first THEN C.id_partitioning END ASC
+            LIMIT i_limit;
+    ELSE
+        RETURN QUERY
+            WITH candidates AS MATERIALIZED (
+                SELECT P.id_partitioning, P.partitioning, P.created_by
+                FROM runs.partitionings P
+                WHERE (P.partitioning -> 'keysToValuesMap') @> _keys
+                  AND EXISTS (
+                      SELECT 1
+                      FROM runs.checkpoints C
+                      WHERE C.fk_partitioning = P.id_partitioning
+                        AND C.process_start_time >= _from
+                        AND C.process_start_time < _to
+                  )
+                ORDER BY CASE WHEN _latest_first THEN P.id_partitioning END DESC,
+                         CASE WHEN NOT _latest_first THEN P.id_partitioning END ASC
+                LIMIT i_limit + 1 OFFSET i_offset
+            )
+            SELECT 11, 'OK'::TEXT, C.id_partitioning, C.partitioning, C.created_by,
+                   count(*) OVER () > i_limit
+            FROM candidates C
+            ORDER BY CASE WHEN _latest_first THEN C.id_partitioning END DESC,
+                     CASE WHEN NOT _latest_first THEN C.id_partitioning END ASC
+            LIMIT i_limit;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp;
+
+ALTER FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ, BOOLEAN) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ, BOOLEAN) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ, BOOLEAN) TO atum_user;

@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.server.api.v2.service
 
-import org.mockito.Mockito.{mock, when}
+import org.mockito.Mockito.{mock, verify, when}
 import za.co.absa.atum.model.dto.{ChildPartitioningDTO, LineageGraphDTO, ParentPartitioningDTO, PartitioningWithIdDTO}
-import za.co.absa.atum.server.api.TestData
+import za.co.absa.atum.server.api.{PartitioningSearchTestData, TestData}
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
@@ -29,7 +29,7 @@ import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
 
-object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
+object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData with PartitioningSearchTestData {
 
   private val partitioningRepositoryMock = mock(classOf[PartitioningRepository])
 
@@ -158,9 +158,74 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
 
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
 
+  when(partitioningRepositoryMock.searchPartitionings(
+    2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), Some(true)
+  )).thenReturn(ZIO.succeed(ResultHasMore(searchPartitionings.reverse)))
+  when(partitioningRepositoryMock.searchPartitionings(3, 1L, Some(searchKeys), None, None, None))
+    .thenReturn(ZIO.succeed(ResultNoMore(searchPartitionings)))
+  when(partitioningRepositoryMock.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
+  when(partitioningRepositoryMock.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
+  when(partitioningRepositoryMock.searchPartitionings(
+    4, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+  )).thenReturn(ZIO.fail(GeneralDatabaseError("search database unavailable")))
+  when(partitioningRepositoryMock.searchPartitionings(
+    5, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+  )).thenReturn(ZIO.fail(NotFoundDatabaseError("search function failure")))
+  when(partitioningRepositoryMock.searchPartitionings(
+    6, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+  )).thenReturn(ZIO.fail(ErrorInDataDatabaseError("invalid search parameters")))
+
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("PartitioningServiceSuite")(
+      suite("SearchPartitioningsSuite")(
+        test("Forwards limit, Long offset, decoded keys, timezone-aware bounds and latestFirst unchanged") {
+          for {
+            result <- PartitioningService.searchPartitionings(
+              2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), Some(true)
+            )
+            _ <- ZIO.attempt(verify(partitioningRepositoryMock).searchPartitionings(
+              2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), Some(true)
+            ))
+          } yield assertTrue(result == ResultHasMore(searchPartitionings.reverse))
+        },
+        test("Preserves a key-only final page and hasMore=false") {
+          for {
+            result <- PartitioningService.searchPartitionings(3, 1L, Some(searchKeys), None, None, None)
+          } yield assertTrue(result == ResultNoMore(searchPartitionings))
+        },
+        test("Preserves empty time-only results") {
+          for {
+            result <- PartitioningService.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
+        },
+        test("Forwards an explicit empty key filter alongside a time bound") {
+          for {
+            result <- PartitioningService.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
+        },
+        test("Maps execution failures to GeneralServiceError") {
+          for {
+            result <- PartitioningService.searchPartitionings(
+              4, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+            ).exit
+          } yield assertTrue(result == Exit.fail(
+            GeneralServiceError("Failed to perform 'searchPartitionings': search database unavailable")
+          ))
+        },
+        test("Propagates classified database failures") {
+          assertZIO(PartitioningService.searchPartitionings(
+            5, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+          ).exit)(failsWithA[NotFoundServiceError])
+        },
+        test("Maps ErrorInDataDatabaseError to ErrorInDataServiceError") {
+          assertZIO(PartitioningService.searchPartitionings(
+            6, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
+          ).exit)(failsWithA[ErrorInDataServiceError])
+        }
+      ),
       suite("CreatePartitioningSuite")(
         test("Passes Created(PartitioningWithIdDTO) through") {
           for {

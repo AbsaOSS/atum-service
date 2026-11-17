@@ -75,7 +75,26 @@ object GetPartitioningLineageGraphIntegrationTests extends ConfigProviderTest wi
           upDto.nodes.map(_.id).toSet == Set(a, b),
           upDto.edges.map(e => (e.parentPartitioningId, e.childPartitioningId)).toSet == Set((a, b)),
           downDto.nodes.map(_.id).toSet == Set(b, c),
-          downDto.edges.map(e => (e.parentPartitioningId, e.childPartitioningId)).toSet == Set((b, c))
+          downDto.edges.map(e => (e.parentPartitioningId, e.childPartitioningId)).toSet == Set((b, c)),
+          !bothDto.truncated,
+          bothDto.expandableUpstreamNodeIds.isEmpty,
+          bothDto.expandableDownstreamNodeIds.isEmpty
+        )
+      },
+      test("depth-limited sub-graph identifies expandable upstream and downstream boundary nodes") {
+        for {
+          a <- create("boundA", Seq.empty[Long])
+          b <- create("boundB", Seq(a))
+          c <- create("boundC", Seq(b))
+          d <- create("boundD", Seq(c))
+          e <- create("boundE", Seq(d))
+          res <- lineageGraph(c, "both", 1)
+          dto = res.toOption.get.data.get.toLineageGraphDTO.toOption.get
+        } yield assertTrue(
+          dto.nodes.map(_.id).toSet == Set(b, c, d),
+          !dto.truncated,
+          dto.expandableUpstreamNodeIds == Seq(b),
+          dto.expandableDownstreamNodeIds == Seq(d)
         )
       }
     ) @@ TestAspect.sequential

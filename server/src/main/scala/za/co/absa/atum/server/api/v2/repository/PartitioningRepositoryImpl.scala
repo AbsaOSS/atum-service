@@ -33,8 +33,9 @@ import za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren.G
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph.GetPartitioningLineageGraphArgs
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningDescendants.GetPartitioningDescendantsArgs
-import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningWithParents, GetPartitioning, GetPartitioningAdditionalData, GetPartitioningById, GetPartitioningMainFlow, GetPartitioningMeasures, GetPartitioningMeasuresById, UpdatePartitioningParent}
+import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningWithParents, GetPartitioning, GetPartitioningAdditionalData, GetPartitioningById, GetPartitioningMainFlow, GetPartitioningMeasures, GetPartitioningMeasuresById, SearchPartitionings, UpdatePartitioningParent}
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
+import za.co.absa.atum.server.api.database.runs.functions.SearchPartitionings.SearchPartitioningsArgs
 import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
 import za.co.absa.atum.server.api.exception.DatabaseError
 import za.co.absa.atum.server.api.exception.DatabaseError.{ConflictDatabaseError, GeneralDatabaseError}
@@ -51,6 +52,8 @@ import za.co.absa.db.fadb.status.FailedOrRows
 import zio._
 import zio.interop.catz.asyncInstance
 
+import java.time.ZonedDateTime
+
 class PartitioningRepositoryImpl(
   createPartitioningWithParentsFn: CreatePartitioningWithParents,
   getPartitioningMeasuresFn: GetPartitioningMeasures,
@@ -63,6 +66,7 @@ class PartitioningRepositoryImpl(
   getPartitioningMainFlowFn: GetPartitioningMainFlow,
   updatePartitioningParentFn: UpdatePartitioningParent,
   getPartitioningAncestorsFn: GetPartitioningAncestors,
+  searchPartitioningsFn: SearchPartitionings,
   getPartitioningDescendantsFn: GetPartitioningDescendants,
   getDirectParentsFn: GetDirectParents,
   getDirectChildrenFn: GetDirectChildren,
@@ -130,6 +134,34 @@ class PartitioningRepositoryImpl(
         "getPartitioning"
       )
     )
+  }
+
+  override def searchPartitionings(
+    limit: Int,
+    offset: Long,
+    keys: Option[Map[String, String]],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime],
+    latestFirst: Option[Boolean] = None
+  ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
+    val databaseFrom = from.map(ceilToMicrosecond)
+    val databaseTo = to.map(ceilToMicrosecond)
+    val emptyWindow = from.zip(to).exists { case (start, end) => start.isBefore(end) } &&
+      databaseFrom.zip(databaseTo).exists { case (start, end) => start.isEqual(end) }
+
+    if (emptyWindow) ZIO.succeed(ResultNoMore(Seq.empty))
+    else {
+      decodePaginatedPartitionings(
+        searchPartitioningsFn(SearchPartitioningsArgs(limit, offset, keys, databaseFrom, databaseTo, latestFirst)),
+        "searchPartitionings"
+      )
+    }
+  }
+
+  // For microsecond-stored timestamps, ceiling both bounds preserves >= from and < to without JDBC rounding.
+  private def ceilToMicrosecond(time: ZonedDateTime): ZonedDateTime = {
+    val remainingNanos = time.getNano % 1000
+    if (remainingNanos == 0) time else time.plusNanos(1000 - remainingNanos)
   }
 
   private def processPartitioningFromDBOptionIO(
@@ -282,6 +314,7 @@ object PartitioningRepositoryImpl {
       with GetPartitioningMainFlow
       with UpdatePartitioningParent
       with GetPartitioningAncestors
+      with SearchPartitionings
       with GetPartitioningDescendants
       with GetDirectParents
       with GetDirectChildren
@@ -300,6 +333,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMainFlow <- ZIO.service[GetPartitioningMainFlow]
       updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
       getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
+      searchPartitionings <- ZIO.service[SearchPartitionings]
       getPartitioningDescendants <- ZIO.service[GetPartitioningDescendants]
       getDirectParents <- ZIO.service[GetDirectParents]
       getDirectChildren <- ZIO.service[GetDirectChildren]
@@ -316,6 +350,7 @@ object PartitioningRepositoryImpl {
       getPartitioningMainFlow,
       updatePartitioningParent,
       getPartitioningAncestors,
+      searchPartitionings,
       getPartitioningDescendants,
       getDirectParents,
       getDirectChildren,

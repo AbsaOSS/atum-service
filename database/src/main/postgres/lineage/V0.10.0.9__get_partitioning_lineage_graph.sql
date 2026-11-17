@@ -28,6 +28,10 @@ CREATE OR REPLACE FUNCTION lineage.get_partitioning_lineage_graph(
 --      Returns the complete lineage graph (nodes + edges) centered on a partitioning.
 --      Enables single-roundtrip lineage visualization without the N+1 query problem.
 --      BFS traversal is capped at 5000 nodes per direction (safety cap against giant fanout hubs).
+--      Includes boundary/truncation hints:
+--        * truncated: true when the MAX_NODES safety cap cut off further reachable nodes
+--        * expandableUpstreamNodeIds: nodes in the returned subgraph that have parents outside it
+--        * expandableDownstreamNodeIds: nodes in the returned subgraph that have children outside it
 --
 -- Parameters:
 --      i_partitioning_id - ID of the focal partitioning
@@ -37,7 +41,8 @@ CREATE OR REPLACE FUNCTION lineage.get_partitioning_lineage_graph(
 -- Returns:
 --      status        - Status code (11 = OK, 41 = Not Found)
 --      status_text   - Status text
---      lineage_graph - JSONB containing { primaryPartitioningId, depth, direction, nodes: [...], edges: [...] }
+--      lineage_graph - JSONB containing { primaryPartitioningId, depth, direction, nodes, edges,
+--                        truncated, expandableUpstreamNodeIds, expandableDownstreamNodeIds }
 --
 -------------------------------------------------------------------------------
 $$
@@ -52,6 +57,8 @@ DECLARE
     _next_frontier      BIGINT[];
     _depth              INTEGER;
     _remaining          INTEGER;
+    _upstream_truncated BOOLEAN := FALSE;
+    _downstream_truncated BOOLEAN := FALSE;
 BEGIN
     -- Check if the primary partitioning exists
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id;
@@ -106,11 +113,22 @@ BEGIN
             _remaining := MAX_NODES - cardinality(_upstream_visited);
             IF cardinality(_next_frontier) > _remaining THEN
                 _next_frontier := _next_frontier[1:_remaining];
+                _upstream_truncated := TRUE;
             END IF;
 
             _upstream_visited := _upstream_visited || _next_frontier;
             _frontier := _next_frontier;
         END LOOP;
+
+        IF NOT _upstream_truncated AND _depth < _max_depth AND cardinality(_upstream_visited) >= MAX_NODES THEN
+            _upstream_truncated := EXISTS (
+                SELECT 1
+                FROM lineage.partitioning_edges E
+                JOIN runs.partitionings P ON P.id_partitioning = E.fk_parent_partitioning
+                WHERE E.fk_child_partitioning = ANY(_frontier)
+                  AND NOT (E.fk_parent_partitioning = ANY(_upstream_visited))
+            );
+        END IF;
     END IF;
 
     -- Iterative BFS for downstream traversal (capped at MAX_NODES)
@@ -141,11 +159,22 @@ BEGIN
             _remaining := MAX_NODES - cardinality(_downstream_visited);
             IF cardinality(_next_frontier) > _remaining THEN
                 _next_frontier := _next_frontier[1:_remaining];
+                _downstream_truncated := TRUE;
             END IF;
 
             _downstream_visited := _downstream_visited || _next_frontier;
             _frontier := _next_frontier;
         END LOOP;
+
+        IF NOT _downstream_truncated AND _depth < _max_depth AND cardinality(_downstream_visited) >= MAX_NODES THEN
+            _downstream_truncated := EXISTS (
+                SELECT 1
+                FROM lineage.partitioning_edges E
+                JOIN runs.partitionings P ON P.id_partitioning = E.fk_child_partitioning
+                WHERE E.fk_parent_partitioning = ANY(_frontier)
+                  AND NOT (E.fk_child_partitioning = ANY(_downstream_visited))
+            );
+        END IF;
     END IF;
 
     _all_visited := ARRAY(
@@ -153,7 +182,7 @@ BEGIN
         FROM unnest(_upstream_visited || _downstream_visited) AS V(id)
     );
 
-    -- Collect valid nodes (guarding against dangling edges) and all induced edges (including cross-edges for 'both')
+    -- Collect valid nodes (guarding against dangling edges), all induced edges, and unexpanded boundary nodes
     WITH valid_nodes AS (
         SELECT P.id_partitioning AS id, P.partitioning, P.created_by
         FROM unnest(_all_visited) AS V(id)
@@ -164,6 +193,28 @@ BEGIN
         FROM valid_nodes VC
         JOIN lineage.partitioning_edges E ON E.fk_child_partitioning = VC.id
         JOIN valid_nodes VP ON VP.id = E.fk_parent_partitioning
+    ),
+    expandable_upstream AS (
+        SELECT COALESCE(jsonb_agg(N.id ORDER BY N.id), '[]'::jsonb) AS ids
+        FROM valid_nodes N
+        WHERE EXISTS (
+            SELECT 1
+            FROM lineage.partitioning_edges E
+            JOIN runs.partitionings P ON P.id_partitioning = E.fk_parent_partitioning
+            WHERE E.fk_child_partitioning = N.id
+              AND NOT EXISTS (SELECT 1 FROM valid_nodes V WHERE V.id = E.fk_parent_partitioning)
+        )
+    ),
+    expandable_downstream AS (
+        SELECT COALESCE(jsonb_agg(N.id ORDER BY N.id), '[]'::jsonb) AS ids
+        FROM valid_nodes N
+        WHERE EXISTS (
+            SELECT 1
+            FROM lineage.partitioning_edges E
+            JOIN runs.partitionings P ON P.id_partitioning = E.fk_child_partitioning
+            WHERE E.fk_parent_partitioning = N.id
+              AND NOT EXISTS (SELECT 1 FROM valid_nodes V WHERE V.id = E.fk_child_partitioning)
+        )
     ),
     nodes_json AS (
         SELECT COALESCE(
@@ -199,10 +250,13 @@ BEGIN
         'depth', _max_depth,
         'direction', _direction,
         'nodes', N.nodes,
-        'edges', E.edges
+        'edges', E.edges,
+        'truncated', (_upstream_truncated OR _downstream_truncated),
+        'expandableUpstreamNodeIds', EU.ids,
+        'expandableDownstreamNodeIds', ED.ids
     )
     INTO lineage_graph
-    FROM nodes_json N, edges_json E;
+    FROM nodes_json N, edges_json E, expandable_upstream EU, expandable_downstream ED;
 
     RETURN;
 END;
@@ -214,4 +268,4 @@ REVOKE EXECUTE ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, 
 GRANT EXECUTE ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) TO atum_user;
 
 COMMENT ON FUNCTION lineage.get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER) IS
-'Returns the lineage graph (nodes + edges) for a partitioning.';
+'Returns the lineage graph (nodes, edges, and boundary/truncation hints) for a partitioning.';

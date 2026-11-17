@@ -69,7 +69,10 @@ object GetPartitioningLineageGraph {
     depth: Int,
     direction: String,
     nodes: Seq[LineageNodeFromDB],
-    edges: Seq[LineageEdgeDTO]
+    edges: Seq[LineageEdgeDTO],
+    truncated: Boolean,
+    expandableUpstreamNodeIds: Seq[Long],
+    expandableDownstreamNodeIds: Seq[Long]
   )
 
   private object LineageGraphFromDB {
@@ -80,7 +83,21 @@ object GetPartitioningLineageGraph {
         direction <- c.downField("direction").as[String]
         nodes <- c.downField("nodes").as[Option[Seq[LineageNodeFromDB]]].map(_.getOrElse(Seq.empty))
         edges <- c.downField("edges").as[Option[Seq[LineageEdgeDTO]]].map(_.getOrElse(Seq.empty))
-      } yield LineageGraphFromDB(primaryPartitioningId, depth, direction, nodes, edges)
+        truncated <- c.downField("truncated").as[Option[Boolean]].map(_.getOrElse(false))
+        expandableUpstreamNodeIds <-
+          c.downField("expandableUpstreamNodeIds").as[Option[Seq[Long]]].map(_.getOrElse(Seq.empty))
+        expandableDownstreamNodeIds <-
+          c.downField("expandableDownstreamNodeIds").as[Option[Seq[Long]]].map(_.getOrElse(Seq.empty))
+      } yield LineageGraphFromDB(
+        primaryPartitioningId,
+        depth,
+        direction,
+        nodes,
+        edges,
+        truncated,
+        expandableUpstreamNodeIds,
+        expandableDownstreamNodeIds
+      )
     }
   }
 
@@ -94,7 +111,16 @@ object GetPartitioningLineageGraph {
             }
           }
           .map { nodes =>
-            LineageGraphDTO(raw.primaryPartitioningId, raw.depth, raw.direction, nodes, raw.edges)
+            LineageGraphDTO(
+              raw.primaryPartitioningId,
+              raw.depth,
+              raw.direction,
+              nodes,
+              raw.edges,
+              raw.truncated,
+              raw.expandableUpstreamNodeIds,
+              raw.expandableDownstreamNodeIds
+            )
           }
       }
     }

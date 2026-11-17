@@ -116,6 +116,7 @@ object Main extends ZIOAppDefault {
           GetPartitioningMainFlow.layer,
           UpdatePartitioningParent.layer,
           GetPartitioningAncestors.layer,
+          SearchPartitionings.layer,
           GetPartitioningDescendants.layer,
           GetDirectParents.layer,
           GetDirectChildren.layer,

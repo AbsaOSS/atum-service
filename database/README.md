@@ -37,7 +37,7 @@ to set the current state as the baseline.
 
 The database is organized into three main schemas:
 
-- **`runs`**: Core partitioning, checkpoint, and measure definition operations along with their metadata
+- **`runs`**: Core partitioning, checkpoint, and measure definition operations along with their metadata, plus `search_partitionings` (key-subset and checkpoint time-window search, backed by `runs.partitionings` GIN and `runs.checkpoints` start-time indexes)
 - **`flows`**: Transitive closure (`partitioning_to_flow`) and flow-based queries (`get_flow_partitionings`, `get_flow_checkpoints`)
 - **`lineage`**: Edge-based lineage operations (source of truth):
   - `partitioning_edges` table (direct parent-child relationships)

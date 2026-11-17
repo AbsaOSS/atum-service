@@ -28,6 +28,8 @@ import za.co.absa.atum.server.model.{CreationResult, PaginatedResult}
 import sttp.model.StatusCode
 import zio._
 
+import java.time.ZonedDateTime
+
 class PartitioningControllerImpl(partitioningService: PartitioningService)
     extends PartitioningController
     with BaseController {
@@ -136,6 +138,23 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     mapToSingleSuccessResponse(
       serviceCall[FlowDTO, FlowDTO](
         partitioningService.getPartitioningMainFlow(partitioningId)
+      )
+    )
+  }
+
+  override def searchPartitionings(
+    limit: Int,
+    offset: Long,
+    keys: Option[Map[String, String]],
+    from: Option[ZonedDateTime],
+    to: Option[ZonedDateTime],
+    latestFirst: Option[Boolean] = None
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit,
+      offset,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.searchPartitionings(limit, offset, keys, from, to, latestFirst)
       )
     )
   }

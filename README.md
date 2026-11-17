@@ -147,8 +147,10 @@ version.*
 ### Server `server/`
 
 A REST API service offering capabilities for storing and retrieving measurement data from and to persistent storage.
-The server accepts metrics potentially from several `Atum Agents` and saves them into one central relational database. 
-Also, it is able to send the measurements back if requested via `Atum Reader`.
+The server accepts metrics potentially from several `Atum Agents` and saves them into one central relational database.
+Also, it is able to send the measurements back if requested via `Atum Reader`, and exposes v2 REST endpoints for
+partitioning search (`GET /api/v2/partitionings/search` by key subset and/or checkpoint time window) and lineage
+navigation (`parents`, `children`, `ancestors`, `descendants`, `lineage`).
 
 Important note: the server never receives any real data - it only works with the metadata and metrics defined
 by the agent!
