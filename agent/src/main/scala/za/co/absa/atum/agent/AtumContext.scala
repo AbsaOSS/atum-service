@@ -52,7 +52,7 @@ class AtumContext private[agent] (
    *  @param subPartitions the partitions for the child context
    *  @param mergeWithParent if true (default), the child's partitioning keys are the concatenation of parent + sub.
    *                         If false, the child's partitioning uses only `subPartitions` as its content while
-   *                         the parent-child relationship is still recorded in the data store (via flows).
+   *                         the parent-child relationship is still recorded in the data store (explicit lineage and flows).
    *
    *  Does not copy measure definitions (copyMeasureDefinitions = false).
    *  @return the sub-partition context
@@ -69,7 +69,7 @@ class AtumContext private[agent] (
    *  @param subPartitions the partitions for the child context
    *  @param mergeWithParent if true (default), the child's partitioning keys are the concatenation of parent + sub.
    *                         If false, the child's partitioning uses only `subPartitions` as its content while
-   *                         the parent-child relationship is still recorded in the data store (via flows).
+   *                         the parent-child relationship is still recorded in the data store (explicit lineage and flows).
    *  @return the sub-partition context
    */
   def subPartitionContext(subPartitions: AtumPartitions, mergeWithParent: Boolean = true): AtumContext =
@@ -82,7 +82,7 @@ class AtumContext private[agent] (
    *  @param subPartitions the partitions for the child context
    *  @param mergeWithParent if true, the child's partitioning keys are the concatenation of parent + sub.
    *                         If false, the child's partitioning uses only `subPartitions` as its content while
-   *                         the parent-child relationship is still recorded in the data store (via flows).
+   *                         the parent-child relationship is still recorded in the data store (explicit lineage and flows).
    *  @param copyMeasureDefinitions if true and the child partitioning is newly created, the parent's measure
    *                         definitions are copied to it by the server; if false (what every other overload sends)
    *                         nothing is copied. Copying is governed solely by this flag, independent of

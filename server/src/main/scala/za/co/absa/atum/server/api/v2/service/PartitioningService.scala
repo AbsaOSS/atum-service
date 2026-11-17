@@ -64,4 +64,20 @@ trait PartitioningService {
     limit: Int,
     offset: Long
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningParents(partitioningId: Long): IO[ServiceError, Seq[ParentPartitioningDTO]]
+
+  def getPartitioningChildren(partitioningId: Long): IO[ServiceError, Seq[ChildPartitioningDTO]]
+
+  def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ServiceError, LineageGraphDTO]
 }

@@ -72,7 +72,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
       response = SingleSuccessResponse(result.data)
       status = result match {
-        case Created(_)  => StatusCode.Created
+        case Created(_) => StatusCode.Created
         case Existing(_) => StatusCode.Ok
       }
       uri <- createRootAnchoredResourcePath(Seq(V2Paths.Partitionings, result.data.id.toString), apiVersion = 2)
@@ -164,9 +164,56 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit,
+      offset,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.getPartitioningDescendants(partitioningId, limit, offset)
+      )
+    )
+  }
+
+  override def getPartitioningParents(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[ParentPartitioningDTO], Seq[ParentPartitioningDTO]](
+        partitioningService.getPartitioningParents(partitioningId)
+      )
+    )
+  }
+
+  override def getPartitioningChildren(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ChildPartitioningDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[ChildPartitioningDTO], Seq[ChildPartitioningDTO]](
+        partitioningService.getPartitioningChildren(partitioningId)
+      )
+    )
+  }
+
+  override def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ErrorResponse, SingleSuccessResponse[LineageGraphDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[LineageGraphDTO, LineageGraphDTO](
+        partitioningService.getPartitioningLineageGraph(partitioningId, direction, depth)
+      )
+    )
+  }
+
 }
 
 object PartitioningControllerImpl {
+
   /** Maximum number of DISTINCT parent ids accepted by `POST /partitionings` (more is answered with 400). */
   val MaxParents = 100
 

@@ -22,8 +22,11 @@ import za.co.absa.atum.model.dto.MeasureResultDTO.TypedValue
 import za.co.absa.atum.model.dto._
 import za.co.absa.atum.model.ResultValueType
 import za.co.absa.atum.server.api.database.flows.functions.GetFlowPartitionings.GetFlowPartitioningsResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren.GetDirectChildrenResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetDirectParents.GetDirectParentsResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph.LineageGraphResult
+import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 import za.co.absa.atum.server.model.database._
-import za.co.absa.atum.server.api.database.runs.functions.GetPartitioningAncestors.GetPartitioningAncestorsResult
 
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -114,6 +117,26 @@ trait TestData {
   protected val getPartitioningAncestorsResult2NoMore: GetPartitioningAncestorsResult =
     getPartitioningAncestorsResult2.copy(hasMore = false)
 
+  // Direct parents fixtures
+  protected val timestamp1: ZonedDateTime = ZonedDateTime.parse("2026-11-09T16:00:00Z")
+  protected val timestamp2: ZonedDateTime = ZonedDateTime.parse("2026-11-09T16:15:00Z")
+
+  protected val getDirectParentsResult1: GetDirectParentsResult = GetDirectParentsResult(
+    id = partitioningFromDB1.id,
+    partitioningJson = partitioningAsJson,
+    author = partitioningFromDB1.author,
+    linkedBy = Some("linker1"),
+    linkedAt = Some(timestamp1)
+  )
+
+  protected val getDirectParentsResult2: GetDirectParentsResult = GetDirectParentsResult(
+    id = partitioningFromDB2.id,
+    partitioningJson = partitioningAsJson,
+    author = partitioningFromDB2.author,
+    linkedBy = Some("linker2"),
+    linkedAt = Some(timestamp2)
+  )
+
   // Partitioning with ID DTO
   protected val partitioningWithIdDTO1: PartitioningWithIdDTO = PartitioningWithIdDTO(
     id = partitioningFromDB1.id,
@@ -123,8 +146,102 @@ trait TestData {
   protected val partitioningWithIdDTO2: PartitioningWithIdDTO = PartitioningWithIdDTO(
     id = partitioningFromDB2.id,
     partitioning = partitioningDTO1,
-    author = partitioningFromDB1.author
+    author = partitioningFromDB2.author
   )
+
+  // Parent Partitioning DTO (matches getDirectParentsResult1/2)
+  protected val parentPartitioningDTO1: ParentPartitioningDTO = ParentPartitioningDTO(
+    id = getDirectParentsResult1.id,
+    partitioning = partitioningDTO1,
+    author = getDirectParentsResult1.author,
+    linkedBy = getDirectParentsResult1.linkedBy,
+    linkedAt = getDirectParentsResult1.linkedAt
+  )
+  protected val parentPartitioningDTO2: ParentPartitioningDTO = ParentPartitioningDTO(
+    id = getDirectParentsResult2.id,
+    partitioning = partitioningDTO1,
+    author = getDirectParentsResult2.author,
+    linkedBy = getDirectParentsResult2.linkedBy,
+    linkedAt = getDirectParentsResult2.linkedAt
+  )
+
+  protected val getDirectChildrenResult1: GetDirectChildrenResult = GetDirectChildrenResult(
+    id = partitioningFromDB1.id,
+    partitioningJson = partitioningAsJson,
+    author = partitioningFromDB1.author,
+    linkedBy = Some("linker1"),
+    linkedAt = Some(timestamp1)
+  )
+
+  protected val getDirectChildrenResult2: GetDirectChildrenResult = GetDirectChildrenResult(
+    id = partitioningFromDB2.id,
+    partitioningJson = partitioningAsJson,
+    author = partitioningFromDB2.author,
+    linkedBy = Some("linker2"),
+    linkedAt = Some(timestamp2)
+  )
+
+  protected val childPartitioningDTO1: ChildPartitioningDTO = ChildPartitioningDTO(
+    id = getDirectChildrenResult1.id,
+    partitioning = partitioningDTO1,
+    author = getDirectChildrenResult1.author,
+    linkedBy = getDirectChildrenResult1.linkedBy,
+    linkedAt = getDirectChildrenResult1.linkedAt
+  )
+  protected val childPartitioningDTO2: ChildPartitioningDTO = ChildPartitioningDTO(
+    id = getDirectChildrenResult2.id,
+    partitioning = partitioningDTO1,
+    author = getDirectChildrenResult2.author,
+    linkedBy = getDirectChildrenResult2.linkedBy,
+    linkedAt = getDirectChildrenResult2.linkedAt
+  )
+
+  protected val lineageEdgeDTO1: LineageEdgeDTO = LineageEdgeDTO(
+    parentPartitioningId = 1L,
+    childPartitioningId = 2L,
+    linkedBy = Some("linker1"),
+    linkedAt = Some(timestamp1)
+  )
+
+  protected val lineageGraphDTO1: LineageGraphDTO = LineageGraphDTO(
+    primaryPartitioningId = 2L,
+    depth = 5,
+    direction = "both",
+    nodes = Seq(partitioningWithIdDTO1, partitioningWithIdDTO2.copy(id = 2L)),
+    edges = Seq(lineageEdgeDTO1)
+  )
+
+  protected val lineageGraphResultJson: Json = parser
+    .parse(
+      s"""{
+       |  "primaryPartitioningId": 2,
+       |  "depth": 5,
+       |  "direction": "both",
+       |  "nodes": [
+       |    {
+       |      "id": ${partitioningFromDB1.id},
+       |      "partitioning": ${partitioningAsJson.noSpaces},
+       |      "author": "${partitioningFromDB1.author}"
+       |    },
+       |    {
+       |      "id": 2,
+       |      "partitioning": ${partitioningAsJson.noSpaces},
+       |      "author": "${partitioningFromDB2.author}"
+       |    }
+       |  ],
+       |  "edges": [
+       |    {
+       |      "parentPartitioningId": 1,
+       |      "childPartitioningId": 2,
+       |      "linkedBy": "linker1",
+       |      "linkedAt": "${timestamp1.toString}"
+       |    }
+       |  ]
+       |}""".stripMargin
+    )
+    .getOrElse(Json.Null)
+
+  protected val lineageGraphResult1: LineageGraphResult = LineageGraphResult(lineageGraphResultJson)
 
   // PartitioningSubmitDTO with different author
   protected val partitioningSubmitDTO2: PartitioningSubmitDTO =
@@ -189,8 +306,8 @@ trait TestData {
   protected val measureDTO2: MeasureDTO = MeasureDTO("count2", Seq("col_A2", "col_B2"))
 
   // Measure from DB
-  protected val measureFromDB1: MeasureFromDB = MeasureFromDB(Some("count1"), Some(Seq("col_A1", "col_B1")))
-  protected val measureFromDB2: MeasureFromDB = MeasureFromDB(Some("count2"), Some(Seq("col_A2", "col_B2")))
+  protected val measureFromDB1: MeasureFromDB = MeasureFromDB("count1", Seq("col_A1", "col_B1"))
+  protected val measureFromDB2: MeasureFromDB = MeasureFromDB("count2", Seq("col_A2", "col_B2"))
 
   // Initial Additional Data
   protected val additionalDataDTO1: Seq[AdditionalDataItemV2DTO] = Seq(

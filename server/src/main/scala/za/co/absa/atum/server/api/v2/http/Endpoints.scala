@@ -39,17 +39,18 @@ object Endpoints extends BaseEndpoints {
   // e.g. `checkpoint-properties=eyJleGVjdXRpb25JRCI6Ii4uLiJ9`. Malformed base64 or JSON, or a property without any
   // accepted value (e.g. `{"executionID": []}`, which would match no checkpoint), results in a 400 Bad Request.
   private implicit val checkpointPropertiesQueryCodec: Codec[String, Map[String, Seq[String]], CodecFormat.TextPlain] =
-    Codec.string.mapDecode { encoded =>
-      Try(encoded.fromBase64As[Map[String, Seq[String]]]) match {
-        case Success(Right(properties)) => DecodeResult.Value(properties)
-        case _ =>
-          Try(encoded.fromBase64As[Map[String, String]]) match {
-            case Success(Right(properties)) => DecodeResult.Value(properties.map { case (k, v) => k -> Seq(v) })
-            case Success(Left(error)) => DecodeResult.Error(encoded, error)
-            case Failure(exception) => DecodeResult.Error(encoded, exception)
-          }
-      }
-    }(_.asBase64EncodedJsonString)
+    Codec.string
+      .mapDecode { encoded =>
+        Try(encoded.fromBase64As[Map[String, Seq[String]]]) match {
+          case Success(Right(properties)) => DecodeResult.Value(properties)
+          case _ =>
+            Try(encoded.fromBase64As[Map[String, String]]) match {
+              case Success(Right(properties)) => DecodeResult.Value(properties.map { case (k, v) => k -> Seq(v) })
+              case Success(Left(error)) => DecodeResult.Error(encoded, error)
+              case Failure(exception) => DecodeResult.Error(encoded, exception)
+            }
+        }
+      }(_.asBase64EncodedJsonString)
       .validate(Validator.custom { properties =>
         val propertiesWithoutValues = properties.filter(_._2.isEmpty).keys
         if (propertiesWithoutValues.isEmpty) ValidationResult.Valid
@@ -74,6 +75,31 @@ object Endpoints extends BaseEndpoints {
         case _ => ValidationResult.Valid
       })
 
+  private val paginationInput: EndpointInput[(Int, Long)] =
+    query[Int]("limit")
+      .default(10)
+      .validate(Validator.inRange(1, 1000))
+      .and(
+        query[Long]("offset")
+          .default(0L)
+          .validate(Validator.min(0L))
+      )
+
+  private val DefaultLineageDirection = "both"
+  private val DefaultLineageDepth = 5
+  private val MinLineageDepth = 1
+  private val MaxLineageDepth = 20
+  private val AllowedLineageDirections = List("both", "downstream", "upstream")
+
+  // Normalizing codec so case-insensitive / padded direction inputs (e.g. "  UPSTREAM ") pass validation while
+  // still advertising the allowed lowercase enum values in OpenAPI.
+  private val lineageDirectionCodec: Codec[List[String], String, CodecFormat.TextPlain] =
+    Codec.listHead(
+      Codec.string
+        .mapDecode(s => DecodeResult.Value(s.trim.toLowerCase))(identity)
+        .validate(Validator.enumeration(AllowedLineageDirections))
+    )
+
   val postCheckpointEndpoint
     : PublicEndpoint[(Long, CheckpointV2DTO), ErrorResponse, (SingleSuccessResponse[CheckpointV2DTO], String), Any] = {
     apiV2.post
@@ -95,11 +121,22 @@ object Endpoints extends BaseEndpoints {
     apiV2.post
       .in(V2Paths.Partitionings)
       .in(jsonBody[PartitioningSubmitV2DTO])
-      .out(statusCode)
+      .out(
+        statusCode
+          .description(StatusCode.Created, "Partitioning created (and linked to any specified parents)")
+          .description(StatusCode.Ok, "Partitioning already existed (and linked to any new parents)")
+      )
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .out(header[String]("Location"))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Create or obtain a partitioning")
+      .description(
+        "Creates a new partitioning (201 Created) or returns the existing one (200 OK), optionally linking " +
+          "0..100 distinct parent partitionings. Returns 400 Bad Request on invalid payload or >100 distinct " +
+          "parents, 404 Not Found if a parent does not exist, and 409 Conflict if linking would create a cycle " +
+          "or add a parent to an existing partitioning that already has descendants."
+      )
   }
 
   val getPartitioningAdditionalDataEndpoint
@@ -112,7 +149,9 @@ object Endpoints extends BaseEndpoints {
   }
 
   val patchPartitioningAdditionalDataEndpoint
-    : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, MultiSuccessResponse[AdditionalDataItemV2DTO], Any] = {
+    : PublicEndpoint[(Long, AdditionalDataPatchDTO), ErrorResponse, MultiSuccessResponse[
+      AdditionalDataItemV2DTO
+    ], Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.AdditionalData)
       .in(jsonBody[AdditionalDataPatchDTO])
@@ -142,15 +181,27 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  val getPartitioningCheckpointsEndpoint
-    : PublicEndpoint[(Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Option[ZonedDateTime], Option[ZonedDateTime], Boolean), ErrorResponse, PaginatedResponse[
+  val getPartitioningCheckpointsEndpoint: PublicEndpoint[
+    (
+      Long,
+      Int,
+      Long,
+      Option[String],
+      Option[Map[String, Seq[String]]],
+      Option[Boolean],
+      Option[ZonedDateTime],
+      Option[ZonedDateTime],
+      Boolean
+    ),
+    ErrorResponse,
+    PaginatedResponse[
       CheckpointV2DTO
-    ], Any] = {
+    ],
+    Any
+  ] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Checkpoints)
-      // Tapir's .default works with non-optional types only
-      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
-      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
+      .in(paginationInput)
       .in(query[Option[String]]("checkpoint-name"))
       .in(query[Option[Map[String, Seq[String]]]]("checkpoint-properties"))
       .in(query[Option[Boolean]]("latest-first"))
@@ -161,14 +212,27 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  val getFlowCheckpointsEndpoint
-    : PublicEndpoint[(Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Option[ZonedDateTime], Option[ZonedDateTime], Boolean), ErrorResponse, PaginatedResponse[
+  val getFlowCheckpointsEndpoint: PublicEndpoint[
+    (
+      Long,
+      Int,
+      Long,
+      Option[String],
+      Option[Map[String, Seq[String]]],
+      Option[Boolean],
+      Option[ZonedDateTime],
+      Option[ZonedDateTime],
+      Boolean
+    ),
+    ErrorResponse,
+    PaginatedResponse[
       CheckpointWithPartitioningDTO
-    ], Any] = {
+    ],
+    Any
+  ] = {
     apiV2.get
       .in(V2Paths.Flows / path[Long]("flowId") / V2Paths.Checkpoints)
-      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
-      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
+      .in(paginationInput)
       .in(query[Option[String]]("checkpoint-name"))
       .in(query[Option[Map[String, Seq[String]]]]("checkpoint-properties"))
       .in(query[Option[Boolean]]("latest-first"))
@@ -188,8 +252,7 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  val getPartitioningMeasuresEndpoint
-    : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
+  val getPartitioningMeasuresEndpoint: PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[MeasureDTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Measures)
       .out(statusCode(StatusCode.Ok))
@@ -197,21 +260,18 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  val getFlowPartitioningsEndpoint
-    : PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
-      PartitioningWithIdDTO
-    ], Any] = {
+  val getFlowPartitioningsEndpoint: PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
+    PartitioningWithIdDTO
+  ], Any] = {
     apiV2.get
       .in(V2Paths.Flows / path[Long]("flowId") / V2Paths.Partitionings)
-      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
-      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
+      .in(paginationInput)
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
   }
 
-  val getPartitioningMainFlowEndpoint
-    : PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[FlowDTO], Any] = {
+  val getPartitioningMainFlowEndpoint: PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[FlowDTO], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.MainFlow)
       .out(statusCode(StatusCode.Ok))
@@ -220,27 +280,106 @@ object Endpoints extends BaseEndpoints {
       .errorOutVariantPrepend(errorInDataOneOfVariant)
   }
 
-  val patchPartitioningParentEndpoint
-  : PublicEndpoint[(Long, PartitioningParentPatchDTO), ErrorResponse, Unit, Any] = {
+  val patchPartitioningParentEndpoint: PublicEndpoint[(Long, PartitioningParentPatchDTO), ErrorResponse, Unit, Any] = {
     apiV2.patch
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
       .in(jsonBody[PartitioningParentPatchDTO])
       .out(statusCode(StatusCode.NoContent))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Link a parent partitioning")
+      .description(
+        "Links an existing parent partitioning to the given child partitioning (204 No Content). " +
+          "Returns 400 Bad Request on invalid payload, 404 Not Found if either partitioning does not exist, " +
+          "and 409 Conflict if the link would create a cycle or the child already has descendants."
+      )
   }
 
-  val getPartitioningAncestorsEndpoint
-  : PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
+  val getPartitioningAncestorsEndpoint: PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
     PartitioningWithIdDTO
   ], Any] = {
     apiV2.get
       .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Ancestors)
-      .in(query[Int]("limit").default(10).validate(Validator.inRange(1, 1000)))
-      .in(query[Long]("offset").default(0L).validate(Validator.min(0L)))
+      .in(paginationInput)
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+  }
+
+  val getPartitioningDescendantsEndpoint: PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
+    PartitioningWithIdDTO
+  ], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Descendants)
+      .in(paginationInput)
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("List descendant partitionings")
+      .description(
+        "Returns a paginated list of all transitive descendants of the partitioning (200 OK). " +
+          "Returns 400 Bad Request for invalid pagination parameters and 404 Not Found if the partitioning does not exist."
+      )
+  }
+
+  val getPartitioningParentsEndpoint
+    : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Parents)
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[MultiSuccessResponse[ParentPartitioningDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("List direct parent partitionings")
+      .description(
+        "Returns all immediate parents of the partitioning with edge metadata (200 OK). " +
+          "Returns 404 Not Found if the partitioning does not exist."
+      )
+  }
+
+  val getPartitioningChildrenEndpoint
+    : PublicEndpoint[Long, ErrorResponse, MultiSuccessResponse[ChildPartitioningDTO], Any] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Children)
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[MultiSuccessResponse[ChildPartitioningDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("List direct child partitionings")
+      .description(
+        "Returns all immediate children of the partitioning with edge metadata (200 OK). " +
+          "Returns 404 Not Found if the partitioning does not exist."
+      )
+  }
+
+  val getPartitioningLineageGraphEndpoint: PublicEndpoint[
+    (Long, String, Int),
+    ErrorResponse,
+    SingleSuccessResponse[LineageGraphDTO],
+    Any
+  ] = {
+    apiV2.get
+      .in(V2Paths.Partitionings / path[Long]("partitioningId") / V2Paths.Lineage)
+      .in(
+        query[String]("direction")(lineageDirectionCodec)
+          .default(DefaultLineageDirection)
+          .description(s"Traversal direction: 'both', 'upstream', or 'downstream' (default: '$DefaultLineageDirection')")
+      )
+      .in(
+        query[Int]("depth")
+          .default(DefaultLineageDepth)
+          .validate(Validator.inRange(MinLineageDepth, MaxLineageDepth))
+          .description(
+            s"Maximum traversal depth (default: $DefaultLineageDepth, " +
+              s"range: $MinLineageDepth..$MaxLineageDepth)"
+          )
+      )
+      .out(statusCode(StatusCode.Ok))
+      .out(jsonBody[SingleSuccessResponse[LineageGraphDTO]])
+      .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Get partitioning lineage sub-graph")
+      .description(
+        "Returns the lineage sub-graph (nodes and direct edges) centered on the given partitioning (200 OK). " +
+          "Returns 400 Bad Request if 'direction' or 'depth' is invalid, and 404 Not Found if the partitioning does not exist."
+      )
   }
 
   val serverEndpoints: List[ZServerEndpoint[HttpEnv.Env, Any]] = List(
@@ -281,57 +420,102 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint[
-      (Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Option[ZonedDateTime], Option[ZonedDateTime], Boolean),
+      (
+        Long,
+        Int,
+        Long,
+        Option[String],
+        Option[Map[String, Seq[String]]],
+        Option[Boolean],
+        Option[ZonedDateTime],
+        Option[ZonedDateTime],
+        Boolean
+      ),
       ErrorResponse,
       PaginatedResponse[CheckpointV2DTO]
     ](
       getPartitioningCheckpointsEndpoint,
-      { case (partitioningId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], latestFirst: Option[Boolean], from: Option[ZonedDateTime], to: Option[ZonedDateTime], includeProperties: Boolean) =>
-        CheckpointController.getPartitioningCheckpoints(partitioningId, limit, offset, checkpointName, checkpointProperties, latestFirst, from, to, includeProperties)
+      {
+        case (
+              partitioningId: Long,
+              limit: Int,
+              offset: Long,
+              checkpointName: Option[String],
+              checkpointProperties: Option[Map[String, Seq[String]]],
+              latestFirst: Option[Boolean],
+              from: Option[ZonedDateTime],
+              to: Option[ZonedDateTime],
+              includeProperties: Boolean
+            ) =>
+          CheckpointController.getPartitioningCheckpoints(
+            partitioningId,
+            limit,
+            offset,
+            checkpointName,
+            checkpointProperties,
+            latestFirst,
+            from,
+            to,
+            includeProperties
+          )
       }
     ),
     createServerEndpoint[
-      (Long, Int, Long, Option[String], Option[Map[String, Seq[String]]], Option[Boolean], Option[ZonedDateTime], Option[ZonedDateTime], Boolean),
+      (
+        Long,
+        Int,
+        Long,
+        Option[String],
+        Option[Map[String, Seq[String]]],
+        Option[Boolean],
+        Option[ZonedDateTime],
+        Option[ZonedDateTime],
+        Boolean
+      ),
       ErrorResponse,
       PaginatedResponse[CheckpointWithPartitioningDTO]
     ](
       getFlowCheckpointsEndpoint,
-      { case (flowId: Long, limit: Int, offset: Long, checkpointName: Option[String], checkpointProperties: Option[Map[String, Seq[String]]], latestFirst: Option[Boolean], from: Option[ZonedDateTime], to: Option[ZonedDateTime], includeProperties: Boolean) =>
-        FlowController.getFlowCheckpoints(flowId, limit, offset, checkpointName, checkpointProperties, latestFirst, from, to, includeProperties)
+      {
+        case (
+              flowId: Long,
+              limit: Int,
+              offset: Long,
+              checkpointName: Option[String],
+              checkpointProperties: Option[Map[String, Seq[String]]],
+              latestFirst: Option[Boolean],
+              from: Option[ZonedDateTime],
+              to: Option[ZonedDateTime],
+              includeProperties: Boolean
+            ) =>
+          FlowController.getFlowCheckpoints(
+            flowId,
+            limit,
+            offset,
+            checkpointName,
+            checkpointProperties,
+            latestFirst,
+            from,
+            to,
+            includeProperties
+          )
       }
     ),
     createServerEndpoint(getPartitioningByIdEndpoint, PartitioningController.getPartitioningById),
     createServerEndpoint(getPartitioningMeasuresEndpoint, PartitioningController.getPartitioningMeasures),
     createServerEndpoint(getPartitioningMainFlowEndpoint, PartitioningController.getPartitioningMainFlow),
-    createServerEndpoint[
-      (Long, Int, Long),
-      ErrorResponse,
-      PaginatedResponse[PartitioningWithIdDTO]
-    ](
-      getFlowPartitioningsEndpoint,
-      { case (flowId: Long, limit: Int, offset: Long) =>
-        PartitioningController.getFlowPartitionings(flowId, limit, offset)
-      }
+    createServerEndpoint(getFlowPartitioningsEndpoint, (PartitioningController.getFlowPartitionings _).tupled),
+    createServerEndpoint(patchPartitioningParentEndpoint, (PartitioningController.patchPartitioningParent _).tupled),
+    createServerEndpoint(getPartitioningAncestorsEndpoint, (PartitioningController.getPartitioningAncestors _).tupled),
+    createServerEndpoint(
+      getPartitioningDescendantsEndpoint,
+      (PartitioningController.getPartitioningDescendants _).tupled
     ),
-    createServerEndpoint[
-      (Long, PartitioningParentPatchDTO),
-      ErrorResponse,
-      Unit
-    ](
-      patchPartitioningParentEndpoint,
-      { case (partitioningId: Long, partitioningParentPatchDTO: PartitioningParentPatchDTO) =>
-        PartitioningController.patchPartitioningParent(partitioningId, partitioningParentPatchDTO)
-      }
-    ),
-    createServerEndpoint[
-      (Long, Int, Long),
-      ErrorResponse,
-      PaginatedResponse[PartitioningWithIdDTO]
-    ](
-      getPartitioningAncestorsEndpoint,
-      { case (partitioningId: Long, limit: Int, offset: Long) =>
-        PartitioningController.getPartitioningAncestors(partitioningId, limit, offset)
-      }
+    createServerEndpoint(getPartitioningParentsEndpoint, PartitioningController.getPartitioningParents),
+    createServerEndpoint(getPartitioningChildrenEndpoint, PartitioningController.getPartitioningChildren),
+    createServerEndpoint(
+      getPartitioningLineageGraphEndpoint,
+      (PartitioningController.getPartitioningLineageGraph _).tupled
     )
   )
 

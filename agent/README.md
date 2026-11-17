@@ -12,11 +12,11 @@ Create multiple `AtumContext` with different control measures to be applied
 ### Option 1
 
 ```scala
-val atumContextInstanceWithRecordCount = AtumContext(processor = processor)
-  .withMeasureAdded(RecordCount(MockMeasureNames.recordCount1))
+import za.co.absa.atum.agent.model.AtumMeasure._
 
-val atumContextWithSalaryAbsMeasure = atumContextInstanceWithRecordCount
-  .withMeasureAdded(AbsSumOfValuesOfColumn(measuredColumn = "salary"))
+val atumContextWithMeasures = atumContext
+  .addMeasure(RecordCount())
+  .addMeasure(AbsSumOfValuesOfColumn("salary"))
 ```
 
 ### Option 2
@@ -95,8 +95,9 @@ val merged = AtumAgent.getOrCreateAtumSubContext(AtumPartitions("run" -> "3"), S
 - `copyMeasureDefinitions = true` makes the server copy the parents' measure definitions **only when the child is newly
   created**; for an already existing child the flag does nothing. Additional data is never copied.
 - `AtumContext.subPartitionContext` throws `PartitioningUpdateException` when `mergeWithParent` is `true` and the keys
-  of the parent and of `subPartitions` overlap. The 3-argument `AtumAgent.getOrCreateAtumSubContext` overload has no
-  such key-overlap guard: it simply builds `parent ++ sub` (overlapping keys take the value of `sub`).
+  of the parent and of `subPartitions` overlap. The single-parent `AtumAgent.getOrCreateAtumSubContext` overloads
+  have no such key-overlap guard: when `mergeWithParent` is `true`, they simply build `parent ++ sub` (overlapping
+  keys take the value of `sub`).
 
 #### One POST per sub-context; errors and retries
 
@@ -116,34 +117,42 @@ Creating a sub-context resolves each parent id first with one `GET` (in the give
   same `POST` on the wire more than once.
 
 
-Control measures can also be overwritten, added or removed.
+Control measures can also be added or removed.
 
 ```scala
-    val atumContext1 = atumContext.withMeasureAdded(
-      Seq(RecordCount("id"), RecordCount("salary"))
-    )
+import za.co.absa.atum.agent.model.AtumMeasure._
 
-    val atumContextRemoved = atumContext1.withMeasureRemoved(RecordCount("id"))
-    assert(atumContextRemoved.measurements.size == 1)
-    assert(atumContextRemoved.measurements.head == RecordCount("salary"))
+val atumContext1 = atumContext
+  .addMeasure(RecordCount())
+  .addMeasure(DistinctRecordCount(Seq("salary")))
+
+val atumContextRemoved = atumContext1.removeMeasure(RecordCount())
 ```
 
-Set a checkpoint on a `Dataframe` with an `AtumContext` associated.
+Set a checkpoint on a `DataFrame` with an `AtumContext` associated (requires `import za.co.absa.atum.agent.AtumContext._`).
 
 ```scala
+import za.co.absa.atum.agent.AtumContext._
+
 val dfPersons: DataFrame = ss.read
   .format("CSV")
   .option("header", "true")
   .load("agent/src/test/resources/random-dataset/persons.csv")
-  .setCheckpoint("checkpoint name")(atumContextInstanceWithRecordCount)
+  .createCheckpoint("checkpoint name")(atumContextInstanceWithRecordCount)
 ```
 
-Another way is to use measures without an `AtumContext`.
+Multiple measures can also be registered at once on an `AtumContext` via `addMeasures(Set(...))` before creating a checkpoint:
 
 ```scala
-val sequenceOfMeasures = Seq(RecordCount("columnName"), RecordCount("other columnName"))
+import za.co.absa.atum.agent.AtumContext._
+import za.co.absa.atum.agent.model.AtumMeasure._
 
-val dfPersons = ss.read
-      .format("CSV")
-      .executeMeasures("checkpoint name")(sequenceOfMeasures)
+val measures = Set(RecordCount(), DistinctRecordCount(Seq("columnName")))
+val contextWithMeasures = atumContext.addMeasures(measures)
+
+val dfPersons: DataFrame = ss.read
+  .format("CSV")
+  .option("header", "true")
+  .load("agent/src/test/resources/random-dataset/persons.csv")
+  .createCheckpoint("checkpoint name")(contextWithMeasures)
 ```

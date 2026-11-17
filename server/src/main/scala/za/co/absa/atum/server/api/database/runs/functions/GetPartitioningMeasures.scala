@@ -32,7 +32,7 @@ import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusA
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 
 class GetPartitioningMeasures(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, MeasureFromDB, Task](values =>
+    extends DoobieMultipleResultFunctionWithAggStatus[PartitioningDTO, Option[MeasureFromDB], Task](values =>
       Seq(fr"${PartitioningForDB.fromSeqPartitionDTO(values).asJson}")
     )
     with StandardStatusHandling

@@ -104,7 +104,7 @@ lazy val server = {
  *
  * It is cross-built per Spark major version, each axis carrying its own Scala and Java baseline:
  * - Spark 3.5.x -> Scala 2.12 + 2.13, Java 8  (`atum-agent-spark3_2.12`, `atum-agent-spark3_2.13`)
- * - Spark 4.0.x -> Scala 2.13,        Java 17 (`atum-agent-spark4_2.13`)
+ * - Spark 4.1.x -> Scala 2.13,        Java 17 (`atum-agent-spark4_2.13`)
  *
  * The Spark 4 rows require a JDK 17+ to compile, so they are only added when sbt itself runs on one.
  */
