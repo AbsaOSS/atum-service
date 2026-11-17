@@ -1,11 +1,11 @@
-# ADR 03 — Lineage Capability: Partitioning Linking, Flow Membership and Explicit Edges
+# ADR 01 — Lineage Capability: Partitioning Linking, Flow Membership and Explicit Edges
 
-|                         |                                                                                                                                                                                                      |
-|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Status**              | Accepted; implemented on `master`, first released in v0.11.0                                                                                                                                         |
-| **Date**                | 2026-11-04                                                                                                                                                                                           |
-| **Revised**             | 2026-11-17 (explicit edges, `lineage` schema, graph API)                                                                                                                                             |
-| **Affected components** | `database/`, `server/`, `model/`, `agent/`, `api-tests/`                                                                                                                                             |
+|                         |                                                                                                                                                                                                                                                                                                                              |
+|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Status**              | Accepted; implemented on `master`, first released in v0.11.0                                                                                                                                                                                                                                                                 |
+| **Date**                | 2026-11-04                                                                                                                                                                                                                                                                                                                   |
+| **Revised**             | 2026-11-17 (explicit edges, `lineage` schema, graph API)                                                                                                                                                                                                                                                                     |
+| **Affected components** | `database/`, `server/`, `model/`, `agent/`, `api-tests/`                                                                                                                                                                                                                                                                     |
 | **Issue / PRs**         | [#475](https://github.com/AbsaOSS/atum-service/issues/475) / [#496](https://github.com/AbsaOSS/atum-service/pull/496) (multi-parent linking, breaking change), [#503](https://github.com/AbsaOSS/atum-service/pull/503) (explicit edges), [#493](https://github.com/AbsaOSS/atum-service/pull/493) (bounded graph traversal) |
 
 This ADR records what the linking ("lineage") capability is, how it works, which alternatives were weighed and why the
@@ -46,20 +46,20 @@ declared.
 
 ## 2. Decision summary
 
-| #   | Decision                                                                                                                                                                                                                                                                                                                                                                             |
-|-----|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| D1  | One consolidated create: `POST /api/v2/partitionings` takes **0..N parents** (max 100 distinct, `400` beyond). It is **idempotent**: `201` created, `200` already existing (same `Location`, stored author). The legacy single `parentPartitioningId` key is still decoded.                                                                                                            |
-| D2  | **One linking routine** for every v2 linking path (`lineage.link_to_parents`), shared by `POST` and `PATCH .../ancestors`.                                                                                                                                                                                                                                                         |
-| D3  | **Cycle detection** before any write: a self-link or a parent that is already a descendant is `409` (DB status `32`).                                                                                                                                                                                                                                                                |
-| D4  | **Flow of X = X + everything downstream of X** (closure). A newly created child joins every flow that contains its parent (this rule already existed).                                                                                                                                                                                                                              |
-| D5  | **Descendants are never propagated.** Linking an *existing* partitioning that **already has descendants** under a new parent is **refused**: `409` (DB status `33`), nothing written. A newly created partitioning is always a leaf, so creation-time linking is unaffected.                                                                                                         |
+| #   | Decision                                                                                                                                                                                                                                                                                                                                                                                                            |
+|-----|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| D1  | One consolidated create: `POST /api/v2/partitionings` takes **0..N parents** (max 100 distinct, `400` beyond). It is **idempotent**: `201` created, `200` already existing (same `Location`, stored author). The legacy single `parentPartitioningId` key is still decoded.                                                                                                                                         |
+| D2  | **One linking routine** for every v2 linking path (`lineage.link_to_parents`), shared by `POST` and `PATCH .../ancestors`.                                                                                                                                                                                                                                                                                          |
+| D3  | **Cycle detection** before any write: a self-link or a parent that is already a descendant is `409` (DB status `32`).                                                                                                                                                                                                                                                                                               |
+| D4  | **Flow of X = X + everything downstream of X** (closure). A newly created child joins every flow that contains its parent (this rule already existed).                                                                                                                                                                                                                                                              |
+| D5  | **Descendants are never propagated.** Linking an *existing* partitioning that **already has descendants** under a new parent is **refused**: `409` (DB status `33`), nothing written. A newly created partitioning is always a leaf, so creation-time linking is unaffected.                                                                                                                                        |
 | D6  | **Additional data is never copied** by `POST`. **Measure definitions** are copied only when `copyMeasureDefinitions` is `true` (default **`false`**; the one exception is a legacy v0.6 – v0.10 body with `parentPartitioningId` and no flag, which defaults to `true` to keep those agents' behaviour), only to a **newly created** child, as a distinct union over the parents (the child's own definitions win). |
-| D7  | `PATCH .../ancestors` keeps its **explicit copy flags** and requires both (an absent flag is `400`). `copyAdditionalData=true` overwrites the child's same-named keys.                                                                                                                                                                                                              |
-| D8  | **API v1 is deprecated** (Swagger `.deprecated()` + README), not removed. v1-only agents (≤ v0.5.x) are not used in practice, so no compatibility effort is spent there.                                                                                                                                                                                                            |
-| D9  | **Deploy the server before agents.** Agents of the same or older version only; no new-agent/old-server shim.                                                                                                                                                                                                                                                                       |
-| D10 | *(#503)* **Explicit direct edges** in `lineage.partitioning_edges`, written in the same transaction as the closure (dual write). Forward-only: no migration backfill. The closure stays authoritative for transitive reads. See §10.                                                                                                                                                 |
-| D11 | *(#503)* **Dedicated `lineage` schema** for all lineage tables and functions, with a **direct cutover**: moved functions are dropped from their old schema, no compatibility wrappers. See §10.3.                                                                                                                                                                                    |
-| D12 | *(#503, #493)* **Edge-based read API**: `GET .../parents`, `.../children`, `.../descendants` and `.../lineage` (bounded sub-graph). See §10.4.                                                                                                                                                                                                                                      |
+| D7  | `PATCH .../ancestors` keeps its **explicit copy flags** and requires both (an absent flag is `400`). `copyAdditionalData=true` overwrites the child's same-named keys.                                                                                                                                                                                                                                              |
+| D8  | **API v1 is deprecated** (Swagger `.deprecated()` + README), not removed. v1-only agents (≤ v0.5.x) are not used in practice, so no compatibility effort is spent there.                                                                                                                                                                                                                                            |
+| D9  | **Deploy the server before agents.** Agents of the same or older version only; no new-agent/old-server shim.                                                                                                                                                                                                                                                                                                        |
+| D10 | *(#503)* **Explicit direct edges** in `lineage.partitioning_edges`, written in the same transaction as the closure (dual write). Forward-only: no migration backfill. The closure stays authoritative for transitive reads. See §10.                                                                                                                                                                                |
+| D11 | *(#503)* **Dedicated `lineage` schema** for all lineage tables and functions, with a **direct cutover**: moved functions are dropped from their old schema, no compatibility wrappers. See §10.3.                                                                                                                                                                                                                   |
+| D12 | *(#503, #493)* **Edge-based read API**: `GET .../parents`, `.../children`, `.../descendants` and `.../lineage` (bounded sub-graph). See §10.4.                                                                                                                                                                                                                                                                      |
 
 ---
 
@@ -105,10 +105,10 @@ afterwards.
 
 ### 3.3 Entry points and statuses
 
-| Path                                    | Behaviour                                                                                                                                                                                                                                                                                                                                                                                        |
-|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Path                                    | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|-----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `runs.create_partitioning_with_parents` | Creates the partitioning or reuses the existing one, links all parents in the same transaction through the helper, copies measure definitions only if the child was created by the call and the flag is `true`. Statuses: `11` created (no parents), `12` created with parents, `13` parents registered on an existing partitioning, `14` already present, `32` cycle, `33` existing partitioning has descendants and would get a new parent, `41` parent not found. |
-| `runs.update_partitioning_parent`       | Validates (`42` child, `41` parent), links through the helper (`32`, `33`), then applies the copy flags (also when the link already existed, so a repeat is harmless). Measure-definition copy is `ON CONFLICT DO NOTHING`.                                                                                                                                                                      |
+| `runs.update_partitioning_parent`       | Validates (`42` child, `41` parent), links through the helper (`32`, `33`), then applies the copy flags (also when the link already existed, so a repeat is harmless). Measure-definition copy is `ON CONFLICT DO NOTHING`.                                                                                                                                                                                                                                          |
 
 HTTP mapping: `201`/`200` created/existing, `204` for `PATCH` (no-op when already linked), `400` for more than 100
 distinct parents or an absent `PATCH` flag, `404` for an unknown parent or child (nothing created), `409` for a
@@ -183,14 +183,14 @@ rely on the closure invariant, and the membership would become **order dependent
 
 ## 5. Alternatives considered
 
-| Option                                                                                                                                                | Verdict                                                                                                                                                                                                                                                                                  |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **A. Propagate the child's descendants** into every parent flow (the implementation up to the previous commit). Order independent, keeps the invariant, can heal retroactive links. | Rejected. Costs below.                                                                                                                                                                                                                                                                   |
-| **B. Silently drop propagation.**                                                                                                                     | Rejected. Breaks the invariant: unsound cycle check, order-dependent flows (§4.4).                                                                                                                                                                                                       |
-| **C. Direct-edge table** with recursive cycle check, no closure.                                                                                      | Rejected *as a replacement* in #496: largest redesign, changes flow and ancestor semantics for existing consumers. **Adopted additively in #503** (edges next to the closure, closure still authoritative; §10).                                                                            |
-| **D. Flow = X + direct children only** (no upward rule).                                                                                              | Rejected: loses the single-timeline view of a whole lineage, changes `GET /ancestors` to direct parents only, and breaks behaviour that already exists on master.                                                                                                                        |
-| **E. Propagation behind an explicit opt-in** (e.g. `includeDescendants`, default false).                                                              | Deferred; see §8.                                                                                                                                                                                                                                                                        |
-| **F. Refuse linking a non-leaf child (chosen).**                                                                                                      | Keeps closure semantics and a sound cycle check, removes the unbounded bulk write.                                                                                                                                                                                                       |
+| Option                                                                                                                                                                              | Verdict                                                                                                                                                                                                          |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **A. Propagate the child's descendants** into every parent flow (the implementation up to the previous commit). Order independent, keeps the invariant, can heal retroactive links. | Rejected. Costs below.                                                                                                                                                                                           |
+| **B. Silently drop propagation.**                                                                                                                                                   | Rejected. Breaks the invariant: unsound cycle check, order-dependent flows (§4.4).                                                                                                                               |
+| **C. Direct-edge table** with recursive cycle check, no closure.                                                                                                                    | Rejected *as a replacement* in #496: largest redesign, changes flow and ancestor semantics for existing consumers. **Adopted additively in #503** (edges next to the closure, closure still authoritative; §10). |
+| **D. Flow = X + direct children only** (no upward rule).                                                                                                                            | Rejected: loses the single-timeline view of a whole lineage, changes `GET /ancestors` to direct parents only, and breaks behaviour that already exists on master.                                                |
+| **E. Propagation behind an explicit opt-in** (e.g. `includeDescendants`, default false).                                                                                            | Deferred; see §8.                                                                                                                                                                                                |
+| **F. Refuse linking a non-leaf child (chosen).**                                                                                                                                    | Keeps closure semantics and a sound cycle check, removes the unbounded bulk write.                                                                                                                               |
 
 ### Costs of option A (why it was removed)
 
@@ -273,8 +273,8 @@ linking functions, removal of the stray `println` in `BaseController`, and a nod
    default refusal.
 2. **Unlink / remove-membership API** (admin only, removing both the edge and the closure rows, with the same cycle
    and invariant guarantees). Prerequisite for making any bulk linking safe.
-3. **Multi-parent retroactive link.** `PATCH .../ancestors` takes one parent per call; a variant accepting several
-   (e.g. `POST .../parents`) would mirror the create path. Leaf-only rules unchanged.
+3. **Multi-parent retroactive link.** `PATCH .../ancestors` takes one parent per call; a variant accepting several (e.g.
+   `POST .../parents`) would mirror the create path. Leaf-only rules unchanged.
 4. **Backfill / repair tooling** for legacy data: an admin function that detects closure gaps and reconstructs edges
    from external lineage metadata where available. Edges cannot be derived from the closure alone (§10.2).
 5. **Locking:** per-lineage (not global) advisory lock or a `lock_timeout`; a guard that rejects non-READ COMMITTED
@@ -313,8 +313,8 @@ After #496 shipped with closure-only storage, option C of §5 was implemented as
 
 ### 10.1 What was added
 
-- **Edge table** `lineage.partitioning_edges`: one row per declared parent → child link
-  (`fk_child_partitioning`, `fk_parent_partitioning`, `created_by`, `created_at`).
+- **Edge table** `lineage.partitioning_edges`: one row per declared parent → child link (`fk_child_partitioning`,
+  `fk_parent_partitioning`, `created_by`, `created_at`).
 - **Dual write:** `lineage.link_to_parents` writes the edges and the closure rows in the same transaction (§3.2), so
   both creation (`POST`) and `PATCH .../ancestors` produce edges.
 - **Read endpoints** over edges and closure (§10.4).
@@ -326,7 +326,7 @@ After #496 shipped with closure-only storage, option C of §5 was implemented as
 The two models coexist because:
 
 - **Closure reads are already in production** and cheap (one indexed join on `flows.partitioning_to_flow`).
-  Replacing them with recursive edge queries would cost O(depth) and change every consumer.
+  Replacing them with recursive edge queries would cost O (depth) and change every consumer.
 - **Adding is non-breaking.** Existing endpoints keep their semantics; new endpoints use the edges.
 - **Different questions:** the closure answers "everything upstream/downstream" (audit scope, impact), edges answer
   "what was this built from" (provenance, graph rendering).
@@ -346,15 +346,15 @@ without parents never get edges.
 All lineage tables and functions live in a dedicated `lineage` schema (owner `atum_owner`, `USAGE` for `atum_user`
 and `atum_reader`; `EXECUTE` revoked from `PUBLIC` and granted to `atum_user`):
 
-| Object                                            | Purpose                                                                     | Backing data |
-|---------------------------------------------------|-----------------------------------------------------------------------------|--------------|
-| `partitioning_edges` (table)                      | Direct parent → child links                                                 | —            |
-| `link_to_parents(BIGINT, BIGINT[], TEXT)`         | Validation, cycle and leaf checks, dual write (§3.2)                        | both         |
-| `get_direct_parents(BIGINT)`                      | 1-hop upstream with edge metadata                                           | edges        |
-| `get_direct_children(BIGINT)`                     | 1-hop downstream with edge metadata                                         | edges        |
-| `get_partitioning_ancestors(BIGINT, INT, BIGINT)` | Paginated transitive ancestors (moved from `runs`)                          | closure      |
-| `get_partitioning_descendants(BIGINT, INT, BIGINT)` | Paginated transitive descendants                                          | closure      |
-| `get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER)` | Bounded sub-graph (nodes + edges) as JSONB                            | edges        |
+| Object                                                  | Purpose                                              | Backing data |
+|---------------------------------------------------------|------------------------------------------------------|--------------|
+| `partitioning_edges` (table)                            | Direct parent → child links                          | —            |
+| `link_to_parents(BIGINT, BIGINT[], TEXT)`               | Validation, cycle and leaf checks, dual write (§3.2) | both         |
+| `get_direct_parents(BIGINT)`                            | 1-hop upstream with edge metadata                    | edges        |
+| `get_direct_children(BIGINT)`                           | 1-hop downstream with edge metadata                  | edges        |
+| `get_partitioning_ancestors(BIGINT, INT, BIGINT)`       | Paginated transitive ancestors (moved from `runs`)   | closure      |
+| `get_partitioning_descendants(BIGINT, INT, BIGINT)`     | Paginated transitive descendants                     | closure      |
+| `get_partitioning_lineage_graph(BIGINT, TEXT, INTEGER)` | Bounded sub-graph (nodes + edges) as JSONB           | edges        |
 
 Responsibilities: `runs` owns partitioning, checkpoint and measure-definition CRUD and the orchestrating entry points
 (`create_partitioning_with_parents`, `update_partitioning_parent`, `search_partitionings`); `flows` owns the closure
@@ -373,12 +373,12 @@ serves "parents of X", a `partitioning_edges_parent_idx (fk_parent_partitioning,
 
 ### 10.4 Read API
 
-| Endpoint                                         | Returns                                                                                                                                         | Source  |
-|--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| `GET /api/v2/partitionings/{id}/parents`         | Direct parents (`ParentPartitioningDTO`: id, partitioning, author, `linkedBy`, `linkedAt`); empty list if none                                  | edges   |
-| `GET /api/v2/partitionings/{id}/children`        | Direct children (`ChildPartitioningDTO`, same shape); empty list if none                                                                        | edges   |
-| `GET /api/v2/partitionings/{id}/ancestors`       | Paginated transitive ancestors (unchanged)                                                                                                      | closure |
-| `GET /api/v2/partitionings/{id}/descendants`     | Paginated transitive descendants (new)                                                                                                          | closure |
+| Endpoint                                                                                  | Returns                                                                                                                                                     | Source  |
+|-------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `GET /api/v2/partitionings/{id}/parents`                                                  | Direct parents (`ParentPartitioningDTO`: id, partitioning, author, `linkedBy`, `linkedAt`); empty list if none                                              | edges   |
+| `GET /api/v2/partitionings/{id}/children`                                                 | Direct children (`ChildPartitioningDTO`, same shape); empty list if none                                                                                    | edges   |
+| `GET /api/v2/partitionings/{id}/ancestors`                                                | Paginated transitive ancestors (unchanged)                                                                                                                  | closure |
+| `GET /api/v2/partitionings/{id}/descendants`                                              | Paginated transitive descendants (new)                                                                                                                      | closure |
 | `GET /api/v2/partitionings/{id}/lineage?direction=both\|upstream\|downstream&depth=1..20` | `LineageGraphDTO`: `primaryPartitioningId`, `depth`, `direction`, `nodes`, `edges`, `truncated`, `expandableUpstreamNodeIds`, `expandableDownstreamNodeIds` | edges   |
 
 All return `404` for an unknown partitioning. `/lineage` defaults to `direction=both`, `depth=5`; an invalid value is
@@ -387,7 +387,7 @@ All return `404` for an unknown partitioning. `/lineage` defaults to `direction=
 **Bounded traversal (#493).** The first `/lineage` version used a recursive CTE without visited-node tracking: a node
 reachable by paths of different lengths was expanded once per path, so a fan-in/fan-out hub could make intermediate
 results grow combinatorially even though the depth was bounded. It was replaced by an iterative breadth-first search
-that expands each node once (O(V + E)) and stops at **5000 nodes per direction**. The response reports
+that expands each node once (O (V + E)) and stops at **5000 nodes per direction**. The response reports
 `truncated = true` when the cap cut the traversal, and lists the nodes that have parents or children outside the
 returned sub-graph, so a client can expand the graph on demand instead of asking for a larger depth.
 
@@ -418,14 +418,14 @@ returned sub-graph, so a client can expand the graph on demand instead of asking
 - Issue #475; PRs #496 (multi-parent linking, closure only), #503 (explicit edges, `lineage` schema), #493 (bounded
   graph traversal, partitioning search).
 - Migrations under `../database/src/main/postgres/`:
-  - `flows/V0.10.0.1__partitioning_to_flow_index.ddl` — index on `partitioning_to_flow (fk_partitioning)`.
-  - `lineage/V0.10.0.2___.ddl` — `lineage` schema.
-  - `lineage/V0.10.0.3__partitioning_edges.ddl` — edge table.
-  - `lineage/V0.10.0.4__link_to_parents.sql` — linking and dual write.
-  - `lineage/V0.10.0.5__get_partitioning_descendants.sql`, `lineage/V0.10.0.6__get_partitioning_ancestors.sql`.
-  - `lineage/V0.10.0.7__get_direct_parents.sql`, `lineage/V0.10.0.8__get_direct_children.sql`.
-  - `lineage/V0.10.0.9__get_partitioning_lineage_graph.sql`.
-  - `runs/V0.10.0.10__update_partitioning_parent.sql`, `runs/V0.10.0.11__create_partitioning_with_parents.sql`.
+    - `flows/V0.10.0.1__partitioning_to_flow_index.ddl` — index on `partitioning_to_flow (fk_partitioning)`.
+    - `lineage/V0.10.0.2___.ddl` — `lineage` schema.
+    - `lineage/V0.10.0.3__partitioning_edges.ddl` — edge table.
+    - `lineage/V0.10.0.4__link_to_parents.sql` — linking and dual write.
+    - `lineage/V0.10.0.5__get_partitioning_descendants.sql`, `lineage/V0.10.0.6__get_partitioning_ancestors.sql`.
+    - `lineage/V0.10.0.7__get_direct_parents.sql`, `lineage/V0.10.0.8__get_direct_children.sql`.
+    - `lineage/V0.10.0.9__get_partitioning_lineage_graph.sql`.
+    - `runs/V0.10.0.10__update_partitioning_parent.sql`, `runs/V0.10.0.11__create_partitioning_with_parents.sql`.
 - `../database/README.md` (schema organisation), `../server/README.md` (compatibility, lineage endpoints),
   `../agent/README.md` (sub-contexts and parents), `../api-tests/README.md`.
 - ADR 02 *Audit Consumption* (consumption side of flow membership and edges; its §2 is aligned with §3 and §10 of
