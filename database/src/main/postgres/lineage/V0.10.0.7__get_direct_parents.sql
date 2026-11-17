@@ -54,7 +54,6 @@ CREATE OR REPLACE FUNCTION lineage.get_direct_parents(
 --      Callers MUST treat an empty result set as "exists, has no parents" (e.g. HTTP 200 with an
 --      empty list), never as an error. Only a status-41 row means not-found.
 --
--- Migrated from flows.get_direct_parents in V0.10.0.14
 -------------------------------------------------------------------------------
 $$
 BEGIN

@@ -51,7 +51,6 @@ CREATE OR REPLACE FUNCTION lineage.get_direct_children(
 --      - Partitioning has no children -> ZERO rows (empty set, success)
 --      - Partitioning has N children  -> N rows, status 11 each, one direct child per row
 --
--- Migrated from flows.get_direct_children in V0.10.0.15
 -------------------------------------------------------------------------------
 $$
 BEGIN

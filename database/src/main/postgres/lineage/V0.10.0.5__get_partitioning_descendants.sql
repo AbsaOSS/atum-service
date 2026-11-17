@@ -72,7 +72,7 @@ BEGIN
     IF i_limit IS NOT NULL THEN
         SELECT count(*) > i_limit
         FROM (SELECT 1
-              FROM (SELECT DISTINCT PF.fk_partitioning
+              FROM (SELECT PF.fk_partitioning
                     FROM flows.flows F
                              INNER JOIN flows.partitioning_to_flow PF ON PF.fk_flow = F.id_flow
                     WHERE F.fk_primary_partitioning = i_id_partitioning
@@ -90,7 +90,7 @@ BEGIN
                P.partitioning    AS partitioning,
                P.created_by      AS author,
                _has_more         AS has_more
-        FROM (SELECT DISTINCT PF.fk_partitioning
+        FROM (SELECT PF.fk_partitioning
               FROM flows.flows F
                        INNER JOIN flows.partitioning_to_flow PF ON PF.fk_flow = F.id_flow
               WHERE F.fk_primary_partitioning = i_id_partitioning

@@ -38,12 +38,16 @@ CREATE OR REPLACE FUNCTION lineage.get_partitioning_lineage_graph(
 --      status_text   - Status text
 --      lineage_graph - JSONB containing { primaryPartitioningId, depth, direction, nodes: [...], edges: [...] }
 --
--- Migrated from flows.get_partitioning_lineage_graph in V0.10.0.16
 -------------------------------------------------------------------------------
 $$
 DECLARE
     _direction  TEXT;
     _max_depth  INTEGER;
+    _upstream_visited   BIGINT[];
+    _downstream_visited BIGINT[];
+    _frontier           BIGINT[];
+    _next_frontier      BIGINT[];
+    _depth              INTEGER;
 BEGIN
     -- Check if the primary partitioning exists
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_partitioning_id;
@@ -70,39 +74,62 @@ BEGIN
     status := 11;
     status_text := 'OK';
 
-    WITH RECURSIVE upstream_edges AS (
-        -- Base case: direct parents
-        SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at, 1 AS depth
+    -- Iterative BFS for upstream traversal (guarantees each node expanded once, O(V+E))
+    _upstream_visited := ARRAY[]::BIGINT[];
+    IF _direction IN ('both', 'upstream') THEN
+        _upstream_visited := ARRAY[i_partitioning_id];
+        _frontier := ARRAY[i_partitioning_id];
+        _depth := 0;
+
+        WHILE _depth < _max_depth LOOP
+            _depth := _depth + 1;
+
+            SELECT COALESCE(array_agg(DISTINCT E.fk_parent_partitioning), ARRAY[]::BIGINT[])
+            INTO _next_frontier
+            FROM lineage.partitioning_edges E
+            WHERE E.fk_child_partitioning = ANY(_frontier)
+              AND NOT (E.fk_parent_partitioning = ANY(_upstream_visited));
+
+            EXIT WHEN cardinality(_next_frontier) = 0;
+
+            _upstream_visited := _upstream_visited || _next_frontier;
+            _frontier := _next_frontier;
+        END LOOP;
+    END IF;
+
+    -- Iterative BFS for downstream traversal
+    _downstream_visited := ARRAY[]::BIGINT[];
+    IF _direction IN ('both', 'downstream') THEN
+        _downstream_visited := ARRAY[i_partitioning_id];
+        _frontier := ARRAY[i_partitioning_id];
+        _depth := 0;
+
+        WHILE _depth < _max_depth LOOP
+            _depth := _depth + 1;
+
+            SELECT COALESCE(array_agg(DISTINCT E.fk_child_partitioning), ARRAY[]::BIGINT[])
+            INTO _next_frontier
+            FROM lineage.partitioning_edges E
+            WHERE E.fk_parent_partitioning = ANY(_frontier)
+              AND NOT (E.fk_child_partitioning = ANY(_downstream_visited));
+
+            EXIT WHEN cardinality(_next_frontier) = 0;
+
+            _downstream_visited := _downstream_visited || _next_frontier;
+            _frontier := _next_frontier;
+        END LOOP;
+    END IF;
+
+    -- Collect edges from each direction's visited set
+    WITH all_edges AS (
+        SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at
         FROM lineage.partitioning_edges E
-        WHERE E.fk_child_partitioning = i_partitioning_id
-          AND _direction IN ('both', 'upstream')
-        UNION
-        -- Recursive case: grandparents and beyond
-        SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at, U.depth + 1
-        FROM lineage.partitioning_edges E
-        JOIN upstream_edges U ON E.fk_child_partitioning = U.fk_parent_partitioning
-        WHERE U.depth < _max_depth
-    ),
-    downstream_edges AS (
-        -- Base case: direct children
-        SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at, 1 AS depth
-        FROM lineage.partitioning_edges E
-        WHERE E.fk_parent_partitioning = i_partitioning_id
-          AND _direction IN ('both', 'downstream')
-        UNION
-        -- Recursive case: grandchildren and beyond
-        SELECT E.fk_child_partitioning, E.fk_parent_partitioning, E.created_by, E.created_at, D.depth + 1
-        FROM lineage.partitioning_edges E
-        JOIN downstream_edges D ON E.fk_parent_partitioning = D.fk_child_partitioning
-        WHERE D.depth < _max_depth
-    ),
-    all_edges AS (
-        SELECT DISTINCT fk_child_partitioning, fk_parent_partitioning, created_by, created_at
-        FROM (
-            SELECT fk_child_partitioning, fk_parent_partitioning, created_by, created_at FROM upstream_edges
-            UNION ALL
-            SELECT fk_child_partitioning, fk_parent_partitioning, created_by, created_at FROM downstream_edges
-        ) combined
+        WHERE (_direction IN ('both', 'upstream') AND
+               E.fk_child_partitioning = ANY(_upstream_visited) AND
+               E.fk_parent_partitioning = ANY(_upstream_visited))
+           OR (_direction IN ('both', 'downstream') AND
+               E.fk_parent_partitioning = ANY(_downstream_visited) AND
+               E.fk_child_partitioning = ANY(_downstream_visited))
     ),
     all_node_ids AS (
         SELECT i_partitioning_id AS id

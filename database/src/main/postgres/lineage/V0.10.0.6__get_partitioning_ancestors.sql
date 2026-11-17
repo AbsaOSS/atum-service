@@ -53,7 +53,6 @@ $$
 --      14 - OK (No Ancestors found, therefore no op)
 --      41 - Partitioning not found
 --
--- Migrated from runs.get_partitioning_ancestors in V0.10.0.17
 -------------------------------------------------------------------------------
 DECLARE
     _has_more BOOLEAN;
