@@ -2932,6 +2932,7 @@
                   "    const page = pm.response.json();",
                   "    pm.expect(page.data).to.be.an(\"array\").that.is.empty;",
                   "    pm.expect(page.pagination).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
                   ""
                 ],
                 "type": "text/javascript",
