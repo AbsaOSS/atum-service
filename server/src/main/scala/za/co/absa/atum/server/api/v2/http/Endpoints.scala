@@ -292,6 +292,7 @@ object Endpoints extends BaseEndpoints {
       .in(V2Paths.Partitionings / V2Paths.Search)
       .in(paginationInput)
       .in(partitioningSearchInput)
+      .summary("Search partitionings")
       .description(
         "Search distinct partitionings by partial keys and/or checkpoint process start time, ordered by partitioning ID " +
           "ascending. Key-only searches include partitionings without checkpoints. Time selection requires both bounds, " +
