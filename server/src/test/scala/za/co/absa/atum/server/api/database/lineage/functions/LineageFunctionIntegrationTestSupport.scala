@@ -40,5 +40,5 @@ private[functions] trait LineageFunctionIntegrationTestSupport {
       .serviceWithZIO[CreatePartitioningWithParents](
         _(PartitioningSubmitV2DTO(uniquePartitioning(tag), parents, author))
       )
-      .map(_.toOption.get.data.id.get)
+      .map(_.toOption.get.data.get.id)
 }

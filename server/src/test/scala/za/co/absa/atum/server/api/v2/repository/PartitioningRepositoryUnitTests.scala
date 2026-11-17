@@ -65,7 +65,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
     ZIO.right(
       Row(
         FunctionStatus(code, text),
-        CreatePartitioningWithParents.DBResult(Some(createdId), Some(createdBy), Some(code == 11 || code == 12))
+        Option(CreatePartitioningWithParents.DBResult(createdId, createdBy, code == 11 || code == 12))
       )
     )
 
@@ -120,7 +120,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
   when(createPartitioningWithParentsMock.apply(dto33))
     .thenReturn(ZIO.left(DataConflictException(FunctionStatus(33, "Partitioning already has descendants"))))
   when(createPartitioningWithParentsMock.apply(dtoNullResult))
-    .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK"), CreatePartitioningWithParents.DBResult(None, None, None))))
+    .thenReturn(ZIO.right(Row(FunctionStatus(11, "OK"), None)))
   when(createPartitioningWithParentsMock.apply(partitioningSubmitV2DTOMultiParentBoom))
     .thenReturn(ZIO.fail(new Exception("boom!")))
 
@@ -496,7 +496,7 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData {
             )
           )
         },
-        test("DBResult(None, None, None) on OK status maps to GeneralDatabaseError") {
+        test("None on OK status maps to GeneralDatabaseError") {
           assertZIO(PartitioningRepository.createPartitioning(dtoNullResult).exit)(
             failsWithA[GeneralDatabaseError]
           )

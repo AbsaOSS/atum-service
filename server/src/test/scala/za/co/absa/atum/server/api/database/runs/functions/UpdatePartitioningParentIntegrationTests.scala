@@ -48,7 +48,7 @@ object UpdatePartitioningParentIntegrationTests extends ConfigProviderTest {
           create <- ZIO.service[CreatePartitioningWithParents]
           updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
           created <- create(PartitioningSubmitV2DTO(partitioning, Seq.empty[Long], "author"))
-          childId = created.toOption.get.data.id.get
+          childId = created.toOption.get.data.get.id
           result <- updatePartitioningParent(
             UpdatePartitioningParentArgs(childId, PartitioningParentPatchDTO(Long.MaxValue, "author"))
           )
@@ -62,8 +62,8 @@ object UpdatePartitioningParentIntegrationTests extends ConfigProviderTest {
           updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
           parentRes <- create(PartitioningSubmitV2DTO(parentPart, Seq.empty[Long], "author"))
           childRes <- create(PartitioningSubmitV2DTO(childPart, Seq.empty[Long], "author"))
-          parentId = parentRes.toOption.get.data.id.get
-          childId = childRes.toOption.get.data.id.get
+          parentId = parentRes.toOption.get.data.get.id
+          childId = childRes.toOption.get.data.get.id
           result <- updatePartitioningParent(
             UpdatePartitioningParentArgs(childId, PartitioningParentPatchDTO(parentId, "linker"))
           )
@@ -78,7 +78,7 @@ object UpdatePartitioningParentIntegrationTests extends ConfigProviderTest {
           create <- ZIO.service[CreatePartitioningWithParents]
           updatePartitioningParent <- ZIO.service[UpdatePartitioningParent]
           created <- create(PartitioningSubmitV2DTO(partitioning, Seq.empty[Long], "author"))
-          id = created.toOption.get.data.id.get
+          id = created.toOption.get.data.get.id
           result <- updatePartitioningParent(
             UpdatePartitioningParentArgs(id, PartitioningParentPatchDTO(parentPartitioningId = id, author = "author"))
           )

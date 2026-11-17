@@ -49,7 +49,7 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
         _(PartitioningSubmitV2DTO(Seq(PartitionDTO("key", UUID.randomUUID().toString)), None, "author"))
       )
       .flatMap(ZIO.fromEither(_))
-      .flatMap(row => ZIO.getOrFail(row.data.id))
+      .flatMap(row => ZIO.getOrFail(row.data.map(_.id)))
 
   private def getMainFlowId(partitioningId: Long): ZIO[GetPartitioningMainFlow, Throwable, Long] =
     ZIO

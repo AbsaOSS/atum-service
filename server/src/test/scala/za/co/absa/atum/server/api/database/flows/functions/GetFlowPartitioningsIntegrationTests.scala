@@ -44,7 +44,7 @@ object GetFlowPartitioningsIntegrationTests extends ConfigProviderTest {
         )
       )
       .flatMap(ZIO.fromEither(_))
-      .flatMap(row => ZIO.getOrFail(row.data.id))
+      .flatMap(row => ZIO.getOrFail(row.data.map(_.id)))
 
   private def getPage(flowId: Long, offset: Long): ZIO[GetFlowPartitionings, Throwable, Seq[(Long, Boolean)]] =
     ZIO

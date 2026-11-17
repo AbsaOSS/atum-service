@@ -75,11 +75,11 @@ class PartitioningRepositoryImpl(
   ): IO[DatabaseError, CreationResult[PartitioningWithIdDTO]] = {
     dbSingleResultCallWithStatus(createPartitioningWithParentsFn(partitioningSubmitDTO), "createPartitioning")
       .flatMap {
-        case CreatePartitioningWithParents.DBResult(Some(id), Some(createdBy), Some(wasCreated)) =>
+        case Some(CreatePartitioningWithParents.DBResult(id, createdBy, wasCreated)) =>
           val result = PartitioningWithIdDTO(id, partitioningSubmitDTO.partitioning, createdBy)
           ZIO.succeed(if (wasCreated) Created(result) else Existing(result))
-        case other =>
-          ZIO.fail(GeneralDatabaseError(s"Unexpected null column in 'createPartitioning' result: $other"))
+        case None =>
+          ZIO.fail(GeneralDatabaseError("Unexpected error."))
       }
   }
 

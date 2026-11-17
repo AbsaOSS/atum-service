@@ -36,16 +36,11 @@ class RunsFunctionsInstantiationUnitTests extends AnyFlatSpec with Matchers {
     )
   }
 
-  "CreatePartitioningWithParents.DBResult" should "support both populated and empty Option fields" in {
-    val populated = DBResult(Some(42L), Some("author"), Some(true))
-    populated.id shouldBe Some(42L)
-    populated.createdBy shouldBe Some("author")
-    populated.wasCreated shouldBe Some(true)
-
-    val empty = DBResult(None, None, None)
-    empty.id shouldBe None
-    empty.createdBy shouldBe None
-    empty.wasCreated shouldBe None
+  "CreatePartitioningWithParents.DBResult" should "store id, createdBy, and wasCreated" in {
+    val result = DBResult(42L, "author", wasCreated = true)
+    result.id shouldBe 42L
+    result.createdBy shouldBe "author"
+    result.wasCreated shouldBe true
   }
 
   "UpdatePartitioningParent" should "instantiate without DB and provide expected fieldsToSelect" in {

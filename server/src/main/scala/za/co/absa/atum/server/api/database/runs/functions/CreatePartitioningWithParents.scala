@@ -31,7 +31,11 @@ import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import zio._
 
 class CreatePartitioningWithParents(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieSingleResultFunctionWithStatus[PartitioningSubmitV2DTO, CreatePartitioningWithParents.DBResult, Task](
+    extends DoobieSingleResultFunctionWithStatus[
+      PartitioningSubmitV2DTO,
+      Option[CreatePartitioningWithParents.DBResult],
+      Task
+    ](
       partitioningSubmit =>
         Seq(
           fr"${PartitioningForDB.fromSeqPartitionDTO(partitioningSubmit.partitioning).asJson}",
@@ -53,8 +57,8 @@ object CreatePartitioningWithParents {
   }
 
   case class DBResult(
-    id: Option[Long],
-    createdBy: Option[String],
-    wasCreated: Option[Boolean]
+    id: Long,
+    createdBy: String,
+    wasCreated: Boolean
   )
 }
