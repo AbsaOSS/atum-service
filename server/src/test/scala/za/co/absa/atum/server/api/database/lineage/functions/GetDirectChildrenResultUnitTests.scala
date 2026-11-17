@@ -46,7 +46,7 @@ class GetDirectChildrenResultUnitTests extends AnyFunSuiteLike {
   ).getOrElse(fail("Invalid JSON"))
 
   test("toChildPartitioningDTO converts valid JSON into ChildPartitioningDTO") {
-    val result = GetDirectChildrenResult(42L, validJson, "author1", "linker1", now)
+    val result = GetDirectChildrenResult(42L, validJson, "author1", Some("linker1"), Some(now))
     val dtoEither = result.toChildPartitioningDTO
 
     assert(dtoEither.isRight)
@@ -60,16 +60,29 @@ class GetDirectChildrenResultUnitTests extends AnyFunSuiteLike {
     ))
   }
 
+  test("toChildPartitioningDTO handles None linkedBy and linkedAt") {
+    val result = GetDirectChildrenResult(42L, validJson, "author1", None, None)
+    val dtoEither = result.toChildPartitioningDTO
+
+    assert(dtoEither == Right(ChildPartitioningDTO(
+      id = 42L,
+      partitioning = Seq(PartitionDTO("keyX", "valX"), PartitionDTO("keyY", "valY")),
+      author = "author1",
+      linkedBy = None,
+      linkedAt = None
+    )))
+  }
+
   test("toChildPartitioningDTO fails on invalid JSON") {
-    val result = GetDirectChildrenResult(42L, invalidJson, "author1", "linker1", now)
+    val result = GetDirectChildrenResult(42L, invalidJson, "author1", Some("linker1"), Some(now))
     val dtoEither = result.toChildPartitioningDTO
 
     assert(dtoEither.isLeft)
   }
 
   test("resultsToChildPartitioningDTOs converts sequence of valid results") {
-    val r1 = GetDirectChildrenResult(1L, validJson, "a1", "l1", now)
-    val r2 = GetDirectChildrenResult(2L, validJson, "a2", "l2", now)
+    val r1 = GetDirectChildrenResult(1L, validJson, "a1", Some("l1"), Some(now))
+    val r2 = GetDirectChildrenResult(2L, validJson, "a2", None, None)
 
     val dtosEither = GetDirectChildrenResult.resultsToChildPartitioningDTOs(Seq(r1, r2))
     assert(dtosEither.isRight)
@@ -77,8 +90,8 @@ class GetDirectChildrenResultUnitTests extends AnyFunSuiteLike {
   }
 
   test("resultsToChildPartitioningDTOs fails when any result has invalid JSON") {
-    val r1 = GetDirectChildrenResult(1L, validJson, "a1", "l1", now)
-    val r2 = GetDirectChildrenResult(2L, invalidJson, "a2", "l2", now)
+    val r1 = GetDirectChildrenResult(1L, validJson, "a1", Some("l1"), Some(now))
+    val r2 = GetDirectChildrenResult(2L, invalidJson, "a2", Some("l2"), Some(now))
 
     val dtosEither = GetDirectChildrenResult.resultsToChildPartitioningDTOs(Seq(r1, r2))
     assert(dtosEither.isLeft)

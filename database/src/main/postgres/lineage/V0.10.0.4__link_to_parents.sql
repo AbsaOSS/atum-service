@@ -36,12 +36,14 @@
 --
 -- Status codes:
 --      11 - Partitioning linked to parents (edge and/or flow membership written, including an edge-only backfill
----                                           for an already-known ancestor)
+--                                           for an already-known ancestor)
 --      14 - Nothing has changed (fully idempotent retry)
 --      32 - Parent partitioning would create a cycle
 --      33 - Partitioning already has descendants and cannot be linked under new parents
 --      41 - Parent partitioning not found
 --      42 - Child partitioning not found
+--      50 - Parent partitioning has no flow membership
+--      51 - Invalid input (i_by_user must not be NULL)
 --
 -- Fast path (no lock): every requested parent is already an ancestor via the closure; only missing
 --   lineage.partitioning_edges rows are backfilled (idempotent, ON CONFLICT DO NOTHING).
@@ -70,6 +72,12 @@ DECLARE
     _rows_edges     INTEGER;
     _rows_flows     INTEGER;
 BEGIN
+    IF i_by_user IS NULL THEN
+        status := 51;
+        status_text := 'User (i_by_user) must not be NULL';
+        RETURN;
+    END IF;
+
     -- normalize parents: distinct, non-NULL, deterministic order
     _parent_ids := ARRAY(
         SELECT DISTINCT PID.id
@@ -82,7 +90,7 @@ BEGIN
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_child_id;
     IF NOT FOUND THEN
         status := 42;
-        status_text := 'Child partitioning not found: ' || i_child_id::TEXT;
+        status_text := 'Child partitioning not found: ' || COALESCE(i_child_id::TEXT, 'NULL');
         RETURN;
     END IF;
 
@@ -188,6 +196,21 @@ BEGIN
         RETURN;
     END IF;
 
+    -- verify every parent has at least one flow membership before writing edges (prevents edges vs flows desync)
+    _offending := ARRAY(
+        SELECT PID.id
+        FROM unnest(_parent_ids) AS PID(id)
+        WHERE NOT EXISTS (
+            SELECT 1 FROM flows.partitioning_to_flow PPTF WHERE PPTF.fk_partitioning = PID.id
+        )
+        ORDER BY PID.id
+    );
+    IF cardinality(_offending) > 0 THEN
+        status := 50;
+        status_text := 'Parent partitioning has no flow membership: ' || array_to_string(_offending, ',');
+        RETURN;
+    END IF;
+
     -- =========================================================================
     -- DUAL WRITE: Insert into both edges and flows tables
     -- =========================================================================
@@ -204,7 +227,7 @@ BEGIN
     SELECT DISTINCT PPTF.fk_flow, i_child_id, i_by_user
     FROM unnest(_parent_ids) AS PID(id)
     INNER JOIN flows.partitioning_to_flow PPTF ON PPTF.fk_partitioning = PID.id
-    ON CONFLICT DO NOTHING;
+    ON CONFLICT ON CONSTRAINT partitioning_to_flow_pk DO NOTHING;
     GET DIAGNOSTICS _rows_flows = ROW_COUNT;
 
     -- Return status based on whether ANY writes occurred

@@ -5,8 +5,8 @@ How to set up database for local testing
 ### Using Docker
 
 ```zsh
-# start up postgres docker container (optional; instead you can create atum_db on your local postgres instance)
-docker run --name=atum_db -e POSTGRES_PASSWORD=changeme -e POSTGRES_DB=atum_db -p 5432:5432 -d postgres:16
+# start up postgres docker container (optional; instead you can create atum_db on your local postgres instance; CI uses postgres:15)
+docker run --name=atum_db -e POSTGRES_PASSWORD=changeme -e POSTGRES_DB=atum_db -p 5432:5432 -d postgres:15
 
 # migrate scripts
 sbt flywayMigrate
@@ -37,7 +37,7 @@ to set the current state as the baseline.
 
 The database is organized into three main schemas:
 
-- **`runs`**: Core partitioning and checkpoint operations along with their metadata, and measure definitions
+- **`runs`**: Core partitioning, checkpoint, and measure definition operations along with their metadata
 - **`flows`**: Transitive closure (`partitioning_to_flow`) and flow-based queries (`get_flow_partitionings`, `get_flow_checkpoints`)
 - **`lineage`**: Edge-based lineage operations (source of truth):
   - `partitioning_edges` table (direct parent-child relationships)

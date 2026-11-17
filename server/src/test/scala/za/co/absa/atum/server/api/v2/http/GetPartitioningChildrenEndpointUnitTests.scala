@@ -17,7 +17,7 @@
 package za.co.absa.atum.server.api.v2.http
 
 import org.mockito.Mockito.{mock, when}
-import sttp.client3.circe.asJson
+import sttp.client3.circe.{asJson, asJsonAlways}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{UriContext, basicRequest}
 import sttp.model.StatusCode
@@ -30,7 +30,7 @@ import za.co.absa.atum.server.api.TestData
 import za.co.absa.atum.server.api.v2.controller.PartitioningController
 import za.co.absa.atum.server.api.v2.http.Endpoints.getPartitioningChildrenEndpoint
 import zio.test.Assertion.equalTo
-import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertZIO}
+import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue, assertZIO}
 import zio.{Scope, ZIO, ZLayer}
 
 object GetPartitioningChildrenEndpointUnitTests extends ZIOSpecDefault with TestData {
@@ -124,41 +124,46 @@ object GetPartitioningChildrenEndpointUnitTests extends ZIOSpecDefault with Test
           )
         )
       },
+      test("Returns 400 BadRequest for non-numeric partitioningId") {
+        for {
+          response <- basicRequest.get(uri"https://test.com/api/v2/partitionings/abc/children").send(backendStub)
+        } yield assertTrue(response.code == StatusCode.BadRequest)
+      },
       test("Returns a NotFoundErrorResponse when partitioning does not exist") {
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/8888/children")
-          .response(asJson[NotFoundErrorResponse])
+          .response(asJsonAlways[NotFoundErrorResponse])
 
-        val response = request
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.NotFound))
+        for {
+          response <- request.send(backendStub)
+        } yield assertTrue(
+          response.code == StatusCode.NotFound,
+          response.body.map(_.message) == Right("Partitioning not found")
+        )
       },
       test("Returns an InternalServerErrorResponse on unexpected error") {
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/9999/children")
-          .response(asJson[InternalServerErrorResponse])
+          .response(asJsonAlways[InternalServerErrorResponse])
 
-        val response = request
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.InternalServerError))
+        for {
+          response <- request.send(backendStub)
+        } yield assertTrue(
+          response.code == StatusCode.InternalServerError,
+          response.body.map(_.message) == Right("internal server error")
+        )
       },
       test("Returns a BadRequest for a general error") {
         val request = basicRequest
           .get(uri"https://test.com/api/v2/partitionings/6666/children")
-          .response(asJson[GeneralErrorResponse])
+          .response(asJsonAlways[GeneralErrorResponse])
 
-        val response = request
-          .send(backendStub)
-
-        val statusCode = response.map(_.code)
-
-        assertZIO(statusCode)(equalTo(StatusCode.BadRequest))
+        for {
+          response <- request.send(backendStub)
+        } yield assertTrue(
+          response.code == StatusCode.BadRequest,
+          response.body.map(_.message) == Right("error")
+        )
       }
     )
 

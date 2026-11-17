@@ -19,34 +19,12 @@ package za.co.absa.atum.model.dto
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 
-import java.time.ZonedDateTime
-
-/**
- *  A direct edge connecting a parent partitioning to a child partitioning.
- *
- *  @param parentPartitioningId ID of the parent (upstream)
- *  @param childPartitioningId  ID of the child (downstream)
- *  @param linkedBy             who created the relationship
- *  @param linkedAt             when the relationship was created
- */
-case class LineageEdgeDTO(
-  parentPartitioningId: Long,
-  childPartitioningId: Long,
-  linkedBy: Option[String] = None,
-  linkedAt: Option[ZonedDateTime] = None
-)
-
-object LineageEdgeDTO {
-  implicit def encoder: Encoder[LineageEdgeDTO] = deriveEncoder
-  implicit def decoder: Decoder[LineageEdgeDTO] = deriveDecoder
-}
-
 /**
  *  The full lineage sub-graph centered on a primary partitioning.
  *  Returned by GET /api/v2/partitionings/{id}/lineage.
  *
  *  @param primaryPartitioningId the root or focal partitioning ID requested
- *  @param depth                 traversal depth evaluated
+ *  @param depth                 maximum traversal depth requested
  *  @param direction             traversal direction ('both', 'upstream', or 'downstream')
  *  @param nodes                 all partitioning nodes present in the sub-graph
  *  @param edges                 all direct edges interconnecting the nodes

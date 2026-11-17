@@ -45,9 +45,9 @@ $$
 -- Parameters:
 --      i_id_partitioning                - id of the partitioning to be changed
 --      i_id_parent_partitioning         - id of the new parent of the partitioning
+--      i_by_user                        - user behind the change
 --      i_copy_measurements              - copies measurements from parent partitioning to child
 --      i_copy_additional_data           - copies additional data from parent partitioning to child
---      i_by_user                        - user behind the change
 --
 -- Returns:
 --      status              - Status code
@@ -61,6 +61,7 @@ $$
 --           under a new parent); nothing is written (no copies either)
 --      41 - Parent Partitioning not found
 --      42 - Child Partitioning not found
+--      51 - Invalid input (i_by_user must not be NULL)
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -85,11 +86,11 @@ BEGIN
         RETURN;
     END IF;
 
-    --Link FIRST: a self-link, a cycle (32) or a child with descendants (33) returns before anything is written
+    --Link FIRST: any non-success outcome (32, 33, 41, 42, 50, 51) returns before anything is written
     SELECT LTP.status, LTP.status_text
     FROM lineage.link_to_parents(i_id_partitioning, ARRAY[i_id_parent_partitioning], i_by_user) AS LTP
     INTO _link_status, _link_status_text;
-    IF _link_status IN (32, 33) THEN
+    IF _link_status NOT IN (11, 14) THEN
         status := _link_status;
         status_text := _link_status_text;
         RETURN;
@@ -104,7 +105,9 @@ BEGIN
             runs.get_partitioning_additional_data(i_id_parent_partitioning) AS PAD
         INTO
             _additional_data;
-        PERFORM 1 FROM runs.create_or_update_additional_data(i_id_partitioning, _additional_data, i_by_user);
+        IF _additional_data IS NOT NULL THEN
+            PERFORM 1 FROM runs.create_or_update_additional_data(i_id_partitioning, _additional_data, i_by_user);
+        END IF;
     END IF;
 
     --IF i_copy_measurements is true,

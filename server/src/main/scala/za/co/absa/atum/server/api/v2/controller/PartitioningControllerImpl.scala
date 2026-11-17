@@ -200,24 +200,14 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
 
   override def getPartitioningLineageGraph(
     partitioningId: Long,
-    direction: Option[String],
-    depth: Option[Int]
+    direction: String,
+    depth: Int
   ): IO[ErrorResponse, SingleSuccessResponse[LineageGraphDTO]] = {
-    val dir = direction.map(_.trim.toLowerCase).getOrElse("both")
-    val d = depth.getOrElse(5)
-    for {
-      _ <- ZIO.when(!Set("both", "upstream", "downstream").contains(dir))(
-        ZIO.fail(BadRequestResponse(s"Invalid direction '$dir'. Allowed values: 'both', 'upstream', 'downstream'."))
+    mapToSingleSuccessResponse(
+      serviceCall[LineageGraphDTO, LineageGraphDTO](
+        partitioningService.getPartitioningLineageGraph(partitioningId, direction, depth)
       )
-      _ <- ZIO.when(d < 1 || d > 20)(
-        ZIO.fail(BadRequestResponse(s"Depth $d out of range. Allowed range is 1 to 20."))
-      )
-      response <- mapToSingleSuccessResponse(
-        serviceCall[LineageGraphDTO, LineageGraphDTO](
-          partitioningService.getPartitioningLineageGraph(partitioningId, dir, d)
-        )
-      )
-    } yield response
+    )
   }
 
 }

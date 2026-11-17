@@ -15,7 +15,7 @@
  */
 
 -- The primary key (fk_flow, fk_partitioning) cannot serve lookups by fk_partitioning alone ("the flows that contain
--- partitioning X"). flows._link_to_parents does exactly that for every parent while holding the global advisory lock,
+-- partitioning X"). lineage.link_to_parents does exactly that for every parent while holding the global advisory lock,
 -- so without this index each link would scan the whole table and serialize all writers behind that scan.
 -- It also serves the ancestors query.
 --
@@ -23,4 +23,4 @@
 -- statement: Flyway then runs it outside of a transaction, which CONCURRENTLY requires.
 -- If the build fails, it leaves an INVALID index behind; drop it
 -- (DROP INDEX CONCURRENTLY flows.partitioning_to_flow_idx1) and re-run the migration.
-CREATE INDEX CONCURRENTLY partitioning_to_flow_idx1 ON flows.partitioning_to_flow (fk_partitioning);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS partitioning_to_flow_idx1 ON flows.partitioning_to_flow (fk_partitioning);

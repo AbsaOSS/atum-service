@@ -86,8 +86,8 @@ trait PartitioningController {
 
   def getPartitioningLineageGraph(
     partitioningId: Long,
-    direction: Option[String],
-    depth: Option[Int]
+    direction: String,
+    depth: Int
   ): IO[ErrorResponse, SingleSuccessResponse[LineageGraphDTO]]
 
 }

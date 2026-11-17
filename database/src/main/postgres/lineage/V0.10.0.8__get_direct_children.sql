@@ -63,15 +63,11 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Set status for successful query
-    status := 11;
-    status_text := 'OK';
-
     -- Return all direct children
     RETURN QUERY
     SELECT
-        status,
-        status_text,
+        11 AS status,
+        'OK'::TEXT AS status_text,
         P.id_partitioning,
         P.partitioning,
         P.created_by,

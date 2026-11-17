@@ -25,7 +25,7 @@ import za.co.absa.atum.server.api.database.runs.functions.{CreatePartitioningWit
 import za.co.absa.db.fadb.exceptions.DataNotFoundException
 import za.co.absa.db.fadb.status.FunctionStatus
 import zio.{Scope, ZIO}
-import zio.test.{Spec, TestEnvironment, assertTrue}
+import zio.test.{Spec, TestAspect, TestEnvironment, assertTrue}
 import zio.interop.catz.asyncInstance
 
 import java.util.UUID
@@ -44,7 +44,7 @@ object GetFlowPartitioningsIntegrationTests extends ConfigProviderTest {
         )
       )
       .flatMap(ZIO.fromEither(_))
-      .map(_.data.id)
+      .flatMap(row => ZIO.getOrFail(row.data.id))
 
   private def getPage(flowId: Long, offset: Long): ZIO[GetFlowPartitionings, Throwable, Seq[(Long, Boolean)]] =
     ZIO
@@ -81,7 +81,7 @@ object GetFlowPartitioningsIntegrationTests extends ConfigProviderTest {
           beyondEndPage.isEmpty
         )
       }
-    )
+    ) @@ TestAspect.sequential
   }.provide(
     GetFlowPartitionings.layer,
     CreatePartitioningWithParents.layer,

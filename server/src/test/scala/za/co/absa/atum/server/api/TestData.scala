@@ -125,34 +125,16 @@ trait TestData {
     id = partitioningFromDB1.id,
     partitioningJson = partitioningAsJson,
     author = partitioningFromDB1.author,
-    linkedBy = "linker1",
-    linkedAt = timestamp1
+    linkedBy = Some("linker1"),
+    linkedAt = Some(timestamp1)
   )
 
   protected val getDirectParentsResult2: GetDirectParentsResult = GetDirectParentsResult(
     id = partitioningFromDB2.id,
     partitioningJson = partitioningAsJson,
     author = partitioningFromDB2.author,
-    linkedBy = "linker2",
-    linkedAt = timestamp2
-  )
-
-  // Expected ParentPartitioningDTOs resulting from the getDirectParentsResult1/2 fixtures above
-  // (used by PartitioningRepositoryUnitTests, which exercises the DB-row -> DTO conversion)
-  protected val directParentDTO1: ParentPartitioningDTO = ParentPartitioningDTO(
-    id = getDirectParentsResult1.id,
-    partitioning = partitioningDTO1,
-    author = getDirectParentsResult1.author,
-    linkedBy = Some(getDirectParentsResult1.linkedBy),
-    linkedAt = Some(getDirectParentsResult1.linkedAt)
-  )
-
-  protected val directParentDTO2: ParentPartitioningDTO = ParentPartitioningDTO(
-    id = getDirectParentsResult2.id,
-    partitioning = partitioningDTO1,
-    author = getDirectParentsResult2.author,
-    linkedBy = Some(getDirectParentsResult2.linkedBy),
-    linkedAt = Some(getDirectParentsResult2.linkedAt)
+    linkedBy = Some("linker2"),
+    linkedAt = Some(timestamp2)
   )
 
   // Partitioning with ID DTO
@@ -164,70 +146,54 @@ trait TestData {
   protected val partitioningWithIdDTO2: PartitioningWithIdDTO = PartitioningWithIdDTO(
     id = partitioningFromDB2.id,
     partitioning = partitioningDTO1,
-    author = partitioningFromDB1.author
+    author = partitioningFromDB2.author
   )
 
-  // Parent Partitioning DTO (for direct parents endpoint tests)
+  // Parent Partitioning DTO (matches getDirectParentsResult1/2)
   protected val parentPartitioningDTO1: ParentPartitioningDTO = ParentPartitioningDTO(
-    id = 1L,
+    id = getDirectParentsResult1.id,
     partitioning = partitioningDTO1,
-    author = "author1",
-    linkedBy = Some("linker1"),
-    linkedAt = Some(ZonedDateTime.parse("2023-01-01T10:00:00Z"))
+    author = getDirectParentsResult1.author,
+    linkedBy = getDirectParentsResult1.linkedBy,
+    linkedAt = getDirectParentsResult1.linkedAt
   )
   protected val parentPartitioningDTO2: ParentPartitioningDTO = ParentPartitioningDTO(
-    id = 2L,
-    partitioning = partitioningDTO2,
-    author = "author2",
-    linkedBy = Some("linker2"),
-    linkedAt = Some(ZonedDateTime.parse("2023-01-02T11:00:00Z"))
+    id = getDirectParentsResult2.id,
+    partitioning = partitioningDTO1,
+    author = getDirectParentsResult2.author,
+    linkedBy = getDirectParentsResult2.linkedBy,
+    linkedAt = getDirectParentsResult2.linkedAt
   )
 
   protected val getDirectChildrenResult1: GetDirectChildrenResult = GetDirectChildrenResult(
     id = partitioningFromDB1.id,
     partitioningJson = partitioningAsJson,
     author = partitioningFromDB1.author,
-    linkedBy = "linker1",
-    linkedAt = timestamp1
+    linkedBy = Some("linker1"),
+    linkedAt = Some(timestamp1)
   )
 
   protected val getDirectChildrenResult2: GetDirectChildrenResult = GetDirectChildrenResult(
     id = partitioningFromDB2.id,
     partitioningJson = partitioningAsJson,
     author = partitioningFromDB2.author,
-    linkedBy = "linker2",
-    linkedAt = timestamp2
-  )
-
-  protected val directChildDTO1: ChildPartitioningDTO = ChildPartitioningDTO(
-    id = getDirectChildrenResult1.id,
-    partitioning = partitioningDTO1,
-    author = getDirectChildrenResult1.author,
-    linkedBy = Some(getDirectChildrenResult1.linkedBy),
-    linkedAt = Some(getDirectChildrenResult1.linkedAt)
-  )
-
-  protected val directChildDTO2: ChildPartitioningDTO = ChildPartitioningDTO(
-    id = getDirectChildrenResult2.id,
-    partitioning = partitioningDTO1,
-    author = getDirectChildrenResult2.author,
-    linkedBy = Some(getDirectChildrenResult2.linkedBy),
-    linkedAt = Some(getDirectChildrenResult2.linkedAt)
+    linkedBy = Some("linker2"),
+    linkedAt = Some(timestamp2)
   )
 
   protected val childPartitioningDTO1: ChildPartitioningDTO = ChildPartitioningDTO(
-    id = 1L,
+    id = getDirectChildrenResult1.id,
     partitioning = partitioningDTO1,
-    author = "author1",
-    linkedBy = Some("linker1"),
-    linkedAt = Some(ZonedDateTime.parse("2023-01-01T10:00:00Z"))
+    author = getDirectChildrenResult1.author,
+    linkedBy = getDirectChildrenResult1.linkedBy,
+    linkedAt = getDirectChildrenResult1.linkedAt
   )
   protected val childPartitioningDTO2: ChildPartitioningDTO = ChildPartitioningDTO(
-    id = 2L,
-    partitioning = partitioningDTO2,
-    author = "author2",
-    linkedBy = Some("linker2"),
-    linkedAt = Some(ZonedDateTime.parse("2023-01-02T11:00:00Z"))
+    id = getDirectChildrenResult2.id,
+    partitioning = partitioningDTO1,
+    author = getDirectChildrenResult2.author,
+    linkedBy = getDirectChildrenResult2.linkedBy,
+    linkedAt = getDirectChildrenResult2.linkedAt
   )
 
   protected val lineageEdgeDTO1: LineageEdgeDTO = LineageEdgeDTO(
@@ -241,7 +207,7 @@ trait TestData {
     primaryPartitioningId = 2L,
     depth = 5,
     direction = "both",
-    nodes = Seq(partitioningWithIdDTO1, partitioningWithIdDTO2),
+    nodes = Seq(partitioningWithIdDTO1, partitioningWithIdDTO2.copy(id = 2L)),
     edges = Seq(lineageEdgeDTO1)
   )
 
@@ -258,7 +224,7 @@ trait TestData {
        |      "author": "${partitioningFromDB1.author}"
        |    },
        |    {
-       |      "id": ${partitioningFromDB2.id},
+       |      "id": 2,
        |      "partitioning": ${partitioningAsJson.noSpaces},
        |      "author": "${partitioningFromDB2.author}"
        |    }

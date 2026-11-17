@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+DROP FUNCTION IF EXISTS runs.get_partitioning_ancestors(BIGINT, INT, BIGINT);
+
 CREATE OR REPLACE FUNCTION lineage.get_partitioning_ancestors(
     IN i_id_partitioning BIGINT,
     IN i_limit INT DEFAULT 10,
@@ -56,6 +58,8 @@ $$
 -------------------------------------------------------------------------------
 DECLARE
     _has_more BOOLEAN;
+    _limit    INT;
+    _offset   BIGINT;
 
 BEGIN
 
@@ -68,16 +72,19 @@ BEGIN
         RETURN;
     END IF;
 
+    _limit := CASE WHEN i_limit IS NULL THEN NULL ELSE GREATEST(i_limit, 1) END;
+    _offset := GREATEST(COALESCE(i_offset, 0), 0);
+
     -- Check if there are more partitionings than the limit
-    IF i_limit IS NOT NULL THEN
-        SELECT count(*) > i_limit
+    IF _limit IS NOT NULL THEN
+        SELECT count(*) > _limit
         FROM (SELECT 1
               FROM flows.partitioning_to_flow PF
                        INNER JOIN flows.flows F ON F.id_flow = PF.fk_flow
                        INNER JOIN runs.partitionings P ON P.id_partitioning = F.fk_primary_partitioning
               WHERE PF.fk_partitioning = i_id_partitioning
-                AND P.id_partitioning IS DISTINCT FROM i_id_partitioning
-              LIMIT i_limit + 1 OFFSET i_offset) s
+                AND F.fk_primary_partitioning <> i_id_partitioning
+              LIMIT _limit::BIGINT + 1 OFFSET _offset) s
         INTO _has_more;
     ELSE
         _has_more := false;
@@ -95,9 +102,9 @@ BEGIN
                  INNER JOIN flows.flows F ON F.id_flow = PF.fk_flow
                  INNER JOIN runs.partitionings P ON P.id_partitioning = F.fk_primary_partitioning
         WHERE PF.fk_partitioning = i_id_partitioning
-          AND P.id_partitioning IS DISTINCT FROM i_id_partitioning
+          AND F.fk_primary_partitioning <> i_id_partitioning
         ORDER BY P.id_partitioning
-        LIMIT i_limit OFFSET i_offset;
+        LIMIT _limit OFFSET _offset;
 
     --If no ancestors found send an OK status
     IF NOT FOUND THEN

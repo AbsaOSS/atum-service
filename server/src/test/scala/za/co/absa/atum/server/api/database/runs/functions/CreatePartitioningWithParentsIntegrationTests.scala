@@ -30,8 +30,15 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
   private def uniquePartitioning(tag: String) =
     Seq(PartitionDTO("withParentsKey", s"$tag-${java.util.UUID.randomUUID()}"))
 
-  private def create(partitioning: Seq[PartitionDTO], parents: Seq[Long], author: String = "author") =
-    ZIO.serviceWithZIO[CreatePartitioningWithParents](_(PartitioningSubmitV2DTO(partitioning, parents, author)))
+  private def create(
+    partitioning: Seq[PartitionDTO],
+    parents: Seq[Long],
+    author: String = "author",
+    copyMeasureDefinitions: Boolean = false
+  ) =
+    ZIO.serviceWithZIO[CreatePartitioningWithParents](
+      _(PartitioningSubmitV2DTO(partitioning, parents, author, copyMeasureDefinitions))
+    )
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
@@ -42,9 +49,62 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
         } yield assertTrue(
           result.isRight,
           result.toOption.get.functionStatus.statusCode == 11,
-          result.toOption.get.data.id > 0L,
-          result.toOption.get.data.createdBy == "requesterA",
-          result.toOption.get.data.wasCreated
+          result.toOption.get.data.id.exists(_ > 0L),
+          result.toOption.get.data.createdBy.contains("requesterA"),
+          result.toOption.get.data.wasCreated.contains(true)
+        )
+      },
+      test("New partitioning with parents -> status 12, wasCreated = true") {
+        for {
+          p1 <- create(uniquePartitioning("p1"), Seq.empty[Long], author = "parentAuthor")
+          p1Id = p1.toOption.get.data.id.get
+          child <- create(uniquePartitioning("c12"), Seq(p1Id), author = "childAuthor")
+        } yield assertTrue(
+          child.isRight,
+          child.toOption.get.functionStatus.statusCode == 12,
+          child.toOption.get.data.id.exists(_ > 0L),
+          child.toOption.get.data.createdBy.contains("childAuthor"),
+          child.toOption.get.data.wasCreated.contains(true)
+        )
+      },
+      test("Existing partitioning gets new parent -> status 13, wasCreated = false, stored author preserved") {
+        val childKey = uniquePartitioning("c13")
+        for {
+          p1 <- create(uniquePartitioning("p13"), Seq.empty[Long], author = "parentAuthor")
+          c0 <- create(childKey, Seq.empty[Long], author = "originalAuthor")
+          c1 <- create(childKey, Seq(p1.toOption.get.data.id.get), author = "laterCaller")
+        } yield assertTrue(
+          c1.isRight,
+          c1.toOption.get.functionStatus.statusCode == 13,
+          c1.toOption.get.data.id == c0.toOption.get.data.id,
+          c1.toOption.get.data.createdBy.contains("originalAuthor"),
+          c1.toOption.get.data.wasCreated.contains(false)
+        )
+      },
+      test("Idempotent re-create with same parents -> status 14, wasCreated = false") {
+        val childKey = uniquePartitioning("c14")
+        for {
+          p1 <- create(uniquePartitioning("p14"), Seq.empty[Long], author = "parentAuthor")
+          p1Id = p1.toOption.get.data.id.get
+          c0 <- create(childKey, Seq(p1Id), author = "originalAuthor")
+          c1 <- create(childKey, Seq(p1Id), author = "retryCaller")
+        } yield assertTrue(
+          c1.isRight,
+          c1.toOption.get.functionStatus.statusCode == 14,
+          c1.toOption.get.data.id == c0.toOption.get.data.id,
+          c1.toOption.get.data.createdBy.contains("originalAuthor"),
+          c1.toOption.get.data.wasCreated.contains(false)
+        )
+      },
+      test("New partitioning with copyMeasureDefinitions = true succeeds with status 12") {
+        for {
+          p1 <- create(uniquePartitioning("pmd"), Seq.empty[Long], author = "parentAuthor")
+          p1Id = p1.toOption.get.data.id.get
+          child <- create(uniquePartitioning("cmd"), Seq(p1Id), author = "childAuthor", copyMeasureDefinitions = true)
+        } yield assertTrue(
+          child.isRight,
+          child.toOption.get.functionStatus.statusCode == 12,
+          child.toOption.get.data.wasCreated.contains(true)
         )
       },
       test("Returns Left with DataNotFoundException as an unknown parent is not in the database") {
@@ -55,15 +115,28 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
           case _ => false
         })
       },
-      test("Returns Left with DataConflictException when linking would create a cycle") {
+      test("Returns Left with DataConflictException when linking would create a cycle (status 32)") {
         val keyC = uniquePartitioning("g")
         for {
           c <- create(keyC, Seq.empty[Long])
-          cId = c.toOption.get.data.id
+          cId = c.toOption.get.data.id.get
           p <- create(uniquePartitioning("gP"), Seq(cId)) // P is a child of C
-          result <- create(keyC, Seq(p.toOption.get.data.id)) // would make C a child of its own descendant
+          result <- create(keyC, Seq(p.toOption.get.data.id.get)) // would make C a child of its own descendant
         } yield assertTrue(result.left.exists {
           case DataConflictException(status) => status.statusCode == 32
+          case _ => false
+        })
+      },
+      test("Returns Left with DataConflictException when existing partitioning already has descendants (status 33)") {
+        val keyC = uniquePartitioning("hC")
+        for {
+          c <- create(keyC, Seq.empty[Long])
+          cId = c.toOption.get.data.id.get
+          _ <- create(uniquePartitioning("hD"), Seq(cId))
+          n <- create(uniquePartitioning("hN"), Seq.empty[Long])
+          result <- create(keyC, Seq(n.toOption.get.data.id.get))
+        } yield assertTrue(result.left.exists {
+          case DataConflictException(status) => status.statusCode == 33
           case _ => false
         })
       }
@@ -71,7 +144,7 @@ object CreatePartitioningWithParentsIntegrationTests extends ConfigProviderTest 
       CreatePartitioningWithParents.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithSingleTransactionRollback
-    )
+    ) @@ TestAspect.sequential
   }
 
 }

@@ -25,7 +25,6 @@ import java.time.OffsetDateTime
 import java.util.{Properties, UUID}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Random
 
 /**
  *  Helper-level tests of `lineage.link_to_parents`.
@@ -37,56 +36,13 @@ import scala.util.Random
  *   - all `advisoryLocksHeld() == 0` assertions precede the first slow-path `link_to_parents` call of a test,
  *   - the slow-lock test asserts `== 1` as its very last step.
  */
-class LinkToParentsIntegrationTests extends DBTestSuite {
+class LinkToParentsIntegrationTests extends DBTestSuite with LineageDBTestSupport {
 
-  private val fncLink = "lineage.link_to_parents"
-  private val fncCreatePartitioning = "runs.create_partitioning"
   private val fncGetAncestors = "lineage.get_partitioning_ancestors"
   private val fncGetFlowPartitionings = "flows.get_flow_partitionings"
   private val fncGetFlowCheckpoints = "flows.get_flow_checkpoints"
   private val helperSignature = "lineage.link_to_parents(bigint,bigint[],text)"
   private val cycleText = "Parent partitioning would create a cycle"
-
-  private def partitioningJson(name: String): String =
-    s"""{"version":1,"keys":["lk"],"keysToValuesMap":{"lk":"$name"}}"""
-
-  private def partitioningOf(name: String): JsonBString = JsonBString(partitioningJson(name))
-
-  private def uniq(prefix: String): String = s"$prefix-${UUID.randomUUID()}"
-
-  private def ids(xs: Seq[Any]): CustomDBType =
-    CustomDBType(xs.map(x => if (x == null) "NULL" else x.toString).mkString("{", ",", "}"), "BIGINT[]")
-
-  /** Seeds a partitioning via the v1 path (takes NO advisory lock); an optional parent is linked with it. */
-  private def seed(name: String, parent: Option[Long] = None): Long = {
-    val call = function(fncCreatePartitioning)
-      .setParam("i_partitioning", partitioningOf(name))
-      .setParam("i_by_user", "Seeder")
-    val withParent = parent match {
-      case Some(p) => call.setParam("i_parent_partitioning_id", p)
-      case None => call.setParamNull("i_parent_partitioning_id")
-    }
-    withParent.execute { qr =>
-      assert(qr.hasNext)
-      val row = qr.next()
-      assert(row.getInt("status").exists(s => s == 11 || s == 12))
-      row.getLong("id_partitioning").get
-    }
-  }
-
-  private def link(child: Long, parents: CustomDBType): (Int, String) = {
-    function(fncLink)
-      .setParam("i_child_id", child)
-      .setParam("i_parent_ids", parents)
-      .setParam("i_by_user", "Linker")
-      .execute { qr =>
-        assert(qr.hasNext)
-        val row = qr.next()
-        val result = (row.getInt("status").get, row.getString("status_text").get)
-        assert(!qr.hasNext)
-        result
-      }
-  }
 
   private def linkNull(child: Long): (Int, String) = {
     function(fncLink)
@@ -150,7 +106,7 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
   /** Inserts one checkpoint with one measurement on the partitioning (flow checkpoints only list measured ones). */
   private def seedCheckpoint(partitioningId: Long): UUID = {
     val checkpointId = UUID.randomUUID()
-    val definitionId: Long = Random.nextLong()
+    val definitionId: Long = queryLong("SELECT public.global_id()")
     table("runs.measure_definitions").insert(
       add("id_measure_definition", definitionId)
         .add("fk_partitioning", partitioningId)
@@ -580,6 +536,9 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
         val statement = writer.createStatement()
         try {
           statement.executeUpdate(
+            s"DELETE FROM lineage.partitioning_edges WHERE fk_child_partitioning IN ($idList) OR fk_parent_partitioning IN ($idList)"
+          )
+          statement.executeUpdate(
             s"DELETE FROM flows.partitioning_to_flow WHERE fk_partitioning IN ($idList) OR fk_flow IN " +
               s"(SELECT id_flow FROM flows.flows WHERE fk_primary_partitioning IN ($idList))"
           )
@@ -590,5 +549,66 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
       retry.close()
       writer.close()
     }
+  }
+
+  test("i_child_id = NULL returns 42 with non-null status_text and writes nothing") {
+    val p = seed(uniq("null-child-p"))
+    val before = counts()
+
+    val (status, statusText) = function(fncLink)
+      .setParamNull("i_child_id")
+      .setParam("i_parent_ids", ids(Seq(p)))
+      .setParam("i_by_user", "Linker")
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        (row.getInt("status").get, row.getString("status_text").getOrElse(fail("status_text must not be NULL")))
+      }
+
+    assert(status == 42)
+    assert(statusText.nonEmpty)
+    assert(counts() == before)
+  }
+
+  test("i_by_user = NULL returns 51 and writes nothing") {
+    val p = seed(uniq("null-user-p"))
+    val c = seed(uniq("null-user-c"))
+    val before = counts()
+    val edgesBefore = table("lineage.partitioning_edges").count()
+
+    val (status, statusText) = function(fncLink)
+      .setParam("i_child_id", c)
+      .setParam("i_parent_ids", ids(Seq(p)))
+      .setParamNull("i_by_user")
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        (row.getInt("status").get, row.getString("status_text").get)
+      }
+
+    assert(status == 51)
+    assert(statusText.contains("i_by_user"))
+    assert(counts() == before)
+    assert(table("lineage.partitioning_edges").count() == edgesBefore)
+  }
+
+  test("parent missing flows.partitioning_to_flow row returns 50 and writes no edge") {
+    val p = seed(uniq("orphan-p"))
+    val c = seed(uniq("orphan-c"))
+
+    val stmt = dbConnection.connection.createStatement()
+    try {
+      stmt.executeUpdate(s"DELETE FROM flows.partitioning_to_flow WHERE fk_partitioning = $p")
+    } finally stmt.close()
+
+    val before = counts()
+    val edgesBefore = table("lineage.partitioning_edges").count()
+
+    val (status, statusText) = link(c, ids(Seq(p)))
+
+    assert(status == 50)
+    assert(statusText.contains(p.toString))
+    assert(counts() == before)
+    assert(table("lineage.partitioning_edges").count() == edgesBefore)
   }
 }

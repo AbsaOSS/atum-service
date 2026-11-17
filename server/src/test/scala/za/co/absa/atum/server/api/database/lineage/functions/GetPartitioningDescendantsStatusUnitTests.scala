@@ -18,7 +18,7 @@ package za.co.absa.atum.server.api.database.lineage.functions
 
 import io.circe.Json
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningDescendants.{GetPartitioningDescendantsArgs, GetPartitioningDescendantsResult}
-import za.co.absa.db.fadb.exceptions.DataNotFoundException
+import za.co.absa.db.fadb.exceptions.{DataConflictException, DataNotFoundException, ErrorInDataException}
 import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
 import za.co.absa.db.fadb.status.{FunctionStatus, Row}
 import zio.test._
@@ -36,20 +36,30 @@ object GetPartitioningDescendantsStatusUnitTests extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment, Any] = suite("GetPartitioningDescendantsStatusSuite")(
     test("status 10 with data -> the descendant") {
       val row = Row[Option[Option[GetPartitioningDescendantsResult]]](FunctionStatus(10, "OK"), Some(Some(descendant)))
-      val result = GetPartitioningDescendants.statusExceptionOrRow(Handling.checkStatus _, row)
+      val result = OptionalRowMultipleResultFunction.statusExceptionOrRow(Handling.checkStatus _, row)
       assertTrue(result.map(r => (r.functionStatus, r.data)) == Right((FunctionStatus(10, "OK"), Some(descendant))))
     },
     test("status 14 with no data (existing partitioning without descendants) -> a data-less row, no exception") {
       val row = Row[Option[Option[GetPartitioningDescendantsResult]]](FunctionStatus(14, "OK"), None)
-      val result = GetPartitioningDescendants.statusExceptionOrRow(Handling.checkStatus _, row)
+      val result = OptionalRowMultipleResultFunction.statusExceptionOrRow(Handling.checkStatus _, row)
       assertTrue(
         result.map(r => (r.functionStatus, r.data)) == Right((FunctionStatus(14, "OK"), None))
       )
     },
     test("status 41 (unknown partitioning) -> DataNotFoundException, whatever the data is") {
       val row = Row[Option[Option[GetPartitioningDescendantsResult]]](FunctionStatus(41, "Partitioning not found"), None)
-      val result = GetPartitioningDescendants.statusExceptionOrRow(Handling.checkStatus _, row)
+      val result = OptionalRowMultipleResultFunction.statusExceptionOrRow(Handling.checkStatus _, row)
       assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
+    },
+    test("status 32 (conflict) -> DataConflictException") {
+      val row = Row[Option[Option[GetPartitioningDescendantsResult]]](FunctionStatus(32, "Conflict"), None)
+      val result = OptionalRowMultipleResultFunction.statusExceptionOrRow(Handling.checkStatus _, row)
+      assertTrue(result == Left(DataConflictException(FunctionStatus(32, "Conflict"))))
+    },
+    test("status 50 (error in data) -> ErrorInDataException") {
+      val row = Row[Option[Option[GetPartitioningDescendantsResult]]](FunctionStatus(50, "Data error"), None)
+      val result = OptionalRowMultipleResultFunction.statusExceptionOrRow(Handling.checkStatus _, row)
+      assertTrue(result == Left(ErrorInDataException(FunctionStatus(50, "Data error"))))
     },
     test("GetPartitioningDescendantsArgs fields") {
       val args = GetPartitioningDescendantsArgs(10L, 20, 30L)

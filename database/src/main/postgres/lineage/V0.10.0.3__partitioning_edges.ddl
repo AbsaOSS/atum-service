@@ -57,9 +57,10 @@ CREATE TABLE lineage.partitioning_edges
 -- (fk_child_partitioning) or on (fk_child_partitioning, fk_parent_partitioning) would just
 -- duplicate the PK index and add write/storage cost.
 --
--- "Who are the children of X?" (WHERE fk_parent_partitioning = X, impact analysis) is NOT a
--- prefix of the PK, so it needs its own index.
-CREATE INDEX partitioning_edges_parent_idx ON lineage.partitioning_edges(fk_parent_partitioning);
+-- "Who are the children of X?" (WHERE fk_parent_partitioning = X, impact analysis and downstream BFS)
+-- is NOT a prefix of the PK, so it needs its own index. Including fk_child_partitioning enables
+-- index-only scans for downstream traversal.
+CREATE INDEX partitioning_edges_parent_idx ON lineage.partitioning_edges(fk_parent_partitioning, fk_child_partitioning);
 
 ALTER TABLE lineage.partitioning_edges OWNER TO atum_owner;
 GRANT SELECT ON lineage.partitioning_edges TO atum_reader;

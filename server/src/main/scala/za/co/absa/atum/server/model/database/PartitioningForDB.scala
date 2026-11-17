@@ -18,13 +18,16 @@ package za.co.absa.atum.server.model.database
 
 import io.circe.generic.semiauto._
 import io.circe.{Decoder, Encoder}
-import za.co.absa.atum.model.dto.PartitioningDTO
+import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningDTO}
 
 private[server] case class PartitioningForDB private (
   version: Int = 1,
   keys: Seq[String],
   keysToValuesMap: Map[String, String]
-)
+) {
+  def toPartitioningDTO: PartitioningDTO =
+    keys.map(key => PartitionDTO(key, keysToValuesMap.getOrElse(key, "")))
+}
 
 object PartitioningForDB {
 

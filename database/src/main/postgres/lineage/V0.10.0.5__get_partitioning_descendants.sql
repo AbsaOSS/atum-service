@@ -58,6 +58,8 @@ $$
 -------------------------------------------------------------------------------
 DECLARE
     _has_more BOOLEAN;
+    _limit    INT;
+    _offset   BIGINT;
 
 BEGIN
 
@@ -69,15 +71,18 @@ BEGIN
         RETURN;
     END IF;
 
-    IF i_limit IS NOT NULL THEN
-        SELECT count(*) > i_limit
+    _limit := CASE WHEN i_limit IS NULL THEN NULL ELSE GREATEST(i_limit, 1) END;
+    _offset := GREATEST(COALESCE(i_offset, 0), 0);
+
+    IF _limit IS NOT NULL THEN
+        SELECT count(*) > _limit
         FROM (SELECT 1
-              FROM (SELECT PF.fk_partitioning
-                    FROM flows.flows F
-                             INNER JOIN flows.partitioning_to_flow PF ON PF.fk_flow = F.id_flow
-                    WHERE F.fk_primary_partitioning = i_id_partitioning
-                      AND PF.fk_partitioning IS DISTINCT FROM i_id_partitioning) D
-              LIMIT i_limit + 1 OFFSET i_offset) s
+              FROM flows.flows F
+                       INNER JOIN flows.partitioning_to_flow PF ON PF.fk_flow = F.id_flow
+                       INNER JOIN runs.partitionings P ON P.id_partitioning = PF.fk_partitioning
+              WHERE F.fk_primary_partitioning = i_id_partitioning
+                AND PF.fk_partitioning <> i_id_partitioning
+              LIMIT _limit::BIGINT + 1 OFFSET _offset) s
         INTO _has_more;
     ELSE
         _has_more := false;
@@ -90,14 +95,13 @@ BEGIN
                P.partitioning    AS partitioning,
                P.created_by      AS author,
                _has_more         AS has_more
-        FROM (SELECT PF.fk_partitioning
-              FROM flows.flows F
-                       INNER JOIN flows.partitioning_to_flow PF ON PF.fk_flow = F.id_flow
-              WHERE F.fk_primary_partitioning = i_id_partitioning
-                AND PF.fk_partitioning IS DISTINCT FROM i_id_partitioning) D
-                 INNER JOIN runs.partitionings P ON P.id_partitioning = D.fk_partitioning
+        FROM flows.flows F
+                 INNER JOIN flows.partitioning_to_flow PF ON PF.fk_flow = F.id_flow
+                 INNER JOIN runs.partitionings P ON P.id_partitioning = PF.fk_partitioning
+        WHERE F.fk_primary_partitioning = i_id_partitioning
+          AND PF.fk_partitioning <> i_id_partitioning
         ORDER BY P.id_partitioning
-        LIMIT i_limit OFFSET i_offset;
+        LIMIT _limit OFFSET _offset;
 
     IF NOT FOUND THEN
         status := 14;

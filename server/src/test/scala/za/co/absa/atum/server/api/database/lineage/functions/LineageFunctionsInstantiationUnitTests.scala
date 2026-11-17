@@ -44,6 +44,16 @@ class LineageFunctionsInstantiationUnitTests extends AnyFlatSpec with Matchers {
     )
   }
 
+  "GetPartitioningAncestors" should "instantiate without DB and provide expected fieldsToSelect" in {
+    val f = new GetPartitioningAncestors()(Lineage, null)
+    f.fieldsToSelect should contain allOf (
+      "ancestor_id",
+      "partitioning",
+      "author",
+      "has_more"
+    )
+  }
+
   "GetPartitioningDescendants" should "instantiate without DB and provide expected fieldsToSelect" in {
     val f = new GetPartitioningDescendants()(Lineage, null)
     f.fieldsToSelect should contain allOf (

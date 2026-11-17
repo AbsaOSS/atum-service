@@ -17,9 +17,13 @@
 package za.co.absa.atum.server.model
 
 import io.circe.{Decoder, DecodingFailure, Json}
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.PartitioningWithIdDTO
 import za.co.absa.atum.server.implicits.SeqImplicits.SeqEnhancements
 import za.co.absa.atum.server.model.database.PartitioningForDB
+
+trait HasMore {
+  def hasMore: Boolean
+}
 
 abstract class PartitioningResult(id: Long, partitioning: Json, author: String) {
 
@@ -27,10 +31,7 @@ abstract class PartitioningResult(id: Long, partitioning: Json, author: String) 
       decoder: Decoder[PartitioningForDB]
      ): Either[DecodingFailure, PartitioningWithIdDTO] = {
     decoder.decodeJson(partitioning).map { partitioningForDB =>
-      val partitioningDTO = partitioningForDB.keys.map { key =>
-        PartitionDTO(key, partitioningForDB.keysToValuesMap.getOrElse(key, ""))
-      }
-      PartitioningWithIdDTO(id, partitioningDTO, author)
+      PartitioningWithIdDTO(id, partitioningForDB.toPartitioningDTO, author)
     }
   }
 }

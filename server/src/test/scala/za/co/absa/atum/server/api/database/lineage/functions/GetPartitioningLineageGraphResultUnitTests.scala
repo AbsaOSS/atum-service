@@ -105,6 +105,114 @@ class GetPartitioningLineageGraphResultUnitTests extends AnyFunSuiteLike {
     ))
   }
 
+  test("toLineageGraphDTO handles empty nodes and edges arrays") {
+    val json = parse(
+      """{
+        |  "primaryPartitioningId": 100,
+        |  "depth": 5,
+        |  "direction": "both",
+        |  "nodes": [],
+        |  "edges": []
+        |}""".stripMargin
+    ).getOrElse(fail("Invalid JSON"))
+
+    val dtoEither = LineageGraphResult(json).toLineageGraphDTO
+    assert(dtoEither == Right(LineageGraphDTO(100L, 5, "both", Seq.empty, Seq.empty)))
+  }
+
+  test("toLineageGraphDTO defaults SQL null nodes and edges to Seq.empty") {
+    val json = parse(
+      """{
+        |  "primaryPartitioningId": 100,
+        |  "depth": 5,
+        |  "direction": "both",
+        |  "nodes": null,
+        |  "edges": null
+        |}""".stripMargin
+    ).getOrElse(fail("Invalid JSON"))
+
+    val dtoEither = LineageGraphResult(json).toLineageGraphDTO
+    assert(dtoEither == Right(LineageGraphDTO(100L, 5, "both", Seq.empty, Seq.empty)))
+  }
+
+  test("toLineageGraphDTO decodes edges with omitted optional linkedBy and linkedAt") {
+    val json = parse(
+      """{
+        |  "primaryPartitioningId": 100,
+        |  "depth": 3,
+        |  "direction": "downstream",
+        |  "nodes": [],
+        |  "edges": [
+        |    {
+        |      "parentPartitioningId": 100,
+        |      "childPartitioningId": 200
+        |    }
+        |  ]
+        |}""".stripMargin
+    ).getOrElse(fail("Invalid JSON"))
+
+    val dtoEither = LineageGraphResult(json).toLineageGraphDTO
+    assert(
+      dtoEither == Right(
+        LineageGraphDTO(100L, 3, "downstream", Seq.empty, Seq(LineageEdgeDTO(100L, 200L, None, None)))
+      )
+    )
+  }
+
+  test("toLineageGraphDTO maps a missing key in keysToValuesMap to empty string") {
+    val json = parse(
+      """{
+        |  "primaryPartitioningId": 100,
+        |  "depth": 3,
+        |  "direction": "both",
+        |  "nodes": [
+        |    {
+        |      "id": 100,
+        |      "partitioning": {
+        |        "version": 1,
+        |        "keys": ["key1", "missingKey"],
+        |        "keysToValuesMap": {"key1": "val1"}
+        |      },
+        |      "author": "author100"
+        |    }
+        |  ],
+        |  "edges": []
+        |}""".stripMargin
+    ).getOrElse(fail("Invalid JSON"))
+
+    val dtoEither = LineageGraphResult(json).toLineageGraphDTO
+    assert(
+      dtoEither == Right(
+        LineageGraphDTO(
+          100L,
+          3,
+          "both",
+          Seq(PartitioningWithIdDTO(100L, Seq(PartitionDTO("key1", "val1"), PartitionDTO("missingKey", "")), "author100")),
+          Seq.empty
+        )
+      )
+    )
+  }
+
+  test("toLineageGraphDTO fails on invalid edges JSON") {
+    val json = parse(
+      """{
+        |  "primaryPartitioningId": 100,
+        |  "depth": 3,
+        |  "direction": "both",
+        |  "nodes": [],
+        |  "edges": [
+        |    {
+        |      "parentPartitioningId": "not-a-long",
+        |      "childPartitioningId": 200
+        |    }
+        |  ]
+        |}""".stripMargin
+    ).getOrElse(fail("Invalid JSON"))
+
+    assert(LineageGraphResult(json).toLineageGraphDTO.isLeft)
+  }
+
   test("toLineageGraphDTO fails on malformed top-level graph structure") {
     val result = LineageGraphResult(malformedStructureJson)
     val dtoEither = result.toLineageGraphDTO

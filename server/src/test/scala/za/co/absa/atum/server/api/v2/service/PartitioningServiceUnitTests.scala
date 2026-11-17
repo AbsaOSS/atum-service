@@ -102,6 +102,8 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.updatePartitioningParent(1L, partitioningParentPatchDTO1)).thenReturn(ZIO.unit)
+  when(partitioningRepositoryMock.updatePartitioningParent(1L, partitioningParentPatchDTO3))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("Parent partitioning would create a cycle")))
   when(partitioningRepositoryMock.updatePartitioningParent(1L, partitioningParentPatchDTO5))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Parent Partitioning not found")))
   when(partitioningRepositoryMock.updatePartitioningParent(0L, partitioningParentPatchDTO1))
@@ -111,6 +113,10 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
 
   when(partitioningRepositoryMock.getPartitioningDescendants(1111L, 10, 0L))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2))))
+  when(partitioningRepositoryMock.getPartitioningDescendants(2222L, 1, 0L))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningRepositoryMock.getPartitioningDescendants(8888L, 10, 0L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
   when(partitioningRepositoryMock.getPartitioningDescendants(9999L, 10, 0L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
@@ -198,7 +204,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         }
       ),
       suite("PatchAdditionalDataSuite")(
-        test("Returns expected Right with Unit") {
+        test("Returns expected Right with Seq[AdditionalDataItemV2DTO]") {
           for {
             result <- PartitioningService.patchAdditionalData(1L, additionalDataPatchDTO1)
           } yield assertTrue(result == additionalDataDTO1)
@@ -344,6 +350,16 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningService.getPartitioningDescendants(1111L, 10, 0L)
           } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2)))
         },
+        test("Returns expected Right with ResultHasMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningService.getPartitioningDescendants(2222L, 1, 0L)
+          } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected GeneralServiceError when repository fails with GeneralDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningDescendants(8888L, 10, 0L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        },
         test("Returns expected NotFoundServiceError when repository fails with NotFoundDatabaseError") {
           assertZIO(PartitioningService.getPartitioningDescendants(9999L, 10, 0L).exit)(
             failsWithA[NotFoundServiceError]
@@ -383,7 +399,18 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningService.patchPartitioningParent(1L, partitioningParentPatchDTO1)
           } yield assertTrue(result == ())
         },
-        test("Returns expected NotFoundServiceError") {
+        test("Returns expected ConflictServiceError when repository fails with ConflictDatabaseError") {
+          for {
+            result <- PartitioningService.patchPartitioningParent(1L, partitioningParentPatchDTO3).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              ConflictServiceError(
+                "Failed to perform 'updatePartitioningParent': Parent partitioning would create a cycle"
+              )
+            )
+          )
+        },
+        test("Returns expected NotFoundServiceError for missing parent") {
           for {
             result <- PartitioningService.patchPartitioningParent(1L, partitioningParentPatchDTO5).exit
           } yield assertTrue(
@@ -392,7 +419,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             )
           )
         },
-        test("Returns expected NotFoundServiceError") {
+        test("Returns expected NotFoundServiceError for missing child") {
           for {
             result <- PartitioningService.patchPartitioningParent(0L, partitioningParentPatchDTO1).exit
           } yield assertTrue(

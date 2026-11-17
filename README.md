@@ -92,7 +92,7 @@ job a *batch*. All checkpoints are calculated for a specific batch.
 This module is intended to replace the legacy [Atum](https://github.com/AbsaOSS/atum) library.
 It provides functionality for computing and pushing control metrics to the API located in `server/`.
 
-For more information, see the [Vocabulary section](#Vocabulary) or `agent/README.md` for more technical documentation.
+For more information, see the [Vocabulary section](#vocabulary) or `agent/README.md` for more technical documentation.
 
 #### Supported Spark / Scala / Java matrix
 
@@ -101,13 +101,13 @@ The agent is cross-built per Spark major version. Pick the artifact matching the
 | Spark | Scala      | Java                      | Artifact                                           |
 |-------|------------|---------------------------|----------------------------------------------------|
 | 3.5.x | 2.12, 2.13 | 8 minimum, 11 recommended | `atum-agent-spark3_2.12`, `atum-agent-spark3_2.13` |
-| 4.0.x | 2.13       | 17+                       | `atum-agent-spark4_2.13`                           |
+| 4.1.x | 2.13       | 17+                       | `atum-agent-spark4_2.13`                           |
 
 ```scala
 // Spark 3.5.x
 libraryDependencies += "za.co.absa.atum-service" %% "atum-agent-spark3" % atumVersion
 
-// Spark 4.0.x
+// Spark 4.1.x
 libraryDependencies += "za.co.absa.atum-service" %% "atum-agent-spark4" % atumVersion
 ```
 
@@ -174,11 +174,15 @@ integration tests that are used to verify the logic of our database functions.
 
 The database tests are integration tests in nature. Therefore, a few conditions applies:
 
-* The tests are excluded from task `test` and are run only by a dedicated `dbTest` task (`sbt dbTest`).
+* The integration tests are excluded from task `test` (which runs only `*UnitTests`). Use the dedicated `testDB` alias
+  (`sbt testDB`) to run both unit and integration tests for the `database` module (see `.sbtrc` and
+  [Run Special Tests](#run-special-tests)).
 * The database structures must exist on the target database (follow
-  the [deployment instructions in database module](database/README.md#Deployment)).
-* The connection information to the DB is provided in file `database/src/test/resources/database.properties`
-  (See `database.properties.template` for syntax).
+  the [deployment instructions in database module](database/README.md#deployment)).
+* The connection information to the DB is provided in `database/src/test/resources/database.properties`. Create or
+  update it with `test.jdbc.url`, `test.jdbc.username`, `test.jdbc.password`, and `test.persist.db` (for example,
+  `test.jdbc.url=jdbc:postgresql://localhost:5432/atum_db`, `test.jdbc.username=atum_owner`,
+  `test.jdbc.password=changeme`, `test.persist.db=false`).
 
 ## Vocabulary
 
@@ -374,9 +378,9 @@ implicit val countryContext: AtumContext =
 
 // Multiple parents linked in one atomic call
 val mergedContext: AtumContext = AtumAgent.getOrCreateAtumSubContext(
-  childPartitions = AtumPartitions("dataset" -> "consolidated"),
-  parentContexts = Seq(parentCtxA, parentCtxB),
-  copyMeasureDefinitions = true // optional, server defaults to false
+  subPartitions = AtumPartitions("dataset" -> "consolidated"),
+  parentAtumContexts = Seq(parentCtxA, parentCtxB),
+  copyMeasureDefinitions = true // 3-arg overload has no default; omit copyMeasureDefinitions to use the 2-arg overload (which sends false)
 )
 ```
 
@@ -411,11 +415,11 @@ represents all currently supported measurement types (aka measures):
 | Type                               | Description                                                   |
 |------------------------------------|:--------------------------------------------------------------|
 | AtumMeasure.RecordCount            | Calculates the number of rows in the dataset                  |
-| AtumMeasure.DistinctRecordCount    | Calculates DISTINCT(COUNT(()) of the specified column         |
+| AtumMeasure.DistinctRecordCount    | Calculates COUNT(DISTINCT ...) over the specified `Seq[String]` columns |
 | AtumMeasure.SumOfValuesOfColumn    | Calculates SUM() of the specified column                      |
 | AtumMeasure.AbsSumOfValuesOfColumn | Calculates SUM(ABS()) of the specified column                 |
 | AtumMeasure.SumOfHashesOfColumn    | Calculates SUM(CRC32()) of the specified column               |
-| Measure.UnknownMeasure             | Custom measure where the data are provided by the application |
+| UnknownMeasure                     | Custom measure where the data are provided by the application |
 
 [//]: # (| controlType.aggregatedTruncTotal    | Calculates SUM&#40;TRUNC&#40;&#41;&#41; of the specified column       |)
 
@@ -485,7 +489,7 @@ These usually have dependency on some system or service being present on the mac
 These also can be performance or penetration tests. Basically the point is that these tests require special
 setup and are usually slower to execute.
 
-Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules.
+Use the `testDB` command to execute all unit and integration tests in `database` module, skipping all other tests and modules.
 
 - Hint: project custom command, requiring a real DB to be present and configured
 

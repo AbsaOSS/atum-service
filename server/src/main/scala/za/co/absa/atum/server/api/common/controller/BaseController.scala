@@ -39,10 +39,7 @@ trait BaseController {
         case GeneralServiceError(message) => InternalServerErrorResponse(message)
         case ErrorInDataServiceError(message) => ErrorInDataErrorResponse(message)
       }
-      .flatMap { result =>
-        ZIO.succeed(onSuccessFnc(result))
-          .tap(res => ZIO.succeed(println(res)))
-      }
+      .map(onSuccessFnc)
 
   }
 

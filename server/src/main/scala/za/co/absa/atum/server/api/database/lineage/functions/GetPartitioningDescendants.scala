@@ -16,70 +16,35 @@
 
 package za.co.absa.atum.server.api.database.lineage.functions
 
-import cats.MonadError
 import doobie.implicits.toSqlInterpolator
 import io.circe.Json
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.lineage.Lineage
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningDescendants._
-import za.co.absa.atum.server.model.PartitioningResult
+import za.co.absa.atum.server.model.{HasMore, PartitioningResult}
 import za.co.absa.db.fadb.DBSchema
-import za.co.absa.db.fadb.doobie.{DoobieEngine, DoobieQueryWithStatus}
-import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
-import za.co.absa.db.fadb.exceptions.StatusException
-import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
-import za.co.absa.db.fadb.status.{FailedOrRow, FunctionStatus, Row}
-import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
-import zio.{Task, URLayer, ZIO, ZLayer}
+import za.co.absa.db.fadb.doobie.DoobieEngine
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import zio.{Task, URLayer, ZIO, ZLayer}
 
 class GetPartitioningDescendants(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[GetPartitioningDescendantsArgs, Option[
-      GetPartitioningDescendantsResult
-    ], Task](args =>
+    extends OptionalRowMultipleResultFunction[GetPartitioningDescendantsArgs, GetPartitioningDescendantsResult](args =>
       Seq(
         fr"${args.partitioningId}",
         fr"${args.limit}",
         fr"${args.offset}"
       )
-    )
-    with StandardStatusHandling
-    with ByFirstErrorStatusAggregator {
+    ) {
 
   override def fieldsToSelect: Seq[String] =
     super.fieldsToSelect ++ Seq("descendant_id", "partitioning", "author", "has_more")
-
-  override protected def query(values: GetPartitioningDescendantsArgs)(implicit
-    me: MonadError[Task, Throwable]
-  ): Task[DoobieQueryWithStatus[Option[GetPartitioningDescendantsResult]]] =
-    super.query(values).map { defaultQuery =>
-      new DoobieQueryWithStatus[Option[GetPartitioningDescendantsResult]](defaultQuery.fragment, checkStatus)(
-        defaultQuery.readStatusWithData
-      ) {
-        override def toStatusExceptionOrData(
-          statusWithData: Row[Option[Option[GetPartitioningDescendantsResult]]]
-        ): FailedOrRow[Option[GetPartitioningDescendantsResult]] =
-          statusExceptionOrRow(checkStatus, statusWithData)
-      }
-    }
 }
 
 object GetPartitioningDescendants {
   case class GetPartitioningDescendantsArgs(partitioningId: Long, limit: Int, offset: Long)
   case class GetPartitioningDescendantsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)
       extends PartitioningResult(id, partitioningJson, author)
-
-  /**
-   *  Status check first (a non-OK status such as 41 becomes a `StatusException`), then the row; an OK row without
-   *  data (status 14, no descendants) becomes `None` instead of failing.
-   */
-  private[functions] def statusExceptionOrRow(
-    checkStatus: FunctionStatus => Option[StatusException],
-    statusWithData: Row[Option[Option[GetPartitioningDescendantsResult]]]
-  ): FailedOrRow[Option[GetPartitioningDescendantsResult]] =
-    checkStatus(statusWithData.functionStatus).toLeft(
-      Row(statusWithData.functionStatus, statusWithData.data.flatten)
-    )
+      with HasMore
 
   val layer: URLayer[PostgresDatabaseProvider, GetPartitioningDescendants] = ZLayer {
     for {

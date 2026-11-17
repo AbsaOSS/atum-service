@@ -53,8 +53,8 @@ object CreatePartitioningWithParents {
   }
 
   case class DBResult(
-    id: Long,
-    createdBy: String,
-    wasCreated: Boolean
+    id: Option[Long],
+    createdBy: Option[String],
+    wasCreated: Option[Boolean]
   )
 }

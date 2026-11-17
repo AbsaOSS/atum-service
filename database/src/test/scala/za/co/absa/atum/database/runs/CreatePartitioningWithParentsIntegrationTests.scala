@@ -25,7 +25,7 @@ import java.time.OffsetDateTime
 /**
  *  Tests of `runs.create_partitioning_with_parents(jsonb, text, bigint[], boolean)` (LINEAGE-03..06, POLICY-02/03).
  *
- *  Test-design pitfall: the advisory lock taken by `flows._link_to_parents` is transaction-scoped and `DBTestSuite`
+ *  Test-design pitfall: the advisory lock taken by `lineage.link_to_parents` is transaction-scoped and `DBTestSuite`
  *  runs the whole test body in a single transaction (rolled back at the end). Once ANY slow-path call has happened
  *  in a test, the lock count of the session stays 1 until the rollback. Therefore:
  *   - fixture graphs are seeded WITHOUT the new function (`runs.create_partitioning` of the v1 path takes no lock),
@@ -191,9 +191,13 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
   private def fourTableCounts(): Seq[Long] = Seq(
     table("runs.partitionings").count(),
     table("flows.partitioning_to_flow").count(),
+    table("lineage.partitioning_edges").count(),
     table("runs.measure_definitions").count(),
     table("runs.additional_data").count()
   )
+
+  private def edgeCount(childId: Long): Long =
+    table("lineage.partitioning_edges").count(add("fk_child_partitioning", childId))
 
   // balta 0.1.0 binds multi-column NamedParams in the wrong order (https://github.com/AbsaOSS/balta/issues/2),
   // so two-column filters are expressed as SQL conditions; inputs are generated ids and test-constant names only
@@ -216,6 +220,7 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     assert(result.createdBy.contains("Fantômas"))
     val child = result.id.get
     assert(flowCount(child) == 1)
+    assert(edgeCount(child) == 0)
     assert(ancestorIds(child).isEmpty)
   }
 
@@ -229,6 +234,13 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     assert(result.createdBy.contains("Fantômas"))
     val child = result.id.get
     assert(flowCount(child) == 2)
+    assert(edgeCount(child) == 1)
+    assert(
+      queryBoolean(
+        s"SELECT created_by = 'Fantômas' FROM lineage.partitioning_edges " +
+          s"WHERE fk_child_partitioning = $child AND fk_parent_partitioning = $p1"
+      )
+    )
     assert(ancestorIds(child) == Set(p1))
   }
 
@@ -242,6 +254,7 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     assert(result.status == 12)
     val child = result.id.get
     assert(flowCount(child) == 4)
+    assert(edgeCount(child) == 3)
     assert(ancestorIds(child) == Set(p1, p2, p3))
     Seq(p1, p2, p3).foreach(p => assert(flowCount(p) == 1))
   }
@@ -314,13 +327,20 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
     val child = seed(lineage("child"), author = "Carol")
     assert(ancestorIds(child).isEmpty)
 
-    val result = createMulti(lineage("child"), ids(Seq(p1)))
+    val result = createMulti(lineage("child"), ids(Seq(p1)), user = "Linker13")
 
     assert(result.status == 13)
     assert(result.statusText == "Partitioning parents registered")
     assert(result.id.contains(child))
     assert(result.createdBy.contains("Carol"))
     assert(flowCount(child) == 2)
+    assert(edgeCount(child) == 1)
+    assert(
+      queryBoolean(
+        s"SELECT created_by = 'Linker13' FROM lineage.partitioning_edges " +
+          s"WHERE fk_child_partitioning = $child AND fk_parent_partitioning = $p1"
+      )
+    )
     assert(ancestorIds(child) == Set(p1))
   }
 
@@ -506,20 +526,22 @@ class CreatePartitioningWithParentsIntegrationTests extends DBTestSuite {
   test(
     "An existing child with descendants backfills the missing edge to an already-ancestor parent (13), lock-free"
   ) {
-    // `a` was linked to `c` only via the v1 path (seed), which never writes flows.partitioning_edges; `a` is
+    // `a` was linked to `c` only via the v1 path (seed), which never writes lineage.partitioning_edges; `a` is
     // already an ancestor of `c` through the closure, so re-registering it here only backfills the missing
     // direct edge (status 13: parents registered) - it does not touch flows.partitioning_to_flow and is
     // lock-free, regardless of `c` already having the descendant `d`.
     val a = seed(lineage("A"))
     val c = seed(lineage("C"), Some(a))
     val d = seed(lineage("D"), Some(c))
-    val before = fourTableCounts()
+    val beforeFlows = table("flows.partitioning_to_flow").count()
+    assert(edgeCount(c) == 0)
 
     val again = createMulti(lineage("C"), ids(Seq(a)))
 
     assert(again.status == 13)
     assert(again.id.contains(c))
-    assert(fourTableCounts() == before)
+    assert(table("flows.partitioning_to_flow").count() == beforeFlows)
+    assert(edgeCount(c) == 1)
     assert(ancestorIds(d) == Set(a, c))
     assert(advisoryLocksHeld() == 0)
   }

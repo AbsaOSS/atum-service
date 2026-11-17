@@ -80,6 +80,7 @@ $$
 --      33                  - An existing partitioning already has descendants and would get a new parent
 --                            (nothing was written, no measure definitions are copied)
 --      41                  - Parent partitioning not found (nothing was written)
+--      51                  - Invalid input (i_by_user must not be NULL)
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -89,6 +90,12 @@ DECLARE
     _link_status            INTEGER;
     _link_status_text       TEXT;
 BEGIN
+    IF i_by_user IS NULL THEN
+        status := 51;
+        status_text := 'User (i_by_user) must not be NULL';
+        RETURN;
+    END IF;
+
     -- normalize parents: distinct, non-NULL, deterministic order
     _parent_ids := ARRAY(
         SELECT DISTINCT PID.id
@@ -136,12 +143,12 @@ BEGIN
     END IF;
 
     -- all linking code (self-link / cycle / has-descendants rejection, lock-free fast path, global advisory lock)
-    -- lives in the shared helper; it writes nothing when it returns 32 or 33
+    -- lives in the shared helper; any non-success outcome (not 11 or 14) returns before measure definitions are copied
     SELECT LTP.status, LTP.status_text
     FROM lineage.link_to_parents(_child_id, _parent_ids, i_by_user) AS LTP
     INTO _link_status, _link_status_text;
 
-    IF _link_status IN (32, 33) THEN
+    IF _link_status NOT IN (11, 14) THEN
         status := _link_status;
         status_text := _link_status_text;
         RETURN;

@@ -28,21 +28,16 @@ import za.co.absa.atum.server.model.PartitioningResult
 import za.co.absa.atum.server.model.database.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
-import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
-import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
-import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
-import zio.{Task, URLayer, ZIO, ZLayer}
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import zio.{Task, URLayer, ZIO, ZLayer}
 
 import java.time.ZonedDateTime
 
 // Direct (immediate) children of a partitioning, from lineage.partitioning_edges.
 class GetDirectChildren(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[Long, Option[GetDirectChildrenResult], Task](partitioningId =>
+    extends OptionalRowMultipleResultFunction[Long, GetDirectChildrenResult](partitioningId =>
       Seq(fr"$partitioningId")
-    )
-    with StandardStatusHandling
-    with ByFirstErrorStatusAggregator {
+    ) {
 
   override def fieldsToSelect: Seq[String] =
     super.fieldsToSelect ++ Seq(
@@ -59,15 +54,15 @@ object GetDirectChildren {
     id: Long,
     partitioningJson: Json,
     author: String,
-    linkedBy: String,
-    linkedAt: ZonedDateTime
+    linkedBy: Option[String],
+    linkedAt: Option[ZonedDateTime]
   ) extends PartitioningResult(id, partitioningJson, author) {
 
     def toChildPartitioningDTO(implicit
       decoder: Decoder[PartitioningForDB]
     ): Either[DecodingFailure, ChildPartitioningDTO] =
       toPartitioningWithIdDTO.map { p =>
-        ChildPartitioningDTO(p.id, p.partitioning, p.author, Some(linkedBy), Some(linkedAt))
+        ChildPartitioningDTO(p.id, p.partitioning, p.author, linkedBy, linkedAt)
       }
   }
 

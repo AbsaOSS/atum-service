@@ -28,24 +28,20 @@ import za.co.absa.atum.server.model.PartitioningResult
 import za.co.absa.atum.server.model.database.PartitioningForDB
 import za.co.absa.db.fadb.DBSchema
 import za.co.absa.db.fadb.doobie.DoobieEngine
-import za.co.absa.db.fadb.doobie.DoobieFunction.DoobieMultipleResultFunctionWithAggStatus
-import za.co.absa.db.fadb.status.aggregation.implementations.ByFirstErrorStatusAggregator
-import za.co.absa.db.fadb.status.handling.implementations.StandardStatusHandling
-import zio.{Task, URLayer, ZIO, ZLayer}
 import za.co.absa.db.fadb.doobie.postgres.circe.implicits.jsonbGet
+import zio.{Task, URLayer, ZIO, ZLayer}
 
 import java.time.ZonedDateTime
 
 // Direct (immediate) parents of a partitioning, from lineage.partitioning_edges. Mirrors GetFlowPartitionings:
 // the DB function returns zero rows when the partitioning exists but has no parents (-> empty Seq, success),
-// and a single status-41 row when the partitioning does not exist (-> StatusException -> NotFound in the
-// repository layer). No pagination: direct parents are few and the DB function returns them all.
+// or a status-14 NULL-data row (handled safely as None), and a single status-41 row when the partitioning does
+// not exist (-> StatusException -> NotFound in the repository layer). No pagination: direct parents are few and
+// the DB function returns them all.
 class GetDirectParents(implicit schema: DBSchema, dbEngine: DoobieEngine[Task])
-    extends DoobieMultipleResultFunctionWithAggStatus[Long, Option[GetDirectParentsResult], Task](
-      partitioningId => Seq(fr"$partitioningId")
-    )
-    with StandardStatusHandling
-    with ByFirstErrorStatusAggregator {
+    extends OptionalRowMultipleResultFunction[Long, GetDirectParentsResult](partitioningId =>
+      Seq(fr"$partitioningId")
+    ) {
 
   override def fieldsToSelect: Seq[String] =
     super.fieldsToSelect ++ Seq(
@@ -62,15 +58,15 @@ object GetDirectParents {
     id: Long,
     partitioningJson: Json,
     author: String,
-    linkedBy: String,
-    linkedAt: ZonedDateTime
+    linkedBy: Option[String],
+    linkedAt: Option[ZonedDateTime]
   ) extends PartitioningResult(id, partitioningJson, author) {
 
     def toParentPartitioningDTO(implicit
       decoder: Decoder[PartitioningForDB]
     ): Either[DecodingFailure, ParentPartitioningDTO] =
       toPartitioningWithIdDTO.map { p =>
-        ParentPartitioningDTO(p.id, p.partitioning, p.author, Some(linkedBy), Some(linkedAt))
+        ParentPartitioningDTO(p.id, p.partitioning, p.author, linkedBy, linkedAt)
       }
   }
 

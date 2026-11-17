@@ -44,7 +44,7 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
         _(PartitioningSubmitV2DTO(Seq(PartitionDTO("key", UUID.randomUUID().toString)), None, "author"))
       )
       .flatMap(ZIO.fromEither(_))
-      .map(_.data.id)
+      .flatMap(row => ZIO.getOrFail(row.data.id))
 
   private def writeCheckpoint(
     partitioningId: Long,
@@ -158,7 +158,7 @@ object GetPartitioningCheckpointsIntegrationTests extends ConfigProviderTest {
       WriteCheckpointV2.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithSingleTransactionRollback
-    )
+    ) @@ TestAspect.sequential
   }
 
 }

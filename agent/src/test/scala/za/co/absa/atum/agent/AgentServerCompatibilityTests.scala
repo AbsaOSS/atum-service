@@ -73,7 +73,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
 
   // Agent writes are committed by the server and not rolled back by balta, so partition values are unique
   // per run to keep the tests re-runnable (and runnable on several build axes) against the same database.
-  private val runSuffix = System.currentTimeMillis().toString
+  private val runSuffix = s"${System.currentTimeMillis()}-${java.util.UUID.randomUUID().toString.take(8)}"
 
   private val testDataForRDD = Seq(
     Row("A", 8.0),
@@ -266,7 +266,7 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     }
 
     // Unique values per run: agent writes are committed by the server and not rolled back by balta.
-    val suffix = System.currentTimeMillis().toString
+    val suffix = s"${System.currentTimeMillis()}-${java.util.UUID.randomUUID().toString.take(8)}"
     val parentAMap = ListMap("mpParentA" -> s"a$suffix")
     val parentBMap = ListMap("mpParentB" -> s"b$suffix")
     val childMap = ListMap("mpChild" -> s"c$suffix")
@@ -370,6 +370,15 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     }
     assert(directChildren.exists(_.id == childId))
 
+    // DESCENDANTS: endpoint verification (idA's descendants must include childId)
+    val descendantsResponse = httpCall("GET", s"/api/v2/partitionings/$idA/descendants?limit=1000")
+    assert(descendantsResponse.statusCode() == 200, s"unexpected response: ${descendantsResponse.body()}")
+    val descendantIds = decode[PaginatedResponse[PartitioningWithIdDTO]](descendantsResponse.body()) match {
+      case Right(parsed) => parsed.data.map(_.id)
+      case Left(error) => fail(s"cannot decode descendants response: $error")
+    }
+    assert(descendantIds.contains(childId))
+
     // LINEAGE GRAPH: endpoint verification
     val lineageResponse = httpCall("GET", s"/api/v2/partitionings/$childId/lineage")
     assert(lineageResponse.statusCode() == 200, s"unexpected response: ${lineageResponse.body()}")
@@ -378,8 +387,13 @@ class AgentServerCompatibilityTests extends DBTestSuite {
       case Left(error) => fail(s"cannot decode lineage graph response: $error")
     }
     assert(lineageGraph.primaryPartitioningId == childId)
-    assert(lineageGraph.nodes.map(_.id).toSet.contains(childId))
-    assert(lineageGraph.edges.size >= 2)
+    assert(lineageGraph.direction == "both")
+    assert(lineageGraph.depth == 5)
+    assert(lineageGraph.nodes.map(_.id).toSet == Set(idA, idB, childId))
+    assert(
+      lineageGraph.edges.map(e => (e.parentPartitioningId, e.childPartitioningId)).toSet ==
+        Set((idA, childId), (idB, childId))
+    )
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -701,5 +715,37 @@ class AgentServerCompatibilityTests extends DBTestSuite {
     }
     assert(notFound.statusCode == 404)
     assert(v11PartitioningIds(agentChildMap).isEmpty, "the child must not be created when the parent lookup fails")
+  }
+
+  // Need to add service & pg run in CI
+  test("v1.1: PATCH ancestors rejects a child that already has descendants (409) and POST rejects >100 parents (400)") {
+    val agent = v11Agent()
+    val parentMap = ListMap("v11DescParent" -> s"p$v11Run")
+    val childMap = ListMap("v11DescChild" -> s"c$v11Run")
+    val newParentMap = ListMap("v11DescNewParent" -> s"np$v11Run")
+
+    val parent = agent.getOrCreateAtumContext(parentMap)
+    parent.subPartitionContext(childMap, mergeWithParent = false)
+    agent.getOrCreateAtumContext(newParentMap)
+
+    val parentId = v11PartitioningIds(parentMap).head
+    val newParentId = v11PartitioningIds(newParentMap).head
+
+    val patchConflict = httpCall(
+      "PATCH",
+      s"/api/v2/partitionings/$parentId/ancestors",
+      Some(v11PatchBody(newParentId))
+    )
+    assert(patchConflict.statusCode() == 409, s"expected 409 for child with descendants, got ${patchConflict.statusCode()}: ${patchConflict.body()}")
+    assert(v11AncestorIds(parentId).isEmpty, "rejected PATCH must leave parent root unchanged")
+
+    val tooManyParentsMap = ListMap("v11TooManyParents" -> s"m$v11Run")
+    val tooManyParents = httpCall(
+      "POST",
+      "/api/v2/partitionings",
+      Some(v11PostBody(tooManyParentsMap, 1L to 101L, "compat"))
+    )
+    assert(tooManyParents.statusCode() == 400, s"expected 400 for >100 parents, got ${tooManyParents.statusCode()}: ${tooManyParents.body()}")
+    assert(v11PartitioningIds(tooManyParentsMap).isEmpty, "rejected POST must not create the partitioning")
   }
 }

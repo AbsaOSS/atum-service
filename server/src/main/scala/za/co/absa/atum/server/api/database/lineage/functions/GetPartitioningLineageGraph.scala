@@ -16,10 +16,11 @@
 
 package za.co.absa.atum.server.api.database.lineage.functions
 
+import cats.syntax.traverse._
 import doobie.implicits.toSqlInterpolator
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.{Decoder, Json}
-import za.co.absa.atum.model.dto.{LineageEdgeDTO, LineageGraphDTO, PartitionDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.model.dto.{LineageEdgeDTO, LineageGraphDTO, PartitioningWithIdDTO}
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.lineage.Lineage
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph._
@@ -72,24 +73,29 @@ object GetPartitioningLineageGraph {
   )
 
   private object LineageGraphFromDB {
-    implicit val decoder: Decoder[LineageGraphFromDB] = deriveDecoder
+    implicit val decoder: Decoder[LineageGraphFromDB] = Decoder.instance { c =>
+      for {
+        primaryPartitioningId <- c.downField("primaryPartitioningId").as[Long]
+        depth <- c.downField("depth").as[Int]
+        direction <- c.downField("direction").as[String]
+        nodes <- c.downField("nodes").as[Option[Seq[LineageNodeFromDB]]].map(_.getOrElse(Seq.empty))
+        edges <- c.downField("edges").as[Option[Seq[LineageEdgeDTO]]].map(_.getOrElse(Seq.empty))
+      } yield LineageGraphFromDB(primaryPartitioningId, depth, direction, nodes, edges)
+    }
   }
 
   case class LineageGraphResult(lineageGraph: Json) {
     def toLineageGraphDTO: Either[io.circe.Error, LineageGraphDTO] = {
       lineageGraph.as[LineageGraphFromDB].flatMap { raw =>
-        val decodedNodesOrError =
-          raw.nodes.foldLeft[Either[io.circe.Error, Vector[PartitioningWithIdDTO]]](Right(Vector.empty)) {
-            case (Right(acc), node) =>
-              node.partitioning.as[PartitioningForDB].map { pdb =>
-                val dto = pdb.keys.map(k => PartitionDTO(k, pdb.keysToValuesMap.getOrElse(k, "")))
-                acc :+ PartitioningWithIdDTO(node.id, dto, node.author)
-              }
-            case (Left(err), _) => Left(err)
+        raw.nodes.toList
+          .traverse { node =>
+            node.partitioning.as[PartitioningForDB].map { pdb =>
+              PartitioningWithIdDTO(node.id, pdb.toPartitioningDTO, node.author)
+            }
           }
-        decodedNodesOrError.map { nodes =>
-          LineageGraphDTO(raw.primaryPartitioningId, raw.depth, raw.direction, nodes, raw.edges)
-        }
+          .map { nodes =>
+            LineageGraphDTO(raw.primaryPartitioningId, raw.depth, raw.direction, nodes, raw.edges)
+          }
       }
     }
   }

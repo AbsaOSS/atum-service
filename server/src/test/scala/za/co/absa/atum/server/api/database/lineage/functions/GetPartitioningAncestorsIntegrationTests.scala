@@ -16,7 +16,6 @@
 
 package za.co.absa.atum.server.api.database.lineage.functions
 
-import za.co.absa.atum.model.dto.{PartitionDTO, PartitioningSubmitV2DTO}
 import za.co.absa.atum.server.ConfigProviderTest
 import za.co.absa.atum.server.api.TestTransactorProvider
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
@@ -34,31 +33,15 @@ import zio.interop.catz.asyncInstance
  *  columns NULL), 41 (unknown partitioning). Plain fa-db 0.7.0 failed with "Status is OK but data is missing" on
  *  the 14 row; the wrapper now yields it as a row without data. All tests share one rolled-back transaction.
  */
-object GetPartitioningAncestorsIntegrationTests extends ConfigProviderTest {
+object GetPartitioningAncestorsIntegrationTests extends ConfigProviderTest with LineageFunctionIntegrationTestSupport {
 
-  private def uniquePartitioning(tag: String) =
-    Seq(PartitionDTO("ancestorsKey", s"$tag-${java.util.UUID.randomUUID()}"))
-
-  private def create(tag: String, parents: Seq[Long]) =
-    ZIO
-      .serviceWithZIO[CreatePartitioningWithParents](
-        _(PartitioningSubmitV2DTO(uniquePartitioning(tag), parents, "author"))
-      )
-      .map(_.toOption.get.data.id)
+  override protected val partitioningKeyName: String = "ancestorsKey"
 
   private def ancestors(partitioningId: Long, limit: Int = 100, offset: Long = 0L) =
     ZIO.serviceWithZIO[GetPartitioningAncestors](_(GetPartitioningAncestorsArgs(partitioningId, limit, offset)))
 
   override def spec: Spec[Unit with TestEnvironment with Scope, Any] = {
     suite("GetPartitioningAncestorsIntegrationTests")(
-      test("Retrieve Ancestors' partitions for a given id") {
-        val partitioningID: Long = 1111L
-        for {
-          getPartitioningAncestors <- ZIO.service[GetPartitioningAncestors]
-          result <- getPartitioningAncestors(GetPartitioningAncestorsArgs(partitioningID, 10, 0L))
-
-        } yield assertTrue(result == Left(DataNotFoundException(FunctionStatus(41, "Partitioning not found"))))
-      },
       test("unknown partitioning -> Left(DataNotFoundException 41), never an OK-without-data failure") {
         for {
           result <- ancestors(Long.MaxValue)
