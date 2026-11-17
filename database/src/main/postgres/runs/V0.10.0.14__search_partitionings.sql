@@ -76,8 +76,9 @@ BEGIN
             USING ERRCODE = '22023';
     END IF;
 
-    -- Only fixed predicate fragments are concatenated; all input values stay bound.
-    -- Replanning avoids a generic optional-filter plan that cannot use selective key/time indexes.
+    -- Dynamic SQL (RETURN QUERY EXECUTE with $query$ tagged dollar-quoting inside $$) is used so PostgreSQL
+    -- replans only the active predicates and ASC/DESC sort direction for index-ordered scans, instead of
+    -- caching a generic optional-filter plan. Only fixed fragments are concatenated; values stay bound via USING.
     IF i_from_time IS NOT NULL THEN
         _time_predicates := _time_predicates || ' AND C.process_start_time >= $4';
     END IF;
