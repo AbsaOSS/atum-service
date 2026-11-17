@@ -141,7 +141,8 @@ class PartitioningRepositoryImpl(
     offset: Long,
     keys: Option[Map[String, String]],
     from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime]
+    to: Option[ZonedDateTime],
+    latestFirst: Option[Boolean] = None
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
     val databaseFrom = from.map(ceilToMicrosecond)
     val databaseTo = to.map(ceilToMicrosecond)
@@ -151,7 +152,7 @@ class PartitioningRepositoryImpl(
     if (emptyWindow) ZIO.succeed(ResultNoMore(Seq.empty))
     else {
       decodePaginatedPartitionings(
-        searchPartitioningsFn(SearchPartitioningsArgs(limit, offset, keys, databaseFrom, databaseTo)),
+        searchPartitioningsFn(SearchPartitioningsArgs(limit, offset, keys, databaseFrom, databaseTo, latestFirst)),
         "searchPartitionings"
       )
     }

@@ -283,19 +283,24 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
         first <- PartitioningSearchTestSupport.get(uri, realController)
         second <- PartitioningSearchTestSupport.get(uri.addParam("offset", "1"), realController)
         empty <- PartitioningSearchTestSupport.get(uri.addParam("offset", "2"), realController)
+        latestFirst <- PartitioningSearchTestSupport.get(uri.addParam("latest-first", "true"), realController)
         firstPage <- ZIO.fromEither(decode[PaginatedResponse[PartitioningWithIdDTO]](first._2))
         secondPage <- ZIO.fromEither(decode[PaginatedResponse[PartitioningWithIdDTO]](second._2))
         emptyPage <- ZIO.fromEither(decode[PaginatedResponse[PartitioningWithIdDTO]](empty._2))
+        latestFirstPage <- ZIO.fromEither(decode[PaginatedResponse[PartitioningWithIdDTO]](latestFirst._2))
       } yield assertTrue(
         first._1 == StatusCode.Ok,
         second._1 == StatusCode.Ok,
         empty._1 == StatusCode.Ok,
+        latestFirst._1 == StatusCode.Ok,
         firstPage.data == Seq(fixture.historical),
         firstPage.pagination == Pagination(1, 0L, hasMore = true),
         secondPage.data == Seq(fixture.atFrom),
         secondPage.pagination == Pagination(1, 1L, hasMore = false),
         emptyPage.data.isEmpty,
-        emptyPage.pagination == Pagination(1, 2L, hasMore = false)
+        emptyPage.pagination == Pagination(1, 2L, hasMore = false),
+        latestFirstPage.data == Seq(fixture.atFrom),
+        latestFirstPage.pagination == Pagination(1, 0L, hasMore = true)
       )
     }
   ).provide(

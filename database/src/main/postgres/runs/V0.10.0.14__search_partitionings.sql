@@ -13,12 +13,15 @@
  * limitations under the License.
  */
 
+DROP FUNCTION IF EXISTS runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ);
+
 CREATE OR REPLACE FUNCTION runs.search_partitionings(
     IN i_limit INT DEFAULT 10,
     IN i_offset BIGINT DEFAULT 0,
     IN i_keys JSONB DEFAULT NULL,
     IN i_from_time TIMESTAMPTZ DEFAULT NULL,
     IN i_to_time TIMESTAMPTZ DEFAULT NULL,
+    IN i_latest_first BOOLEAN DEFAULT FALSE,
     OUT status INTEGER,
     OUT status_text TEXT,
     OUT id BIGINT,
@@ -33,8 +36,9 @@ $$
 -- Keys-only searches include partitionings without checkpoints. An empty keys
 -- object is unconstrained, so at least one time bound is then required.
 --
--- Returns original partitioning envelopes in ID ascending order, status 11/OK,
--- and paging metadata. No matches (including offsets past the end) return no rows.
+-- Returns original partitioning envelopes ordered by ID (ascending by default,
+-- or descending when i_latest_first is true), status 11/OK, and paging metadata.
+-- No matches (including offsets past the end) return no rows.
 -- Invalid direct-call arguments raise invalid_parameter_value (SQLSTATE 22023).
 --
 -- Additive migration: rollback can drop this function after callers are removed;
@@ -42,6 +46,8 @@ $$
 -------------------------------------------------------------------------------
 DECLARE
     _keys JSONB := nullif(i_keys, '{}'::JSONB);
+    _latest_first BOOLEAN := coalesce(i_latest_first, FALSE);
+    _order_direction TEXT := CASE WHEN _latest_first THEN 'DESC' ELSE 'ASC' END;
     _predicates TEXT := '';
     _time_predicates TEXT := '';
 BEGIN
@@ -97,7 +103,7 @@ BEGIN
                 FROM active_ids A
                 WHERE (SELECT P.id_partitioning FROM runs.partitionings P
                        WHERE P.id_partitioning = A.fk_partitioning) IS NOT NULL
-                ORDER BY A.fk_partitioning
+                ORDER BY A.fk_partitioning $query$ || _order_direction || $query$
                 LIMIT $1 + 1 OFFSET $2
             ),
             page_partitionings AS MATERIALIZED (
@@ -109,7 +115,7 @@ BEGIN
                    (P.partitioning_row).partitioning, (P.partitioning_row).created_by,
                    count(*) OVER () > $1
             FROM page_partitionings P
-            ORDER BY (P.partitioning_row).id_partitioning
+            ORDER BY (P.partitioning_row).id_partitioning $query$ || _order_direction || $query$
             LIMIT $1
             $query$
             USING i_limit, i_offset, _keys, i_from_time, i_to_time;
@@ -130,13 +136,13 @@ BEGIN
             FROM runs.partitionings P
             WHERE TRUE
         $query$ || _predicates || $query$
-            ORDER BY P.id_partitioning
+            ORDER BY P.id_partitioning $query$ || _order_direction || $query$
             LIMIT $1 + 1 OFFSET $2
         )
         SELECT 11, 'OK'::TEXT, C.id_partitioning, C.partitioning, C.created_by,
                count(*) OVER () > $1
         FROM candidates C
-        ORDER BY C.id_partitioning
+        ORDER BY C.id_partitioning $query$ || _order_direction || $query$
         LIMIT $1
         $query$
         USING i_limit, i_offset, _keys, i_from_time, i_to_time;
@@ -145,6 +151,6 @@ $$
 LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = pg_catalog, pg_temp;
 
-ALTER FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ) OWNER TO atum_owner;
-REVOKE EXECUTE ON FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ) TO atum_user;
+ALTER FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ, BOOLEAN) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ, BOOLEAN) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION runs.search_partitionings(INT, BIGINT, JSONB, TIMESTAMPTZ, TIMESTAMPTZ, BOOLEAN) TO atum_user;

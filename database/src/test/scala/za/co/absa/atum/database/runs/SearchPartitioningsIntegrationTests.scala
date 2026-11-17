@@ -59,19 +59,27 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
     from: Option[OffsetDateTime] = None,
     to: Option[OffsetDateTime] = None,
     limit: Option[Int] = Some(10),
-    offset: Option[Long] = Some(0L)
+    offset: Option[Long] = Some(0L),
+    latestFirst: Option[Boolean] = None
   ): DBFunction = {
     val base = function(searchFn)
     val withLimit = limit.fold(base.setParamNull("i_limit"): DBFunction)(base.setParam("i_limit", _))
     val withOffset = offset.fold(withLimit.setParamNull("i_offset"): DBFunction)(withLimit.setParam("i_offset", _))
     val withKeys = keys.fold(withOffset.setParamNull("i_keys"): DBFunction)(withOffset.setParam("i_keys", _))
     val withFrom = from.fold(withKeys.setParamNull("i_from_time"): DBFunction)(withKeys.setParam("i_from_time", _))
-    to.fold(withFrom.setParamNull("i_to_time"): DBFunction)(withFrom.setParam("i_to_time", _))
+    val withTo = to.fold(withFrom.setParamNull("i_to_time"): DBFunction)(withFrom.setParam("i_to_time", _))
+    latestFirst.fold(withTo)(withTo.setParam("i_latest_first", _))
   }
 
-  private def assertPage(search: DBFunction, expected: Seq[(Long, Json)], hasMore: Boolean = false): Unit = {
+  private def assertPage(
+    search: DBFunction,
+    expected: Seq[(Long, Json)],
+    hasMore: Boolean = false,
+    descending: Boolean = false
+  ): Unit = {
+    val ordered = if (descending) expected.sortBy(-_._1) else expected.sortBy(_._1)
     search.execute { rows =>
-      expected.sortBy(_._1).foreach { case (id, partitioning) =>
+      ordered.foreach { case (id, partitioning) =>
         assert(rows.hasNext)
         val row = rows.next()
         assert(row.getInt("status").contains(11))
@@ -232,6 +240,18 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
       query(from = Some(fromTime), to = Some(fromTime.plusNanos(1000000)), limit = Some(1000), offset = Some(1000L)),
       partitionings.drop(1000)
     )
+  }
+
+  test("i_latest_first=true orders descending by ID with correct pagination and has_more") {
+    val partitionings = (0 until 4).map(index => insertPartitioning("group" -> "latest-first", "row" -> index.toString))
+    partitionings.foreach { case (id, _) => insertCheckpoint(id, fromTime) }
+    val desc = partitionings.sortBy(-_._1)
+    val keys = Some(JsonBString("""{"group":"latest-first"}"""))
+
+    assertPage(query(keys = keys, limit = Some(2), offset = Some(0L), latestFirst = Some(true)), desc.take(2), hasMore = true, descending = true)
+    assertPage(query(keys = keys, limit = Some(2), offset = Some(2L), latestFirst = Some(true)), desc.drop(2), hasMore = false, descending = true)
+    assertPage(query(from = Some(fromTime), to = Some(toTime), limit = Some(2), offset = Some(0L), latestFirst = Some(true)), desc.take(2), hasMore = true, descending = true)
+    assertPage(query(from = Some(fromTime), to = Some(toTime), limit = Some(2), offset = Some(2L), latestFirst = Some(true)), desc.drop(2), hasMore = false, descending = true)
   }
 
   test("Default limit and offset return the first ten partitionings") {

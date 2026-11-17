@@ -29,7 +29,7 @@ import za.co.absa.atum.model.utils.JsonSyntaxExtensions._
 import za.co.absa.atum.server.api.v2.controller.{CheckpointController, FlowController, PartitioningController}
 import za.co.absa.atum.server.api.common.http.{BaseEndpoints, HttpEnv}
 
-import java.time.{Duration, ZonedDateTime}
+import java.time.{Duration, Instant, ZonedDateTime}
 import java.util.UUID
 import scala.util.{Failure, Success, Try}
 
@@ -97,13 +97,16 @@ object Endpoints extends BaseEndpoints {
       .description("base64url-encoded JSON object of partial partitioning keys; all supplied string values must match")
       .and(checkpointTimeWindowInput)
       .validate(Validator.custom {
-        case (_, Some(_), None) | (_, None, Some(_)) =>
-          ValidationResult.Invalid("'from' and 'to' must be supplied together")
+        case (_, None, Some(_)) =>
+          ValidationResult.Invalid("'from' is required when 'to' is supplied")
+        case (_, Some(from), None) if Duration.between(from.toInstant, Instant.now())
+          .compareTo(maxPartitioningSearchWindow) > 0 =>
+          ValidationResult.Invalid("One-sided 'from' must not be older than 365 days")
         case (_, Some(from), Some(to)) if Duration.between(from.toInstant, to.toInstant)
           .compareTo(maxPartitioningSearchWindow) > 0 =>
           ValidationResult.Invalid("The time window must not exceed 365 days")
         case (keys, None, None) if keys.forall(_.isEmpty) =>
-          ValidationResult.Invalid("At least one non-empty key filter or complete time window is required")
+          ValidationResult.Invalid("At least one non-empty key filter or time bound is required")
         case _ => ValidationResult.Valid
       })
 
@@ -142,6 +145,7 @@ object Endpoints extends BaseEndpoints {
       .out(header[String]("Location"))
       .errorOutVariantPrepend(conflictErrorOneOfVariant)
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Create a checkpoint")
   }
 
   val postPartitioningEndpoint: PublicEndpoint[
@@ -178,6 +182,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[MultiSuccessResponse[AdditionalDataItemV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Get partitioning additional data")
   }
 
   val patchPartitioningAdditionalDataEndpoint
@@ -190,6 +195,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[MultiSuccessResponse[AdditionalDataItemV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Update partitioning additional data")
   }
 
   val getPartitioningEndpoint: PublicEndpoint[String, ErrorResponse, SingleSuccessResponse[
@@ -201,6 +207,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Get partitioning by definition")
   }
 
   val getPartitioningCheckpointEndpoint
@@ -211,6 +218,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[CheckpointV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Get a partitioning checkpoint")
   }
 
   val getPartitioningCheckpointsEndpoint: PublicEndpoint[
@@ -242,6 +250,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointV2DTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("List partitioning checkpoints")
   }
 
   val getFlowCheckpointsEndpoint: PublicEndpoint[
@@ -273,6 +282,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[CheckpointWithPartitioningDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("List flow checkpoints")
   }
 
   val getPartitioningByIdEndpoint
@@ -282,21 +292,31 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[SingleSuccessResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("Get partitioning by ID")
   }
 
-  val searchPartitioningsEndpoint
-    : PublicEndpoint[(Int, Long, Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime]), ErrorResponse, PaginatedResponse[
+  val searchPartitioningsEndpoint: PublicEndpoint[
+    (Int, Long, Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime], Option[Boolean]),
+    ErrorResponse,
+    PaginatedResponse[
       PartitioningWithIdDTO
-    ], Any] = {
+    ],
+    Any
+  ] = {
     apiV2.get
       .in(V2Paths.Partitionings / V2Paths.Search)
       .in(paginationInput)
       .in(partitioningSearchInput)
+      .in(
+        query[Option[Boolean]]("latest-first")
+          .description("if true, returns partitionings ordered by ID descending (newest first); default false (ascending)")
+      )
       .summary("Search partitionings")
       .description(
         "Search distinct partitionings by partial keys and/or checkpoint process start time, ordered by partitioning ID " +
-          "ascending. Key-only searches include partitionings without checkpoints. Time selection requires both bounds, " +
-          "a window no longer than 365 days, and at least one matching checkpoint. Pagination is live, not a snapshot."
+          "(ascending by default, or descending when 'latest-first=true'). Key-only searches include partitionings without " +
+          "checkpoints. Time selection accepts 'from' alone (within the last 365 days) or paired 'from' and 'to' spanning " +
+          "at most 365 days. Pagination is live, not a snapshot."
       )
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
@@ -308,6 +328,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[MultiSuccessResponse[MeasureDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("List partitioning measures")
   }
 
   val getFlowPartitioningsEndpoint: PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
@@ -319,6 +340,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("List flow partitionings")
   }
 
   val getPartitioningMainFlowEndpoint: PublicEndpoint[Long, ErrorResponse, SingleSuccessResponse[FlowDTO], Any] = {
@@ -328,6 +350,7 @@ object Endpoints extends BaseEndpoints {
       .out(jsonBody[SingleSuccessResponse[FlowDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
       .errorOutVariantPrepend(errorInDataOneOfVariant)
+      .summary("Get partitioning main flow")
   }
 
   val patchPartitioningParentEndpoint: PublicEndpoint[(Long, PartitioningParentPatchDTO), ErrorResponse, Unit, Any] = {
@@ -354,6 +377,7 @@ object Endpoints extends BaseEndpoints {
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
       .errorOutVariantPrepend(notFoundErrorOneOfVariant)
+      .summary("List ancestor partitionings")
   }
 
   val getPartitioningDescendantsEndpoint: PublicEndpoint[(Long, Int, Long), ErrorResponse, PaginatedResponse[
@@ -552,13 +576,21 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint[
-      (Int, Long, Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime]),
+      (Int, Long, Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime], Option[Boolean]),
       ErrorResponse,
       PaginatedResponse[PartitioningWithIdDTO]
     ](
       searchPartitioningsEndpoint,
-      { case (limit: Int, offset: Long, keys: Option[Map[String, String]], from: Option[ZonedDateTime], to: Option[ZonedDateTime]) =>
-        PartitioningController.searchPartitionings(limit, offset, keys, from, to)
+      {
+        case (
+              limit: Int,
+              offset: Long,
+              keys: Option[Map[String, String]],
+              from: Option[ZonedDateTime],
+              to: Option[ZonedDateTime],
+              latestFirst: Option[Boolean]
+            ) =>
+          PartitioningController.searchPartitionings(limit, offset, keys, from, to, latestFirst)
       }
     ),
     createServerEndpoint(getPartitioningByIdEndpoint, PartitioningController.getPartitioningById),

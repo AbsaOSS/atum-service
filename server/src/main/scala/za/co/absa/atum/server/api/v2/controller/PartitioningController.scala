@@ -56,7 +56,8 @@ trait PartitioningController {
     offset: Long,
     keys: Option[Map[String, String]],
     from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime]
+    to: Option[ZonedDateTime],
+    latestFirst: Option[Boolean] = None
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
 
   def getFlowPartitionings(

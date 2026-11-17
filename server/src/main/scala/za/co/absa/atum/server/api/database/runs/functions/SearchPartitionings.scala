@@ -43,7 +43,8 @@ class SearchPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Task
         fr"${args.offset}",
         fr"${args.keys.map(_.asJson)}",
         fr"${args.from}",
-        fr"${args.to}"
+        fr"${args.to}",
+        fr"${args.latestFirst}"
       )
     )
     with StandardStatusHandling
@@ -58,7 +59,8 @@ object SearchPartitionings {
     offset: Long,
     keys: Option[Map[String, String]],
     from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime]
+    to: Option[ZonedDateTime],
+    latestFirst: Option[Boolean] = None
   )
 
   case class SearchPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)

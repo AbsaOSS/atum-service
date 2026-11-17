@@ -105,10 +105,11 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
     offset: Long,
     keys: Option[Map[String, String]],
     from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime]
+    to: Option[ZonedDateTime],
+    latestFirst: Option[Boolean] = None
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
     repositoryCall(
-      partitioningRepository.searchPartitionings(limit, offset, keys, from, to),
+      partitioningRepository.searchPartitionings(limit, offset, keys, from, to, latestFirst),
       "searchPartitionings"
     )
   }

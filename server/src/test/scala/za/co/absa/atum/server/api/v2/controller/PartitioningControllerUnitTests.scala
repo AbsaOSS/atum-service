@@ -183,53 +183,53 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
   private val partitioningServiceMockLayer = ZLayer.succeed(partitioningServiceMock)
 
   when(partitioningServiceMock.searchPartitionings(
-    2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo)
-  )).thenReturn(ZIO.succeed(ResultHasMore(searchPartitionings)))
-  when(partitioningServiceMock.searchPartitionings(3, 1L, Some(searchKeys), None, None))
+    2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), Some(true)
+  )).thenReturn(ZIO.succeed(ResultHasMore(searchPartitionings.reverse)))
+  when(partitioningServiceMock.searchPartitionings(3, 1L, Some(searchKeys), None, None, None))
     .thenReturn(ZIO.succeed(ResultNoMore(searchPartitionings)))
-  when(partitioningServiceMock.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo)))
+  when(partitioningServiceMock.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
-  when(partitioningServiceMock.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None))
+  when(partitioningServiceMock.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
   when(partitioningServiceMock.searchPartitionings(
-    4, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo)
+    4, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
   )).thenReturn(ZIO.fail(GeneralServiceError("search unavailable")))
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
     suite("PartitioningControllerSuite")(
       suite("SearchPartitioningsSuite")(
-        test("Forwards every argument and returns a paginated DTO envelope with nonzero Long offset") {
+        test("Forwards every argument including latestFirst and returns a paginated DTO envelope with nonzero Long offset") {
           for {
             result <- PartitioningController.searchPartitionings(
-              2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo)
+              2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), Some(true)
             )
             _ <- ZIO.attempt(verify(partitioningServiceMock).searchPartitionings(
-              2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo)
+              2, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), Some(true)
             ))
           } yield assertTrue(result.copy(requestId = searchRequestId) ==
-            PaginatedResponse(searchPartitionings, Pagination(2, searchOffset, hasMore = true), searchRequestId))
+            PaginatedResponse(searchPartitionings.reverse, Pagination(2, searchOffset, hasMore = true), searchRequestId))
         },
         test("Retains the requested limit and offset for a key-only final page") {
           for {
-            result <- PartitioningController.searchPartitionings(3, 1L, Some(searchKeys), None, None)
+            result <- PartitioningController.searchPartitionings(3, 1L, Some(searchKeys), None, None, None)
           } yield assertTrue(result.copy(requestId = searchRequestId) ==
             PaginatedResponse(searchPartitionings, Pagination(3, 1L, hasMore = false), searchRequestId))
         },
         test("Wraps empty time-only matches in a successful no-more-results envelope") {
           for {
-            result <- PartitioningController.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo))
+            result <- PartitioningController.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None)
           } yield assertTrue(result.copy(requestId = searchRequestId) ==
             PaginatedResponse(Seq.empty[PartitioningWithIdDTO], Pagination(10, 0L, hasMore = false), searchRequestId))
         },
         test("Forwards explicit empty keys and keeps paging metadata on an empty page") {
           for {
-            result <- PartitioningController.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None)
+            result <- PartitioningController.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None)
           } yield assertTrue(result.copy(requestId = searchRequestId) ==
             PaginatedResponse(Seq.empty[PartitioningWithIdDTO], Pagination(10, 1L, hasMore = false), searchRequestId))
         },
         test("Maps upstream failures to an InternalServerErrorResponse") {
           assertZIO(PartitioningController.searchPartitionings(
-            4, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo)
+            4, searchOffset, Some(searchKeys), Some(searchFrom), Some(searchTo), None
           ).exit)(failsWithA[InternalServerErrorResponse])
         }
       ),

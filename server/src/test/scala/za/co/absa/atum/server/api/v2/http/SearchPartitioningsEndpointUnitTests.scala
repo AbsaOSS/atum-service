@@ -35,6 +35,9 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
   private val searchUri = uri"http://localhost/api/v2/partitionings/search"
   private val encodedKeys = encodeSearchJson(searchKeys.asJson.noSpaces)
 
+  private val recentFrom = ZonedDateTime.now().minusDays(7)
+  private val staleFrom = ZonedDateTime.now().minusDays(366)
+
   private case class ValidSearch(
     name: String,
     params: Seq[(String, String)],
@@ -43,6 +46,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
     keys: Option[Map[String, String]] = None,
     from: Option[ZonedDateTime] = None,
     to: Option[ZonedDateTime] = None,
+    latestFirst: Option[Boolean] = None,
     data: Seq[PartitioningWithIdDTO] = searchPartitionings,
     hasMore: Boolean = false
   )
@@ -52,11 +56,16 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
       Seq("keys" -> encodedKeys), keys = Some(searchKeys)),
     ValidSearch("time-only bounded search",
       Seq("from" -> searchFrom.toString, "to" -> searchTo.toString), from = Some(searchFrom), to = Some(searchTo)),
-    ValidSearch("combined search forwards custom limit and nonzero offset",
+    ValidSearch("one-sided recent from search without to",
+      Seq("from" -> recentFrom.toString), from = Some(recentFrom)),
+    ValidSearch("one-sided recent from combined with keys and latest-first=true",
+      Seq("keys" -> encodedKeys, "from" -> recentFrom.toString, "latest-first" -> "true"),
+      keys = Some(searchKeys), from = Some(recentFrom), latestFirst = Some(true)),
+    ValidSearch("combined search forwards custom limit, nonzero offset and latest-first=false",
       Seq("keys" -> encodedKeys, "from" -> searchFrom.toString, "to" -> searchTo.toString,
-        "limit" -> "1", "offset" -> "2"),
+        "limit" -> "1", "offset" -> "2", "latest-first" -> "false"),
       limit = 1, offset = 2L, keys = Some(searchKeys), from = Some(searchFrom), to = Some(searchTo),
-      data = searchPartitionings.take(1), hasMore = true),
+      latestFirst = Some(false), data = searchPartitionings.take(1), hasMore = true),
     ValidSearch("maximum limit and offset beyond Int range are accepted",
       Seq("keys" -> encodedKeys, "limit" -> "1000", "offset" -> searchOffset.toString),
       limit = 1000, offset = searchOffset, keys = Some(searchKeys)),
@@ -104,7 +113,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
         "invalid from" -> Seq("from" -> "not-a-date"),
         "invalid to" -> Seq("to" -> "2026-99-01T00:00:00Z"),
         "missing date offset" -> Seq("from" -> "2026-06-01T00:00:00"),
-        "from without to" -> Seq("from" -> searchFrom.toString),
+        "one-sided from older than 365 days" -> Seq("from" -> staleFrom.toString),
         "to without from" -> Seq("to" -> searchTo.toString),
         "equal time bounds" -> Seq("from" -> searchFrom.toString, "to" -> searchFrom.toString),
         "equal instants in different timezones" ->
@@ -137,14 +146,14 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
           scenario.data, Pagination(scenario.limit, scenario.offset, scenario.hasMore), searchRequestId
         )
         when(controller.searchPartitionings(
-          scenario.limit, scenario.offset, scenario.keys, scenario.from, scenario.to
+          scenario.limit, scenario.offset, scenario.keys, scenario.from, scenario.to, scenario.latestFirst
         )).thenReturn(ZIO.succeed(expected))
 
         for {
           response <- PartitioningSearchTestSupport.get(withParams(scenario.params), controller)
           _ <- ZIO.attempt {
             verify(controller).searchPartitionings(
-              scenario.limit, scenario.offset, scenario.keys, scenario.from, scenario.to
+              scenario.limit, scenario.offset, scenario.keys, scenario.from, scenario.to, scenario.latestFirst
             )
             verifyNoMoreInteractions(controller)
           }
@@ -171,7 +180,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
     test("Surfaces an upstream failure as an InternalServerErrorResponse") {
       val controller = mock(classOf[PartitioningController])
       val error = InternalServerErrorResponse("search unavailable", searchRequestId)
-      when(controller.searchPartitionings(10, 0L, Some(searchKeys), None, None)).thenReturn(ZIO.fail(error))
+      when(controller.searchPartitionings(10, 0L, Some(searchKeys), None, None, None)).thenReturn(ZIO.fail(error))
       for {
         response <- PartitioningSearchTestSupport.get(withParams(Seq("keys" -> encodedKeys)), controller)
       } yield assertTrue(
@@ -186,7 +195,9 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
         _ <- ZIO.attempt(verifyNoInteractions(controller))
       } yield assertTrue(
         response._1 == StatusCode.Ok,
-        response._2.contains("/api/v2/partitionings/search:")
+        response._2.contains("/api/v2/partitionings/search:"),
+        response._2.contains("summary: Search partitionings"),
+        response._2.contains("name: latest-first")
       )
     },
     test("Registered search route does not shadow or get consumed by exact and numeric-ID routes") {
@@ -195,7 +206,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
       val encodedPartitioning = encodeSearchJson(partitioning.partitioning.asJson.noSpaces)
       val single = SingleSuccessResponse(partitioning, searchRequestId)
       val page = PaginatedResponse(Seq(partitioning), Pagination(10, 0L, hasMore = false), searchRequestId)
-      when(controller.searchPartitionings(10, 0L, Some(searchKeys), None, None)).thenReturn(ZIO.succeed(page))
+      when(controller.searchPartitionings(10, 0L, Some(searchKeys), None, None, None)).thenReturn(ZIO.succeed(page))
       when(controller.getPartitioning(encodedPartitioning)).thenReturn(ZIO.succeed(single))
       when(controller.getPartitioningById(partitioning.id)).thenReturn(ZIO.succeed(single))
       for {
@@ -207,7 +218,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
           uri"http://localhost/api/v2/partitionings/${partitioning.id}", controller
         )
         _ <- ZIO.attempt {
-          verify(controller).searchPartitionings(10, 0L, Some(searchKeys), None, None)
+          verify(controller).searchPartitionings(10, 0L, Some(searchKeys), None, None, None)
           verify(controller).getPartitioning(encodedPartitioning)
           verify(controller).getPartitioningById(partitioning.id)
           verifyNoMoreInteractions(controller)
