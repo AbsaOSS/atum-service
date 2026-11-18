@@ -4,27 +4,59 @@
 <meta charset="utf-8">
 <title>Atum · Lineage &amp; Control Measures</title>
 <style>
+@font-face {
+  font-family: 'Brave Sans';
+  src: url('assets/fonts/BraveSansWeb-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Brave Sans';
+  src: url('assets/fonts/BraveSansWeb-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Brave Sans';
+  src: url('assets/fonts/BraveSansWeb-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --bg: #f8fafc;
+  /* ABSA brand */
+  --absa-passion: #DC0037;
+  --absa-power:   #B50232;
+  --absa-hope:    #95052A;
+  --absa-inspire: #77021E;
+  --absa-energy:  #FF780F;
+  --absa-enrich:  #131010;
+  --absa-serene:  #FFFFFF;
+
+  --bg: #faf8f8;
   --surface: #ffffff;
-  --surface-subtle: #f1f5f9;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --sidebar-bg: #0f172a;
-  --sidebar-hover: #1e293b;
-  --primary: #0f4c81;
-  --primary-hover: #0c3d69;
-  --primary-bg: #eff6ff;
-  --primary-border: #93c5fd;
-  --success: #15803d;
-  --warn: #b45309;
-  --warn-bg: #fffbeb;
-  --warn-border: #f59e0b;
+  --surface-subtle: #f5f2f2;
+  --border: #e6e2e2;
+  --border-strong: #cdc7c7;
+  --text: var(--absa-enrich);
+  --text-secondary: #453f3f;
+  --text-muted: #767676;
+  --sidebar-bg: #1c1515;
+  --sidebar-hover: #2d2222;
+  --primary: var(--absa-power);
+  --primary-hover: var(--absa-passion);
+  --primary-active: var(--absa-inspire);
+  --primary-bg: #fcebee;
+  --primary-border: #e7a9b7;
+  --success: #1e7a42;
+  --warn: #c2410c;
+  --warn-bg: #fff3e9;
+  --warn-border: var(--absa-energy);
   --mono: "SF Mono", "JetBrains Mono", "Ubuntu Sans Mono", Menlo, Consolas, monospace;
-  --sans: "Inter", "Ubuntu Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --sans: "Brave Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -41,6 +73,7 @@ button, select, input { font: inherit; }
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(181,2,50,0.25);
 }
 
 /* ── App Shell with Left Sidebar ── */
@@ -50,41 +83,35 @@ button, select, input { font: inherit; }
 }
 
 .sidebar {
-  width: 176px;
+  width: 184px;
   background: var(--sidebar-bg);
   color: #fff;
   display: flex;
   flex-direction: column;
   flex: none;
-  border-right: 1px solid #1e293b;
+  border-right: 1px solid #000;
 }
 .brand {
-  height: 52px;
+  height: 78px;
+  min-height: 78px;
   padding: 0 16px;
   display: flex;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: var(--absa-inspire);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
   cursor: pointer;
   user-select: none;
 }
-.brand-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #be123c 0%, #881337 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-  color: #fff;
-  flex: none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+.brand-mark img {
+  height: 32px;
+  min-height: 32px;
+  width: auto;
+  display: block;
 }
 .brand-text { display: flex; flex-direction: column; }
-.brand-name { font-weight: 600; font-size: 14px; line-height: 1.15; }
-.brand-sub { font-size: 11px; color: #94a3b8; }
+.brand-name { font-weight: 700; font-size: 14px; line-height: 1.15; letter-spacing: 0.2px; }
+.brand-sub { font-size: 11px; color: rgba(255,255,255,0.72); }
 
 .side-nav {
   padding: 12px 8px;
@@ -96,7 +123,7 @@ button, select, input { font: inherit; }
   width: 100%;
   border: 0;
   background: transparent;
-  color: #cbd5e1;
+  color: #d9c9c9;
   padding: 8px 10px;
   border-radius: 6px;
   font-size: 13px;
@@ -111,18 +138,18 @@ button, select, input { font: inherit; }
 .side-link svg { width: 16px; height: 16px; flex: none; opacity: 0.85; }
 .side-link:hover { background: var(--sidebar-hover); color: #fff; }
 .side-link.active {
-  background: #1e293b;
+  background: var(--sidebar-hover);
   color: #fff;
-  font-weight: 600;
-  box-shadow: inset 3px 0 0 #38bdf8;
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--absa-energy);
 }
 .side-count {
   margin-left: auto;
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.12);
-  color: #e2e8f0;
+  background: rgba(255,255,255,0.14);
+  color: #f1e9e9;
   font-weight: 600;
 }
 .side-footer {
@@ -130,7 +157,7 @@ button, select, input { font: inherit; }
   padding: 12px 14px;
   border-top: 1px solid rgba(255,255,255,0.08);
   font-size: 11px;
-  color: #64748b;
+  color: #8f8484;
 }
 
 /* ── Main Area & Topbar ── */
@@ -199,7 +226,7 @@ button, select, input { font: inherit; }
 .btn {
   height: 32px;
   padding: 0 12px;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid var(--border-strong);
   background: #fff;
   color: var(--text);
@@ -218,8 +245,9 @@ button, select, input { font: inherit; }
   border-color: var(--primary);
   color: #fff;
 }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-sm { height: 27px; padding: 0 9px; font-size: 12px; font-weight: 400; }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-primary:active { background: var(--primary-active); border-color: var(--primary-active); }
+.btn-sm { height: 27px; padding: 0 9px; font-size: 12px; font-weight: 500; }
 
 .container {
   padding: 14px 20px 24px;
@@ -241,7 +269,7 @@ button, select, input { font: inherit; }
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 .kpi-card.clickable { cursor: pointer; }
-.kpi-card.clickable:hover { border-color: var(--primary); box-shadow: 0 2px 6px rgba(15, 76, 129, 0.08); }
+.kpi-card.clickable:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(181, 2, 50, 0.1); }
 .kpi-label {
   font-size: 12px;
   font-weight: 400;
@@ -259,7 +287,8 @@ button, select, input { font: inherit; }
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(19,16,16,0.04);
   overflow: hidden;
   margin-bottom: 12px;
 }
@@ -270,7 +299,7 @@ button, select, input { font: inherit; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: #fcfdff;
+  background: #fdfbfb;
 }
 .toolbar-meta { font-size: 12px; color: var(--text-muted); }
 
@@ -326,7 +355,7 @@ button, select, input { font: inherit; }
 /* ── Filter Bar (Datasets) ── */
 .filter-bar {
   padding: 10px 16px;
-  background: #fcfdff;
+  background: #fdfbfb;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -366,8 +395,8 @@ button, select, input { font: inherit; }
 .pill-btn.active {
   background: #fff;
   color: var(--primary);
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 
 /* ── Tables ── */
@@ -381,13 +410,13 @@ th, td {
   vertical-align: middle;
 }
 th {
-  background: #f8fafc;
+  background: #faf8f8;
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 tr.row-link { cursor: pointer; transition: background 0.1s; }
-tr.row-link:hover td { background: #f8fafc; }
+tr.row-link:hover td { background: #faf8f8; }
 tr.row-link:hover .row-chevron { color: var(--primary); transform: translateX(2px); }
 tr.row-selected td { background: var(--primary-bg); }
 tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
@@ -422,13 +451,13 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
 
 /* ── Lineage Graph Canvas ── */
 .lineage-canvas {
-  background: radial-gradient(#cbd5e1 1px, transparent 1px) 0 0 / 18px 18px #fcfdff;
+  background: radial-gradient(#dcd7d7 1px, transparent 1px) 0 0 / 18px 18px #fdfbfb;
   padding: 8px 12px;
   overflow-x: auto;
 }
 .resize-handle {
   height: 7px;
-  background: #f8fafc;
+  background: #faf8f8;
   border-top: 1px solid var(--border);
   cursor: ns-resize;
   display: flex;
@@ -446,33 +475,11 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
 .resize-handle:hover::after { background: var(--primary); }
 .node-group { cursor: pointer; transition: opacity 0.15s; }
 .node-group:hover .node-box { stroke: var(--primary); }
-.collapsed-chain {
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12.5px;
-  background: #fcfdff;
-  flex-wrap: wrap;
-}
-.chain-pill {
-  padding: 3px 9px;
-  border-radius: 5px;
-  border: 1px solid var(--border);
-  background: #fff;
-  cursor: pointer;
-}
-.chain-pill.active {
-  border-color: var(--primary);
-  background: var(--primary-bg);
-  color: var(--primary);
-  font-weight: 600;
-}
 
 /* ── Inspector Header & Tabs ── */
 .inspector-head {
   padding: 10px 16px 0;
-  background: #fcfdff;
+  background: #fdfbfb;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -522,8 +529,8 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
   gap: 8px;
   border-bottom: 1px solid var(--border);
 }
-.callout-warn { background: var(--warn-bg); color: #78350f; }
-.callout-ok { background: #f8fafc; color: var(--text-secondary); }
+.callout-warn { background: var(--warn-bg); color: #7a3200; }
+.callout-ok { background: #faf8f8; color: var(--text-secondary); }
 
 /* ── Metadata Layout ── */
 .meta-top {
@@ -532,7 +539,7 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
   gap: 14px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
-  background: #fcfdff;
+  background: #fdfbfb;
 }
 .meta-card {
   background: #fff;
@@ -542,7 +549,7 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
 }
 .meta-card-head {
   padding: 7px 12px;
-  background: #f8fafc;
+  background: #faf8f8;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -623,7 +630,7 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
 .modal-body { padding: 16px 20px; overflow-y: auto; }
 .modal-footer {
   padding: 10px 20px;
-  background: #f8fafc;
+  background: #faf8f8;
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -641,13 +648,13 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
   border: 1px solid var(--border);
   border-radius: 7px;
   padding: 10px 14px;
-  background: #f8fafc;
+  background: #faf8f8;
 }
 .code-block {
   margin: 0;
   padding: 14px 16px;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--absa-enrich);
+  color: #f1e9e9;
   font-family: var(--mono);
   font-size: 12px;
   border-radius: 7px;
@@ -668,13 +675,13 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
 <div class="shell">
   <!-- LEFT NAVIGATION SIDEBAR -->
   <aside class="sidebar">
-    <div class="brand" id="brandHome" tabindex="0" role="button">
-      <div class="brand-mark">A</div>
+    <a class="brand" id="brandHome" tabindex="0" aria-label="Go to home">
+      <div class="brand-mark"><img src="assets/logo/logo-white_58.svg" alt="Absa" style="height:32px;min-height:32px" /></div>
       <div class="brand-text">
         <span class="brand-name">Atum</span>
         <span class="brand-sub">Lineage &amp; Controls</span>
       </div>
-    </div>
+    </a>
 
     <nav class="side-nav">
       <button class="side-link" data-view="catalog">
@@ -727,7 +734,7 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
         <section class="card">
           <div class="filter-bar">
             <label class="search-input">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
               <input id="searchInput" placeholder="Filter by dataset or partitioning key...">
             </label>
 
@@ -790,7 +797,6 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
                 <button class="pill-btn active" data-scope="full">Full graph</button>
                 <button class="pill-btn" data-scope="direct">Direct neighbors (1 hop)</button>
               </div>
-              <button class="btn btn-sm" id="collapseGraphBtn">Collapse graph</button>
             </div>
           </div>
 
@@ -798,7 +804,6 @@ tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
             <svg id="lineageSvg" width="100%" viewBox="0 0 1120 220" style="display:block;min-width:860px;height:210px"></svg>
           </div>
           <div class="resize-handle" id="graphResizeHandle" title="Drag to resize lineage graph height"></div>
-          <div class="collapsed-chain hidden" id="collapsedChainBar"></div>
         </section>
 
         <!-- Bottom Inspector: Prominent Selected Dataset Title + Tabs -->
@@ -1149,7 +1154,6 @@ const STATE = {
   subtab: "measures",
   scope: "full",
   graphMetric: "count",
-  graphCollapsed: false,
   windowPreset: "7d",
   searchQuery: "",
   prodFilter: "all",
@@ -1185,8 +1189,10 @@ function changedMeasuresCount(d) {
 
 const checkIconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>`;
 
+const warnIconSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 1 22h22L12 2zm0 7a1 1 0 0 1 1 1v5a1 1 0 1 1-2 0V10a1 1 0 0 1 1-1zm0 11a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 12 20z"/></svg>`;
+
 function statusDisplayHtml(hasShift) {
-  if (hasShift) return `<span class="badge-shift">⚠ Measure Shift</span>`;
+  if (hasShift) return `<span class="badge-shift">${warnIconSvg} Measure Shift</span>`;
   return `<span class="status-consistent">${checkIconSvg} Consistent</span>`;
 }
 
@@ -1334,26 +1340,8 @@ function renderLineage() {
   const visibleEdges = EDGES.map((e, idx) => ({ ...e, idx })).filter(e => visibleIds.has(e.from) && visibleIds.has(e.to));
 
   $("lineageSummaryText").textContent = `${visibleNodes.length} datasets · ${visibleEdges.length} links · Highlighting active path for ${focal.name}`;
-  $("collapseGraphBtn").textContent = STATE.graphCollapsed ? "Expand graph" : "Collapse graph";
-  $("graphCanvasWrap").classList.toggle("hidden", STATE.graphCollapsed);
-  $("collapsedChainBar").classList.toggle("hidden", !STATE.graphCollapsed);
 
-  if (STATE.graphCollapsed) {
-    const parents = EDGES.filter(e => e.to === focal.id).map(e => byId[e.from]);
-    const children = EDGES.filter(e => e.from === focal.id).map(e => byId[e.to]);
-    $("collapsedChainBar").innerHTML = `
-      <span style="color:var(--text-muted)">Upstream:</span>
-      ${parents.length ? parents.map(p => `<span class="chain-pill" data-pick="${p.id}">${esc(p.name)}</span>`).join("") : '<span style="color:var(--text-muted)">None</span>'}
-      <span>→</span>
-      <span class="chain-pill active">${esc(focal.name)}</span>
-      <span>→</span>
-      <span style="color:var(--text-muted)">Downstream:</span>
-      ${children.length ? children.map(c => `<span class="chain-pill" data-pick="${c.id}">${esc(c.name)}</span>`).join("") : '<span style="color:var(--text-muted)">None</span>'}
-    `;
-    $("collapsedChainBar").querySelectorAll("[data-pick]").forEach(el => {
-      el.onclick = () => { STATE.selectedId = Number(el.dataset.pick); render(); };
-    });
-  } else {
+  {
     // Topological layout
     const rank = new Map();
     visibleNodes.forEach(n => rank.set(n.id, 0));
@@ -1393,10 +1381,10 @@ function renderLineage() {
 
     let svg = `<defs>
       <marker id="arrActive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-        <path d="M0,0 L10,5 L0,10 z" fill="#0f4c81"/>
+        <path d="M0,0 L10,5 L0,10 z" fill="#B50232"/>
       </marker>
       <marker id="arrMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-        <path d="M0,0 L10,5 L0,10 z" fill="#cbd5e1"/>
+        <path d="M0,0 L10,5 L0,10 z" fill="#cdc7c7"/>
       </marker>
       <filter id="cardShadow" x="-8%" y="-8%" width="116%" height="124%">
         <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.05"/>
@@ -1421,11 +1409,11 @@ function renderLineage() {
       const handoffMatched = pExit !== undefined && cEntry !== undefined && pExit === cEntry;
       const bx = mx, by = span > 1 ? (0.125 * y1 + 0.75 * (svgH - 4) + 0.125 * y2) : my;
 
-      svg += `<path d="${dPath}" fill="none" stroke="${isOnPath ? "#0f4c81" : "#cbd5e1"}" stroke-width="${isOnPath ? "2" : "1.4"}" marker-end="url(#${isOnPath ? "arrActive" : "arrMuted"})"/>`;
+      svg += `<path d="${dPath}" fill="none" stroke="${isOnPath ? "#B50232" : "#cdc7c7"}" stroke-width="${isOnPath ? "2" : "1.4"}" marker-end="url(#${isOnPath ? "arrActive" : "arrMuted"})"/>`;
       if (handoffMatched && isOnPath) {
         svg += `<g transform="translate(${bx},${by})" title="Parent exit equals child entry">
           <circle r="7.5" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
-          <text y="3.2" text-anchor="middle" font-size="9.5" font-weight="600" fill="#15803d">=</text>
+          <text y="3.2" text-anchor="middle" font-size="9.5" font-weight="600" fill="#1e7a42">=</text>
         </g>`;
       }
     });
@@ -1463,17 +1451,17 @@ function renderLineage() {
         <g class="node-group" data-node-id="${n.id}" tabindex="0" role="button"
            opacity="${isOnPath ? "1" : "0.52"}" filter="url(#cardShadow)">
           <rect class="node-box" x="${x}" y="${y}" width="${W}" height="${H}" rx="7"
-                fill="${isSel ? "#eff6ff" : "#ffffff"}"
-                stroke="${isSel ? "#0f4c81" : (hasShift ? "#f59e0b" : "#cbd5e1")}"
+                fill="${isSel ? "#fcebee" : "#ffffff"}"
+                stroke="${isSel ? "#B50232" : (hasShift ? "#FF780F" : "#cdc7c7")}"
                 stroke-width="${isSel ? "2" : "1.2"}"/>
-          ${hasShift ? `<rect x="${x}" y="${y}" width="4" height="${H}" rx="2" fill="#f59e0b"/>` : ""}
+          ${hasShift ? `<rect x="${x}" y="${y}" width="4" height="${H}" rx="2" fill="#FF780F"/>` : ""}
 
-          <text x="${x + 12}" y="${y + 20}" font-size="12.5" font-weight="600" fill="#0f172a">${esc(n.name)}</text>
-          <text x="${x + W - 12}" y="${y + 19}" text-anchor="end" font-size="11.5" font-weight="600" fill="${hasShift ? "#b45309" : "#15803d"}">${hasShift ? "⚠" : "✓"}</text>
+          <text x="${x + 12}" y="${y + 20}" font-size="12.5" font-weight="600" fill="#131010">${esc(n.name)}</text>
+          <g transform="translate(${x + W - 26},${y + 8})">${hasShift ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="#c2410c"><path d="M12 2 1 22h22L12 2zm0 7a1 1 0 0 1 1 1v5a1 1 0 1 1-2 0V10a1 1 0 0 1 1-1zm0 11a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 12 20z"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e7a42" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'}</g>
 
           <g transform="translate(${x + 12},${y + 26.5})">${sysSvg(n.producer, 13)}</g>
-          <text x="${x + 29}" y="${y + 37}" font-size="11" fill="#64748b">${esc(n.producer)} · ${esc(n.infoDate)}</text>
-          <text x="${x + 12}" y="${y + 53}" font-size="11" fill="${metricShifted ? "#b45309" : (lastVal === undefined && firstVal === undefined ? "#94a3b8" : "#334155")}" font-weight="${metricShifted ? "600" : "400"}">${esc(metricLine)}</text>
+          <text x="${x + 29}" y="${y + 37}" font-size="11" fill="#767676">${esc(n.producer)} · ${esc(n.infoDate)}</text>
+          <text x="${x + 12}" y="${y + 53}" font-size="11" fill="${metricShifted ? "#c2410c" : (lastVal === undefined && firstVal === undefined ? "#9c9494" : "#453f3f")}" font-weight="${metricShifted ? "600" : "400"}">${esc(metricLine)}</text>
         </g>
       `;
     });
@@ -1506,7 +1494,7 @@ function renderInspector(focal) {
     const chCount = changedMeasuresCount(focal);
     const calloutHtml = chCount > 0
       ? `<div class="callout callout-warn">
-           <strong>⚠ Measure Shift:</strong>
+           <strong>Measure Shift:</strong>
            <span>${chCount} of ${focal.measures.length} control measures shifted at checkpoint <b>2. Joined</b> on ${esc(focal.name)}.</span>
          </div>`
       : `<div class="callout callout-ok">
@@ -1787,16 +1775,16 @@ function renderInspector(focal) {
       const sy = v => maxCount === minCount ? sh / 2 : (sh - 12) - ((v - minCount) / (maxCount - minCount)) * (sh - 24);
       const pts = hist.map((h, i) => `${sx(i).toFixed(1)},${sy(h.count).toFixed(1)}`).join(" ");
       sparkHtml = `
-        <div style="padding:10px 16px;border-bottom:1px solid var(--border);background:#fcfdff;display:flex;align-items:center;gap:16px">
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);background:#fdfbfb;display:flex;align-items:center;gap:16px">
           <div style="font-size:12px;color:var(--text-muted);white-space:nowrap">7-day record count trend</div>
           <svg width="100%" viewBox="0 0 ${sw} ${sh}" style="max-height:54px;display:block">
-            <polyline fill="none" stroke="#0f4c81" stroke-width="1.8" points="${pts}"/>
+            <polyline fill="none" stroke="#B50232" stroke-width="1.8" points="${pts}"/>
             ${hist.map((h, i) => {
               const sel = h.date === activeDate;
               const isShift = h.status === "Measure Shift";
               return `<circle cx="${sx(i).toFixed(1)}" cy="${sy(h.count).toFixed(1)}" r="${sel ? 4.5 : 3}"
-                              fill="${isShift ? "#f59e0b" : (sel ? "#0f4c81" : "#fff")}"
-                              stroke="${isShift ? "#b45309" : "#0f4c81"}" stroke-width="1.6"/>`;
+                              fill="${isShift ? "#FF780F" : (sel ? "#B50232" : "#fff")}"
+                              stroke="${isShift ? "#c2410c" : "#B50232"}" stroke-width="1.6"/>`;
             }).join("")}
           </svg>
         </div>
@@ -1825,8 +1813,8 @@ function renderInspector(focal) {
                 <tr class="row-link ${isCur ? "row-selected" : ""}" data-hist-date="${esc(h.date)}" tabindex="0" role="button" title="Partitioning #${h.id}">
                   <td style="font-weight:${isCur ? "600" : "400"}">${esc(h.date)} ${isCur ? '<span style="color:var(--primary);font-size:11.5px;margin-left:6px">(Selected)</span>' : ""}</td>
                   <td>
-                    <div style="background:#e2e8f0;height:8px;border-radius:4px;overflow:hidden">
-                      <div style="width:${pct}%;height:100%;background:${isShift ? "#f59e0b" : "#0f4c81"}"></div>
+                    <div style="background:#e6e2e2;height:8px;border-radius:4px;overflow:hidden">
+                      <div style="width:${pct}%;height:100%;background:${isShift ? "#FF780F" : "#B50232"}"></div>
                     </div>
                   </td>
                   <td class="num" style="font-weight:600">${fmtNum(h.count)}</td>
@@ -1936,11 +1924,6 @@ document.querySelectorAll("#scopeGroup .pill-btn").forEach(btn => {
     renderLineage();
   };
 });
-$("collapseGraphBtn").onclick = () => {
-  STATE.graphCollapsed = !STATE.graphCollapsed;
-  $("graphResizeHandle").classList.toggle("hidden", STATE.graphCollapsed);
-  renderLineage();
-};
 (() => {
   let startY = 0, startH = 210, dragging = false;
   const handle = $("graphResizeHandle"), svgEl = $("lineageSvg");
@@ -1968,7 +1951,7 @@ $("exportReportBtn").onclick = () => {
 };
 $("closeModalBtn").onclick = () => $("reportModal").classList.add("hidden");
 $("downloadPdfBtn").onclick = () => {
-  $("exportToast").textContent = "✓ Opening PDF print dialog";
+  $("exportToast").textContent = "Opening PDF print dialog…";
   window.print();
 };
 $("exportCsvBtn").onclick = () => {
@@ -1979,7 +1962,7 @@ $("exportCsvBtn").onclick = () => {
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   a.download = "atum-audit-evidence.csv";
   a.click();
-  $("exportToast").textContent = "✓ Downloaded atum-audit-evidence.csv";
+  $("exportToast").textContent = "Downloaded atum-audit-evidence.csv";
 };
 document.querySelectorAll("#modalModeGroup .pill-btn").forEach(btn => {
   btn.onclick = () => { STATE.modalMode = btn.dataset.mmode; renderModal(); };
