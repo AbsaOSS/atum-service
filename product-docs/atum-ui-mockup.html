@@ -670,16 +670,12 @@ const STATE = {
   view: "datasets", win: "7d",
   focus: "cust_pay", day: YDAY, subtab: "measures", graphMetric: "count", scope: "full",
   dsQ: "", dsProducer: "all", dsStatus: "all", dsLatest: true,
-  searchMode: "search", // "search" | "exact" | "id"
   keyFilters: [],       // [{ key: string, mode: "exact" | "exists", value: string }]
-  exactKeys: false,
-  authorFilter: "",     // exact registration author (runs.partitionings.created_by)
-  pidQuery: "",         // numeric partitioning ID when searchMode === "id"
+  keyMatch: "partial",  // "partial" | "exact_set" | "exact_ordered"
   latestFirst: true,
   pageLimit: 25,
   pageShown: 25,
   showApiPreview: false,
-  runQ: "", runStatus: "all", runApp: "all", runTenant: "all", runLimit: 50,
   from: addDays(TODAY, -6), to: TODAY
 };
 (function () { const v = location.hash.replace(/^#\/?/, "").split("/")[0]; if (NAV[v]) STATE.view = v; })();
@@ -701,49 +697,21 @@ const winDays = () => DAYS.filter(d => STATE.win === "24h" ? DS.some(ds => { con
 function resetPaging() { STATE.pageShown = Number(STATE.pageLimit) || 25; }
 function resetAllSearch() {
   STATE.dsQ = ""; STATE.dsProducer = "all"; STATE.dsStatus = "all";
-  STATE.searchMode = "search"; STATE.keyFilters = []; STATE.exactKeys = false;
-  STATE.authorFilter = ""; STATE.pidQuery = "";
+  STATE.keyFilters = []; STATE.keyMatch = "partial";
   if (STATE.win === "all") { STATE.win = "7d"; [STATE.from, STATE.to] = winRange(); }
-  resetPaging();
-}
-function applyPreset(name) {
-  STATE.view = "datasets";
-  STATE.searchMode = "search";
-  STATE.dsProducer = "all"; STATE.dsStatus = "all";
-  STATE.dsLatest = false;
-  STATE.latestFirst = true;
-  if (name === "cust_pay_siblings") {
-    STATE.win = "all";
-    STATE.keyFilters = [
-      { key: "catalog_path", mode: "exact", value: "edla_prod_curated.un_customer_payments" },
-      { key: "info_date", mode: "exists", value: "" }
-    ];
-    STATE.exactKeys = true; STATE.authorFilter = ""; STATE.dsQ = "";
-  } else if (name === "business_date") {
-    STATE.win = "all";
-    STATE.keyFilters = [{ key: "info_date", mode: "exact", value: YDAY }];
-    STATE.exactKeys = false; STATE.authorFilter = ""; STATE.dsQ = "";
-  } else if (name === "unify_payments") {
-    STATE.win = "30d";
-    STATE.keyFilters = []; STATE.exactKeys = false; STATE.authorFilter = "unify"; STATE.dsQ = "payments";
-  } else if (name === "refdata_outside") {
-    STATE.win = "all";
-    STATE.keyFilters = [{ key: "ref_version", mode: "exists", value: "" }];
-    STATE.exactKeys = false; STATE.authorFilter = ""; STATE.dsQ = "";
-  }
   resetPaging();
 }
 function pivotFromDataset(dsKey, dayStr, dropKey) {
   const ds = byKey[dsKey]; if (!ds) return;
   const r = REC[dsKey]?.[dayStr] || (ds.static ? STATIC_ISO : null); if (!r) return;
   const ks = batchKeys(ds, dayStr, r);
-  STATE.view = "datasets"; STATE.searchMode = "search"; STATE.win = "all";
+  STATE.view = "datasets"; STATE.win = "all";
   STATE.dsLatest = false; STATE.dsProducer = "all"; STATE.dsStatus = "all";
-  STATE.authorFilter = ""; STATE.dsQ = "";
+  STATE.dsQ = "";
   STATE.keyFilters = ks.map(([k, v]) => k === dropKey
     ? { key: k, mode: "exists", value: "" }
     : { key: k, mode: "exact", value: v });
-  STATE.exactKeys = true;
+  STATE.keyMatch = "exact_set";
   resetPaging();
 }
 
@@ -769,26 +737,17 @@ function go(spec) {
   else if (kind === "copy") { navigator.clipboard?.writeText(rest); return toast(`Copied <b>${esc(rest)}</b>`); }
   else if (kind === "copyapi") { const info = buildApiQueryInfo(); navigator.clipboard?.writeText(info.url); return toast(`Copied <code>${esc(info.url)}</code>`); }
   else if (kind === "toggleapi") { STATE.showApiPreview = !STATE.showApiPreview; }
-  else if (kind === "searchmode") {
-    STATE.searchMode = a;
-    if (a === "exact" && STATE.keyFilters.length === 0) STATE.keyFilters.push({ key: "catalog_path", mode: "exact", value: "" });
-    if (a === "exact") STATE.keyFilters.forEach(f => { f.mode = "exact"; });
-    resetPaging();
-  }
   else if (kind === "addkey") { STATE.keyFilters.push({ key: "", mode: "exact", value: "" }); resetPaging(); }
-  else if (kind === "remkey") { STATE.keyFilters.splice(Number(a), 1); if (!STATE.keyFilters.length) STATE.exactKeys = false; resetPaging(); }
+  else if (kind === "remkey") { STATE.keyFilters.splice(Number(a), 1); if (!STATE.keyFilters.length) STATE.keyMatch = "partial"; resetPaging(); }
   else if (kind === "movekey") {
     const i = Number(a), dir = Number(b), j = i + dir;
     if (j >= 0 && j < STATE.keyFilters.length) [STATE.keyFilters[i], STATE.keyFilters[j]] = [STATE.keyFilters[j], STATE.keyFilters[i]];
     resetPaging();
   }
-  else if (kind === "exactkeys") { STATE.exactKeys = a === "1"; resetPaging(); }
+  else if (kind === "keymatch") { STATE.keyMatch = a; resetPaging(); }
   else if (kind === "sort") { STATE.latestFirst = a === "latest"; resetPaging(); }
   else if (kind === "loadmore") { STATE.pageShown += Number(STATE.pageLimit) || 25; }
-  else if (kind === "clearauthor") { STATE.authorFilter = ""; resetPaging(); }
   else if (kind === "showallbatches") { STATE.dsLatest = false; resetPaging(); }
-  else if (kind === "switchsearch") { STATE.searchMode = "search"; STATE.exactKeys = true; resetPaging(); }
-  else if (kind === "preset") { applyPreset(a); }
   else if (kind === "reset") { resetAllSearch(); }
   render();
 }
@@ -799,7 +758,7 @@ document.addEventListener("click", e => {
     const kind = act.dataset.act;
     if (kind === "usekey") {
       const k = act.dataset.k, v = act.dataset.v;
-      STATE.view = "datasets"; STATE.searchMode = "search"; STATE.dsLatest = false;
+      STATE.view = "datasets"; STATE.dsLatest = false;
       const ex = STATE.keyFilters.find(f => f.key === k);
       if (ex) { ex.mode = "exact"; ex.value = v; } else STATE.keyFilters.push({ key: k, mode: "exact", value: v });
       resetPaging(); render();
@@ -971,92 +930,70 @@ function rowKeysMatchSearch(keysArr, filters, exactKeys) {
   }
   return true;
 }
-function rowKeysMatchExactOrdered(keysArr, pairs) {
-  if (!pairs.length || keysArr.length !== pairs.length) return false;
-  return pairs.every((p, i) => keysArr[i][0] === p.key && keysArr[i][1] === p.value);
+function rowKeysMatchExactOrdered(keysArr, filters) {
+  if (!filters.length || keysArr.length !== filters.length) return false;
+  return filters.every((f, i) => keysArr[i][0] === f.key && (f.mode === "exists" || keysArr[i][1] === f.value));
 }
 function rowMatchesSearchText(keysArr, qLower) {
   if (!qLower) return true;
   return keysArr.some(([k, v]) => k.toLowerCase().includes(qLower) || String(v).toLowerCase().includes(qLower));
 }
+function selectedAuthor() {
+  return STATE.dsProducer === "all" ? "" : STATE.dsProducer;
+}
 function validateSearchState() {
   const keys = activeKeyFilters();
   const qRaw = STATE.dsQ, qTrim = qRaw.trim();
-  const author = STATE.authorFilter.trim();
-  if (STATE.searchMode === "id") {
-    const pidTrim = STATE.pidQuery.trim();
-    if (!pidTrim) return { ok: true, emptyPrompt: true, message: "Enter a numeric Partitioning ID (e.g. 2000000010448528) for GET /api/v2/partitionings/{id}." };
-    if (!/^\d+$/.test(pidTrim)) return { ok: false, severity: "err", message: "Partitioning ID must be a positive integer." };
-    return { ok: true };
-  }
-  if (STATE.searchMode === "exact") {
-    if (!keys.length) return { ok: true, emptyPrompt: true, message: "Add ordered key = value pairs to query GET /api/v2/partitionings?partitioning=." };
-    return { ok: true };
-  }
-  if (qTrim.length === 1) return { ok: false, severity: "err", message: "'search-text' must contain at least 2 non-whitespace characters (matching API validation)." };
-  if (STATE.exactKeys && !keys.length) return { ok: false, severity: "warn", message: "'exact-keys=true' requires at least one key in 'keys'." };
+  const author = selectedAuthor();
+  if (qTrim.length === 1) return { ok: false, severity: "err", message: "'search-text' requires at least 2 non-whitespace characters." };
+  if (STATE.keyMatch !== "partial" && !keys.length) return { ok: false, severity: "warn", message: "Exact key matching requires at least one key filter." };
   if (STATE.win === "all" && !keys.length && !author && qTrim.length < 2) {
-    return { ok: true, emptyPrompt: true, message: "In Any time mode, add at least one key filter, author, or search-text (min 2 chars) — at least one filter is required by /search." };
+    return { ok: true, emptyPrompt: true, message: "In Any time mode, add a key filter, source system, or search text (min 2 chars)." };
   }
   return { ok: true };
 }
 function buildApiQueryInfo() {
-  if (STATE.searchMode === "id") {
-    const pid = STATE.pidQuery.trim() || "{partitioningId}";
-    return { url: `/api/v2/partitionings/${pid}`, decoded: "Direct single-partitioning lookup by primary key (ignores time window)" };
-  }
   const keys = activeKeyFilters();
-  if (STATE.searchMode === "exact") {
+  const author = selectedAuthor();
+  const qRaw = STATE.dsQ, qTrim = qRaw.trim();
+  const isOrdered = STATE.keyMatch === "exact_ordered" && keys.length > 0;
+  const allConcrete = isOrdered && keys.every(f => f.mode === "exact");
+  if (allConcrete && !author && qTrim.length < 2 && STATE.win === "all") {
     const arr = keys.map(f => ({ key: f.key, value: f.value }));
     const rawJson = JSON.stringify(arr);
-    const enc = keys.length ? toBase64Url(rawJson) : "<base64url>";
-    return { url: `/api/v2/partitionings?partitioning=${enc}`, decoded: `partitioning = ${rawJson} (key order must match exactly)` };
+    return { url: `/api/v2/partitionings?partitioning=${toBase64Url(rawJson)}`, decoded: `exact ordered partitioning = ${rawJson}` };
   }
   const params = [];
   const obj = {};
   keys.forEach(f => { obj[f.key] = f.mode === "exists" ? null : f.value; });
   if (keys.length) params.push(`keys=${toBase64Url(JSON.stringify(obj))}`);
-  if (STATE.exactKeys && keys.length) params.push("exact-keys=true");
-  const author = STATE.authorFilter.trim();
+  if ((STATE.keyMatch === "exact_set" || isOrdered) && keys.length) params.push("exact-keys=true");
   if (author) params.push(`author=${encodeURIComponent(author)}`);
-  const qRaw = STATE.dsQ, qTrim = qRaw.trim();
   if (qTrim.length >= 2) params.push(`search-text=${encodeURIComponent(qRaw)}`);
   if (STATE.win !== "all") {
     const [f, t] = winRange();
     const toIso = addDays(t, 1);
     params.push(`from=${encodeURIComponent(f + "T00:00:00Z")}`, `to=${encodeURIComponent(toIso + "T00:00:00Z")}`);
   }
-  if (!STATE.latestFirst) params.push("latest-first=false"); else params.push("latest-first=true");
+  params.push(`latest-first=${STATE.latestFirst}`);
   params.push(`limit=${STATE.pageLimit}`, `offset=${Math.max(0, STATE.pageShown - STATE.pageLimit)}`);
   const decodedParts = [];
   if (keys.length) decodedParts.push(`keys = ${JSON.stringify(obj)}`);
-  if (STATE.exactKeys && keys.length) decodedParts.push("exact-keys = true");
+  if (STATE.keyMatch === "exact_set" && keys.length) decodedParts.push("exact-keys = true");
+  if (isOrdered) decodedParts.push(`exact-keys = true + key order [${keys.map(f => f.key).join(" → ")}]`);
   if (author) decodedParts.push(`author = "${author}"`);
   if (qTrim.length >= 2) decodedParts.push(`search-text = "${qRaw}"`);
   if (STATE.win === "all") decodedParts.push("time = unbounded"); else { const [f, t] = winRange(); decodedParts.push(`[${f}T00:00Z, ${addDays(t, 1)}T00:00Z)`); }
   return { url: `/api/v2/partitionings/search?${params.join("&")}`, decoded: decodedParts.join(" · ") };
 }
-function runDatasetQuery() {
+function runDatasetQuery({ ignoreStatusFilter = false, ignorePaging = false } = {}) {
   const v = validateSearchState();
-  if (!v.ok || v.emptyPrompt) return { validation: v, rows: [], total: 0, hasMore: false, unorderedHint: false, usingAtumFilter: true };
+  if (!v.ok || v.emptyPrompt) return { validation: v, rows: [], allRows: [], total: 0, hasMore: false, unorderedHint: false, usingAtumFilter: true };
 
   const keys = activeKeyFilters();
-  const author = STATE.authorFilter.trim();
+  const author = selectedAuthor();
   const qRaw = STATE.dsQ, qTrim = qRaw.trim(), qLower = qTrim.length >= 2 ? qRaw.toLowerCase() : "";
-  const atumFilterActive = STATE.searchMode !== "search" || keys.length > 0 || !!author || !!qLower;
-
-  if (STATE.searchMode === "id") {
-    const targetPid = Number(STATE.pidQuery.trim());
-    const all = datasetRowsAll(true).filter(x => x.r.atum?.pid === targetPid);
-    return { validation: v, rows: all, total: all.length, hasMore: false, unorderedHint: false, usingAtumFilter: true };
-  }
-  if (STATE.searchMode === "exact") {
-    const allAtum = datasetRowsAll(true).filter(x => !!x.r.atum);
-    const exact = allAtum.filter(x => rowKeysMatchExactOrdered(batchKeys(x.ds, x.d, x.r), keys));
-    exact.sort((a, b) => STATE.latestFirst ? (b.r.atum.pid - a.r.atum.pid) : (a.r.atum.pid - b.r.atum.pid));
-    const unorderedHint = !exact.length && allAtum.some(x => rowKeysMatchSearch(batchKeys(x.ds, x.d, x.r), keys, true));
-    return { validation: v, rows: exact, total: exact.length, hasMore: false, unorderedHint, usingAtumFilter: true };
-  }
+  const atumFilterActive = keys.length > 0 || !!author || !!qLower;
 
   let rows = datasetRowsAll(false);
   if (STATE.win !== "all" && STATE.dsLatest && !atumFilterActive) {
@@ -1064,11 +1001,17 @@ function runDatasetQuery() {
     if (!rows.some(x => x.ds.key === "iso")) rows.push({ ds: iso, d: null, r: STATIC_ISO, s: STATUS[STATE.edition].iso[DAYS[0]] || { code: "ok" }, t: 0 });
   }
   if (atumFilterActive) rows = rows.filter(x => !!x.r.atum);
-  if (STATE.dsProducer !== "all") rows = rows.filter(x => x.ds.producer === STATE.dsProducer);
-  if (STATE.dsStatus === "ok") rows = rows.filter(x => x.s.code === "ok");
-  if (STATE.dsStatus === "shift") rows = rows.filter(x => x.s.code === "control_break");
-  if (keys.length) rows = rows.filter(x => rowKeysMatchSearch(batchKeys(x.ds, x.d, x.r), keys, STATE.exactKeys));
   if (author) rows = rows.filter(x => rowAuthorMatches(x.ds, author));
+  let unorderedHint = false;
+  if (keys.length) {
+    if (STATE.keyMatch === "exact_ordered") {
+      const unorderedMatched = rows.filter(x => rowKeysMatchSearch(batchKeys(x.ds, x.d, x.r), keys, true));
+      rows = rows.filter(x => rowKeysMatchExactOrdered(batchKeys(x.ds, x.d, x.r), keys));
+      unorderedHint = !rows.length && unorderedMatched.length > 0;
+    } else {
+      rows = rows.filter(x => rowKeysMatchSearch(batchKeys(x.ds, x.d, x.r), keys, STATE.keyMatch === "exact_set"));
+    }
+  }
   if (qLower) rows = rows.filter(x => rowMatchesSearchText(batchKeys(x.ds, x.d, x.r), qLower));
 
   if (STATE.dsLatest && STATE.win !== "all" && !atumFilterActive) {
@@ -1081,14 +1024,37 @@ function runDatasetQuery() {
     });
     if (STATE.dsLatest) { const seen = new Set(); rows = rows.filter(x => !seen.has(x.ds.key) && seen.add(x.ds.key)); }
   }
-  const total = rows.length, shown = rows.slice(0, STATE.pageShown);
-  return { validation: v, rows: shown, total, hasMore: total > shown.length, unorderedHint: false, usingAtumFilter: atumFilterActive };
+
+  const allBeforeStatus = rows;
+  if (!ignoreStatusFilter) {
+    if (STATE.dsStatus === "ok") rows = rows.filter(x => x.s.code === "ok");
+    if (STATE.dsStatus === "shift") rows = rows.filter(x => x.s.code === "control_break");
+  }
+  const total = rows.length, shown = ignorePaging ? rows : rows.slice(0, STATE.pageShown);
+  return { validation: v, rows: shown, allRows: allBeforeStatus, total, hasMore: !ignorePaging && total > shown.length, unorderedHint, usingAtumFilter: atumFilterActive };
+}
+function kpiHtml(baseRows) {
+  const byCode = {}; baseRows.forEach(x => (byCode[x.s.code] ||= []).push(x));
+  const order = Object.keys(byCode).sort((a, b) => SEV[ST[a].tone] - SEV[ST[b].tone]);
+  const breakdown = order.map(c => `${byCode[c].length} ${stLabel(c).toLowerCase()}`).join(" · ");
+  const okRows = byCode.ok || [], shiftRows = byCode.control_break || [];
+  const winShiftCount = STATE.dsLatest && !shiftRows.length
+    ? datasetRowsAll(false).filter(x => x.s.code === "control_break").length
+    : 0;
+  const kp = [
+    { icon: "table", label: `${STATE.dsLatest ? "Active partitioning groups" : "Matching partitionings"} (${esc(winLabel())})`, value: baseRows.length, sub: breakdown || "no activity in this scope", go: "dsstatus:all", active: STATE.dsStatus === "all" },
+    { icon: "ok", tone: "good", label: "Consistent", value: okRows.length, sub: "all control measures match across checkpoints · Click to filter", go: "dsstatus:ok", active: STATE.dsStatus === "ok" },
+    { icon: "warn", label: "Measure Shift", value: shiftRows.length, warn: true, attn: shiftRows.length > 0, sub: shiftRows.length ? `${esc(partitioningIdentity(shiftRows[0].ds, shiftRows[0].d, shiftRows[0].r, STATE.dsLatest))} (${esc(shiftInfo(shiftRows[0].ds, shiftRows[0].r, false).cpName)} step) · Click to filter` : (winShiftCount ? `none on latest date (${winShiftCount} earlier in window if ungrouped)` : "none in current view"), go: "dsstatus:shift", active: STATE.dsStatus === "shift" }
+  ];
+  return kp.map(kpiCard).join("");
 }
 function fillDatasets() {
-  const comb = STATE.edition === "combined";
   const res = runDatasetQuery();
   const keys = activeKeyFilters(), qLower = STATE.dsQ.trim().length >= 2 ? STATE.dsQ.toLowerCase() : "";
   const filterKeySet = new Set(keys.map(f => f.key));
+
+  const kpiEl = $("kpiGrid");
+  if (kpiEl) kpiEl.innerHTML = kpiHtml(res.allRows);
 
   const statusEl = $("searchStatus");
   if (statusEl) {
@@ -1096,8 +1062,8 @@ function fillDatasets() {
       statusEl.innerHTML = `<div class="inline-hint ${res.validation.severity}">${warnIconSvg}<span>${esc(res.validation.message)}</span></div>`;
     } else if (res.validation.emptyPrompt) {
       statusEl.innerHTML = `<div class="inline-hint">${esc(res.validation.message)}</div>`;
-    } else if (STATE.dsLatest && res.usingAtumFilter && res.total > 0 && STATE.searchMode === "search") {
-      statusEl.innerHTML = `<div class="inline-hint" style="justify-content:space-between"><span>Grouped by shared partitioning keys (ignoring <code>info_date</code> / <code>ref_version</code>) — showing latest batch per group (<b>${res.total}</b>). Uncheck grouping to inspect every matching partitioning.</span><button class="btn btn-sm" data-go="showallbatches">Show ungrouped partitionings</button></div>`;
+    } else if (STATE.dsLatest && res.usingAtumFilter && res.total > 0) {
+      statusEl.innerHTML = `<div class="inline-hint" style="justify-content:space-between"><span>Grouped by shared partitioning keys (ignoring <code>info_date</code> / <code>ref_version</code>) — showing latest batch per group (<b>${res.total}</b>). Uncheck grouping to see every batch.</span><button class="btn btn-sm" data-go="showallbatches">Show ungrouped partitionings</button></div>`;
     } else {
       statusEl.innerHTML = "";
     }
@@ -1114,13 +1080,13 @@ function fillDatasets() {
   }
   $("dsSearch")?.classList.toggle("has-error", !res.validation.ok && STATE.dsQ.trim().length === 1);
 
-  const grouped = STATE.dsLatest && STATE.searchMode === "search";
+  const grouped = STATE.dsLatest;
   $("dsCount").textContent = res.validation.emptyPrompt || !res.validation.ok
     ? "0 results"
     : `Showing ${res.rows.length} of ${res.total} ${grouped && !res.usingAtumFilter ? "partitioning groups" : TERM.many}${res.hasMore ? " (hasMore=true)" : ""}`;
 
   $("dsBody").innerHTML = res.rows.map(({ ds, d, r, s }) => {
-    const last = lastCp(r, comb);
+    const last = lastCp(r, false);
     const pid = r.atum?.pid;
     const idLabel = partitioningIdentity(ds, d, r, grouped);
     const kvHtml = r.atum
@@ -1142,7 +1108,7 @@ function fillDatasets() {
       <td style="white-space:nowrap">${last ? `${esc(last.name)} <span style="color:var(--text-muted)">(${r.atum.checkpoints.length})</span>` : `<span class="muted">${esc(stLabel(s.code))}</span>`}</td>
       <td class="num" style="font-weight:600">${last ? fmt(last.values.count) : "—"}</td>
       <td>${stChip(s.code)}</td><td style="text-align:right"><span class="row-chevron" title="Inspect Lineage">›</span></td></tr>`;
-  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px"><div style="font-weight:600;color:var(--text);margin-bottom:4px">${res.unorderedHint ? "Exact ordered key sequence did not match" : "No matching batches"}</div><div style="margin-bottom:10px">${res.unorderedHint ? "A partitioning exists with these exact keys & values in a different order. /search ignores key order; exact lookup requires the exact stored sequence." : esc(res.validation.emptyPrompt || !res.validation.ok ? res.validation.message : "No batches in the active scope match your current filter criteria.")}</div><div style="display:flex;gap:8px;justify-content:center">${res.unorderedHint ? `<button class="btn btn-sm btn-primary" data-go="switchsearch">Switch to Search (exact key set)</button>` : ""}<button class="btn btn-sm" data-go="reset">Reset search</button></div></td></tr>`;
+  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px"><div style="font-weight:600;color:var(--text);margin-bottom:4px">${res.unorderedHint ? "Exact key order did not match" : "No matching partitionings"}</div><div style="margin-bottom:10px">${res.unorderedHint ? "A partitioning exists with these exact keys & values in a different stored order." : esc(res.validation.emptyPrompt || !res.validation.ok ? res.validation.message : "No partitionings in the active scope match your current filter criteria.")}</div><div style="display:flex;gap:8px;justify-content:center">${res.unorderedHint ? `<button class="btn btn-sm btn-primary" data-go="keymatch:exact_set">Switch to Exact keys (any order)</button>` : ""}<button class="btn btn-sm" data-go="reset">Reset search</button></div></td></tr>`;
 
   const lm = $("dsLoadMore");
   if (lm) {
@@ -1151,54 +1117,42 @@ function fillDatasets() {
   }
 }
 LIVE.dsQ = fillDatasets;
-LIVE.authorFilter = fillDatasets;
-LIVE.pidQuery = fillDatasets;
 function datasetFilters() {
-  const producers = [...new Set(edDatasets().map(x => x.producer))];
-  return `<div class="field"><label>Source System</label><select data-set="dsProducer"><option value="all">All source systems (${producers.length})</option>${producers.map(p => `<option ${STATE.dsProducer === p ? "selected" : ""}>${esc(p)}</option>`).join("")}</select></div>`;
+  const seen = new Map();
+  edDatasets().forEach(x => { if (!seen.has(x.author)) seen.set(x.author, x.producer); });
+  return `<div class="field"><label>Source System</label><select data-set="dsProducer" title="Filters by registration author (created_by)"><option value="all">All source systems (${seen.size})</option>${[...seen.entries()].map(([author, prod]) => `<option value="${esc(author)}" ${STATE.dsProducer === author ? "selected" : ""}>${esc(prod)} (${esc(author)})</option>`).join("")}</select></div>`;
 }
 function renderSearchPanel(filterLabel) {
   const knownKeys = ["catalog_path", "info_date", "system", "feed", "ref_version"];
-  const authors = [...new Set(DS.map(d => d.author).filter(Boolean))];
-  const isSearch = STATE.searchMode === "search", isExact = STATE.searchMode === "exact", isId = STATE.searchMode === "id";
   const hasAnyKeys = activeKeyFilters().length > 0;
+  const isOrdered = STATE.keyMatch === "exact_ordered";
   const clausesHtml = STATE.keyFilters.map((f, i) => `
     <div class="key-clause">
-      ${isExact ? `<span class="key-idx" style="margin-right:2px">${i + 1}</span>` : ""}
+      ${isOrdered ? `<span class="key-idx" style="margin-right:2px">${i + 1}</span>` : ""}
       <input class="k-name" list="keyNameList" data-keyclause="${i}:key" value="${esc(f.key)}" placeholder="key name" aria-label="Partitioning key name ${i + 1}">
-      ${isSearch ? `<select data-keyclause="${i}:mode" aria-label="Match operator">
-          <option value="exact" ${f.mode === "exact" ? "selected" : ""}>= exact</option>
-          <option value="exists" ${f.mode === "exists" ? "selected" : ""}>* exists (null)</option>
-        </select>` : `<span class="mono-id" style="padding:0 4px">=</span>`}
-      ${f.mode === "exists" && isSearch
+      <select data-keyclause="${i}:mode" aria-label="Match operator">
+        <option value="exact" ${f.mode === "exact" ? "selected" : ""}>= exact</option>
+        <option value="exists" ${f.mode === "exists" ? "selected" : ""}>* any value</option>
+      </select>
+      ${f.mode === "exists"
         ? `<span class="k-any">null (any value)</span>`
-        : `<input class="k-val" data-keyclause="${i}:value" value="${esc(f.value)}" placeholder="exact string value" aria-label="Partitioning key value ${i + 1}">`}
-      ${isExact ? `<button class="tiny-btn" data-go="movekey:${i}:-1" ${i === 0 ? "disabled" : ""} title="Move up">↑</button><button class="tiny-btn" data-go="movekey:${i}:1" ${i === STATE.keyFilters.length - 1 ? "disabled" : ""} title="Move down">↓</button>` : ""}
+        : `<input class="k-val" data-keyclause="${i}:value" value="${esc(f.value)}" placeholder="exact value" aria-label="Partitioning key value ${i + 1}">`}
+      ${isOrdered ? `<button class="tiny-btn" data-go="movekey:${i}:-1" ${i === 0 ? "disabled" : ""} title="Move left">←</button><button class="tiny-btn" data-go="movekey:${i}:1" ${i === STATE.keyFilters.length - 1 ? "disabled" : ""} title="Move right">→</button>` : ""}
       <button class="tiny-btn" data-go="remkey:${i}" title="Remove key filter">✕</button>
     </div>`).join("");
 
   return `<datalist id="keyNameList">${knownKeys.map(k => `<option value="${esc(k)}">`).join("")}</datalist>
-    <datalist id="authorList">${authors.map(a => `<option value="${esc(a)}">`).join("")}</datalist>
     <div class="search-panel">
       <div class="search-top">
-        <div class="pill-group" role="tablist" aria-label="Search endpoint mode">
-          <button class="pill-btn ${isSearch ? "active" : ""}" data-go="searchmode:search" title="GET /api/v2/partitionings/search (unordered keys, wildcards, author, text, time window)">Search (/search)</button>
-          <button class="pill-btn ${isExact ? "active" : ""}" data-go="searchmode:exact" title="GET /api/v2/partitionings?partitioning= (exact complete ordered keys)">Exact ordered</button>
-          <button class="pill-btn ${isId ? "active" : ""}" data-go="searchmode:id" title="GET /api/v2/partitionings/{id} (direct numeric ID lookup)">By ID</button>
-        </div>
-        ${isId ? `
-          <label class="search-input" style="max-width:300px"><span class="mono-id">#</span><input id="pidSearch" data-live="pidQuery" value="${esc(STATE.pidQuery)}" placeholder="Partitioning ID (e.g. 2000000010448528)"></label>
-        ` : isSearch ? `
-          <label class="search-input"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dsSearch" data-live="dsQ" value="${esc(STATE.dsQ)}" placeholder="Search key or value text (min 2 chars)…"></label>
-          <label class="author-ctrl" title="Exact match on runs.partitionings.created_by (indexed)"><span>Author:</span><input list="authorList" data-live="authorFilter" value="${esc(STATE.authorFilter)}" placeholder="all (e.g. unify)">${STATE.authorFilter ? `<button class="tiny-btn" style="border:0;height:18px" data-go="clearauthor" title="Clear author">✕</button>` : ""}</label>
-          <label class="check" ${tipAttr("Group batches sharing the same non-batch partitioning keys (ignoring info_date / ref_version in the label) and show only the latest batch per group.")}><input type="checkbox" data-set="dsLatest" ${STATE.dsLatest ? "checked" : ""}> Group batches (ignore info_date / ref_version)</label>
-        ` : `<span class="toolbar-meta">Complete <b>ordered</b> keys required — order differs from stored partitioning returns 404.</span>`}
+        <label class="search-input"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dsSearch" data-live="dsQ" value="${esc(STATE.dsQ)}" placeholder="Search key names or values (min 2 chars)…"></label>
+        <button class="btn btn-sm" data-go="addkey" title="Filter by exact partitioning key/value or key existence (null)">+ Add key filter</button>
+        <label class="check" ${tipAttr("Group batches sharing the same non-batch partitioning keys (ignoring info_date / ref_version in the label) and show only the latest batch per group.")}><input type="checkbox" data-set="dsLatest" ${STATE.dsLatest ? "checked" : ""}> Group batches (ignore info_date / ref_version)</label>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          ${isSearch ? `<div class="pill-group" title="latest-first query parameter (ordered by partitioning ID)">
+          <div class="pill-group" title="latest-first query parameter (ordered by partitioning ID)">
             <button class="pill-btn ${STATE.latestFirst ? "active" : ""}" data-go="sort:latest">Newest ID first</button>
             <button class="pill-btn ${!STATE.latestFirst ? "active" : ""}" data-go="sort:oldest">Oldest ID first</button>
-          </div>` : ""}
-          ${isSearch ? `<div class="author-ctrl" style="height:28px;padding:0 6px" title="limit query parameter"><span>Page:</span><select data-set="pageLimit" style="border:0;background:transparent;font-weight:600;outline:none">${[10, 25, 50, 100].map(n => `<option value="${n}" ${STATE.pageLimit === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>` : ""}
+          </div>
+          <div class="author-ctrl" style="height:28px;padding:0 6px" title="limit query parameter"><span>Page:</span><select data-set="pageLimit" style="border:0;background:transparent;font-weight:600;outline:none">${[10, 25, 50, 100].map(n => `<option value="${n}" ${STATE.pageLimit === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
           <button class="btn btn-sm ${STATE.showApiPreview ? "btn-outline" : ""}" data-go="toggleapi">API query</button>
           <button class="btn btn-sm" data-go="reset">Reset</button>
           ${filterLabel ? `<button class="chip" style="cursor:pointer" data-go="dsstatus:${STATE.dsStatus}">Filtered: ${esc(filterLabel)} ✕</button>` : ""}
@@ -1206,47 +1160,29 @@ function renderSearchPanel(filterLabel) {
         </div>
       </div>
 
-      ${!isId ? `<div class="keys-box">
+      ${STATE.keyFilters.length ? `<div class="keys-box">
         <div class="keys-head">
-          <strong>${isExact ? "Ordered Partitioning Keys" : "Partitioning Keys Filter"}</strong>
-          <button class="tiny-btn" data-go="addkey">+ Add key</button>
-          ${isSearch ? `<div class="pill-group" id="exactKeysToggle" style="margin-left:6px" ${tipAttr("exact-keys=false matches subsets of keys; exact-keys=true matches only partitionings with this exact key set (ignoring order).")}>
-            <button class="pill-btn ${!STATE.exactKeys ? "active" : ""}" data-go="exactkeys:0" ${!hasAnyKeys ? "disabled" : ""}>Partial keys (contains)</button>
-            <button class="pill-btn ${STATE.exactKeys ? "active" : ""}" data-go="exactkeys:1" ${!hasAnyKeys ? "disabled" : ""}>Exact key set</button>
-          </div>` : ""}
-          <span class="toolbar-meta">${isExact ? "Order matters; every key in the stored partitioning must be listed in exact order." : hasAnyKeys ? "Use <b>* exists (null)</b> to match any value for a key (key-drop / wildcard discovery)." : "Click <b>+ Add key</b> or any key chip below to filter by exact key/value or key existence (null)."}</span>
+          <strong>Partitioning Keys</strong>
+          <div class="pill-group" id="exactKeysToggle" ${tipAttr("Partial matches key subsets; Exact keys matches the exact key set ignoring order; Exact keys + order requires the exact stored key sequence.")}>
+            <button class="pill-btn ${STATE.keyMatch === "partial" ? "active" : ""}" data-go="keymatch:partial" ${!hasAnyKeys ? "disabled" : ""}>Partial (any order)</button>
+            <button class="pill-btn ${STATE.keyMatch === "exact_set" ? "active" : ""}" data-go="keymatch:exact_set" ${!hasAnyKeys ? "disabled" : ""}>Exact keys (any order)</button>
+            <button class="pill-btn ${isOrdered ? "active" : ""}" data-go="keymatch:exact_ordered" ${!hasAnyKeys ? "disabled" : ""}>Exact keys + order</button>
+          </div>
+          <span class="toolbar-meta">${isOrdered ? "Use <b>← / →</b> to match stored key order." : "Use <b>* any value</b> (<code>null</code>) for key existence."}</span>
         </div>
-        ${STATE.keyFilters.length ? `<div class="key-clauses">${clausesHtml}</div>` : ""}
+        <div class="key-clauses">${clausesHtml}</div>
       </div>` : ""}
 
-      <div class="preset-bar">
-        <span>Try API patterns:</span>
-        <button class="preset-chip" data-go="preset:cust_pay_siblings">un_customer_payments (key-drop: info_date=* · exact-keys)</button>
-        <button class="preset-chip" data-go="preset:business_date">All partitionings for info_date=2026-11-11</button>
-        <button class="preset-chip" data-go="preset:unify_payments">author=unify + search-text=payments</button>
-        <button class="preset-chip" data-go="preset:refdata_outside">ref_version=* (outside 7d via Any time)</button>
-      </div>
       <div id="searchStatus"></div>
       <div id="apiPreview" class="api-preview ${STATE.showApiPreview ? "" : "hidden"}"></div>
     </div>`;
 }
 function viewDatasets() {
-  const comb = STATE.edition === "combined", all = datasetRowsAll(false);
-  const latest = []; { const seen = new Set(); for (const x of all) if (!seen.has(x.ds.key)) { seen.add(x.ds.key); latest.push(x); } }
-  // All three cards partition the SAME `latest` snapshot, so the numbers always add up to the total.
-  const byCode = {}; latest.forEach(x => (byCode[x.s.code] ||= []).push(x));
-  const order = Object.keys(byCode).sort((a, b) => SEV[ST[a].tone] - SEV[ST[b].tone]);
-  const breakdown = order.map(c => `${byCode[c].length} ${stLabel(c).toLowerCase()}`).join(" · ");
-  const okRows = byCode.ok || [], shiftRows = byCode.control_break || [];
-  const kp = [
-    { icon: "table", label: `Active partitioning groups (${esc(winLabel())})`, value: latest.length, sub: breakdown || "no activity in this window", go: "dsstatus:all", active: STATE.dsStatus === "all" },
-    { icon: "ok", tone: "good", label: "Consistent", value: okRows.length, sub: "all control measures match across checkpoints · Click to filter", go: "dsstatus:ok", active: STATE.dsStatus === "ok" },
-    { icon: "warn", label: "Measure Shift", value: shiftRows.length, warn: true, attn: shiftRows.length > 0, sub: shiftRows.length ? `${esc(partitioningIdentity(shiftRows[0].ds, shiftRows[0].d, shiftRows[0].r, true))} (${esc(shiftInfo(shiftRows[0].ds, shiftRows[0].r, comb).cpName)} step) · Click to filter` : "none in this window", go: "dsstatus:shift", active: STATE.dsStatus === "shift" }
-  ];
+  const res = runDatasetQuery({ ignoreStatusFilter: true, ignorePaging: true });
   const filterLabel = { ok: "Consistent", shift: "Measure Shift" }[STATE.dsStatus];
-  const html = `<div class="kpi-grid k3">${kp.map(kpiCard).join("")}</div>
+  const html = `<div id="kpiGrid" class="kpi-grid k3">${kpiHtml(res.allRows)}</div>
     <section class="card">${renderSearchPanel(filterLabel)}
-    <div class="table-wrap"><table><thead><tr><th>Partitioning Identity &amp; Keys <span class="muted" style="font-weight:400">(+ filter or ⇄ vary batch key)</span></th><th>Producer · Author</th><th>Info date / version</th><th>Latest checkpoint</th><th class="num">Record count</th><th>Status</th><th style="width:28px"></th></tr></thead><tbody id="dsBody"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Partitioning Identity &amp; Keys <span class="muted" style="font-weight:400">(+ filter or ⇄ vary batch key)</span></th><th>Source System · Author</th><th>Info date / version</th><th>Latest checkpoint</th><th class="num">Record count</th><th>Status</th><th style="width:28px"></th></tr></thead><tbody id="dsBody"></tbody></table></div>
     <div id="dsLoadMore" class="load-more hidden"></div></section>`;
   return { html, after: fillDatasets };
 }
