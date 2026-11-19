@@ -335,7 +335,7 @@ tr.detail-row > td { background: #fcfafa; padding: 0; }
 
 <div class="shell">
   <aside class="sidebar">
-    <a class="brand" data-go="view:datasets" tabindex="0" aria-label="Go to Control Metrics">
+    <a class="brand" href="#/datasets" data-go="view:datasets" aria-label="Go to Control Metrics">
       <img src="assets/logo/logo-white_58.svg" alt="Absa" style="height:58px;min-height:58px">
       <div class="brand-text"><span class="brand-name" id="brandName"></span><span class="brand-sub" id="brandSub"></span></div>
     </a>
@@ -838,8 +838,8 @@ function renderShell() {
   const btn = (k, side) => `<button class="${side ? "side-link" : ""} ${STATE.view === k ? "active" : ""}" data-go="view:${k}">${side ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${NAV[k].icon}</svg>` : ""}${NAV[k].label}</button>`;
   $("sideNav").innerHTML = ed.nav.map(k => btn(k, true)).join("");
   $("sideFooter").innerHTML = `<div>${esc(ed.audience)}</div><div style="margin-top:6px">${[ed.atum && "Atum v0.11", ed.eg && "EventGate 1.4"].filter(Boolean).join(" · ")}</div>`;
-  const crumbs = [`<a data-go="view:datasets">${esc(ed.name)}</a>`];
-  if (STATE.view === "lineage") crumbs.push(`<a data-go="view:datasets">Control Metrics</a>`, `<a data-go="view:lineage">Lineage</a>`, `<strong>${esc(partitioningIdentity(byKey[STATE.focus], STATE.day, recFor(STATE.focus, STATE.day), true))}</strong>`);
+  const crumbs = [`<a href="#/datasets" data-go="view:datasets">${esc(ed.name)}</a>`];
+  if (STATE.view === "lineage") crumbs.push(`<a href="#/datasets" data-go="view:datasets">Control Metrics</a>`, `<a href="#/lineage" data-go="view:lineage">Lineage</a>`, `<strong>${esc(partitioningIdentity(byKey[STATE.focus], STATE.day, recFor(STATE.focus, STATE.day), true))}</strong>`);
   else crumbs.push(`<strong>${esc(NAV[STATE.view].label)}</strong>`);
   $("crumbs").innerHTML = crumbs.join("<span>›</span>");
 }

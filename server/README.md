@@ -42,8 +42,7 @@ link is stored both as flow membership (transitive) and as an explicit direct ed
 | `{id}/ancestors`, `{id}/descendants`                            | All transitive ancestors / descendants, paginated                                                                        | flow membership |
 | `{id}/lineage?direction=both\|upstream\|downstream&depth=1..20` | Sub-graph (nodes + edges); `truncated=true` if the 5,000-node/direction cap hit, `expandable*NodeIds` for boundary nodes | edges           |
 
-Edges exist only for links written from versions newer than v0.10.0; for older links `parents` and `children` are empty
-and `lineage` returns only the focal node, while `ancestors` and `descendants` still answer. The design is in
+Edges exist for links written from versions newer than v0.10.0 (older links start edge-less and are lazily backfilled only if re-declared, with no bulk migration); for un-backfilled legacy links `parents` and `children` are empty and `lineage` returns only the focal node (`nodes` = `[focal]`, `edges` = `[]`), while `ancestors` and `descendants` still answer. The design is in
 [ADR 01](../adrs/01-lineage-capability.md), the consumer view in
 [ADR 02](../adrs/02-consumption-pattern-for-audits.md).
 
