@@ -35,9 +35,9 @@ Partitionings are linked to their parents when they are created (`POST /api/v2/p
 `parentPartitioningIds`) or afterwards (`PATCH /api/v2/partitionings/{id}/ancestors`, leaf partitionings only). Each
 link is stored both as flow membership (transitive) and as an explicit direct edge:
 
-| Endpoint (`/api/v2/partitionings/...`)                          | Returns                                                                                                                  | Based on        |
-|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|-----------------|
-| `search?keys=&from=&to=&latest-first=`                          | Paginated distinct partitionings matching partial keys and/or checkpoint activity                                        | GIN + time idx  |
+| Endpoint (`/api/v2/partitionings/...`)                                       | Returns                                                                                                                  | Based on        |
+|------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|-----------------|
+| `search?keys=&exact-keys=&author=&search-text=&from=&to=&latest-first=`      | Paginated distinct partitionings matching key/value, key-existence, author, substring, and/or checkpoint activity        | GIN + author + time idx |
 | `{id}/parents`, `{id}/children`                                 | Direct neighbours, with `linkedBy` / `linkedAt`                                                                          | edges           |
 | `{id}/ancestors`, `{id}/descendants`                            | All transitive ancestors / descendants, paginated                                                                        | flow membership |
 | `{id}/lineage?direction=both\|upstream\|downstream&depth=1..20` | Sub-graph (nodes + edges); `truncated=true` if the 5,000-node/direction cap hit, `expandable*NodeIds` for boundary nodes | edges           |

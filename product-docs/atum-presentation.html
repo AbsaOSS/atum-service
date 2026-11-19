@@ -1422,7 +1422,7 @@ th {
   <!-- =================================================================== -->
   <!-- SLIDE 13: HOW ANALYSTS & AUDITORS QUERY LINEAGE & HISTORY           -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="Finally, once systems report their partitionings, checkpoints, control measures, and parent links to Atum, how do analysts, reconciliation tools, and auditors query that information? Using Atum Reader or the REST API, they use three main mechanisms: first, searching datasets by any subset of partitioning keys or within a reproducible checkpoint time window; second, reading all checkpoints across an entire Flow or traversing the lineage graph upstream and downstream; and third, comparing historical trends across days by simply dropping the varying date key from a partitioning's key map.">
+  <section class="slide" data-notes="Finally, once systems report their partitionings, checkpoints, control measures, and parent links to Atum, how do analysts, reconciliation tools, and auditors query that information? Using Atum Reader or the REST API, they use three main mechanisms: first, discovering partitionings by key/value or null key-existence filters, optional exact-keys matching, registration author, case-insensitive key/value search-text, and reproducible checkpoint time windows; second, reading all checkpoints across an entire Flow or traversing the lineage graph upstream and downstream; and third, comparing historical trends across days by simply dropping the varying date key—or matching it with null and exact-keys=true—from a partitioning's key map.">
     <div class="s-head">
       <span class="s-kicker">SLIDE 13 / 13 · CONSUMPTION &amp; AUDIT MECHANISMS</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
@@ -1432,13 +1432,13 @@ th {
 
     <div class="grid-2">
       <div class="card" style="padding:13px 17px">
-        <div class="card-title"><span class="num-dot">1</span> Key, Property &amp; Time-Window Discovery</div>
+        <div class="card-title"><span class="num-dot">1</span> Key, Author, Text &amp; Time-Window Discovery</div>
         <p style="font-size:13px;color:var(--sub);margin:0 0 7px">
-          Find dataset runs by any subset of partitioning keys, checkpoint properties, and a reproducible time interval <code>[from, to)</code>:
+          Find runs by <code>keys</code> (exact or <code>null</code> key-existence, optional <code>exact-keys</code>), <code>author</code>, <code>search-text</code>, checkpoint properties, and <code>[from, to)</code>:
         </p>
         <div style="background:var(--bg-soft);padding:7px 11px;border-radius:8px;font-size:12.2px">
-          • <b>All tables for a business date:</b> <span class="mono">keys = { info_date: "2026-11-11" }</span><br>
-          • <b>Reproducible audit window:</b> <span class="mono">from = 2026-11-04T00:00Z, to = 2026-11-11T23:59Z</span>
+          • <b>Keys &amp; existence:</b> <span class="mono">keys = { catalog_path: null, info_date: "2026-11-11" }</span>, <span class="mono">exact-keys=true</span><br>
+          • <b>Author, text &amp; window:</b> <span class="mono">author=unify&amp;search-text=payments&amp;from=...&amp;to=...</span>
         </div>
       </div>
 
@@ -1458,7 +1458,7 @@ th {
       <div>
         <div class="card-title"><span class="num-dot">3</span> The "Key-Drop" Mechanism for Historical Trend Comparison</div>
         <p style="font-size:13px;color:var(--sub);margin:0 0 7px">
-          Because Atum does not hardcode which key represents a date, how does it find historical runs of the same table across days? By <b>dropping the varying date key</b> (<code>info_date</code>) and searching for all partitionings matching the remaining key (<code>catalog_path</code>):
+          Because Atum does not hardcode which key represents a date, how does it find historical runs of the same table across days? By <b>dropping the varying date key</b> (<code>info_date</code>)—or matching <code>{ catalog_path: "cur.payments", info_date: null }</code> with <code>exact-keys=true</code> (plus optional <code>author</code> / <code>search-text</code>):
         </p>
       </div>
 

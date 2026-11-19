@@ -26,8 +26,13 @@ import java.time.ZonedDateTime
 import java.util.{Base64, UUID}
 
 trait PartitioningSearchTestData {
-  protected val searchKeys: Map[String, String] =
-    Map("source" -> "\u96ea/\u6771\u4eac +&= \ud83d\ude42", "empty" -> "")
+  protected val searchSourceValue: String = "\u96ea/\u6771\u4eac +&= \ud83d\ude42"
+  protected val searchKeys: Map[String, Option[String]] =
+    Map("source" -> Some(searchSourceValue), "empty" -> Some(""))
+  protected val searchKeyNamesOnly: Map[String, Option[String]] =
+    Map("source" -> None, "empty" -> None)
+  protected val searchMixedKeys: Map[String, Option[String]] =
+    Map("source" -> Some(searchSourceValue), "empty" -> None)
   protected val searchFrom: ZonedDateTime = ZonedDateTime.parse("2026-06-01T08:00:00+05:30")
   protected val searchTo: ZonedDateTime = ZonedDateTime.parse("2026-06-01T07:00:00-04:00")
   protected val searchOffset: Long = 4294967297L
@@ -35,12 +40,12 @@ trait PartitioningSearchTestData {
   protected val searchPartitionings: Seq[PartitioningWithIdDTO] = Seq(
     PartitioningWithIdDTO(
       11L,
-      Seq(PartitionDTO("source", searchKeys("source")), PartitionDTO("empty", ""), PartitionDTO("date", "2026-06-01")),
+      Seq(PartitionDTO("source", searchSourceValue), PartitionDTO("empty", ""), PartitionDTO("date", "2026-06-01")),
       "Search author"
     ),
     PartitioningWithIdDTO(
       22L,
-      Seq(PartitionDTO("date", "2026-06-02"), PartitionDTO("empty", ""), PartitionDTO("source", searchKeys("source"))),
+      Seq(PartitionDTO("date", "2026-06-02"), PartitionDTO("empty", ""), PartitionDTO("source", searchSourceValue)),
       "Other author"
     )
   )

@@ -103,13 +103,26 @@ class PartitioningServiceImpl(partitioningRepository: PartitioningRepository)
   override def searchPartitionings(
     limit: Int,
     offset: Long,
-    keys: Option[Map[String, String]],
+    keys: Option[Map[String, Option[String]]],
     from: Option[ZonedDateTime],
     to: Option[ZonedDateTime],
-    latestFirst: Option[Boolean] = None
+    latestFirst: Option[Boolean] = None,
+    exactKeys: Option[Boolean] = None,
+    author: Option[String] = None,
+    searchText: Option[String] = None
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]] = {
     repositoryCall(
-      partitioningRepository.searchPartitionings(limit, offset, keys, from, to, latestFirst),
+      partitioningRepository.searchPartitionings(
+        limit,
+        offset,
+        keys,
+        from,
+        to,
+        latestFirst,
+        exactKeys,
+        author,
+        searchText
+      ),
       "searchPartitionings"
     )
   }
