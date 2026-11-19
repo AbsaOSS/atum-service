@@ -1,46 +1,52 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Atum · Concepts &amp; Mechanisms Presentation</title>
+<title>Atum Service — Concept, Architecture &amp; Onboarding Presentation</title>
 <style>
-:root {
-  --ink: #0f172a;
-  --sub: #334155;
-  --muted: #64748b;
-  --blue: #2563eb;
-  --blue-dark: #1d4ed8;
-  --blue-soft: #eff6ff;
-  --blue-border: #bfdbfe;
-  --teal: #0d9488;
-  --teal-soft: #f0fdfa;
-  --teal-border: #99f6e4;
-  --amber: #d97706;
-  --amber-dark: #b45309;
-  --amber-soft: #fffbeb;
-  --amber-border: #fcd34d;
-  --green: #16a34a;
-  --green-dark: #15803d;
-  --green-soft: #f0fdf4;
-  --green-border: #86efac;
-  --purple: #7c3aed;
-  --purple-soft: #f5f3ff;
-  --purple-border: #ddd6fe;
-  --line: #e2e8f0;
-  --bg-soft: #f8fafc;
-  --sans: "Ubuntu Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --mono: "Ubuntu Sans Mono", "SF Mono", "JetBrains Mono", Consolas, monospace;
-}
-
 @page {
   size: 1280px 720px;
   margin: 0;
 }
 
+:root {
+  --ink: #0f172a;
+  --sub: #334155;
+  --muted: #64748b;
+  --line: #cbd5e1;
+  --bg-soft: #f8fafc;
+  --blue: #2563eb;
+  --blue-dark: #1d4ed8;
+  --blue-soft: #eff6ff;
+  --blue-border: #93c5fd;
+  --green: #15803d;
+  --green-dark: #166534;
+  --green-soft: #f0fdf4;
+  --green-border: #86efac;
+  --amber: #d97706;
+  --amber-dark: #b45309;
+  --amber-soft: #fffbeb;
+  --amber-border: #fcd34d;
+  --red: #dc2626;
+  --red-dark: #991b1b;
+  --red-soft: #fef2f2;
+  --red-border: #fca5a5;
+  --purple: #6d28d9;
+  --purple-soft: #f5f3ff;
+  --purple-border: #c4b5fd;
+  --teal: #0f766e;
+  --teal-soft: #f0fdfa;
+  --teal-border: #99f6e4;
+  --sans: "Ubuntu Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "DejaVu Sans", sans-serif;
+  --mono: "Ubuntu Sans Mono", "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", monospace;
+}
+
 * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body {
+
+html, body {
   margin: 0;
-  font: 400 15px/1.45 var(--sans);
+  padding: 0;
+  font-family: var(--sans);
   color: var(--ink);
   background: #0f172a;
   font-variant-numeric: tabular-nums;
@@ -62,8 +68,8 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 38px 54px 28px;
-  gap: 18px;
+  padding: 34px 52px 26px;
+  gap: 15px;
   overflow: hidden;
   box-shadow: 0 20px 50px rgba(0,0,0,0.45);
   border-radius: 6px;
@@ -76,9 +82,9 @@ body {
   break-after: auto;
 }
 
-/* Interactive Single-Slide Mode (Active in browser, disabled when printing) */
+/* Interactive Single-Slide Mode */
 body.interactive .deck {
-  padding: 16px 0 0;
+  padding: 16px 0 72px;
   gap: 0;
   min-height: 100vh;
   justify-content: center;
@@ -131,7 +137,7 @@ body.interactive .slide.active {
   align-items: center;
   justify-content: space-between;
   border-bottom: 2px solid var(--line);
-  padding-bottom: 10px;
+  padding-bottom: 9px;
   flex: none;
 }
 .s-kicker {
@@ -144,7 +150,7 @@ body.interactive .slide.active {
   padding: 4px 13px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: 12px;
   letter-spacing: 0.4px;
 }
 .s-brand {
@@ -161,30 +167,32 @@ body.interactive .slide.active {
   border-radius: 6px;
   background: #be123c;
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
-h1.s-title {
-  font-size: 29px;
+
+.s-title {
+  font-size: 30px;
   font-weight: 700;
-  margin: 0;
   color: #0f172a;
+  margin: 0;
   letter-spacing: -0.4px;
-  flex: none;
+  line-height: 1.18;
 }
-p.s-lead {
-  font-size: 16px;
+.s-lead {
+  font-size: 15.5px;
   color: var(--sub);
-  margin: -8px 0 0;
-  flex: none;
+  margin: -4px 0 0;
+  line-height: 1.42;
 }
+
 .s-foot {
   margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
   display: flex;
   justify-content: space-between;
   font-size: 12px;
@@ -193,37 +201,38 @@ p.s-lead {
 }
 
 /* ── Cards, Grids & Tables ── */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .card {
   border: 1.5px solid var(--line);
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 15px 18px;
   background: #fff;
 }
 .card-soft {
   border: 1.5px solid var(--line);
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 15px 18px;
   background: var(--bg-soft);
 }
 .card-title {
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 8px;
+  margin: 0 0 7px;
   display: flex;
   align-items: center;
   gap: 9px;
 }
 .num-dot {
-  width: 26px;
-  height: 26px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
   background: var(--blue);
   color: #fff;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12.5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -233,11 +242,11 @@ p.s-lead {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13.5px;
   background: #fff;
 }
 th, td {
-  padding: 8px 12px;
+  padding: 7px 11px;
   border: 1px solid #cbd5e1;
   text-align: left;
   vertical-align: middle;
@@ -246,10 +255,10 @@ th {
   background: #f1f5f9;
   color: #334155;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.mono { font-family: var(--mono); font-size: 13.5px; }
+.mono { font-family: var(--mono); font-size: 13px; }
 .row-amber td { background: var(--amber-soft); color: var(--amber-dark); font-weight: 600; }
 .row-green td { background: var(--green-soft); color: var(--green-dark); font-weight: 600; }
 .row-strike td { background: #fef2f2; color: #991b1b; text-decoration: line-through; }
@@ -258,7 +267,7 @@ th {
   display: inline-block;
   padding: 2px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -266,18 +275,19 @@ th {
 .pill-amber { background: var(--amber-soft); color: var(--amber-dark); border: 1px solid var(--amber-border); }
 .pill-blue { background: var(--blue-soft); color: var(--blue-dark); border: 1px solid var(--blue-border); }
 .pill-purple { background: var(--purple-soft); color: var(--purple); border: 1px solid var(--purple-border); }
+.pill-red { background: var(--red-soft); color: var(--red-dark); border: 1px solid var(--red-border); }
 
 .kv-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 13.5px;
   background: #fff;
   border: 1.5px solid #cbd5e1;
   border-radius: 7px;
-  padding: 6px 12px;
-  margin: 4px 0;
+  padding: 5px 11px;
+  margin: 3px 0;
 }
 .kv-idx {
   background: var(--blue-soft);
@@ -285,32 +295,45 @@ th {
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11.5px;
 }
+
+.code-box {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: var(--mono);
+  font-size: 12.2px;
+  line-height: 1.48;
+  padding: 10px 13px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  overflow: hidden;
+}
+.code-kw { color: #93c5fd; font-weight: 700; }
+.code-str { color: #86efac; }
+.code-cm { color: #94a3b8; font-style: italic; }
+.code-fn { color: #fcd34d; }
 
 /* ── Browser Presentation Controls & Voiceover Drawer ── */
 .pres-controls {
-  position: fixed;
-  bottom: 16px;
-  right: 24px;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 999px;
-  padding: 6px 14px;
+  width: 1280px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px 18px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   color: #fff;
   font-size: 13px;
-  z-index: 50;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 .pres-controls button {
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.22);
   background: rgba(255,255,255,0.08);
   color: #fff;
   border-radius: 999px;
-  padding: 4px 11px;
+  padding: 5px 13px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -323,7 +346,7 @@ th {
   border: 1px solid #334155;
   border-radius: 8px;
   padding: 12px 20px;
-  margin-top: 10px;
+  margin-top: 8px;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -345,166 +368,378 @@ th {
   <!-- =================================================================== -->
   <!-- SLIDE 1: TITLE SLIDE                                                -->
   <!-- =================================================================== -->
-  <section class="slide active" data-notes="Welcome to this overview of Atum. In the next few minutes, we will walk through the core concepts and mechanisms behind Atum—showing how it measures data integrity at key processing milestones and connects lineage across completely separate systems.">
-    <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:16px;padding:48px 56px;color:#fff;flex:1;display:flex;flex-direction:column;justify-content:space-between">
+  <section class="slide active" data-notes="Welcome to this presentation on Atum Service. In the next few minutes, we will introduce what Atum is, what it solves—and by design, what it does not do. We will look at its high-level architecture, walk through its core concepts and failure-detection mechanisms across a multi-system pipeline, and show how quickly teams can onboard onto it.">
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:16px;padding:44px 54px;color:#fff;flex:1;display:flex;flex-direction:column;justify-content:space-between">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:14px">
           <div style="width:44px;height:44px;border-radius:10px;background:#be123c;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px">A</div>
           <div>
-            <div style="font-size:20px;font-weight:700">Atum</div>
-            <div style="font-size:13px;color:#94a3b8">Data Control &amp; Lineage Assurance</div>
+            <div style="font-size:20px;font-weight:700">Atum Service</div>
+            <div style="font-size:13px;color:#94a3b8">Independent Consistency Evidence &amp; Cross-System Lineage</div>
           </div>
         </div>
-        <span style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);padding:6px 16px;border-radius:999px;font-size:13px;color:#cbd5e1">Concept &amp; Mechanism Presentation</span>
+        <span style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);padding:6px 16px;border-radius:999px;font-size:13px;color:#cbd5e1">Concept, Architecture &amp; Onboarding Deck</span>
       </div>
 
       <div>
-        <div style="color:#60a5fa;font-weight:700;font-size:14px;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">Cross-System Data Trust</div>
-        <h1 style="font-size:44px;font-weight:700;margin:0 0 16px;line-height:1.15;letter-spacing:-0.6px">How Atum Measures Data Integrity &amp; Connects Cross-System Lineage</h1>
-        <p style="font-size:18px;color:#cbd5e1;max-width:920px;margin:0;line-height:1.5">
-          A visual guide to Partitionings, Checkpoints, Control Measures, and Boundary Lineage Linking—demonstrated step-by-step across Mainframe, Ingestion, and Curation systems.
+        <div style="color:#60a5fa;font-weight:700;font-size:13.5px;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">Cross-System Data Trust</div>
+        <h1 style="font-size:42px;font-weight:700;margin:0 0 16px;line-height:1.15;letter-spacing:-0.6px">How Atum Measures Data Integrity &amp; Connects Cross-System Lineage</h1>
+        <p style="font-size:17.5px;color:#cbd5e1;max-width:960px;margin:0;line-height:1.5">
+          An end-to-end visual guide to what Atum solves, how its architecture works, how Partitionings, Checkpoints, Control Measures, and Lineage Links operate across Mainframe, Ingestion, and Curation systems—and how to onboard.
         </p>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.14)">
-        <div style="background:rgba(255,255,255,0.06);padding:14px 16px;border-radius:10px">
-          <div style="color:#60a5fa;font-weight:700;font-size:12px">CONCEPT 1</div>
-          <div style="font-weight:700;font-size:16px;margin-top:3px">Partitionings</div>
-          <div style="font-size:12.5px;color:#94a3b8;margin-top:2px">Ordered key-value dataset identity</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.14)">
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 14px">
+          <div style="color:#60a5fa;font-size:11px;font-weight:700;text-transform:uppercase">PART 1</div>
+          <div style="font-size:15px;font-weight:700;margin:3px 0 2px">Scope &amp; Purpose</div>
+          <div style="font-size:12px;color:#94a3b8">What Atum solves &amp; does not solve</div>
         </div>
-        <div style="background:rgba(255,255,255,0.06);padding:14px 16px;border-radius:10px">
-          <div style="color:#60a5fa;font-weight:700;font-size:12px">CONCEPT 2</div>
-          <div style="font-weight:700;font-size:16px;margin-top:3px">Checkpoints</div>
-          <div style="font-size:12.5px;color:#94a3b8;margin-top:2px">Internal job processing milestones</div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 14px">
+          <div style="color:#34d399;font-size:11px;font-weight:700;text-transform:uppercase">PART 2</div>
+          <div style="font-size:15px;font-weight:700;margin:3px 0 2px">Architecture</div>
+          <div style="font-size:12px;color:#94a3b8">Agent, Server, DB &amp; Reader</div>
         </div>
-        <div style="background:rgba(255,255,255,0.06);padding:14px 16px;border-radius:10px">
-          <div style="color:#60a5fa;font-weight:700;font-size:12px">CONCEPT 3</div>
-          <div style="font-weight:700;font-size:16px;margin-top:3px">Control Measures</div>
-          <div style="font-size:12.5px;color:#94a3b8;margin-top:2px">Counts, sums, distincts &amp; hashes</div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 14px">
+          <div style="color:#fbbf24;font-size:11px;font-weight:700;text-transform:uppercase">PART 3</div>
+          <div style="font-size:15px;font-weight:700;margin:3px 0 2px">Core Concepts</div>
+          <div style="font-size:12px;color:#94a3b8">Partitionings, Checkpoints &amp; Measures</div>
         </div>
-        <div style="background:rgba(255,255,255,0.06);padding:14px 16px;border-radius:10px">
-          <div style="color:#60a5fa;font-weight:700;font-size:12px">CONCEPT 4</div>
-          <div style="font-weight:700;font-size:16px;margin-top:3px">Lineage Links</div>
-          <div style="font-size:12.5px;color:#94a3b8;margin-top:2px">Parent-to-child boundary handoffs</div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 14px">
+          <div style="color:#c084fc;font-size:11px;font-weight:700;text-transform:uppercase">PART 4</div>
+          <div style="font-size:15px;font-weight:700;margin:3px 0 2px">Lineage Trace</div>
+          <div style="font-size:12px;color:#94a3b8">Mainframe → Ingestion → Curation</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 14px">
+          <div style="color:#2dd4bf;font-size:11px;font-weight:700;text-transform:uppercase">PART 5</div>
+          <div style="font-size:15px;font-weight:700;margin:3px 0 2px">Onboarding</div>
+          <div style="font-size:12px;color:#94a3b8">4-step adoption &amp; audit queries</div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 2: THE CORE PROBLEM                                           -->
+  <!-- SLIDE 2: INTRODUCTION — WHAT ATUM SOLVES & WHAT IT DOES NOT SOLVE   -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="Imagine a daily payment feed travelling across three different systems: it starts on a Mainframe with 5 transactions worth 8,200, moves through an Ingestion system into our data lake, and is transformed by a Curation system into a business table. At the end of the pipeline, the curated table shows only 4 transactions worth 8,000. When someone asks where that missing 200 went, we need to know immediately: Was data lost in transit between systems, or did a transformation step inside one of the systems filter it out?">
+  <section class="slide" data-notes="Before diving into mechanics, let's clarify what Atum is and where its boundaries lie. Organisations move data through long chains of processing steps—loading, cleaning, casting, joining, and reporting—where records can be silently lost, duplicated, or altered. Atum creates an independent, central, auditable record of control figures and dataset lineage at each step, supporting regulatory frameworks like BCBS 239. Equally important is what Atum does NOT do: first, your raw business data never leaves your job—Atum stores only aggregated control figures and labels. Second, Atum records evidence and never intervenes or blocks your jobs. Third, matching control figures are strong consistency evidence, not formal row-by-row proof that every individual record is unchanged.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 2 / 10 · THE CORE PROBLEM</span>
+      <span class="s-kicker">SLIDE 2 / 13 · INTRODUCTION &amp; DESIGN BOUNDARIES</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
-    <h1 class="s-title">Where Did the Missing Data Go?</h1>
+    <h1 class="s-title">What Is Atum? What It Solves — and What It Does Not Solve</h1>
+    <p class="s-lead">Atum creates an independent, auditable record of data completeness, consistency evidence, and dataset lineage across pipelines.</p>
+
+    <div class="grid-2" style="flex:1">
+      <!-- Left: What Atum Solves -->
+      <div class="card" style="background:var(--green-soft);border-color:var(--green-border);display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div class="card-title" style="margin:0;color:var(--green-dark);font-size:17px">✓ What Atum Solves</div>
+            <span class="pill pill-green">Core Value Proposition</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13.8px;color:#1e293b">
+            <div style="background:#fff;border:1px solid var(--green-border);border-radius:9px;padding:10px 13px">
+              <b style="color:var(--green-dark)">1. Verifiable Completeness &amp; Consistency Evidence</b><br>
+              Captures control figures (record counts, numeric totals, distinct counts, and CRC32 column hash fingerprints) at named <b>checkpoints</b> inside jobs.
+            </div>
+            <div style="background:#fff;border:1px solid var(--green-border);border-radius:9px;padding:10px 13px">
+              <b style="color:var(--green-dark)">2. Cross-System &amp; Cross-Team Dataset Lineage</b><br>
+              Records which datasets were produced from which (single parent, multi-parent joins, regional splits, and end-to-end flows) in one central store.
+            </div>
+            <div style="background:#fff;border:1px solid var(--green-border);border-radius:9px;padding:10px 13px">
+              <b style="color:var(--green-dark)">3. Instant Root-Cause Localization</b><br>
+              Comparing control figures side-by-side pinpoints the exact job step or handoff where rows were dropped, duplicated, or altered—saving days of investigation.
+            </div>
+            <div style="background:#fff;border:1px solid var(--green-border);border-radius:9px;padding:10px 13px">
+              <b style="color:var(--green-dark)">4. Automated Regulatory &amp; Audit Evidence (e.g., BCBS 239)</b><br>
+              Replaces manual audit spreadsheet assembly with standardized evidence captured automatically on every batch run.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: What Atum Does NOT Solve (By Design) -->
+      <div class="card" style="background:#fff8f6;border-color:#fdba74;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div class="card-title" style="margin:0;color:#9a3412;font-size:17px">✕ What Atum Does NOT Solve (By Design)</div>
+            <span class="pill pill-amber">Intentional Scope Boundaries</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13.8px;color:#1e293b">
+            <div style="background:#fff;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px">
+              <b style="color:#9a3412">1. Does NOT Store or Move Business Data ("Privacy by Design")</b><br>
+              Your records never leave your processing job. Atum never receives or stores PII or table rows—only aggregated control figures and descriptive labels.
+            </div>
+            <div style="background:#fff;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px">
+              <b style="color:#9a3412">2. Does NOT Intervene, Validate, or Block Pipelines</b><br>
+              Atum does not define pass/fail rules or halt your Spark jobs when numbers shift. It <b>records the independent evidence</b>; your reconciliation tools and teams decide how to act.
+            </div>
+            <div style="background:#fff;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px">
+              <b style="color:#9a3412">3. Does NOT Prove Row-by-Row Immutability</b><br>
+              Matching totals and column fingerprints are strong <b>consistency evidence</b>, not proof that every individual row is unchanged (e.g., swapping balances between two accounts preserves both sum and column hash).
+            </div>
+            <div style="background:#fff;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px">
+              <b style="color:#9a3412">4. Does NOT Track Individual Row-Level Lineage</b><br>
+              Atum tracks dataset/partitioning-level lineage and aggregate figures—it does not record which specific rows contributed to a figure.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="s-foot">
+      <span>Atum · Cross-System Data Control &amp; Lineage</span>
+      <span>Slide 2 of 13</span>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- SLIDE 3: THE CORE PROBLEM — WHERE DID THE MISSING DATA GO?          -->
+  <!-- =================================================================== -->
+  <section class="slide" data-notes="Consider a classic scenario: a core banking system extracts 5 payment records totaling 8,200. After moving through an Ingestion job and a Curation job, the final table has only 4 rows totaling 8,000. Without Atum, each system is a black box—you don't know if a row was dropped during file transfer, corrupted on read, or filtered out by a join. With Atum, each system records checkpoints at its internal milestones and links its dataset to the upstream parent, proving immediately that handoffs were 100% intact and isolating the 1-row change to the join step inside Curation.">
+    <div class="s-head">
+      <span class="s-kicker">SLIDE 3 / 13 · WHY IT MATTERS</span>
+      <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
+    </div>
+    <h1 class="s-title">Why It Matters: Where Did the Missing Data Go?</h1>
     <p class="s-lead">When a downstream table differs from an upstream source, teams must distinguish transit data loss from internal job rules.</p>
 
-    <div class="card-soft">
-      <div class="card-title"><span class="num-dot" style="background:#64748b">A</span> Without Atum: The "Black-Box" Pipeline (Guesswork)</div>
-      <svg width="100%" viewBox="0 0 1120 130" style="display:block;background:#fff;border:1px solid var(--line);border-radius:9px">
+    <!-- Top Box: Without Atum -->
+    <div class="card-soft" style="padding:14px 20px">
+      <div class="card-title" style="margin-bottom:8px">
+        <span class="num-dot" style="background:#64748b">A</span>
+        Without Atum: The "Black-Box" Pipeline (Days of Manual Investigation)
+      </div>
+      <svg width="100%" viewBox="0 0 1120 105" style="display:block;background:#fff;border:1px solid var(--line);border-radius:8px">
         <defs>
           <marker id="s2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
             <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
           </marker>
         </defs>
-        <rect x="30" y="22" width="280" height="86" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
-        <text x="170" y="54" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">1. Mainframe System</text>
-        <text x="170" y="82" text-anchor="middle" font-size="15" font-weight="600" fill="#334155">Starts with: 5 rows · 8,200</text>
+        <rect x="24" y="18" width="290" height="68" rx="9" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6"/>
+        <text x="169" y="45" text-anchor="middle" font-size="16" font-weight="700" fill="#1e293b">1. Mainframe System</text>
+        <text x="169" y="68" text-anchor="middle" font-size="14" fill="#334155">Starts with: <tspan font-weight="700">5 rows · 8,200</tspan></text>
 
-        <path d="M310,65 L415,65" stroke="#94a3b8" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#s2g)"/>
-        <text x="362" y="52" text-anchor="middle" font-size="14" font-weight="700" fill="#dc2626">? Lost here ?</text>
+        <path d="M314,52 L412,52" stroke="#94a3b8" stroke-width="2.2" stroke-dasharray="6,4" marker-end="url(#s2g)"/>
+        <text x="363" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#dc2626">? Lost here ?</text>
 
-        <rect x="420" y="22" width="280" height="86" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
-        <text x="560" y="54" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">2. Ingestion System</text>
-        <text x="560" y="82" text-anchor="middle" font-size="15" fill="#64748b">No checkpoints recorded</text>
+        <rect x="415" y="18" width="290" height="68" rx="9" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6"/>
+        <text x="560" y="45" text-anchor="middle" font-size="16" font-weight="700" fill="#1e293b">2. Ingestion System</text>
+        <text x="560" y="68" text-anchor="middle" font-size="14" fill="#64748b">No checkpoints recorded</text>
 
-        <path d="M700,65 L805,65" stroke="#94a3b8" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#s2g)"/>
-        <text x="752" y="52" text-anchor="middle" font-size="14" font-weight="700" fill="#dc2626">? Or here ?</text>
+        <path d="M705,52 L803,52" stroke="#94a3b8" stroke-width="2.2" stroke-dasharray="6,4" marker-end="url(#s2g)"/>
+        <text x="754" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#dc2626">? Or here ?</text>
 
-        <rect x="810" y="22" width="280" height="86" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
-        <text x="950" y="54" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">3. Curation System</text>
-        <text x="950" y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#b45309">Ends with: 4 rows · 8,000</text>
+        <rect x="806" y="18" width="290" height="68" rx="9" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+        <text x="951" y="45" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">3. Curation System</text>
+        <text x="951" y="68" text-anchor="middle" font-size="14" font-weight="700" fill="#b45309">Ends with: 4 rows · 8,000</text>
       </svg>
     </div>
 
-    <div class="card-soft" style="background:#f0fdf4;border-color:#bbf7d0">
-      <div class="card-title"><span class="num-dot" style="background:var(--green)">B</span> With Atum: Checkpoints Inside Each System + Lineage Links Between Systems</div>
-      <svg width="100%" viewBox="0 0 1120 156" style="display:block;background:#fff;border:1px solid #bbf7d0;border-radius:9px">
+    <!-- Bottom Box: With Atum -->
+    <div class="card" style="padding:14px 20px;background:var(--green-soft);border-color:var(--green-border);flex:1;display:flex;flex-direction:column;justify-content:space-between">
+      <div class="card-title" style="margin-bottom:6px">
+        <span class="num-dot" style="background:var(--green)">B</span>
+        With Atum: Checkpoints Inside Each System + Lineage Links Between Systems
+      </div>
+      <svg width="100%" viewBox="0 0 1120 155" style="display:block;background:#fff;border:1px solid var(--green-border);border-radius:8px">
         <defs>
           <marker id="s2b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
             <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
           </marker>
         </defs>
         <!-- Mainframe -->
-        <rect x="24" y="16" width="295" height="124" rx="10" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.8"/>
-        <text x="171" y="40" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">1. Mainframe System</text>
-        <rect x="38" y="54" width="126" height="70" rx="6" fill="#fff" stroke="#cbd5e1"/>
-        <text x="101" y="78" text-anchor="middle" font-size="13" font-weight="700">CP 1: Ledger</text>
-        <text x="101" y="102" text-anchor="middle" font-size="13" font-weight="600" fill="#15803d">5 rows · 8,200</text>
-        <rect x="178" y="54" width="126" height="70" rx="6" fill="#fff" stroke="#cbd5e1"/>
-        <text x="241" y="78" text-anchor="middle" font-size="13" font-weight="700">CP 2: Extract</text>
-        <text x="241" y="102" text-anchor="middle" font-size="13" font-weight="600" fill="#15803d">5 rows · 8,200</text>
+        <rect x="20" y="14" width="304" height="126" rx="9" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.6"/>
+        <text x="172" y="38" text-anchor="middle" font-size="15.5" font-weight="700" fill="#0f172a">1. Mainframe System</text>
+        <rect x="34" y="52" width="130" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
+        <text x="99" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">CP 1: Ledger</text>
+        <text x="99" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">5 rows · 8,200</text>
+        <rect x="180" y="52" width="130" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
+        <text x="245" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">CP 2: Extract</text>
+        <text x="245" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">5 rows · 8,200</text>
 
-        <!-- Link 1 -->
-        <path d="M319,89 L406,89" stroke="#2563eb" stroke-width="2.5" marker-end="url(#s2b)"/>
-        <circle cx="362" cy="89" r="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
-        <text x="362" y="94" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">=</text>
-        <text x="362" y="64" text-anchor="middle" font-size="11.5" font-weight="700" fill="#15803d">Handoff Match</text>
+        <!-- Handoff 1 -->
+        <path d="M324,88 L400,88" stroke="#2563eb" stroke-width="2.5" marker-end="url(#s2b)"/>
+        <circle cx="362" cy="88" r="15" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+        <text x="362" y="93" text-anchor="middle" font-size="15" font-weight="700" fill="#166534">=</text>
+        <text x="362" y="64" text-anchor="middle" font-size="11.5" font-weight="700" fill="#166534">Handoff Match</text>
 
         <!-- Ingestion -->
-        <rect x="412" y="16" width="295" height="124" rx="10" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.8"/>
-        <text x="559" y="40" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">2. Ingestion System</text>
-        <rect x="426" y="54" width="126" height="70" rx="6" fill="#fff" stroke="#cbd5e1"/>
-        <text x="489" y="78" text-anchor="middle" font-size="13" font-weight="700">CP 1: Landed</text>
-        <text x="489" y="102" text-anchor="middle" font-size="13" font-weight="600" fill="#15803d">5 rows · 8,200</text>
-        <rect x="566" y="54" width="126" height="70" rx="6" fill="#fff" stroke="#cbd5e1"/>
-        <text x="629" y="78" text-anchor="middle" font-size="13" font-weight="700">CP 2: Written</text>
-        <text x="629" y="102" text-anchor="middle" font-size="13" font-weight="600" fill="#15803d">5 rows · 8,200</text>
+        <rect x="404" y="14" width="304" height="126" rx="9" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.6"/>
+        <text x="556" y="38" text-anchor="middle" font-size="15.5" font-weight="700" fill="#0f172a">2. Ingestion System</text>
+        <rect x="418" y="52" width="130" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
+        <text x="483" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">CP 1: Landed</text>
+        <text x="483" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">5 rows · 8,200</text>
+        <rect x="564" y="52" width="130" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
+        <text x="629" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">CP 2: Written</text>
+        <text x="629" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">5 rows · 8,200</text>
 
-        <!-- Link 2 -->
-        <path d="M707,89 L794,89" stroke="#2563eb" stroke-width="2.5" marker-end="url(#s2b)"/>
-        <circle cx="750" cy="89" r="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
-        <text x="750" y="94" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">=</text>
-        <text x="750" y="64" text-anchor="middle" font-size="11.5" font-weight="700" fill="#15803d">Handoff Match</text>
+        <!-- Handoff 2 -->
+        <path d="M708,88 L784,88" stroke="#2563eb" stroke-width="2.5" marker-end="url(#s2b)"/>
+        <circle cx="746" cy="88" r="15" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+        <text x="746" y="93" text-anchor="middle" font-size="15" font-weight="700" fill="#166534">=</text>
+        <text x="746" y="64" text-anchor="middle" font-size="11.5" font-weight="700" fill="#166534">Handoff Match</text>
 
         <!-- Curation -->
-        <rect x="800" y="16" width="296" height="124" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
-        <text x="948" y="40" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">3. Curation System</text>
-        <rect x="814" y="54" width="126" height="70" rx="6" fill="#fff" stroke="#cbd5e1"/>
-        <text x="877" y="78" text-anchor="middle" font-size="13" font-weight="700">CP 1: Input</text>
-        <text x="877" y="102" text-anchor="middle" font-size="13" font-weight="600" fill="#15803d">5 rows · 8,200</text>
-        <rect x="954" y="54" width="128" height="70" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.8"/>
-        <text x="1018" y="78" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">CP 2: Joined ⚠</text>
-        <text x="1018" y="102" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">4 rows · 8,000</text>
+        <rect x="788" y="14" width="312" height="126" rx="9" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+        <text x="944" y="38" text-anchor="middle" font-size="15.5" font-weight="700" fill="#0f172a">3. Curation System</text>
+        <rect x="802" y="52" width="132" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
+        <text x="868" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">CP 1: Input</text>
+        <text x="868" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">5 rows · 8,200</text>
+        <rect x="948" y="52" width="138" height="72" rx="7" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+        <text x="1017" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">CP 2: Joined ⚠</text>
+        <text x="1017" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">4 rows · 8,000</text>
       </svg>
     </div>
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 2 of 10</span>
+      <span>Slide 3 of 13</span>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 3: CONCEPT 1 — WHAT IS A PARTITIONING?                        -->
+  <!-- SLIDE 4: HIGH-LEVEL ARCHITECTURE — HOW ATUM WORKS                   -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="To track data across completely different technologies, we first need a universal way to identify a specific slice of data. In Atum, this identifier is called a Partitioning. Not every dataset looks the same: a daily table in a data catalog has a table name and a processing date, a mainframe extract has a system and feed name, and a reference table like country codes might only be updated once a quarter. That is why a Partitioning in Atum is simply an ordered list of key-value pairs, plus optional Partitioning Metadata.">
+  <section class="slide" data-notes="How does Atum work architecturally? Atum Service consists of three software components and a central PostgreSQL database. First, the Atum Agent is a lightweight library added to Apache Spark jobs—or non-Spark jobs can call the REST API directly. At each checkpoint, the agent calculates control figures and sends only those aggregated figures and lineage labels to the Atum Server. Second, the Atum Server is the central stateless REST service that validates lineage safeguards and stores everything in a central PostgreSQL database. Third, the Atum Reader library and REST API let reconciliation tools, dashboards, and auditors query checkpoints and lineage back—without needing Spark.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 3 / 10 · CONCEPT 1: PARTITIONING</span>
+      <span class="s-kicker">SLIDE 4 / 13 · HIGH-LEVEL ARCHITECTURE</span>
+      <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
+    </div>
+    <h1 class="s-title">High-Level Architecture: How Atum Works</h1>
+    <p class="s-lead">Three lightweight components and a central database connect data producers with downstream reconciliation, dashboards, and audits.</p>
+
+    <!-- Architecture Diagram -->
+    <div class="card-soft" style="padding:12px 18px">
+      <svg width="100%" viewBox="0 0 1130 250" style="display:block;background:#fff;border:1px solid var(--line);border-radius:10px">
+        <defs>
+          <marker id="arB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+          </marker>
+          <marker id="arT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/>
+          </marker>
+          <marker id="arS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+          </marker>
+        </defs>
+
+        <!-- 1. Producers Zone -->
+        <rect x="16" y="14" width="286" height="222" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.6"/>
+        <text x="32" y="37" font-size="14" font-weight="700" fill="#1d4ed8">1. DATA PRODUCERS (PIPELINES)</text>
+
+        <rect x="30" y="48" width="258" height="54" rx="7" fill="#fff" stroke="#60a5fa" stroke-width="1.5"/>
+        <text x="44" y="70" font-size="13.5" font-weight="700" fill="#0f172a">Spark Job A + Atum Agent</text>
+        <text x="44" y="90" font-size="12" fill="#475569">Spark 3.5 / 4.0 · Calculates measures inline</text>
+
+        <rect x="30" y="110" width="258" height="54" rx="7" fill="#fff" stroke="#60a5fa" stroke-width="1.5"/>
+        <text x="44" y="132" font-size="13.5" font-weight="700" fill="#0f172a">Spark Job B + Atum Agent</text>
+        <text x="44" y="152" font-size="12" fill="#475569">Links parent dataset &amp; adds checkpoints</text>
+
+        <rect x="30" y="172" width="258" height="50" rx="7" fill="#f8fafc" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.4"/>
+        <text x="44" y="193" font-size="13" font-weight="700" fill="#334155">Non-Spark Producers (REST)</text>
+        <text x="44" y="211" font-size="11.5" fill="#64748b">Mainframe bridges, Python/SQL jobs</text>
+
+        <!-- Arrows Producers -> Server -->
+        <path d="M302,102 L416,102" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arB)"/>
+        <text x="359" y="78" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1d4ed8">HTTP POST</text>
+        <text x="359" y="93" text-anchor="middle" font-size="11" fill="#334155">Control figures &amp; lineage</text>
+        <rect x="310" y="114" width="98" height="36" rx="6" fill="#f0fdf4" stroke="#86efac"/>
+        <text x="359" y="129" text-anchor="middle" font-size="10.5" font-weight="700" fill="#166534">✓ No Raw Data</text>
+        <text x="359" y="143" text-anchor="middle" font-size="10" fill="#15803d">Only aggregates</text>
+
+        <!-- 2. Central Atum Server -->
+        <rect x="420" y="14" width="256" height="222" rx="10" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+        <text x="548" y="40" text-anchor="middle" font-size="15.5" font-weight="700" fill="#fff">2. ATUM SERVER</text>
+        <text x="548" y="58" text-anchor="middle" font-size="12" fill="#93c5fd">Central Stateless Service (Docker)</text>
+
+        <rect x="436" y="70" width="224" height="44" rx="6" fill="#1e293b" stroke="#475569"/>
+        <text x="548" y="89" text-anchor="middle" font-size="12.5" font-weight="700" fill="#f8fafc">Documented REST API (/docs/)</text>
+        <text x="548" y="105" text-anchor="middle" font-size="11" fill="#cbd5e1">Backward-compatible with older agents</text>
+
+        <rect x="436" y="122" width="224" height="44" rx="6" fill="#1e293b" stroke="#475569"/>
+        <text x="548" y="141" text-anchor="middle" font-size="12.5" font-weight="700" fill="#f8fafc">Lineage &amp; Flow Safeguards</text>
+        <text x="548" y="157" text-anchor="middle" font-size="11" fill="#cbd5e1">Rejects loops · Safe idempotent re-runs</text>
+
+        <rect x="436" y="174" width="224" height="44" rx="6" fill="#1e293b" stroke="#475569"/>
+        <text x="548" y="193" text-anchor="middle" font-size="12.5" font-weight="700" fill="#f8fafc">Observability Ready</text>
+        <text x="548" y="209" text-anchor="middle" font-size="11" fill="#cbd5e1">Prometheus &amp; Grafana health metrics</text>
+
+        <!-- Arrows Server <-> DB -->
+        <path d="M676,82 L734,82" stroke="#475569" stroke-width="2.3" marker-end="url(#arS)"/>
+        <path d="M734,98 L676,98" stroke="#475569" stroke-width="2.3" marker-end="url(#arS)"/>
+
+        <!-- 3. Central Database -->
+        <rect x="738" y="20" width="166" height="106" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.8"/>
+        <text x="821" y="45" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a">3. DATABASE</text>
+        <text x="821" y="63" text-anchor="middle" font-size="12" font-weight="700" fill="#2563eb">PostgreSQL</text>
+        <text x="821" y="83" text-anchor="middle" font-size="11.5" fill="#334155">• Partitionings &amp; Keys</text>
+        <text x="821" y="99" text-anchor="middle" font-size="11.5" fill="#334155">• Checkpoints &amp; Figures</text>
+        <text x="821" y="115" text-anchor="middle" font-size="11.5" fill="#334155">• Lineage &amp; Flows</text>
+
+        <!-- Arrows Server <- Consumers -->
+        <path d="M676,184 L734,184" stroke="#0f766e" stroke-width="2.5" marker-end="url(#arT)"/>
+        <text x="705" y="174" text-anchor="middle" font-size="11" font-weight="700" fill="#0f766e">Queries</text>
+
+        <!-- 4. Consumers Zone -->
+        <rect x="738" y="138" width="376" height="98" rx="10" fill="#f0fdfa" stroke="#5eead4" stroke-width="1.8"/>
+        <text x="754" y="161" font-size="14" font-weight="700" fill="#0f766e">4. CONSUMERS (ATUM READER &amp; REST API)</text>
+        <rect x="754" y="171" width="166" height="52" rx="7" fill="#fff" stroke="#99f6e4"/>
+        <text x="837" y="192" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">Atum Reader Library</text>
+        <text x="837" y="210" text-anchor="middle" font-size="11.5" fill="#475569">Java / Scala (No Spark needed)</text>
+        <rect x="932" y="171" width="166" height="52" rx="7" fill="#fff" stroke="#99f6e4"/>
+        <text x="1015" y="192" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">Audit &amp; Recon Tools</text>
+        <text x="1015" y="210" text-anchor="middle" font-size="11.5" fill="#475569">Dashboards, reports &amp; UI</text>
+      </svg>
+    </div>
+
+    <!-- Bottom 4 Component Role Cards -->
+    <div class="grid-4" style="flex:1">
+      <div class="card" style="padding:12px 14px;border-top:3.5px solid var(--blue)">
+        <div style="font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase">Component 1</div>
+        <div style="font-size:15px;font-weight:700;margin:2px 0 4px">Atum Agent</div>
+        <div style="font-size:12.5px;color:var(--sub);line-height:1.38">Library added to a Spark job. Calculates control figures at each checkpoint and dispatches them via <code>http</code>, <code>console</code>, or in-memory <code>capture</code>.</div>
+      </div>
+      <div class="card" style="padding:12px 14px;border-top:3.5px solid #0f172a">
+        <div style="font-size:11px;font-weight:700;color:#0f172a;text-transform:uppercase">Component 2</div>
+        <div style="font-size:15px;font-weight:700;margin:2px 0 4px">Atum Server</div>
+        <div style="font-size:12.5px;color:var(--sub);line-height:1.38">Central service receiving figures from all agents, enforcing lineage graph integrity, and answering queries via REST API.</div>
+      </div>
+      <div class="card" style="padding:12px 14px;border-top:3.5px solid #475569">
+        <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase">Component 3</div>
+        <div style="font-size:15px;font-weight:700;margin:2px 0 4px">PostgreSQL Store</div>
+        <div style="font-size:12.5px;color:var(--sub);line-height:1.38">Central relational database holding partitionings, checkpoints, measures, lineage flows, and author audit trails in one place.</div>
+      </div>
+      <div class="card" style="padding:12px 14px;border-top:3.5px solid var(--teal)">
+        <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase">Component 4</div>
+        <div style="font-size:15px;font-weight:700;margin:2px 0 4px">Atum Reader</div>
+        <div style="font-size:12.5px;color:var(--sub);line-height:1.38">Lightweight client library for reconciliation jobs, dashboards, or audit tools to read checkpoints and flows (no Spark dependency).</div>
+      </div>
+    </div>
+
+    <div class="s-foot">
+      <span>Atum · Cross-System Data Control &amp; Lineage</span>
+      <span>Slide 4 of 13</span>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- SLIDE 5: CONCEPT 1 — PARTITIONING (ORDERED KEY-VALUE IDENTITY)      -->
+  <!-- =================================================================== -->
+  <section class="slide" data-notes="Now let's examine Atum's four core concepts, starting with Partitioning. In a large enterprise, datasets live everywhere: some are tables in AWS Glue or Hive, some are daily files from a Mainframe, and some are reference tables updated once a quarter. Instead of forcing a single hardcoded naming convention, Atum identifies every dataset slice by an ordered list of key-value pairs called a Partitioning—plus optional Additional Data for descriptive context like application version, join keys, or owner.">
+    <div class="s-head">
+      <span class="s-kicker">SLIDE 5 / 13 · CONCEPT 1: PARTITIONING</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
     <h1 class="s-title">Concept 1: Identifying Any Dataset Slice ("Partitioning")</h1>
-    <p class="s-lead">Because not every system uses a data catalog or updates daily, Atum identifies datasets by an ordered key-value map.</p>
+    <p class="s-lead">Because not every system uses a data catalog or updates daily, Atum identifies datasets by an ordered key-value label.</p>
 
+    <!-- Top 2-col: Identity vs Metadata -->
     <div class="grid-2">
       <div class="card" style="background:var(--blue-soft);border-color:var(--blue-border)">
-        <div style="font-size:12px;font-weight:700;color:var(--blue-dark);text-transform:uppercase;margin-bottom:6px">1. Ordered Key-Value Identity (Unique Slice ID)</div>
-        <p style="font-size:14px;color:var(--sub);margin:0 0 10px">
-          An ordered list of <code>(key, value)</code> pairs. Any two submissions with the exact same ordered keys and values resolve to the same Partitioning ID:
-        </p>
+        <div style="font-size:12px;font-weight:700;color:var(--blue-dark);text-transform:uppercase;margin-bottom:6px">1. Ordered Key-Value Identity (Unique Slice Label)</div>
+        <p style="font-size:13.5px;color:var(--sub);margin:0 0 8px">An ordered list of <code>(key, value)</code> pairs. Any two submissions with the exact same ordered keys and values resolve to the same Partitioning ID:</p>
         <div>
           <span class="kv-chip"><span class="kv-idx">#1</span> catalog_path = <b>edla_curated.customer_payments</b></span><br>
           <span class="kv-chip"><span class="kv-idx">#2</span> info_date = <b>2026-11-11</b></span>
@@ -512,10 +747,8 @@ th {
       </div>
 
       <div class="card" style="background:var(--teal-soft);border-color:var(--teal-border)">
-        <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;margin-bottom:6px">2. Partitioning Metadata (Additional Context)</div>
-        <p style="font-size:14px;color:var(--sub);margin:0 0 10px">
-          Extra key-value attributes attached to the partitioning to record technical or business context without changing its primary identity:
-        </p>
+        <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;margin-bottom:6px">2. Additional Data / Partitioning Metadata (Audited Context)</div>
+        <p style="font-size:13.5px;color:var(--sub);margin:0 0 8px">Descriptive attributes attached to a dataset (such as catalog provider, join keys, app version, or owner) without changing its primary identity—every update records who made it:</p>
         <div>
           <span class="kv-chip">catalog_provider = <b>aws-glue</b></span><br>
           <span class="kv-chip">join_keys = <b>customer_id, country_code</b></span>
@@ -523,39 +756,40 @@ th {
       </div>
     </div>
 
-    <div class="grid-3" style="margin-top:4px">
-      <div class="card" style="border-top:4px solid #4f46e5">
-        <div style="font-size:11.5px;font-weight:700;color:#4f46e5;text-transform:uppercase">Example A · Mainframe Feed</div>
-        <div style="font-weight:700;font-size:17px;margin:4px 0 8px">Daily Mainframe Extract</div>
-        <p style="font-size:13.5px;color:var(--sub);margin:0 0 12px">
-          Mainframe feeds do not live in Glue or Hive, so they use system, feed, and date keys:
-        </p>
-        <div style="background:var(--bg-soft);padding:10px 12px;border-radius:8px" class="mono">
+    <!-- Bottom 3-col: Examples across systems -->
+    <div class="grid-3" style="flex:1">
+      <div class="card" style="border-top:4px solid var(--purple);display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--purple);text-transform:uppercase">Example A · Mainframe Feed</div>
+          <div style="font-size:17px;font-weight:700;margin:4px 0 6px">Daily Mainframe Extract</div>
+          <p style="font-size:13px;color:var(--sub);margin:0 0 10px">Mainframe feeds do not live in Glue or Hive, so they use system, feed, and date keys:</p>
+        </div>
+        <div class="mono" style="background:var(--bg-soft);padding:10px 12px;border-radius:8px;line-height:1.6">
           1. <b>system</b> = core_banking<br>
           2. <b>feed</b> = payments_eod<br>
           3. <b>info_date</b> = 2026-11-11
         </div>
       </div>
 
-      <div class="card" style="border-top:4px solid var(--blue)">
-        <div style="font-size:11.5px;font-weight:700;color:var(--blue);text-transform:uppercase">Example B · Ingestion &amp; Curation</div>
-        <div style="font-weight:700;font-size:17px;margin:4px 0 8px">Daily Catalog Table</div>
-        <p style="font-size:13.5px;color:var(--sub);margin:0 0 12px">
-          Ingestion and curation apps produce tables in Glue or Hive partitioned by logical date:
-        </p>
-        <div style="background:var(--bg-soft);padding:10px 12px;border-radius:8px" class="mono">
+      <div class="card" style="border-top:4px solid var(--blue);display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--blue);text-transform:uppercase">Example B · Ingestion &amp; Curation</div>
+          <div style="font-size:17px;font-weight:700;margin:4px 0 6px">Daily Catalog Table</div>
+          <p style="font-size:13px;color:var(--sub);margin:0 0 10px">Ingestion and curation apps produce tables in Glue or Hive partitioned by logical date:</p>
+        </div>
+        <div class="mono" style="background:var(--bg-soft);padding:10px 12px;border-radius:8px;line-height:1.6">
           1. <b>catalog_path</b> = raw.core_payments<br>
           2. <b>info_date</b> = 2026-11-11
         </div>
       </div>
 
-      <div class="card" style="border-top:4px solid var(--teal)">
-        <div style="font-size:11.5px;font-weight:700;color:var(--teal);text-transform:uppercase">Example C · Reference Data</div>
-        <div style="font-weight:700;font-size:17px;margin:4px 0 8px">Quarterly Lookup Table</div>
-        <p style="font-size:13.5px;color:var(--sub);margin:0 0 12px">
-          Infrequently updated reference datasets use a release version instead of a daily date:
-        </p>
-        <div style="background:var(--bg-soft);padding:10px 12px;border-radius:8px" class="mono">
+      <div class="card" style="border-top:4px solid var(--teal);display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--teal);text-transform:uppercase">Example C · Reference Data</div>
+          <div style="font-size:17px;font-weight:700;margin:4px 0 6px">Quarterly Lookup Table</div>
+          <p style="font-size:13px;color:var(--sub);margin:0 0 10px">Infrequently updated reference datasets use a release version instead of a daily date:</p>
+        </div>
+        <div class="mono" style="background:var(--bg-soft);padding:10px 12px;border-radius:8px;line-height:1.6">
           1. <b>catalog_path</b> = ref.iso_countries<br>
           2. <b>ref_version</b> = 2026-Q4
         </div>
@@ -564,119 +798,121 @@ th {
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 3 of 10</span>
+      <span>Slide 5 of 13</span>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 4: CONCEPTS 2 & 3 — CHECKPOINTS & CONTROL MEASURES (5 ROWS)   -->
+  <!-- SLIDE 6: CONCEPTS 2 & 3 — CHECKPOINTS & CONTROL MEASURES            -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="While a job is processing a dataset, it passes through several internal steps—such as reading the input, joining or filtering records, and writing the final output. Atum records a Checkpoint at each of these moments. Inside every Checkpoint, Atum evaluates Control Measures. Here is a simple 5-row payment table with 3 columns showing how the four baseline control measures are calculated.">
+  <section class="slide" data-notes="Concepts 2 and 3 are Checkpoints and Control Measures. A Checkpoint is a named point in a job where measures are calculated—recording its name, author, start and end timestamps, and results. Atum supports eight measure types to answer two fundamental questions: Is the data complete, and is it unchanged? Let's illustrate the four most common measures on a simple 5-row, 3-column dataset of payment transactions: record count is 5, sum of amount is 8,200, distinct customer count is 3, and the CRC32 hash fingerprint of transaction IDs is A9F4.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 4 / 10 · CONCEPTS 2 &amp; 3: CHECKPOINTS &amp; CONTROL MEASURES</span>
+      <span class="s-kicker">SLIDE 6 / 13 · CONCEPTS 2 &amp; 3: CHECKPOINTS &amp; CONTROL MEASURES</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
     <h1 class="s-title">Concepts 2 &amp; 3: Checkpoints &amp; Control Measures</h1>
-    <p class="s-lead">Checkpoints capture milestones inside a job run; Control Measures quantify the data at each milestone.</p>
+    <p class="s-lead">Checkpoints capture named milestones inside a job; Control Measures answer <i>"Is it complete?"</i> and <i>"Is it unchanged?"</i></p>
 
-    <svg width="100%" viewBox="0 0 1120 90" style="display:block;background:#f8fafc;border:1.5px solid var(--line);border-radius:10px;flex:none">
+    <!-- Checkpoint Timeline SVG -->
+    <svg width="100%" viewBox="0 0 1120 68" style="display:block;background:#f8fafc;border:1px solid var(--line);border-radius:10px;flex:none">
       <defs>
         <marker id="s4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
           <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
         </marker>
       </defs>
-      <rect x="28" y="14" width="310" height="62" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
-      <text x="46" y="38" font-size="15" font-weight="700" fill="#1d4ed8">Checkpoint 1: Input</text>
-      <text x="46" y="60" font-size="13" fill="#334155">06:12:01 → 06:12:40 UTC · Evaluated on read</text>
+      <rect x="24" y="10" width="310" height="48" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.6"/>
+      <text x="42" y="31" font-size="14.5" font-weight="700" fill="#1d4ed8">Checkpoint 1: Input</text>
+      <text x="42" y="49" font-size="12" fill="#475569">06:12:01 → 06:12:40 UTC · Evaluated on read</text>
+      <path d="M334,34 L402,34" stroke="#2563eb" stroke-width="2.4" marker-end="url(#s4a)"/>
 
-      <path d="M338,45 L400,45" stroke="#2563eb" stroke-width="2.2" marker-end="url(#s4a)"/>
+      <rect x="405" y="10" width="310" height="48" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.6"/>
+      <text x="423" y="31" font-size="14.5" font-weight="700" fill="#1d4ed8">Checkpoint 2: Joined</text>
+      <text x="423" y="49" font-size="12" fill="#475569">06:18:41 → 06:19:07 UTC · Evaluated post-join</text>
+      <path d="M715,34 L783,34" stroke="#2563eb" stroke-width="2.4" marker-end="url(#s4a)"/>
 
-      <rect x="405" y="14" width="310" height="62" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
-      <text x="423" y="38" font-size="15" font-weight="700" fill="#1d4ed8">Checkpoint 2: Joined</text>
-      <text x="423" y="60" font-size="13" fill="#334155">06:18:41 → 06:19:07 UTC · Evaluated post-join</text>
-
-      <path d="M715,45 L777,45" stroke="#2563eb" stroke-width="2.2" marker-end="url(#s4a)"/>
-
-      <rect x="782" y="14" width="310" height="62" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
-      <text x="800" y="38" font-size="15" font-weight="700" fill="#1d4ed8">Checkpoint 3: Written</text>
-      <text x="800" y="60" font-size="13" fill="#334155">06:20:30 → 06:21:12 UTC · Evaluated on save</text>
+      <rect x="786" y="10" width="310" height="48" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.6"/>
+      <text x="804" y="31" font-size="14.5" font-weight="700" fill="#1d4ed8">Checkpoint 3: Written</text>
+      <text x="804" y="49" font-size="12" fill="#475569">06:20:30 → 06:21:12 UTC · Evaluated on save</text>
     </svg>
 
-    <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:22px;align-items:stretch;flex:1">
+    <!-- 2-column: 5-row x 3-col table + 4 Measures & Full Toolkit -->
+    <div class="grid-2" style="flex:1;align-items:stretch">
       <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
         <div>
-          <div style="font-size:12px;font-weight:700;color:var(--blue-dark);text-transform:uppercase">Sample Dataset (5 Rows × 3 Columns)</div>
-          <div style="font-size:18px;font-weight:700;margin:2px 0 6px">Raw Payment Transactions</div>
-          <p style="font-size:13.5px;color:var(--sub);margin:0 0 10px">
-            Notice Row 5 (<code>TX-105</code>): it is a <code>200.00</code> payment, but its <code>customer_id</code> is <i>null</i> (a guest transaction).
-          </p>
+          <div style="font-size:11.5px;font-weight:700;color:var(--blue);text-transform:uppercase">Sample Dataset (5 Rows × 3 Columns)</div>
+          <div style="font-size:17px;font-weight:700;margin:2px 0 4px">Raw Payment Transactions</div>
+          <p style="font-size:12.8px;color:var(--sub);margin:0 0 8px">Notice Row 5 (<code>TX-105</code>): it is a <code>200.00</code> payment, but its <code>customer_id</code> is <i>null</i> (a guest transaction).</p>
         </div>
         <table>
           <thead>
             <tr>
               <th>Row</th>
-              <th>Col 1: <code>tx_id</code></th>
-              <th>Col 2: <code>customer_id</code></th>
-              <th class="num">Col 3: <code>amount</code></th>
+              <th>Col 1: tx_id</th>
+              <th>Col 2: customer_id</th>
+              <th class="num">Col 3: amount</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>1</td><td class="mono"><b>TX-101</b></td><td class="mono">CUST-01</td><td class="num">1,000.00</td></tr>
-            <tr><td>2</td><td class="mono"><b>TX-102</b></td><td class="mono">CUST-02</td><td class="num">2,500.00</td></tr>
-            <tr><td>3</td><td class="mono"><b>TX-103</b></td><td class="mono">CUST-01</td><td class="num">500.00</td></tr>
-            <tr><td>4</td><td class="mono"><b>TX-104</b></td><td class="mono">CUST-03</td><td class="num">4,000.00</td></tr>
-            <tr class="row-amber"><td>5</td><td class="mono"><b>TX-105</b></td><td><i>null (guest)</i></td><td class="num">200.00</td></tr>
+            <tr><td>1</td><td class="mono"><b>TX-101</b></td><td class="mono">CUST-01</td><td class="num mono">1,000.00</td></tr>
+            <tr><td>2</td><td class="mono"><b>TX-102</b></td><td class="mono">CUST-02</td><td class="num mono">2,500.00</td></tr>
+            <tr><td>3</td><td class="mono"><b>TX-103</b></td><td class="mono">CUST-01</td><td class="num mono">500.00</td></tr>
+            <tr><td>4</td><td class="mono"><b>TX-104</b></td><td class="mono">CUST-03</td><td class="num mono">4,000.00</td></tr>
+            <tr class="row-amber"><td>5</td><td class="mono"><b>TX-105</b></td><td class="mono"><i>null (guest)</i></td><td class="num mono">200.00</td></tr>
           </tbody>
         </table>
       </div>
 
-      <div style="display:flex;flex-direction:column;justify-content:space-between;gap:10px">
-        <div class="card" style="border-left:5px solid var(--blue);padding:12px 16px">
+      <div style="display:flex;flex-direction:column;justify-content:space-between;gap:8px">
+        <div class="card" style="padding:9px 14px;border-left:4px solid var(--blue)">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <b style="font-size:15px">1. Record count — <code>count(*)</code></b>
-            <span class="pill pill-blue" style="font-size:15px">5</span>
+            <b style="font-size:14px">1. Record count — <span class="mono">count(*)</span></b>
+            <span class="pill pill-blue" style="font-size:13px">5</span>
           </div>
-          <div style="font-size:13px;color:var(--sub);margin-top:3px">Counts total records present at the checkpoint.</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px">Detects lost or added records at every checkpoint.</div>
         </div>
 
-        <div class="card" style="border-left:5px solid var(--green);padding:12px 16px">
+        <div class="card" style="padding:9px 14px;border-left:4px solid var(--green)">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <b style="font-size:15px">2. Financial total — <code>sum(amount)</code></b>
-            <span class="pill pill-green" style="font-size:15px">8,200.00</span>
+            <b style="font-size:14px">2. Financial total — <span class="mono">sum(amount)</span></b>
+            <span class="pill pill-green" style="font-size:13px">8,200.00</span>
           </div>
-          <div style="font-size:13px;color:var(--sub);margin-top:3px">1,000 + 2,500 + 500 + 4,000 + 200 = <b>8,200.00</b>.</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px">1,000 + 2,500 + 500 + 4,000 + 200 = <b>8,200.00</b> (with overflow protection).</div>
         </div>
 
-        <div class="card" style="border-left:5px solid var(--teal);padding:12px 16px">
+        <div class="card" style="padding:9px 14px;border-left:4px solid var(--teal)">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <b style="font-size:15px">3. Unique entities — <code>distinctCount(customer_id)</code></b>
-            <span class="pill pill-blue" style="font-size:15px">3</span>
+            <b style="font-size:14px">3. Unique entities — <span class="mono">distinctCount(customer_id)</span></b>
+            <span class="pill pill-blue" style="font-size:13px">3</span>
           </div>
-          <div style="font-size:13px;color:var(--sub);margin-top:3px">3 distinct customers: <code>CUST-01</code>, <code>CUST-02</code>, <code>CUST-03</code>.</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px">3 distinct customers: <code>CUST-01</code>, <code>CUST-02</code>, <code>CUST-03</code> (detects duplicate keys).</div>
         </div>
 
-        <div class="card" style="border-left:5px solid var(--purple);padding:12px 16px">
+        <div class="card" style="padding:9px 14px;border-left:4px solid var(--purple)">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <b style="font-size:15px">4. Key fingerprint — <code>sumOfHashes(tx_id)</code></b>
-            <span class="pill pill-purple mono" style="font-size:14px">#A9F4</span>
+            <b style="font-size:14px">4. Column fingerprint — <span class="mono">sumOfHashes(tx_id)</span></b>
+            <span class="pill pill-purple" style="font-size:13px">#A9F4</span>
           </div>
-          <div style="font-size:13px;color:var(--sub);margin-top:3px">Order-independent sum of hashes across <code>TX-101..TX-105</code>.</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px">Sums CRC32 hashes of every value in the column—changes if even one ID or string changes.</div>
+        </div>
+
+        <div style="background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:11.8px;color:var(--sub)">
+          <b>Full 8-Measure Toolkit:</b> Also includes <code>absSum</code> (debits/credits), <code>truncatedSum</code> &amp; <code>absTruncatedSum</code> (ignoring decimal rounding noise), and <code>Provided</code> trailer figures.
         </div>
       </div>
     </div>
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 4 of 10</span>
+      <span>Slide 6 of 13</span>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 5: SCENARIOS A & B (ROW DROP VS SILENT VALUE ALTERATION)      -->
+  <!-- SLIDE 7: SCENARIOS A & B — ROW LOSS VS. SILENT AMOUNT ALTERATION    -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="Why do we measure four different things instead of just counting rows? Let's look at the first two scenarios on our 5-row table. In Scenario A on the left, guest row TX-105 is dropped during an inner join: record count drops from 5 to 4, sum drops from 8,200 to 8,000, and the hash changes. Now look at Scenario B on the right: all 5 rows arrive and all transaction IDs are intact, so the row count is still 5—but Row 2's amount was corrupted from 2,500 to 2,050. A row-count check completely misses this, whereas Sum of amount immediately catches the 450 discrepancy.">
+  <section class="slide" data-notes="Why do we combine multiple measures instead of just counting rows? Here are Scenarios A and B on our 5-row dataset. In Scenario A, an inner join drops the guest transaction Row 5 because its customer ID is null. Both the row count and the amount sum drop, flagging the excluded row immediately. In Scenario B, all 5 rows arrive and all 5 transaction IDs are intact—so row count stays 5 and the ID hash stays A9F4. However, Row 2's amount was corrupted from 2,500 to 2,050. A row-count check would pass completely blind, while Atum's sum measure immediately catches the minus-450 discrepancy.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 5 / 10 · DATA LOSS &amp; ALTERATION SCENARIOS (PART 1)</span>
+      <span class="s-kicker">SLIDE 7 / 13 · DATA LOSS &amp; ALTERATION SCENARIOS (PART 1)</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
     <h1 class="s-title">How Measures Catch Row Drops vs. Silent Amount Edits</h1>
@@ -684,76 +920,72 @@ th {
 
     <div class="grid-2" style="flex:1">
       <!-- Scenario A -->
-      <div class="card" style="border-top:5px solid var(--amber);display:flex;flex-direction:column;justify-content:space-between">
+      <div class="card" style="border-top:4px solid var(--amber);display:flex;flex-direction:column;justify-content:space-between">
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-weight:700;font-size:18px">Scenario A · Row Loss or Join Filter</span>
+            <b style="font-size:17px">Scenario A · Row Loss or Join Filter</b>
             <span class="pill pill-amber">⚠ Measure Shift</span>
           </div>
-          <p style="font-size:14px;color:var(--sub);margin:0 0 12px">
-            Row 5 (<code>TX-105</code>, guest with <code>customer_id = null</code>) is dropped during an inner join with the customer master table:
-          </p>
+          <p style="font-size:13.5px;color:var(--sub);margin:0 0 10px">Row 5 (<code>TX-105</code>, guest with <code>customer_id = null</code>) is dropped during an inner join with the customer master table:</p>
           <table>
             <thead><tr><th>tx_id</th><th>customer_id</th><th class="num">amount</th></tr></thead>
             <tbody>
-              <tr><td class="mono">TX-101</td><td class="mono">CUST-01</td><td class="num">1,000.00</td></tr>
-              <tr><td class="mono">TX-102</td><td class="mono">CUST-02</td><td class="num">2,500.00</td></tr>
-              <tr><td class="mono">TX-103</td><td class="mono">CUST-01</td><td class="num">500.00</td></tr>
-              <tr><td class="mono">TX-104</td><td class="mono">CUST-03</td><td class="num">4,000.00</td></tr>
-              <tr class="row-strike"><td class="mono">TX-105</td><td>null (dropped)</td><td class="num">200.00</td></tr>
+              <tr><td class="mono">TX-101</td><td class="mono">CUST-01</td><td class="num mono">1,000.00</td></tr>
+              <tr><td class="mono">TX-102</td><td class="mono">CUST-02</td><td class="num mono">2,500.00</td></tr>
+              <tr><td class="mono">TX-103</td><td class="mono">CUST-01</td><td class="num mono">500.00</td></tr>
+              <tr><td class="mono">TX-104</td><td class="mono">CUST-03</td><td class="num mono">4,000.00</td></tr>
+              <tr class="row-strike"><td class="mono">TX-105</td><td class="mono">null (dropped)</td><td class="num mono">200.00</td></tr>
             </tbody>
           </table>
         </div>
-        <div style="background:var(--amber-soft);border:1px solid var(--amber-border);padding:12px 14px;border-radius:8px;font-size:13.5px">
-          • <b>count(*)</b>: <code>5 → 4</code> (<b>−1 row caught</b>)<br>
-          • <b>sum(amount)</b>: <code>8,200.00 → 8,000.00</code> (<b>−200.00 caught</b>)<br>
-          • <b>distinct(customer_id)</b>: <code>3 → 3</code> (All 3 known customers retained)<br>
-          • <b>hash(tx_id)</b>: <code>#A9F4 → #7C12</code> (<b>ID fingerprint shifted</b>)
+        <div style="background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:8px;padding:10px 14px;font-size:13px;line-height:1.55">
+          • <b>count(*):</b> <code>5 → 4</code> <b style="color:var(--amber-dark)">(−1 row caught)</b><br>
+          • <b>sum(amount):</b> <code>8,200.00 → 8,000.00</code> <b style="color:var(--amber-dark)">(−200.00 caught)</b><br>
+          • <b>distinct(customer_id):</b> <code>3 → 3</code> (All 3 known customers retained)<br>
+          • <b>hash(tx_id):</b> <code>#A9F4 → #7C12</code> <b style="color:var(--amber-dark)">(ID fingerprint shifted)</b>
         </div>
       </div>
 
       <!-- Scenario B -->
-      <div class="card" style="border-top:5px solid var(--amber);display:flex;flex-direction:column;justify-content:space-between">
+      <div class="card" style="border-top:4px solid var(--amber);display:flex;flex-direction:column;justify-content:space-between">
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-weight:700;font-size:18px">Scenario B · Silent Amount Alteration</span>
+            <b style="font-size:17px">Scenario B · Silent Amount Alteration</b>
             <span class="pill pill-amber">⚠ Measure Shift</span>
           </div>
-          <p style="font-size:14px;color:var(--sub);margin:0 0 12px">
-            All 5 rows arrive and all <code>tx_id</code> keys are intact, but Row 2's amount is corrupted from <code>2,500.00</code> to <code>2,050.00</code>:
-          </p>
+          <p style="font-size:13.5px;color:var(--sub);margin:0 0 10px">All 5 rows arrive and all <code>tx_id</code> keys are intact, but Row 2's amount is corrupted from <code>2,500.00</code> to <code>2,050.00</code>:</p>
           <table>
             <thead><tr><th>tx_id</th><th>customer_id</th><th class="num">amount</th></tr></thead>
             <tbody>
-              <tr><td class="mono">TX-101</td><td class="mono">CUST-01</td><td class="num">1,000.00</td></tr>
-              <tr class="row-amber"><td class="mono">TX-102</td><td class="mono">CUST-02</td><td class="num">2,050.00 (was 2,500.00)</td></tr>
-              <tr><td class="mono">TX-103</td><td class="mono">CUST-01</td><td class="num">500.00</td></tr>
-              <tr><td class="mono">TX-104</td><td class="mono">CUST-03</td><td class="num">4,000.00</td></tr>
-              <tr><td class="mono">TX-105</td><td>null</td><td class="num">200.00</td></tr>
+              <tr><td class="mono">TX-101</td><td class="mono">CUST-01</td><td class="num mono">1,000.00</td></tr>
+              <tr class="row-amber"><td class="mono">TX-102</td><td class="mono">CUST-02</td><td class="num mono">2,050.00 (was 2,500.00)</td></tr>
+              <tr><td class="mono">TX-103</td><td class="mono">CUST-01</td><td class="num mono">500.00</td></tr>
+              <tr><td class="mono">TX-104</td><td class="mono">CUST-03</td><td class="num mono">4,000.00</td></tr>
+              <tr><td class="mono">TX-105</td><td class="mono">null</td><td class="num mono">200.00</td></tr>
             </tbody>
           </table>
         </div>
-        <div style="background:var(--amber-soft);border:1px solid var(--amber-border);padding:12px 14px;border-radius:8px;font-size:13.5px">
-          • <b>count(*)</b>: <code>5 → 5</code> <span style="color:var(--muted)">(Row count completely misses this!)</span><br>
-          • <b>hash(tx_id)</b>: <code>#A9F4 → #A9F4</code> <span style="color:var(--muted)">(All 5 transaction IDs arrived!)</span><br>
-          • <b>distinct(customer_id)</b>: <code>3 → 3</code><br>
-          • <b>sum(amount)</b>: <code>8,200.00 → 7,750.00</code> (<b>−450.00 caught by Sum!</b>)
+        <div style="background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:8px;padding:10px 14px;font-size:13px;line-height:1.55">
+          • <b>count(*):</b> <code>5 → 5</code> <span style="color:var(--muted)">(Row count completely misses this!)</span><br>
+          • <b>hash(tx_id):</b> <code>#A9F4 → #A9F4</code> <span style="color:var(--muted)">(All 5 transaction IDs arrived!)</span><br>
+          • <b>distinct(customer_id):</b> <code>3 → 3</code><br>
+          • <b>sum(amount):</b> <code>8,200.00 → 7,750.00</code> <b style="color:var(--amber-dark)">(−450.00 caught by Sum!)</b>
         </div>
       </div>
     </div>
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 5 of 10</span>
+      <span>Slide 7 of 13</span>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 6: SCENARIOS C & D (KEY SWAP VS CUSTOMER AGGREGATION)         -->
+  <!-- SLIDE 8: SCENARIOS C & D — KEY SUBSTITUTION VS. SUMMARY ROLLUP      -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="Now look at Scenarios C and D. In Scenario C on the left, 5 rows arrive AND their amounts still add up to 8,200—so both row count and financial sum pass! However, Row 3 (TX-103) was accidentally overwritten by a rogue record TX-999 with the same 500 amount. Only the Hash integrity measure on tx_id catches that the actual record identities changed. Finally, in Scenario D on the right, we aggregate the 4 valid customer payments into 3 customer totals: the row count changes from 4 to 3 as expected, while Distinct customer_id (3) and Sum of amount (8,000) prove that 100% of customers and money were preserved.">
+  <section class="slide" data-notes="Now let's look at Scenarios C and D. In Scenario C, 5 rows arrive and the amounts still total 8,200.00—because Row 3 (TX-103 for 500.00) was accidentally replaced by a different record, TX-999, also for 500.00. Both row count and financial sum pass without noticing, but Atum's sumOfHashes fingerprint on tx_id shifts from A9F4 to E381, catching the substituted record immediately. Conversely, in Scenario D, a downstream summary table aggregates the 4 curated customer payments by customer_id. The row count changes from 4 transactions to 3 customers, while Atum's sum of 8,000.00 and distinct count of 3 customers prove that 100% of the financial value was preserved.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 6 / 10 · DATA LOSS &amp; ALTERATION SCENARIOS (PART 2)</span>
+      <span class="s-kicker">SLIDE 8 / 13 · DATA LOSS &amp; ALTERATION SCENARIOS (PART 2)</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
     <h1 class="s-title">How Measures Catch Key Swaps &amp; Verify Rollups</h1>
@@ -761,424 +993,523 @@ th {
 
     <div class="grid-2" style="flex:1">
       <!-- Scenario C -->
-      <div class="card" style="border-top:5px solid var(--purple);display:flex;flex-direction:column;justify-content:space-between">
+      <div class="card" style="border-top:4px solid var(--purple);display:flex;flex-direction:column;justify-content:space-between">
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-weight:700;font-size:18px">Scenario C · Silent Key / Row Substitution</span>
+            <b style="font-size:17px">Scenario C · Silent Key / Row Substitution</b>
             <span class="pill pill-amber">⚠ Measure Shift</span>
           </div>
-          <p style="font-size:14px;color:var(--sub);margin:0 0 12px">
-            5 rows arrive and the amounts still sum to <code>8,200.00</code>, but Row 3 (<code>TX-103</code>) was replaced by a rogue record <code>TX-999</code> (<code>500.00</code>):
-          </p>
+          <p style="font-size:13.5px;color:var(--sub);margin:0 0 10px">5 rows arrive and the amounts still sum to <code>8,200.00</code>, but Row 3 (<code>TX-103</code>) was replaced by a rogue record <code>TX-999</code> (<code>500.00</code>):</p>
           <table>
             <thead><tr><th>tx_id</th><th>customer_id</th><th class="num">amount</th></tr></thead>
             <tbody>
-              <tr><td class="mono">TX-101</td><td class="mono">CUST-01</td><td class="num">1,000.00</td></tr>
-              <tr><td class="mono">TX-102</td><td class="mono">CUST-02</td><td class="num">2,500.00</td></tr>
-              <tr class="row-amber"><td class="mono">TX-999 (was TX-103)</td><td class="mono">CUST-01</td><td class="num">500.00</td></tr>
-              <tr><td class="mono">TX-104</td><td class="mono">CUST-03</td><td class="num">4,000.00</td></tr>
-              <tr><td class="mono">TX-105</td><td>null</td><td class="num">200.00</td></tr>
+              <tr><td class="mono">TX-101</td><td class="mono">CUST-01</td><td class="num mono">1,000.00</td></tr>
+              <tr><td class="mono">TX-102</td><td class="mono">CUST-02</td><td class="num mono">2,500.00</td></tr>
+              <tr class="row-amber"><td class="mono">TX-999 (was TX-103)</td><td class="mono">CUST-01</td><td class="num mono">500.00</td></tr>
+              <tr><td class="mono">TX-104</td><td class="mono">CUST-03</td><td class="num mono">4,000.00</td></tr>
+              <tr><td class="mono">TX-105</td><td class="mono">null</td><td class="num mono">200.00</td></tr>
             </tbody>
           </table>
         </div>
-        <div style="background:var(--purple-soft);border:1px solid var(--purple-border);padding:12px 14px;border-radius:8px;font-size:13.5px">
-          • <b>count(*)</b>: <code>5 → 5</code> <span style="color:var(--muted)">(Row count misses this!)</span><br>
-          • <b>sum(amount)</b>: <code>8,200.00 → 8,200.00</code> <span style="color:var(--muted)">(Sum also misses this!)</span><br>
-          • <b>distinct(customer_id)</b>: <code>3 → 3</code><br>
-          • <b>hash(tx_id)</b>: <code>#A9F4 → #E381</code> (<b>Caught by Hash Fingerprint!</b>)
+        <div style="background:var(--purple-soft);border:1px solid var(--purple-border);border-radius:8px;padding:10px 14px;font-size:13px;line-height:1.55">
+          • <b>count(*):</b> <code>5 → 5</code> <span style="color:var(--muted)">(Row count misses this!)</span><br>
+          • <b>sum(amount):</b> <code>8,200.00 → 8,200.00</code> <span style="color:var(--muted)">(Sum also misses this!)</span><br>
+          • <b>distinct(customer_id):</b> <code>3 → 3</code><br>
+          • <b>hash(tx_id):</b> <code>#A9F4 → #E381</code> <b style="color:var(--purple)">(Caught by Hash Fingerprint!)</b>
         </div>
       </div>
 
       <!-- Scenario D -->
-      <div class="card" style="border-top:5px solid var(--green);display:flex;flex-direction:column;justify-content:space-between">
+      <div class="card" style="border-top:4px solid var(--green);display:flex;flex-direction:column;justify-content:space-between">
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-weight:700;font-size:18px">Scenario D · Customer Summary Rollup</span>
+            <b style="font-size:17px">Scenario D · Customer Summary Rollup</b>
             <span class="pill pill-green">✓ Value Preserved</span>
           </div>
-          <p style="font-size:14px;color:var(--sub);margin:0 0 12px">
-            A downstream mart groups the 4 curated customer transactions by <code>customer_id</code> (<code>CUST-01</code> combines <code>1,000 + 500 = 1,500</code>):
-          </p>
+          <p style="font-size:13.5px;color:var(--sub);margin:0 0 10px">A downstream mart groups the 4 curated customer transactions by <code>customer_id</code> (<code>CUST-01</code> combines <code>1,000 + 500 = 1,500</code>):</p>
           <table>
             <thead><tr><th>Rollup Grain</th><th>customer_id</th><th class="num">total_amount</th></tr></thead>
             <tbody>
-              <tr class="row-green"><td>2 txns combined</td><td class="mono">CUST-01</td><td class="num">1,500.00</td></tr>
-              <tr><td>1 txn</td><td class="mono">CUST-02</td><td class="num">2,500.00</td></tr>
-              <tr><td>1 txn</td><td class="mono">CUST-03</td><td class="num">4,000.00</td></tr>
+              <tr class="row-green"><td>2 txns combined</td><td class="mono">CUST-01</td><td class="num mono">1,500.00</td></tr>
+              <tr><td>1 txn</td><td class="mono">CUST-02</td><td class="num mono">2,500.00</td></tr>
+              <tr><td>1 txn</td><td class="mono">CUST-03</td><td class="num mono">4,000.00</td></tr>
             </tbody>
           </table>
         </div>
-        <div style="background:var(--green-soft);border:1px solid var(--green-border);padding:12px 14px;border-radius:8px;font-size:13.5px">
-          • <b>count(*)</b>: <code>4 → 3</code> (Expected grain change from transactions to customers)<br>
-          • <b>distinct(customer_id)</b>: <code>3 → 3</code> (<b>✓ 100% of customers preserved</b>)<br>
-          • <b>sum(amount)</b>: <code>8,000.00 → 8,000.00</code> (<b>✓ 100% of money preserved</b>)
+        <div style="background:var(--green-soft);border:1px solid var(--green-border);border-radius:8px;padding:10px 14px;font-size:13px;line-height:1.55">
+          • <b>count(*):</b> <code>4 → 3</code> (Expected grain change from transactions to customers)<br>
+          • <b>distinct(customer_id):</b> <code>3 → 3</code> <b style="color:var(--green-dark)">(✓ 100% of customers preserved)</b><br>
+          • <b>sum(amount):</b> <code>8,000.00 → 8,000.00</code> <b style="color:var(--green-dark)">(✓ 100% of money preserved)</b>
         </div>
       </div>
     </div>
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 6 of 10</span>
+      <span>Slide 8 of 13</span>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 7: CONCEPT 4 — CROSS-SYSTEM BOUNDARY LINKING                  -->
+  <!-- SLIDE 9: CONCEPT 4 — CROSS-SYSTEM LINEAGE & FLOW SAFEGUARDS         -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="How does Atum build a continuous lineage graph across separate applications when there is no single central orchestrator? The secret is boundary reconstruction. When an upstream app writes a table to a Data Catalog like Glue or Hive, that catalog is the integration boundary. When the downstream app loads that table from the catalog, it reconstructs the upstream Partitioning key map and explicitly links its child Partitioning to that upstream parent—either automatically through the Atum Spark Agent or via a direct REST API call.">
+  <section class="slide" data-notes="Concept 4 is Cross-System Lineage and Flows. How do two separate applications—like an Ingestion service and a Curation service—connect their datasets in Atum without talking directly to each other? They meet at a shared integration boundary, such as a data catalog table. When the upstream job writes the table, it registers its Partitioning keys in Atum. When the downstream job loads that table, it reconstructs those exact same parent keys from the catalog metadata and links its new child partitioning to the parent. Atum also enforces built-in safeguards: rejecting loops, protecting historical lineage once descendants exist, and allowing child datasets to automatically inherit their parent's measures.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 7 / 10 · CONCEPT 4: CROSS-SYSTEM LINEAGE LINKING</span>
+      <span class="s-kicker">SLIDE 9 / 13 · CONCEPT 4: CROSS-SYSTEM LINEAGE &amp; FLOWS</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
-    <h1 class="s-title">Concept 4: Linking Lineage Across System Boundaries</h1>
-    <p class="s-lead">Downstream systems reconstruct the upstream Partitioning keys at the integration boundary and register an explicit Parent → Child link.</p>
+    <h1 class="s-title">Concept 4: Linking Lineage &amp; Flows Across Boundaries</h1>
+    <p class="s-lead">Downstream systems reconstruct upstream Partitioning keys at the integration boundary to link Parent → Child datasets into Flows.</p>
 
-    <svg width="100%" viewBox="0 0 1120 310" style="display:block;background:#f8fafc;border:1.5px solid var(--line);border-radius:12px">
-      <defs>
-        <marker id="s7b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-          <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
-        </marker>
-        <marker id="s7t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-          <path d="M0,0 L10,5 L0,10 z" fill="#0d9488"/>
-        </marker>
-      </defs>
+    <div class="card-soft" style="padding:14px 20px">
+      <svg width="100%" viewBox="0 0 1120 225" style="display:block;background:#fff;border:1px solid var(--line);border-radius:10px">
+        <defs>
+          <marker id="s7t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/>
+          </marker>
+          <marker id="s7b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+          </marker>
+        </defs>
 
-      <!-- Upstream System -->
-      <rect x="30" y="24" width="320" height="145" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
-      <text x="50" y="54" font-size="17" font-weight="700" fill="#1d4ed8">1. Upstream App (Ingestion)</text>
-      <text x="50" y="78" font-size="14" fill="#334155">Registers Parent Partitioning:</text>
-      <rect x="46" y="90" width="288" height="62" rx="7" fill="#fff" stroke="#bfdbfe"/>
-      <text x="60" y="114" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" fill="#0f172a">catalog_path = <tspan font-weight="700">raw.payments</tspan></text>
-      <text x="60" y="138" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" fill="#0f172a">info_date    = <tspan font-weight="700">2026-11-11</tspan></text>
+        <!-- Upstream -->
+        <rect x="24" y="16" width="320" height="114" rx="10" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.8"/>
+        <text x="42" y="42" font-size="15.5" font-weight="700" fill="#1d4ed8">1. Upstream App (Ingestion)</text>
+        <text x="42" y="61" font-size="12.5" fill="#475569">Registers Parent Partitioning:</text>
+        <rect x="42" y="70" width="284" height="46" rx="6" fill="#fff" stroke="#cbd5e1"/>
+        <text x="54" y="90" font-family="Ubuntu Sans Mono,monospace" font-size="13" fill="#0f172a">catalog_path = <tspan font-weight="700">raw.payments</tspan></text>
+        <text x="54" y="108" font-family="Ubuntu Sans Mono,monospace" font-size="13" fill="#0f172a">info_date = <tspan font-weight="700">2026-11-11</tspan></text>
 
-      <!-- Integration Boundary -->
-      <rect x="420" y="42" width="280" height="110" rx="10" fill="#f0fdfa" stroke="#5eead4" stroke-width="2"/>
-      <text x="560" y="74" text-anchor="middle" font-size="17" font-weight="700" fill="#0f766e">2. Integration Boundary</text>
-      <text x="560" y="100" text-anchor="middle" font-size="15" font-weight="600" fill="#0f172a">Data Catalog (Glue / Hive)</text>
-      <text x="560" y="124" text-anchor="middle" font-size="13.5" fill="#475569">Table: raw.payments (2026-11-11)</text>
+        <path d="M344,73 L416,73" stroke="#0f766e" stroke-width="2.4" marker-end="url(#s7t)"/>
 
-      <path d="M350,96 L414,96" stroke="#0d9488" stroke-width="2.5" marker-end="url(#s7t)"/>
-      <path d="M700,96 L764,96" stroke="#0d9488" stroke-width="2.5" marker-end="url(#s7t)"/>
+        <!-- Boundary -->
+        <rect x="420" y="26" width="280" height="94" rx="10" fill="#f0fdfa" stroke="#2dd4bf" stroke-width="2"/>
+        <text x="560" y="54" text-anchor="middle" font-size="15.5" font-weight="700" fill="#0f766e">2. Integration Boundary</text>
+        <text x="560" y="76" text-anchor="middle" font-size="13.5" font-weight="700" fill="#0f172a">Data Catalog (Glue / Hive)</text>
+        <text x="560" y="98" text-anchor="middle" font-size="12.5" fill="#475569">Table: raw.payments (2026-11-11)</text>
 
-      <!-- Downstream System -->
-      <rect x="770" y="24" width="320" height="145" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
-      <text x="790" y="54" font-size="17" font-weight="700" fill="#1d4ed8">3. Downstream App (Curation)</text>
-      <text x="790" y="78" font-size="14" fill="#334155">Loads catalog table &amp; creates Child:</text>
-      <rect x="786" y="90" width="288" height="62" rx="7" fill="#fff" stroke="#bfdbfe"/>
-      <text x="800" y="114" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" fill="#0f172a">catalog_path = <tspan font-weight="700">cur.payments</tspan></text>
-      <text x="800" y="138" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" fill="#0f172a">info_date    = <tspan font-weight="700">2026-11-11</tspan></text>
+        <path d="M700,73 L772,73" stroke="#0f766e" stroke-width="2.4" marker-end="url(#s7t)"/>
 
-      <!-- Atum Service Bottom Box -->
-      <rect x="200" y="216" width="720" height="74" rx="10" fill="#0f172a"/>
-      <text x="560" y="246" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">Atum Service · Directed Lineage Edge Recorded</text>
-      <text x="560" y="272" text-anchor="middle" font-family="Ubuntu Sans Mono,monospace" font-size="14.5" fill="#93c5fd">Parent (raw.payments, 2026-11-11)   ───►   Child (cur.payments, 2026-11-11)</text>
+        <!-- Downstream -->
+        <rect x="776" y="16" width="320" height="114" rx="10" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.8"/>
+        <text x="794" y="42" font-size="15.5" font-weight="700" fill="#1d4ed8">3. Downstream App (Curation)</text>
+        <text x="794" y="61" font-size="12.5" fill="#475569">Loads catalog table &amp; creates Child:</text>
+        <rect x="794" y="70" width="284" height="46" rx="6" fill="#fff" stroke="#cbd5e1"/>
+        <text x="806" y="90" font-family="Ubuntu Sans Mono,monospace" font-size="13" fill="#0f172a">catalog_path = <tspan font-weight="700">cur.payments</tspan></text>
+        <text x="806" y="108" font-family="Ubuntu Sans Mono,monospace" font-size="13" fill="#0f172a">info_date = <tspan font-weight="700">2026-11-11</tspan></text>
 
-      <path d="M190,169 L290,213" stroke="#2563eb" stroke-width="2.2" fill="none" marker-end="url(#s7b)"/>
-      <text x="175" y="198" font-size="13" font-weight="700" fill="#1d4ed8">1. Registers Parent</text>
+        <!-- Central Atum Box -->
+        <rect x="200" y="156" width="720" height="54" rx="10" fill="#0f172a"/>
+        <text x="560" y="179" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">Atum Service · Directed Lineage Edge &amp; Flow Recorded</text>
+        <text x="560" y="199" text-anchor="middle" font-family="Ubuntu Sans Mono,monospace" font-size="13" fill="#93c5fd">Parent (raw.payments, 2026-11-11) ───► Child (cur.payments, 2026-11-11)</text>
 
-      <path d="M930,169 L830,213" stroke="#2563eb" stroke-width="2.2" fill="none" marker-end="url(#s7b)"/>
-      <text x="780" y="198" font-size="13" font-weight="700" fill="#1d4ed8">2. Reconstructs Parent keys &amp; links Child</text>
-    </svg>
+        <path d="M184,130 L280,156" stroke="#2563eb" stroke-width="2.2" marker-end="url(#s7b)"/>
+        <text x="205" y="148" text-anchor="middle" font-size="12" font-weight="700" fill="#1d4ed8">1. Registers Parent</text>
 
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title"><span class="num-dot">A</span> Spark Pipelines: Automated via Atum Agent</div>
-        <div style="font-size:14px;color:var(--sub)">
-          When a Spark job loads a catalog table, the embedded <b>Atum Agent</b> reconstructs the parent keys and links the child partitioning automatically.
-        </div>
+        <path d="M936,130 L840,156" stroke="#2563eb" stroke-width="2.2" marker-end="url(#s7b)"/>
+        <text x="900" y="148" text-anchor="middle" font-size="12" font-weight="700" fill="#1d4ed8">2. Links Child to Parent(s)</text>
+      </svg>
+    </div>
+
+    <div class="grid-3" style="flex:1">
+      <div class="card" style="padding:12px 15px">
+        <div class="card-title" style="font-size:14.5px"><span class="num-dot">A</span> Multi-Parent Joins &amp; Splits</div>
+        <p style="font-size:12.8px;color:var(--sub);margin:0;line-height:1.42">A dataset built from several sources links to <b>multiple parents</b> in one step; regional or business-unit splits create multiple child datasets from one parent.</p>
       </div>
-      <div class="card">
-        <div class="card-title"><span class="num-dot">B</span> Non-Spark Systems: Direct REST API POST</div>
-        <div style="font-size:14px;color:var(--sub)">
-          Systems without Spark/Scala (Mainframe bridges, Python/SQL services) send an HTTP <code>POST</code> directly to Atum Server with their keys, parent keys, and checkpoints.
-        </div>
+      <div class="card" style="padding:12px 15px">
+        <div class="card-title" style="font-size:14.5px"><span class="num-dot" style="background:var(--teal)">B</span> Built-In Graph Safeguards</div>
+        <p style="font-size:12.8px;color:var(--sub);margin:0;line-height:1.42">Atum Server automatically <b>rejects circular loops</b>, prevents rewriting parent history once descendants exist, and makes re-runs with the same parents safe and idempotent.</p>
+      </div>
+      <div class="card" style="padding:12px 15px">
+        <div class="card-title" style="font-size:14.5px"><span class="num-dot" style="background:var(--purple)">C</span> Optional Measure Inheritance</div>
+        <p style="font-size:12.8px;color:var(--sub);margin:0;line-height:1.42">A newly created child partitioning can automatically <b>inherit its parent's control measures</b>, continuing the exact same completeness and hash checks downstream.</p>
       </div>
     </div>
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 7 of 10</span>
+      <span>Slide 9 of 13</span>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 8: END-TO-END MULTI-SYSTEM LINEAGE DIAGRAM                    -->
+  <!-- SLIDE 10: END-TO-END TRACE — MAINFRAME → INGESTION → CURATION       -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="Now let's put everything together and watch our 5-row payment dataset travel across all three systems: Mainframe (2 checkpoints), Ingestion (2 checkpoints), and Curation (3 checkpoints), where it is joined with CRM Customers and ISO Countries. Notice the two green equals signs at the system boundaries: they prove that 100% of the data written by Mainframe arrived at Ingestion, and 100% of the data written by Ingestion arrived at Curation Input. The change from 5 rows to 4 rows happened strictly between Curation Checkpoint 1 and Checkpoint 2.">
+  <section class="slide" data-notes="Now let's put all four concepts together in an end-to-end trace across three systems: a Mainframe System, an Ingestion System, and a Curation System—plus two lookup datasets. First, the Mainframe closes its ledger at Checkpoint 1 and writes an SFTP extract at Checkpoint 2: both measure 5 rows and 8,200. Second, Ingestion lands the file at Checkpoint 1 and writes the raw catalog table at Checkpoint 2: the handoff badge is green equals, confirming zero transit loss. Third, Curation reads the raw table at Checkpoint 1 (still 5 rows and 8,200), joins it with CRM Customers and ISO Countries at Checkpoint 2 where the guest transaction TX-105 is excluded (shifting to 4 rows and 8,000), and writes the curated output at Checkpoint 3.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 8 / 10 · END-TO-END MULTI-SYSTEM WALKTHROUGH</span>
+      <span class="s-kicker">SLIDE 10 / 13 · END-TO-END MULTI-SYSTEM WALKTHROUGH</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
     <h1 class="s-title">End-to-End Trace: Mainframe → Ingestion → Curation</h1>
     <p class="s-lead">Tracing our 5-row payment dataset across 3 systems, 2 lookup datasets, and 7 checkpoints.</p>
 
-    <svg width="100%" viewBox="0 0 1120 390" style="display:block;background:#fff;border:1.5px solid var(--line);border-radius:12px">
-      <defs>
-        <marker id="s8a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-          <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
-        </marker>
-      </defs>
+    <div class="card-soft" style="padding:12px 16px;flex:1;display:flex;flex-direction:column;justify-content:space-between">
+      <svg width="100%" viewBox="0 0 1120 355" style="display:block;background:#fff;border:1px solid var(--line);border-radius:10px">
+        <defs>
+          <marker id="s8b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+          </marker>
+        </defs>
 
-      <!-- 1. MAINFRAME -->
-      <rect x="24" y="20" width="305" height="250" rx="10" fill="#f8fafc" stroke="#93c5fd" stroke-width="2"/>
-      <text x="44" y="50" font-size="17" font-weight="700" fill="#1d4ed8">1. Mainframe System</text>
-      <text x="44" y="70" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#64748b">feed=payments_eod · 2026-11-11</text>
+        <!-- 1. Mainframe System -->
+        <rect x="18" y="14" width="305" height="238" rx="10" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.8"/>
+        <text x="34" y="39" font-size="16" font-weight="700" fill="#1d4ed8">1. Mainframe System</text>
+        <text x="34" y="57" font-family="Ubuntu Sans Mono,monospace" font-size="12" fill="#475569">feed=payments_eod · 2026-11-11</text>
 
-      <rect x="40" y="86" width="273" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
-      <text x="54" y="112" font-size="14.5" font-weight="700">CP 1: Ledger Close</text>
-      <text x="54" y="138" font-size="13.5" fill="#334155">count=5 · sum=8,200 · hash=#A9F4</text>
+        <rect x="32" y="72" width="277" height="72" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.4"/>
+        <text x="46" y="95" font-size="13.5" font-weight="700" fill="#0f172a">CP 1: Ledger Close</text>
+        <text x="46" y="118" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#334155">count=5 · sum=8,200 · hash=#A9F4</text>
 
-      <rect x="40" y="176" width="273" height="74" rx="7" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
-      <text x="54" y="202" font-size="14.5" font-weight="700" fill="#15803d">CP 2: SFTP Extract (✓ Consistent)</text>
-      <text x="54" y="228" font-size="13.5" fill="#15803d">count=5 · sum=8,200 · hash=#A9F4</text>
+        <rect x="32" y="160" width="277" height="74" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.6"/>
+        <text x="46" y="183" font-size="13.5" font-weight="700" fill="#166534">CP 2: SFTP Extract (✓ Consistent)</text>
+        <text x="46" y="206" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#15803d">count=5 · sum=8,200 · hash=#A9F4</text>
 
-      <!-- Handoff 1 -->
-      <path d="M329,213 C368,213 358,122 398,122" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#s8a)"/>
-      <circle cx="364" cy="167" r="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
-      <text x="364" y="172" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">=</text>
+        <!-- Handoff 1 -->
+        <path d="M309,197 C344,197 344,108 380,108" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#s8b)"/>
+        <circle cx="350" cy="152" r="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+        <text x="350" y="157" text-anchor="middle" font-size="15" font-weight="700" fill="#166534">=</text>
 
-      <!-- 2. INGESTION -->
-      <rect x="404" y="20" width="305" height="250" rx="10" fill="#f8fafc" stroke="#93c5fd" stroke-width="2"/>
-      <text x="424" y="50" font-size="17" font-weight="700" fill="#1d4ed8">2. Ingestion System (AqueDuct)</text>
-      <text x="424" y="70" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#64748b">raw.core_payments · 2026-11-11</text>
+        <!-- 2. Ingestion System -->
+        <rect x="384" y="14" width="305" height="238" rx="10" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.8"/>
+        <text x="400" y="39" font-size="16" font-weight="700" fill="#1d4ed8">2. Ingestion System (AqueDuct)</text>
+        <text x="400" y="57" font-family="Ubuntu Sans Mono,monospace" font-size="12" fill="#475569">raw.core_payments · 2026-11-11</text>
 
-      <rect x="420" y="86" width="273" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
-      <text x="434" y="112" font-size="14.5" font-weight="700">CP 1: Feed Landed</text>
-      <text x="434" y="138" font-size="13.5" fill="#334155">count=5 · sum=8,200 · hash=#A9F4</text>
+        <rect x="398" y="72" width="277" height="72" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.4"/>
+        <text x="412" y="95" font-size="13.5" font-weight="700" fill="#0f172a">CP 1: Feed Landed</text>
+        <text x="412" y="118" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#334155">count=5 · sum=8,200 · hash=#A9F4</text>
 
-      <rect x="420" y="176" width="273" height="74" rx="7" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
-      <text x="434" y="202" font-size="14.5" font-weight="700" fill="#15803d">CP 2: Catalog Written (✓ Consistent)</text>
-      <text x="434" y="228" font-size="13.5" fill="#15803d">count=5 · sum=8,200 · hash=#A9F4</text>
+        <rect x="398" y="160" width="277" height="74" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.6"/>
+        <text x="412" y="183" font-size="13.5" font-weight="700" fill="#166534">CP 2: Catalog Written (✓ Consistent)</text>
+        <text x="412" y="206" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#15803d">count=5 · sum=8,200 · hash=#A9F4</text>
 
-      <!-- Lookup / Reference inputs -->
-      <rect x="24" y="290" width="305" height="78" rx="9" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
-      <text x="44" y="320" font-size="15" font-weight="700" fill="#0f172a">RefData · ISO Countries (2026-Q4)</text>
-      <text x="44" y="346" font-size="13.5" fill="#475569">CP 1: Published · count = 249 countries</text>
+        <!-- Handoff 2 -->
+        <path d="M675,197 C710,197 710,108 746,108" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#s8b)"/>
+        <circle cx="716" cy="152" r="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+        <text x="716" y="157" text-anchor="middle" font-size="15" font-weight="700" fill="#166534">=</text>
 
-      <rect x="404" y="290" width="305" height="78" rx="9" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
-      <text x="424" y="320" font-size="15" font-weight="700" fill="#0f172a">Ingestion · CRM Customers (Raw)</text>
-      <text x="424" y="346" font-size="13.5" fill="#475569">CP 1: Written · count = 3 customers</text>
+        <!-- Lookup Nodes (Bottom Left & Middle) -->
+        <rect x="18" y="268" width="305" height="72" rx="9" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="34" y="293" font-size="14" font-weight="700" fill="#0f172a">RefData · ISO Countries (2026-Q4)</text>
+        <text x="34" y="317" font-size="12.5" fill="#475569">CP 1: Published · count = 249 countries</text>
 
-      <!-- Handoff 2 + Lookup edges -->
-      <path d="M709,213 C748,213 738,122 778,122" stroke="#2563eb" stroke-width="2.5" fill="none" marker-end="url(#s8a)"/>
-      <circle cx="744" cy="167" r="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
-      <text x="744" y="172" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">=</text>
+        <rect x="384" y="268" width="305" height="72" rx="9" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="400" y="293" font-size="14" font-weight="700" fill="#0f172a">Ingestion · CRM Customers (Raw)</text>
+        <text x="400" y="317" font-size="12.5" fill="#475569">CP 1: Written · count = 3 customers</text>
 
-      <path d="M709,329 C745,329 745,222 778,222" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#s8a)"/>
-      <path d="M329,329 C370,382 735,382 778,236" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#s8a)"/>
+        <path d="M689,304 C724,304 724,200 746,200" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#s8b)"/>
+        <path d="M323,322 C540,360 715,345 746,214" fill="none" stroke="#2563eb" stroke-width="1.8" marker-end="url(#s8b)"/>
 
-      <!-- 3. CURATION -->
-      <rect x="784" y="20" width="312" height="348" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="2.2"/>
-      <text x="804" y="50" font-size="17" font-weight="700" fill="#b45309">3. Curation System (Unify)</text>
-      <text x="804" y="70" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#78350f">curated.customer_payments · 2026-11-11</text>
+        <!-- 3. Curation System -->
+        <rect x="750" y="14" width="352" height="326" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="2.2"/>
+        <text x="768" y="39" font-size="16" font-weight="700" fill="#b45309">3. Curation System (Unify)</text>
+        <text x="768" y="57" font-family="Ubuntu Sans Mono,monospace" font-size="12" fill="#78350f">curated.customer_payments · 2026-11-11</text>
 
-      <rect x="800" y="86" width="280" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
-      <text x="814" y="112" font-size="14.5" font-weight="700">CP 1: Catalog Input</text>
-      <text x="814" y="138" font-size="13.5" fill="#15803d">count=5 · sum=8,200 · hash=#A9F4</text>
+        <rect x="766" y="72" width="320" height="72" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.4"/>
+        <text x="780" y="95" font-size="13.5" font-weight="700" fill="#0f172a">CP 1: Catalog Input</text>
+        <text x="780" y="118" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#15803d">count=5 · sum=8,200 · hash=#A9F4</text>
 
-      <rect x="800" y="176" width="280" height="86" rx="7" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
-      <text x="814" y="202" font-size="14.5" font-weight="700" fill="#b45309">CP 2: Joined (⚠ Measure Shift)</text>
-      <text x="814" y="226" font-size="13.5" font-weight="700" fill="#b45309">count=4 (−1) · sum=8,000 (−200)</text>
-      <text x="814" y="247" font-size="12.5" fill="#92400e">Guest row TX-105 excluded · hash=#7C12</text>
+        <rect x="766" y="158" width="320" height="82" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+        <text x="780" y="181" font-size="13.5" font-weight="700" fill="#92400e">CP 2: Joined (⚠ Measure Shift)</text>
+        <text x="780" y="203" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" font-weight="700" fill="#b45309">count=4 (−1) · sum=8,000 (−200)</text>
+        <text x="780" y="224" font-size="12" fill="#92400e">Guest row TX-105 excluded · hash=#7C12</text>
 
-      <rect x="800" y="280" width="280" height="72" rx="7" fill="#fff" stroke="#cbd5e1"/>
-      <text x="814" y="306" font-size="14.5" font-weight="700">CP 3: Curated Written</text>
-      <text x="814" y="332" font-size="13.5" fill="#334155">count=4 · sum=8,000 · hash=#7C12</text>
-    </svg>
+        <rect x="766" y="254" width="320" height="70" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.4"/>
+        <text x="780" y="277" font-size="13.5" font-weight="700" fill="#0f172a">CP 3: Curated Written</text>
+        <text x="780" y="300" font-family="Ubuntu Sans Mono,monospace" font-size="12.5" fill="#334155">count=4 · sum=8,000 · hash=#7C12</text>
+      </svg>
+    </div>
 
     <div class="grid-2">
-      <div class="card-soft" style="background:var(--green-soft);border-color:var(--green-border);padding:10px 16px">
-        <b>1. Cross-System Handoff Check (<code>Parent Last == Child First</code>):</b> Both boundary handoffs match 100% (<code>=</code>). Zero data was lost between systems.
+      <div style="background:var(--green-soft);border:1px solid var(--green-border);border-radius:8px;padding:8px 14px;font-size:13px">
+        <b style="color:var(--green-dark)">1. Cross-System Handoff Check (<code>Parent Last == Child First</code>):</b> Both boundary handoffs match 100% (<code>=</code>). Zero data was lost between systems.
       </div>
-      <div class="card-soft" style="background:var(--amber-soft);border-color:var(--amber-border);padding:10px 16px">
-        <b>2. Internal Progression Check (<code>CP i-1 → CP i</code>):</b> Pinpoints the exact step (Curation <code>CP 2: Joined</code>) where <code>TX-105</code> (<code>−200.00</code>) was excluded.
+      <div style="background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:8px;padding:8px 14px;font-size:13px">
+        <b style="color:var(--amber-dark)">2. Internal Progression Check (<code>CP i-1 → CP i</code>):</b> Pinpoints the exact step (Curation <code>CP 2: Joined</code>) where <code>TX-105</code> (<code>−200.00</code>) was excluded.
       </div>
     </div>
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 8 of 10</span>
+      <span>Slide 10 of 13</span>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 9: COMPLETE 7-CHECKPOINT RECONCILIATION MATRIX                -->
+  <!-- SLIDE 11: COMPLETE 7-CHECKPOINT RECONCILIATION TRAIL                -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="When we view all 7 checkpoints across the 3 systems in a single reconciliation table, the entire story is clear at a glance. From Mainframe Ledger Close through Mainframe Extract, Ingestion Feed Landed, Ingestion Catalog Written, and Curation Catalog Input, every single measure stays at 5 rows, 8,200 amount, 3 distinct customers, and hash A9F4. Only at Curation Checkpoint 2 (Joined) does the count shift to 4 and the amount to 8,000, which is then written unchanged at Checkpoint 3.">
+  <section class="slide" data-notes="This reconciliation table summarizes all seven checkpoints across the three systems in a single continuous audit trail. You can see every control measure side-by-side from the Mainframe Ledger Close all the way to the Curated Catalog Write, proving that both cross-system handoffs lost zero rows and documenting the exact step where the guest transaction was filtered.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 9 / 10 · END-TO-END RECONCILIATION TRAIL</span>
+      <span class="s-kicker">SLIDE 11 / 13 · END-TO-END RECONCILIATION TRAIL</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
     <h1 class="s-title">The Complete 7-Checkpoint Reconciliation Trail</h1>
     <p class="s-lead">Every step from Mainframe source extract to Curated catalog output in one continuous audit trail.</p>
 
-    <table style="font-size:15px;flex:1">
-      <thead>
-        <tr>
-          <th>System &amp; Partitioning</th>
-          <th>Checkpoint Step</th>
-          <th class="num">count(*)</th>
-          <th class="num">sum(amount)</th>
-          <th class="num">distinct(customer_id)</th>
-          <th class="num">hash(tx_id)</th>
-          <th>What Atum Proves at This Step</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td rowspan="2"><b>1. Mainframe System</b><br><span class="mono" style="color:var(--muted)">feed=payments_eod</span></td>
-          <td><b>CP 1: Ledger Close</b></td>
-          <td class="num">5</td>
-          <td class="num">8,200.00</td>
-          <td class="num">3</td>
-          <td class="num mono">#A9F4</td>
-          <td>Originating baseline measurement</td>
-        </tr>
-        <tr>
-          <td><b>CP 2: SFTP Extract</b></td>
-          <td class="num">5</td>
-          <td class="num">8,200.00</td>
-          <td class="num">3</td>
-          <td class="num mono">#A9F4</td>
-          <td><span class="pill pill-green">✓ Consistent</span> Extract matches ledger 100%</td>
-        </tr>
-        <tr>
-          <td rowspan="2"><b>2. Ingestion System</b><br><span class="mono" style="color:var(--muted)">raw.core_payments</span></td>
-          <td><b>CP 1: Feed Landed</b></td>
-          <td class="num">5</td>
-          <td class="num">8,200.00</td>
-          <td class="num">3</td>
-          <td class="num mono">#A9F4</td>
-          <td><span class="pill pill-green">= Handoff Match</span> 0 rows lost from Mainframe</td>
-        </tr>
-        <tr>
-          <td><b>CP 2: Catalog Written</b></td>
-          <td class="num">5</td>
-          <td class="num">8,200.00</td>
-          <td class="num">3</td>
-          <td class="num mono">#A9F4</td>
-          <td><span class="pill pill-green">✓ Consistent</span> Raw write matches landed feed</td>
-        </tr>
-        <tr>
-          <td rowspan="3"><b>3. Curation System</b><br><span class="mono" style="color:var(--muted)">curated.customer_payments</span></td>
-          <td><b>CP 1: Catalog Input</b></td>
-          <td class="num">5</td>
-          <td class="num">8,200.00</td>
-          <td class="num">3</td>
-          <td class="num mono">#A9F4</td>
-          <td><span class="pill pill-green">= Handoff Match</span> 0 rows lost from Ingestion</td>
-        </tr>
-        <tr class="row-amber">
-          <td><b>CP 2: Joined</b></td>
-          <td class="num">4 (−1)</td>
-          <td class="num">8,000.00 (−200.00)</td>
-          <td class="num">3</td>
-          <td class="num mono">#7C12</td>
-          <td><span class="pill pill-amber">⚠ Measure Shift</span> Guest row TX-105 excluded</td>
-        </tr>
-        <tr>
-          <td><b>CP 3: Curated Written</b></td>
-          <td class="num">4</td>
-          <td class="num">8,000.00</td>
-          <td class="num">3</td>
-          <td class="num mono">#7C12</td>
-          <td><span class="pill pill-green">✓ Consistent</span> Final write matches Joined step</td>
-        </tr>
-      </tbody>
-    </table>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <table>
+        <thead>
+          <tr>
+            <th>System &amp; Partitioning</th>
+            <th>Checkpoint Step</th>
+            <th class="num">count(*)</th>
+            <th class="num">sum(amount)</th>
+            <th class="num">distinct(customer_id)</th>
+            <th class="num">hash(tx_id)</th>
+            <th>What Atum Proves at This Step</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td rowspan="2"><b>1. Mainframe System</b><br><span class="mono" style="color:var(--muted);font-size:12px">feed=payments_eod</span></td>
+            <td><b>CP 1: Ledger Close</b></td>
+            <td class="num mono">5</td>
+            <td class="num mono">8,200.00</td>
+            <td class="num mono">3</td>
+            <td class="num mono">#A9F4</td>
+            <td>Originating baseline measurement</td>
+          </tr>
+          <tr>
+            <td><b>CP 2: SFTP Extract</b></td>
+            <td class="num mono">5</td>
+            <td class="num mono">8,200.00</td>
+            <td class="num mono">3</td>
+            <td class="num mono">#A9F4</td>
+            <td><span class="pill pill-green">✓ Consistent</span> Extract matches ledger 100%</td>
+          </tr>
+          <tr>
+            <td rowspan="2"><b>2. Ingestion System</b><br><span class="mono" style="color:var(--muted);font-size:12px">raw.core_payments</span></td>
+            <td><b>CP 1: Feed Landed</b></td>
+            <td class="num mono">5</td>
+            <td class="num mono">8,200.00</td>
+            <td class="num mono">3</td>
+            <td class="num mono">#A9F4</td>
+            <td><span class="pill pill-green">= Handoff Match</span> 0 rows lost from Mainframe</td>
+          </tr>
+          <tr>
+            <td><b>CP 2: Catalog Written</b></td>
+            <td class="num mono">5</td>
+            <td class="num mono">8,200.00</td>
+            <td class="num mono">3</td>
+            <td class="num mono">#A9F4</td>
+            <td><span class="pill pill-green">✓ Consistent</span> Raw write matches landed feed</td>
+          </tr>
+          <tr>
+            <td rowspan="3"><b>3. Curation System</b><br><span class="mono" style="color:var(--muted);font-size:12px">curated.customer_payments</span></td>
+            <td><b>CP 1: Catalog Input</b></td>
+            <td class="num mono">5</td>
+            <td class="num mono">8,200.00</td>
+            <td class="num mono">3</td>
+            <td class="num mono">#A9F4</td>
+            <td><span class="pill pill-green">= Handoff Match</span> 0 rows lost from Ingestion</td>
+          </tr>
+          <tr class="row-amber">
+            <td><b>CP 2: Joined</b></td>
+            <td class="num mono">4 (−1)</td>
+            <td class="num mono">8,000.00 (−200.00)</td>
+            <td class="num mono">3</td>
+            <td class="num mono">#7C12</td>
+            <td><span class="pill pill-amber">⚠ Measure Shift</span> Guest row TX-105 excluded</td>
+          </tr>
+          <tr>
+            <td><b>CP 3: Curated Written</b></td>
+            <td class="num mono">4</td>
+            <td class="num mono">8,000.00</td>
+            <td class="num mono">3</td>
+            <td class="num mono">#7C12</td>
+            <td><span class="pill pill-green">✓ Consistent</span> Final write matches Joined step</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 9 of 10</span>
+      <span>Slide 11 of 13</span>
     </div>
   </section>
 
   <!-- =================================================================== -->
-  <!-- SLIDE 10: CONSUMPTION & QUERY MECHANISMS                            -->
+  <!-- SLIDE 12: HOW TO ONBOARD ONTO ATUM (LIGHTWEIGHT 4-STEP ADOPTION)    -->
   <!-- =================================================================== -->
-  <section class="slide" data-notes="Finally, once systems report their partitionings, checkpoints, control measures, and parent links to Atum, how do analysts and auditors query that information? Atum provides three main consumption mechanisms: first, searching datasets by any subset of partitioning keys or within a reproducible checkpoint time window; second, traversing the lineage graph upstream, downstream, or in both directions; and third, comparing historical trends across days by simply dropping the date key from a partitioning's key map.">
+  <section class="slide" data-notes="How does a team onboard onto Atum? Adoption is intentionally lightweight—a few lines in an existing Spark job are enough to start, without changing how your transformations work. Step 1: add the atum-agent library from Maven Central and set the dispatcher URL in application.conf—using http for Atum Server, console for local development, or capture for unit tests. Step 2: define your ordered AtumPartitions label and obtain an AtumContext. Step 3: register your control measures—which Atum remembers centrally and restores automatically on future runs. Step 4: call createCheckpoint inline on any Spark DataFrame at key milestones.">
     <div class="s-head">
-      <span class="s-kicker">SLIDE 10 / 10 · CONSUMPTION &amp; AUDIT MECHANISMS</span>
+      <span class="s-kicker">SLIDE 12 / 13 · ONBOARDING GUIDE</span>
+      <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
+    </div>
+    <h1 class="s-title">How to Onboard Onto Atum in 4 Lightweight Steps</h1>
+    <p class="s-lead">Plug Atum Agent into an existing Apache Spark job (Spark 3.5 / 4.0) with a few lines of code—zero change to how your pipeline runs.</p>
+
+    <div class="grid-2" style="flex:1">
+      <!-- Step 1 -->
+      <div class="card" style="padding:12px 15px;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div class="card-title" style="font-size:14.8px"><span class="num-dot">1</span> Add Dependency &amp; Configure Dispatcher</div>
+          <p style="font-size:12.5px;color:var(--sub);margin:0 0 7px">Add <code>atum-agent-spark3</code> (or <code>spark4</code>) from Maven Central and configure <code>application.conf</code>:</p>
+        </div>
+        <div class="code-box">
+          <span class="code-cm">// build.sbt (Maven Central: za.co.absa.atum-service)</span><br>
+          libraryDependencies += <span class="code-str">"za.co.absa.atum-service"</span> %% <span class="code-str">"atum-agent-spark3"</span> % <span class="code-str">"&lt;ver&gt;"</span><br>
+          <span class="code-cm"># application.conf — modes: "http" | "console" | "capture"</span><br>
+          atum.dispatcher.type = <span class="code-str">"http"</span><br>
+          atum.dispatcher.http.url = <span class="code-str">"http://atum-server:8080"</span>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="card" style="padding:12px 15px;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div class="card-title" style="font-size:14.8px"><span class="num-dot">2</span> Define Partitioning &amp; Obtain AtumContext</div>
+          <p style="font-size:12.5px;color:var(--sub);margin:0 0 7px">Define your ordered dataset keys (and optional parent partitionings to link lineage):</p>
+        </div>
+        <div class="code-box">
+          <span class="code-kw">val</span> partitions = <span class="code-fn">AtumPartitions</span>(List(<br>
+          &nbsp;&nbsp;<span class="code-str">"catalog_path"</span> -&gt; <span class="code-str">"curated.customer_payments"</span>,<br>
+          &nbsp;&nbsp;<span class="code-str">"info_date"</span> &nbsp;&nbsp;&nbsp;-&gt; <span class="code-str">"2026-11-11"</span><br>
+          ))<br>
+          <span class="code-kw">implicit val</span> ctx: AtumContext = <span class="code-fn">AtumAgent.getOrCreateAtumContext</span>(partitions)
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="card" style="padding:12px 15px;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div class="card-title" style="font-size:14.8px"><span class="num-dot">3</span> Select Control Measures (Persisted Centrally)</div>
+          <p style="font-size:12.5px;color:var(--sub);margin:0 0 7px">Register measures once—or inherit them from parents. Atum remembers and restores them on future runs:</p>
+        </div>
+        <div class="code-box">
+          ctx.<span class="code-fn">addMeasure</span>(<span class="code-fn">RecordCount</span>())<br>
+          &nbsp;&nbsp;&nbsp;.<span class="code-fn">addMeasure</span>(<span class="code-fn">SumOfValuesOfColumn</span>(<span class="code-str">"amount"</span>))<br>
+          &nbsp;&nbsp;&nbsp;.<span class="code-fn">addMeasure</span>(<span class="code-fn">DistinctRecordCount</span>(List(<span class="code-str">"customer_id"</span>)))<br>
+          &nbsp;&nbsp;&nbsp;.<span class="code-fn">addMeasure</span>(<span class="code-fn">SumOfHashesOfColumn</span>(<span class="code-str">"tx_id"</span>))
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="card" style="padding:12px 15px;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div class="card-title" style="font-size:14.8px"><span class="num-dot">4</span> Place <code>.createCheckpoint(...)</code> Inline in Spark</div>
+          <p style="font-size:12.5px;color:var(--sub);margin:0 0 7px">Call <code>createCheckpoint</code> directly on any <code>DataFrame</code> at the start, between steps, and at the end:</p>
+        </div>
+        <div class="code-box">
+          <span class="code-kw">import</span> za.co.absa.atum.agent.AtumContext._<br>
+          <span class="code-kw">val</span> rawDf = spark.read.table(<span class="code-str">"raw.core_payments"</span>)<br>
+          &nbsp;&nbsp;.<span class="code-fn">createCheckpoint</span>(<span class="code-str">"Catalog Input"</span>)<br>
+          <span class="code-kw">val</span> joinedDf = rawDf.join(customersDf, <span class="code-str">"customer_id"</span>)<br>
+          &nbsp;&nbsp;.<span class="code-fn">createCheckpoint</span>(<span class="code-str">"Joined"</span>)
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Strip: 3 Delivery Modes + Non-Spark & Reader Onboarding -->
+    <div class="grid-3">
+      <div style="background:var(--blue-soft);border:1px solid var(--blue-border);border-radius:8px;padding:8px 13px;font-size:12.5px">
+        <b style="color:var(--blue-dark)">3 Agent Delivery Modes:</b> <code>http</code> (Server with retries &amp; backoff), <code>console</code> (prints locally during dev), <code>capture</code> (in-memory for unit tests).
+      </div>
+      <div style="background:var(--teal-soft);border:1px solid var(--teal-border);border-radius:8px;padding:8px 13px;font-size:12.5px">
+        <b style="color:var(--teal)">Non-Spark Systems:</b> Onboard via direct HTTP <code>POST</code> to Atum Server using the interactive OpenAPI documentation at <code>/docs/</code>.
+      </div>
+      <div style="background:var(--purple-soft);border:1px solid var(--purple-border);border-radius:8px;padding:8px 13px;font-size:12.5px">
+        <b style="color:var(--purple)">Reconciliation &amp; Audit Apps:</b> Add <code>atum-reader</code> (pure Java/Scala, no Spark dependency) to query checkpoints &amp; flows.
+      </div>
+    </div>
+
+    <div class="s-foot">
+      <span>Atum · Cross-System Data Control &amp; Lineage</span>
+      <span>Slide 12 of 13</span>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- SLIDE 13: HOW ANALYSTS & AUDITORS QUERY LINEAGE & HISTORY           -->
+  <!-- =================================================================== -->
+  <section class="slide" data-notes="Finally, once systems report their partitionings, checkpoints, control measures, and parent links to Atum, how do analysts, reconciliation tools, and auditors query that information? Using Atum Reader or the REST API, they use three main mechanisms: first, searching datasets by any subset of partitioning keys or within a reproducible checkpoint time window; second, reading all checkpoints across an entire Flow or traversing the lineage graph upstream and downstream; and third, comparing historical trends across days by simply dropping the varying date key from a partitioning's key map.">
+    <div class="s-head">
+      <span class="s-kicker">SLIDE 13 / 13 · CONSUMPTION &amp; AUDIT MECHANISMS</span>
       <span class="s-brand"><span class="s-logo">A</span> Atum Concept Guide</span>
     </div>
     <h1 class="s-title">How Analysts &amp; Auditors Query Lineage &amp; History</h1>
-    <p class="s-lead">Three core query mechanisms power discovery, impact analysis, and historical trend verification.</p>
+    <p class="s-lead">Three core query mechanisms via <b>Atum Reader</b> or the <b>REST API</b> power discovery, flow trace, and historical trend verification.</p>
 
     <div class="grid-2">
-      <div class="card" style="padding:14px 18px">
-        <div class="card-title"><span class="num-dot">1</span> Key &amp; Time-Window Discovery</div>
-        <p style="font-size:13.5px;color:var(--sub);margin:0 0 8px">
-          Find dataset runs by any subset of partitioning keys and a reproducible checkpoint time interval <code>[from, to)</code>:
+      <div class="card" style="padding:13px 17px">
+        <div class="card-title"><span class="num-dot">1</span> Key, Property &amp; Time-Window Discovery</div>
+        <p style="font-size:13px;color:var(--sub);margin:0 0 7px">
+          Find dataset runs by any subset of partitioning keys, checkpoint properties, and a reproducible time interval <code>[from, to)</code>:
         </p>
-        <div style="background:var(--bg-soft);padding:8px 12px;border-radius:8px;font-size:12.5px">
+        <div style="background:var(--bg-soft);padding:7px 11px;border-radius:8px;font-size:12.2px">
           • <b>All tables for a business date:</b> <span class="mono">keys = { info_date: "2026-11-11" }</span><br>
           • <b>Reproducible audit window:</b> <span class="mono">from = 2026-11-04T00:00Z, to = 2026-11-11T23:59Z</span>
         </div>
       </div>
 
-      <div class="card" style="padding:14px 18px">
-        <div class="card-title"><span class="num-dot">2</span> Directional Lineage Graph Traversal</div>
-        <p style="font-size:13.5px;color:var(--sub);margin:0 0 8px">
-          Start from any Partitioning ID and traverse the directed graph up to <i>N</i> hops:
+      <div class="card" style="padding:13px 17px">
+        <div class="card-title"><span class="num-dot">2</span> End-to-End Flow &amp; Directional Lineage Traversal</div>
+        <p style="font-size:13px;color:var(--sub);margin:0 0 7px">
+          Read all checkpoints across an entire <b>Flow</b> in one query, or traverse the directed graph up to <i>N</i> hops:
         </p>
-        <div style="background:var(--bg-soft);padding:8px 12px;border-radius:8px;font-size:12.5px">
+        <div style="background:var(--bg-soft);padding:7px 11px;border-radius:8px;font-size:12.2px">
           • <b>Upstream (Ancestors):</b> <i>"Where did this report come from?"</i><br>
           • <b>Downstream (Descendants):</b> <i>"Which reports depend on this raw feed?"</i>
         </div>
       </div>
     </div>
 
-    <div class="card-soft" style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:14px 18px">
+    <div class="card-soft" style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:13px 17px">
       <div>
         <div class="card-title"><span class="num-dot">3</span> The "Key-Drop" Mechanism for Historical Trend Comparison</div>
-        <p style="font-size:13.5px;color:var(--sub);margin:0 0 8px">
+        <p style="font-size:13px;color:var(--sub);margin:0 0 7px">
           Because Atum does not hardcode which key represents a date, how does it find historical runs of the same table across days? By <b>dropping the varying date key</b> (<code>info_date</code>) and searching for all partitionings matching the remaining key (<code>catalog_path</code>):
         </p>
       </div>
 
-      <svg width="100%" viewBox="0 0 1080 138" style="display:block;background:#fff;border:1px solid var(--line);border-radius:9px">
+      <svg width="100%" viewBox="0 0 1080 132" style="display:block;background:#fff;border:1px solid var(--line);border-radius:9px">
         <defs>
           <marker id="s10a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
             <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
           </marker>
         </defs>
-        <rect x="24" y="16" width="340" height="106" rx="9" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.6"/>
-        <text x="42" y="44" font-size="15.5" font-weight="700" fill="#1d4ed8">Selected Dataset Run</text>
-        <text x="42" y="72" font-family="Ubuntu Sans Mono,monospace" font-size="14" fill="#0f172a">✓ catalog_path = <tspan font-weight="700">cur.payments</tspan></text>
-        <text x="42" y="98" font-family="Ubuntu Sans Mono,monospace" font-size="14" fill="#dc2626">✕ info_date = 2026-11-11 (drop key)</text>
+        <rect x="24" y="14" width="340" height="104" rx="9" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.6"/>
+        <text x="42" y="42" font-size="15.5" font-weight="700" fill="#1d4ed8">Selected Dataset Run</text>
+        <text x="42" y="70" font-family="Ubuntu Sans Mono,monospace" font-size="14" fill="#0f172a">✓ catalog_path = <tspan font-weight="700">cur.payments</tspan></text>
+        <text x="42" y="96" font-family="Ubuntu Sans Mono,monospace" font-size="14" fill="#dc2626">✕ info_date = 2026-11-11 (drop key)</text>
 
-        <path d="M364,69 L454,69" stroke="#2563eb" stroke-width="2.5" marker-end="url(#s10a)"/>
-        <text x="409" y="57" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1d4ed8">Search siblings</text>
+        <path d="M364,66 L454,66" stroke="#2563eb" stroke-width="2.5" marker-end="url(#s10a)"/>
+        <text x="409" y="54" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1d4ed8">Search siblings</text>
 
-        <rect x="460" y="12" width="596" height="114" rx="9" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
-        <text x="480" y="38" font-size="15" font-weight="700" fill="#0f172a">Matched Daily Runs for catalog_path = cur.payments</text>
-        <text x="480" y="62" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" fill="#334155">• 2026-11-09: count =   598,190 · sum =  48,883,069.87 (✓ Consistent)</text>
-        <text x="480" y="86" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" fill="#334155">• 2026-11-10: count = 1,251,590 · sum = 102,277,802.14 (✓ Consistent)</text>
-        <text x="480" y="110" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" font-weight="700" fill="#b45309">• 2026-11-11: count = 1,203,998 · sum =  98,388,669.76 (⚠ Measure Shift)</text>
+        <rect x="460" y="10" width="596" height="112" rx="9" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="480" y="36" font-size="15" font-weight="700" fill="#0f172a">Matched Daily Runs for catalog_path = cur.payments</text>
+        <text x="480" y="60" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" fill="#334155">• 2026-11-09: count =   598,190 · sum =  48,883,069.87 (✓ Consistent)</text>
+        <text x="480" y="84" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" fill="#334155">• 2026-11-10: count = 1,251,590 · sum = 102,277,802.14 (✓ Consistent)</text>
+        <text x="480" y="108" font-family="Ubuntu Sans Mono,monospace" font-size="13.5" font-weight="700" fill="#b45309">• 2026-11-11: count = 1,203,998 · sum =  98,388,669.76 (⚠ Measure Shift)</text>
       </svg>
     </div>
 
     <div class="s-foot">
       <span>Atum · Cross-System Data Control &amp; Lineage</span>
-      <span>Slide 10 of 10</span>
+      <span>Slide 13 of 13</span>
     </div>
   </section>
 
+  <!-- INTERACTIVE PRESENTATION BAR -->
+  <div class="pres-controls">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button id="prevBtn">← Prev</button>
+      <span id="slideCounter" style="font-weight:700;min-width:65px;text-align:center">1 / 13</span>
+      <button id="nextBtn">Next →</button>
+    </div>
+    <span style="color:#94a3b8;font-size:12px">Use <b>← / → / Space</b> to navigate · <b>N</b> for Voiceover · <b>G</b> for All Slides</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="notesBtn">Toggle Voiceover (N)</button>
+      <button id="gridBtn">All Slides (G)</button>
+    </div>
+  </div>
+
   <!-- VOICEOVER / SPEAKER NOTES DRAWER (Visible in interactive mode) -->
   <div class="notes-drawer" id="notesDrawer">
-    <strong>Voiceover / Speaker Notes (Press N to toggle)</strong>
+    <strong>Voiceover / Speaker Notes (For AI Narration &amp; Video Storyboard)</strong>
     <div id="notesText"></div>
   </div>
 
-</div>
-
-<!-- INTERACTIVE PRESENTATION BAR -->
-<div class="pres-controls">
-  <button id="prevBtn">← Prev</button>
-  <span id="slideCounter" style="font-weight:700;min-width:85px;text-align:center">1 / 10</span>
-  <button id="nextBtn">Next →</button>
-  <button id="notesBtn">Toggle Voiceover (N)</button>
-  <button id="gridBtn">All Slides (G)</button>
 </div>
 
 <script>
