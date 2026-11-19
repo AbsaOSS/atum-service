@@ -125,12 +125,47 @@ a { color: var(--primary); }
 .two-col { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: 12px; }
 @media (max-width: 1150px) { .two-col { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
 
-/* ── Filter bar ── */
+/* ── Filter bar & structured partitioning search ── */
 .filter-bar { padding: 10px 16px; background: #fdfbfb; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.search-input { flex: 0 1 300px; display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border-strong); border-radius: 6px; padding: 0 10px; height: 32px; }
+.search-input { flex: 1 1 240px; max-width: 340px; display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border-strong); border-radius: 6px; padding: 0 10px; height: 32px; }
 .search-input input { border: 0; outline: none; width: 100%; font-size: 12.5px; background: transparent; }
+.search-input.has-error { border-color: var(--tone-critical); background: #fffafb; }
 .check { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); cursor: pointer; }
 .result-count { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+
+.search-panel { padding: 12px 16px; background: #fdfbfb; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+.search-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.search-fields { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.author-ctrl { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--border-strong); border-radius: 6px; padding: 0 8px; height: 32px; font-size: 12.5px; }
+.author-ctrl span { color: var(--text-muted); font-size: 12px; }
+.author-ctrl input { border: 0; outline: none; background: transparent; width: 145px; font-size: 12.5px; color: var(--text); }
+.keys-box { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+.keys-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); }
+.key-clauses { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.key-clause { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-subtle); border: 1px solid var(--border-strong); border-radius: 6px; padding: 3px 6px; font-size: 12px; }
+.key-clause input, .key-clause select { border: 1px solid var(--border); background: #fff; border-radius: 4px; height: 24px; padding: 0 6px; font-size: 12px; color: var(--text); }
+.key-clause input.k-name { width: 120px; font-family: var(--mono); font-weight: 600; }
+.key-clause input.k-val { width: 185px; font-family: var(--mono); }
+.key-clause .k-any { font-family: var(--mono); font-size: 11.5px; color: var(--text-muted); padding: 0 8px; height: 24px; display: inline-flex; align-items: center; background: #faf8f8; border: 1px dashed var(--border-strong); border-radius: 4px; }
+.tiny-btn { border: 1px solid var(--border-strong); background: #fff; color: var(--text-secondary); border-radius: 4px; height: 22px; padding: 0 6px; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; }
+.tiny-btn:hover { border-color: var(--primary); color: var(--primary); }
+.tiny-btn:disabled { opacity: .45; cursor: not-allowed; }
+.preset-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-muted); }
+.preset-chip { border: 1px solid var(--border-strong); background: #fff; color: var(--text-secondary); border-radius: 999px; padding: 2px 9px; font-size: 11.5px; cursor: pointer; }
+.preset-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
+.kv-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.kv-badge { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; color: var(--text-secondary); max-width: 100%; }
+.kv-badge.matched { background: var(--primary-bg); border-color: #e4a3b1; color: var(--absa-inspire); }
+.kv-badge .kv-idx { font-family: var(--sans); font-size: 10px; font-weight: 700; color: var(--text-muted); }
+.kv-badge button.kv-act { border: 0; background: transparent; padding: 0 2px; cursor: pointer; color: var(--text-muted); font-size: 11px; line-height: 1; }
+.kv-badge button.kv-act:hover { color: var(--primary); }
+.api-preview { padding: 8px 12px; background: #1c1515; color: #f4eeee; border-radius: 6px; font-family: var(--mono); font-size: 11.5px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.api-preview code { word-break: break-all; flex: 1; min-width: 240px; }
+.api-preview .api-decoded { color: #d9c9c9; font-size: 11px; width: 100%; }
+.inline-hint { padding: 7px 12px; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: #fff; color: var(--text-secondary); }
+.inline-hint.warn { background: var(--warn-bg); border-color: #f3c499; color: #7a3200; }
+.inline-hint.err { background: var(--crit-bg); border-color: #e7a9b7; color: #8f1424; }
+.pill-btn:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ── Tables ── */
 .table-wrap { overflow-x: auto; }
@@ -295,7 +330,7 @@ tr.detail-row > td { background: #fcfafa; padding: 0; }
 
 <div class="proto-bar">
   <span class="proto-tag">Prototype</span>
-  <span class="proto-note">Demo fixtures, no backend · data from Atum + EventGate · "now" = Thu 12 Nov 2026 07:42 UTC</span>
+  <span class="proto-note">Demo fixtures, no backend · Atum data model · "now" = Thu 12 Nov 2026 07:42 UTC</span>
 </div>
 
 <div class="shell">
@@ -342,17 +377,42 @@ const isWeekend = d => { const w = new Date(d + "T00:00:00Z").getUTCDay(); retur
 const dayShort = d => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const dayNum = d => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 function rangeLabel(f, t) {
+  if (STATE.win === "all") return `All recorded ${TERM.many} <span class="muted">(no time bound)</span>`;
   const n = daysBetween(f, t) + 1, sameMonth = f.slice(0, 7) === t.slice(0, 7);
   const span = f === t ? dayNum(f) : sameMonth ? `${f.slice(8)}–${dayNum(t)}` : `${dayNum(f)} – ${dayNum(t)}`;
   return `${span} ${t.slice(0, 4)} <span class="muted">(${n} day${n === 1 ? "" : "s"})</span>`;
 }
 const ymd = d => d.replaceAll("-", "");
+function toBase64Url(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function batchKeys(ds, d, r) {
+  if (ds.static) return [["catalog_path", ds.catalog], ["ref_version", r.version]];
+  if (ds.keys) return ds.keys(d);
+  return [["catalog_path", ds.catalog], ["info_date", d]];
+}
+const BATCH_KEYS = new Set(["info_date", "ref_version"]);
+function partitioningIdentity(ds, d = STATE.day, r = null, dropBatchKey = true) {
+  if (!ds.inAtum) return ds.catalog || ds.asset;
+  const rec = r || (ds.static ? STATIC_ISO : REC[ds.key]?.[d] || REC[ds.key]?.[YDAY]);
+  const ks = batchKeys(ds, d || YDAY, rec);
+  const idPairs = dropBatchKey ? ks.filter(([k]) => !BATCH_KEYS.has(k)) : ks;
+  const effective = idPairs.length ? idPairs : ks;
+  if (effective.length === 1 && effective[0][0] === "catalog_path") return effective[0][1];
+  if (effective[0]?.[0] === "catalog_path") {
+    return `${effective[0][1]} · ${effective.slice(1).map(([k, v]) => `${k}=${v}`).join(" · ")}`;
+  }
+  return effective.map(([k, v]) => `${k}=${v}`).join(" · ");
+}
 
 const TODAY = "2026-11-12", YDAY = "2026-11-11", NOW_MIN = 7 * 60 + 42;
 const DAYS = Array.from({ length: 30 }, (_, i) => addDays(TODAY, i - 29));
 const absT = (d, t) => daysBetween(DAYS[0], d) * 1440 + t;
 const NOW_ABS = absT(TODAY, NOW_MIN);
-const WINDOWS = { "24h": "Last 24 hours", "7d": "Last 7 days", month: "Current month", "30d": "Last 30 days" };
+const WINDOWS = { all: "Any time", "24h": "Last 24 hours", "7d": "Last 7 days", month: "Current month", "30d": "Last 30 days" };
 
 // User-facing name for an Atum "partitioning": one delivery of a dataset (Atum's README calls it a batch)
 const TERM = { one: "batch", many: "batches", One: "Batch", Many: "Batches",
@@ -362,7 +422,7 @@ const TERM = { one: "batch", many: "batches", One: "Batch", Many: "Batches",
 // App configuration
 // ═══════════════════════════════════════════════════════════════════════════
 const EDITIONS = {
-  combined: { name: "Atum", sub: "Control Metrics · Lineage", audience: "Control measures and lineage for datasets, enriched with EventGate run status", atum: true, eg: true, nav: ["datasets", "lineage"] }
+  atum: { name: "Atum", sub: "Control Metrics · Lineage", audience: "Control measures and lineage for Atum partitionings", atum: true, eg: false, nav: ["datasets", "lineage"] }
 };
 const NAV = {
   datasets: { label: "Control Metrics", icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="10" x2="9" y2="20"/>' },
@@ -447,7 +507,7 @@ const DS = [
     cps: [{ name: "Written", off: 1.733, len: .767, ids: { [YDAY]: "66666666-6666-4666-8666-000000000603" } }],
     props: d => [{ executionID: `un-${511 - 4 * daysBetween(d, YDAY)}` }],
     platform: "aws.emr", definition: "un-2311", jobName: "Unify Curation · un_customer_360" },
-  // Extra ingest datasets (no lineage) that cover the EventGate-only scenarios: not measured, failed-with-message
+  // Extra ingest dataset (no lineage)
   { key: "fx", name: "FX Rates", asset: "edla_prod_raw.aq_fx_rates", catalog: "edla_prod_raw.aq_fx_rates", producer: "AqueDuct", author: "aqueduct", team: "ingest",
     inEG: true, inAtum: true, capture: "agent", tenant: "trnd", owner: "Treasury Data", businessDays: true, pid: 2000000010448301,
     ad: [["catalog_provider", "aws-glue"]], measures: ["count"], parents: [], runAt: 330, runLen: 6,
@@ -516,15 +576,6 @@ function buildRecord(ds, d) {
     return rec;
   }
   const start = ds.runAt + jit, len = ds.runLen * (d === YDAY ? 1 : 1 + (rnd(ds.key + d + "l") - .5) * .2);
-  // Sourced only from EventGate's `runs` topic: one outcome per finished job, no live/in-progress state.
-  if (ds.key === "fx" && d === "2026-11-10") {
-    rec.eg = { status: "FAILED", subtype: "NO_DATA", detail: "No data at source: the provider did not deliver the rates file", start, end: start + 1.5 };
-    rec.end = rec.eg.end; return rec;
-  }
-  if (ds.key === "card" && d === "2026-11-07") {
-    rec.eg = { status: "KILLED", error: "Killed by operator (cluster maintenance)", start, end: start + 41 };
-    rec.end = rec.eg.end; return rec;
-  }
   rec.eg = { status: "SUCCEEDED", start, end: start + len };
   rec.end = start + len;
   if (ds.inAtum) {
@@ -534,21 +585,13 @@ function buildRecord(ds, d) {
   }
   return rec;
 }
-// One frequent job, several short runs a day, straight off the `runs` topic: succeeded (mostly),
-// failed with "no data at the source" (probabilistic), plus one guaranteed skipped and one guaranteed
-// killed run each week so every outcome in the runs.json enum is always visible without relying on luck.
-const SF_SKIP = { day: "2026-11-08", slot: 2 }, SF_KILL = { day: "2026-11-09", slot: 4 };
 function buildHourly(ds, d) {
   const runs = [];
   for (let t = ds.at; t < 1440; t += ds.every) {
     const i = runs.length, st0 = t + (rnd(ds.key + d + i + "o") - .5) * .6;
     if (d === TODAY && st0 > NOW_MIN) break;
-    const len = (ds.lenS[0] + rnd(ds.key + d + i + "l") * (ds.lenS[1] - ds.lenS[0])) / 60, x = rnd(ds.key + d + i + "x");
-    let eg;
-    if (d === SF_SKIP.day && i === SF_SKIP.slot) eg = { status: "SKIPPED", detail: "Skipped: upstream feed not ready", start: st0, end: st0 + len };
-    else if (d === SF_KILL.day && i === SF_KILL.slot) eg = { status: "KILLED", error: "Killed by operator (cluster maintenance)", start: st0, end: st0 + len };
-    else if (x < (ds.noData || 0)) eg = { status: "FAILED", subtype: "NO_DATA", detail: "No data at the source", start: st0, end: st0 + len };
-    else eg = { status: "SUCCEEDED", start: st0, end: st0 + len };
+    const len = (ds.lenS[0] + rnd(ds.key + d + i + "l") * (ds.lenS[1] - ds.lenS[0])) / 60;
+    const eg = { status: "SUCCEEDED", start: st0, end: st0 + len };
     runs.push({ day: d, expected: true, eg, atum: null, end: eg.end });
   }
   const last = runs.at(-1);
@@ -558,7 +601,7 @@ for (const ds of DS) REC[ds.key] = {};
 for (const d of DAYS) for (const ds of DS) REC[ds.key][d] = buildRecord(ds, d);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Status from three perspectives: Atum only, EventGate only, and joined (the app uses joined; run chips use the EventGate one)
+// Status derivation for Atum partitionings
 // ═══════════════════════════════════════════════════════════════════════════
 function shiftInfo(ds, rec, ignoreSup) {
   const cps = (rec?.atum?.checkpoints || []).filter(c => !(ignoreSup && c.superseded));
@@ -574,57 +617,24 @@ function shiftInfo(ds, rec, ignoreSup) {
   return { n: changed.length, of: ds.measures.length, at: first, cpName: cps[first].name, cnt,
     text: `${changed.length} of ${ds.measures.length} control measures shifted at checkpoint ${first + 1}. ${cps[first].name}${cnt ? ` (record count ${cnt.to - cnt.from > 0 ? "+" : "−"}${fmt(Math.abs(cnt.to - cnt.from))})` : ""}` };
 }
-// EventGate only ever reports one of: succeeded | failed | killed | skipped (the `runs` topic enum).
-// "No data at the source" is not a status of its own — it is the free-text `message` on a FAILED job.
-function egStatus(eg) {
-  if (eg.status === "FAILED") return { code: "job_failed", detail: eg.subtype === "NO_DATA" ? eg.detail : eg.error };
-  if (eg.status === "KILLED") return { code: "run_killed", detail: eg.error };
-  if (eg.status === "SKIPPED") return { code: "run_skipped", detail: eg.detail || eg.error };
-  return { code: "ok", detail: `Succeeded in ${dur(eg.end - eg.start)}` };
-}
-const STATUS = { atum: {}, eventgate: {}, combined: {} };
+const STATUS = { atum: {} };
 function derive(ed, ds, d) {
-  const rec = REC[ds.key][d], eg = rec.eg;
+  const rec = REC[ds.key][d];
   if (ds.static) return rec.atum ? (shiftInfo(ds, rec, false) ? { code: "control_break" } : { code: "ok", detail: "Reference data · current version " + rec.version }) : null;
   if (!rec.expected) return { code: "not_scheduled", detail: "Business days only" };
-  if (ed === "atum") {
-    if (!rec.atum) return { code: "no_batch", detail: `No ${TERM.one} recorded for this info date` };
-    const sh = shiftInfo(ds, rec, false);
-    return sh ? { code: "control_break", detail: sh.text } : { code: "ok", detail: `All ${ds.measures.length} control measures consistent across ${rec.atum.checkpoints.length} checkpoint(s)` };
-  }
-  if (ed === "eventgate") {
-    if (!eg) return { code: "no_run", detail: "No run recorded" };
-    return egStatus(eg);
-  }
-  // combined
-  if (eg?.status === "FAILED") return eg.subtype === "NO_DATA" ? { code: "explained", detail: "Explained: the job reported FAILED with message \"No data at the source\", so no batch was produced" } : { code: "job_failed", detail: eg.error };
-  if (eg?.status === "KILLED") return { code: "run_killed", detail: eg.error };
-  if (eg?.status === "SKIPPED") return { code: "run_skipped", detail: eg.detail || eg.error };
-  if (!eg && !rec.atum) return { code: "no_batch", detail: `No ${TERM.one} and no run recorded` };
-  if (eg && !ds.inAtum) return { code: "not_measured", detail: "Job succeeded, but this dataset has no control measures (coverage gap)" };
-  const sh = shiftInfo(ds, rec, true);
-  if (sh) return { code: "control_break", detail: (eg ? "Job succeeded, but " : "") + sh.text };
-  return { code: "ok", detail: eg ? `Run succeeded · ${rec.atum.checkpoints.length} checkpoint(s) consistent` : `${rec.atum.checkpoints.length} checkpoint(s) consistent · no execution data (team not on EventGate)` };
+  if (!rec.atum) return { code: "no_batch", detail: `No ${TERM.one} recorded for this info date` };
+  const sh = shiftInfo(ds, rec, false);
+  return sh ? { code: "control_break", detail: sh.text } : { code: "ok", detail: `All ${ds.measures.length} control measures consistent across ${rec.atum.checkpoints.length} checkpoint(s)` };
 }
 for (const ed of Object.keys(STATUS)) for (const ds of DS) { STATUS[ed][ds.key] = {}; for (const d of DAYS) STATUS[ed][ds.key][d] = derive(ed, ds, d); }
 
 const ST = {
   ok: { label: "OK", tone: "good", icon: "check" },
   control_break: { label: "Measure Shift", tone: "serious", icon: "warn" },
-  job_failed: { label: "Job failed", tone: "critical", icon: "x" },
-  explained: { label: "Explained absence", tone: "info", icon: "info" },
   no_batch: { label: "No batch", tone: "none", icon: "dot" },
-  not_measured: { label: "Not measured", tone: "gap", icon: "dash" },
-  not_scheduled: { label: "Not scheduled", tone: "none", icon: "dot" },
-  no_run: { label: "No run", tone: "none", icon: "dot" },
-  // EventGate "runs" topic job statuses: succeeded | failed | killed | skipped
-  run_succeeded: { label: "Succeeded", tone: "good", icon: "check" },
-  run_failed: { label: "Failed", tone: "critical", icon: "x" },
-  run_killed: { label: "Killed", tone: "serious", icon: "x" },
-  run_skipped: { label: "Skipped", tone: "neutral", icon: "dash" },
-  run_mixed: { label: "Mixed", tone: "serious", icon: "minus" }
+  not_scheduled: { label: "Not scheduled", tone: "none", icon: "dot" }
 };
-const LABELS = { eventgate: { ok: "Succeeded" }, atum: { ok: "Consistent" } };
+const LABELS = { atum: { ok: "Consistent" } };
 const stLabel = (code, ed = STATE.edition) => LABELS[ed]?.[code] || ST[code].label;
 const SEV = { critical: 0, serious: 1, gap: 2, info: 3, neutral: 4, good: 5, none: 6 };
 const GLYPH = {
@@ -656,10 +666,19 @@ const tipAttr = html => `data-tip="${esc(html)}"`;
 // State & routing
 // ═══════════════════════════════════════════════════════════════════════════
 const STATE = {
-  edition: "combined",
+  edition: "atum",
   view: "datasets", win: "7d",
   focus: "cust_pay", day: YDAY, subtab: "measures", graphMetric: "count", scope: "full",
   dsQ: "", dsProducer: "all", dsStatus: "all", dsLatest: true,
+  searchMode: "search", // "search" | "exact" | "id"
+  keyFilters: [],       // [{ key: string, mode: "exact" | "exists", value: string }]
+  exactKeys: false,
+  authorFilter: "",     // exact registration author (runs.partitionings.created_by)
+  pidQuery: "",         // numeric partitioning ID when searchMode === "id"
+  latestFirst: true,
+  pageLimit: 25,
+  pageShown: 25,
+  showApiPreview: false,
   runQ: "", runStatus: "all", runApp: "all", runTenant: "all", runLimit: 50,
   from: addDays(TODAY, -6), to: TODAY
 };
@@ -668,6 +687,7 @@ const ED = () => EDITIONS[STATE.edition];
 const edDatasets = (ed = STATE.edition) => DS.filter(ds => ed === "atum" ? ds.inAtum : ed === "eventgate" ? ds.inEG : true);
 const st = (k, d = STATE.day, ed = STATE.edition) => STATUS[ed][k][d];
 const inWin = (d, t) => {
+  if (STATE.win === "all") return true;
   if (STATE.win === "24h") { const a = absT(d, t); return a > NOW_ABS - 1440 && a <= NOW_ABS; }
   if (STATE.win === "custom") return d >= STATE.from && d <= STATE.to;
   if (STATE.win === "7d") return d >= addDays(TODAY, -6);
@@ -675,36 +695,156 @@ const inWin = (d, t) => {
   return d >= addDays(TODAY, -29);
 };
 const recTime = r => r.eg?.start ?? lastCp(r, false)?.t ?? null;
-const winRange = () => ({ "24h": [YDAY, TODAY], "7d": [addDays(TODAY, -6), TODAY], month: [TODAY.slice(0, 8) + "01", TODAY], "30d": [DAYS[0], TODAY], custom: [STATE.from, STATE.to] })[STATE.win];
+const winRange = () => ({ all: [DAYS[0], TODAY], "24h": [YDAY, TODAY], "7d": [addDays(TODAY, -6), TODAY], month: [TODAY.slice(0, 8) + "01", TODAY], "30d": [DAYS[0], TODAY], custom: [STATE.from, STATE.to] })[STATE.win];
 const winDays = () => DAYS.filter(d => STATE.win === "24h" ? DS.some(ds => { const r = REC[ds.key][d], t = r.static ? null : recTime(r); return t != null && inWin(d, t); }) : inWin(d, 0));
+
+function resetPaging() { STATE.pageShown = Number(STATE.pageLimit) || 25; }
+function resetAllSearch() {
+  STATE.dsQ = ""; STATE.dsProducer = "all"; STATE.dsStatus = "all";
+  STATE.searchMode = "search"; STATE.keyFilters = []; STATE.exactKeys = false;
+  STATE.authorFilter = ""; STATE.pidQuery = "";
+  if (STATE.win === "all") { STATE.win = "7d"; [STATE.from, STATE.to] = winRange(); }
+  resetPaging();
+}
+function applyPreset(name) {
+  STATE.view = "datasets";
+  STATE.searchMode = "search";
+  STATE.dsProducer = "all"; STATE.dsStatus = "all";
+  STATE.dsLatest = false;
+  STATE.latestFirst = true;
+  if (name === "cust_pay_siblings") {
+    STATE.win = "all";
+    STATE.keyFilters = [
+      { key: "catalog_path", mode: "exact", value: "edla_prod_curated.un_customer_payments" },
+      { key: "info_date", mode: "exists", value: "" }
+    ];
+    STATE.exactKeys = true; STATE.authorFilter = ""; STATE.dsQ = "";
+  } else if (name === "business_date") {
+    STATE.win = "all";
+    STATE.keyFilters = [{ key: "info_date", mode: "exact", value: YDAY }];
+    STATE.exactKeys = false; STATE.authorFilter = ""; STATE.dsQ = "";
+  } else if (name === "unify_payments") {
+    STATE.win = "30d";
+    STATE.keyFilters = []; STATE.exactKeys = false; STATE.authorFilter = "unify"; STATE.dsQ = "payments";
+  } else if (name === "refdata_outside") {
+    STATE.win = "all";
+    STATE.keyFilters = [{ key: "ref_version", mode: "exists", value: "" }];
+    STATE.exactKeys = false; STATE.authorFilter = ""; STATE.dsQ = "";
+  }
+  resetPaging();
+}
+function pivotFromDataset(dsKey, dayStr, dropKey) {
+  const ds = byKey[dsKey]; if (!ds) return;
+  const r = REC[dsKey]?.[dayStr] || (ds.static ? STATIC_ISO : null); if (!r) return;
+  const ks = batchKeys(ds, dayStr, r);
+  STATE.view = "datasets"; STATE.searchMode = "search"; STATE.win = "all";
+  STATE.dsLatest = false; STATE.dsProducer = "all"; STATE.dsStatus = "all";
+  STATE.authorFilter = ""; STATE.dsQ = "";
+  STATE.keyFilters = ks.map(([k, v]) => k === dropKey
+    ? { key: k, mode: "exists", value: "" }
+    : { key: k, mode: "exact", value: v });
+  STATE.exactKeys = true;
+  resetPaging();
+}
 
 function syncUrl() { history.replaceState(null, "", `${location.pathname}#/${STATE.view}`); }
 function go(spec) {
-  const [kind, a, b, c] = spec.split(":");
+  const idx = spec.indexOf(":"), kind = idx < 0 ? spec : spec.slice(0, idx), rest = idx < 0 ? "" : spec.slice(idx + 1);
+  const [a, b, c] = rest.split(":");
   if (kind === "view") STATE.view = a;
   else if (kind === "focus") { STATE.view = "lineage"; STATE.focus = a; if (b) STATE.day = b; }
   else if (kind === "sub") STATE.subtab = a;
   else if (kind === "scope") STATE.scope = a;
   else if (kind === "metric") STATE.graphMetric = a;
   else if (kind === "day") STATE.day = a;
-  else if (kind === "dsstatus") { STATE.view = "datasets"; STATE.dsStatus = STATE.dsStatus === a ? "all" : a; }
-  else if (kind === "win") { STATE.win = a; if (a !== "custom") [STATE.from, STATE.to] = winRange(); }
+  else if (kind === "dsstatus") { STATE.view = "datasets"; STATE.dsStatus = STATE.dsStatus === a ? "all" : a; resetPaging(); }
+  else if (kind === "win") { STATE.win = a; if (a !== "custom") [STATE.from, STATE.to] = winRange(); resetPaging(); }
   else if (kind === "apply") {
     let f = $("winFrom").value || DAYS[0], t = $("winTo").value || TODAY;
     if (f > t) [f, t] = [t, f];
-    STATE.from = f < DAYS[0] ? DAYS[0] : f; STATE.to = t > TODAY ? TODAY : t; STATE.win = "custom";
+    STATE.from = f < DAYS[0] ? DAYS[0] : f; STATE.to = t > TODAY ? TODAY : t; STATE.win = "custom"; resetPaging();
   }
-  else if (kind === "refresh") { toast("Prototype: re-fetched Atum and EventGate (demo data, nothing changed)."); return; }
+  else if (kind === "refresh") { toast("Prototype: re-fetched Atum partitionings and checkpoints (demo data, nothing changed)."); return; }
   else if (kind === "link") return showLink(a);
-  else if (kind === "copy") { navigator.clipboard?.writeText(a); return toast(`Copied <b>${esc(a)}</b>`); }
-  else if (kind === "reset") { STATE.dsQ = ""; STATE.dsProducer = "all"; STATE.dsStatus = "all"; }
+  else if (kind === "copy") { navigator.clipboard?.writeText(rest); return toast(`Copied <b>${esc(rest)}</b>`); }
+  else if (kind === "copyapi") { const info = buildApiQueryInfo(); navigator.clipboard?.writeText(info.url); return toast(`Copied <code>${esc(info.url)}</code>`); }
+  else if (kind === "toggleapi") { STATE.showApiPreview = !STATE.showApiPreview; }
+  else if (kind === "searchmode") {
+    STATE.searchMode = a;
+    if (a === "exact" && STATE.keyFilters.length === 0) STATE.keyFilters.push({ key: "catalog_path", mode: "exact", value: "" });
+    if (a === "exact") STATE.keyFilters.forEach(f => { f.mode = "exact"; });
+    resetPaging();
+  }
+  else if (kind === "addkey") { STATE.keyFilters.push({ key: "", mode: "exact", value: "" }); resetPaging(); }
+  else if (kind === "remkey") { STATE.keyFilters.splice(Number(a), 1); if (!STATE.keyFilters.length) STATE.exactKeys = false; resetPaging(); }
+  else if (kind === "movekey") {
+    const i = Number(a), dir = Number(b), j = i + dir;
+    if (j >= 0 && j < STATE.keyFilters.length) [STATE.keyFilters[i], STATE.keyFilters[j]] = [STATE.keyFilters[j], STATE.keyFilters[i]];
+    resetPaging();
+  }
+  else if (kind === "exactkeys") { STATE.exactKeys = a === "1"; resetPaging(); }
+  else if (kind === "sort") { STATE.latestFirst = a === "latest"; resetPaging(); }
+  else if (kind === "loadmore") { STATE.pageShown += Number(STATE.pageLimit) || 25; }
+  else if (kind === "clearauthor") { STATE.authorFilter = ""; resetPaging(); }
+  else if (kind === "showallbatches") { STATE.dsLatest = false; resetPaging(); }
+  else if (kind === "switchsearch") { STATE.searchMode = "search"; STATE.exactKeys = true; resetPaging(); }
+  else if (kind === "preset") { applyPreset(a); }
+  else if (kind === "reset") { resetAllSearch(); }
   render();
 }
-document.addEventListener("click", e => { const el = e.target.closest("[data-go]"); if (el) { e.preventDefault(); e.stopPropagation(); go(el.dataset.go); } });
+document.addEventListener("click", e => {
+  const act = e.target.closest("[data-act]");
+  if (act) {
+    e.preventDefault(); e.stopPropagation();
+    const kind = act.dataset.act;
+    if (kind === "usekey") {
+      const k = act.dataset.k, v = act.dataset.v;
+      STATE.view = "datasets"; STATE.searchMode = "search"; STATE.dsLatest = false;
+      const ex = STATE.keyFilters.find(f => f.key === k);
+      if (ex) { ex.mode = "exact"; ex.value = v; } else STATE.keyFilters.push({ key: k, mode: "exact", value: v });
+      resetPaging(); render();
+    } else if (kind === "pivot") {
+      pivotFromDataset(act.dataset.ds, act.dataset.day, act.dataset.drop);
+      render();
+    }
+    return;
+  }
+  const el = e.target.closest("[data-go]");
+  if (el) { e.preventDefault(); e.stopPropagation(); go(el.dataset.go); }
+});
 document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-go]:not(button)")) { e.preventDefault(); go(e.target.dataset.go); } });
-document.addEventListener("change", e => { const k = e.target.dataset.set; if (!k) return; STATE[k] = e.target.type === "checkbox" ? e.target.checked : e.target.value; STATE.runLimit = 50; render(); });
+document.addEventListener("change", e => {
+  const kf = e.target.dataset.keyclause;
+  if (kf) {
+    const [i, field] = kf.split(":");
+    const item = STATE.keyFilters[Number(i)];
+    if (item) {
+      item[field] = e.target.value;
+      if (field === "mode" && e.target.value === "exists") item.value = "";
+      resetPaging();
+      if (field === "mode") render(); else LIVE.dsQ?.();
+    }
+    return;
+  }
+  const k = e.target.dataset.set;
+  if (!k) return;
+  STATE[k] = e.target.type === "checkbox" ? e.target.checked : k === "pageLimit" ? Number(e.target.value) : e.target.value;
+  STATE.runLimit = 50;
+  resetPaging();
+  render();
+});
 const LIVE = {};
-document.addEventListener("input", e => { const k = e.target.dataset.live; if (k) { STATE[k] = e.target.value; STATE.runLimit = 50; LIVE[k]?.(); } });
+document.addEventListener("input", e => {
+  const kf = e.target.dataset.keyclause;
+  if (kf) {
+    const [i, field] = kf.split(":");
+    const item = STATE.keyFilters[Number(i)];
+    if (item) { item[field] = e.target.value; resetPaging(); LIVE.dsQ?.(); }
+    return;
+  }
+  const k = e.target.dataset.live;
+  if (k) { STATE[k] = e.target.value; STATE.runLimit = 50; resetPaging(); LIVE[k]?.(); }
+});
 const tt = $("tooltip");
 document.addEventListener("mouseover", e => { const el = e.target.closest("[data-tip]"); if (!el) return; tt.innerHTML = el.dataset.tip; tt.classList.remove("hidden"); });
 document.addEventListener("mouseout", e => { const el = e.target.closest("[data-tip]"); if (el && !el.contains(e.relatedTarget)) tt.classList.add("hidden"); });
@@ -740,7 +880,7 @@ function renderShell() {
   $("sideNav").innerHTML = ed.nav.map(k => btn(k, true)).join("");
   $("sideFooter").innerHTML = `<div>${esc(ed.audience)}</div><div style="margin-top:6px">${[ed.atum && "Atum v0.11", ed.eg && "EventGate 1.4"].filter(Boolean).join(" · ")}</div>`;
   const crumbs = [`<a data-go="view:datasets">${esc(ed.name)}</a>`];
-  if (STATE.view === "lineage") crumbs.push(`<a data-go="view:datasets">Control Metrics</a>`, `<a data-go="view:lineage">Lineage</a>`, `<strong>${esc(byKey[STATE.focus].name)}</strong>`);
+  if (STATE.view === "lineage") crumbs.push(`<a data-go="view:datasets">Control Metrics</a>`, `<a data-go="view:lineage">Lineage</a>`, `<strong>${esc(partitioningIdentity(byKey[STATE.focus], STATE.day, recFor(STATE.focus, STATE.day), true))}</strong>`);
   else crumbs.push(`<strong>${esc(NAV[STATE.view].label)}</strong>`);
   $("crumbs").innerHTML = crumbs.join("<span>›</span>");
 }
@@ -773,8 +913,8 @@ function kpiCard(k) {
 }
 // Page header + filter bar shared by every page (layout from the Run Activity Monitor)
 const PAGES = {
-  datasets: { icon: "table", title: "Control Metrics", sub: `Latest ${TERM.many} of every dataset and their control measures` },
-  lineage: { icon: "lineage", title: "Lineage", sub: "How data flows between datasets, with control measures at every step" }
+  datasets: { icon: "table", title: "Control Metrics", sub: `Atum partitionings identified by their keys (dropping batch keys info_date / ref_version when grouped)` },
+  lineage: { icon: "lineage", title: "Lineage", sub: "Lineage graph across Atum partitionings, with control measures at every checkpoint and handoff" }
 };
 function pageHead(v) {
   const p = PAGES[v];
@@ -797,77 +937,317 @@ const winLabel = () => STATE.win === "custom" ? `${STATE.from} – ${STATE.to}` 
 // ═══════════════════════════════════════════════════════════════════════════
 // Datasets (Atum & Combined), as in the Atum mockup's catalog
 // ═══════════════════════════════════════════════════════════════════════════
-function datasetRowsAll() {
+function datasetRowsAll(ignoreWin = false) {
   const comb = STATE.edition === "combined", rows = [];
   for (const ds of edDatasets()) {
-    if (ds.static) continue;
+    if (ds.static) {
+      if (ignoreWin || STATE.win === "all") rows.push({ ds, d: null, r: STATIC_ISO, s: STATUS[STATE.edition].iso[DAYS[0]] || { code: "ok" }, t: 0 });
+      continue;
+    }
     for (const d of DAYS) {
       const r = REC[ds.key][d];
       if (!r.expected) continue;
       if (!comb && !r.atum) continue;
       if (comb && !(r.atum || r.eg)) continue;
       const t = comb ? recTime(r) : lastCp(r, false).t;
-      if (!inWin(d, t)) continue;
+      if (!ignoreWin && !inWin(d, t)) continue;
       rows.push({ ds, d, r, s: st(ds.key, d), t: absT(d, t) });
     }
   }
-  rows.sort((a, b) => b.t - a.t);
   return rows;
 }
-function datasetRowsFiltered() {
-  let rows = datasetRowsAll();
-  if (STATE.dsLatest) {
-    const seen = new Set(); rows = rows.filter(x => !seen.has(x.ds.key) && seen.add(x.ds.key));
-    const iso = byKey.iso; rows.push({ ds: iso, d: null, r: STATIC_ISO, s: STATUS[STATE.edition].iso[DAYS[0]] || { code: "ok" }, t: 0 });
+const activeKeyFilters = () => STATE.keyFilters.map(f => ({ ...f, key: f.key.trim() })).filter(f => f.key.length > 0);
+const rowAuthorMatches = (ds, author) => !author || ds.author === author;
+function rowKeysMatchSearch(keysArr, filters, exactKeys) {
+  if (!filters.length) return true;
+  const map = new Map(keysArr);
+  for (const f of filters) {
+    if (!map.has(f.key)) return false;
+    if (f.mode === "exact" && map.get(f.key) !== f.value) return false;
   }
+  if (exactKeys) {
+    const distinctFilterKeys = new Set(filters.map(f => f.key));
+    if (map.size !== distinctFilterKeys.size) return false;
+  }
+  return true;
+}
+function rowKeysMatchExactOrdered(keysArr, pairs) {
+  if (!pairs.length || keysArr.length !== pairs.length) return false;
+  return pairs.every((p, i) => keysArr[i][0] === p.key && keysArr[i][1] === p.value);
+}
+function rowMatchesSearchText(keysArr, qLower) {
+  if (!qLower) return true;
+  return keysArr.some(([k, v]) => k.toLowerCase().includes(qLower) || String(v).toLowerCase().includes(qLower));
+}
+function validateSearchState() {
+  const keys = activeKeyFilters();
+  const qRaw = STATE.dsQ, qTrim = qRaw.trim();
+  const author = STATE.authorFilter.trim();
+  if (STATE.searchMode === "id") {
+    const pidTrim = STATE.pidQuery.trim();
+    if (!pidTrim) return { ok: true, emptyPrompt: true, message: "Enter a numeric Partitioning ID (e.g. 2000000010448528) for GET /api/v2/partitionings/{id}." };
+    if (!/^\d+$/.test(pidTrim)) return { ok: false, severity: "err", message: "Partitioning ID must be a positive integer." };
+    return { ok: true };
+  }
+  if (STATE.searchMode === "exact") {
+    if (!keys.length) return { ok: true, emptyPrompt: true, message: "Add ordered key = value pairs to query GET /api/v2/partitionings?partitioning=." };
+    return { ok: true };
+  }
+  if (qTrim.length === 1) return { ok: false, severity: "err", message: "'search-text' must contain at least 2 non-whitespace characters (matching API validation)." };
+  if (STATE.exactKeys && !keys.length) return { ok: false, severity: "warn", message: "'exact-keys=true' requires at least one key in 'keys'." };
+  if (STATE.win === "all" && !keys.length && !author && qTrim.length < 2) {
+    return { ok: true, emptyPrompt: true, message: "In Any time mode, add at least one key filter, author, or search-text (min 2 chars) — at least one filter is required by /search." };
+  }
+  return { ok: true };
+}
+function buildApiQueryInfo() {
+  if (STATE.searchMode === "id") {
+    const pid = STATE.pidQuery.trim() || "{partitioningId}";
+    return { url: `/api/v2/partitionings/${pid}`, decoded: "Direct single-partitioning lookup by primary key (ignores time window)" };
+  }
+  const keys = activeKeyFilters();
+  if (STATE.searchMode === "exact") {
+    const arr = keys.map(f => ({ key: f.key, value: f.value }));
+    const rawJson = JSON.stringify(arr);
+    const enc = keys.length ? toBase64Url(rawJson) : "<base64url>";
+    return { url: `/api/v2/partitionings?partitioning=${enc}`, decoded: `partitioning = ${rawJson} (key order must match exactly)` };
+  }
+  const params = [];
+  const obj = {};
+  keys.forEach(f => { obj[f.key] = f.mode === "exists" ? null : f.value; });
+  if (keys.length) params.push(`keys=${toBase64Url(JSON.stringify(obj))}`);
+  if (STATE.exactKeys && keys.length) params.push("exact-keys=true");
+  const author = STATE.authorFilter.trim();
+  if (author) params.push(`author=${encodeURIComponent(author)}`);
+  const qRaw = STATE.dsQ, qTrim = qRaw.trim();
+  if (qTrim.length >= 2) params.push(`search-text=${encodeURIComponent(qRaw)}`);
+  if (STATE.win !== "all") {
+    const [f, t] = winRange();
+    const toIso = addDays(t, 1);
+    params.push(`from=${encodeURIComponent(f + "T00:00:00Z")}`, `to=${encodeURIComponent(toIso + "T00:00:00Z")}`);
+  }
+  if (!STATE.latestFirst) params.push("latest-first=false"); else params.push("latest-first=true");
+  params.push(`limit=${STATE.pageLimit}`, `offset=${Math.max(0, STATE.pageShown - STATE.pageLimit)}`);
+  const decodedParts = [];
+  if (keys.length) decodedParts.push(`keys = ${JSON.stringify(obj)}`);
+  if (STATE.exactKeys && keys.length) decodedParts.push("exact-keys = true");
+  if (author) decodedParts.push(`author = "${author}"`);
+  if (qTrim.length >= 2) decodedParts.push(`search-text = "${qRaw}"`);
+  if (STATE.win === "all") decodedParts.push("time = unbounded"); else { const [f, t] = winRange(); decodedParts.push(`[${f}T00:00Z, ${addDays(t, 1)}T00:00Z)`); }
+  return { url: `/api/v2/partitionings/search?${params.join("&")}`, decoded: decodedParts.join(" · ") };
+}
+function runDatasetQuery() {
+  const v = validateSearchState();
+  if (!v.ok || v.emptyPrompt) return { validation: v, rows: [], total: 0, hasMore: false, unorderedHint: false, usingAtumFilter: true };
+
+  const keys = activeKeyFilters();
+  const author = STATE.authorFilter.trim();
+  const qRaw = STATE.dsQ, qTrim = qRaw.trim(), qLower = qTrim.length >= 2 ? qRaw.toLowerCase() : "";
+  const atumFilterActive = STATE.searchMode !== "search" || keys.length > 0 || !!author || !!qLower;
+
+  if (STATE.searchMode === "id") {
+    const targetPid = Number(STATE.pidQuery.trim());
+    const all = datasetRowsAll(true).filter(x => x.r.atum?.pid === targetPid);
+    return { validation: v, rows: all, total: all.length, hasMore: false, unorderedHint: false, usingAtumFilter: true };
+  }
+  if (STATE.searchMode === "exact") {
+    const allAtum = datasetRowsAll(true).filter(x => !!x.r.atum);
+    const exact = allAtum.filter(x => rowKeysMatchExactOrdered(batchKeys(x.ds, x.d, x.r), keys));
+    exact.sort((a, b) => STATE.latestFirst ? (b.r.atum.pid - a.r.atum.pid) : (a.r.atum.pid - b.r.atum.pid));
+    const unorderedHint = !exact.length && allAtum.some(x => rowKeysMatchSearch(batchKeys(x.ds, x.d, x.r), keys, true));
+    return { validation: v, rows: exact, total: exact.length, hasMore: false, unorderedHint, usingAtumFilter: true };
+  }
+
+  let rows = datasetRowsAll(false);
+  if (STATE.win !== "all" && STATE.dsLatest && !atumFilterActive) {
+    const iso = byKey.iso;
+    if (!rows.some(x => x.ds.key === "iso")) rows.push({ ds: iso, d: null, r: STATIC_ISO, s: STATUS[STATE.edition].iso[DAYS[0]] || { code: "ok" }, t: 0 });
+  }
+  if (atumFilterActive) rows = rows.filter(x => !!x.r.atum);
   if (STATE.dsProducer !== "all") rows = rows.filter(x => x.ds.producer === STATE.dsProducer);
+  if (STATE.dsStatus === "ok") rows = rows.filter(x => x.s.code === "ok");
   if (STATE.dsStatus === "shift") rows = rows.filter(x => x.s.code === "control_break");
-  if (STATE.dsStatus === "notmeasured") rows = rows.filter(x => x.s.code === "not_measured");
-  const q = STATE.dsQ.trim().toLowerCase();
-  if (q) rows = rows.filter(x => `${x.ds.name} ${x.ds.asset} ${x.ds.producer} ${x.d || ""} ${x.r.atum?.pid || ""}`.toLowerCase().includes(q));
-  return rows;
+  if (keys.length) rows = rows.filter(x => rowKeysMatchSearch(batchKeys(x.ds, x.d, x.r), keys, STATE.exactKeys));
+  if (author) rows = rows.filter(x => rowAuthorMatches(x.ds, author));
+  if (qLower) rows = rows.filter(x => rowMatchesSearchText(batchKeys(x.ds, x.d, x.r), qLower));
+
+  if (STATE.dsLatest && STATE.win !== "all" && !atumFilterActive) {
+    rows.sort((a, b) => b.t - a.t);
+    const seen = new Set(); rows = rows.filter(x => !seen.has(x.ds.key) && seen.add(x.ds.key));
+  } else {
+    rows.sort((a, b) => {
+      const pa = a.r.atum?.pid ?? (a.t * 1000), pb = b.r.atum?.pid ?? (b.t * 1000);
+      return STATE.latestFirst ? pb - pa : pa - pb;
+    });
+    if (STATE.dsLatest) { const seen = new Set(); rows = rows.filter(x => !seen.has(x.ds.key) && seen.add(x.ds.key)); }
+  }
+  const total = rows.length, shown = rows.slice(0, STATE.pageShown);
+  return { validation: v, rows: shown, total, hasMore: total > shown.length, unorderedHint: false, usingAtumFilter: atumFilterActive };
 }
 function fillDatasets() {
-  const rows = datasetRowsFiltered(), comb = STATE.edition === "combined";
-  $("dsCount").textContent = `${rows.length} ${STATE.dsLatest ? "datasets" : TERM.many}`;
-  $("dsBody").innerHTML = rows.map(({ ds, d, r, s }) => {
+  const comb = STATE.edition === "combined";
+  const res = runDatasetQuery();
+  const keys = activeKeyFilters(), qLower = STATE.dsQ.trim().length >= 2 ? STATE.dsQ.toLowerCase() : "";
+  const filterKeySet = new Set(keys.map(f => f.key));
+
+  const statusEl = $("searchStatus");
+  if (statusEl) {
+    if (!res.validation.ok) {
+      statusEl.innerHTML = `<div class="inline-hint ${res.validation.severity}">${warnIconSvg}<span>${esc(res.validation.message)}</span></div>`;
+    } else if (res.validation.emptyPrompt) {
+      statusEl.innerHTML = `<div class="inline-hint">${esc(res.validation.message)}</div>`;
+    } else if (STATE.dsLatest && res.usingAtumFilter && res.total > 0 && STATE.searchMode === "search") {
+      statusEl.innerHTML = `<div class="inline-hint" style="justify-content:space-between"><span>Grouped by shared partitioning keys (ignoring <code>info_date</code> / <code>ref_version</code>) — showing latest batch per group (<b>${res.total}</b>). Uncheck grouping to inspect every matching partitioning.</span><button class="btn btn-sm" data-go="showallbatches">Show ungrouped partitionings</button></div>`;
+    } else {
+      statusEl.innerHTML = "";
+    }
+  }
+  const apiEl = $("apiPreview");
+  if (apiEl) {
+    const info = buildApiQueryInfo();
+    apiEl.innerHTML = `<span class="proto-tag" style="color:#ffb37a;border-color:#6b4a33">REST</span><code>GET ${esc(info.url)}</code><button class="tiny-btn" data-go="copyapi">Copy URL</button><div class="api-decoded">${esc(info.decoded)}</div>`;
+  }
+  const exactBtn = $("exactKeysToggle");
+  if (exactBtn) {
+    const hasKeys = keys.length > 0;
+    exactBtn.querySelectorAll("button").forEach(b => { b.disabled = !hasKeys; });
+  }
+  $("dsSearch")?.classList.toggle("has-error", !res.validation.ok && STATE.dsQ.trim().length === 1);
+
+  const grouped = STATE.dsLatest && STATE.searchMode === "search";
+  $("dsCount").textContent = res.validation.emptyPrompt || !res.validation.ok
+    ? "0 results"
+    : `Showing ${res.rows.length} of ${res.total} ${grouped && !res.usingAtumFilter ? "partitioning groups" : TERM.many}${res.hasMore ? " (hasMore=true)" : ""}`;
+
+  $("dsBody").innerHTML = res.rows.map(({ ds, d, r, s }) => {
     const last = lastCp(r, comb);
-    const run = comb ? `<td>${!ds.inEG ? '<span class="chip ext">not on EventGate</span>' : stChip(STATUS.eventgate[ds.key][d].code, "eventgate")}</td>` : "";
+    const pid = r.atum?.pid;
+    const idLabel = partitioningIdentity(ds, d, r, grouped);
+    const kvHtml = r.atum
+      ? `<div class="kv-list">${batchKeys(ds, d, r).map(([k, v], idx) => {
+          const isBatchKey = BATCH_KEYS.has(k);
+          const hit = filterKeySet.has(k) || (qLower && (k.toLowerCase().includes(qLower) || String(v).toLowerCase().includes(qLower)));
+          const varyBtn = isBatchKey
+            ? `<button class="kv-act" data-act="pivot" data-ds="${esc(ds.key)}" data-day="${esc(d || TODAY)}" data-drop="${esc(k)}" title="Find sibling partitionings (vary ${esc(k)}, exact-keys=true)">⇄</button>`
+            : "";
+          const badgeStyle = grouped && isBatchKey ? ' style="border-style:dashed"' : "";
+          const batchTip = grouped && isBatchKey ? ' title="Batch-varying key (ignored in group name when grouped)"' : "";
+          return `<span class="kv-badge ${hit ? "matched" : ""}"${badgeStyle}${batchTip}><span class="kv-idx">${idx + 1}</span><span>${esc(k)}=<b>${esc(v)}</b></span><button class="kv-act" data-act="usekey" data-k="${esc(k)}" data-v="${esc(v)}" title="Filter by ${esc(k)}=${esc(v)}">+</button>${varyBtn}</span>`;
+        }).join("")}</div>`
+      : "";
     return `<tr class="row-link ${s.code === "control_break" ? "row-shift" : ""}" data-go="focus:${ds.key}${d ? ":" + d : ""}" tabindex="0">
-      <td><div style="font-weight:600;color:var(--text)">${esc(ds.name)}</div><div class="mono-id">${esc(ds.asset)}</div></td>
-      <td>${prodBadge(ds.producer)}</td>
+      <td><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--text)">${esc(idLabel)}</span>${pid ? `<span class="mono-id">#${pid}</span>` : ""}</div>${kvHtml}</td>
+      <td>${prodBadge(ds.producer)}<div class="mono-id" style="margin-top:2px">author: ${esc(ds.author || "—")}</div></td>
       <td style="white-space:nowrap">${d ? esc(d) : esc(r.version)}${ds.static ? ' <span class="muted">(reference)</span>' : ""}</td>
       <td style="white-space:nowrap">${last ? `${esc(last.name)} <span style="color:var(--text-muted)">(${r.atum.checkpoints.length})</span>` : `<span class="muted">${esc(stLabel(s.code))}</span>`}</td>
-      <td class="num" style="font-weight:600">${last ? fmt(last.values.count) : "—"}</td>${run}
+      <td class="num" style="font-weight:600">${last ? fmt(last.values.count) : "—"}</td>
       <td>${stChip(s.code)}</td><td style="text-align:right"><span class="row-chevron" title="Inspect Lineage">›</span></td></tr>`;
-  }).join("") || `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:28px"><div style="font-weight:600;color:var(--text);margin-bottom:4px">No matching datasets</div><div style="margin-bottom:10px">No datasets in the active window match your current filter criteria.</div><button class="btn btn-sm" data-go="reset">Reset filters</button></td></tr>`;
+  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px"><div style="font-weight:600;color:var(--text);margin-bottom:4px">${res.unorderedHint ? "Exact ordered key sequence did not match" : "No matching batches"}</div><div style="margin-bottom:10px">${res.unorderedHint ? "A partitioning exists with these exact keys & values in a different order. /search ignores key order; exact lookup requires the exact stored sequence." : esc(res.validation.emptyPrompt || !res.validation.ok ? res.validation.message : "No batches in the active scope match your current filter criteria.")}</div><div style="display:flex;gap:8px;justify-content:center">${res.unorderedHint ? `<button class="btn btn-sm btn-primary" data-go="switchsearch">Switch to Search (exact key set)</button>` : ""}<button class="btn btn-sm" data-go="reset">Reset search</button></div></td></tr>`;
+
+  const lm = $("dsLoadMore");
+  if (lm) {
+    lm.classList.toggle("hidden", !res.hasMore);
+    if (res.hasMore) lm.innerHTML = `<button class="btn btn-outline" data-go="loadmore">Load more (${res.total - res.rows.length} remaining · hasMore=true)</button>`;
+  }
 }
 LIVE.dsQ = fillDatasets;
+LIVE.authorFilter = fillDatasets;
+LIVE.pidQuery = fillDatasets;
 function datasetFilters() {
   const producers = [...new Set(edDatasets().map(x => x.producer))];
   return `<div class="field"><label>Source System</label><select data-set="dsProducer"><option value="all">All source systems (${producers.length})</option>${producers.map(p => `<option ${STATE.dsProducer === p ? "selected" : ""}>${esc(p)}</option>`).join("")}</select></div>`;
 }
+function renderSearchPanel(filterLabel) {
+  const knownKeys = ["catalog_path", "info_date", "system", "feed", "ref_version"];
+  const authors = [...new Set(DS.map(d => d.author).filter(Boolean))];
+  const isSearch = STATE.searchMode === "search", isExact = STATE.searchMode === "exact", isId = STATE.searchMode === "id";
+  const hasAnyKeys = activeKeyFilters().length > 0;
+  const clausesHtml = STATE.keyFilters.map((f, i) => `
+    <div class="key-clause">
+      ${isExact ? `<span class="key-idx" style="margin-right:2px">${i + 1}</span>` : ""}
+      <input class="k-name" list="keyNameList" data-keyclause="${i}:key" value="${esc(f.key)}" placeholder="key name" aria-label="Partitioning key name ${i + 1}">
+      ${isSearch ? `<select data-keyclause="${i}:mode" aria-label="Match operator">
+          <option value="exact" ${f.mode === "exact" ? "selected" : ""}>= exact</option>
+          <option value="exists" ${f.mode === "exists" ? "selected" : ""}>* exists (null)</option>
+        </select>` : `<span class="mono-id" style="padding:0 4px">=</span>`}
+      ${f.mode === "exists" && isSearch
+        ? `<span class="k-any">null (any value)</span>`
+        : `<input class="k-val" data-keyclause="${i}:value" value="${esc(f.value)}" placeholder="exact string value" aria-label="Partitioning key value ${i + 1}">`}
+      ${isExact ? `<button class="tiny-btn" data-go="movekey:${i}:-1" ${i === 0 ? "disabled" : ""} title="Move up">↑</button><button class="tiny-btn" data-go="movekey:${i}:1" ${i === STATE.keyFilters.length - 1 ? "disabled" : ""} title="Move down">↓</button>` : ""}
+      <button class="tiny-btn" data-go="remkey:${i}" title="Remove key filter">✕</button>
+    </div>`).join("");
+
+  return `<datalist id="keyNameList">${knownKeys.map(k => `<option value="${esc(k)}">`).join("")}</datalist>
+    <datalist id="authorList">${authors.map(a => `<option value="${esc(a)}">`).join("")}</datalist>
+    <div class="search-panel">
+      <div class="search-top">
+        <div class="pill-group" role="tablist" aria-label="Search endpoint mode">
+          <button class="pill-btn ${isSearch ? "active" : ""}" data-go="searchmode:search" title="GET /api/v2/partitionings/search (unordered keys, wildcards, author, text, time window)">Search (/search)</button>
+          <button class="pill-btn ${isExact ? "active" : ""}" data-go="searchmode:exact" title="GET /api/v2/partitionings?partitioning= (exact complete ordered keys)">Exact ordered</button>
+          <button class="pill-btn ${isId ? "active" : ""}" data-go="searchmode:id" title="GET /api/v2/partitionings/{id} (direct numeric ID lookup)">By ID</button>
+        </div>
+        ${isId ? `
+          <label class="search-input" style="max-width:300px"><span class="mono-id">#</span><input id="pidSearch" data-live="pidQuery" value="${esc(STATE.pidQuery)}" placeholder="Partitioning ID (e.g. 2000000010448528)"></label>
+        ` : isSearch ? `
+          <label class="search-input"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dsSearch" data-live="dsQ" value="${esc(STATE.dsQ)}" placeholder="Search key or value text (min 2 chars)…"></label>
+          <label class="author-ctrl" title="Exact match on runs.partitionings.created_by (indexed)"><span>Author:</span><input list="authorList" data-live="authorFilter" value="${esc(STATE.authorFilter)}" placeholder="all (e.g. unify)">${STATE.authorFilter ? `<button class="tiny-btn" style="border:0;height:18px" data-go="clearauthor" title="Clear author">✕</button>` : ""}</label>
+          <label class="check" ${tipAttr("Group batches sharing the same non-batch partitioning keys (ignoring info_date / ref_version in the label) and show only the latest batch per group.")}><input type="checkbox" data-set="dsLatest" ${STATE.dsLatest ? "checked" : ""}> Group batches (ignore info_date / ref_version)</label>
+        ` : `<span class="toolbar-meta">Complete <b>ordered</b> keys required — order differs from stored partitioning returns 404.</span>`}
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${isSearch ? `<div class="pill-group" title="latest-first query parameter (ordered by partitioning ID)">
+            <button class="pill-btn ${STATE.latestFirst ? "active" : ""}" data-go="sort:latest">Newest ID first</button>
+            <button class="pill-btn ${!STATE.latestFirst ? "active" : ""}" data-go="sort:oldest">Oldest ID first</button>
+          </div>` : ""}
+          ${isSearch ? `<div class="author-ctrl" style="height:28px;padding:0 6px" title="limit query parameter"><span>Page:</span><select data-set="pageLimit" style="border:0;background:transparent;font-weight:600;outline:none">${[10, 25, 50, 100].map(n => `<option value="${n}" ${STATE.pageLimit === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>` : ""}
+          <button class="btn btn-sm ${STATE.showApiPreview ? "btn-outline" : ""}" data-go="toggleapi">API query</button>
+          <button class="btn btn-sm" data-go="reset">Reset</button>
+          ${filterLabel ? `<button class="chip" style="cursor:pointer" data-go="dsstatus:${STATE.dsStatus}">Filtered: ${esc(filterLabel)} ✕</button>` : ""}
+          <span class="toolbar-meta" id="dsCount"></span>
+        </div>
+      </div>
+
+      ${!isId ? `<div class="keys-box">
+        <div class="keys-head">
+          <strong>${isExact ? "Ordered Partitioning Keys" : "Partitioning Keys Filter"}</strong>
+          <button class="tiny-btn" data-go="addkey">+ Add key</button>
+          ${isSearch ? `<div class="pill-group" id="exactKeysToggle" style="margin-left:6px" ${tipAttr("exact-keys=false matches subsets of keys; exact-keys=true matches only partitionings with this exact key set (ignoring order).")}>
+            <button class="pill-btn ${!STATE.exactKeys ? "active" : ""}" data-go="exactkeys:0" ${!hasAnyKeys ? "disabled" : ""}>Partial keys (contains)</button>
+            <button class="pill-btn ${STATE.exactKeys ? "active" : ""}" data-go="exactkeys:1" ${!hasAnyKeys ? "disabled" : ""}>Exact key set</button>
+          </div>` : ""}
+          <span class="toolbar-meta">${isExact ? "Order matters; every key in the stored partitioning must be listed in exact order." : hasAnyKeys ? "Use <b>* exists (null)</b> to match any value for a key (key-drop / wildcard discovery)." : "Click <b>+ Add key</b> or any key chip below to filter by exact key/value or key existence (null)."}</span>
+        </div>
+        ${STATE.keyFilters.length ? `<div class="key-clauses">${clausesHtml}</div>` : ""}
+      </div>` : ""}
+
+      <div class="preset-bar">
+        <span>Try API patterns:</span>
+        <button class="preset-chip" data-go="preset:cust_pay_siblings">un_customer_payments (key-drop: info_date=* · exact-keys)</button>
+        <button class="preset-chip" data-go="preset:business_date">All partitionings for info_date=2026-11-11</button>
+        <button class="preset-chip" data-go="preset:unify_payments">author=unify + search-text=payments</button>
+        <button class="preset-chip" data-go="preset:refdata_outside">ref_version=* (outside 7d via Any time)</button>
+      </div>
+      <div id="searchStatus"></div>
+      <div id="apiPreview" class="api-preview ${STATE.showApiPreview ? "" : "hidden"}"></div>
+    </div>`;
+}
 function viewDatasets() {
-  const comb = STATE.edition === "combined", all = datasetRowsAll();
+  const comb = STATE.edition === "combined", all = datasetRowsAll(false);
   const latest = []; { const seen = new Set(); for (const x of all) if (!seen.has(x.ds.key)) { seen.add(x.ds.key); latest.push(x); } }
   // All three cards partition the SAME `latest` snapshot, so the numbers always add up to the total.
   const byCode = {}; latest.forEach(x => (byCode[x.s.code] ||= []).push(x));
   const order = Object.keys(byCode).sort((a, b) => SEV[ST[a].tone] - SEV[ST[b].tone]);
   const breakdown = order.map(c => `${byCode[c].length} ${stLabel(c).toLowerCase()}`).join(" · ");
-  const shiftRows = byCode.control_break || [], notMeasuredRows = byCode.not_measured || [];
+  const okRows = byCode.ok || [], shiftRows = byCode.control_break || [];
   const kp = [
-    { icon: "table", label: `Active datasets (${esc(winLabel())})`, value: latest.length, sub: breakdown || "no activity in this window", go: "dsstatus:all", active: STATE.dsStatus === "all" },
-    { icon: "warn", label: "Measure Shift", value: shiftRows.length, warn: true, attn: shiftRows.length > 0, sub: shiftRows.length ? `${esc(shiftRows[0].ds.name)} (${esc(shiftInfo(shiftRows[0].ds, shiftRows[0].r, comb).cpName)} step) · Click to filter` : "none in this window", go: "dsstatus:shift", active: STATE.dsStatus === "shift" },
-    { icon: "pie", label: "Not measured", value: notMeasuredRows.length, sub: "datasets that ran in EventGate without controls · Click to filter", go: "dsstatus:notmeasured", active: STATE.dsStatus === "notmeasured" }
+    { icon: "table", label: `Active partitioning groups (${esc(winLabel())})`, value: latest.length, sub: breakdown || "no activity in this window", go: "dsstatus:all", active: STATE.dsStatus === "all" },
+    { icon: "ok", tone: "good", label: "Consistent", value: okRows.length, sub: "all control measures match across checkpoints · Click to filter", go: "dsstatus:ok", active: STATE.dsStatus === "ok" },
+    { icon: "warn", label: "Measure Shift", value: shiftRows.length, warn: true, attn: shiftRows.length > 0, sub: shiftRows.length ? `${esc(partitioningIdentity(shiftRows[0].ds, shiftRows[0].d, shiftRows[0].r, true))} (${esc(shiftInfo(shiftRows[0].ds, shiftRows[0].r, comb).cpName)} step) · Click to filter` : "none in this window", go: "dsstatus:shift", active: STATE.dsStatus === "shift" }
   ];
-  const filterLabel = { shift: "Measure Shift", notmeasured: "Not measured" }[STATE.dsStatus];
+  const filterLabel = { ok: "Consistent", shift: "Measure Shift" }[STATE.dsStatus];
   const html = `<div class="kpi-grid k3">${kp.map(kpiCard).join("")}</div>
-    <section class="card"><div class="filter-bar">
-      <label class="search-input"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dsSearch" data-live="dsQ" value="${esc(STATE.dsQ)}" placeholder="Filter by dataset or ${TERM.one} key..."></label>
-      <label class="check" ${tipAttr(TERM.tip)}><input type="checkbox" data-set="dsLatest" ${STATE.dsLatest ? "checked" : ""}> Latest ${TERM.one} only</label>
-      ${filterLabel ? `<button class="chip" style="margin-left:auto;cursor:pointer" data-go="dsstatus:${STATE.dsStatus}">Filtered by ${esc(filterLabel)} <span style="font-weight:700">✕</span></button>` : ""}
-      <span class="toolbar-meta" ${filterLabel ? "" : 'style="margin-left:auto"'} id="dsCount"></span></div>
-    <div class="table-wrap"><table><thead><tr><th>Dataset &amp; ${TERM.one} key</th><th>Producer</th><th>Info date / version</th><th>Latest checkpoint</th><th class="num">Record count</th>${comb ? "<th>Pipeline run</th>" : ""}<th>Status</th><th style="width:28px"></th></tr></thead><tbody id="dsBody"></tbody></table></div></section>`;
+    <section class="card">${renderSearchPanel(filterLabel)}
+    <div class="table-wrap"><table><thead><tr><th>Partitioning Identity &amp; Keys <span class="muted" style="font-weight:400">(+ filter or ⇄ vary batch key)</span></th><th>Producer · Author</th><th>Info date / version</th><th>Latest checkpoint</th><th class="num">Record count</th><th>Status</th><th style="width:28px"></th></tr></thead><tbody id="dsBody"></tbody></table></div>
+    <div id="dsLoadMore" class="load-more hidden"></div></section>`;
   return { html, after: fillDatasets };
 }
 
@@ -899,7 +1279,7 @@ function lineageSvg(focus) {
   nodes.forEach(k => { if (rank.get(k) === 0) { const cr = edges.filter(e => e.from === k).map(e => rank.get(e.to)); if (cr.length && Math.min(...cr) > 1) rank.set(k, Math.min(...cr) - 1); } });
   const cols = new Map(); nodes.forEach(k => { const r = rank.get(k); if (!cols.has(r)) cols.set(r, []); cols.get(r).push(k); });
   const ranks = [...cols.keys()].sort((a, b) => a - b);
-  const W = 232, H = 64, YG = 10, XG = 48, PAD_X = 16, svgW = 1120, svgH = 220, pos = {};
+  const W = 256, H = 66, YG = 10, XG = 40, PAD_X = 16, svgW = 1190, svgH = 224, pos = {};
   const offX = (svgW - (ranks.length * W + (ranks.length - 1) * XG)) / 2 - PAD_X;
   ranks.forEach((r, c) => { const cn = cols.get(r), totalH = cn.length * H + (cn.length - 1) * YG, y0 = (svgH - totalH) / 2; cn.forEach((k, i) => { pos[k] = { x: PAD_X + Math.max(0, ranks.length < 4 ? offX : 0) + c * (W + XG), y: y0 + i * (H + YG), col: c }; }); });
   let svg = `<defs><marker id="arrActive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B50232"/></marker>
@@ -916,6 +1296,13 @@ function lineageSvg(focus) {
   });
   const fmtCard = (v, k) => v == null ? null : k === "count" ? `${fmt(v)} rows` : k === "sum_amount" ? fmt(v, true) : k === "distinct_cust" ? `${fmt(v)} customers` : k === "hash_tx" ? `hash ${fmtShortHash(v)}` : String(v);
   const fmtPair = (a, b, k) => k === "count" ? `${fmt(a)} → ${fmt(b)} rows` : k === "sum_amount" ? `${fmt(a, true)} → ${fmt(b, true)}` : `${fmtShortHash(a)} → ${fmtShortHash(b)}`;
+  const svgTitleTspans = lbl => {
+    const dot = lbl.indexOf(".");
+    if (dot > 0 && !lbl.includes("=")) {
+      return `<tspan fill="#6f6464" font-weight="500">${esc(lbl.slice(0, dot + 1))}</tspan><tspan fill="#131010" font-weight="700">${esc(lbl.slice(dot + 1))}</tspan>`;
+    }
+    return `<tspan fill="#131010" font-weight="700">${esc(lbl)}</tspan>`;
+  };
   nodes.forEach(k => {
     const n = byKey[k], { x, y } = pos[k], r = recFor(k, d), sel = k === focus, on = onPath.has(k), s = STATUS[STATE.edition][k][d] || { code: "ok" };
     const shift = s.code === "control_break", hasBatch = !!r.atum;
@@ -924,30 +1311,33 @@ function lineageSvg(focus) {
     if (!hasBatch) line = `— (no ${TERM.one} for ${d})`;
     else if (f == null && l == null) line = "— (not measured)";
     else line = mShift ? fmtPair(f, l, gm) : fmtCard(l ?? f, gm);
-    const sub = `${n.producer} · ${n.static ? r.version : d}`;
+    const idLabel = partitioningIdentity(n, d, r, true);
+    const pidTail = r.atum?.pid ? ` · #…${String(r.atum.pid).slice(-5)}` : "";
+    const sub = `${n.author || n.producer} · ${n.static ? r.version : d}${pidTail}`;
     const icon = !hasBatch ? glyph("no_batch", 14).replace('width="14"', 'width="14" x="0"')
       : shift ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="#c2410c"><path d="M12 2 1 22h22L12 2zm0 7a1 1 0 0 1 1 1v5a1 1 0 1 1-2 0V10a1 1 0 0 1 1-1zm0 11a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 12 20z"/></svg>'
       : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e7a42" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
-    svg += `<g class="node-group" data-go="focus:${k}" tabindex="0" role="button" opacity="${on ? 1 : .52}" filter="url(#cardShadow)" ${tipAttr(`<b>${esc(n.name)}</b><br>${esc(stLabel(s.code))}${s.detail ? `<br><span class="tt-muted">${esc(s.detail)}</span>` : ""}`)}>
+    svg += `<g class="node-group" data-go="focus:${k}" tabindex="0" role="button" opacity="${on ? 1 : .52}" filter="url(#cardShadow)">
       <rect class="node-box" x="${x}" y="${y}" width="${W}" height="${H}" rx="7" fill="${sel ? "#fcebee" : "#ffffff"}" stroke="${sel ? "#B50232" : (shift ? "#FF780F" : "#cdc7c7")}" stroke-width="${sel ? 2 : 1.2}" ${!hasBatch && !sel ? 'stroke-dasharray="4 3"' : ""}/>
       ${shift ? `<rect x="${x}" y="${y}" width="4" height="${H}" rx="2" fill="#FF780F"/>` : ""}
-      <text x="${x + 12}" y="${y + 20}" font-size="12.5" font-weight="600" fill="#131010">${esc(n.name)}</text>
-      <g transform="translate(${x + W - 26},${y + 8})">${icon}</g>
-      <g transform="translate(${x + 12},${y + 26.5})">${sysSvg(n.producer, 13)}</g>
-      <text x="${x + 29}" y="${y + 37}" font-size="11" fill="#767676">${esc(sub)}</text>
-      <text x="${x + 12}" y="${y + 53}" font-size="11" fill="${mShift ? "#c2410c" : (!hasBatch || (f == null && l == null) ? "#9c9494" : "#453f3f")}" font-weight="${mShift ? 600 : 400}">${esc(line)}</text></g>`;
+      <text x="${x + 11}" y="${y + 20}" font-size="11" letter-spacing="-0.1">${svgTitleTspans(idLabel)}</text>
+      <g transform="translate(${x + W - 24},${y + 8})">${icon}</g>
+      <g transform="translate(${x + 11},${y + 27})">${sysSvg(n.producer, 13)}</g>
+      <text x="${x + 28}" y="${y + 37.5}" font-size="10.8" fill="#767676">${esc(sub)}</text>
+      <text x="${x + 11}" y="${y + 54.5}" font-size="11" fill="${mShift ? "#c2410c" : (!hasBatch || (f == null && l == null) ? "#9c9494" : "#453f3f")}" font-weight="${mShift ? 600 : 400}">${esc(line)}</text></g>`;
   });
-  return { svg: `<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="display:block;min-width:860px;height:210px" role="img" aria-label="Lineage graph">${svg}</svg>`, nodes, edges };
+  return { svg: `<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="display:block;min-width:920px;height:216px" role="img" aria-label="Lineage graph">${svg}</svg>`, nodes, edges };
 }
 
-const SUBTABS = { measures: "Control Measures", cross: "Cross-Dataset Comparison", metadata: "Metadata & Properties", history: "Historical Runs" };
+const SUBTABS = { measures: "Control Measures", cross: "Cross-Partitioning Comparison", metadata: "Metadata & Properties", history: "Historical Runs" };
 const INSPECT = {
   measures(ds, d, r, s) {
     const comb = STATE.edition === "combined";
-    if (!r.atum) return `<div class="callout callout-ok"><span>${esc(stLabel(s.code))}. ${esc(s.detail || "")}</span></div><div class="empty"><strong>No checkpoints for this info date</strong>${!ds.inAtum ? "This dataset is not measured by Atum (coverage gap)." : ""}</div>`;
+    const idLabel = partitioningIdentity(ds, d, r, true);
+    if (!r.atum) return `<div class="callout callout-ok"><span>${esc(stLabel(s.code))}. ${esc(s.detail || "")}</span></div><div class="empty"><strong>No checkpoints for this info date</strong>${!ds.inAtum ? "No partitioning registered in Atum for this dataset." : ""}</div>`;
     const cps = r.atum.checkpoints, sh = shiftInfo(ds, r, comb);
-    const callout = sh ? `<div class="callout callout-warn"><strong>Measure Shift:</strong> <span>${sh.n} of ${sh.of} control measures shifted at checkpoint <b>${sh.at + 1}. ${esc(sh.cpName)}</b> on ${esc(ds.name)}${comb && r.eg ? " (the job itself succeeded)" : ""}.</span></div>`
-      : `<div class="callout callout-ok"><span>All ${ds.measures.length} control measures remained consistent across checkpoints on <b>${esc(ds.name)}</b>.</span></div>`;
+    const callout = sh ? `<div class="callout callout-warn"><strong>Measure Shift:</strong> <span>${sh.n} of ${sh.of} control measures shifted at checkpoint <b>${sh.at + 1}. ${esc(sh.cpName)}</b> on <code>${esc(idLabel)}</code>${comb && r.eg ? " (the job itself succeeded)" : ""}.</span></div>`
+      : `<div class="callout callout-ok"><span>All ${ds.measures.length} control measures remained consistent across checkpoints on <code>${esc(idLabel)}</code>.</span></div>`;
     const head = cps.map((c, i) => `<th class="num"><div style="color:var(--text);font-size:12px">${i + 1}. ${esc(c.name)}</div><div style="font-weight:400;font-size:11px;color:var(--text-muted)">${hms(c.t)}</div></th>`).join("");
     const rows = ds.measures.map(m => {
       let prev;
@@ -970,33 +1360,35 @@ const INSPECT = {
     const comb = STATE.edition === "combined";
     const all = [...new Set(graph.nodes.flatMap(k => byKey[k].measures))];
     const mk = all.includes(STATE.graphMetric) ? STATE.graphMetric : all[0];
-    if (!mk || graph.nodes.length < 2) return `<div class="empty"><strong>No cross-dataset comparison</strong>This dataset has no recorded lineage.</div>`;
+    if (!mk || graph.nodes.length < 2) return `<div class="empty"><strong>No cross-partitioning comparison</strong>This partitioning has no recorded lineage.</div>`;
     const rows = graph.nodes.map(k => {
       const n = byKey[k], rr = recFor(k, d), isSel = k === ds.key;
+      const nodeLabel = partitioningIdentity(n, d, rr, true);
       const entry = firstCp(rr, comb)?.values[mk], exit = lastCp(rr, comb)?.values[mk], measured = entry != null || exit != null;
       const shifted = entry != null && exit != null && !same(entry, exit);
       const parents = graph.edges.filter(e => e.to === k).map(e => e.from), withM = parents.filter(p => lastCp(recFor(p, d), comb)?.values[mk] != null);
       let hand = `<span style="color:var(--text-muted)">— (Source root)</span>`;
       if (!rr.atum) hand = `<span style="color:var(--text-muted)">No ${TERM.one} for ${d}</span>`;
       else if (!measured) hand = `<span style="color:var(--text-muted)">Not measured</span>`;
-      else if (withM.length && entry != null) { const p = withM.find(p => same(lastCp(recFor(p, d), comb).values[mk], entry)); hand = p ? `<span class="status-consistent">${checkIconSvg} Matches ${esc(byKey[p].name)}</span>` : `<span style="color:var(--text-muted)">Transformed on read</span>`; }
+      else if (withM.length && entry != null) { const p = withM.find(p => same(lastCp(recFor(p, d), comb).values[mk], entry)); hand = p ? `<span class="status-consistent">${checkIconSvg} Matches <span class="mono-id" style="color:inherit">${esc(partitioningIdentity(byKey[p], d, recFor(p, d), true))}</span></span>` : `<span style="color:var(--text-muted)">Transformed on read</span>`; }
       else if (parents.length) hand = `<span style="color:var(--text-muted)">Not on parent</span>`;
       const delta = shifted && !MEASURES[mk].hash ? `<span class="delta-sub">${exit - entry > 0 ? "+" : "−"}${fmt(Math.abs(exit - entry), MEASURES[mk].dec)}</span>` : shifted ? `<span class="delta-sub">recomputed</span>` : "";
-      return `<tr class="row-link ${isSel ? "row-selected" : ""} ${shifted ? "row-shift" : ""}" data-go="focus:${k}" tabindex="0"><td style="font-weight:600;white-space:nowrap">${esc(n.name)}${isSel ? '<span style="color:var(--primary);font-size:11px;font-weight:600;margin-left:4px">(Selected)</span>' : ""}</td>
-        <td>${prodBadge(n.producer)}</td><td class="num">${fmtMeasure(mk, entry)}</td><td class="num ${shifted ? "cell-changed" : ""}">${fmtMeasure(mk, exit)}${delta}</td><td>${hand}</td><td>${!measured ? '<span style="color:var(--text-muted)">—</span>' : stChip(shifted ? "control_break" : "ok", "atum")}</td></tr>`;
+      return `<tr class="row-link ${isSel ? "row-selected" : ""} ${shifted ? "row-shift" : ""}" data-go="focus:${k}" tabindex="0"><td><span style="font-family:var(--mono);font-size:12px;font-weight:600">${esc(nodeLabel)}</span>${isSel ? '<span style="color:var(--primary);font-size:11px;font-weight:600;margin-left:6px">(Selected)</span>' : ""}</td>
+        <td>${prodBadge(n.producer)}<div class="mono-id">${esc(n.author || "—")}</div></td><td class="num">${fmtMeasure(mk, entry)}</td><td class="num ${shifted ? "cell-changed" : ""}">${fmtMeasure(mk, exit)}${delta}</td><td>${hand}</td><td>${!measured ? '<span style="color:var(--text-muted)">—</span>' : stChip(shifted ? "control_break" : "ok", "atum")}</td></tr>`;
     }).join("");
-    return `<div class="callout callout-ok" style="justify-content:space-between"><span>Comparing <b>${esc(MEASURES[mk].label)}</b> across all datasets in the lineage graph.</span>
+    return `<div class="callout callout-ok" style="justify-content:space-between"><span>Comparing <b>${esc(MEASURES[mk].label)}</b> across all partitionings in the lineage graph.</span>
       <div class="pill-group">${all.map(m => `<button class="pill-btn ${m === mk ? "active" : ""}" data-go="metric:${m}">${esc(MEASURES[m].label)}</button>`).join("")}</div></div>
-      <div class="table-wrap"><table><thead><tr><th>Dataset</th><th>Producer</th><th class="num">Entry (First cp)</th><th class="num">Exit (Last cp)</th><th>Upstream handoff</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      <div class="table-wrap"><table><thead><tr><th>Partitioning Identity</th><th>Producer · Author</th><th class="num">Entry (First cp)</th><th class="num">Exit (Last cp)</th><th>Upstream handoff</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   },
   metadata(ds, d, r) {
-    const keys = ds.static ? [["catalog_path", ds.catalog], ["ref_version", r.version]] : ds.keys ? ds.keys(d) : [["catalog_path", ds.catalog], ["info_date", d]];
+    const keys = batchKeys(ds, d, r);
     const pid = r.atum?.pid;
     const cps = r.atum?.checkpoints || [];
-    return `<div class="links-row">Open in: ${linksFor(ds)}</div>
+    const extLinks = linksFor(ds);
+    return `${extLinks ? `<div class="links-row">Open in: ${extLinks}</div>` : ""}
       <div class="meta-top">
       <div class="meta-card"><div class="meta-card-head"><span ${tipAttr(TERM.tip)}>Partitioning Keys (Ordered)</span><span style="font-weight:400;color:var(--text-muted)">${pid ? `ID <span class="mono-id">#${pid}</span> · ` : ""}Author: <strong style="color:var(--text-secondary)">${esc(ds.author || "—")}</strong>${pid ? `<button class="copy-btn" data-go="copy:${pid}">Copy</button>` : ""}</span></div>
-        <table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>${keys.map(([k, v], i) => `<tr><td style="width:150px;color:var(--text-secondary);font-weight:600"><span class="key-idx">${i + 1}</span>${esc(k)}</td><td style="font-family:var(--mono)">${esc(v)}</td></tr>`).join("")}</tbody></table></div>
+        <table><thead><tr><th>Key</th><th>Value</th><th style="text-align:right">Search</th></tr></thead><tbody>${keys.map(([k, v], i) => `<tr><td style="width:140px;color:var(--text-secondary);font-weight:600"><span class="key-idx">${i + 1}</span>${esc(k)}</td><td style="font-family:var(--mono)">${esc(v)}</td><td style="text-align:right;white-space:nowrap"><button class="tiny-btn" data-act="usekey" data-k="${esc(k)}" data-v="${esc(v)}" title="Filter Control Metrics by ${esc(k)}=${esc(v)}">+ Filter</button> <button class="tiny-btn" data-act="pivot" data-ds="${esc(ds.key)}" data-day="${esc(d || TODAY)}" data-drop="${esc(k)}" title="Find sibling batches varying ${esc(k)} (null wildcard + exact-keys=true)">⇄ Vary</button></td></tr>`).join("")}</tbody></table></div>
       <div class="meta-card"><div class="meta-card-head"><span>Partitioning Metadata</span><span style="font-weight:400;color:var(--text-muted)">${ds.ad.length} registered</span></div>
         <table><thead><tr><th>Key</th><th>Value</th><th style="text-align:right">Author</th></tr></thead><tbody>${ds.ad.length ? ds.ad.map(([k, v]) => `<tr><td style="width:140px;color:var(--text-secondary);font-weight:600">${esc(k)}</td><td style="font-family:var(--mono)">${esc(v)}</td><td style="color:var(--text-muted);text-align:right">${esc(ds.author)}</td></tr>`).join("") : `<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:14px">No partitioning metadata registered</td></tr>`}</tbody></table></div></div>
       ${cps.length ? `<div class="table-wrap"><table><thead><tr><th>Checkpoint</th><th>Checkpoint UUID</th><th>Process start</th><th>Process end</th><th>Capture method</th><th>Checkpoint properties</th></tr></thead><tbody>
@@ -1046,22 +1438,25 @@ function viewLineage() {
   const graph = lineageSvg(ds.key);
   const metrics = [...new Set(graph.nodes.flatMap(k => byKey[k].measures))];
   if (!metrics.includes(STATE.graphMetric)) STATE.graphMetric = metrics[0] || "count";
-  const allKeys = ds.static ? [["catalog_path", ds.catalog]] : ds.keys ? ds.keys(d) : [["catalog_path", ds.catalog], ["info_date", d]];
-  const shared = allKeys.filter(([k]) => k !== "info_date").map(([k, v]) => `${k}=${v}`).join(" · ");
+  const allKeys = batchKeys(ds, d, r);
+  const shared = allKeys.filter(([k]) => k !== "info_date" && k !== "ref_version").map(([k, v]) => `${k}=${v}`).join(" · ");
+  const varyKey = ds.static ? "ref_version" : "info_date";
+  const pivotBtn = r.atum ? `<button class="link-chip" style="margin-left:auto" data-act="pivot" data-ds="${esc(ds.key)}" data-day="${esc(d || TODAY)}" data-drop="${esc(varyKey)}" title="Search all batches sharing these keys with ${varyKey}=null and exact-keys=true">Find all batches (vary ${varyKey})</button>` : "";
   const batchBar = ds.static
-    ? `<div class="links-row"><span class="chip">Reference data</span> single current version <b style="color:var(--text)">ref_version = ${esc(STATIC_ISO.version)}</b> <span class="muted">· keys: <span class="mono-id">${esc(shared)}</span></span></div>`
+    ? `<div class="links-row"><span class="chip">Reference data</span> single current version <b style="color:var(--text)">ref_version = ${esc(STATIC_ISO.version)}</b> <span class="muted">· keys: <span class="mono-id">${esc(shared)}</span></span>${pivotBtn}</div>`
     : `<div class="links-row"><span ${tipAttr(TERM.tip + " All batches of a dataset share the same keys except info_date.")} style="border-bottom:1px dotted var(--text-muted);cursor:help">${TERM.One}</span>
         ${batches.length ? `<div class="control-pill" style="height:27px;font-size:12px;padding:0 8px"><select data-set="day">${batches.map(x => `<option value="${x}" ${x === d ? "selected" : ""}>info_date = ${x}${x === TODAY ? " (today)" : ""}</option>`).join("")}</select></div>
         <span>${batches.length} ${batches.length === 1 ? TERM.one : TERM.many} in ${esc(winLabel().toLowerCase())}</span>` : `<span>No ${TERM.many} in ${esc(winLabel().toLowerCase())}; showing info_date ${d}</span>`}
-        <span class="muted">· shared keys: <span class="mono-id">${esc(shared)}</span></span></div>`;
-  return `<section class="card"><div class="card-toolbar"><span class="toolbar-meta">${graph.nodes.length} datasets · ${graph.edges.length} links · Highlighting active path for ${esc(ds.name)}</span>
+        <span class="muted">· shared keys: <span class="mono-id">${esc(shared)}</span></span>${pivotBtn}</div>`;
+  const focusId = partitioningIdentity(ds, d, r, true);
+  return `<section class="card"><div class="card-toolbar"><span class="toolbar-meta">${graph.nodes.length} nodes · ${graph.edges.length} edges · Highlighting active path for <code>${esc(focusId)}</code></span>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div class="control-pill" style="height:27px;font-size:12px;padding:0 8px"><span>Graph metric:</span><select data-set="graphMetric">${metrics.map(m => `<option value="${m}" ${STATE.graphMetric === m ? "selected" : ""}>${esc(MEASURES[m].label)}</option>`).join("")}</select></div>
         <div class="pill-group"><button class="pill-btn ${STATE.scope === "full" ? "active" : ""}" data-go="scope:full">Full graph</button><button class="pill-btn ${STATE.scope === "direct" ? "active" : ""}" data-go="scope:direct">Direct neighbors (1 hop)</button></div>
       </div></div>
       <div class="lineage-canvas">${graph.svg}</div></section>
     <section class="card" style="margin-bottom:0">
-      <div class="inspector-head"><div class="inspector-title"><h2>${esc(ds.name)}</h2>${prodBadge(ds.producer)}${stChip(s.code)}</div>
+      <div class="inspector-head"><div class="inspector-title"><h2 style="font-family:var(--mono);font-size:14px">${esc(focusId)}</h2>${r.atum?.pid ? `<span class="mono-id">#${r.atum.pid}</span>` : ""}<span class="chip">author: <b>${esc(ds.author)}</b></span>${prodBadge(ds.producer)}${stChip(s.code)}</div>
         <div class="subtabs">${tabs.map(k => `<button class="subtab ${STATE.subtab === k ? "active" : ""}" data-go="sub:${k}">${SUBTABS[k]}</button>`).join("")}</div></div>
       ${batchBar}
       <div>${INSPECT[STATE.subtab](ds, d, r, s, graph)}</div></section>`;
