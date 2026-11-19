@@ -17,36 +17,45 @@ docker rm atum_db
 ```
 
 ### Using local postgres instance
+
 - create database `atum_db`
 - migrate scripts
+
 ```zsh
 sbt flywayMigrate
 ```
 
 In case some structures are already present in the database, you can use
+
 ```zsh
 sbt flywayClean 
 ```
-to remove them or 
+
+to remove them or
+
 ```zsh
 sbt flywayBaseline 
 ```
+
 to set the current state as the baseline.
 
 ## Schema Organization
 
 The database is organized into three main schemas:
 
-- **`runs`**: Core partitioning, checkpoint, and measure definition operations along with their metadata, plus `search_partitionings` (key-subset and checkpoint time-window search, backed by `runs.partitionings` GIN and `runs.checkpoints` start-time indexes)
-- **`flows`**: Transitive closure (`partitioning_to_flow`) and flow-based queries (`get_flow_partitionings`, `get_flow_checkpoints`)
-- **`lineage`**: Explicit direct-edge lineage operations (forward-only from v0.11.0):
-  - `partitioning_edges` table (direct parent-child relationships)
-  - `link_to_parents` (multi-parent linking with cycle/leaf checks, dual-writing `partitioning_edges` and `partitioning_to_flow`)
-  - `get_direct_parents`, `get_direct_children` (1-hop navigation over edges)
-  - `get_partitioning_lineage_graph` (bounded sub-graph for visualization over edges)
-  - `get_partitioning_ancestors` (transitive ancestors traversal over `flows`)
-  - `get_partitioning_descendants` (transitive descendants traversal over `flows`)
+- **`runs`**: Core partitioning, checkpoint, and measure definition operations along with their metadata, plus
+  `search_partitionings` (key-subset and checkpoint time-window search, backed by `runs.partitionings` GIN and
+  `runs.checkpoints` start-time indexes)
+- **`flows`**: Transitive closure (`partitioning_to_flow`) and flow-based queries (`get_flow_partitionings`,
+  `get_flow_checkpoints`)
+- **`lineage`**: Explicit direct-edge lineage operations (forward-only in versions newer than v0.10.0):
+    - `partitioning_edges` table (direct parent-child relationships)
+    - `link_to_parents` (multi-parent linking with cycle/leaf checks, dual-writing `partitioning_edges` and
+      `partitioning_to_flow`)
+    - `get_direct_parents`, `get_direct_children` (1-hop navigation over edges)
+    - `get_partitioning_lineage_graph` (bounded sub-graph for visualization over edges)
+    - `get_partitioning_ancestors` (transitive ancestors traversal over `flows`)
+    - `get_partitioning_descendants` (transitive descendants traversal over `flows`)
 
 `flows.partitioning_to_flow` remains authoritative for transitive queries (`ancestors`, `descendants`, flow queries)
-and cycle/leaf checks, and is the only record for pre-v0.11.0 links (no backfill). `lineage.partitioning_edges`
-adds exact 1-hop parent-child links for v0.11.0+ writes (see [ADR 01](../adrs/01-lineage-capability.md)).
+and cycle/leaf checks.

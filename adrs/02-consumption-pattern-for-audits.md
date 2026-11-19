@@ -2,9 +2,8 @@
 
 |                         |                                                                                                                          |
 |-------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| **Status**              | Accepted; checkpoint time filtering released in v0.10.0, partitioning search and lineage reads in v0.11.0                |
-| **Date**                | 2026-10-14                                                                                                               |
-| **Revised**             | 2026-11-17 (search contract as merged, explicit lineage edges)                                                           |
+| **Status**              | Accepted                                                                                                                 |
+| **Date**                | 2026-11-19                                                                                                               |
 | **Affected components** | `server/`, `database/`; optional Scala application support in `reader/`                                                  |
 | **Implementation**      | Time filtering, partitioning search and edge-based lineage reads are implemented; grouping remains a producer convention |
 
@@ -57,17 +56,9 @@ measurements; consumers remain responsible for comparisons, validation, and repo
       identifying a unique root. Empty lists return `200` with `data: []`.
     - `GET .../parents`, `.../children`, and `.../lineage?direction=&depth=` read explicit edges
       (`lineage.partitioning_edges`, written from v0.11.0 onward) with `linkedBy`/`linkedAt` metadata.
-- **No backfill for pre-v0.11.0 data.** Links written by v0.6–v0.10 servers have no edges (unless a producer re-runs and
-  re-declares an already-known ancestor, which lazily backfills the missing edge) and may have incomplete descendant
-  membership from legacy `PATCH` calls. For pre-v0.11.0 links, `parents` and `children` return `[]` and `lineage`
-  returns only the focal node, while `ancestors` and `descendants` still read the closure.
-- **Checkpoints and flow partitionings.** `GET /api/v2/flows/{flowId}/checkpoints` returns paginated checkpoints with
-  nested measurements and `partitioning` (`id`, ordered keys, `author`) — no parent-child edges.
-  `GET /api/v2/flows/{flowId}/partitionings` lists membership without measurements (including members with no
-  checkpoints in the time window). Membership itself is not time-filtered.
 
 ```text
-Links established in v0.11.0+: A -> B -> C
+Links established: A -> B -> C
   mainFlow(A): {A, B, C}     ancestors(C): {A, B}  (includes intermediate B)
   mainFlow(B): {B, C}        parents(C):   {B}     (direct edge only; empty for pre-v0.11.0 links)
   mainFlow(C): {C}
@@ -86,24 +77,23 @@ Links established in v0.11.0+: A -> B -> C
 
 #### Establish the scope first
 
-| Intended scope                          | API approach                                                                        | Limitation                                                                          |
-|-----------------------------------------|-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| One exact partitioning                  | `/partitionings/{id}/checkpoints`                                                   | Excludes ancestors and descendants                                                  |
-| Membership of a known main flow         | Resolve `/partitionings/{id}/main-flow`, then `/flows/{flowId}/checkpoints`         | Includes all downstream members, potentially unrelated sibling branches             |
-| Target and its recorded ancestors only  | Exhaust `/partitionings/{id}/ancestors`, then query checkpoints per distinct ID     | Multiple requests; ancestors are not marked as direct or transitive                 |
-| Target and its direct inputs only       | `/partitionings/{id}/parents`, then checkpoints of target and each parent           | Empty for links written before v0.11.0                                              |
-| Upstream or downstream graph to a depth | `/partitionings/{id}/lineage?direction=upstream&depth=n`, then checkpoints per node | Edge-based (v0.11.0+ links); expand via `expandable*NodeIds` when `depth`/cap stops |
-| All dates/executions for a business key | Search by partial keys, optionally narrowed by checkpoint activity (Recipe B)       | Exact key/value match only; no business-date range or automatic lineage resolution  |
+| Intended scope                          | API approach                                                                        | Limitation                                                                                     |
+|-----------------------------------------|-------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| One exact partitioning                  | `/partitionings/{id}/checkpoints`                                                   | Excludes ancestors and descendants                                                             |
+| Membership of a known main flow         | Resolve `/partitionings/{id}/main-flow`, then `/flows/{flowId}/checkpoints`         | Includes all downstream members, potentially unrelated sibling branches                        |
+| Target and its recorded ancestors only  | Exhaust `/partitionings/{id}/ancestors`, then query checkpoints per distinct ID     | Multiple requests; ancestors are not marked as direct or transitive                            |
+| Target and its direct inputs only       | `/partitionings/{id}/parents`, then checkpoints of target and each parent           | Empty for links written prior v0.10.0                                                          |
+| Upstream or downstream graph to a depth | `/partitionings/{id}/lineage?direction=upstream&depth=n`, then checkpoints per node | Edge-based (only after v0.10.0+ links); expand via `expandable*NodeIds` when `depth`/cap stops |
+| All dates/executions for a business key | Search by partial keys, optionally narrowed by checkpoint activity (Recipe B)       | Exact key/value match only; no business-date range or automatic lineage resolution             |
 
 If whole upstream-root flows are wanted, discover **all** candidate roots rather than picking the first ancestor. Page
 `/ancestors` until reaching nodes with no ancestors (a target with no ancestors is itself a candidate root), tracking
-visited IDs. Remember that root flows can include sibling branches unrelated to the target, and pre-v0.11.0 links may
-have incomplete membership.
+visited IDs.
 
 Where edges exist, `/lineage?direction=upstream` finds candidate roots as nodes with no incoming edges that are **not**
 in `expandableUpstreamNodeIds`, with two caveats: (1) if `depth` (max 20) or the 5,000-node cap cuts traversal, you must
-follow `expandableUpstreamNodeIds` to reach deeper roots; and (2) in a **mixed** chain where a v0.11.0+ link sits
-downstream of a pre-v0.11.0 link (which has no edge), `/lineage` stops at the older node without listing it as
+follow `expandableUpstreamNodeIds` to reach deeper roots; and (2) in a **mixed** chain where a post v0.10.0 link sits
+downstream of a v0.10.0 (or prior) link (which has no edge), `/lineage` stops at the older node without listing it as
 expandable, whereas `/ancestors` still includes the older upstream ancestors.
 
 When combining several flows or partitionings, deduplicate by checkpoint ID and merge in the desired checkpoint order;
@@ -323,12 +313,6 @@ All paginated endpoints provide **best-effort live pagination, not a point-in-ti
   duplicates or omissions; deduplication removes repeats but cannot recover omissions).
 - A repeatable, complete audit requires an external snapshot or watermark/late-arrival policy, not provided by this API.
 
-### Explicit fallback for older servers
-
-Against pre-v0.10.0 servers without `from`/`to`, page `latest-first=true` and filter individual checkpoints client-side:
-skip `>= to`, keep `[from, to)`, and stop on the first timestamp `< from` (do not discard a whole boundary page). This
-does not provide service-wide discovery where `/search` is absent.
-
 ---
 
 ## 4. Implemented change
@@ -346,9 +330,6 @@ AND
     AND
     (i_to_time IS NULL OR C.process_start_time < i_to_time)
 ```
-
-`FlowReader` and `PartitioningReader` expose these through `CheckpointFilter` in `getCheckpointsPage` (applications
-manage their own paging; no `getAllCheckpoints` helper or Reader search method is provided).
 
 ### Partitioning search and deployment
 
@@ -373,8 +354,7 @@ Within known partitionings/flows, checkpoints use a composite B-tree `checkpoint
 is not guaranteed for late/backfilled reports.
 
 Fetching a page is **one HTTP request**, not one database query: with `include-properties=true`, the server enriches
-each checkpoint separately (100 checkpoints = 1 checkpoint query + 100 property queries). No end-to-end latency SLO is
-asserted; benchmark representative flows, offsets, and `EXPLAIN (ANALYZE, BUFFERS)` plans before production rollout.
+each checkpoint separately (100 checkpoints = 1 checkpoint query + 100 property queries).
 
 ---
 
@@ -429,19 +409,7 @@ consumed set.
   the response shape by parameter and break existing clients. `/search` is additive and unambiguous against numeric
   `/{id}`.
 - **Dedicated graph endpoint:** delivered as `GET .../lineage`
-  ([ADR 01 §10](01-lineage-capability.md#10-explicit-edges-and-the-lineage-schema-503-493));
+  ([ADR 01 §9](01-lineage-capability.md#9-explicit-edges-and-the-lineage-schema-503-493));
   returns structure only, no measurements.
 - **Dedicated audit export endpoint:** deferred (not rejected); consistent bulk exports require snapshot semantics that
   live paginated endpoints do not provide.
-
----
-
-## 7. Open consumer decisions
-
-| Open question                               | Consumer / deployment responsibility                                                                          |
-|---------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| Does `process_start_time` match the report? | Confirm measurement time (rather than business date or `created_at`) fits the audit question                  |
-| Which scope is required?                    | Decide per report between one partitioning, its ancestors/parents, or its full downstream flow                |
-| Is best-effort live pagination sufficient?  | A repeatable complete audit requires an external snapshot, watermark, or late-arrival policy                  |
-| What performance is acceptable?             | Benchmark representative flow sizes, offsets, search selectivity, and `include-properties=true` load          |
-| Who can read audit data?                    | Authentication, authorization, and read-only access policies are out of scope and must be provided externally |

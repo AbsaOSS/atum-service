@@ -27,9 +27,7 @@ v0.5.x use them; agents v0.6.0+ use API v2 (`POST /api/v2/partitionings`,
 **Always upgrade the server before the agents.** The server accepts what released agents send; a newer agent against an
 older server is to be avoided.
 
-**Server and database migrations are deployed together.** From v0.11.0 the lineage functions live in the `lineage`
-schema and `runs.get_partitioning_ancestors` is dropped, so a v0.10.0 server binary does not work against a migrated
-database. Rolling the server back means restoring the database too.
+**Server and database migrations are deployed together.**
 
 ### Lineage and discovery endpoints
 
@@ -37,15 +35,15 @@ Partitionings are linked to their parents when they are created (`POST /api/v2/p
 `parentPartitioningIds`) or afterwards (`PATCH /api/v2/partitionings/{id}/ancestors`, leaf partitionings only). Each
 link is stored both as flow membership (transitive) and as an explicit direct edge:
 
-| Endpoint (`/api/v2/partitionings/...`)                              | Returns                                                                                                                      | Based on        |
-|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|-----------------|
-| `search?keys=&from=&to=&latest-first=`                              | Paginated distinct partitionings matching partial keys and/or checkpoint activity                                            | GIN + time idx  |
-| `{id}/parents`, `{id}/children`                                     | Direct neighbours, with `linkedBy` / `linkedAt`                                                                              | edges           |
-| `{id}/ancestors`, `{id}/descendants`                                | All transitive ancestors / descendants, paginated                                                                            | flow membership |
-| `{id}/lineage?direction=both\|upstream\|downstream&depth=1..20`     | Sub-graph (nodes + edges); `truncated=true` if the 5,000-node/direction cap hit, `expandable*NodeIds` for boundary nodes     | edges           |
+| Endpoint (`/api/v2/partitionings/...`)                          | Returns                                                                                                                  | Based on        |
+|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|-----------------|
+| `search?keys=&from=&to=&latest-first=`                          | Paginated distinct partitionings matching partial keys and/or checkpoint activity                                        | GIN + time idx  |
+| `{id}/parents`, `{id}/children`                                 | Direct neighbours, with `linkedBy` / `linkedAt`                                                                          | edges           |
+| `{id}/ancestors`, `{id}/descendants`                            | All transitive ancestors / descendants, paginated                                                                        | flow membership |
+| `{id}/lineage?direction=both\|upstream\|downstream&depth=1..20` | Sub-graph (nodes + edges); `truncated=true` if the 5,000-node/direction cap hit, `expandable*NodeIds` for boundary nodes | edges           |
 
-Edges exist only for links written from v0.11.0 on; for older links `parents` and `children` are empty and `lineage`
-returns only the focal node, while `ancestors` and `descendants` still answer. The design is in
+Edges exist only for links written from versions newer than v0.10.0; for older links `parents` and `children` are empty
+and `lineage` returns only the focal node, while `ancestors` and `descendants` still answer. The design is in
 [ADR 01](../adrs/01-lineage-capability.md), the consumer view in
 [ADR 02](../adrs/02-consumption-pattern-for-audits.md).
 
