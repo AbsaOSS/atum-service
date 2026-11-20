@@ -92,6 +92,16 @@ object Endpoints extends BaseEndpoints {
 
   private val maxPartitioningSearchWindow = Duration.ofDays(365)
 
+  private def trimAsciiWhitespace(value: String): String = {
+    def isAsciiWs(c: Char): Boolean =
+      c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\u000b'
+    var start = 0
+    var end = value.length
+    while (start < end && isAsciiWs(value.charAt(start))) start += 1
+    while (end > start && isAsciiWs(value.charAt(end - 1))) end -= 1
+    value.substring(start, end)
+  }
+
   private val partitioningSearchInput: EndpointInput[
     (
       Option[Map[String, Option[String]]],
@@ -131,9 +141,12 @@ object Endpoints extends BaseEndpoints {
           )
       )
       .validate(Validator.custom {
-        case (_, _, _, _, _, Some(author), _) if author.trim.isEmpty || author.contains('\u0000') =>
+        case (_, _, _, _, _, Some(author), _) if trimAsciiWhitespace(author).isEmpty || author.contains('\u0000') =>
           ValidationResult.Invalid("'author' must not be blank and must not contain NUL characters")
-        case (_, _, _, _, _, _, Some(searchText)) if searchText.trim.length < 2 || searchText.contains('\u0000') =>
+        case (_, _, _, _, _, _, Some(searchText)) if {
+              val trimmed = trimAsciiWhitespace(searchText)
+              trimmed.codePointCount(0, trimmed.length) < 2 || searchText.contains('\u0000')
+            } =>
           ValidationResult.Invalid(
             "'search-text' must contain at least 2 non-whitespace characters and must not contain NUL characters"
           )
@@ -660,15 +673,15 @@ object Endpoints extends BaseEndpoints {
               searchText: Option[String]
             ) =>
           PartitioningController.searchPartitionings(
-            limit,
-            offset,
             keys,
+            exactKeys,
+            author,
+            searchText,
             from,
             to,
             latestFirst,
-            exactKeys,
-            author,
-            searchText
+            limit,
+            offset
           )
       }
     ),

@@ -39,15 +39,15 @@ class SearchPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Task
       SearchPartitioningsResult
     ], Task](args =>
       Seq(
-        fr"${args.limit}",
-        fr"${args.offset}",
         fr"${args.keys.map(_.asJson)}",
+        fr"${args.exactKeys}",
+        fr"${args.author}",
+        fr"${args.searchText}",
         fr"${args.from}",
         fr"${args.to}",
         fr"${args.latestFirst}",
-        fr"${args.exactKeys}",
-        fr"${args.author}",
-        fr"${args.searchText}"
+        fr"${args.limit}",
+        fr"${args.offset}"
       )
     )
     with StandardStatusHandling
@@ -58,15 +58,15 @@ class SearchPartitionings(implicit schema: DBSchema, dbEngine: DoobieEngine[Task
 
 object SearchPartitionings {
   case class SearchPartitioningsArgs(
-    limit: Int,
-    offset: Long,
-    keys: Option[Map[String, Option[String]]],
-    from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime],
-    latestFirst: Option[Boolean] = None,
+    keys: Option[Map[String, Option[String]]] = None,
     exactKeys: Option[Boolean] = None,
     author: Option[String] = None,
-    searchText: Option[String] = None
+    searchText: Option[String] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
+    latestFirst: Option[Boolean] = None,
+    limit: Int = 10,
+    offset: Long = 0L
   )
 
   case class SearchPartitioningsResult(id: Long, partitioningJson: Json, author: String, hasMore: Boolean)

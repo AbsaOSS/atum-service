@@ -18,7 +18,7 @@ Atum partitionings (datasets or subsets of them) can be related: a child partiti
 partitionings relationship (e.g., curation derived from raw ingestion). Consumers (audits, UIs) want to ask "which
 partitionings belong together" and "which upstream partitionings does this one come from".
 
-Before #475 (v0.10.0), relationships existed only as transitive **flow membership** (`flows.partitioning_to_flow`):
+Up through v0.10.0 (before #475), relationships existed only as transitive **flow membership** (`flows.partitioning_to_flow`):
 creation took at most one parent (`parentPartitioning`), linking happened over multiple round trips (`GET`/`POST`/
 `PATCH`), linking implicitly copied measure definitions and additional data, nothing prevented cycles via `PATCH`, and
 retroactive linking of a partitioning with existing descendants had undefined/unbounded propagation behaviour.

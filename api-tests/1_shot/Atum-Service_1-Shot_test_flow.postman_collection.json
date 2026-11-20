@@ -1833,7 +1833,7 @@
           "response": []
         }
       ],
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings/{partitioning_id}/checkpoints\n    \n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/checkpoints/{checkpoint_id}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/measures",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings/{partitioning_id}/checkpoints\n    \n- POST:/api/v1/createCheckpoint\n    \n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/checkpoints\n    \n- GET:/api/v2/partitionings/{partitioning_id}/checkpoints/{checkpoint_id}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/measures",
       "event": [
         {
           "listen": "prerequest",

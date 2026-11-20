@@ -179,47 +179,47 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
 
   when(
     partitioningServiceMock.searchPartitionings(
-      2,
-      searchOffset,
       Some(searchKeys),
+      Some(true),
+      Some("unify"),
+      Some("payments"),
       Some(searchFrom),
       Some(searchTo),
       Some(true),
-      Some(true),
-      Some("unify"),
-      Some("payments")
+      2,
+      searchOffset
     )
   ).thenReturn(ZIO.succeed(ResultHasMore(searchPartitionings.reverse)))
-  when(partitioningServiceMock.searchPartitionings(3, 1L, Some(searchKeys), None, None, None, None, None, None))
+  when(partitioningServiceMock.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 3, 1L))
     .thenReturn(ZIO.succeed(ResultNoMore(searchPartitionings)))
-  when(partitioningServiceMock.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None, None, None, None))
+  when(partitioningServiceMock.searchPartitionings(None, None, None, None, Some(searchFrom), Some(searchTo), None, 10, 0L))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
-  when(partitioningServiceMock.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None, None, None, None))
+  when(partitioningServiceMock.searchPartitionings(Some(Map.empty), None, None, None, Some(searchFrom), None, None, 10, 1L))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
   when(
     partitioningServiceMock.searchPartitionings(
-      4,
-      searchOffset,
       Some(searchKeys),
+      None,
+      None,
+      None,
       Some(searchFrom),
       Some(searchTo),
       None,
-      None,
-      None,
-      None
+      4,
+      searchOffset
     )
   ).thenReturn(ZIO.fail(GeneralServiceError("search unavailable")))
   when(
     partitioningServiceMock.searchPartitionings(
-      5,
-      searchOffset,
       Some(searchKeys),
+      None,
+      None,
+      None,
       Some(searchFrom),
       Some(searchTo),
       None,
-      None,
-      None,
-      None
+      5,
+      searchOffset
     )
   ).thenReturn(ZIO.fail(ErrorInDataServiceError("invalid search parameters")))
 
@@ -227,31 +227,31 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
     suite("PartitioningControllerSuite")(
       suite("SearchPartitioningsSuite")(
         test(
-          "Forwards every argument including latestFirst, exactKeys, author and searchText and returns a paginated DTO envelope with nonzero Long offset"
+          "Forwards every argument including exactKeys, author, searchText and latestFirst and returns a paginated DTO envelope with nonzero Long offset"
         ) {
           for {
             result <- PartitioningController.searchPartitionings(
-              2,
-              searchOffset,
               Some(searchKeys),
+              Some(true),
+              Some("unify"),
+              Some("payments"),
               Some(searchFrom),
               Some(searchTo),
               Some(true),
-              Some(true),
-              Some("unify"),
-              Some("payments")
+              2,
+              searchOffset
             )
             _ <- ZIO.attempt(
               verify(partitioningServiceMock).searchPartitionings(
-                2,
-                searchOffset,
                 Some(searchKeys),
+                Some(true),
+                Some("unify"),
+                Some("payments"),
                 Some(searchFrom),
                 Some(searchTo),
                 Some(true),
-                Some(true),
-                Some("unify"),
-                Some("payments")
+                2,
+                searchOffset
               )
             )
           } yield assertTrue(
@@ -265,7 +265,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
         },
         test("Retains the requested limit and offset for a key-only final page") {
           for {
-            result <- PartitioningController.searchPartitionings(3, 1L, Some(searchKeys), None, None, None)
+            result <- PartitioningController.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 3, 1L)
           } yield assertTrue(
             result.copy(requestId = searchRequestId) ==
               PaginatedResponse(searchPartitionings, Pagination(3, 1L, hasMore = false), searchRequestId)
@@ -273,7 +273,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
         },
         test("Wraps empty time-only matches in a successful no-more-results envelope") {
           for {
-            result <- PartitioningController.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None)
+            result <- PartitioningController.searchPartitionings(None, None, None, None, Some(searchFrom), Some(searchTo), None, 10, 0L)
           } yield assertTrue(
             result.copy(requestId = searchRequestId) ==
               PaginatedResponse(Seq.empty[PartitioningWithIdDTO], Pagination(10, 0L, hasMore = false), searchRequestId)
@@ -281,7 +281,7 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
         },
         test("Forwards explicit empty keys and keeps paging metadata on an empty page") {
           for {
-            result <- PartitioningController.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None)
+            result <- PartitioningController.searchPartitionings(Some(Map.empty), None, None, None, Some(searchFrom), None, None, 10, 1L)
           } yield assertTrue(
             result.copy(requestId = searchRequestId) ==
               PaginatedResponse(Seq.empty[PartitioningWithIdDTO], Pagination(10, 1L, hasMore = false), searchRequestId)
@@ -291,12 +291,15 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
           assertZIO(
             PartitioningController
               .searchPartitionings(
-                4,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                4,
+                searchOffset
               )
               .exit
           )(failsWithA[InternalServerErrorResponse])
@@ -305,12 +308,15 @@ object PartitioningControllerUnitTests extends ZIOSpecDefault with TestData with
           assertZIO(
             PartitioningController
               .searchPartitionings(
-                5,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                5,
+                searchOffset
               )
               .exit
           )(failsWithA[ErrorInDataErrorResponse])

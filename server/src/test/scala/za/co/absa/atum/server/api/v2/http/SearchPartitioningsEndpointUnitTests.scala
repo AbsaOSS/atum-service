@@ -197,6 +197,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
       "empty search-text" -> Seq("search-text" -> ""),
       "whitespace-only search-text" -> Seq("search-text" -> "   \t"),
       "single-char search-text" -> Seq("search-text" -> "a"),
+      "single non-BMP code point search-text" -> Seq("search-text" -> "\uD83D\uDE00"),
       "padded single-char search-text" -> Seq("search-text" -> " a "),
       "single-char search-text with keys" -> Seq("keys" -> encodedKeys, "search-text" -> "a"),
       "NUL in search-text" -> Seq("search-text" -> "pay\u0000ments")
@@ -243,15 +244,15 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
         )
         when(
           controller.searchPartitionings(
-            scenario.limit,
-            scenario.offset,
             scenario.keys,
+            scenario.exactKeys,
+            scenario.author,
+            scenario.searchText,
             scenario.from,
             scenario.to,
             scenario.latestFirst,
-            scenario.exactKeys,
-            scenario.author,
-            scenario.searchText
+            scenario.limit,
+            scenario.offset
           )
         ).thenReturn(ZIO.succeed(expected))
 
@@ -259,15 +260,15 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
           response <- PartitioningSearchTestSupport.get(withParams(scenario.params), controller)
           _ <- ZIO.attempt {
             verify(controller).searchPartitionings(
-              scenario.limit,
-              scenario.offset,
               scenario.keys,
+              scenario.exactKeys,
+              scenario.author,
+              scenario.searchText,
               scenario.from,
               scenario.to,
               scenario.latestFirst,
-              scenario.exactKeys,
-              scenario.author,
-              scenario.searchText
+              scenario.limit,
+              scenario.offset
             )
             verifyNoMoreInteractions(controller)
           }
@@ -299,7 +300,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
     test("Surfaces an upstream failure as an InternalServerErrorResponse") {
       val controller = mock(classOf[PartitioningController])
       val error = InternalServerErrorResponse("search unavailable", searchRequestId)
-      when(controller.searchPartitionings(10, 0L, Some(searchKeys), None, None, None, None, None, None))
+      when(controller.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 10, 0L))
         .thenReturn(ZIO.fail(error))
       for {
         response <- PartitioningSearchTestSupport.get(withParams(Seq("keys" -> encodedKeys)), controller)
@@ -311,7 +312,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
     test("Surfaces ErrorInDataErrorResponse as Conflict") {
       val controller = mock(classOf[PartitioningController])
       val error = ErrorInDataErrorResponse("invalid search parameters", searchRequestId)
-      when(controller.searchPartitionings(10, 0L, Some(searchKeys), None, None, None, None, None, None))
+      when(controller.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 10, 0L))
         .thenReturn(ZIO.fail(error))
       for {
         response <- PartitioningSearchTestSupport.get(withParams(Seq("keys" -> encodedKeys)), controller)
@@ -342,7 +343,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
       val encodedPartitioning = encodeSearchJson(partitioning.partitioning.asJson.noSpaces)
       val single = SingleSuccessResponse(partitioning, searchRequestId)
       val page = PaginatedResponse(Seq(partitioning), Pagination(10, 0L, hasMore = false), searchRequestId)
-      when(controller.searchPartitionings(10, 0L, Some(searchKeys), None, None, None, None, None, None))
+      when(controller.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 10, 0L))
         .thenReturn(ZIO.succeed(page))
       when(controller.getPartitioning(encodedPartitioning)).thenReturn(ZIO.succeed(single))
       when(controller.getPartitioningById(partitioning.id)).thenReturn(ZIO.succeed(single))
@@ -357,7 +358,7 @@ object SearchPartitioningsEndpointUnitTests extends ZIOSpecDefault with Partitio
           controller
         )
         _ <- ZIO.attempt {
-          verify(controller).searchPartitionings(10, 0L, Some(searchKeys), None, None, None, None, None, None)
+          verify(controller).searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 10, 0L)
           verify(controller).getPartitioning(encodedPartitioning)
           verify(controller).getPartitioningById(partitioning.id)
           verifyNoMoreInteractions(controller)

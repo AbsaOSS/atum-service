@@ -837,7 +837,7 @@ function renderShell() {
   $("brandName").textContent = ed.name; $("brandSub").textContent = ed.sub;
   const btn = (k, side) => `<button class="${side ? "side-link" : ""} ${STATE.view === k ? "active" : ""}" data-go="view:${k}">${side ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${NAV[k].icon}</svg>` : ""}${NAV[k].label}</button>`;
   $("sideNav").innerHTML = ed.nav.map(k => btn(k, true)).join("");
-  $("sideFooter").innerHTML = `<div>${esc(ed.audience)}</div><div style="margin-top:6px">${[ed.atum && "Atum v0.11", ed.eg && "EventGate 1.4"].filter(Boolean).join(" · ")}</div>`;
+  $("sideFooter").innerHTML = `<div>${esc(ed.audience)}</div><div style="margin-top:6px">${[ed.atum && "Atum API v2", ed.eg && "EventGate 1.4"].filter(Boolean).join(" · ")}</div>`;
   const crumbs = [`<a href="#/datasets" data-go="view:datasets">${esc(ed.name)}</a>`];
   if (STATE.view === "lineage") crumbs.push(`<a href="#/datasets" data-go="view:datasets">Control Metrics</a>`, `<a href="#/lineage" data-go="view:lineage">Lineage</a>`, `<strong>${esc(partitioningIdentity(byKey[STATE.focus], STATE.day, recFor(STATE.focus, STATE.day), true))}</strong>`);
   else crumbs.push(`<strong>${esc(NAV[STATE.view].label)}</strong>`);

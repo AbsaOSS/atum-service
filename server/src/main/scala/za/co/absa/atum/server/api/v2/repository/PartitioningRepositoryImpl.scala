@@ -148,15 +148,15 @@ class PartitioningRepositoryImpl(
   }
 
   override def searchPartitionings(
-    limit: Int,
-    offset: Long,
-    keys: Option[Map[String, Option[String]]],
-    from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime],
-    latestFirst: Option[Boolean] = None,
+    keys: Option[Map[String, Option[String]]] = None,
     exactKeys: Option[Boolean] = None,
     author: Option[String] = None,
-    searchText: Option[String] = None
+    searchText: Option[String] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
+    latestFirst: Option[Boolean] = None,
+    limit: Int = 10,
+    offset: Long = 0L
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
     val databaseFrom = from.map(ceilToMicrosecond)
     val databaseTo = to.map(ceilToMicrosecond)
@@ -168,15 +168,15 @@ class PartitioningRepositoryImpl(
       decodePaginatedPartitionings(
         searchPartitioningsFn(
           SearchPartitioningsArgs(
-            limit,
-            offset,
             keys,
+            exactKeys,
+            author,
+            searchText,
             databaseFrom,
             databaseTo,
             latestFirst,
-            exactKeys,
-            author,
-            searchText
+            limit,
+            offset
           )
         ),
         "searchPartitionings"

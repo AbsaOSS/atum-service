@@ -63,7 +63,7 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
     Map("source" -> Some(source), "kind" -> Some("main"), "empty" -> Some(""))
   private val from = ZonedDateTime.parse("2216-06-01T08:00:00+05:30")
   private val to = ZonedDateTime.parse("2216-06-01T00:30:00-04:00")
-  private val baseArgs = SearchPartitioningsArgs(10, 0L, Some(keys), None, None)
+  private val baseArgs = SearchPartitioningsArgs(Some(keys))
 
   private case class Fixture(
     withoutCheckpoint: PartitioningWithIdDTO,
@@ -361,16 +361,11 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
         )
         wildcardFourKeys = Map("source" -> Some(source), "kind" -> None, "empty" -> None, "case" -> None)
         wildcardRows <- getPage(
-          SearchPartitioningsArgs(10, 0L, Some(wildcardFourKeys), None, None, exactKeys = Some(true))
+          SearchPartitioningsArgs(Some(wildcardFourKeys), exactKeys = Some(true))
         )
         wildcardPartitionings <- decodePartitionings(wildcardRows)
         authorAndTextRows <- getPage(
           SearchPartitioningsArgs(
-            10,
-            0L,
-            None,
-            None,
-            None,
             author = Some(twoKeyForwardAuthor),
             searchText = Some("MAIN")
           )

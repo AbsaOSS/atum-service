@@ -357,15 +357,15 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
   private val searchPartitioningsMock = mock(classOf[SearchPartitionings])
   private val combinedSearchArgs =
     SearchPartitioningsArgs(
-      2,
-      searchOffset,
       Some(searchKeys),
+      Some(true),
+      Some("unify"),
+      Some("payments"),
       Some(searchFrom),
       Some(searchTo),
       Some(true),
-      Some(true),
-      Some("unify"),
-      Some("payments")
+      2,
+      searchOffset
     )
   private val searchRows: Seq[Row[Option[SearchPartitioningsResult]]] =
     searchPartitionings.zipWithIndex.map { case (partitioning, index) =>
@@ -383,15 +383,15 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
     }
 
   when(searchPartitioningsMock.apply(combinedSearchArgs)).thenReturn(ZIO.right(searchRows))
-  when(searchPartitioningsMock.apply(SearchPartitioningsArgs(3, 1L, Some(searchKeys), None, None)))
+  when(searchPartitioningsMock.apply(SearchPartitioningsArgs(Some(searchKeys), limit = 3, offset = 1L)))
     .thenReturn(ZIO.right(searchRows.map(row => row.copy(data = row.data.map(_.copy(hasMore = false))))))
-  when(searchPartitioningsMock.apply(SearchPartitioningsArgs(10, 0L, None, Some(searchFrom), Some(searchTo))))
+  when(searchPartitioningsMock.apply(SearchPartitioningsArgs(from = Some(searchFrom), to = Some(searchTo))))
     .thenReturn(ZIO.right(Seq.empty))
-  when(searchPartitioningsMock.apply(SearchPartitioningsArgs(10, 1L, Some(Map.empty), Some(searchFrom), None)))
+  when(searchPartitioningsMock.apply(SearchPartitioningsArgs(Some(Map.empty), from = Some(searchFrom), offset = 1L)))
     .thenReturn(ZIO.right(Seq(Row(FunctionStatus(10, "OK"), None))))
   when(
     searchPartitioningsMock.apply(
-      combinedSearchArgs.copy(limit = 4, latestFirst = None, exactKeys = None, author = None, searchText = None)
+      combinedSearchArgs.copy(exactKeys = None, author = None, searchText = None, latestFirst = None, limit = 4)
     )
   )
     .thenReturn(
@@ -514,33 +514,36 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
         ) {
           for {
             result <- PartitioningRepository.searchPartitionings(
-              2,
-              searchOffset,
               Some(searchKeys),
+              Some(true),
+              Some("unify"),
+              Some("payments"),
               Some(searchFrom),
               Some(searchTo),
               Some(true),
-              Some(true),
-              Some("unify"),
-              Some("payments")
+              2,
+              searchOffset
             )
             _ <- ZIO.attempt(verify(searchPartitioningsMock).apply(combinedSearchArgs))
           } yield assertTrue(result == ResultHasMore(searchPartitionings))
         },
         test("Returns ResultNoMore for a key-only final page") {
           for {
-            result <- PartitioningRepository.searchPartitionings(3, 1L, Some(searchKeys), None, None, None)
+            result <- PartitioningRepository.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 3, 1L)
           } yield assertTrue(result == ResultNoMore(searchPartitionings))
         },
         test("Ceils fractional bounds before database binding without changing offsets or paging") {
           for {
             result <- PartitioningRepository.searchPartitionings(
-              7,
-              searchOffset,
               Some(searchKeys),
+              None,
+              None,
+              None,
               Some(searchFrom.plusNanos(100)),
               Some(searchTo.plusNanos(999)),
-              None
+              None,
+              7,
+              searchOffset
             )
             _ <- ZIO.attempt(verify(searchPartitioningsMock).apply(fractionalSearchArgs))
           } yield assertTrue(result == ResultHasMore(searchPartitionings))
@@ -548,35 +551,41 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
         test("A valid window with no representable database timestamp returns an empty page") {
           for {
             result <- PartitioningRepository.searchPartitionings(
-              8,
-              searchOffset,
               Some(searchKeys),
+              None,
+              None,
+              None,
               Some(searchFrom.plusNanos(100)),
               Some(searchFrom.plusNanos(200)),
-              None
+              None,
+              8,
+              searchOffset
             )
           } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
         },
         test("Returns an empty ResultNoMore for a time-only search with no rows") {
           for {
-            result <- PartitioningRepository.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None)
+            result <- PartitioningRepository.searchPartitionings(None, None, None, None, Some(searchFrom), Some(searchTo), None, 10, 0L)
           } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
         },
         test("Drops a status-only NULL row and preserves explicit empty keys with a time bound") {
           for {
-            result <- PartitioningRepository.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None)
+            result <- PartitioningRepository.searchPartitionings(Some(Map.empty), None, None, None, Some(searchFrom), None, None, 10, 1L)
           } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
         },
         test("Malformed stored partitioning JSON fails instead of returning a partial page") {
           assertZIO(
             PartitioningRepository
               .searchPartitionings(
-                4,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                4,
+                searchOffset
               )
               .exit
           )(failsWithA[GeneralDatabaseError])
@@ -585,12 +594,15 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
           assertZIO(
             PartitioningRepository
               .searchPartitionings(
-                5,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                5,
+                searchOffset
               )
               .exit
           )(failsWithA[GeneralDatabaseError])
@@ -599,12 +611,15 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
           assertZIO(
             PartitioningRepository
               .searchPartitionings(
-                6,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                6,
+                searchOffset
               )
               .exit
           )(failsWithA[NotFoundDatabaseError])
@@ -613,12 +628,15 @@ object PartitioningRepositoryUnitTests extends ZIOSpecDefault with TestData with
           assertZIO(
             PartitioningRepository
               .searchPartitionings(
-                9,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                9,
+                searchOffset
               )
               .exit
           )(failsWithA[ErrorInDataDatabaseError])

@@ -27,7 +27,7 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
 
   private val searchFn = "runs.search_partitionings"
   private val searchSignature =
-    "runs.search_partitionings(integer,bigint,jsonb,timestamp with time zone,timestamp with time zone,boolean,boolean,text,text)"
+    "runs.search_partitionings(jsonb,boolean,text,text,timestamp with time zone,timestamp with time zone,boolean,integer,bigint)"
   private val helperSignature = "runs._partitioning_matches_search_text(jsonb,text)"
   private val author = "Search author"
   private val fromTime = OffsetDateTime.parse("2026-01-10T00:00:00Z")
@@ -71,15 +71,16 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
     searchText: Option[String] = None
   ): DBFunction = {
     val base = function(searchFn)
-    val withLimit = limit.fold(base.setParamNull("i_limit"): DBFunction)(base.setParam("i_limit", _))
-    val withOffset = offset.fold(withLimit.setParamNull("i_offset"): DBFunction)(withLimit.setParam("i_offset", _))
-    val withKeys = keys.fold(withOffset.setParamNull("i_keys"): DBFunction)(withOffset.setParam("i_keys", _))
-    val withFrom = from.fold(withKeys.setParamNull("i_from_time"): DBFunction)(withKeys.setParam("i_from_time", _))
+    val withKeys = keys.fold(base.setParamNull("i_keys"): DBFunction)(base.setParam("i_keys", _))
+    val withExact = exactKeys.fold(withKeys)(withKeys.setParam("i_exact_keys", _))
+    val withAuthor = author.fold(withExact)(withExact.setParam("i_author", _))
+    val withSearchText = searchText.fold(withAuthor)(withAuthor.setParam("i_search_text", _))
+    val withFrom =
+      from.fold(withSearchText.setParamNull("i_from_time"): DBFunction)(withSearchText.setParam("i_from_time", _))
     val withTo = to.fold(withFrom.setParamNull("i_to_time"): DBFunction)(withFrom.setParam("i_to_time", _))
     val withLatest = latestFirst.fold(withTo)(withTo.setParam("i_latest_first", _))
-    val withExact = exactKeys.fold(withLatest)(withLatest.setParam("i_exact_keys", _))
-    val withAuthor = author.fold(withExact)(withExact.setParam("i_author", _))
-    searchText.fold(withAuthor)(withAuthor.setParam("i_search_text", _))
+    val withLimit = limit.fold(withLatest.setParamNull("i_limit"): DBFunction)(withLatest.setParam("i_limit", _))
+    offset.fold(withLimit.setParamNull("i_offset"): DBFunction)(withLimit.setParam("i_offset", _))
   }
 
   private def assertPage(
@@ -103,6 +104,30 @@ class SearchPartitioningsIntegrationTests extends DBTestSuite {
       }
       assert(!rows.hasNext)
     }
+  }
+
+  test("Positional calls work with only leading filter parameters and default trailing parameters") {
+    val exactTwo = insertPartitioningByAuthor("PosAuthor", "pos" -> "v1")
+    insertPartitioningByAuthor("PosAuthor", "pos" -> "v1", "extra" -> "v2")
+
+    assert(
+      queryBoolean(
+        """SELECT COUNT(*) = 2
+          |FROM runs.search_partitionings('{"pos":"v1"}'::jsonb)""".stripMargin
+      )
+    )
+    assert(
+      queryBoolean(
+        s"""SELECT COUNT(*) = 1 AND MIN(id) = ${exactTwo._1}
+           |FROM runs.search_partitionings('{"pos":"v1"}'::jsonb, TRUE)""".stripMargin
+      )
+    )
+    assert(
+      queryBoolean(
+        s"""SELECT COUNT(*) = 2
+           |FROM runs.search_partitionings(NULL, FALSE, 'PosAuthor', 'v1')""".stripMargin
+      )
+    )
   }
 
   test("Key-only searches require every key and preserve subset envelopes and stored key order without checkpoints") {

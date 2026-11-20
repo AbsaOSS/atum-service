@@ -160,60 +160,60 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData with Pa
 
   when(
     partitioningRepositoryMock.searchPartitionings(
-      2,
-      searchOffset,
       Some(searchKeys),
+      Some(true),
+      Some("unify"),
+      Some("payments"),
       Some(searchFrom),
       Some(searchTo),
       Some(true),
-      Some(true),
-      Some("unify"),
-      Some("payments")
+      2,
+      searchOffset
     )
   ).thenReturn(ZIO.succeed(ResultHasMore(searchPartitionings.reverse)))
-  when(partitioningRepositoryMock.searchPartitionings(3, 1L, Some(searchKeys), None, None, None, None, None, None))
+  when(partitioningRepositoryMock.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 3, 1L))
     .thenReturn(ZIO.succeed(ResultNoMore(searchPartitionings)))
-  when(partitioningRepositoryMock.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None, None, None, None))
+  when(partitioningRepositoryMock.searchPartitionings(None, None, None, None, Some(searchFrom), Some(searchTo), None, 10, 0L))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
-  when(partitioningRepositoryMock.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None, None, None, None))
+  when(partitioningRepositoryMock.searchPartitionings(Some(Map.empty), None, None, None, Some(searchFrom), None, None, 10, 1L))
     .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
   when(
     partitioningRepositoryMock.searchPartitionings(
-      4,
-      searchOffset,
       Some(searchKeys),
+      None,
+      None,
+      None,
       Some(searchFrom),
       Some(searchTo),
       None,
-      None,
-      None,
-      None
+      4,
+      searchOffset
     )
   ).thenReturn(ZIO.fail(GeneralDatabaseError("search database unavailable")))
   when(
     partitioningRepositoryMock.searchPartitionings(
-      5,
-      searchOffset,
       Some(searchKeys),
+      None,
+      None,
+      None,
       Some(searchFrom),
       Some(searchTo),
       None,
-      None,
-      None,
-      None
+      5,
+      searchOffset
     )
   ).thenReturn(ZIO.fail(NotFoundDatabaseError("search function failure")))
   when(
     partitioningRepositoryMock.searchPartitionings(
-      6,
-      searchOffset,
       Some(searchKeys),
+      None,
+      None,
+      None,
       Some(searchFrom),
       Some(searchTo),
       None,
-      None,
-      None,
-      None
+      6,
+      searchOffset
     )
   ).thenReturn(ZIO.fail(ErrorInDataDatabaseError("invalid search parameters")))
 
@@ -221,59 +221,62 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData with Pa
 
     suite("PartitioningServiceSuite")(
       suite("SearchPartitioningsSuite")(
-        test("Forwards limit, Long offset, decoded keys, timezone-aware bounds, latestFirst, exactKeys, author and searchText unchanged") {
+        test("Forwards decoded keys, exactKeys, author, searchText, timezone-aware bounds, latestFirst, limit and Long offset unchanged") {
           for {
             result <- PartitioningService.searchPartitionings(
-              2,
-              searchOffset,
               Some(searchKeys),
+              Some(true),
+              Some("unify"),
+              Some("payments"),
               Some(searchFrom),
               Some(searchTo),
               Some(true),
-              Some(true),
-              Some("unify"),
-              Some("payments")
+              2,
+              searchOffset
             )
             _ <- ZIO.attempt(
               verify(partitioningRepositoryMock).searchPartitionings(
-                2,
-                searchOffset,
                 Some(searchKeys),
+                Some(true),
+                Some("unify"),
+                Some("payments"),
                 Some(searchFrom),
                 Some(searchTo),
                 Some(true),
-                Some(true),
-                Some("unify"),
-                Some("payments")
+                2,
+                searchOffset
               )
             )
           } yield assertTrue(result == ResultHasMore(searchPartitionings.reverse))
         },
         test("Preserves a key-only final page and hasMore=false") {
           for {
-            result <- PartitioningService.searchPartitionings(3, 1L, Some(searchKeys), None, None, None)
+            result <- PartitioningService.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 3, 1L)
           } yield assertTrue(result == ResultNoMore(searchPartitionings))
         },
         test("Preserves empty time-only results") {
           for {
-            result <- PartitioningService.searchPartitionings(10, 0L, None, Some(searchFrom), Some(searchTo), None)
+            result <- PartitioningService.searchPartitionings(None, None, None, None, Some(searchFrom), Some(searchTo), None, 10, 0L)
           } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
         },
         test("Forwards an explicit empty key filter alongside a time bound") {
           for {
-            result <- PartitioningService.searchPartitionings(10, 1L, Some(Map.empty), Some(searchFrom), None, None)
+            result <- PartitioningService.searchPartitionings(Some(Map.empty), None, None, None, Some(searchFrom), None, None, 10, 1L)
           } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
         },
         test("Maps execution failures to GeneralServiceError") {
           for {
             result <- PartitioningService
               .searchPartitionings(
-                4,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                4,
+                searchOffset
               )
               .exit
           } yield assertTrue(
@@ -286,12 +289,15 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData with Pa
           assertZIO(
             PartitioningService
               .searchPartitionings(
-                5,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                5,
+                searchOffset
               )
               .exit
           )(failsWithA[NotFoundServiceError])
@@ -300,12 +306,15 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData with Pa
           assertZIO(
             PartitioningService
               .searchPartitionings(
-                6,
-                searchOffset,
                 Some(searchKeys),
+                None,
+                None,
+                None,
                 Some(searchFrom),
                 Some(searchTo),
-                None
+                None,
+                6,
+                searchOffset
               )
               .exit
           )(failsWithA[ErrorInDataServiceError])

@@ -38,11 +38,10 @@ measurements and producer-declared links; consumers remain responsible for compa
 - **Partitioning identity is exact and ordered:** API represents a partitioning as an ordered `[{key, value}]` array; DB
   uniqueness applies to the whole JSONB envelope (`{"keys": [...], "version": 1, "keysToValuesMap": {...}}`). Exact
   lookup (`GET /api/v2/partitionings?partitioning=...`) does not match subsets or reordered keys.
-- **Closure vs. edges:** `GET .../ancestors` and `.../descendants` read the flow closure (includes pre-v0.11.0 links,
-  does not mark direct parents); `GET .../parents`, `.../children`, and `.../lineage` read explicit edges (v0.11.0+
-  or lazily backfilled if re-declared, with `linkedBy`/`linkedAt`). See [ADR 01](01-lineage-capability.md) for linking
-  guarantees and the mixed-chain
-  caveat.
+- **Closure vs. edges:** `GET .../ancestors` and `.../descendants` read the flow closure (includes v0.10.0 and earlier
+  links, does not mark direct parents); `GET .../parents`, `.../children`, and `.../lineage` read explicit edges
+  (post-v0.10.0 or lazily backfilled if re-declared, with `linkedBy`/`linkedAt`). See [ADR 01](01-lineage-capability.md)
+  for linking guarantees and the mixed-chain caveat.
 
 ---
 
@@ -60,8 +59,8 @@ measurements and producer-declared links; consumers remain responsible for compa
 | One exact partitioning             | `/partitionings/{id}/checkpoints`                                              | Excludes ancestors and descendants                                                                      |
 | Known main flow (whole downstream) | `/partitionings/{id}/main-flow`, then `/flows/{flowId}/checkpoints`            | Includes unrelated sibling branches                                                                     |
 | Recorded ancestors only            | Exhaust `/partitionings/{id}/ancestors`, then checkpoints per ID               | Multi-request; no direct-vs-transitive marker                                                           |
-| Direct inputs only                 | `/partitionings/{id}/parents`, then checkpoints per node                       | Empty for un-backfilled links written before v0.11.0                                                    |
-| Bounded upstream/downstream graph  | `/partitionings/{id}/lineage?direction=...&depth=n`, then checkpoints per node | Edges v0.11.0+ (or lazily backfilled); expand via `expandable*NodeIds`; stops at edge-less legacy links |
+| Direct inputs only                 | `/partitionings/{id}/parents`, then checkpoints per node                       | Empty for un-backfilled links written in v0.10.0 or earlier                                                 |
+| Bounded upstream/downstream graph  | `/partitionings/{id}/lineage?direction=...&depth=n`, then checkpoints per node | Post-v0.10.0 edges (or lazily backfilled); expand via `expandable*NodeIds`; stops at edge-less legacy links |
 
 When combining several flows or partitionings, deduplicate by checkpoint UUID and merge in the desired order (`limit`/
 `offset` apply per request). Set `include-properties=true` only when property values are needed in the response (server
