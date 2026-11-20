@@ -27,6 +27,25 @@ v0.5.x use them; agents v0.6.0+ use API v2 (`POST /api/v2/partitionings`,
 **Always upgrade the server before the agents.** The server accepts what released agents send; a newer agent against an
 older server is to be avoided.
 
+**Server and database migrations are deployed together.**
+
+### Lineage and discovery endpoints
+
+Partitionings are linked to their parents when they are created (`POST /api/v2/partitionings` with
+`parentPartitioningIds`) or afterwards (`PATCH /api/v2/partitionings/{id}/ancestors`, leaf partitionings only). Each
+link is stored both as flow membership (transitive) and as an explicit direct edge:
+
+| Endpoint (`/api/v2/partitionings/...`)                                       | Returns                                                                                                                  | Based on        |
+|------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|-----------------|
+| `search?keys=&exact-keys=&author=&search-text=&from=&to=&latest-first=`      | Paginated distinct partitionings matching key/value, key-existence, author, substring, and/or checkpoint activity        | GIN + author + time idx |
+| `{id}/parents`, `{id}/children`                                 | Direct neighbours, with `linkedBy` / `linkedAt`                                                                          | edges           |
+| `{id}/ancestors`, `{id}/descendants`                            | All transitive ancestors / descendants, paginated                                                                        | flow membership |
+| `{id}/lineage?direction=both\|upstream\|downstream&depth=1..20` | Sub-graph (nodes + edges); `truncated=true` if the 5,000-node/direction cap hit, `expandable*NodeIds` for boundary nodes | edges           |
+
+Edges exist for links written from versions newer than v0.10.0 (older links start edge-less and are lazily backfilled only if re-declared, with no bulk migration); for un-backfilled legacy links `parents` and `children` are empty and `lineage` returns only the focal node (`nodes` = `[focal]`, `edges` = `[]`), while `ancestors` and `descendants` still answer. The design is in
+[ADR 01](../adrs/01-lineage-capability.md), the consumer view in
+[ADR 02](../adrs/02-consumption-pattern-for-audits.md).
+
 ### REST API Reference
 
 The REST API exposes a Swagger Documentation UI which documents all the HTTP endpoints exposed.

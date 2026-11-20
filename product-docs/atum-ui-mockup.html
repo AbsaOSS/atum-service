@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atum · Prototype</title>
+<style>
+@font-face { font-family: 'Brave Sans'; src: url('assets/fonts/BraveSansWeb-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Brave Sans'; src: url('assets/fonts/BraveSansWeb-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Brave Sans'; src: url('assets/fonts/BraveSansWeb-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+
+:root {
+  --absa-passion: #DC0037;
+  --absa-power:   #B50232;
+  --absa-hope:    #95052A;
+  --absa-inspire: #77021E;
+  --absa-energy:  #FF780F;
+  --absa-enrich:  #131010;
+  --absa-serene:  #FFFFFF;
+
+  --bg: #faf8f8;
+  --surface: #ffffff;
+  --surface-subtle: #f5f2f2;
+  --border: #e6e2e2;
+  --border-strong: #cdc7c7;
+  --text: var(--absa-enrich);
+  --text-secondary: #453f3f;
+  --text-muted: #767676;
+  --sidebar-bg: #1c1515;
+  --sidebar-hover: #2d2222;
+  --primary: var(--absa-power);
+  --primary-hover: var(--absa-passion);
+  --primary-active: var(--absa-inspire);
+  --primary-bg: #fcebee;
+  --success: #1e7a42;
+  --warn: #c2410c;
+  --warn-bg: #fff3e9;
+  --warn-border: var(--absa-energy);
+  --crit-bg: #fdecee;
+
+  /* status tones: always paired with an icon + label */
+  --tone-good: #1e7a42;
+  --tone-critical: #c62b3b;
+  --tone-serious: #c2410c;
+  --tone-info: #6f6464;
+  --tone-gap: #9a8f8f;
+  --tone-neutral: #e9e3e3;
+
+  --mono: "SF Mono", "JetBrains Mono", "Ubuntu Sans Mono", Menlo, Consolas, monospace;
+  --sans: "Brave Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font: 400 13px/1.45 var(--sans); background: var(--bg); color: var(--text); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+button, select, input { font: inherit; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+a { color: var(--primary); }
+
+/* ── Prototype control bar (not part of the product) ── */
+.proto-bar { display: flex; align-items: center; gap: 18px; padding: 7px 16px; background: #2b2b2b; color: #e8e8e8; font-size: 12px; position: sticky; top: 0; z-index: 40; flex-wrap: wrap; }
+.proto-tag { font-weight: 700; letter-spacing: .4px; text-transform: uppercase; font-size: 10.5px; color: #ffb37a; border: 1px solid #6b4a33; padding: 2px 7px; border-radius: 4px; }
+.proto-group { display: flex; align-items: center; gap: 8px; }
+.proto-group > span { color: #b9b9b9; }
+.proto-note { color: #b9b9b9; margin-left: auto; }
+
+.pill-group { display: inline-flex; background: var(--surface-subtle); border: 1px solid var(--border); padding: 2px; border-radius: 6px; gap: 2px; flex-wrap: wrap; }
+.pill-btn { border: 0; background: transparent; padding: 3px 10px; border-radius: 4px; font-size: 12px; color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
+.pill-btn:hover { color: var(--text); }
+.pill-btn.active { background: #fff; color: var(--primary); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.pill-group.dark { background: #1d1d1d; border-color: #444; }
+.pill-group.dark .pill-btn { color: #cfcfcf; }
+.pill-group.dark .pill-btn.active { background: #fff; color: var(--primary); }
+
+/* ── Shell ── */
+.shell { display: flex; min-height: calc(100vh - 38px); }
+.sidebar { width: 212px; background: var(--sidebar-bg); color: #fff; display: flex; flex-direction: column; flex: none; }
+.brand { height: 78px; min-height: 78px; padding: 0 12px; display: flex; align-items: center; gap: 8px; background: var(--absa-inspire); cursor: pointer; color: #fff; text-decoration: none; }
+.brand img { height: 58px; min-height: 58px; width: 58px; display: block; }
+.brand-text { display: flex; flex-direction: column; min-width: 0; }
+.brand-name { font-weight: 700; font-size: 13.5px; line-height: 1.15; }
+.brand-sub { font-size: 10.5px; color: rgba(255,255,255,.72); line-height: 1.25; margin-top: 2px; }
+.side-nav { padding: 12px 8px; display: flex; flex-direction: column; gap: 3px; }
+.side-link { width: 100%; border: 0; background: transparent; color: #d9c9c9; padding: 8px 10px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 9px; text-align: left; }
+.side-link svg { width: 16px; height: 16px; flex: none; opacity: .85; }
+.side-link:hover { background: var(--sidebar-hover); color: #fff; }
+.side-link.active { background: var(--sidebar-hover); color: #fff; font-weight: 700; box-shadow: inset 3px 0 0 var(--absa-energy); }
+.side-count { margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 10px; background: rgba(255,255,255,.14); color: #f1e9e9; font-weight: 600; }
+.side-footer { margin-top: auto; padding: 12px 14px; border-top: 1px solid rgba(255,255,255,.08); font-size: 11px; color: #8f8484; line-height: 1.5; }
+
+.main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { height: 52px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 14px; }
+.crumbs { font-size: 14px; color: var(--text-muted); display: flex; align-items: center; gap: 7px; min-width: 0; }
+.crumbs a { color: var(--text-muted); text-decoration: none; cursor: pointer; }
+.crumbs a:hover { color: var(--primary); }
+.crumbs strong { color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.control-pill { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 6px; padding: 0 10px; height: 32px; font-size: 12.5px; }
+.control-pill span { color: var(--text-muted); }
+.control-pill select { border: 0; background: transparent; color: var(--text); font-weight: 600; outline: none; cursor: pointer; }
+.btn { height: 32px; padding: 0 12px; border-radius: 4px; border: 1px solid var(--border-strong); background: #fff; color: var(--text); font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.btn:hover { background: var(--surface-subtle); }
+.btn-sm { height: 26px; padding: 0 9px; font-size: 12px; font-weight: 500; }
+
+.container { padding: 14px 20px 28px; max-width: 1400px; width: 100%; }
+
+/* ── Cards, KPIs ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 14px; }
+.kpi-grid.k3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+.kpi-card.clickable { cursor: pointer; }
+.kpi-card.clickable:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(181,2,50,.1); }
+.kpi-card.attn { border-left: 3px solid var(--warn-border); }
+.kpi-card.kpi-active { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary) inset; }
+.kpi-pillar { font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text-muted); }
+.kpi-label { font-size: 12px; color: var(--text-muted); }
+.kpi-label .hint { border-bottom: 1px dotted var(--text-muted); cursor: help; }
+.kpi-val { font-size: 20px; font-weight: 600; margin: 2px 0 1px; }
+.kpi-val.warn { color: var(--warn); }
+.kpi-sub { font-size: 12px; color: var(--text-muted); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 1px 2px rgba(19,16,16,.04); overflow: hidden; margin-bottom: 12px; }
+.card-toolbar { padding: 8px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fdfbfb; flex-wrap: wrap; }
+.card-title { font-weight: 600; font-size: 13.5px; }
+.toolbar-meta { font-size: 12px; color: var(--text-muted); }
+.card-body { padding: 12px 16px; }
+.two-col { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: 12px; }
+@media (max-width: 1150px) { .two-col { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+
+/* ── Filter bar & structured partitioning search ── */
+.filter-bar { padding: 10px 16px; background: #fdfbfb; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.search-input { flex: 1 1 240px; max-width: 340px; display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border-strong); border-radius: 6px; padding: 0 10px; height: 32px; }
+.search-input input { border: 0; outline: none; width: 100%; font-size: 12.5px; background: transparent; }
+.search-input.has-error { border-color: var(--tone-critical); background: #fffafb; }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); cursor: pointer; }
+.result-count { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+
+.search-panel { padding: 12px 16px; background: #fdfbfb; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+.search-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.search-fields { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.author-ctrl { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--border-strong); border-radius: 6px; padding: 0 8px; height: 32px; font-size: 12.5px; }
+.author-ctrl span { color: var(--text-muted); font-size: 12px; }
+.author-ctrl input { border: 0; outline: none; background: transparent; width: 145px; font-size: 12.5px; color: var(--text); }
+.keys-box { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+.keys-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); }
+.key-clauses { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.key-clause { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-subtle); border: 1px solid var(--border-strong); border-radius: 6px; padding: 3px 6px; font-size: 12px; }
+.key-clause input, .key-clause select { border: 1px solid var(--border); background: #fff; border-radius: 4px; height: 24px; padding: 0 6px; font-size: 12px; color: var(--text); }
+.key-clause input.k-name { width: 120px; font-family: var(--mono); font-weight: 600; }
+.key-clause input.k-val { width: 185px; font-family: var(--mono); }
+.key-clause .k-any { font-family: var(--mono); font-size: 11.5px; color: var(--text-muted); padding: 0 8px; height: 24px; display: inline-flex; align-items: center; background: #faf8f8; border: 1px dashed var(--border-strong); border-radius: 4px; }
+.tiny-btn { border: 1px solid var(--border-strong); background: #fff; color: var(--text-secondary); border-radius: 4px; height: 22px; padding: 0 6px; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; }
+.tiny-btn:hover { border-color: var(--primary); color: var(--primary); }
+.tiny-btn:disabled { opacity: .45; cursor: not-allowed; }
+.preset-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-muted); }
+.preset-chip { border: 1px solid var(--border-strong); background: #fff; color: var(--text-secondary); border-radius: 999px; padding: 2px 9px; font-size: 11.5px; cursor: pointer; }
+.preset-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
+.kv-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.kv-badge { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; color: var(--text-secondary); max-width: 100%; }
+.kv-badge.matched { background: var(--primary-bg); border-color: #e4a3b1; color: var(--absa-inspire); }
+.kv-badge .kv-idx { font-family: var(--sans); font-size: 10px; font-weight: 700; color: var(--text-muted); }
+.kv-badge button.kv-act { border: 0; background: transparent; padding: 0 2px; cursor: pointer; color: var(--text-muted); font-size: 11px; line-height: 1; }
+.kv-badge button.kv-act:hover { color: var(--primary); }
+.api-preview { padding: 8px 12px; background: #1c1515; color: #f4eeee; border-radius: 6px; font-family: var(--mono); font-size: 11.5px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.api-preview code { word-break: break-all; flex: 1; min-width: 240px; }
+.api-preview .api-decoded { color: #d9c9c9; font-size: 11px; width: 100%; }
+.inline-hint { padding: 7px 12px; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: #fff; color: var(--text-secondary); }
+.inline-hint.warn { background: var(--warn-bg); border-color: #f3c499; color: #7a3200; }
+.inline-hint.err { background: var(--crit-bg); border-color: #e7a9b7; color: #8f1424; }
+.pill-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+th { background: #faf8f8; color: var(--text-muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+tr.row-link { cursor: pointer; transition: background .1s; }
+tr.row-link:hover td { background: #faf8f8; }
+tr.row-link:hover .row-chevron { color: var(--primary); transform: translateX(2px); }
+tr.row-selected td { background: var(--primary-bg); }
+tr.row-shift { box-shadow: inset 3px 0 0 var(--warn-border); }
+tr.group-row td { background: #f7f3f3; font-size: 11.5px; font-weight: 700; color: var(--text-secondary); padding: 5px 12px; }
+tr.detail-row > td { background: #fcfafa; padding: 0; }
+.row-chevron { color: var(--text-muted); font-weight: 600; display: inline-block; transition: transform .12s, color .12s; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mono-id { font-family: var(--mono); font-size: 11.5px; color: var(--text-muted); }
+.muted { color: var(--text-muted); }
+.ds-name { font-weight: 600; color: var(--text); }
+.cell-changed { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+.delta-sub { display: block; font-size: 11px; font-weight: 400; color: var(--warn); line-height: 1.15; }
+.strike { text-decoration: line-through; color: var(--text-muted); }
+
+/* ── Status & producer indicators (from the Atum mockup) ── */
+.badge-shift { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-border); white-space: nowrap; }
+.badge-crit { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--crit-bg); color: #8f1424; border: 1px solid #e7a9b7; white-space: nowrap; }
+.status-consistent, .status-plain { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-secondary); white-space: nowrap; }
+.status-consistent svg { color: var(--success); flex: none; }
+.prod-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--surface-subtle); border: 1px solid var(--border); color: var(--text-secondary); white-space: nowrap; }
+.chip.weak { border-color: #e9c9a8; background: var(--warn-bg); color: #7a3200; }
+.chip.ext { border-style: dashed; }
+.link-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 9px; border-radius: 4px; border: 1px solid var(--border-strong); background: #fff; color: var(--text-secondary); cursor: pointer; }
+.link-chip:hover { border-color: var(--primary); color: var(--primary); }
+.link-chip svg { width: 12px; height: 12px; }
+
+/* ── Status grid (Combined overview) ── */
+.status-grid td.cell-td { padding: 3px 3px; text-align: center; }
+.status-grid th.day-th { text-align: center; font-weight: 600; padding: 6px 3px; font-size: 11px; }
+.status-grid th.day-th .today { display: block; font-size: 10px; font-weight: 400; color: var(--text-muted); }
+.cell { border: 0; padding: 0; background: transparent; cursor: pointer; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 24px; }
+.compact .cell { width: 22px; height: 20px; }
+.cell:hover { box-shadow: 0 0 0 2px var(--text-secondary); }
+.glyph-bg-good { fill: var(--tone-good); } .glyph-bg-critical { fill: var(--tone-critical); } .glyph-bg-serious { fill: var(--tone-serious); }
+.glyph-bg-info { fill: var(--tone-info); } .glyph-bg-neutral { fill: var(--tone-neutral); } .glyph-bg-gap { fill: #fff; stroke: var(--tone-gap); stroke-width: 1.4; stroke-dasharray: 2.2 1.6; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11.5px; color: var(--text-secondary); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+.callout { padding: 7px 16px; font-size: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+.callout-warn { background: var(--warn-bg); color: #7a3200; }
+.callout-crit { background: var(--crit-bg); color: #6d0f1b; }
+.callout-ok { background: #faf8f8; color: var(--text-secondary); }
+.empty { padding: 22px 16px; text-align: center; color: var(--text-muted); font-size: 12.5px; }
+.empty strong { display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 13px; }
+.scope-list { margin: 0; padding: 0; list-style: none; font-size: 12.5px; }
+.scope-list li { padding: 5px 0 5px 22px; position: relative; color: var(--text-secondary); border-bottom: 1px solid #f1eded; }
+.scope-list li:last-child { border-bottom: 0; }
+.scope-list li svg { position: absolute; left: 0; top: 7px; }
+.sec-heading { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0 0 6px; }
+
+/* ── Lineage & inspector (from the Atum mockup) ── */
+.lineage-canvas { background: radial-gradient(#dcd7d7 1px, transparent 1px) 0 0 / 18px 18px #fdfbfb; padding: 8px 12px; overflow-x: auto; }
+.node-group { cursor: pointer; transition: opacity .15s; }
+.node-group:hover .node-box { stroke: var(--primary); }
+.inspector-head { padding: 10px 16px 0; background: #fdfbfb; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.inspector-title { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; flex-wrap: wrap; }
+.inspector-title h2 { font-size: 15px; font-weight: 600; margin: 0; }
+.subtabs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.subtab { border: 0; background: transparent; padding: 7px 12px 9px; font-size: 12.5px; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; }
+.subtab:hover { color: var(--text); }
+.subtab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.meta-top { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: #fdfbfb; }
+.meta-card { background: #fff; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.meta-card-head { padding: 7px 12px; background: #faf8f8; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.meta-card table th, .meta-card table td { padding: 6px 12px; font-size: 12px; }
+.meta-card table tr:last-child td { border-bottom: 0; }
+.key-idx { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 4px; background: var(--surface-subtle); border: 1px solid var(--border); font-size: 10.5px; font-weight: 600; color: var(--text-muted); margin-right: 6px; }
+.prop-chip { display: inline-block; font-family: var(--mono); font-size: 11px; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; margin-right: 4px; color: var(--text-secondary); }
+.copy-btn { border: 1px solid var(--border); background: #fff; border-radius: 4px; padding: 0 5px; font-size: 10.5px; color: var(--text-muted); cursor: pointer; margin-left: 5px; }
+.copy-btn:hover { color: var(--primary); border-color: var(--primary); }
+.links-row { padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-muted); }
+.chart-wrap { padding: 8px 12px 4px; }
+.hov .xh { opacity: 0; }
+.hov:hover .xh { opacity: 1; }
+.chart-wrap svg text, .lineage-canvas svg text { font-family: var(--sans); }
+.run-detail { padding: 12px 16px 14px; border-left: 3px solid var(--primary); }
+.run-detail .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+
+/* ── Page header, filter bar, KPI icons (from the Run Activity Monitor) ── */
+.page-head { display: flex; align-items: center; gap: 14px; margin: 2px 0 14px; }
+.page-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--primary-bg); color: var(--primary); display: flex; align-items: center; justify-content: center; flex: none; }
+.page-icon svg { width: 22px; height: 22px; }
+.page-head h1 { font-size: 19px; margin: 0; font-weight: 700; line-height: 1.2; }
+.page-head .sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.page-head .right { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); }
+.btn-ico { width: 14px; height: 14px; }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.win-bar { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+.win-bar-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.pill-custom { display: inline-flex; align-items: center; gap: 5px; }
+.pill-cal { width: 12px; height: 12px; }
+.win-resolved { font-size: 12.5px; color: var(--text-secondary); white-space: nowrap; }
+.win-resolved b { color: var(--text); font-weight: 600; }
+.win-extra { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.win-dates { display: flex; align-items: flex-end; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.pill-group.seg { padding: 3px; }
+.pill-group.seg .pill-btn { padding: 6px 14px; font-size: 12.5px; }
+.win-dates { margin-left: auto; display: flex; gap: 10px; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label { font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text-muted); }
+.field select, .field input { height: 32px; border: 1px solid var(--border-strong); border-radius: 6px; padding: 0 8px; background: #fff; font-size: 12.5px; color: var(--text); min-width: 140px; }
+.kpi-grid.k5 { grid-template-columns: repeat(5, minmax(0,1fr)); }
+.kpi-head { display: flex; align-items: center; gap: 8px; }
+.kpi-ico { width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-subtle); color: var(--text-secondary); flex: none; }
+.kpi-ico svg { width: 15px; height: 15px; }
+.kpi-ico.good { background: #e7f6ec; color: var(--tone-good); }
+.kpi-ico.bad { background: var(--crit-bg); color: var(--tone-critical); }
+.kpi-ico.accent { background: var(--primary-bg); color: var(--primary); }
+.kpi-head + .kpi-val { margin-top: 6px; }
+.kpi-bar { height: 6px; border-radius: 3px; background: #ece7e7; margin: 6px 0 4px; overflow: hidden; }
+.kpi-bar i { display: block; height: 100%; background: var(--primary); border-radius: 3px; }
+/* ── Run status pills ── */
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { background: #e7f6ec; color: #1d5a35; }
+.pill.bad { background: var(--crit-bg); color: #8f1424; }
+.pill.warn { background: var(--warn-bg); color: #7a3200; }
+.pill.neutral { background: var(--surface-subtle); color: var(--text-secondary); }
+/* ── Charts: activity, donut, tenant bars, heatmap ── */
+.charts-row { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 1150px) { .charts-row { grid-template-columns: 1fr; } .kpi-grid.k5 { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.donut-wrap { display: flex; flex-direction: column; align-items: center; padding: 14px 12px 12px; }
+.legend-list { display: grid; grid-template-columns: auto 1fr auto auto; gap: 4px 10px; font-size: 12px; color: var(--text-secondary); margin-top: 10px; width: 100%; max-width: 300px; }
+.legend-list .num { color: var(--text); font-weight: 600; }
+.tbars { padding: 12px 16px 14px; display: grid; grid-template-columns: 70px 1fr 150px; gap: 7px 12px; align-items: center; font-size: 12px; }
+.tbars .lbl { font-family: var(--mono); color: var(--text-secondary); }
+.tbars .track { height: 16px; display: flex; gap: 2px; }
+.tbars .track i { display: block; height: 100%; }
+.tbars .track i:last-child { border-radius: 0 4px 4px 0; }
+.tbars .val { color: var(--text-muted); text-align: right; white-space: nowrap; }
+.tbars .val b { color: var(--text); font-weight: 600; }
+.heat { display: grid; gap: 3px; padding: 12px 16px 6px; }
+.heat .hl { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; white-space: nowrap; }
+.heat .hh { font-size: 10px; color: var(--text-muted); text-align: center; }
+.heat .hc { height: 18px; border-radius: 3px; }
+.heat-legend { display: flex; justify-content: space-between; align-items: center; padding: 6px 16px 12px; font-size: 11.5px; color: var(--text-secondary); flex-wrap: wrap; gap: 8px; }
+.ramp { width: 80px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, rgba(69,63,63,.15), rgba(69,63,63,1)); display: inline-block; vertical-align: middle; margin: 0 6px; }
+.source-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-muted); }
+.load-more { display: flex; justify-content: center; padding: 14px; border-top: 1px solid var(--border); }
+.btn-outline { border-color: var(--primary); color: var(--primary); }
+.btn-outline:hover { background: var(--primary-bg); }
+
+/* ── Tooltip / toast ── */
+.tooltip { position: fixed; z-index: 80; pointer-events: none; background: var(--absa-enrich); color: #f4eeee; font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 6px; max-width: 340px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.tooltip b { color: #fff; }
+.tooltip .tt-muted { color: #bfb3b3; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--absa-enrich); color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 12.5px; z-index: 90; box-shadow: 0 6px 20px rgba(0,0,0,.25); max-width: 680px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <span class="proto-tag">Prototype</span>
+  <span class="proto-note">Demo fixtures, no backend · Atum data model · "now" = Thu 12 Nov 2026 07:42 UTC</span>
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="#/datasets" data-go="view:datasets" aria-label="Go to Control Metrics">
+      <img src="assets/logo/logo-white_58.svg" alt="Absa" style="height:58px;min-height:58px">
+      <div class="brand-text"><span class="brand-name" id="brandName"></span><span class="brand-sub" id="brandSub"></span></div>
+    </a>
+    <nav class="side-nav" id="sideNav"></nav>
+    <div class="side-footer" id="sideFooter"></div>
+  </aside>
+  <div class="main-col">
+    <header class="topbar">
+      <div class="crumbs" id="crumbs"></div>
+    </header>
+    <main class="container" id="view"></main>
+  </div>
+</div>
+
+<div class="tooltip hidden" id="tooltip"></div>
+<div class="toast hidden" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// Utilities
+// ═══════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const r2 = v => Math.round(v * 100) / 100;
+const fmt = (v, dec) => v == null ? "—" : typeof v === "number" ? (dec ? v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v.toLocaleString("en-US")) : String(v);
+const fmtShortHash = s => { const t = String(s ?? ""); return t.length > 9 ? `${t.slice(0, 4)}…${t.slice(-4)}` : t; };
+const fmtShortUuid = u => `${u.slice(0, 8)}…${u.slice(-4)}`;
+const same = (a, b) => typeof a === "number" && typeof b === "number" ? Math.round(a * 100) === Math.round(b * 100) : a === b;
+function rnd(s) { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15; return (h >>> 0) / 4294967296; }
+const hm = m => { m = Math.round(m); return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
+const hms = m => { const s = Math.round(m * 60); return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(x => String(x).padStart(2, "0")).join(":"); };
+const dur = m => { const s = Math.round(m * 60); if (s < 60) return `${Math.max(s, 1)}s`; const mm = Math.floor(s / 60); return mm < 60 ? `${mm}m ${String(s % 60).padStart(2, "0")}s` : `${Math.floor(mm / 60)}h ${String(mm % 60).padStart(2, "0")}m`; };
+function hex(seed, n) { let s = "", i = 0; while (s.length < n) s += Math.floor(rnd(seed + ":" + i++) * 0xffffffff).toString(16).padStart(8, "0"); return s.slice(0, n); }
+const uuid = seed => { const h = hex(seed, 32); return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-${"89ab"[parseInt(h[16], 16) % 4]}${h.slice(17, 20)}-${h.slice(20, 32)}`; };
+const compact = v => Math.abs(v) >= 1e6 ? +(v / 1e6).toFixed(2) + "M" : Math.abs(v) >= 1e3 ? +(v / 1e3).toFixed(1) + "K" : String(+v.toFixed(1));
+function addDays(d, n) { const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+const daysBetween = (a, b) => Math.round((new Date(b + "T00:00:00Z") - new Date(a + "T00:00:00Z")) / 864e5);
+const isWeekend = d => { const w = new Date(d + "T00:00:00Z").getUTCDay(); return w === 0 || w === 6; };
+const dayShort = d => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const dayNum = d => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+function rangeLabel(f, t) {
+  if (STATE.win === "all") return `All recorded ${TERM.many} <span class="muted">(no time bound)</span>`;
+  const n = daysBetween(f, t) + 1, sameMonth = f.slice(0, 7) === t.slice(0, 7);
+  const span = f === t ? dayNum(f) : sameMonth ? `${f.slice(8)}–${dayNum(t)}` : `${dayNum(f)} – ${dayNum(t)}`;
+  return `${span} ${t.slice(0, 4)} <span class="muted">(${n} day${n === 1 ? "" : "s"})</span>`;
+}
+const ymd = d => d.replaceAll("-", "");
+function toBase64Url(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function batchKeys(ds, d, r) {
+  if (ds.static) return [["catalog_path", ds.catalog], ["ref_version", r.version]];
+  if (ds.keys) return ds.keys(d);
+  return [["catalog_path", ds.catalog], ["info_date", d]];
+}
+const BATCH_KEYS = new Set(["info_date", "ref_version"]);
+function partitioningIdentity(ds, d = STATE.day, r = null, dropBatchKey = true) {
+  if (!ds.inAtum) return ds.catalog || ds.asset;
+  const rec = r || (ds.static ? STATIC_ISO : REC[ds.key]?.[d] || REC[ds.key]?.[YDAY]);
+  const ks = batchKeys(ds, d || YDAY, rec);
+  const idPairs = dropBatchKey ? ks.filter(([k]) => !BATCH_KEYS.has(k)) : ks;
+  const effective = idPairs.length ? idPairs : ks;
+  if (effective.length === 1 && effective[0][0] === "catalog_path") return effective[0][1];
+  if (effective[0]?.[0] === "catalog_path") {
+    return `${effective[0][1]} · ${effective.slice(1).map(([k, v]) => `${k}=${v}`).join(" · ")}`;
+  }
+  return effective.map(([k, v]) => `${k}=${v}`).join(" · ");
+}
+
+const TODAY = "2026-11-12", YDAY = "2026-11-11", NOW_MIN = 7 * 60 + 42;
+const DAYS = Array.from({ length: 30 }, (_, i) => addDays(TODAY, i - 29));
+const absT = (d, t) => daysBetween(DAYS[0], d) * 1440 + t;
+const NOW_ABS = absT(TODAY, NOW_MIN);
+const WINDOWS = { all: "Any time", "24h": "Last 24 hours", "7d": "Last 7 days", month: "Current month", "30d": "Last 30 days" };
+
+// User-facing name for an Atum "partitioning": one delivery of a dataset (Atum's README calls it a batch)
+const TERM = { one: "batch", many: "batches", One: "Batch", Many: "Batches",
+  tip: "A batch is one delivery of a dataset, for example Customer Payments for info_date 2026-11-11. Atum calls it a partitioning." };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// App configuration
+// ═══════════════════════════════════════════════════════════════════════════
+const EDITIONS = {
+  atum: { name: "Atum", sub: "Control Metrics · Lineage", audience: "Control measures and lineage for Atum partitionings", atum: true, eg: false, nav: ["datasets", "lineage"] }
+};
+const NAV = {
+  datasets: { label: "Control Metrics", icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="10" x2="9" y2="20"/>' },
+  lineage: { label: "Lineage", icon: '<circle cx="5" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 6c5 0 4 6 9 6M7.5 18c5 0 4-6 9-6"/>' }
+};
+
+// Producer icons (from the Atum mockup)
+const SYS_ICONS = {
+  "AqueDuct": '<rect width="24" height="24" rx="5.5" fill="#5B0E31"/><text x="12.4" y="16.6" text-anchor="middle" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-style="italic" font-weight="600" font-size="12.5" fill="#fff">Aq</text><path d="M4.5 19.6h15" stroke="#fff" stroke-opacity=".55" stroke-width="1" stroke-linecap="round"/>',
+  "Unify": '<circle cx="12" cy="12" r="12" fill="#5B0E31"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8.6 11v3.1a3.4 3.4 0 0 0 6.8 0V9.6M15.4 9.6v7.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polygon points="7.28,4.47 8.43,6.21 10.50,5.90 9.19,7.54 10.13,9.41 8.17,8.67 6.68,10.14 6.77,8.05 4.92,7.09 6.93,6.53" fill="#fff"/>',
+  "Mainframe Bridge": '<rect width="24" height="24" rx="6" fill="#4f46e5"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">MB</text>',
+  "RefData": '<rect width="24" height="24" rx="6" fill="#0f766e"/><text x="12" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">RF</text>'
+};
+const sysSvg = (sys, s = 15) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="flex:none">${SYS_ICONS[sys] || ""}</svg>`;
+const prodBadge = name => `<span class="prod-badge">${sysSvg(name, 15)} ${esc(name)}</span>`;
+const checkIconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>`;
+const warnIconSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 1 22h22L12 2zm0 7a1 1 0 0 1 1 1v5a1 1 0 1 1-2 0V10a1 1 0 0 1 1-1zm0 11a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 12 20z"/></svg>`;
+
+const MEASURES = {
+  count: { label: "Record count (All rows)", kind: "count" },
+  sum_amount: { label: "Sum of amount", kind: "sum", col: "amount", dec: true },
+  sum_fee: { label: "Sum of fee_amount", kind: "sum", col: "fee_amount", dec: true },
+  distinct_cust: { label: "Distinct customer_id", kind: "distinct", col: "customer_id" },
+  distinct_iso: { label: "Distinct iso_code", kind: "distinct", col: "iso_code" },
+  hash_tx: { label: "Hash integrity of tx_id", kind: "hash", col: "tx_id", hash: true }
+};
+// Measure definitions grouped by kind, in plain language (Atum type in the tooltip)
+const MEASURE_KINDS = {
+  count: { name: "Record count", what: "Number of rows: catches added or lost records", atum: "RecordCount" },
+  sum: { name: "Sum of values", what: "Total of a numeric column: catches changed amounts", atum: "SumOfValuesOfColumn" },
+  distinct: { name: "Distinct values", what: "Number of unique values in a column: catches duplicates or lost keys", atum: "DistinctRecordCount" },
+  hash: { name: "Hash checksum", what: "Fingerprint of a column's content: catches any change to the values", atum: "SumOfHashesOfColumn" }
+};
+const fmtMeasure = (m, v) => v == null ? "—" : MEASURES[m].hash ? fmtShortHash(v) : fmt(v, MEASURES[m].dec);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Demo fixtures — the lineage example is the one from the Atum mockup
+// ═══════════════════════════════════════════════════════════════════════════
+const TEAMS = { upstream: "Upstream team · Payments Mainframe", refdata: "Reference data · RefData", ingest: "Ingest · AqueDuct", curate: "Curate · Unify" };
+
+const DS = [
+  { key: "cbp", name: "Core Banking Payments EOD", asset: "system=core_banking · feed=payments_eod", producer: "Mainframe Bridge", author: "mainframe-bridge-svc", team: "upstream",
+    inEG: false, inAtum: true, capture: "external", tenant: "pmfb", owner: "Payments Mainframe Support", pid: 2000000010448101,
+    keys: d => [["system", "core_banking"], ["feed", "payments_eod"], ["info_date", d]],
+    ad: [["transport", "sftp-csv"], ["source_region", "za-jnb-1"]], measures: ["count", "sum_amount"], parents: [],
+    cps: [{ name: "Source Extract", at: 295, len: 1 / 60, ids: { [YDAY]: "11111111-1111-4111-8111-000000000101" } }],
+    props: d => [{ executionID: "eod-" + ymd(d), format: "fixed-width" }] },
+  { key: "iso", name: "ISO 3166 Countries", asset: "edla_prod_ref.iso3166_countries", catalog: "edla_prod_ref.iso3166_countries", producer: "RefData", author: "refdata-steward", team: "refdata",
+    inEG: false, inAtum: true, capture: "agent", tenant: "refd", owner: "Reference Data Stewards", static: true, pid: 2000000010000049,
+    ad: [["cadence", "quarterly"]], measures: ["count", "distinct_iso"], parents: [] },
+  { key: "core_raw", name: "Core Payments (Raw)", asset: "edla_prod_raw.aq_core_payments", catalog: "edla_prod_raw.aq_core_payments", producer: "AqueDuct", author: "aqueduct", team: "ingest",
+    inEG: true, inAtum: true, capture: "agent", tenant: "cpay", owner: "Data Ingestion ZA", pid: 2000000010448202,
+    ad: [["catalog_provider", "aws-glue"]], measures: ["count", "sum_amount", "hash_tx"], parents: ["cbp"], after: ["cbp"],
+    runAt: 342, runLen: 16.5, cps: [{ name: "Written", off: 8.333, len: 7.7, ids: { [YDAY]: "22222222-2222-4222-8222-000000000202" } }],
+    props: (d, n) => [{ executionID: `aq-${902 - 3 * daysBetween(d, YDAY)}` }],
+    platform: "aws.glue", definition: "aq-1042", jobName: "AqueDuct Ingestion · aq_core_payments" },
+  { key: "crm", name: "CRM Customers (Raw)", asset: "edla_prod_raw.aq_crm_customers", catalog: "edla_prod_raw.aq_crm_customers", producer: "AqueDuct", author: "aqueduct", team: "ingest",
+    inEG: true, inAtum: true, capture: "agent", tenant: "cpay", owner: "Data Ingestion ZA", pid: 2000000010448201,
+    ad: [["source_system", "CRM"]], measures: ["count", "distinct_cust"], parents: [],
+    runAt: 321, runLen: 10, cps: [{ name: "Written", off: 9.033, len: .65, ids: { [YDAY]: "22222222-2222-4222-8222-000000000201" } }],
+    props: d => [{ executionID: `aq-${901 - 3 * daysBetween(d, YDAY)}` }],
+    platform: "aws.glue", definition: "aq-0977", jobName: "AqueDuct Ingestion · aq_crm_customers" },
+  { key: "cust_pay", name: "Customer Payments", asset: "edla_prod_curated.un_customer_payments", catalog: "edla_prod_curated.un_customer_payments", producer: "Unify", author: "unify", team: "curate",
+    inEG: true, inAtum: true, capture: "agent", tenant: "cpay", owner: "Data Curation ZA", pid: 2000000010448528,
+    ad: [["join_keys", "customer_id,country_code"], ["catalog_provider", "aws-glue"], ["spark_version", "3.5.1"]],
+    measures: ["count", "sum_amount", "sum_fee", "distinct_cust", "hash_tx"], parents: ["core_raw", "crm", "iso"], after: ["core_raw", "crm"],
+    runAt: 370, runLen: 11.5,
+    cps: [{ name: "Input", off: 2.017, len: .65, ids: { [YDAY]: "41ea35cd-6398-42ed-b6d3-a8d613176501" } },
+          { name: "Joined", off: 8.683, len: .433, ids: { [YDAY]: "41ea35cd-6398-42ed-b6d3-a8d613176502" } },
+          { name: "Written", off: 10.5, len: .7, ids: { [YDAY]: "41ea35cd-6398-42ed-b6d3-a8d613176503" } }],
+    props: d => { const id = `un-${441 - 4 * daysBetween(d, YDAY)}`; return [{ executionID: id, step: "catalog-read" }, { executionID: id, step: "inner-join", ...(d === YDAY ? { dropped_rows: "333" } : {}) }, { executionID: id, step: "catalog-write" }]; },
+    platform: "aws.emr", definition: "un-2201", jobName: "Unify Curation · un_customer_payments" },
+  { key: "revenue", name: "Revenue by Country", asset: "edla_prod_publish.un_revenue_by_country", catalog: "edla_prod_publish.un_revenue_by_country", producer: "Unify", author: "unify", team: "curate",
+    inEG: true, inAtum: true, capture: "agent", tenant: "cpay", owner: "Data Curation ZA", pid: 2000000010448601,
+    ad: [], measures: ["count", "sum_amount"], parents: ["cust_pay"], after: ["cust_pay"], runAt: 399, runLen: 3.5,
+    cps: [{ name: "Input", off: 1.083, len: .433, ids: { [YDAY]: "55555555-5555-4555-8555-000000000601" } }, { name: "Written", off: 3.167, len: .033, ids: { [YDAY]: "55555555-5555-4555-8555-000000000602" } }],
+    props: d => { const id = `un-${510 - 4 * daysBetween(d, YDAY)}`; return [{ executionID: id }, { executionID: id }]; },
+    platform: "aws.emr", definition: "un-2310", jobName: "Unify Curation · un_revenue_by_country" },
+  { key: "c360", name: "Customer 360", asset: "edla_prod_publish.un_customer_360", catalog: "edla_prod_publish.un_customer_360", producer: "Unify", author: "unify", team: "curate",
+    inEG: true, inAtum: true, capture: "agent", tenant: "cpay", owner: "Data Curation ZA", pid: 2000000010448602,
+    ad: [], measures: ["count", "sum_amount"], parents: ["cust_pay", "crm"], after: ["cust_pay", "crm"], runAt: 404, runLen: 2.67,
+    cps: [{ name: "Written", off: 1.733, len: .767, ids: { [YDAY]: "66666666-6666-4666-8666-000000000603" } }],
+    props: d => [{ executionID: `un-${511 - 4 * daysBetween(d, YDAY)}` }],
+    platform: "aws.emr", definition: "un-2311", jobName: "Unify Curation · un_customer_360" },
+  // Extra ingest dataset (no lineage)
+  { key: "fx", name: "FX Rates", asset: "edla_prod_raw.aq_fx_rates", catalog: "edla_prod_raw.aq_fx_rates", producer: "AqueDuct", author: "aqueduct", team: "ingest",
+    inEG: true, inAtum: true, capture: "agent", tenant: "trnd", owner: "Treasury Data", businessDays: true, pid: 2000000010448301,
+    ad: [["catalog_provider", "aws-glue"]], measures: ["count"], parents: [], runAt: 330, runLen: 6,
+    cps: [{ name: "Written", off: 5.5, len: .3 }], props: d => [{ executionID: `aq-${905 - 3 * daysBetween(d, YDAY)}` }],
+    platform: "aws.glue", definition: "aq-0412", jobName: "AqueDuct Ingestion · aq_fx_rates" },
+  { key: "card", name: "Card Transactions", asset: "edla_prod_raw.aq_card_transactions", catalog: "edla_prod_raw.aq_card_transactions", producer: "AqueDuct", author: "aqueduct", team: "ingest",
+    inEG: true, inAtum: false, tenant: "cams", owner: "Cards Data ZA", pid: 2000000010448303, measures: [], parents: [], ad: [], runAt: 305, runLen: 25,
+    platform: "aws.glue", definition: "aq-1310", jobName: "AqueDuct Ingestion · aq_card_transactions" },
+  // One frequent job (several runs a day) covering succeeded / failed / skipped / killed
+  { key: "sf_contact", name: "Salesforce Contact Update", asset: "edla_prod_raw.aq_salesforcecontact_update", catalog: "edla_prod_raw.aq_salesforcecontact_update", producer: "AqueDuct", author: "aqueduct", team: "ingest",
+    inEG: true, inAtum: false, tenant: "cams", owner: "Cards & Merchant Data", pid: 2000000010448304, measures: [], parents: [], ad: [],
+    every: 180, at: 5, lenS: [8, 15], noData: .12, platform: "aws.glue", definition: "aq-1501", jobName: "AqueDuct Ingestion · aq_salesforcecontact_update" }
+];
+const byKey = Object.fromEntries(DS.map(d => [d.key, d]));
+const EDGES = DS.flatMap(ds => ds.parents.map(p => ({ from: p, to: ds.key })));
+const ancestors = k => { const out = []; const walk = x => byKey[x].parents.forEach(p => { if (!out.includes(p)) { out.push(p); walk(p); } }); walk(k); return out; };
+const descendants = k => DS.filter(d => ancestors(d.key).includes(k)).map(d => d.key);
+
+// Payments flow values; 5–11 Nov are exactly the Atum mockup's numbers
+const PAY_HIST = { "2026-11-05": [1201300, 98168204.79], "2026-11-06": [1196610, 97784934.97], "2026-11-07": [1242870, 101565225.43], "2026-11-08": [611902, 50003591.20], "2026-11-09": [598190, 48883069.87], "2026-11-10": [1251590, 102277802.14] };
+function pay(d) {
+  if (d === YDAY) return { inC: 1204331, outC: 1203998, inA: 98415881.96, outA: 98388669.76, inFee: 1412090.10, outFee: 1411640.55, inHash: "8194029184012", outHash: "8191764019284", crm: 84801 };
+  let c, a;
+  if (PAY_HIST[d]) [c, a] = PAY_HIST[d];
+  else { c = Math.round(1204000 * (isWeekend(d) ? .5 : 1) * (1 + (rnd("p" + d) - .5) * .05)); a = r2(c * (81.70 + rnd("amt" + d) * .08)); }
+  const fee = r2(a * .014348), h = String(8190000000000 + Math.floor(rnd("h" + d) * 9999999999));
+  return { inC: c, outC: c, inA: a, outA: a, inFee: fee, outFee: fee, inHash: h, outHash: h, crm: 84801 - 7 * daysBetween(d, YDAY) };
+}
+function cpValues(ds, d) {
+  const p = pay(d);
+  switch (ds.key) {
+    case "cbp": return [{ count: p.inC, sum_amount: p.inA }];
+    case "core_raw": return [{ count: p.inC, sum_amount: p.inA, hash_tx: p.inHash }];
+    case "crm": return [{ count: p.crm, distinct_cust: p.crm }];
+    case "cust_pay": { const i = { count: p.inC, sum_amount: p.inA, sum_fee: p.inFee, distinct_cust: p.crm, hash_tx: p.inHash }, o = { count: p.outC, sum_amount: p.outA, sum_fee: p.outFee, distinct_cust: p.crm, hash_tx: p.outHash }; return [i, o, { ...o }]; }
+    case "revenue": return [{ sum_amount: p.outA }, { count: 181, sum_amount: p.outA }];
+    case "c360": return [{ count: p.crm, sum_amount: p.outA }];
+    case "fx": return [{ count: 168 }];
+  }
+  return [];
+}
+const pidFor = (ds, d) => ds.pid - 600 * daysBetween(d, YDAY);
+
+// ── Build records: REC[key][day] ──────────────────────────────────────────
+const REC = {};
+const STATIC_ISO = { day: "2026-10-02", static: true, expected: true, eg: null, end: 0, version: "2026-Q4",
+  atum: { pid: 2000000010000049, checkpoints: [{ id: "33333333-3333-4333-8333-000000000049", name: "Published", t: 495, len: 4 / 60, agent: true, props: { release: "2026-Q4" }, values: { count: 249, distinct_iso: 249 } }] } };
+function lastCp(rec, ignoreSup = true) { const c = (rec?.atum?.checkpoints || []).filter(x => !(ignoreSup && x.superseded)); return c[c.length - 1]; }
+function firstCp(rec, ignoreSup = true) { return (rec?.atum?.checkpoints || []).filter(x => !(ignoreSup && x.superseded))[0]; }
+
+function buildRecord(ds, d) {
+  if (ds.static) return STATIC_ISO;
+  if (ds.every) return buildHourly(ds, d);
+  const rec = { day: d, expected: !(ds.businessDays && isWeekend(d)), eg: null, atum: null, end: null };
+  if (!rec.expected) return rec;
+  const jit = d === YDAY ? 0 : (rnd(ds.key + d + "s") - .5) * 5;
+  const vals = cpValues(ds, d), props = ds.props ? ds.props(d) : [];
+  const mkCps = (base, attempt) => ds.cps.map((c, i) => ({
+    id: c.ids?.[d] || uuid(ds.key + d + "cp" + i + "a" + attempt), name: c.name,
+    t: base + (c.at != null ? 0 : c.off), len: c.len, values: { ...vals[i] }, agent: ds.capture !== "external", attempt, props: props[i] || {}
+  }));
+  if (!ds.inEG) {
+    const t = ds.cps[0].at + jit;
+    rec.atum = { pid: pidFor(ds, d), checkpoints: mkCps(t, null).map(c => ({ ...c, t })) };
+    rec.end = t + 1;
+    return rec;
+  }
+  const start = ds.runAt + jit, len = ds.runLen * (d === YDAY ? 1 : 1 + (rnd(ds.key + d + "l") - .5) * .2);
+  rec.eg = { status: "SUCCEEDED", start, end: start + len };
+  rec.end = start + len;
+  if (ds.inAtum) {
+    const cps = mkCps(start, null);
+    if (d !== YDAY) cps.forEach(c => { c.t = start + (c.t - start) * len / ds.runLen; });
+    rec.atum = { pid: pidFor(ds, d), checkpoints: cps };
+  }
+  return rec;
+}
+function buildHourly(ds, d) {
+  const runs = [];
+  for (let t = ds.at; t < 1440; t += ds.every) {
+    const i = runs.length, st0 = t + (rnd(ds.key + d + i + "o") - .5) * .6;
+    if (d === TODAY && st0 > NOW_MIN) break;
+    const len = (ds.lenS[0] + rnd(ds.key + d + i + "l") * (ds.lenS[1] - ds.lenS[0])) / 60;
+    const eg = { status: "SUCCEEDED", start: st0, end: st0 + len };
+    runs.push({ day: d, expected: true, eg, atum: null, end: eg.end });
+  }
+  const last = runs.at(-1);
+  return { day: d, expected: true, eg: last ? last.eg : null, atum: null, end: last ? last.end : null, hourly: runs };
+}
+for (const ds of DS) REC[ds.key] = {};
+for (const d of DAYS) for (const ds of DS) REC[ds.key][d] = buildRecord(ds, d);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Status derivation for Atum partitionings
+// ═══════════════════════════════════════════════════════════════════════════
+function shiftInfo(ds, rec, ignoreSup) {
+  const cps = (rec?.atum?.checkpoints || []).filter(c => !(ignoreSup && c.superseded));
+  const changed = [];
+  for (const m of ds.measures) {
+    for (let i = 1; i < cps.length; i++) {
+      const a = cps[i - 1].values[m], b = cps[i].values[m];
+      if (a != null && b != null && !same(a, b)) { changed.push({ m, i, from: a, to: b }); break; }
+    }
+  }
+  if (!changed.length) return null;
+  const first = Math.min(...changed.map(c => c.i)), cnt = changed.find(c => c.m === "count");
+  return { n: changed.length, of: ds.measures.length, at: first, cpName: cps[first].name, cnt,
+    text: `${changed.length} of ${ds.measures.length} control measures shifted at checkpoint ${first + 1}. ${cps[first].name}${cnt ? ` (record count ${cnt.to - cnt.from > 0 ? "+" : "−"}${fmt(Math.abs(cnt.to - cnt.from))})` : ""}` };
+}
+const STATUS = { atum: {} };
+function derive(ed, ds, d) {
+  const rec = REC[ds.key][d];
+  if (ds.static) return rec.atum ? (shiftInfo(ds, rec, false) ? { code: "control_break" } : { code: "ok", detail: "Reference data · current version " + rec.version }) : null;
+  if (!rec.expected) return { code: "not_scheduled", detail: "Business days only" };
+  if (!rec.atum) return { code: "no_batch", detail: `No ${TERM.one} recorded for this info date` };
+  const sh = shiftInfo(ds, rec, false);
+  return sh ? { code: "control_break", detail: sh.text } : { code: "ok", detail: `All ${ds.measures.length} control measures consistent across ${rec.atum.checkpoints.length} checkpoint(s)` };
+}
+for (const ed of Object.keys(STATUS)) for (const ds of DS) { STATUS[ed][ds.key] = {}; for (const d of DAYS) STATUS[ed][ds.key][d] = derive(ed, ds, d); }
+
+const ST = {
+  ok: { label: "OK", tone: "good", icon: "check" },
+  control_break: { label: "Measure Shift", tone: "serious", icon: "warn" },
+  no_batch: { label: "No batch", tone: "none", icon: "dot" },
+  not_scheduled: { label: "Not scheduled", tone: "none", icon: "dot" }
+};
+const LABELS = { atum: { ok: "Consistent" } };
+const stLabel = (code, ed = STATE.edition) => LABELS[ed]?.[code] || ST[code].label;
+const SEV = { critical: 0, serious: 1, gap: 2, info: 3, neutral: 4, good: 5, none: 6 };
+const GLYPH = {
+  check: '<path d="M4.2 8.3l2.3 2.3 5-5.2" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>',
+  x: '<path d="M5 5l6 6M11 5l-6 6" fill="none" stroke-width="1.9" stroke-linecap="round"/>',
+  warn: '<path d="M8 4.3v4.4" fill="none" stroke-width="1.9" stroke-linecap="round"/><circle cx="8" cy="11.4" r="1.1" stroke="none"/>',
+  minus: '<path d="M4.5 8h7" fill="none" stroke-width="1.9" stroke-linecap="round"/>',
+  clock: '<circle cx="8" cy="8" r="3.9" fill="none" stroke-width="1.4"/><path d="M8 5.8V8l1.6 1.1" fill="none" stroke-width="1.4" stroke-linecap="round"/>',
+  info: '<path d="M8 7.4v4" fill="none" stroke-width="1.9" stroke-linecap="round"/><circle cx="8" cy="4.9" r="1.05" stroke="none"/>',
+  dash: '<path d="M5.5 8h5" fill="none" stroke-width="1.6" stroke-linecap="round"/>',
+  dot: '<circle cx="8" cy="8" r="1.6" stroke="none"/>'
+};
+function glyph(code, size = 16) {
+  const tone = ST[code].tone, ink = tone === "neutral" ? "#5a5050" : tone === "gap" || tone === "none" ? "#9a8f8f" : "#fff";
+  const bg = tone === "none" ? "" : `<rect x="0.7" y="0.7" width="14.6" height="14.6" rx="3.5" class="glyph-bg-${tone}"/>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 16 16" aria-hidden="true" style="flex:none">${bg}<g stroke="${ink}" fill="${ink}">${GLYPH[ST[code].icon]}</g></svg>`;
+}
+// Chips in the Atum mockup's style: quiet when OK, loud when not
+function stChip(code, ed) {
+  const label = esc(stLabel(code, ed)), tone = ST[code].tone;
+  if (tone === "good") return `<span class="status-consistent">${checkIconSvg} ${label}</span>`;
+  if (code === "control_break") return `<span class="badge-shift">${warnIconSvg} ${label}</span>`;
+  if (tone === "critical") return `<span class="badge-crit">${glyph(code, 13)} ${label}</span>`;
+  return `<span class="status-plain">${glyph(code, 14)} ${label}</span>`;
+}
+const tipAttr = html => `data-tip="${esc(html)}"`;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// State & routing
+// ═══════════════════════════════════════════════════════════════════════════
+const STATE = {
+  edition: "atum",
+  view: "datasets", win: "7d",
+  focus: "cust_pay", day: YDAY, subtab: "measures", graphMetric: "count", scope: "full",
+  dsQ: "", dsProducer: "all", dsStatus: "all", dsLatest: true,
+  keyFilters: [],       // [{ key: string, mode: "exact" | "exists", value: string }]
+  keyMatch: "partial",  // "partial" | "exact_set" | "exact_ordered"
+  latestFirst: true,
+  pageLimit: 25,
+  pageShown: 25,
+  showApiPreview: false,
+  from: addDays(TODAY, -6), to: TODAY
+};
+(function () { const v = location.hash.replace(/^#\/?/, "").split("/")[0]; if (NAV[v]) STATE.view = v; })();
+const ED = () => EDITIONS[STATE.edition];
+const edDatasets = (ed = STATE.edition) => DS.filter(ds => ed === "atum" ? ds.inAtum : ed === "eventgate" ? ds.inEG : true);
+const st = (k, d = STATE.day, ed = STATE.edition) => STATUS[ed][k][d];
+const inWin = (d, t) => {
+  if (STATE.win === "all") return true;
+  if (STATE.win === "24h") { const a = absT(d, t); return a > NOW_ABS - 1440 && a <= NOW_ABS; }
+  if (STATE.win === "custom") return d >= STATE.from && d <= STATE.to;
+  if (STATE.win === "7d") return d >= addDays(TODAY, -6);
+  if (STATE.win === "month") return d >= TODAY.slice(0, 8) + "01";
+  return d >= addDays(TODAY, -29);
+};
+const recTime = r => r.eg?.start ?? lastCp(r, false)?.t ?? null;
+const winRange = () => ({ all: [DAYS[0], TODAY], "24h": [YDAY, TODAY], "7d": [addDays(TODAY, -6), TODAY], month: [TODAY.slice(0, 8) + "01", TODAY], "30d": [DAYS[0], TODAY], custom: [STATE.from, STATE.to] })[STATE.win];
+const winDays = () => DAYS.filter(d => STATE.win === "24h" ? DS.some(ds => { const r = REC[ds.key][d], t = r.static ? null : recTime(r); return t != null && inWin(d, t); }) : inWin(d, 0));
+
+function resetPaging() { STATE.pageShown = Number(STATE.pageLimit) || 25; }
+function resetAllSearch() {
+  STATE.dsQ = ""; STATE.dsProducer = "all"; STATE.dsStatus = "all";
+  STATE.keyFilters = []; STATE.keyMatch = "partial";
+  if (STATE.win === "all") { STATE.win = "7d"; [STATE.from, STATE.to] = winRange(); }
+  resetPaging();
+}
+function pivotFromDataset(dsKey, dayStr, dropKey) {
+  const ds = byKey[dsKey]; if (!ds) return;
+  const r = REC[dsKey]?.[dayStr] || (ds.static ? STATIC_ISO : null); if (!r) return;
+  const ks = batchKeys(ds, dayStr, r);
+  STATE.view = "datasets"; STATE.win = "all";
+  STATE.dsLatest = false; STATE.dsProducer = "all"; STATE.dsStatus = "all";
+  STATE.dsQ = "";
+  STATE.keyFilters = ks.map(([k, v]) => k === dropKey
+    ? { key: k, mode: "exists", value: "" }
+    : { key: k, mode: "exact", value: v });
+  STATE.keyMatch = "exact_set";
+  resetPaging();
+}
+
+function syncUrl() { history.replaceState(null, "", `${location.pathname}#/${STATE.view}`); }
+function go(spec) {
+  const idx = spec.indexOf(":"), kind = idx < 0 ? spec : spec.slice(0, idx), rest = idx < 0 ? "" : spec.slice(idx + 1);
+  const [a, b, c] = rest.split(":");
+  if (kind === "view") STATE.view = a;
+  else if (kind === "focus") { STATE.view = "lineage"; STATE.focus = a; if (b) STATE.day = b; }
+  else if (kind === "sub") STATE.subtab = a;
+  else if (kind === "scope") STATE.scope = a;
+  else if (kind === "metric") STATE.graphMetric = a;
+  else if (kind === "day") STATE.day = a;
+  else if (kind === "dsstatus") { STATE.view = "datasets"; STATE.dsStatus = STATE.dsStatus === a ? "all" : a; resetPaging(); }
+  else if (kind === "win") { STATE.win = a; if (a !== "custom") [STATE.from, STATE.to] = winRange(); resetPaging(); }
+  else if (kind === "apply") {
+    let f = $("winFrom").value || DAYS[0], t = $("winTo").value || TODAY;
+    if (f > t) [f, t] = [t, f];
+    STATE.from = f < DAYS[0] ? DAYS[0] : f; STATE.to = t > TODAY ? TODAY : t; STATE.win = "custom"; resetPaging();
+  }
+  else if (kind === "refresh") { toast("Prototype: re-fetched Atum partitionings and checkpoints (demo data, nothing changed)."); return; }
+  else if (kind === "link") return showLink(a);
+  else if (kind === "copy") { navigator.clipboard?.writeText(rest); return toast(`Copied <b>${esc(rest)}</b>`); }
+  else if (kind === "copyapi") { const info = buildApiQueryInfo(); navigator.clipboard?.writeText(info.url); return toast(`Copied <code>${esc(info.url)}</code>`); }
+  else if (kind === "toggleapi") { STATE.showApiPreview = !STATE.showApiPreview; }
+  else if (kind === "addkey") { STATE.keyFilters.push({ key: "", mode: "exact", value: "" }); resetPaging(); }
+  else if (kind === "remkey") { STATE.keyFilters.splice(Number(a), 1); if (!STATE.keyFilters.length) STATE.keyMatch = "partial"; resetPaging(); }
+  else if (kind === "movekey") {
+    const i = Number(a), dir = Number(b), j = i + dir;
+    if (j >= 0 && j < STATE.keyFilters.length) [STATE.keyFilters[i], STATE.keyFilters[j]] = [STATE.keyFilters[j], STATE.keyFilters[i]];
+    resetPaging();
+  }
+  else if (kind === "keymatch") { STATE.keyMatch = a; resetPaging(); }
+  else if (kind === "sort") { STATE.latestFirst = a === "latest"; resetPaging(); }
+  else if (kind === "loadmore") { STATE.pageShown += Number(STATE.pageLimit) || 25; }
+  else if (kind === "showallbatches") { STATE.dsLatest = false; resetPaging(); }
+  else if (kind === "reset") { resetAllSearch(); }
+  render();
+}
+document.addEventListener("click", e => {
+  const act = e.target.closest("[data-act]");
+  if (act) {
+    e.preventDefault(); e.stopPropagation();
+    const kind = act.dataset.act;
+    if (kind === "usekey") {
+      const k = act.dataset.k, v = act.dataset.v;
+      STATE.view = "datasets"; STATE.dsLatest = false;
+      const ex = STATE.keyFilters.find(f => f.key === k);
+      if (ex) { ex.mode = "exact"; ex.value = v; } else STATE.keyFilters.push({ key: k, mode: "exact", value: v });
+      resetPaging(); render();
+    } else if (kind === "pivot") {
+      pivotFromDataset(act.dataset.ds, act.dataset.day, act.dataset.drop);
+      render();
+    }
+    return;
+  }
+  const el = e.target.closest("[data-go]");
+  if (el) { e.preventDefault(); e.stopPropagation(); go(el.dataset.go); }
+});
+document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-go]:not(button)")) { e.preventDefault(); go(e.target.dataset.go); } });
+document.addEventListener("change", e => {
+  const kf = e.target.dataset.keyclause;
+  if (kf) {
+    const [i, field] = kf.split(":");
+    const item = STATE.keyFilters[Number(i)];
+    if (item) {
+      item[field] = e.target.value;
+      if (field === "mode" && e.target.value === "exists") item.value = "";
+      resetPaging();
+      if (field === "mode") render(); else LIVE.dsQ?.();
+    }
+    return;
+  }
+  const k = e.target.dataset.set;
+  if (!k) return;
+  STATE[k] = e.target.type === "checkbox" ? e.target.checked : k === "pageLimit" ? Number(e.target.value) : e.target.value;
+  STATE.runLimit = 50;
+  resetPaging();
+  render();
+});
+const LIVE = {};
+document.addEventListener("input", e => {
+  const kf = e.target.dataset.keyclause;
+  if (kf) {
+    const [i, field] = kf.split(":");
+    const item = STATE.keyFilters[Number(i)];
+    if (item) { item[field] = e.target.value; resetPaging(); LIVE.dsQ?.(); }
+    return;
+  }
+  const k = e.target.dataset.live;
+  if (k) { STATE[k] = e.target.value; STATE.runLimit = 50; resetPaging(); LIVE[k]?.(); }
+});
+const tt = $("tooltip");
+document.addEventListener("mouseover", e => { const el = e.target.closest("[data-tip]"); if (!el) return; tt.innerHTML = el.dataset.tip; tt.classList.remove("hidden"); });
+document.addEventListener("mouseout", e => { const el = e.target.closest("[data-tip]"); if (el && !el.contains(e.relatedTarget)) tt.classList.add("hidden"); });
+document.addEventListener("mousemove", e => {
+  if (tt.classList.contains("hidden")) return;
+  const w = tt.offsetWidth, h = tt.offsetHeight; let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + w > innerWidth - 8) x = e.clientX - w - 14; if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+  tt.style.left = x + "px"; tt.style.top = y + "px";
+});
+let toastTimer;
+function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("hidden"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 4200); }
+
+// Link resolver: only the one link we can actually resolve today (a static Data Gateway route).
+// Glue table / Glue job run / CloudWatch logs / ServiceNow are not gatherable yet, so they're dropped
+// rather than shown as dead buttons.
+const LINK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M21 3l-9 9M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg>';
+const LINKS = {};
+function linksFor(ds) {
+  if (!ds.inEG) return "";
+  const app = ds.producer === "Unify" ? "Curation" : "Ingestion", id = "L" + Object.keys(LINKS).length;
+  LINKS[id] = `Data Gateway route: <b>${app} app → pipeline ${esc(ds.definition)}</b>`;
+  return `<button class="link-chip" data-go="link:${id}">${LINK_ICON}Pipeline in ${app} app</button>`;
+}
+function showLink(id) { toast(`Prototype link, would open: ${LINKS[id] || "?"}`); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Shell
+// ═══════════════════════════════════════════════════════════════════════════
+function renderShell() {
+  const ed = ED();
+  $("brandName").textContent = ed.name; $("brandSub").textContent = ed.sub;
+  const btn = (k, side) => `<button class="${side ? "side-link" : ""} ${STATE.view === k ? "active" : ""}" data-go="view:${k}">${side ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${NAV[k].icon}</svg>` : ""}${NAV[k].label}</button>`;
+  $("sideNav").innerHTML = ed.nav.map(k => btn(k, true)).join("");
+  $("sideFooter").innerHTML = `<div>${esc(ed.audience)}</div><div style="margin-top:6px">${[ed.atum && "Atum API v2", ed.eg && "EventGate 1.4"].filter(Boolean).join(" · ")}</div>`;
+  const crumbs = [`<a href="#/datasets" data-go="view:datasets">${esc(ed.name)}</a>`];
+  if (STATE.view === "lineage") crumbs.push(`<a href="#/datasets" data-go="view:datasets">Control Metrics</a>`, `<a href="#/lineage" data-go="view:lineage">Lineage</a>`, `<strong>${esc(partitioningIdentity(byKey[STATE.focus], STATE.day, recFor(STATE.focus, STATE.day), true))}</strong>`);
+  else crumbs.push(`<strong>${esc(NAV[STATE.view].label)}</strong>`);
+  $("crumbs").innerHTML = crumbs.join("<span>›</span>");
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Shared components
+// ═══════════════════════════════════════════════════════════════════════════
+const ICON = {
+  runs: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
+  ok: '<circle cx="12" cy="12" r="9"/><polyline points="8 12.5 11 15.5 16.5 9.5"/>',
+  fail: '<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
+  trend: '<polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>',
+  check: '<rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="8 12.5 11 15.5 16.5 9.5"/>',
+  pie: '<path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
+  layers: '<polygon points="12 3 21 8 12 13 3 8 12 3"/><polyline points="3 13 12 18 21 13"/>',
+  warn: '<path d="M12 3 2 20h20L12 3z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17.2"/>',
+  pulse: '<polyline points="3 12 7 12 10 5 14 19 17 12 21 12"/>',
+  grid: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  table: '<rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="10" x2="9" y2="20"/>',
+  lineage: '<circle cx="5" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 6c5 0 4 6 9 6M7.5 18c5 0 4-6 9-6"/>',
+  refresh: '<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/>'
+};
+const svgIcon = (k, cls = "") => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${cls}">${ICON[k]}</svg>`;
+function kpiCard(k) {
+  return `<div class="kpi-card ${k.go ? "clickable" : ""} ${k.attn ? "attn" : ""} ${k.active ? "kpi-active" : ""}" ${k.go ? `data-go="${k.go}" tabindex="0"` : ""}>
+    <div class="kpi-head">${k.icon ? `<span class="kpi-ico ${k.tone || ""}">${svgIcon(k.icon)}</span>` : ""}<span class="kpi-label">${k.label}</span></div>
+    <div class="kpi-val ${k.warn ? "warn" : ""}">${k.value}</div>${k.bar != null ? `<div class="kpi-bar"><i style="width:${Math.max(0, Math.min(100, k.bar))}%"></i></div>` : ""}<div class="kpi-sub">${k.sub}</div></div>`;
+}
+// Page header + filter bar shared by every page (layout from the Run Activity Monitor)
+const PAGES = {
+  datasets: { icon: "table", title: "Control Metrics", sub: `Atum partitionings identified by their keys (dropping batch keys info_date / ref_version when grouped)` },
+  lineage: { icon: "lineage", title: "Lineage", sub: "Lineage graph across Atum partitionings, with control measures at every checkpoint and handoff" }
+};
+function pageHead(v) {
+  const p = PAGES[v];
+  return `<div class="page-head"><span class="page-icon">${svgIcon(p.icon)}</span><div><h1>${esc(p.title)}</h1><div class="sub">${esc(p.sub)}</div></div>
+    <div class="right">Updated ${hms(NOW_MIN)} UTC<button class="btn" data-go="refresh">${svgIcon("refresh", "btn-ico")}Refresh</button></div></div>`;
+}
+function filterBar(extra = "") {
+  const [f, t] = winRange(), custom = STATE.win === "custom";
+  return `<div class="win-bar">
+    <div class="win-bar-top">
+      <div class="pill-group seg">${Object.entries(WINDOWS).map(([k, l]) => `<button class="pill-btn ${STATE.win === k ? "active" : ""}" data-go="win:${k}">${l}</button>`).join("")}<button class="pill-btn pill-custom ${custom ? "active" : ""}" data-go="win:custom">${svgIcon("cal", "pill-cal")}Custom range</button></div>
+      <div class="win-resolved" ${tipAttr("This is the date range every chart and table on this page uses, however it was chosen.")}>Showing <b>${rangeLabel(f, t)}</b></div>
+      ${extra ? `<div class="win-extra">${extra}</div>` : ""}
+    </div>
+    ${custom ? `<div class="win-dates"><div class="field"><label for="winFrom">From</label><input type="date" id="winFrom" value="${f}" min="${DAYS[0]}" max="${TODAY}"></div>
+      <div class="field"><label for="winTo">To</label><input type="date" id="winTo" value="${t}" min="${DAYS[0]}" max="${TODAY}"></div>
+      <button class="btn btn-primary" data-go="apply">Apply</button></div>` : ""}</div>`;
+}
+const winLabel = () => STATE.win === "custom" ? `${STATE.from} – ${STATE.to}` : WINDOWS[STATE.win];
+// ═══════════════════════════════════════════════════════════════════════════
+// Datasets (Atum & Combined), as in the Atum mockup's catalog
+// ═══════════════════════════════════════════════════════════════════════════
+function datasetRowsAll(ignoreWin = false) {
+  const comb = STATE.edition === "combined", rows = [];
+  for (const ds of edDatasets()) {
+    if (ds.static) {
+      if (ignoreWin || STATE.win === "all") rows.push({ ds, d: null, r: STATIC_ISO, s: STATUS[STATE.edition].iso[DAYS[0]] || { code: "ok" }, t: 0 });
+      continue;
+    }
+    for (const d of DAYS) {
+      const r = REC[ds.key][d];
+      if (!r.expected) continue;
+      if (!comb && !r.atum) continue;
+      if (comb && !(r.atum || r.eg)) continue;
+      const t = comb ? recTime(r) : lastCp(r, false).t;
+      if (!ignoreWin && !inWin(d, t)) continue;
+      rows.push({ ds, d, r, s: st(ds.key, d), t: absT(d, t) });
+    }
+  }
+  return rows;
+}
+const activeKeyFilters = () => STATE.keyFilters.map(f => ({ ...f, key: f.key.trim() })).filter(f => f.key.length > 0);
+const rowAuthorMatches = (ds, author) => !author || ds.author === author;
+function rowKeysMatchSearch(keysArr, filters, exactKeys) {
+  if (!filters.length) return true;
+  const map = new Map(keysArr);
+  for (const f of filters) {
+    if (!map.has(f.key)) return false;
+    if (f.mode === "exact" && map.get(f.key) !== f.value) return false;
+  }
+  if (exactKeys) {
+    const distinctFilterKeys = new Set(filters.map(f => f.key));
+    if (map.size !== distinctFilterKeys.size) return false;
+  }
+  return true;
+}
+function rowKeysMatchExactOrdered(keysArr, filters) {
+  if (!filters.length || keysArr.length !== filters.length) return false;
+  return filters.every((f, i) => keysArr[i][0] === f.key && (f.mode === "exists" || keysArr[i][1] === f.value));
+}
+function rowMatchesSearchText(keysArr, qLower) {
+  if (!qLower) return true;
+  return keysArr.some(([k, v]) => k.toLowerCase().includes(qLower) || String(v).toLowerCase().includes(qLower));
+}
+function selectedAuthor() {
+  return STATE.dsProducer === "all" ? "" : STATE.dsProducer;
+}
+function validateSearchState() {
+  const keys = activeKeyFilters();
+  const qRaw = STATE.dsQ, qTrim = qRaw.trim();
+  const author = selectedAuthor();
+  if (qTrim.length === 1) return { ok: false, severity: "err", message: "'search-text' requires at least 2 non-whitespace characters." };
+  if (STATE.keyMatch !== "partial" && !keys.length) return { ok: false, severity: "warn", message: "Exact key matching requires at least one key filter." };
+  if (STATE.win === "all" && !keys.length && !author && qTrim.length < 2) {
+    return { ok: true, emptyPrompt: true, message: "In Any time mode, add a key filter, source system, or search text (min 2 chars)." };
+  }
+  return { ok: true };
+}
+function buildApiQueryInfo() {
+  const keys = activeKeyFilters();
+  const author = selectedAuthor();
+  const qRaw = STATE.dsQ, qTrim = qRaw.trim();
+  const isOrdered = STATE.keyMatch === "exact_ordered" && keys.length > 0;
+  const allConcrete = isOrdered && keys.every(f => f.mode === "exact");
+  if (allConcrete && !author && qTrim.length < 2 && STATE.win === "all") {
+    const arr = keys.map(f => ({ key: f.key, value: f.value }));
+    const rawJson = JSON.stringify(arr);
+    return { url: `/api/v2/partitionings?partitioning=${toBase64Url(rawJson)}`, decoded: `exact ordered partitioning = ${rawJson}` };
+  }
+  const params = [];
+  const obj = {};
+  keys.forEach(f => { obj[f.key] = f.mode === "exists" ? null : f.value; });
+  if (keys.length) params.push(`keys=${toBase64Url(JSON.stringify(obj))}`);
+  if ((STATE.keyMatch === "exact_set" || isOrdered) && keys.length) params.push("exact-keys=true");
+  if (author) params.push(`author=${encodeURIComponent(author)}`);
+  if (qTrim.length >= 2) params.push(`search-text=${encodeURIComponent(qRaw)}`);
+  if (STATE.win !== "all") {
+    const [f, t] = winRange();
+    const toIso = addDays(t, 1);
+    params.push(`from=${encodeURIComponent(f + "T00:00:00Z")}`, `to=${encodeURIComponent(toIso + "T00:00:00Z")}`);
+  }
+  params.push(`latest-first=${STATE.latestFirst}`);
+  params.push(`limit=${STATE.pageLimit}`, `offset=${Math.max(0, STATE.pageShown - STATE.pageLimit)}`);
+  const decodedParts = [];
+  if (keys.length) decodedParts.push(`keys = ${JSON.stringify(obj)}`);
+  if (STATE.keyMatch === "exact_set" && keys.length) decodedParts.push("exact-keys = true");
+  if (isOrdered) decodedParts.push(`exact-keys = true + key order [${keys.map(f => f.key).join(" → ")}]`);
+  if (author) decodedParts.push(`author = "${author}"`);
+  if (qTrim.length >= 2) decodedParts.push(`search-text = "${qRaw}"`);
+  if (STATE.win === "all") decodedParts.push("time = unbounded"); else { const [f, t] = winRange(); decodedParts.push(`[${f}T00:00Z, ${addDays(t, 1)}T00:00Z)`); }
+  return { url: `/api/v2/partitionings/search?${params.join("&")}`, decoded: decodedParts.join(" · ") };
+}
+function runDatasetQuery({ ignoreStatusFilter = false, ignorePaging = false } = {}) {
+  const v = validateSearchState();
+  if (!v.ok || v.emptyPrompt) return { validation: v, rows: [], allRows: [], total: 0, hasMore: false, unorderedHint: false, usingAtumFilter: true };
+
+  const keys = activeKeyFilters();
+  const author = selectedAuthor();
+  const qRaw = STATE.dsQ, qTrim = qRaw.trim(), qLower = qTrim.length >= 2 ? qRaw.toLowerCase() : "";
+  const atumFilterActive = keys.length > 0 || !!author || !!qLower;
+
+  let rows = datasetRowsAll(false);
+  if (STATE.win !== "all" && STATE.dsLatest && !atumFilterActive) {
+    const iso = byKey.iso;
+    if (!rows.some(x => x.ds.key === "iso")) rows.push({ ds: iso, d: null, r: STATIC_ISO, s: STATUS[STATE.edition].iso[DAYS[0]] || { code: "ok" }, t: 0 });
+  }
+  if (atumFilterActive) rows = rows.filter(x => !!x.r.atum);
+  if (author) rows = rows.filter(x => rowAuthorMatches(x.ds, author));
+  let unorderedHint = false;
+  if (keys.length) {
+    if (STATE.keyMatch === "exact_ordered") {
+      const unorderedMatched = rows.filter(x => rowKeysMatchSearch(batchKeys(x.ds, x.d, x.r), keys, true));
+      rows = rows.filter(x => rowKeysMatchExactOrdered(batchKeys(x.ds, x.d, x.r), keys));
+      unorderedHint = !rows.length && unorderedMatched.length > 0;
+    } else {
+      rows = rows.filter(x => rowKeysMatchSearch(batchKeys(x.ds, x.d, x.r), keys, STATE.keyMatch === "exact_set"));
+    }
+  }
+  if (qLower) rows = rows.filter(x => rowMatchesSearchText(batchKeys(x.ds, x.d, x.r), qLower));
+
+  if (STATE.dsLatest && STATE.win !== "all" && !atumFilterActive) {
+    rows.sort((a, b) => b.t - a.t);
+    const seen = new Set(); rows = rows.filter(x => !seen.has(x.ds.key) && seen.add(x.ds.key));
+  } else {
+    rows.sort((a, b) => {
+      const pa = a.r.atum?.pid ?? (a.t * 1000), pb = b.r.atum?.pid ?? (b.t * 1000);
+      return STATE.latestFirst ? pb - pa : pa - pb;
+    });
+    if (STATE.dsLatest) { const seen = new Set(); rows = rows.filter(x => !seen.has(x.ds.key) && seen.add(x.ds.key)); }
+  }
+
+  const allBeforeStatus = rows;
+  if (!ignoreStatusFilter) {
+    if (STATE.dsStatus === "ok") rows = rows.filter(x => x.s.code === "ok");
+    if (STATE.dsStatus === "shift") rows = rows.filter(x => x.s.code === "control_break");
+  }
+  const total = rows.length, shown = ignorePaging ? rows : rows.slice(0, STATE.pageShown);
+  return { validation: v, rows: shown, allRows: allBeforeStatus, total, hasMore: !ignorePaging && total > shown.length, unorderedHint, usingAtumFilter: atumFilterActive };
+}
+function kpiHtml(baseRows) {
+  const byCode = {}; baseRows.forEach(x => (byCode[x.s.code] ||= []).push(x));
+  const order = Object.keys(byCode).sort((a, b) => SEV[ST[a].tone] - SEV[ST[b].tone]);
+  const breakdown = order.map(c => `${byCode[c].length} ${stLabel(c).toLowerCase()}`).join(" · ");
+  const okRows = byCode.ok || [], shiftRows = byCode.control_break || [];
+  const winShiftCount = STATE.dsLatest && !shiftRows.length
+    ? datasetRowsAll(false).filter(x => x.s.code === "control_break").length
+    : 0;
+  const kp = [
+    { icon: "table", label: `${STATE.dsLatest ? "Active partitioning groups" : "Matching partitionings"} (${esc(winLabel())})`, value: baseRows.length, sub: breakdown || "no activity in this scope", go: "dsstatus:all", active: STATE.dsStatus === "all" },
+    { icon: "ok", tone: "good", label: "Consistent", value: okRows.length, sub: "all control measures match across checkpoints · Click to filter", go: "dsstatus:ok", active: STATE.dsStatus === "ok" },
+    { icon: "warn", label: "Measure Shift", value: shiftRows.length, warn: true, attn: shiftRows.length > 0, sub: shiftRows.length ? `${esc(partitioningIdentity(shiftRows[0].ds, shiftRows[0].d, shiftRows[0].r, STATE.dsLatest))} (${esc(shiftInfo(shiftRows[0].ds, shiftRows[0].r, false).cpName)} step) · Click to filter` : (winShiftCount ? `none on latest date (${winShiftCount} earlier in window if ungrouped)` : "none in current view"), go: "dsstatus:shift", active: STATE.dsStatus === "shift" }
+  ];
+  return kp.map(kpiCard).join("");
+}
+function fillDatasets() {
+  const res = runDatasetQuery();
+  const keys = activeKeyFilters(), qLower = STATE.dsQ.trim().length >= 2 ? STATE.dsQ.toLowerCase() : "";
+  const filterKeySet = new Set(keys.map(f => f.key));
+
+  const kpiEl = $("kpiGrid");
+  if (kpiEl) kpiEl.innerHTML = kpiHtml(res.allRows);
+
+  const statusEl = $("searchStatus");
+  if (statusEl) {
+    if (!res.validation.ok) {
+      statusEl.innerHTML = `<div class="inline-hint ${res.validation.severity}">${warnIconSvg}<span>${esc(res.validation.message)}</span></div>`;
+    } else if (res.validation.emptyPrompt) {
+      statusEl.innerHTML = `<div class="inline-hint">${esc(res.validation.message)}</div>`;
+    } else if (STATE.dsLatest && res.usingAtumFilter && res.total > 0) {
+      statusEl.innerHTML = `<div class="inline-hint" style="justify-content:space-between"><span>Grouped by shared partitioning keys (ignoring <code>info_date</code> / <code>ref_version</code>) — showing latest batch per group (<b>${res.total}</b>). Uncheck grouping to see every batch.</span><button class="btn btn-sm" data-go="showallbatches">Show ungrouped partitionings</button></div>`;
+    } else {
+      statusEl.innerHTML = "";
+    }
+  }
+  const apiEl = $("apiPreview");
+  if (apiEl) {
+    const info = buildApiQueryInfo();
+    apiEl.innerHTML = `<span class="proto-tag" style="color:#ffb37a;border-color:#6b4a33">REST</span><code>GET ${esc(info.url)}</code><button class="tiny-btn" data-go="copyapi">Copy URL</button><div class="api-decoded">${esc(info.decoded)}</div>`;
+  }
+  const exactBtn = $("exactKeysToggle");
+  if (exactBtn) {
+    const hasKeys = keys.length > 0;
+    exactBtn.querySelectorAll("button").forEach(b => { b.disabled = !hasKeys; });
+  }
+  $("dsSearch")?.classList.toggle("has-error", !res.validation.ok && STATE.dsQ.trim().length === 1);
+
+  const grouped = STATE.dsLatest;
+  $("dsCount").textContent = res.validation.emptyPrompt || !res.validation.ok
+    ? "0 results"
+    : `Showing ${res.rows.length} of ${res.total} ${grouped && !res.usingAtumFilter ? "partitioning groups" : TERM.many}${res.hasMore ? " (hasMore=true)" : ""}`;
+
+  $("dsBody").innerHTML = res.rows.map(({ ds, d, r, s }) => {
+    const last = lastCp(r, false);
+    const pid = r.atum?.pid;
+    const idLabel = partitioningIdentity(ds, d, r, grouped);
+    const kvHtml = r.atum
+      ? `<div class="kv-list">${batchKeys(ds, d, r).map(([k, v], idx) => {
+          const isBatchKey = BATCH_KEYS.has(k);
+          const hit = filterKeySet.has(k) || (qLower && (k.toLowerCase().includes(qLower) || String(v).toLowerCase().includes(qLower)));
+          const varyBtn = isBatchKey
+            ? `<button class="kv-act" data-act="pivot" data-ds="${esc(ds.key)}" data-day="${esc(d || TODAY)}" data-drop="${esc(k)}" title="Find sibling partitionings (vary ${esc(k)}, exact-keys=true)">⇄</button>`
+            : "";
+          const badgeStyle = grouped && isBatchKey ? ' style="border-style:dashed"' : "";
+          const batchTip = grouped && isBatchKey ? ' title="Batch-varying key (ignored in group name when grouped)"' : "";
+          return `<span class="kv-badge ${hit ? "matched" : ""}"${badgeStyle}${batchTip}><span class="kv-idx">${idx + 1}</span><span>${esc(k)}=<b>${esc(v)}</b></span><button class="kv-act" data-act="usekey" data-k="${esc(k)}" data-v="${esc(v)}" title="Filter by ${esc(k)}=${esc(v)}">+</button>${varyBtn}</span>`;
+        }).join("")}</div>`
+      : "";
+    return `<tr class="row-link ${s.code === "control_break" ? "row-shift" : ""}" data-go="focus:${ds.key}${d ? ":" + d : ""}" tabindex="0">
+      <td><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--text)">${esc(idLabel)}</span>${pid ? `<span class="mono-id">#${pid}</span>` : ""}</div>${kvHtml}</td>
+      <td>${prodBadge(ds.producer)}<div class="mono-id" style="margin-top:2px">author: ${esc(ds.author || "—")}</div></td>
+      <td style="white-space:nowrap">${d ? esc(d) : esc(r.version)}${ds.static ? ' <span class="muted">(reference)</span>' : ""}</td>
+      <td style="white-space:nowrap">${last ? `${esc(last.name)} <span style="color:var(--text-muted)">(${r.atum.checkpoints.length})</span>` : `<span class="muted">${esc(stLabel(s.code))}</span>`}</td>
+      <td class="num" style="font-weight:600">${last ? fmt(last.values.count) : "—"}</td>
+      <td>${stChip(s.code)}</td><td style="text-align:right"><span class="row-chevron" title="Inspect Lineage">›</span></td></tr>`;
+  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px"><div style="font-weight:600;color:var(--text);margin-bottom:4px">${res.unorderedHint ? "Exact key order did not match" : "No matching partitionings"}</div><div style="margin-bottom:10px">${res.unorderedHint ? "A partitioning exists with these exact keys & values in a different stored order." : esc(res.validation.emptyPrompt || !res.validation.ok ? res.validation.message : "No partitionings in the active scope match your current filter criteria.")}</div><div style="display:flex;gap:8px;justify-content:center">${res.unorderedHint ? `<button class="btn btn-sm btn-primary" data-go="keymatch:exact_set">Switch to Exact keys (any order)</button>` : ""}<button class="btn btn-sm" data-go="reset">Reset search</button></div></td></tr>`;
+
+  const lm = $("dsLoadMore");
+  if (lm) {
+    lm.classList.toggle("hidden", !res.hasMore);
+    if (res.hasMore) lm.innerHTML = `<button class="btn btn-outline" data-go="loadmore">Load more (${res.total - res.rows.length} remaining · hasMore=true)</button>`;
+  }
+}
+LIVE.dsQ = fillDatasets;
+function datasetFilters() {
+  const seen = new Map();
+  edDatasets().forEach(x => { if (!seen.has(x.author)) seen.set(x.author, x.producer); });
+  return `<div class="field"><label>Source System</label><select data-set="dsProducer" title="Filters by registration author (created_by)"><option value="all">All source systems (${seen.size})</option>${[...seen.entries()].map(([author, prod]) => `<option value="${esc(author)}" ${STATE.dsProducer === author ? "selected" : ""}>${esc(prod)} (${esc(author)})</option>`).join("")}</select></div>`;
+}
+function renderSearchPanel(filterLabel) {
+  const knownKeys = ["catalog_path", "info_date", "system", "feed", "ref_version"];
+  const hasAnyKeys = activeKeyFilters().length > 0;
+  const isOrdered = STATE.keyMatch === "exact_ordered";
+  const clausesHtml = STATE.keyFilters.map((f, i) => `
+    <div class="key-clause">
+      ${isOrdered ? `<span class="key-idx" style="margin-right:2px">${i + 1}</span>` : ""}
+      <input class="k-name" list="keyNameList" data-keyclause="${i}:key" value="${esc(f.key)}" placeholder="key name" aria-label="Partitioning key name ${i + 1}">
+      <select data-keyclause="${i}:mode" aria-label="Match operator">
+        <option value="exact" ${f.mode === "exact" ? "selected" : ""}>= exact</option>
+        <option value="exists" ${f.mode === "exists" ? "selected" : ""}>* any value</option>
+      </select>
+      ${f.mode === "exists"
+        ? `<span class="k-any">null (any value)</span>`
+        : `<input class="k-val" data-keyclause="${i}:value" value="${esc(f.value)}" placeholder="exact value" aria-label="Partitioning key value ${i + 1}">`}
+      ${isOrdered ? `<button class="tiny-btn" data-go="movekey:${i}:-1" ${i === 0 ? "disabled" : ""} title="Move left">←</button><button class="tiny-btn" data-go="movekey:${i}:1" ${i === STATE.keyFilters.length - 1 ? "disabled" : ""} title="Move right">→</button>` : ""}
+      <button class="tiny-btn" data-go="remkey:${i}" title="Remove key filter">✕</button>
+    </div>`).join("");
+
+  return `<datalist id="keyNameList">${knownKeys.map(k => `<option value="${esc(k)}">`).join("")}</datalist>
+    <div class="search-panel">
+      <div class="search-top">
+        <label class="search-input"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dsSearch" data-live="dsQ" value="${esc(STATE.dsQ)}" placeholder="Search key names or values (min 2 chars)…"></label>
+        <button class="btn btn-sm" data-go="addkey" title="Filter by exact partitioning key/value or key existence (null)">+ Add key filter</button>
+        <label class="check" ${tipAttr("Group batches sharing the same non-batch partitioning keys (ignoring info_date / ref_version in the label) and show only the latest batch per group.")}><input type="checkbox" data-set="dsLatest" ${STATE.dsLatest ? "checked" : ""}> Group batches (ignore info_date / ref_version)</label>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="pill-group" title="latest-first query parameter (ordered by partitioning ID)">
+            <button class="pill-btn ${STATE.latestFirst ? "active" : ""}" data-go="sort:latest">Newest ID first</button>
+            <button class="pill-btn ${!STATE.latestFirst ? "active" : ""}" data-go="sort:oldest">Oldest ID first</button>
+          </div>
+          <div class="author-ctrl" style="height:28px;padding:0 6px" title="limit query parameter"><span>Page:</span><select data-set="pageLimit" style="border:0;background:transparent;font-weight:600;outline:none">${[10, 25, 50, 100].map(n => `<option value="${n}" ${STATE.pageLimit === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+          <button class="btn btn-sm ${STATE.showApiPreview ? "btn-outline" : ""}" data-go="toggleapi">API query</button>
+          <button class="btn btn-sm" data-go="reset">Reset</button>
+          ${filterLabel ? `<button class="chip" style="cursor:pointer" data-go="dsstatus:${STATE.dsStatus}">Filtered: ${esc(filterLabel)} ✕</button>` : ""}
+          <span class="toolbar-meta" id="dsCount"></span>
+        </div>
+      </div>
+
+      ${STATE.keyFilters.length ? `<div class="keys-box">
+        <div class="keys-head">
+          <strong>Partitioning Keys</strong>
+          <div class="pill-group" id="exactKeysToggle" ${tipAttr("Partial matches key subsets; Exact keys matches the exact key set ignoring order; Exact keys + order requires the exact stored key sequence.")}>
+            <button class="pill-btn ${STATE.keyMatch === "partial" ? "active" : ""}" data-go="keymatch:partial" ${!hasAnyKeys ? "disabled" : ""}>Partial (any order)</button>
+            <button class="pill-btn ${STATE.keyMatch === "exact_set" ? "active" : ""}" data-go="keymatch:exact_set" ${!hasAnyKeys ? "disabled" : ""}>Exact keys (any order)</button>
+            <button class="pill-btn ${isOrdered ? "active" : ""}" data-go="keymatch:exact_ordered" ${!hasAnyKeys ? "disabled" : ""}>Exact keys + order</button>
+          </div>
+          <span class="toolbar-meta">${isOrdered ? "Use <b>← / →</b> to match stored key order." : "Use <b>* any value</b> (<code>null</code>) for key existence."}</span>
+        </div>
+        <div class="key-clauses">${clausesHtml}</div>
+      </div>` : ""}
+
+      <div id="searchStatus"></div>
+      <div id="apiPreview" class="api-preview ${STATE.showApiPreview ? "" : "hidden"}"></div>
+    </div>`;
+}
+function viewDatasets() {
+  const res = runDatasetQuery({ ignoreStatusFilter: true, ignorePaging: true });
+  const filterLabel = { ok: "Consistent", shift: "Measure Shift" }[STATE.dsStatus];
+  const html = `<div id="kpiGrid" class="kpi-grid k3">${kpiHtml(res.allRows)}</div>
+    <section class="card">${renderSearchPanel(filterLabel)}
+    <div class="table-wrap"><table><thead><tr><th>Partitioning Identity &amp; Keys <span class="muted" style="font-weight:400">(+ filter or ⇄ vary batch key)</span></th><th>Source System · Author</th><th>Info date / version</th><th>Latest checkpoint</th><th class="num">Record count</th><th>Status</th><th style="width:28px"></th></tr></thead><tbody id="dsBody"></tbody></table></div>
+    <div id="dsLoadMore" class="load-more hidden"></div></section>`;
+  return { html, after: fillDatasets };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Lineage & inspector (Atum & Combined), ported from the Atum mockup
+// ═══════════════════════════════════════════════════════════════════════════
+function component(focus) {
+  const seen = new Set([focus]), q = [focus];
+  while (q.length) { const k = q.shift(); for (const e of EDGES) for (const [a, b] of [[e.from, e.to], [e.to, e.from]]) if (a === k && !seen.has(b) && edDatasets().includes(byKey[b])) { seen.add(b); q.push(b); } }
+  return DS.filter(d => seen.has(d.key)).map(d => d.key);
+}
+function connectedPath(focus, edges) {
+  const nodes = new Set([focus]), eds = new Set();
+  const up = k => edges.forEach((e, i) => { if (e.to === k) { eds.add(i); if (!nodes.has(e.from)) { nodes.add(e.from); up(e.from); } } });
+  const down = k => edges.forEach((e, i) => { if (e.from === k) { eds.add(i); if (!nodes.has(e.to)) { nodes.add(e.to); down(e.to); } } });
+  up(focus); down(focus);
+  return { nodes, eds };
+}
+const recFor = (k, d) => REC[k][d];
+function lineageSvg(focus) {
+  const comb = STATE.edition === "combined", d = STATE.day, gm = STATE.graphMetric;
+  let nodes = component(focus);
+  if (STATE.scope === "direct") nodes = nodes.filter(k => k === focus || EDGES.some(e => (e.from === focus && e.to === k) || (e.to === focus && e.from === k)));
+  const edges = EDGES.filter(e => nodes.includes(e.from) && nodes.includes(e.to));
+  const { nodes: onPath, eds: pathEdges } = connectedPath(focus, edges);
+  // Topological layout (as in the Atum mockup)
+  const rank = new Map(nodes.map(k => [k, 0]));
+  for (let i = 0; i < nodes.length; i++) edges.forEach(e => { const r = rank.get(e.from) + 1; if (r > rank.get(e.to)) rank.set(e.to, r); });
+  nodes.forEach(k => { if (rank.get(k) === 0) { const cr = edges.filter(e => e.from === k).map(e => rank.get(e.to)); if (cr.length && Math.min(...cr) > 1) rank.set(k, Math.min(...cr) - 1); } });
+  const cols = new Map(); nodes.forEach(k => { const r = rank.get(k); if (!cols.has(r)) cols.set(r, []); cols.get(r).push(k); });
+  const ranks = [...cols.keys()].sort((a, b) => a - b);
+  const W = 256, H = 66, YG = 10, XG = 40, PAD_X = 16, svgW = 1190, svgH = 224, pos = {};
+  const offX = (svgW - (ranks.length * W + (ranks.length - 1) * XG)) / 2 - PAD_X;
+  ranks.forEach((r, c) => { const cn = cols.get(r), totalH = cn.length * H + (cn.length - 1) * YG, y0 = (svgH - totalH) / 2; cn.forEach((k, i) => { pos[k] = { x: PAD_X + Math.max(0, ranks.length < 4 ? offX : 0) + c * (W + XG), y: y0 + i * (H + YG), col: c }; }); });
+  let svg = `<defs><marker id="arrActive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B50232"/></marker>
+    <marker id="arrMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#cdc7c7"/></marker>
+    <filter id="cardShadow" x="-8%" y="-8%" width="116%" height="124%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.05"/></filter></defs>`;
+  edges.forEach((e, i) => {
+    const a = pos[e.from], b = pos[e.to], on = pathEdges.has(i);
+    const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2, mx = (x1 + x2) / 2, my = (y1 + y2) / 2, span = b.col - a.col;
+    const dPath = span > 1 ? `M${x1},${y1} C${x1 + 50},${svgH - 4} ${x2 - 50},${svgH - 4} ${x2 - 2},${y2}` : `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2 - 2},${y2}`;
+    const pExit = lastCp(recFor(e.from, d), comb)?.values[gm], cEntry = firstCp(recFor(e.to, d), comb)?.values[gm];
+    const matched = pExit != null && cEntry != null && same(pExit, cEntry), bx = mx, by = span > 1 ? (.125 * y1 + .75 * (svgH - 4) + .125 * y2) : my;
+    svg += `<path d="${dPath}" fill="none" stroke="${on ? "#B50232" : "#cdc7c7"}" stroke-width="${on ? 2 : 1.4}" marker-end="url(#${on ? "arrActive" : "arrMuted"})"/>`;
+    if (matched && on) svg += `<g transform="translate(${bx},${by})" ${tipAttr("Parent exit equals child entry")}><circle r="7.5" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/><text y="3.2" text-anchor="middle" font-size="9.5" font-weight="600" fill="#1e7a42">=</text></g>`;
+  });
+  const fmtCard = (v, k) => v == null ? null : k === "count" ? `${fmt(v)} rows` : k === "sum_amount" ? fmt(v, true) : k === "distinct_cust" ? `${fmt(v)} customers` : k === "hash_tx" ? `hash ${fmtShortHash(v)}` : String(v);
+  const fmtPair = (a, b, k) => k === "count" ? `${fmt(a)} → ${fmt(b)} rows` : k === "sum_amount" ? `${fmt(a, true)} → ${fmt(b, true)}` : `${fmtShortHash(a)} → ${fmtShortHash(b)}`;
+  const svgTitleTspans = lbl => {
+    const dot = lbl.indexOf(".");
+    if (dot > 0 && !lbl.includes("=")) {
+      return `<tspan fill="#6f6464" font-weight="500">${esc(lbl.slice(0, dot + 1))}</tspan><tspan fill="#131010" font-weight="700">${esc(lbl.slice(dot + 1))}</tspan>`;
+    }
+    return `<tspan fill="#131010" font-weight="700">${esc(lbl)}</tspan>`;
+  };
+  nodes.forEach(k => {
+    const n = byKey[k], { x, y } = pos[k], r = recFor(k, d), sel = k === focus, on = onPath.has(k), s = STATUS[STATE.edition][k][d] || { code: "ok" };
+    const shift = s.code === "control_break", hasBatch = !!r.atum;
+    const f = firstCp(r, comb)?.values[gm], l = lastCp(r, comb)?.values[gm], mShift = f != null && l != null && !same(f, l);
+    let line;
+    if (!hasBatch) line = `— (no ${TERM.one} for ${d})`;
+    else if (f == null && l == null) line = "— (not measured)";
+    else line = mShift ? fmtPair(f, l, gm) : fmtCard(l ?? f, gm);
+    const idLabel = partitioningIdentity(n, d, r, true);
+    const pidTail = r.atum?.pid ? ` · #…${String(r.atum.pid).slice(-5)}` : "";
+    const sub = `${n.author || n.producer} · ${n.static ? r.version : d}${pidTail}`;
+    const icon = !hasBatch ? glyph("no_batch", 14).replace('width="14"', 'width="14" x="0"')
+      : shift ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="#c2410c"><path d="M12 2 1 22h22L12 2zm0 7a1 1 0 0 1 1 1v5a1 1 0 1 1-2 0V10a1 1 0 0 1 1-1zm0 11a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 12 20z"/></svg>'
+      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e7a42" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    svg += `<g class="node-group" data-go="focus:${k}" tabindex="0" role="button" opacity="${on ? 1 : .52}" filter="url(#cardShadow)">
+      <rect class="node-box" x="${x}" y="${y}" width="${W}" height="${H}" rx="7" fill="${sel ? "#fcebee" : "#ffffff"}" stroke="${sel ? "#B50232" : (shift ? "#FF780F" : "#cdc7c7")}" stroke-width="${sel ? 2 : 1.2}" ${!hasBatch && !sel ? 'stroke-dasharray="4 3"' : ""}/>
+      ${shift ? `<rect x="${x}" y="${y}" width="4" height="${H}" rx="2" fill="#FF780F"/>` : ""}
+      <text x="${x + 11}" y="${y + 20}" font-size="11" letter-spacing="-0.1">${svgTitleTspans(idLabel)}</text>
+      <g transform="translate(${x + W - 24},${y + 8})">${icon}</g>
+      <g transform="translate(${x + 11},${y + 27})">${sysSvg(n.producer, 13)}</g>
+      <text x="${x + 28}" y="${y + 37.5}" font-size="10.8" fill="#767676">${esc(sub)}</text>
+      <text x="${x + 11}" y="${y + 54.5}" font-size="11" fill="${mShift ? "#c2410c" : (!hasBatch || (f == null && l == null) ? "#9c9494" : "#453f3f")}" font-weight="${mShift ? 600 : 400}">${esc(line)}</text></g>`;
+  });
+  return { svg: `<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="display:block;min-width:920px;height:216px" role="img" aria-label="Lineage graph">${svg}</svg>`, nodes, edges };
+}
+
+const SUBTABS = { measures: "Control Measures", cross: "Cross-Partitioning Comparison", metadata: "Metadata & Properties", history: "Historical Runs" };
+const INSPECT = {
+  measures(ds, d, r, s) {
+    const comb = STATE.edition === "combined";
+    const idLabel = partitioningIdentity(ds, d, r, true);
+    if (!r.atum) return `<div class="callout callout-ok"><span>${esc(stLabel(s.code))}. ${esc(s.detail || "")}</span></div><div class="empty"><strong>No checkpoints for this info date</strong>${!ds.inAtum ? "No partitioning registered in Atum for this dataset." : ""}</div>`;
+    const cps = r.atum.checkpoints, sh = shiftInfo(ds, r, comb);
+    const callout = sh ? `<div class="callout callout-warn"><strong>Measure Shift:</strong> <span>${sh.n} of ${sh.of} control measures shifted at checkpoint <b>${sh.at + 1}. ${esc(sh.cpName)}</b> on <code>${esc(idLabel)}</code>${comb && r.eg ? " (the job itself succeeded)" : ""}.</span></div>`
+      : `<div class="callout callout-ok"><span>All ${ds.measures.length} control measures remained consistent across checkpoints on <code>${esc(idLabel)}</code>.</span></div>`;
+    const head = cps.map((c, i) => `<th class="num"><div style="color:var(--text);font-size:12px">${i + 1}. ${esc(c.name)}</div><div style="font-weight:400;font-size:11px;color:var(--text-muted)">${hms(c.t)}</div></th>`).join("");
+    const rows = ds.measures.map(m => {
+      let prev;
+      const cells = cps.map(c => {
+        const v = c.values[m];
+        if (comb && c.superseded) return `<td class="num strike">${fmtMeasure(m, v)}</td>`;
+        if (v == null) return `<td class="num" style="color:var(--text-muted)">—</td>`;
+        const changed = prev != null && !same(v, prev);
+        const delta = changed ? (MEASURES[m].hash ? `<span class="delta-sub">recomputed</span>` : `<span class="delta-sub">${v - prev > 0 ? "+" : "−"}${fmt(Math.abs(v - prev), MEASURES[m].dec)}</span>`) : "";
+        const out = `<td class="num ${changed ? "cell-changed" : ""}">${MEASURES[m].hash ? `<span class="mono-id" title="Full hash: ${esc(v)}">${esc(fmtShortHash(v))}</span>` : fmt(v, MEASURES[m].dec)}${delta}</td>`;
+        prev = v; return out;
+      }).join("");
+      const vals = cps.filter(c => !(comb && c.superseded)).map(c => c.values[m]).filter(v => v != null);
+      const rowShift = vals.some((v, i) => i > 0 && !same(v, vals[i - 1]));
+      return `<tr><td style="font-weight:600">${esc(MEASURES[m].label)}</td>${cells}<td>${stChip(rowShift ? "control_break" : "ok", "atum")}</td></tr>`;
+    }).join("");
+    return `${callout}<div class="table-wrap"><table><thead><tr><th>Control measure</th>${head}<th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  },
+  cross(ds, d, r, s, graph) {
+    const comb = STATE.edition === "combined";
+    const all = [...new Set(graph.nodes.flatMap(k => byKey[k].measures))];
+    const mk = all.includes(STATE.graphMetric) ? STATE.graphMetric : all[0];
+    if (!mk || graph.nodes.length < 2) return `<div class="empty"><strong>No cross-partitioning comparison</strong>This partitioning has no recorded lineage.</div>`;
+    const rows = graph.nodes.map(k => {
+      const n = byKey[k], rr = recFor(k, d), isSel = k === ds.key;
+      const nodeLabel = partitioningIdentity(n, d, rr, true);
+      const entry = firstCp(rr, comb)?.values[mk], exit = lastCp(rr, comb)?.values[mk], measured = entry != null || exit != null;
+      const shifted = entry != null && exit != null && !same(entry, exit);
+      const parents = graph.edges.filter(e => e.to === k).map(e => e.from), withM = parents.filter(p => lastCp(recFor(p, d), comb)?.values[mk] != null);
+      let hand = `<span style="color:var(--text-muted)">— (Source root)</span>`;
+      if (!rr.atum) hand = `<span style="color:var(--text-muted)">No ${TERM.one} for ${d}</span>`;
+      else if (!measured) hand = `<span style="color:var(--text-muted)">Not measured</span>`;
+      else if (withM.length && entry != null) { const p = withM.find(p => same(lastCp(recFor(p, d), comb).values[mk], entry)); hand = p ? `<span class="status-consistent">${checkIconSvg} Matches <span class="mono-id" style="color:inherit">${esc(partitioningIdentity(byKey[p], d, recFor(p, d), true))}</span></span>` : `<span style="color:var(--text-muted)">Transformed on read</span>`; }
+      else if (parents.length) hand = `<span style="color:var(--text-muted)">Not on parent</span>`;
+      const delta = shifted && !MEASURES[mk].hash ? `<span class="delta-sub">${exit - entry > 0 ? "+" : "−"}${fmt(Math.abs(exit - entry), MEASURES[mk].dec)}</span>` : shifted ? `<span class="delta-sub">recomputed</span>` : "";
+      return `<tr class="row-link ${isSel ? "row-selected" : ""} ${shifted ? "row-shift" : ""}" data-go="focus:${k}" tabindex="0"><td><span style="font-family:var(--mono);font-size:12px;font-weight:600">${esc(nodeLabel)}</span>${isSel ? '<span style="color:var(--primary);font-size:11px;font-weight:600;margin-left:6px">(Selected)</span>' : ""}</td>
+        <td>${prodBadge(n.producer)}<div class="mono-id">${esc(n.author || "—")}</div></td><td class="num">${fmtMeasure(mk, entry)}</td><td class="num ${shifted ? "cell-changed" : ""}">${fmtMeasure(mk, exit)}${delta}</td><td>${hand}</td><td>${!measured ? '<span style="color:var(--text-muted)">—</span>' : stChip(shifted ? "control_break" : "ok", "atum")}</td></tr>`;
+    }).join("");
+    return `<div class="callout callout-ok" style="justify-content:space-between"><span>Comparing <b>${esc(MEASURES[mk].label)}</b> across all partitionings in the lineage graph.</span>
+      <div class="pill-group">${all.map(m => `<button class="pill-btn ${m === mk ? "active" : ""}" data-go="metric:${m}">${esc(MEASURES[m].label)}</button>`).join("")}</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Partitioning Identity</th><th>Producer · Author</th><th class="num">Entry (First cp)</th><th class="num">Exit (Last cp)</th><th>Upstream handoff</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  },
+  metadata(ds, d, r) {
+    const keys = batchKeys(ds, d, r);
+    const pid = r.atum?.pid;
+    const cps = r.atum?.checkpoints || [];
+    const extLinks = linksFor(ds);
+    return `${extLinks ? `<div class="links-row">Open in: ${extLinks}</div>` : ""}
+      <div class="meta-top">
+      <div class="meta-card"><div class="meta-card-head"><span ${tipAttr(TERM.tip)}>Partitioning Keys (Ordered)</span><span style="font-weight:400;color:var(--text-muted)">${pid ? `ID <span class="mono-id">#${pid}</span> · ` : ""}Author: <strong style="color:var(--text-secondary)">${esc(ds.author || "—")}</strong>${pid ? `<button class="copy-btn" data-go="copy:${pid}">Copy</button>` : ""}</span></div>
+        <table><thead><tr><th>Key</th><th>Value</th><th style="text-align:right">Search</th></tr></thead><tbody>${keys.map(([k, v], i) => `<tr><td style="width:140px;color:var(--text-secondary);font-weight:600"><span class="key-idx">${i + 1}</span>${esc(k)}</td><td style="font-family:var(--mono)">${esc(v)}</td><td style="text-align:right;white-space:nowrap"><button class="tiny-btn" data-act="usekey" data-k="${esc(k)}" data-v="${esc(v)}" title="Filter Control Metrics by ${esc(k)}=${esc(v)}">+ Filter</button> <button class="tiny-btn" data-act="pivot" data-ds="${esc(ds.key)}" data-day="${esc(d || TODAY)}" data-drop="${esc(k)}" title="Find sibling batches varying ${esc(k)} (null wildcard + exact-keys=true)">⇄ Vary</button></td></tr>`).join("")}</tbody></table></div>
+      <div class="meta-card"><div class="meta-card-head"><span>Partitioning Metadata</span><span style="font-weight:400;color:var(--text-muted)">${ds.ad.length} registered</span></div>
+        <table><thead><tr><th>Key</th><th>Value</th><th style="text-align:right">Author</th></tr></thead><tbody>${ds.ad.length ? ds.ad.map(([k, v]) => `<tr><td style="width:140px;color:var(--text-secondary);font-weight:600">${esc(k)}</td><td style="font-family:var(--mono)">${esc(v)}</td><td style="color:var(--text-muted);text-align:right">${esc(ds.author)}</td></tr>`).join("") : `<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:14px">No partitioning metadata registered</td></tr>`}</tbody></table></div></div>
+      ${cps.length ? `<div class="table-wrap"><table><thead><tr><th>Checkpoint</th><th>Checkpoint UUID</th><th>Process start</th><th>Process end</th><th>Capture method</th><th>Checkpoint properties</th></tr></thead><tbody>
+      ${cps.map((c, i) => `<tr><td style="font-weight:600;white-space:nowrap">${i + 1}. ${esc(c.name)}</td><td style="white-space:nowrap"><span class="mono-id" title="${esc(c.id)}">${esc(fmtShortUuid(c.id))}</span><button class="copy-btn" data-go="copy:${c.id}">Copy</button></td>
+        <td style="white-space:nowrap">${r.static ? r.day : d} ${hms(c.t)} UTC</td><td style="white-space:nowrap">${r.static ? r.day : d} ${hms(c.t + c.len)} UTC</td><td style="white-space:nowrap">${c.agent ? "Atum Agent" : "External API"}</td>
+        <td>${Object.entries(c.props || {}).map(([k, v]) => `<span class="prop-chip">${esc(k)}=<b>${esc(v)}</b></span>`).join("") || "—"}</td></tr>`).join("")}
+      </tbody></table></div>` : ""}`;
+  },
+  history(ds, d) {
+    const comb = STATE.edition === "combined";
+    const hist = ds.static ? [{ d: null, r: STATIC_ISO }] : DAYS.filter(x => REC[ds.key][x].atum && inWin(x, lastCp(REC[ds.key][x], false).t)).map(x => ({ d: x, r: REC[ds.key][x] }));
+    if (!hist.length) return `<div class="empty"><strong>No ${TERM.many} in this window</strong>Widen the window at the top.</div>`;
+    const vals = hist.map(h => lastCp(h.r, comb)?.values.count ?? 0), max = Math.max(...vals, 1), min = Math.min(...vals);
+    let spark = "";
+    if (hist.length > 1) {
+      const sw = 820, sh = 54, sx = i => 24 + i * (sw - 48) / (hist.length - 1), sy = v => max === min ? sh / 2 : (sh - 12) - ((v - min) / (max - min)) * (sh - 24);
+      spark = `<div style="padding:10px 16px;border-bottom:1px solid var(--border);background:#fdfbfb;display:flex;align-items:center;gap:16px"><div style="font-size:12px;color:var(--text-muted);white-space:nowrap">Record count trend · ${esc(winLabel().toLowerCase())}</div>
+        <svg width="100%" viewBox="0 0 ${sw} ${sh}" style="max-height:54px;display:block"><polyline fill="none" stroke="#B50232" stroke-width="1.8" points="${hist.map((h, i) => `${sx(i).toFixed(1)},${sy(vals[i]).toFixed(1)}`).join(" ")}"/>
+        ${hist.map((h, i) => { const selD = h.d === d, sft = STATUS[STATE.edition][ds.key][h.d]?.code === "control_break"; return `<circle cx="${sx(i).toFixed(1)}" cy="${sy(vals[i]).toFixed(1)}" r="${selD ? 4.5 : 3}" fill="${sft ? "#FF780F" : (selD ? "#B50232" : "#fff")}" stroke="${sft ? "#c2410c" : "#B50232"}" stroke-width="1.6" ${tipAttr(`<b>${h.d}</b><br>${fmt(vals[i])} rows`)}/>`; }).join("")}</svg></div>`;
+    }
+    return `${spark}<div class="table-wrap"><table><thead><tr><th>Info date / version</th><th style="width:220px">Relative volume</th><th class="num">Record count</th><th class="num">Sum of amount</th>${comb && ds.inEG ? '<th class="num">Run duration</th>' : ""}<th>Status</th></tr></thead><tbody>
+      ${hist.slice().reverse().map(h => { const cur = h.d === d, s = h.d ? STATUS[STATE.edition][ds.key][h.d] : { code: "ok" }, lc = lastCp(h.r, comb), c = lc?.values.count ?? 0, pct = Math.max(8, Math.round(c / max * 100)), sft = s.code === "control_break";
+        return `<tr class="row-link ${cur ? "row-selected" : ""}" data-go="${h.d ? "day:" + h.d : "sub:history"}" tabindex="0" title="Partitioning #${h.r.atum.pid}"><td style="font-weight:${cur ? 600 : 400}">${esc(h.d || h.r.version)} ${cur ? '<span style="color:var(--primary);font-size:11.5px;margin-left:6px">(Selected)</span>' : ""}</td>
+          <td><div style="background:#e6e2e2;height:8px;border-radius:4px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${sft ? "#FF780F" : "#B50232"}"></div></div></td>
+          <td class="num" style="font-weight:600">${fmt(lc?.values.count)}</td><td class="num">${fmt(lc?.values.sum_amount, true)}</td>${comb && ds.inEG ? `<td class="num">${h.r.eg ? dur(h.r.eg.end - h.r.eg.start) : "—"}</td>` : ""}<td>${stChip(s.code)}</td></tr>`; }).join("")}
+      </tbody></table></div>`;
+  }
+};
+// Batches of one dataset share all keys except the varying one (info_date); offer only those inside the window
+function batchesInWindow(ds) {
+  if (ds.static) return [];
+  const comb = STATE.edition === "combined";
+  return DAYS.filter(x => {
+    const r = REC[ds.key][x];
+    if (!r.expected || (!comb && !r.atum) || (comb && !(r.atum || r.eg))) return false;
+    return inWin(x, comb ? recTime(r) : lastCp(r, false).t);
+  }).reverse();
+}
+function viewLineage() {
+  const comb = STATE.edition === "combined";
+  if (!edDatasets().includes(byKey[STATE.focus])) STATE.focus = "cust_pay";
+  const ds = byKey[STATE.focus], batches = batchesInWindow(ds);
+  if (batches.length && !batches.includes(STATE.day)) STATE.day = batches[0];
+  const d = STATE.day, r = recFor(ds.key, d), s = STATUS[STATE.edition][ds.key][d] || { code: "ok" };
+  const tabs = Object.keys(SUBTABS);
+  if (!tabs.includes(STATE.subtab)) STATE.subtab = "measures";
+  const graph = lineageSvg(ds.key);
+  const metrics = [...new Set(graph.nodes.flatMap(k => byKey[k].measures))];
+  if (!metrics.includes(STATE.graphMetric)) STATE.graphMetric = metrics[0] || "count";
+  const allKeys = batchKeys(ds, d, r);
+  const shared = allKeys.filter(([k]) => k !== "info_date" && k !== "ref_version").map(([k, v]) => `${k}=${v}`).join(" · ");
+  const varyKey = ds.static ? "ref_version" : "info_date";
+  const pivotBtn = r.atum ? `<button class="link-chip" style="margin-left:auto" data-act="pivot" data-ds="${esc(ds.key)}" data-day="${esc(d || TODAY)}" data-drop="${esc(varyKey)}" title="Search all batches sharing these keys with ${varyKey}=null and exact-keys=true">Find all batches (vary ${varyKey})</button>` : "";
+  const batchBar = ds.static
+    ? `<div class="links-row"><span class="chip">Reference data</span> single current version <b style="color:var(--text)">ref_version = ${esc(STATIC_ISO.version)}</b> <span class="muted">· keys: <span class="mono-id">${esc(shared)}</span></span>${pivotBtn}</div>`
+    : `<div class="links-row"><span ${tipAttr(TERM.tip + " All batches of a dataset share the same keys except info_date.")} style="border-bottom:1px dotted var(--text-muted);cursor:help">${TERM.One}</span>
+        ${batches.length ? `<div class="control-pill" style="height:27px;font-size:12px;padding:0 8px"><select data-set="day">${batches.map(x => `<option value="${x}" ${x === d ? "selected" : ""}>info_date = ${x}${x === TODAY ? " (today)" : ""}</option>`).join("")}</select></div>
+        <span>${batches.length} ${batches.length === 1 ? TERM.one : TERM.many} in ${esc(winLabel().toLowerCase())}</span>` : `<span>No ${TERM.many} in ${esc(winLabel().toLowerCase())}; showing info_date ${d}</span>`}
+        <span class="muted">· shared keys: <span class="mono-id">${esc(shared)}</span></span>${pivotBtn}</div>`;
+  const focusId = partitioningIdentity(ds, d, r, true);
+  return `<section class="card"><div class="card-toolbar"><span class="toolbar-meta">${graph.nodes.length} nodes · ${graph.edges.length} edges · Highlighting active path for <code>${esc(focusId)}</code></span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="control-pill" style="height:27px;font-size:12px;padding:0 8px"><span>Graph metric:</span><select data-set="graphMetric">${metrics.map(m => `<option value="${m}" ${STATE.graphMetric === m ? "selected" : ""}>${esc(MEASURES[m].label)}</option>`).join("")}</select></div>
+        <div class="pill-group"><button class="pill-btn ${STATE.scope === "full" ? "active" : ""}" data-go="scope:full">Full graph</button><button class="pill-btn ${STATE.scope === "direct" ? "active" : ""}" data-go="scope:direct">Direct neighbors (1 hop)</button></div>
+      </div></div>
+      <div class="lineage-canvas">${graph.svg}</div></section>
+    <section class="card" style="margin-bottom:0">
+      <div class="inspector-head"><div class="inspector-title"><h2 style="font-family:var(--mono);font-size:14px">${esc(focusId)}</h2>${r.atum?.pid ? `<span class="mono-id">#${r.atum.pid}</span>` : ""}<span class="chip">author: <b>${esc(ds.author)}</b></span>${prodBadge(ds.producer)}${stChip(s.code)}</div>
+        <div class="subtabs">${tabs.map(k => `<button class="subtab ${STATE.subtab === k ? "active" : ""}" data-go="sub:${k}">${SUBTABS[k]}</button>`).join("")}</div></div>
+      ${batchBar}
+      <div>${INSPECT[STATE.subtab](ds, d, r, s, graph)}</div></section>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Render
+// ═══════════════════════════════════════════════════════════════════════════
+const VIEWS = { datasets: viewDatasets, lineage: viewLineage };
+function render() {
+  renderShell();
+  const out = VIEWS[STATE.view]();
+  const extra = STATE.view === "datasets" ? datasetFilters() : "";
+  $("view").innerHTML = pageHead(STATE.view) + filterBar(extra) + (typeof out === "string" ? out : out.html);
+  if (out.after) out.after();
+  tt.classList.add("hidden");
+  syncUrl();
+}
+render();
+</script>
+</body>
+</html>

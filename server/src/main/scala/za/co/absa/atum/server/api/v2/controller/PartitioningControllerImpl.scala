@@ -143,18 +143,31 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
   }
 
   override def searchPartitionings(
-    limit: Int,
-    offset: Long,
-    keys: Option[Map[String, String]],
-    from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime],
-    latestFirst: Option[Boolean] = None
+    keys: Option[Map[String, Option[String]]] = None,
+    exactKeys: Option[Boolean] = None,
+    author: Option[String] = None,
+    searchText: Option[String] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
+    latestFirst: Option[Boolean] = None,
+    limit: Int = 10,
+    offset: Long = 0L
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
     mapToPaginatedResponse(
       limit,
       offset,
       serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
-        partitioningService.searchPartitionings(limit, offset, keys, from, to, latestFirst)
+        partitioningService.searchPartitionings(
+          keys,
+          exactKeys,
+          author,
+          searchText,
+          from,
+          to,
+          latestFirst,
+          limit,
+          offset
+        )
       )
     )
   }

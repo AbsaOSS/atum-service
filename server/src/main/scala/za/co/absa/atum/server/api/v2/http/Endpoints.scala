@@ -35,16 +35,17 @@ import scala.util.{Failure, Success, Try}
 
 object Endpoints extends BaseEndpoints {
 
-  private implicit val partitioningKeysQueryCodec: Codec[String, Map[String, String], CodecFormat.TextPlain] =
-    Codec.string.mapDecode { encoded =>
-      Try(encoded.fromBase64As[Map[String, String]]) match {
-        case Success(Right(keys)) => DecodeResult.Value(keys)
-        case Success(Left(error)) => DecodeResult.Error(encoded, error)
-        case Failure(exception) => DecodeResult.Error(encoded, exception)
-      }
-    }(_.asBase64EncodedJsonString)
+  private implicit val partitioningKeysQueryCodec: Codec[String, Map[String, Option[String]], CodecFormat.TextPlain] =
+    Codec.string
+      .mapDecode { encoded =>
+        Try(encoded.fromBase64As[Map[String, Option[String]]]) match {
+          case Success(Right(keys)) => DecodeResult.Value(keys)
+          case Success(Left(error)) => DecodeResult.Error(encoded, error)
+          case Failure(exception) => DecodeResult.Error(encoded, exception)
+        }
+      }(_.asBase64EncodedJsonString)
       .validate(Validator.custom { keys =>
-        if (keys.exists { case (key, value) => key.contains('\u0000') || value.contains('\u0000') })
+        if (keys.exists { case (key, value) => key.contains('\u0000') || value.exists(_.contains('\u0000')) })
           ValidationResult.Invalid("Partitioning keys and values must not contain NUL characters")
         else ValidationResult.Valid
       })
@@ -91,22 +92,80 @@ object Endpoints extends BaseEndpoints {
 
   private val maxPartitioningSearchWindow = Duration.ofDays(365)
 
-  private val partitioningSearchInput
-    : EndpointInput[(Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime])] =
-    query[Option[Map[String, String]]]("keys")
-      .description("base64url-encoded JSON object of partial partitioning keys; all supplied string values must match")
+  private def trimAsciiWhitespace(value: String): String = {
+    def isAsciiWs(c: Char): Boolean =
+      c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\u000b'
+    var start = 0
+    var end = value.length
+    while (start < end && isAsciiWs(value.charAt(start))) start += 1
+    while (end > start && isAsciiWs(value.charAt(end - 1))) end -= 1
+    value.substring(start, end)
+  }
+
+  private val partitioningSearchInput: EndpointInput[
+    (
+      Option[Map[String, Option[String]]],
+      Option[ZonedDateTime],
+      Option[ZonedDateTime],
+      Option[Boolean],
+      Option[Boolean],
+      Option[String],
+      Option[String]
+    )
+  ] =
+    query[Option[Map[String, Option[String]]]]("keys")
+      .description(
+        "base64url-encoded JSON object of partitioning keys; string values must match exactly, null values match any value for that key"
+      )
       .and(checkpointTimeWindowInput)
+      .and(
+        query[Option[Boolean]]("latest-first")
+          .description(
+            "if true, returns partitionings ordered by ID descending (newest first); default false (ascending)"
+          )
+      )
+      .and(
+        query[Option[Boolean]]("exact-keys")
+          .description(
+            "if true, matches only partitionings whose key set equals the supplied keys (ignoring key order); default false (partial match)"
+          )
+      )
+      .and(
+        query[Option[String]]("author")
+          .description("non-blank exact match on the partitioning registration author")
+      )
+      .and(
+        query[Option[String]]("search-text")
+          .description(
+            "case-insensitive substring match against any partitioning key name or value (minimum 2 non-whitespace characters)"
+          )
+      )
       .validate(Validator.custom {
-        case (_, None, Some(_)) =>
+        case (_, _, _, _, _, Some(author), _) if trimAsciiWhitespace(author).isEmpty || author.contains('\u0000') =>
+          ValidationResult.Invalid("'author' must not be blank and must not contain NUL characters")
+        case (_, _, _, _, _, _, Some(searchText)) if {
+              val trimmed = trimAsciiWhitespace(searchText)
+              trimmed.codePointCount(0, trimmed.length) < 2 || searchText.contains('\u0000')
+            } =>
+          ValidationResult.Invalid(
+            "'search-text' must contain at least 2 non-whitespace characters and must not contain NUL characters"
+          )
+        case (_, None, Some(_), _, _, _, _) =>
           ValidationResult.Invalid("'from' is required when 'to' is supplied")
-        case (_, Some(from), None) if Duration.between(from.toInstant, Instant.now())
-          .compareTo(maxPartitioningSearchWindow) > 0 =>
+        case (_, Some(from), None, _, _, _, _)
+            if Duration
+              .between(from.toInstant, Instant.now())
+              .compareTo(maxPartitioningSearchWindow) > 0 =>
           ValidationResult.Invalid("One-sided 'from' must not be older than 365 days")
-        case (_, Some(from), Some(to)) if Duration.between(from.toInstant, to.toInstant)
-          .compareTo(maxPartitioningSearchWindow) > 0 =>
+        case (_, Some(from), Some(to), _, _, _, _)
+            if Duration
+              .between(from.toInstant, to.toInstant)
+              .compareTo(maxPartitioningSearchWindow) > 0 =>
           ValidationResult.Invalid("The time window must not exceed 365 days")
-        case (keys, None, None) if keys.forall(_.isEmpty) =>
-          ValidationResult.Invalid("At least one non-empty key filter or time bound is required")
+        case (keys, None, None, _, _, None, None) if keys.forall(_.isEmpty) =>
+          ValidationResult.Invalid("At least one non-empty key filter, author, search-text or time bound is required")
+        case (keys, _, _, _, Some(true), _, _) if keys.forall(_.isEmpty) =>
+          ValidationResult.Invalid("'exact-keys=true' requires at least one key in 'keys'")
         case _ => ValidationResult.Valid
       })
 
@@ -296,7 +355,17 @@ object Endpoints extends BaseEndpoints {
   }
 
   val searchPartitioningsEndpoint: PublicEndpoint[
-    (Int, Long, Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime], Option[Boolean]),
+    (
+      Int,
+      Long,
+      Option[Map[String, Option[String]]],
+      Option[ZonedDateTime],
+      Option[ZonedDateTime],
+      Option[Boolean],
+      Option[Boolean],
+      Option[String],
+      Option[String]
+    ),
     ErrorResponse,
     PaginatedResponse[
       PartitioningWithIdDTO
@@ -307,16 +376,13 @@ object Endpoints extends BaseEndpoints {
       .in(V2Paths.Partitionings / V2Paths.Search)
       .in(paginationInput)
       .in(partitioningSearchInput)
-      .in(
-        query[Option[Boolean]]("latest-first")
-          .description("if true, returns partitionings ordered by ID descending (newest first); default false (ascending)")
-      )
       .summary("Search partitionings")
       .description(
-        "Search distinct partitionings by partial keys and/or checkpoint process start time, ordered by partitioning ID " +
-          "(ascending by default, or descending when 'latest-first=true'). Key-only searches include partitionings without " +
-          "checkpoints. Time selection accepts 'from' alone (within the last 365 days) or paired 'from' and 'to' spanning " +
-          "at most 365 days. Pagination is live, not a snapshot."
+        "Search distinct partitionings by keys (exact string values and/or null wildcard values, partial or exact key set), " +
+          "registration author, case-insensitive key/value substring ('search-text'), and/or checkpoint process start time, " +
+          "ordered by partitioning ID (ascending by default, or descending when 'latest-first=true'). Searches without time " +
+          "bounds include partitionings without checkpoints. Time selection accepts 'from' alone (within the last 365 days) " +
+          "or paired 'from' and 'to' spanning at most 365 days. Pagination is live, not a snapshot."
       )
       .out(statusCode(StatusCode.Ok))
       .out(jsonBody[PaginatedResponse[PartitioningWithIdDTO]])
@@ -436,7 +502,9 @@ object Endpoints extends BaseEndpoints {
       .in(
         query[String]("direction")(lineageDirectionCodec)
           .default(DefaultLineageDirection)
-          .description(s"Traversal direction: 'both', 'upstream', or 'downstream' (default: '$DefaultLineageDirection')")
+          .description(
+            s"Traversal direction: 'both', 'upstream', or 'downstream' (default: '$DefaultLineageDirection')"
+          )
       )
       .in(
         query[Int]("depth")
@@ -577,7 +645,17 @@ object Endpoints extends BaseEndpoints {
       }
     ),
     createServerEndpoint[
-      (Int, Long, Option[Map[String, String]], Option[ZonedDateTime], Option[ZonedDateTime], Option[Boolean]),
+      (
+        Int,
+        Long,
+        Option[Map[String, Option[String]]],
+        Option[ZonedDateTime],
+        Option[ZonedDateTime],
+        Option[Boolean],
+        Option[Boolean],
+        Option[String],
+        Option[String]
+      ),
       ErrorResponse,
       PaginatedResponse[PartitioningWithIdDTO]
     ](
@@ -586,12 +664,25 @@ object Endpoints extends BaseEndpoints {
         case (
               limit: Int,
               offset: Long,
-              keys: Option[Map[String, String]],
+              keys: Option[Map[String, Option[String]]],
               from: Option[ZonedDateTime],
               to: Option[ZonedDateTime],
-              latestFirst: Option[Boolean]
+              latestFirst: Option[Boolean],
+              exactKeys: Option[Boolean],
+              author: Option[String],
+              searchText: Option[String]
             ) =>
-          PartitioningController.searchPartitionings(limit, offset, keys, from, to, latestFirst)
+          PartitioningController.searchPartitionings(
+            keys,
+            exactKeys,
+            author,
+            searchText,
+            from,
+            to,
+            latestFirst,
+            limit,
+            offset
+          )
       }
     ),
     createServerEndpoint(getPartitioningByIdEndpoint, PartitioningController.getPartitioningById),

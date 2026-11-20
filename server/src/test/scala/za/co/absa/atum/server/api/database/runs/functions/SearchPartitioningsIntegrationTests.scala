@@ -37,7 +37,10 @@ import za.co.absa.atum.server.api.database.lineage.functions.{
   GetPartitioningDescendants,
   GetPartitioningLineageGraph
 }
-import za.co.absa.atum.server.api.database.runs.functions.SearchPartitionings.{SearchPartitioningsArgs, SearchPartitioningsResult}
+import za.co.absa.atum.server.api.database.runs.functions.SearchPartitionings.{
+  SearchPartitioningsArgs,
+  SearchPartitioningsResult
+}
 import za.co.absa.atum.server.api.database.runs.functions.WriteCheckpointV2.WriteCheckpointArgs
 import za.co.absa.atum.server.api.v2.controller.PartitioningControllerImpl
 import za.co.absa.atum.server.api.v2.http.PartitioningSearchTestSupport
@@ -56,10 +59,11 @@ import java.util.UUID
 
 object SearchPartitioningsIntegrationTests extends ConfigProviderTest with PartitioningSearchTestData {
   private val source = "search-integration-\u96ea/\u6771\u4eac +&= \ud83d\ude42"
-  private val keys = Map("source" -> source, "kind" -> "main", "empty" -> "")
+  private val keys: Map[String, Option[String]] =
+    Map("source" -> Some(source), "kind" -> Some("main"), "empty" -> Some(""))
   private val from = ZonedDateTime.parse("2216-06-01T08:00:00+05:30")
   private val to = ZonedDateTime.parse("2216-06-01T00:30:00-04:00")
-  private val baseArgs = SearchPartitioningsArgs(10, 0L, Some(keys), None, None)
+  private val baseArgs = SearchPartitioningsArgs(Some(keys))
 
   private case class Fixture(
     withoutCheckpoint: PartitioningWithIdDTO,
@@ -88,9 +92,12 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
     )
     val partitioning = if (reverseKeys) original.reverse else original
     val author = s"Search integration author: $name"
-    ZIO.serviceWithZIO[CreatePartitioningWithParents](_(PartitioningSubmitV2DTO(partitioning, None, author)))
+    ZIO
+      .serviceWithZIO[CreatePartitioningWithParents](_(PartitioningSubmitV2DTO(partitioning, None, author)))
       .flatMap(ZIO.fromEither(_))
-      .flatMap(row => ZIO.fromOption(row.data).orElseFail(new IllegalStateException("Expected created partitioning id")))
+      .flatMap(row =>
+        ZIO.fromOption(row.data).orElseFail(new IllegalStateException("Expected created partitioning id"))
+      )
       .map(dbResult => PartitioningWithIdDTO(dbResult.id, partitioning, author))
   }
 
@@ -110,8 +117,10 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
         MeasurementDTO(MeasureDTO("count", Seq("*")), MeasureResultDTO(TypedValue("1", ResultValueType.LongValue)))
       )
     )
-    ZIO.serviceWithZIO[WriteCheckpointV2](_(WriteCheckpointArgs(partitioning.id, checkpoint)))
-      .flatMap(ZIO.fromEither(_)).unit
+    ZIO
+      .serviceWithZIO[WriteCheckpointV2](_(WriteCheckpointArgs(partitioning.id, checkpoint)))
+      .flatMap(ZIO.fromEither(_))
+      .unit
   }
 
   private val createFixture: ZIO[CreatePartitioningWithParents with WriteCheckpointV2, Throwable, Fixture] = for {
@@ -133,7 +142,8 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
   private def getPage(
     args: SearchPartitioningsArgs
   ): ZIO[SearchPartitionings, Throwable, Seq[SearchPartitioningsResult]] =
-    ZIO.serviceWithZIO[SearchPartitionings](_(args))
+    ZIO
+      .serviceWithZIO[SearchPartitionings](_(args))
       .flatMap(ZIO.fromEither(_))
       .map(_.flatMap(_.data))
 
@@ -180,7 +190,9 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
         rows.forall(!_.hasMore)
       )
     },
-    test("Activity-only search matches any historical checkpoint, deduplicates IDs and applies instant-aware half-open bounds") {
+    test(
+      "Activity-only search matches any historical checkpoint, deduplicates IDs and applies instant-aware half-open bounds"
+    ) {
       for {
         fixture <- createFixture
         rows <- getPage(baseArgs.copy(keys = None, from = Some(from), to = Some(to)))
@@ -224,7 +236,7 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
         lastPartial <- getPage(baseArgs.copy(limit = 2, offset = 4L))
         atEnd <- getPage(baseArgs.copy(limit = 2, offset = 5L))
         largeOffset <- getPage(baseArgs.copy(limit = 2, offset = searchOffset))
-        noMatches <- getPage(baseArgs.copy(keys = Some(keys + ("case" -> "does-not-exist"))))
+        noMatches <- getPage(baseArgs.copy(keys = Some(keys + ("case" -> Some("does-not-exist")))))
         activeFirst <- getPage(baseArgs.copy(limit = 1, from = Some(from), to = Some(to)))
         activeSecond <- getPage(baseArgs.copy(limit = 1, offset = 1L, from = Some(from), to = Some(to)))
         ids = fixture.keyMatches.map(_.id)
@@ -242,15 +254,30 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
     },
     suite("HTTP nanosecond bounds against microsecond storage")(
       Seq(
-        ("excludes a checkpoint before a fractional lower bound", from.plusNanos(100), to,
-          (fixture: Fixture) => Seq(fixture.historical)),
-        ("includes a checkpoint before a fractional upper bound", from, from.plusNanos(100),
-          (fixture: Fixture) => Seq(fixture.atFrom)),
-        ("handles a lower bound that ceilings into the next second", from.minusNanos(1), from.plusNanos(100),
-          (fixture: Fixture) => Seq(fixture.atFrom)),
-        ("returns an empty page for a window without a representable timestamp",
-          from.plusNanos(100), from.withZoneSameInstant(ZoneOffset.UTC).plusNanos(200),
-          (_: Fixture) => Seq.empty[PartitioningWithIdDTO])
+        (
+          "excludes a checkpoint before a fractional lower bound",
+          from.plusNanos(100),
+          to,
+          (fixture: Fixture) => Seq(fixture.historical)
+        ),
+        (
+          "includes a checkpoint before a fractional upper bound",
+          from,
+          from.plusNanos(100),
+          (fixture: Fixture) => Seq(fixture.atFrom)
+        ),
+        (
+          "handles a lower bound that ceilings into the next second",
+          from.minusNanos(1),
+          from.plusNanos(100),
+          (fixture: Fixture) => Seq(fixture.atFrom)
+        ),
+        (
+          "returns an empty page for a window without a representable timestamp",
+          from.plusNanos(100),
+          from.withZoneSameInstant(ZoneOffset.UTC).plusNanos(200),
+          (_: Fixture) => Seq.empty[PartitioningWithIdDTO]
+        )
       ).map { case (name, lower, upper, expected) =>
         test(name) {
           for {
@@ -270,7 +297,9 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
         }
       }: _*
     ),
-    test("Registered HTTP endpoint through controller, service and repository returns SQL-backed pages and an empty envelope") {
+    test(
+      "Registered HTTP endpoint through controller, service and repository returns SQL-backed pages and an empty envelope"
+    ) {
       for {
         fixture <- createFixture
         search <- ZIO.service[SearchPartitionings]
@@ -301,6 +330,67 @@ object SearchPartitioningsIntegrationTests extends ConfigProviderTest with Parti
         emptyPage.pagination == Pagination(1, 2L, hasMore = false),
         latestFirstPage.data == Seq(fixture.atFrom),
         latestFirstPage.pagination == Pagination(1, 0L, hasMore = true)
+      )
+    },
+    test("Supports null wildcard values in keys, exact-keys, author, and search-text matching through fa-db and HTTP") {
+      for {
+        fixture <- createFixture
+        twoKeyForwardAuthor = "Search integration author: two-key-forward"
+        twoKeyReverseAuthor = "Search integration author: two-key-reverse"
+        twoKeyForwardPartitions = Seq(PartitionDTO("source", source), PartitionDTO("kind", "main"))
+        twoKeyReversePartitions = twoKeyForwardPartitions.reverse
+        twoKeyForwardRes <- ZIO
+          .serviceWithZIO[CreatePartitioningWithParents](
+            _(PartitioningSubmitV2DTO(twoKeyForwardPartitions, None, twoKeyForwardAuthor))
+          )
+          .flatMap(ZIO.fromEither(_))
+        twoKeyReverseRes <- ZIO
+          .serviceWithZIO[CreatePartitioningWithParents](
+            _(PartitioningSubmitV2DTO(twoKeyReversePartitions, None, twoKeyReverseAuthor))
+          )
+          .flatMap(ZIO.fromEither(_))
+        twoKeyForward = PartitioningWithIdDTO(
+          twoKeyForwardRes.data.get.id,
+          twoKeyForwardPartitions,
+          twoKeyForwardAuthor
+        )
+        twoKeyReverse = PartitioningWithIdDTO(
+          twoKeyReverseRes.data.get.id,
+          twoKeyReversePartitions,
+          twoKeyReverseAuthor
+        )
+        wildcardFourKeys = Map("source" -> Some(source), "kind" -> None, "empty" -> None, "case" -> None)
+        wildcardRows <- getPage(
+          SearchPartitioningsArgs(Some(wildcardFourKeys), exactKeys = Some(true))
+        )
+        wildcardPartitionings <- decodePartitionings(wildcardRows)
+        authorAndTextRows <- getPage(
+          SearchPartitioningsArgs(
+            author = Some(twoKeyForwardAuthor),
+            searchText = Some("MAIN")
+          )
+        )
+        authorAndTextPartitionings <- decodePartitionings(authorAndTextRows)
+        exactTwoKeys = Map("source" -> Some(source), "kind" -> None)
+        search <- ZIO.service[SearchPartitionings]
+        realController = controller(search)
+        uri = uri"http://localhost/api/v2/partitionings/search"
+          .addParam("keys", encodeSearchJson(exactTwoKeys.asJson.noSpaces))
+          .addParam("exact-keys", "true")
+        exactTwoResp <- PartitioningSearchTestSupport.get(uri, realController)
+        exactTwoPage <- ZIO.fromEither(decode[PaginatedResponse[PartitioningWithIdDTO]](exactTwoResp._2))
+        authorSearchUri = uri"http://localhost/api/v2/partitionings/search"
+          .addParam("author", twoKeyReverseAuthor)
+          .addParam("search-text", "SOURCE")
+        authorSearchResp <- PartitioningSearchTestSupport.get(authorSearchUri, realController)
+        authorSearchPage <- ZIO.fromEither(decode[PaginatedResponse[PartitioningWithIdDTO]](authorSearchResp._2))
+      } yield assertTrue(
+        wildcardPartitionings == (fixture.keyMatches :+ fixture.otherKind).sortBy(_.id),
+        authorAndTextPartitionings == Seq(twoKeyForward),
+        exactTwoResp._1 == StatusCode.Ok,
+        exactTwoPage.data == Seq(twoKeyForward, twoKeyReverse).sortBy(_.id),
+        authorSearchResp._1 == StatusCode.Ok,
+        authorSearchPage.data == Seq(twoKeyReverse)
       )
     }
   ).provide(

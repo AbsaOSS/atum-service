@@ -33,7 +33,18 @@ import za.co.absa.atum.server.api.database.lineage.functions.GetDirectChildren.G
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningLineageGraph.GetPartitioningLineageGraphArgs
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningAncestors.GetPartitioningAncestorsArgs
 import za.co.absa.atum.server.api.database.lineage.functions.GetPartitioningDescendants.GetPartitioningDescendantsArgs
-import za.co.absa.atum.server.api.database.runs.functions.{CreateOrUpdateAdditionalData, CreatePartitioningWithParents, GetPartitioning, GetPartitioningAdditionalData, GetPartitioningById, GetPartitioningMainFlow, GetPartitioningMeasures, GetPartitioningMeasuresById, SearchPartitionings, UpdatePartitioningParent}
+import za.co.absa.atum.server.api.database.runs.functions.{
+  CreateOrUpdateAdditionalData,
+  CreatePartitioningWithParents,
+  GetPartitioning,
+  GetPartitioningAdditionalData,
+  GetPartitioningById,
+  GetPartitioningMainFlow,
+  GetPartitioningMeasures,
+  GetPartitioningMeasuresById,
+  SearchPartitionings,
+  UpdatePartitioningParent
+}
 import za.co.absa.atum.server.api.database.runs.functions.CreateOrUpdateAdditionalData.CreateOrUpdateAdditionalDataArgs
 import za.co.absa.atum.server.api.database.runs.functions.SearchPartitionings.SearchPartitioningsArgs
 import za.co.absa.atum.server.api.database.runs.functions.UpdatePartitioningParent.UpdatePartitioningParentArgs
@@ -137,12 +148,15 @@ class PartitioningRepositoryImpl(
   }
 
   override def searchPartitionings(
-    limit: Int,
-    offset: Long,
-    keys: Option[Map[String, String]],
-    from: Option[ZonedDateTime],
-    to: Option[ZonedDateTime],
-    latestFirst: Option[Boolean] = None
+    keys: Option[Map[String, Option[String]]] = None,
+    exactKeys: Option[Boolean] = None,
+    author: Option[String] = None,
+    searchText: Option[String] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
+    latestFirst: Option[Boolean] = None,
+    limit: Int = 10,
+    offset: Long = 0L
   ): IO[DatabaseError, PaginatedResult[PartitioningWithIdDTO]] = {
     val databaseFrom = from.map(ceilToMicrosecond)
     val databaseTo = to.map(ceilToMicrosecond)
@@ -152,7 +166,19 @@ class PartitioningRepositoryImpl(
     if (emptyWindow) ZIO.succeed(ResultNoMore(Seq.empty))
     else {
       decodePaginatedPartitionings(
-        searchPartitioningsFn(SearchPartitioningsArgs(limit, offset, keys, databaseFrom, databaseTo, latestFirst)),
+        searchPartitioningsFn(
+          SearchPartitioningsArgs(
+            keys,
+            exactKeys,
+            author,
+            searchText,
+            databaseFrom,
+            databaseTo,
+            latestFirst,
+            limit,
+            offset
+          )
+        ),
         "searchPartitionings"
       )
     }
@@ -172,8 +198,7 @@ class PartitioningRepositoryImpl(
         val decodingResult = partitioning.as[PartitioningForDB]
         decodingResult.fold(
           error => ZIO.fail(GeneralDatabaseError(s"Failed to decode JSON: $error")),
-          partitioningForDB =>
-            ZIO.succeed(PartitioningWithIdDTO(id, partitioningForDB.toPartitioningDTO, author))
+          partitioningForDB => ZIO.succeed(PartitioningWithIdDTO(id, partitioningForDB.toPartitioningDTO, author))
         )
       case None => ZIO.fail(GeneralDatabaseError("Unexpected error."))
     }

@@ -13,11 +13,13 @@
  * limitations under the License.
  */
 
--- Supports exact key/value subset searches without depending on the stored keys array order.
+-- Supports exact key/value and key-existence searches without depending on the stored keys array order.
+-- Uses the default jsonb_ops GIN operator class so one index serves both @> (key/value containment)
+-- and ?& (key-only existence).
 --
 -- Built CONCURRENTLY so writes to runs.partitionings are not blocked. This file must contain only this
 -- statement: Flyway then runs it outside of a transaction, which CONCURRENTLY requires.
 -- If the build fails, it leaves an INVALID index behind; drop it
 -- (DROP INDEX CONCURRENTLY runs.partitionings_keys_to_values_idx) and re-run the migration.
 CREATE INDEX CONCURRENTLY partitionings_keys_to_values_idx ON runs.partitionings
-    USING gin ((partitioning -> 'keysToValuesMap') jsonb_path_ops);
+    USING gin ((partitioning -> 'keysToValuesMap'));
