@@ -1,0 +1,72 @@
+# Validates pull-request hygiene: conventional title, description, issue
+# reference, branch name, size, and target branch.
+# Action: AbsaOSS/check-pr-requirements (SHA-pinned; see Dependabot for bumps).
+
+name: PR Requirements
+
+on:
+  # No base-branch filter: a stacked PR targets the layer below it, and each
+  # layer needs the same hygiene checks as the one that reaches master.
+  pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+
+# Least privilege: read PR metadata only.
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-pr:
+    name: PR Requirements
+    runs-on: ubuntu-latest
+    steps:
+      # A stacked PR targets the layer below it rather than main, so a fixed
+      # allow-list of `master` fails every layer but the bottom one. Allow the
+      # base branch as well when it is itself a convention-named branch — that
+      # still rejects a PR aimed at some unrelated branch, which is what the
+      # check is for, while letting a stack be reviewed layer by layer.
+      - name: Resolve allowed target branches
+        id: targets
+        env:
+          KB_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          KB_BRANCH_PATTERN: '^(feat|feature|fix|bugfix|hotfix|release|support|chore|docs|ci|test)/[a-zA-Z0-9._/-]+$'
+        run: |
+          set -euo pipefail
+          if printf '%s' "$KB_BASE_REF" | grep -Eq "$KB_BRANCH_PATTERN"; then
+            echo "Stacked PR: also allowing the layer below ($KB_BASE_REF)."
+            echo "list=master,$KB_BASE_REF" >> "$GITHUB_OUTPUT"
+          else
+            echo "list=master" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check PR requirements
+        uses: AbsaOSS/check-pr-requirements@40a8970bea7014f119ec34a044082ac304999873 # v0.4.0
+        with:
+          pr-title: ${{ github.event.pull_request.title }}
+          pr-body: ${{ github.event.pull_request.body }}
+          pr-branch: ${{ github.event.pull_request.head.ref }}
+          pr-number: ${{ github.event.pull_request.number }}
+          target-branch: ${{ github.event.pull_request.base.ref }}
+          files-changed: ${{ github.event.pull_request.changed_files }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # Enabled checks
+          check-title: "true"
+          check-description: "true"
+          check-issue-reference: "true"
+          check-branch-name: "true"
+          warn-checks: "branch-name"
+          check-pr-size: "true"
+          check-target-branch: "true"
+          check-release-notes: "false" # no release-notes convention yet
+          check-label: "false"
+
+          # Configuration
+          title-formats: "conventional"
+          title-types: "feat,fix,docs,style,refactor,perf,test,build,ci,chore,revert"
+          description-min-length: "20"
+          # Branch names this repo uses; the char class allows the extra path
+          # segments in dependabot branches (e.g. dependabot/npm_and_yarn/…).
+          branch-pattern: "^(feat|feature|fix|bugfix|hotfix|release|support|chore|docs|ci|test|dependabot)/[a-zA-Z0-9._/-]+$"
+          max-files-changed: "50"
+          allowed-target-branches: ${{ steps.targets.outputs.list }}
