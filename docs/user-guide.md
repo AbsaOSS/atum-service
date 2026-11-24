@@ -98,9 +98,6 @@ A named point in a job where the measures are calculated, for example *"source d
 **Additional data: context about a dataset**
 Descriptive information attached to a dataset, such as application version, source system, owner or run identifier. Every change records who made it.
 
-**Flow: the journey of data**
-The chain of datasets connected by lineage: what was derived from what, across one or many applications.
-
 ---
 
 ## Guaranteeing completeness and integrity
@@ -123,16 +120,18 @@ The measures below answer both. Combining several of them on the same data makes
 | **Column fingerprint** (sum of hashes) | Any change to any value in a column, including text, IDs and dates | Evidence that key identifiers were not altered |
 | **Provided figures** | Discrepancies against figures known from elsewhere | Record counts from a source file trailer or a source system |
 
-**How the fingerprint works.** Atum converts every value in the column into a short code (a CRC32 hash) and adds the codes together. If any single value changes, the total almost always changes too. The data does not need to be stored or compared row by row. Matching fingerprints at the start and end of a pipeline are strong evidence that the column's values arrived unchanged, but not proof that they stay attached to the right records.
+**How the fingerprint works.** Atum converts every value in the column into a string and then a short code (a CRC32 hash) and adds the codes together (a sum operation; the result is a bigint, see the [docs](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.functions.crc32.html)). If any single value changes, the total almost always changes too. The data does not need to be stored or compared row by row. Matching fingerprints at the start and end of a pipeline are strong evidence that the column's values arrived unchanged, but not proof that they stay attached to the right records.
 
 ```mermaid
 flowchart LR
-    subgraph Checkpoint: source loaded
+    subgraph SL [Checkpoint: source loaded]
         A1[Records: 1,000]
         A2[Amount total: 5,200,000.00]
         A3[Account ID fingerprint: 8f3a…]
     end
-    subgraph Checkpoint: final output
+    style SL fill:#f5f5f5,stroke:#999,color:#000
+    style FO fill:#f5f5f5,stroke:#999,color:#000
+    subgraph FO [Checkpoint: final output]
         B1[Records: 1,000 ✅]
         B2[Amount total: 5,200,000.00 ✅]
         B3[Account ID fingerprint: 8f3a… ✅]
@@ -145,6 +144,55 @@ flowchart LR
 *Same count, same total, same fingerprint: consistent evidence that the data arrived complete and unaltered for these measures.*
 
 Totals are calculated with overflow protection, so very large amounts are never silently wrapped around. Numbers stored as text are also supported.
+
+### Example
+
+You are processing an employee list in a Spark-based data pipeline job. How do you know nothing was lost or altered on the way?
+
+**Step 1: the employee data to process**
+
+```
+id  name   salary
+1   Anna   5000
+2   Boris  6000
+3   Clara  7000
+```
+
+**Step 2: Atum takes measurements before processing**
+
+- Record count: 3
+- Column sum (salary): 18,000
+- Column fingerprint (CRC32 of the name column): each name becomes a number (the result of the hash function), and the numbers are added up:
+
+```
+Anna  → 2,171,474,313
+Boris → 2,903,660,343
+Clara → 3,324,540,562
+Total → 8,399,675,218
+```
+
+**Step 3: after processing, Atum measures again**
+
+| Case | Count | Salary total | Name fingerprint | Outcome |
+|---|---|---|---|---|
+| 1. Nothing happened on the way | 3 | 18,000 | 8,399,675,218 | Everything matches. |
+| 2. A row was lost (Boris) | 2 | 12,000 | 5,496,014,875 | Caught by all three measures. |
+| 3. "Boris" became "Borys" | 3 | 18,000 | 9,385,201,025 | Caught only by the name fingerprint. |
+| 4. Rows arrived in a different order | 3 | 18,000 | 8,399,675,218 | Not caught. Order is not measured. |
+| 5. Boris and Anna exchanged salaries | 3 | 18,000 | 8,399,675,218 | Not caught. Each column is measured separately. |
+
+Case 5 can be caught by fingerprinting several columns together, so that values must stay attached to the right record:
+
+```scala
+val withRow = df.withColumn("row", concat_ws("|", col("id"), col("name"), col("salary")))
+withRow.setCheckpoint("After load")(ctx.addMeasure(SumOfHashesOfColumn("row")))
+```
+
+Why three measures?
+
+- The count catches missing or extra rows.
+- The salary total catches changed numbers.
+- The name fingerprint catches changed text.
 
 ---
 
@@ -166,13 +214,11 @@ What Atum supports:
 - **Parent-child relationships.** Derive a child dataset from a parent, for example the per-country split above.
 - **Multiple parents.** A dataset built from several sources is linked to all of them in one step.
 - **Ancestor lookup.** Starting from any dataset, list everything it was derived from, all the way to the original sources.
-- **Flows.** Every dataset belongs to a flow. You can list all datasets in a flow and read every checkpoint across the flow in one query, which gives an end-to-end view of a pipeline.
-- **Main flow.** Each dataset has a main flow that represents its primary journey.
 - **Built-in safeguards.** The server rejects links that would create a loop, or that would rewrite the history of datasets that already have descendants. Re-running a job with the same parents is safe and creates no duplicates.
-- **Flexible identification.** A child can extend its parent's label (for example *CRM, 2024-01-01, country = ZA*) or have a label of its own, and stays linked either way.
-- **Optional inheritance of measures.** A newly created child can take over its parents' measures, so the same checks continue downstream automatically.
+- **Flexible identification.** A child can inherit its parent's label (for example *CRM, 2024-01-01, country = ZA*) or have a label of its own, and stays linked either way.
+- **Optional inheritance of measures.** A newly created child can take over its parents' measures, so the same checks continue downstream automatically. This is not the default behavior, because the downstream schema can differ and the measures may no longer apply. Also, a child inheriting measures from multiple parents gets the merged list of its direct parents' measures, which might not make sense for some datasets.
 
-With lineage, you can trace a dataset back through the datasets it was derived from, and read the recorded control figures for each of them. Atum does not record which individual rows or values contributed to a particular figure.
+With lineage, you can trace a dataset back through the datasets it was derived from and also where a given dataset is used downstream (bi-directional lineage), and eventually read the recorded control figures for each of them. Atum does not record which individual rows or values contributed to a particular figure.
 
 ---
 
@@ -207,7 +253,7 @@ With lineage, you can trace a dataset back through the datasets it was derived f
 **Querying figures (Atum Reader and API)**
 
 - Look up a dataset by its label and read its checkpoints, additional data and author.
-- Read all checkpoints across an entire flow.
+- Read all checkpoints across an entire dataset (partitioning).
 - Filter checkpoints by name, by custom properties, or by time window, newest first if needed.
 - Page through large result sets.
 - Usable from any Java or Scala application. Spark is not required.
