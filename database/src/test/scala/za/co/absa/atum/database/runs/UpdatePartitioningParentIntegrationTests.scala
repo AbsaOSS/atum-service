@@ -68,9 +68,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
       }
 
   //Data Preparation Step
-  def dataPreparation(): (Long, Long, Long) = {
-    val nonExistentID = 9999L
-
+  def dataPreparation(): (Long, Long) = {
     val parentPartitioningIDTest = createPartitioning(parentPartitioning, "Albert Einstein")
     val childPartitioningIDTest = createPartitioning(partitioning, "Albert Einstein")
 
@@ -79,13 +77,13 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     addMeasure(parentPartitioningIDTest, "measure1", """{"col1"}""")
     addMeasure(parentPartitioningIDTest, "measure2", """{"col2"}""")
 
-    (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest)
+    (parentPartitioningIDTest, childPartitioningIDTest)
   }
 
   //Update Parent with additional data and with measurements
   test("Parent Partitioning Updated with additional data and with measurements") {
 
-    val (nonExistentID, parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
+    val (parentPartitioningIDTest, childPartitioningIDTest) = dataPreparation()
 
     function(updateParentFn)
       .setParam("i_id_partitioning", childPartitioningIDTest)
@@ -106,6 +104,15 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     )
     assert(
       table("flows.partitioning_to_flow").count(add("fk_partitioning", childPartitioningIDTest)) == 2
+    )
+    assert(
+      table("lineage.partitioning_edges").count(add("fk_child_partitioning", childPartitioningIDTest)) == 1
+    )
+    assert(
+      queryBoolean(
+        s"SELECT created_by = 'Happy Nappy' FROM lineage.partitioning_edges " +
+          s"WHERE fk_child_partitioning = $childPartitioningIDTest AND fk_parent_partitioning = $parentPartitioningIDTest"
+      )
     )
 
     function(fncGetPartitioningAdditionalData)
@@ -147,7 +154,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
 
   // ---- Part 2: shared linking routine, cycle rejection, copy policy ---------------------------------------------
   //
-  // Test-design pitfall: the advisory lock taken by `flows._link_to_parents` is transaction-scoped and `DBTestSuite`
+  // Test-design pitfall: the advisory lock taken by `lineage.link_to_parents` is transaction-scoped and `DBTestSuite`
   // runs the whole test body in one transaction (rolled back at the end). After ANY slow-path call the lock count of
   // the session stays 1 until the rollback. Therefore fixture links are seeded WITHOUT the linking routine
   // (`runs.create_partitioning` of the v1 path takes no lock) and every `advisoryLocksHeld() == 0` assertion
@@ -257,6 +264,11 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
 
   private def flowCount(id: Long): Long = table("flows.partitioning_to_flow").count(add("fk_partitioning", id))
 
+  private def totalEdgeCount(): Long = table("lineage.partitioning_edges").count()
+
+  private def edgeCount(childId: Long): Long =
+    table("lineage.partitioning_edges").count(add("fk_child_partitioning", childId))
+
   private def queryStrings(sql: String): Seq[String] = {
     val statement = dbConnection.connection.createStatement()
     try {
@@ -283,7 +295,7 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
   )
 
   private def ancestorIds(id: Long): Set[Long] = {
-    function("runs.get_partitioning_ancestors")
+    function("lineage.get_partitioning_ancestors")
       .setParam("i_id_partitioning", id)
       .execute { qr =>
         Iterator
@@ -303,39 +315,45 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     addMeasure(c, "child_measure", """{"colC"}""")
     addAd(c, "child_ad", "child value")
     val before = fourTableCounts()
+    val edgesBefore = totalEdgeCount()
 
     val result = patch(a, c, copyMeasurements = true, copyAdditionalData = true)
 
     assert(result.status == 32)
     assert(result.statusText == s"$cycleText: $c")
     assert(fourTableCounts() == before)
+    assert(totalEdgeCount() == edgesBefore)
     assert(measureCount(a) == 0)
     assert(adCount(a) == 0)
     assert(ancestorIds(a).isEmpty)
     assert(ancestorIds(c) == Set(a, b))
   }
 
-  test("Child missing: 41 and nothing is written (both flags true)") {
+  test("Child missing: 42 and nothing is written (both flags true)") {
     val parent = seedParentWithData("missing-child")
     val before = fourTableCounts()
+    val edgesBefore = totalEdgeCount()
 
     val result = patch(unknownId, parent, copyMeasurements = true, copyAdditionalData = true)
 
-    assert(result.status == 41)
+    assert(result.status == 42)
     assert(result.statusText == "Child Partitioning not found")
     assert(fourTableCounts() == before)
+    assert(totalEdgeCount() == edgesBefore)
     assert(advisoryLocksHeld() == 0)
   }
 
-  test("Parent missing: 42 and nothing is written (both flags true)") {
+  test("Parent missing: 41 and nothing is written (both flags true)") {
     val child = seed("missing-parent")
     val before = fourTableCounts()
+    val edgesBefore = totalEdgeCount()
 
     val result = patch(child, unknownId, copyMeasurements = true, copyAdditionalData = true)
 
-    assert(result.status == 42)
+    assert(result.status == 41)
     assert(result.statusText == "Parent Partitioning not found")
     assert(fourTableCounts() == before)
+    assert(totalEdgeCount() == edgesBefore)
     assert(advisoryLocksHeld() == 0)
   }
 
@@ -350,6 +368,13 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
     assert(result.status == 11)
     assert(result.statusText == "OK")
     assert(ancestorIds(child) == Set(parent))
+    assert(edgeCount(child) == 1)
+    assert(
+      queryBoolean(
+        s"SELECT created_by = 'Happy Nappy' FROM lineage.partitioning_edges " +
+          s"WHERE fk_child_partitioning = $child AND fk_parent_partitioning = $parent"
+      )
+    )
     assert(measureCount(child) == 0)
     assert(adCount(child) == 0)
   }
@@ -362,15 +387,18 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
 
     assert(patch(c, b, copyMeasurements = false, copyAdditionalData = false).status == 11)
     assert(ancestorIds(c) == Set(a, b))
+    assert(edgeCount(c) == 1)
 
     val d = seed("prop-d", Some(c))
     val before = fourTableCounts()
+    val edgesBefore = totalEdgeCount()
 
     val result = patch(c, n, copyMeasurements = true, copyAdditionalData = true)
 
     assert(result.status == 33)
     assert(result.statusText.contains("descendants"))
     assert(fourTableCounts() == before)
+    assert(totalEdgeCount() == edgesBefore)
     assert(ancestorIds(c) == Set(a, b))
     assert(ancestorIds(d) == Set(a, b, c))
     assert(measureCount(c) == 0)
@@ -499,6 +527,19 @@ class UpdatePartitioningParentIntegrationTests extends DBTestSuite {
         s"SELECT ad_value FROM runs.additional_data WHERE fk_partitioning = $child AND ad_name = 'ad_1'"
       ) == Seq("This is the additional data for Joseph")
     )
+  }
+
+  test("copyAdditionalData=true when parent has 0 additional data rows succeeds (11) without error") {
+    val parent = seed("empty-ad-parent")
+    val child = seed("empty-ad-child")
+    addAd(child, "ad_existing", "keep me")
+
+    val result = patch(child, parent, copyMeasurements = false, copyAdditionalData = true)
+
+    assert(result.status == 11)
+    assert(result.statusText == "OK")
+    assert(edgeCount(child) == 1)
+    assert(adNames(child) == Seq("ad_existing"))
   }
 
   // ---- privileges, configuration ---------------------------------------------------------------------------------

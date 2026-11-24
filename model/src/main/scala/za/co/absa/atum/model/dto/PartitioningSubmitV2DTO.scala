@@ -32,7 +32,7 @@ import io.circe.syntax._
  */
 case class PartitioningSubmitV2DTO(
   partitioning: PartitioningDTO,
-  parentPartitioningIds: Seq[Long],
+  parentPartitioningIds: Seq[Long] = Seq.empty,
   author: String,
   copyMeasureDefinitions: Boolean = false
 )

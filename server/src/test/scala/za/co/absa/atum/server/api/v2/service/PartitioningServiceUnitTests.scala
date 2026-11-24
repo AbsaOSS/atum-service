@@ -16,9 +16,9 @@
 
 package za.co.absa.atum.server.api.v2.service
 
-import org.mockito.Mockito.{mock, when}
-import za.co.absa.atum.model.dto.PartitioningWithIdDTO
-import za.co.absa.atum.server.api.TestData
+import org.mockito.Mockito.{mock, verify, when}
+import za.co.absa.atum.model.dto.{ChildPartitioningDTO, LineageGraphDTO, ParentPartitioningDTO, PartitioningWithIdDTO}
+import za.co.absa.atum.server.api.{PartitioningSearchTestData, TestData}
 import za.co.absa.atum.server.api.exception.DatabaseError._
 import za.co.absa.atum.server.api.exception.ServiceError
 import za.co.absa.atum.server.api.exception.ServiceError._
@@ -29,7 +29,7 @@ import zio._
 import zio.test.Assertion.failsWithA
 import zio.test._
 
-object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
+object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData with PartitioningSearchTestData {
 
   private val partitioningRepositoryMock = mock(classOf[PartitioningRepository])
 
@@ -102,12 +102,23 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
 
   when(partitioningRepositoryMock.updatePartitioningParent(1L, partitioningParentPatchDTO1)).thenReturn(ZIO.unit)
+  when(partitioningRepositoryMock.updatePartitioningParent(1L, partitioningParentPatchDTO3))
+    .thenReturn(ZIO.fail(ConflictDatabaseError("Parent partitioning would create a cycle")))
   when(partitioningRepositoryMock.updatePartitioningParent(1L, partitioningParentPatchDTO5))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Parent Partitioning not found")))
   when(partitioningRepositoryMock.updatePartitioningParent(0L, partitioningParentPatchDTO1))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Child Partitioning not found")))
   when(partitioningRepositoryMock.updatePartitioningParent(2L, partitioningParentPatchDTO1))
     .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
+  when(partitioningRepositoryMock.getPartitioningDescendants(1111L, 10, 0L))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2))))
+  when(partitioningRepositoryMock.getPartitioningDescendants(2222L, 1, 0L))
+    .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
+  when(partitioningRepositoryMock.getPartitioningDescendants(8888L, 10, 0L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getPartitioningDescendants(9999L, 10, 0L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
   when(partitioningRepositoryMock.getPartitioningAncestors(1111L, 1, 1L))
     .thenReturn(ZIO.succeed(ResultHasMore(Seq(partitioningWithIdDTO1))))
@@ -120,11 +131,195 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
   when(partitioningRepositoryMock.getPartitioningAncestors(9999L, 1, 1L))
     .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
 
+  when(partitioningRepositoryMock.getPartitioningParents(1111L))
+    .thenReturn(ZIO.succeed(Seq.empty[ParentPartitioningDTO]))
+  when(partitioningRepositoryMock.getPartitioningParents(5555L))
+    .thenReturn(ZIO.succeed(Seq(parentPartitioningDTO1, parentPartitioningDTO2)))
+  when(partitioningRepositoryMock.getPartitioningParents(8888L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getPartitioningParents(9999L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+
+  when(partitioningRepositoryMock.getPartitioningChildren(1111L))
+    .thenReturn(ZIO.succeed(Seq.empty[ChildPartitioningDTO]))
+  when(partitioningRepositoryMock.getPartitioningChildren(5555L))
+    .thenReturn(ZIO.succeed(Seq(childPartitioningDTO1, childPartitioningDTO2)))
+  when(partitioningRepositoryMock.getPartitioningChildren(8888L))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+  when(partitioningRepositoryMock.getPartitioningChildren(9999L))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+
+  when(partitioningRepositoryMock.getPartitioningLineageGraph(2L, "both", 5))
+    .thenReturn(ZIO.succeed(lineageGraphDTO1))
+  when(partitioningRepositoryMock.getPartitioningLineageGraph(9999L, "both", 5))
+    .thenReturn(ZIO.fail(NotFoundDatabaseError("Partitioning not found")))
+  when(partitioningRepositoryMock.getPartitioningLineageGraph(8888L, "both", 5))
+    .thenReturn(ZIO.fail(GeneralDatabaseError("boom!")))
+
   private val partitioningRepositoryMockLayer = ZLayer.succeed(partitioningRepositoryMock)
+
+  when(
+    partitioningRepositoryMock.searchPartitionings(
+      Some(searchKeys),
+      Some(true),
+      Some("unify"),
+      Some("payments"),
+      Some(searchFrom),
+      Some(searchTo),
+      Some(true),
+      2,
+      searchOffset
+    )
+  ).thenReturn(ZIO.succeed(ResultHasMore(searchPartitionings.reverse)))
+  when(partitioningRepositoryMock.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 3, 1L))
+    .thenReturn(ZIO.succeed(ResultNoMore(searchPartitionings)))
+  when(partitioningRepositoryMock.searchPartitionings(None, None, None, None, Some(searchFrom), Some(searchTo), None, 10, 0L))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
+  when(partitioningRepositoryMock.searchPartitionings(Some(Map.empty), None, None, None, Some(searchFrom), None, None, 10, 1L))
+    .thenReturn(ZIO.succeed(ResultNoMore(Seq.empty)))
+  when(
+    partitioningRepositoryMock.searchPartitionings(
+      Some(searchKeys),
+      None,
+      None,
+      None,
+      Some(searchFrom),
+      Some(searchTo),
+      None,
+      4,
+      searchOffset
+    )
+  ).thenReturn(ZIO.fail(GeneralDatabaseError("search database unavailable")))
+  when(
+    partitioningRepositoryMock.searchPartitionings(
+      Some(searchKeys),
+      None,
+      None,
+      None,
+      Some(searchFrom),
+      Some(searchTo),
+      None,
+      5,
+      searchOffset
+    )
+  ).thenReturn(ZIO.fail(NotFoundDatabaseError("search function failure")))
+  when(
+    partitioningRepositoryMock.searchPartitionings(
+      Some(searchKeys),
+      None,
+      None,
+      None,
+      Some(searchFrom),
+      Some(searchTo),
+      None,
+      6,
+      searchOffset
+    )
+  ).thenReturn(ZIO.fail(ErrorInDataDatabaseError("invalid search parameters")))
 
   override def spec: Spec[TestEnvironment with Scope, Any] = {
 
     suite("PartitioningServiceSuite")(
+      suite("SearchPartitioningsSuite")(
+        test("Forwards decoded keys, exactKeys, author, searchText, timezone-aware bounds, latestFirst, limit and Long offset unchanged") {
+          for {
+            result <- PartitioningService.searchPartitionings(
+              Some(searchKeys),
+              Some(true),
+              Some("unify"),
+              Some("payments"),
+              Some(searchFrom),
+              Some(searchTo),
+              Some(true),
+              2,
+              searchOffset
+            )
+            _ <- ZIO.attempt(
+              verify(partitioningRepositoryMock).searchPartitionings(
+                Some(searchKeys),
+                Some(true),
+                Some("unify"),
+                Some("payments"),
+                Some(searchFrom),
+                Some(searchTo),
+                Some(true),
+                2,
+                searchOffset
+              )
+            )
+          } yield assertTrue(result == ResultHasMore(searchPartitionings.reverse))
+        },
+        test("Preserves a key-only final page and hasMore=false") {
+          for {
+            result <- PartitioningService.searchPartitionings(Some(searchKeys), None, None, None, None, None, None, 3, 1L)
+          } yield assertTrue(result == ResultNoMore(searchPartitionings))
+        },
+        test("Preserves empty time-only results") {
+          for {
+            result <- PartitioningService.searchPartitionings(None, None, None, None, Some(searchFrom), Some(searchTo), None, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
+        },
+        test("Forwards an explicit empty key filter alongside a time bound") {
+          for {
+            result <- PartitioningService.searchPartitionings(Some(Map.empty), None, None, None, Some(searchFrom), None, None, 10, 1L)
+          } yield assertTrue(result == ResultNoMore(Seq.empty[PartitioningWithIdDTO]))
+        },
+        test("Maps execution failures to GeneralServiceError") {
+          for {
+            result <- PartitioningService
+              .searchPartitionings(
+                Some(searchKeys),
+                None,
+                None,
+                None,
+                Some(searchFrom),
+                Some(searchTo),
+                None,
+                4,
+                searchOffset
+              )
+              .exit
+          } yield assertTrue(
+            result == Exit.fail(
+              GeneralServiceError("Failed to perform 'searchPartitionings': search database unavailable")
+            )
+          )
+        },
+        test("Propagates classified database failures") {
+          assertZIO(
+            PartitioningService
+              .searchPartitionings(
+                Some(searchKeys),
+                None,
+                None,
+                None,
+                Some(searchFrom),
+                Some(searchTo),
+                None,
+                5,
+                searchOffset
+              )
+              .exit
+          )(failsWithA[NotFoundServiceError])
+        },
+        test("Maps ErrorInDataDatabaseError to ErrorInDataServiceError") {
+          assertZIO(
+            PartitioningService
+              .searchPartitionings(
+                Some(searchKeys),
+                None,
+                None,
+                None,
+                Some(searchFrom),
+                Some(searchTo),
+                None,
+                6,
+                searchOffset
+              )
+              .exit
+          )(failsWithA[ErrorInDataServiceError])
+        }
+      ),
       suite("CreatePartitioningSuite")(
         test("Passes Created(PartitioningWithIdDTO) through") {
           for {
@@ -168,7 +363,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         }
       ),
       suite("PatchAdditionalDataSuite")(
-        test("Returns expected Right with Unit") {
+        test("Returns expected Right with Seq[AdditionalDataItemV2DTO]") {
           for {
             result <- PartitioningService.patchAdditionalData(1L, additionalDataPatchDTO1)
           } yield assertTrue(result == additionalDataDTO1)
@@ -308,6 +503,28 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
           )
         }
       ),
+      suite("GetPartitioningDescendantsSuite")(
+        test("Returns all descendants unchanged") {
+          for {
+            result <- PartitioningService.getPartitioningDescendants(1111L, 10, 0L)
+          } yield assertTrue(result == ResultNoMore(Seq(partitioningWithIdDTO1, partitioningWithIdDTO2)))
+        },
+        test("Returns expected Right with ResultHasMore[PartitioningWithIdDTO]") {
+          for {
+            result <- PartitioningService.getPartitioningDescendants(2222L, 1, 0L)
+          } yield assertTrue(result == ResultHasMore(Seq(partitioningWithIdDTO1)))
+        },
+        test("Returns expected GeneralServiceError when repository fails with GeneralDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningDescendants(8888L, 10, 0L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        },
+        test("Returns expected NotFoundServiceError when repository fails with NotFoundDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningDescendants(9999L, 10, 0L).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        }
+      ),
       suite("GetPartitioningAncestorsSuite")(
         test("Returns expected Right with ResultHasMore[PartitioningWithIdDTO]") {
           for {
@@ -341,7 +558,18 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             result <- PartitioningService.patchPartitioningParent(1L, partitioningParentPatchDTO1)
           } yield assertTrue(result == ())
         },
-        test("Returns expected NotFoundServiceError") {
+        test("Returns expected ConflictServiceError when repository fails with ConflictDatabaseError") {
+          for {
+            result <- PartitioningService.patchPartitioningParent(1L, partitioningParentPatchDTO3).exit
+          } yield assertTrue(
+            result == Exit.fail(
+              ConflictServiceError(
+                "Failed to perform 'updatePartitioningParent': Parent partitioning would create a cycle"
+              )
+            )
+          )
+        },
+        test("Returns expected NotFoundServiceError for missing parent") {
           for {
             result <- PartitioningService.patchPartitioningParent(1L, partitioningParentPatchDTO5).exit
           } yield assertTrue(
@@ -350,7 +578,7 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
             )
           )
         },
-        test("Returns expected NotFoundServiceError") {
+        test("Returns expected NotFoundServiceError for missing child") {
           for {
             result <- PartitioningService.patchPartitioningParent(0L, partitioningParentPatchDTO1).exit
           } yield assertTrue(
@@ -361,6 +589,67 @@ object PartitioningServiceUnitTests extends ZIOSpecDefault with TestData {
         },
         test("Returns expected GeneralServiceError") {
           assertZIO(PartitioningService.patchPartitioningParent(2L, partitioningParentPatchDTO1).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningParentsSuite")(
+        test("Returns empty Seq when partitioning has no parents") {
+          for {
+            result <- PartitioningService.getPartitioningParents(1111L)
+          } yield assertTrue(result.isEmpty)
+        },
+        test("Returns all parents for partitioning") {
+          for {
+            result <- PartitioningService.getPartitioningParents(5555L)
+          } yield assertTrue(result == Seq(parentPartitioningDTO1, parentPartitioningDTO2))
+        },
+        test("Returns expected GeneralServiceError when repository fails with GeneralDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningParents(8888L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        },
+        test("Returns expected NotFoundServiceError when repository fails with NotFoundDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningParents(9999L).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningChildrenSuite")(
+        test("Returns empty Seq when partitioning has no children") {
+          for {
+            result <- PartitioningService.getPartitioningChildren(1111L)
+          } yield assertTrue(result.isEmpty)
+        },
+        test("Returns all children for partitioning") {
+          for {
+            result <- PartitioningService.getPartitioningChildren(5555L)
+          } yield assertTrue(result == Seq(childPartitioningDTO1, childPartitioningDTO2))
+        },
+        test("Returns expected GeneralServiceError when repository fails with GeneralDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningChildren(8888L).exit)(
+            failsWithA[GeneralServiceError]
+          )
+        },
+        test("Returns expected NotFoundServiceError when repository fails with NotFoundDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningChildren(9999L).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        }
+      ),
+      suite("GetPartitioningLineageGraphSuite")(
+        test("Returns lineage graph for valid partitioning") {
+          for {
+            result <- PartitioningService.getPartitioningLineageGraph(2L, "both", 5)
+          } yield assertTrue(result == lineageGraphDTO1)
+        },
+        test("Returns expected NotFoundServiceError when partitioning not found") {
+          assertZIO(PartitioningService.getPartitioningLineageGraph(9999L, "both", 5).exit)(
+            failsWithA[NotFoundServiceError]
+          )
+        },
+        test("Returns expected GeneralServiceError on GeneralDatabaseError") {
+          assertZIO(PartitioningService.getPartitioningLineageGraph(8888L, "both", 5).exit)(
             failsWithA[GeneralServiceError]
           )
         }

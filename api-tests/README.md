@@ -12,16 +12,17 @@
 - Postman v11.34.5 (used for creating and running Postman collections)
 - Node.js >= v16
 - Newman >= v6 (used for running Postman collections in CLI)
+- Running Atum Service with a migrated database (see [Run Tests](#run-tests))
 
 ## Setup
 
-- Import the Postman collection `Atum-Service_LOCAL_env.postman_environment.json` into Postman.
-    - This file will set up env variables.
+- Import the Postman environment `Atum-Service_LOCAL_env.postman_environment.json` into Postman.
+    - This file sets up env variables (`host`, defaults to `http://localhost:8080`).
 - Import the Postman collections for `1-shot` test:
     - `1_shot/Atum-Service_1-Shot_test_flow.postman_collection.json` (the only collection in this directory)
         - A **flow** collection: its folders run in sequence from the top to the bottom, each folder is one named test
           with its own preparations.
-        - Covers the health endpoints, the v2 partitioning, ancestors, additional data, checkpoint and flow endpoints,
+        - Covers the health endpoints, the v2 partitioning, search, ancestors, lineage (parents, children, descendants, graph), additional data, checkpoint and flow endpoints,
           and the deprecated v1 `createPartitioning` / `createCheckpoint` calls.
 
 ## Backup
@@ -72,12 +73,12 @@ newman run ./1_shot/Atum-Service_1-Shot_test_flow.postman_collection.json \
 ### Running locally (Newman against a local server)
 
 The collection creates (uniquely named) data, so run it only against a **local or test stack**, never against a shared
-or production host. 
+or production host.
 
 The environment file `Atum-Service_LOCAL_env.postman_environment.json` points to `host=http://localhost:8080`.
 
 1. Start a PostgreSQL database and migrate it as described in [`database/README.md`](../database/README.md#deployment).
-2. Start the server (see [`server/README.md`](../server/README.md)); `GET http://localhost:8080/health` has to answer `200`.
+2. Start the server (see [`server/README.md`](../server/README.md), e.g. `sbt "project server" "runMain za.co.absa.atum.server.Main"`); `GET http://localhost:8080/health` has to answer `200`.
 3. Run Newman from this directory:
 
 ```yaml
@@ -87,4 +88,3 @@ newman run ./1_shot/Atum-Service_1-Shot_test_flow.postman_collection.json \
 --environment Atum-Service_LOCAL_env.postman_environment.json --reporters cli,json --insecure \
 --reporter-json-export 1_shot_test_run.json
 ```
-

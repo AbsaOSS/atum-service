@@ -28,6 +28,8 @@ import za.co.absa.atum.server.model.{CreationResult, PaginatedResult}
 import sttp.model.StatusCode
 import zio._
 
+import java.time.ZonedDateTime
+
 class PartitioningControllerImpl(partitioningService: PartitioningService)
     extends PartitioningController
     with BaseController {
@@ -72,7 +74,7 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
       )
       response = SingleSuccessResponse(result.data)
       status = result match {
-        case Created(_)  => StatusCode.Created
+        case Created(_) => StatusCode.Created
         case Existing(_) => StatusCode.Ok
       }
       uri <- createRootAnchoredResourcePath(Seq(V2Paths.Partitionings, result.data.id.toString), apiVersion = 2)
@@ -140,6 +142,36 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def searchPartitionings(
+    keys: Option[Map[String, Option[String]]] = None,
+    exactKeys: Option[Boolean] = None,
+    author: Option[String] = None,
+    searchText: Option[String] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
+    latestFirst: Option[Boolean] = None,
+    limit: Int = 10,
+    offset: Long = 0L
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit,
+      offset,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.searchPartitionings(
+          keys,
+          exactKeys,
+          author,
+          searchText,
+          from,
+          to,
+          latestFirst,
+          limit,
+          offset
+        )
+      )
+    )
+  }
+
   override def patchPartitioningParent(
     partitioningId: Long,
     partitioningParentPatchDTO: PartitioningParentPatchDTO
@@ -164,9 +196,56 @@ class PartitioningControllerImpl(partitioningService: PartitioningService)
     )
   }
 
+  override def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]] = {
+    mapToPaginatedResponse(
+      limit,
+      offset,
+      serviceCall[PaginatedResult[PartitioningWithIdDTO], PaginatedResult[PartitioningWithIdDTO]](
+        partitioningService.getPartitioningDescendants(partitioningId, limit, offset)
+      )
+    )
+  }
+
+  override def getPartitioningParents(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[ParentPartitioningDTO], Seq[ParentPartitioningDTO]](
+        partitioningService.getPartitioningParents(partitioningId)
+      )
+    )
+  }
+
+  override def getPartitioningChildren(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ChildPartitioningDTO]] = {
+    mapToMultiSuccessResponse(
+      serviceCall[Seq[ChildPartitioningDTO], Seq[ChildPartitioningDTO]](
+        partitioningService.getPartitioningChildren(partitioningId)
+      )
+    )
+  }
+
+  override def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ErrorResponse, SingleSuccessResponse[LineageGraphDTO]] = {
+    mapToSingleSuccessResponse(
+      serviceCall[LineageGraphDTO, LineageGraphDTO](
+        partitioningService.getPartitioningLineageGraph(partitioningId, direction, depth)
+      )
+    )
+  }
+
 }
 
 object PartitioningControllerImpl {
+
   /** Maximum number of DISTINCT parent ids accepted by `POST /partitionings` (more is answered with 400). */
   val MaxParents = 100
 

@@ -49,7 +49,7 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
         _(PartitioningSubmitV2DTO(Seq(PartitionDTO("key", UUID.randomUUID().toString)), None, "author"))
       )
       .flatMap(ZIO.fromEither(_))
-      .map(_.data.id)
+      .flatMap(row => ZIO.getOrFail(row.data.map(_.id)))
 
   private def getMainFlowId(partitioningId: Long): ZIO[GetPartitioningMainFlow, Throwable, Long] =
     ZIO
@@ -169,7 +169,7 @@ object GetFlowCheckpointsIntegrationTests extends ConfigProviderTest {
       WriteCheckpointV2.layer,
       PostgresDatabaseProvider.layer,
       TestTransactorProvider.layerWithSingleTransactionRollback
-    )
+    ) @@ TestAspect.sequential
   }
 
 }

@@ -17,7 +17,6 @@
 package za.co.absa.atum.server.api.database.runs.functions
 
 import doobie.implicits.toSqlInterpolator
-import io.circe.syntax._
 import za.co.absa.atum.model.dto.PartitioningParentPatchDTO
 import za.co.absa.atum.server.api.database.PostgresDatabaseProvider
 import za.co.absa.atum.server.api.database.runs.Runs

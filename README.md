@@ -3,7 +3,7 @@
 [![Build](https://github.com/AbsaOSS/atum-service/actions/workflows/build.yml/badge.svg)](https://github.com/AbsaOSS/atum-service/actions/workflows/build.yml)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
-![Java 11](https://img.shields.io/badge/Java_11-ED8B00?style=flat&logo=openjdk&logoColor=black)
+![Java 11, 17, 21](https://img.shields.io/badge/Java-11%20%7C%2017%20%7C%2021-ED8B00?style=flat&logo=openjdk&logoColor=black)
 
 | Atum Server                                                                                                                            | Atum Agent                                                                                                                                                                                                        | Atum Model                                                                                                                                                                                                 | Atum Reader                                                                                                                                                                                                  |
 |----------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -24,7 +24,7 @@
         - [Measure](#measure)
         - [Measurement](#measurement)
         - [Checkpoint](#checkpoint)
-        - [Data Flow](#data-flow)
+        - [Data Flow & Lineage](#data-flow--lineage)
     - [Usage](#usage)
         - [Atum Agent routines](#atum-agent-routines)
         - [Control measurement types](#control-measurement-types)
@@ -92,7 +92,7 @@ job a *batch*. All checkpoints are calculated for a specific batch.
 This module is intended to replace the legacy [Atum](https://github.com/AbsaOSS/atum) library.
 It provides functionality for computing and pushing control metrics to the API located in `server/`.
 
-For more information, see the [Vocabulary section](#Vocabulary) or `agent/README.md` for more technical documentation.
+For more information, see the [Vocabulary section](#vocabulary) or `agent/README.md` for more technical documentation.
 
 #### Supported Spark / Scala / Java matrix
 
@@ -101,13 +101,13 @@ The agent is cross-built per Spark major version. Pick the artifact matching the
 | Spark | Scala      | Java                      | Artifact                                           |
 |-------|------------|---------------------------|----------------------------------------------------|
 | 3.5.x | 2.12, 2.13 | 8 minimum, 11 recommended | `atum-agent-spark3_2.12`, `atum-agent-spark3_2.13` |
-| 4.0.x | 2.13       | 17+                       | `atum-agent-spark4_2.13`                           |
+| 4.1.x | 2.13       | 17+                       | `atum-agent-spark4_2.13`                           |
 
 ```scala
 // Spark 3.5.x
 libraryDependencies += "za.co.absa.atum-service" %% "atum-agent-spark3" % atumVersion
 
-// Spark 4.0.x
+// Spark 4.1.x
 libraryDependencies += "za.co.absa.atum-service" %% "atum-agent-spark4" % atumVersion
 ```
 
@@ -136,8 +136,7 @@ support for Spark 2.4. If you need the agent to work with Spark 2.4 follow these
 
 This module is a Scala client for applications reading metrics stored by the _Atum Service_. `FlowReader` and
 `PartitioningReader` resolve partitionings and retrieve checkpoint pages through the server's REST API.
-Applications control pagination; the Reader does not discover datasets from partial business keys or reconstruct
-the original parent-child lineage graph.
+Applications control pagination; direct parent-child lineage queries are served natively by the server's lineage endpoints.
 
 Reader features require a compatible server version. In particular, older servers can ignore checkpoint time-window
 parameters; using a newer Reader alone does not enable server-side filtering.
@@ -148,8 +147,11 @@ version.*
 ### Server `server/`
 
 A REST API service offering capabilities for storing and retrieving measurement data from and to persistent storage.
-The server accepts metrics potentially from several `Atum Agents` and saves them into one central relational database. 
-Also, it is able to send the measurements back if requested via `Atum Reader`.
+The server accepts metrics potentially from several `Atum Agents` and saves them into one central relational database.
+Also, it is able to send the measurements back if requested via `Atum Reader`, and exposes v2 REST endpoints for
+partitioning search (`GET /api/v2/partitionings/search` by key/value or key-existence, partial or exact key set, author,
+key/value substring, and/or checkpoint time window) and lineage
+navigation (`parents`, `children`, `ancestors`, `descendants`, `lineage`).
 
 Important note: the server never receives any real data - it only works with the metadata and metrics defined
 by the agent!
@@ -175,11 +177,15 @@ integration tests that are used to verify the logic of our database functions.
 
 The database tests are integration tests in nature. Therefore, a few conditions applies:
 
-* The tests are excluded from task `test` and are run only by a dedicated `dbTest` task (`sbt dbTest`).
+* The integration tests are excluded from task `test` (which runs only `*UnitTests`). Use the dedicated `testDB` alias
+  (`sbt testDB`) to run both unit and integration tests for the `database` module (see `.sbtrc` and
+  [Run Special Tests](#run-special-tests)).
 * The database structures must exist on the target database (follow
-  the [deployment instructions in database module](database/README.md#Deployment)).
-* The connection information to the DB is provided in file `database/src/test/resources/database.properties`
-  (See `database.properties.template` for syntax).
+  the [deployment instructions in database module](database/README.md#deployment)).
+* The connection information to the DB is provided in `database/src/test/resources/database.properties`. Create or
+  update it with `test.jdbc.url`, `test.jdbc.username`, `test.jdbc.password`, and `test.persist.db` (for example,
+  `test.jdbc.url=jdbc:postgresql://localhost:5432/atum_db`, `test.jdbc.username=atum_owner`,
+  `test.jdbc.password=changeme`, `test.persist.db=false`).
 
 ## Vocabulary
 
@@ -240,10 +246,11 @@ A `Checkpoint` is defined on the agent side, the server only accepts it.
 calculations of individual metrics are performed only after the `Checkpoint` operation is being called.
 We can even say, that `Checkpoint` is a result of particular `Measurements` (verb).
 
-### Data Flow
+### Data Flow & Lineage
 
 The journey of a dataset throughout various data transformations and pipelines. It captures the whole journey,
-even if it involves multiple applications or ETL pipelines.
+even if it involves multiple applications or ETL pipelines. Datasets can be linked to one or multiple parent
+partitionings to explicitly model direct upstream lineage relationships alongside the overall data flow.
 
 ## Usage
 
@@ -361,19 +368,28 @@ atumContext.createCheckpointOnProvidedData(
 )
 ```
 
-#### 6. Sub-contexts (sub-partitionings)
+#### 6. Sub-contexts (sub-partitionings & multiple parents)
 
-When a pipeline splits the data further (e.g. per country), a child context can be derived from the parent one.
-The parent-child relationship is recorded in the data store, which is what builds up the `Data Flow`:
+When a pipeline splits the data further (e.g. per country) or joins multiple inputs, a child context can be derived
+from one or more parent contexts. The parent-child relationships are recorded in the data store, building up the `Data Flow`
+and explicit upstream lineage:
 
 ```scala
+// Single parent derivation
 implicit val countryContext: AtumContext =
   atumContext.subPartitionContext(AtumPartitions("country" -> "SA"))
+
+// Multiple parents linked in one atomic call
+val mergedContext: AtumContext = AtumAgent.getOrCreateAtumSubContext(
+  subPartitions = AtumPartitions("dataset" -> "consolidated"),
+  parentAtumContexts = Seq(parentCtxA, parentCtxB),
+  copyMeasureDefinitions = true // 3-arg overload has no default; omit copyMeasureDefinitions to use the 2-arg overload (which sends false)
+)
 ```
 
-By default the child partitioning is `parent ++ sub` (and overlapping keys are rejected). Pass
-`mergeWithParent = false` if the child should be identified only by `subPartitions`, while the lineage is still
-kept via flows. Note that measure definitions are copied from the parent only on explicit opt-in
+By default for single-parent derivations the child partitioning is `parent ++ sub` (and overlapping keys are rejected).
+Pass `mergeWithParent = false` if the child should be identified only by `subPartitions`, while the lineage is still
+recorded. Note that measure definitions are copied from the parent(s) only on explicit opt-in
 (`copyMeasureDefinitions = true`) and only when the child partitioning is newly created; additional data is never
 copied.
 
@@ -402,11 +418,11 @@ represents all currently supported measurement types (aka measures):
 | Type                               | Description                                                   |
 |------------------------------------|:--------------------------------------------------------------|
 | AtumMeasure.RecordCount            | Calculates the number of rows in the dataset                  |
-| AtumMeasure.DistinctRecordCount    | Calculates DISTINCT(COUNT(()) of the specified column         |
+| AtumMeasure.DistinctRecordCount    | Calculates COUNT(DISTINCT ...) over the specified `Seq[String]` columns |
 | AtumMeasure.SumOfValuesOfColumn    | Calculates SUM() of the specified column                      |
 | AtumMeasure.AbsSumOfValuesOfColumn | Calculates SUM(ABS()) of the specified column                 |
 | AtumMeasure.SumOfHashesOfColumn    | Calculates SUM(CRC32()) of the specified column               |
-| Measure.UnknownMeasure             | Custom measure where the data are provided by the application |
+| UnknownMeasure                     | Custom measure where the data are provided by the application |
 
 [//]: # (| controlType.aggregatedTruncTotal    | Calculates SUM&#40;TRUNC&#40;&#41;&#41; of the specified column       |)
 
@@ -476,7 +492,7 @@ These usually have dependency on some system or service being present on the mac
 These also can be performance or penetration tests. Basically the point is that these tests require special
 setup and are usually slower to execute.
 
-Use the `testDB` command to execute all Integration tests in `database` module, skipping all other tests and modules.
+Use the `testDB` command to execute all unit and integration tests in `database` module, skipping all other tests and modules.
 
 - Hint: project custom command, requiring a real DB to be present and configured
 

@@ -127,7 +127,7 @@ trait AtumAgent {
    *  @param subPartitions   Partitions identifying the child.
    *  @param mergeWithParent if true, the child partitioning is `parent ++ sub`;
    *                         if false, only `sub` is used as partitioning content,
-   *                         and the parent relationship is still recorded via flows.
+   *                         and the parent-child relationship is still recorded in explicit lineage (and flows).
    *  @param parentAtumContext Parent context.
    *
    *  @return Atum context object of the child
@@ -145,7 +145,7 @@ trait AtumAgent {
    *  @param subPartitions   Partitions identifying the child.
    *  @param mergeWithParent if true, the child partitioning is `parent ++ sub`;
    *                         if false, only `sub` is used as partitioning content,
-   *                         and the parent relationship is still recorded via flows.
+   *                         and the parent-child relationship is still recorded in explicit lineage (and flows).
    *  @param copyMeasureDefinitions if true and the child partitioning is newly created, the parent's measure
    *                         definitions are copied to it by the server; if false (what every other overload sends)
    *                         nothing is copied. Copying is governed solely by this flag, independent of

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.atum.database.flows
+package za.co.absa.atum.database.lineage
 
 import za.co.absa.balta.DBTestSuite
 import za.co.absa.balta.classes.JsonBString
@@ -25,68 +25,24 @@ import java.time.OffsetDateTime
 import java.util.{Properties, UUID}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Random
 
 /**
- *  Helper-level tests of `flows._link_to_parents`.
+ *  Helper-level tests of `lineage.link_to_parents`.
  *
  *  Test-design pitfall: the advisory lock is transaction-scoped and `DBTestSuite` runs the whole test body in a
  *  single transaction (rolled back at the end). Once ANY slow-path (check the DB function) call has happened in a test,
  *  the lock count of the session stays 1 until the rollback. Therefore:
  *   - every fixture graph is seeded WITHOUT the helper (`runs.create_partitioning` of the v1 path takes no lock),
- *   - all `advisoryLocksHeld() == 0` assertions precede the first slow-path `_link_to_parents` call of a test,
+ *   - all `advisoryLocksHeld() == 0` assertions precede the first slow-path `link_to_parents` call of a test,
  *   - the slow-lock test asserts `== 1` as its very last step.
  */
-class LinkToParentsIntegrationTests extends DBTestSuite {
+class LinkToParentsIntegrationTests extends DBTestSuite with LineageDBTestSupport {
 
-  private val fncLink = "flows._link_to_parents"
-  private val fncCreatePartitioning = "runs.create_partitioning"
-  private val fncGetAncestors = "runs.get_partitioning_ancestors"
+  private val fncGetAncestors = "lineage.get_partitioning_ancestors"
   private val fncGetFlowPartitionings = "flows.get_flow_partitionings"
   private val fncGetFlowCheckpoints = "flows.get_flow_checkpoints"
-  private val helperSignature = "flows._link_to_parents(bigint,bigint[],text)"
+  private val helperSignature = "lineage.link_to_parents(bigint,bigint[],text)"
   private val cycleText = "Parent partitioning would create a cycle"
-
-  private def partitioningJson(name: String): String =
-    s"""{"version":1,"keys":["lk"],"keysToValuesMap":{"lk":"$name"}}"""
-
-  private def partitioningOf(name: String): JsonBString = JsonBString(partitioningJson(name))
-
-  private def uniq(prefix: String): String = s"$prefix-${UUID.randomUUID()}"
-
-  private def ids(xs: Seq[Any]): CustomDBType =
-    CustomDBType(xs.map(x => if (x == null) "NULL" else x.toString).mkString("{", ",", "}"), "BIGINT[]")
-
-  /** Seeds a partitioning via the v1 path (takes NO advisory lock); an optional parent is linked with it. */
-  private def seed(name: String, parent: Option[Long] = None): Long = {
-    val call = function(fncCreatePartitioning)
-      .setParam("i_partitioning", partitioningOf(name))
-      .setParam("i_by_user", "Seeder")
-    val withParent = parent match {
-      case Some(p) => call.setParam("i_parent_partitioning_id", p)
-      case None => call.setParamNull("i_parent_partitioning_id")
-    }
-    withParent.execute { qr =>
-      assert(qr.hasNext)
-      val row = qr.next()
-      assert(row.getInt("status").exists(s => s == 11 || s == 12))
-      row.getLong("id_partitioning").get
-    }
-  }
-
-  private def link(child: Long, parents: CustomDBType): (Int, String) = {
-    function(fncLink)
-      .setParam("i_child_id", child)
-      .setParam("i_parent_ids", parents)
-      .setParam("i_by_user", "Linker")
-      .execute { qr =>
-        assert(qr.hasNext)
-        val row = qr.next()
-        val result = (row.getInt("status").get, row.getString("status_text").get)
-        assert(!qr.hasNext)
-        result
-      }
-  }
 
   private def linkNull(child: Long): (Int, String) = {
     function(fncLink)
@@ -103,6 +59,8 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
   private def ancestorIds(id: Long): Set[Long] = {
     function(fncGetAncestors)
       .setParam("i_id_partitioning", id)
+      .setParamNull("i_limit")
+      .setParamNull("i_offset")
       .execute { qr =>
         Iterator
           .continually(qr)
@@ -148,7 +106,7 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
   /** Inserts one checkpoint with one measurement on the partitioning (flow checkpoints only list measured ones). */
   private def seedCheckpoint(partitioningId: Long): UUID = {
     val checkpointId = UUID.randomUUID()
-    val definitionId: Long = Random.nextLong()
+    val definitionId: Long = queryLong("SELECT public.global_id()")
     table("runs.measure_definitions").insert(
       add("id_measure_definition", definitionId)
         .add("fk_partitioning", partitioningId)
@@ -211,17 +169,24 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     table("runs.additional_data").count()
   )
 
-  test("fast path: re-linking direct and transitive ancestors returns 14, writes nothing and takes no lock") {
+  test(
+    "fast path: re-linking an already-ancestor backfills only the missing edge (11 first time, 14 once present)," +
+      " writes no flow membership and takes no lock"
+  ) {
     val a = seed(uniq("a"))
     val b = seed(uniq("b"), Some(a))
     val c = seed(uniq("c"), Some(b))
     val before = counts()
 
+    // `a`/`b` were linked to their children only via the v1 path (seed), which never writes
+    // lineage.partitioning_edges; each is already an ancestor through the closure, so the first
+    // re-link of each pair only backfills the missing direct edge (11), lock-free.
     val (status, _) = link(c, ids(Seq(a)))
-    assert(status == 14)
-    assert(link(c, ids(Seq(b)))._1 == 14)
+    assert(status == 11)
+    assert(link(c, ids(Seq(b)))._1 == 11)
+    // both edges (a-c, b-c) now exist and the closure already contains them: truly nothing left to do
     assert(link(c, ids(Seq(a, b)))._1 == 14)
-    assert(link(b, ids(Seq(a)))._1 == 14)
+    assert(link(b, ids(Seq(a)))._1 == 11)
 
     assert(counts() == before)
     assert(advisoryLocksHeld() == 0)
@@ -235,7 +200,9 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     assert(link(c, ids(Seq.empty))._1 == 14)
     assert(linkNull(c)._1 == 14)
     assert(link(c, ids(Seq(null)))._1 == 14)
-    assert(link(c, ids(Seq(null, a, a)))._1 == 14)
+    // `a` is a real (deduplicated) parent here and, like above, was only v1-linked (no edge yet), so this
+    // backfills the missing edge once (11), not a true no-op
+    assert(link(c, ids(Seq(null, a, a)))._1 == 11)
 
     assert(counts() == before)
     assert(advisoryLocksHeld() == 0)
@@ -348,7 +315,9 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
 
     assert(link(d, ids(Seq(b)))._1 == 11)
     assert(link(d, ids(Seq(e)))._1 == 11)
-    assert(link(d, ids(Seq(a, b, e)))._1 == 14)
+    // `a` is already a (transitive) ancestor of `d` at this point (via b and e), but has never gotten a direct
+    // edge, so this call backfills it (11), even though b's and e's edges already exist and are no-ops
+    assert(link(d, ids(Seq(a, b, e)))._1 == 11)
 
     assert(ancestorIds(d) == Set(a, b, e))
     assert(table("flows.partitioning_to_flow").count(add("fk_partitioning", d)) == 4)
@@ -391,14 +360,20 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     assert(flowMembers(n) == Set(n))
   }
 
-  test("re-linking a child with descendants to an ancestor it already has stays a lock-free no-op (14)") {
+  test(
+    "re-linking a child with descendants to an ancestor it already has backfills missing edges" +
+      " (11), lock-free"
+  ) {
     val a = seed(uniq("a"))
     val c = seed(uniq("c"), Some(a))
     val d = seed(uniq("d"), Some(c))
     val before = counts()
 
-    assert(link(c, ids(Seq(a)))._1 == 14)
-    assert(link(d, ids(Seq(a, c)))._1 == 14)
+    // a-c, a-d and c-d were all only established via the v1 path (closure only, no edges), so each of
+    // these re-links backfills missing edges (11) rather than being a true no-op; the closure is unaffected
+    // (a and c are already ancestors of their respective children) so no lock is taken either way
+    assert(link(c, ids(Seq(a)))._1 == 11)
+    assert(link(d, ids(Seq(a, c)))._1 == 11)
 
     assert(counts() == before)
     assert(flowMembers(a) == Set(a, c, d))
@@ -467,9 +442,9 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
     assert(ancestorIds(z) == Set(x, y))
   }
 
-  test("privileges: only atum_owner may execute the helper and its search_path is pinned") {
+  test("privileges: atum_user may execute the helper and its search_path is pinned") {
     assert(hasExecute("atum_owner"))
-    assert(!hasExecute("atum_user"))
+    assert(hasExecute("atum_user"))
     assert(!hasExecute("atum_reader"))
     assert(!hasExecute("public"))
     assert(
@@ -561,6 +536,9 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
         val statement = writer.createStatement()
         try {
           statement.executeUpdate(
+            s"DELETE FROM lineage.partitioning_edges WHERE fk_child_partitioning IN ($idList) OR fk_parent_partitioning IN ($idList)"
+          )
+          statement.executeUpdate(
             s"DELETE FROM flows.partitioning_to_flow WHERE fk_partitioning IN ($idList) OR fk_flow IN " +
               s"(SELECT id_flow FROM flows.flows WHERE fk_primary_partitioning IN ($idList))"
           )
@@ -571,5 +549,66 @@ class LinkToParentsIntegrationTests extends DBTestSuite {
       retry.close()
       writer.close()
     }
+  }
+
+  test("i_child_id = NULL returns 42 with non-null status_text and writes nothing") {
+    val p = seed(uniq("null-child-p"))
+    val before = counts()
+
+    val (status, statusText) = function(fncLink)
+      .setParamNull("i_child_id")
+      .setParam("i_parent_ids", ids(Seq(p)))
+      .setParam("i_by_user", "Linker")
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        (row.getInt("status").get, row.getString("status_text").getOrElse(fail("status_text must not be NULL")))
+      }
+
+    assert(status == 42)
+    assert(statusText.nonEmpty)
+    assert(counts() == before)
+  }
+
+  test("i_by_user = NULL returns 51 and writes nothing") {
+    val p = seed(uniq("null-user-p"))
+    val c = seed(uniq("null-user-c"))
+    val before = counts()
+    val edgesBefore = table("lineage.partitioning_edges").count()
+
+    val (status, statusText) = function(fncLink)
+      .setParam("i_child_id", c)
+      .setParam("i_parent_ids", ids(Seq(p)))
+      .setParamNull("i_by_user")
+      .execute { qr =>
+        assert(qr.hasNext)
+        val row = qr.next()
+        (row.getInt("status").get, row.getString("status_text").get)
+      }
+
+    assert(status == 51)
+    assert(statusText.contains("i_by_user"))
+    assert(counts() == before)
+    assert(table("lineage.partitioning_edges").count() == edgesBefore)
+  }
+
+  test("parent missing flows.partitioning_to_flow row returns 50 and writes no edge") {
+    val p = seed(uniq("orphan-p"))
+    val c = seed(uniq("orphan-c"))
+
+    val stmt = dbConnection.connection.createStatement()
+    try {
+      stmt.executeUpdate(s"DELETE FROM flows.partitioning_to_flow WHERE fk_partitioning = $p")
+    } finally stmt.close()
+
+    val before = counts()
+    val edgesBefore = table("lineage.partitioning_edges").count()
+
+    val (status, statusText) = link(c, ids(Seq(p)))
+
+    assert(status == 50)
+    assert(statusText.contains(p.toString))
+    assert(counts() == before)
+    assert(table("lineage.partitioning_edges").count() == edgesBefore)
   }
 }

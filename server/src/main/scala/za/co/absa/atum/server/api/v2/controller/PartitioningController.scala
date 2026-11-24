@@ -23,6 +23,8 @@ import sttp.model.StatusCode
 import zio.IO
 import zio.macros.accessible
 
+import java.time.ZonedDateTime
+
 @accessible
 trait PartitioningController {
 
@@ -49,6 +51,18 @@ trait PartitioningController {
     partitioning: String
   ): IO[ErrorResponse, SingleSuccessResponse[PartitioningWithIdDTO]]
 
+  def searchPartitionings(
+    keys: Option[Map[String, Option[String]]] = None,
+    exactKeys: Option[Boolean] = None,
+    author: Option[String] = None,
+    searchText: Option[String] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
+    latestFirst: Option[Boolean] = None,
+    limit: Int = 10,
+    offset: Long = 0L
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
+
   def getFlowPartitionings(
     flowId: Long,
     limit: Int,
@@ -64,11 +78,30 @@ trait PartitioningController {
     partitioningParentPatchDTO: PartitioningParentPatchDTO
   ): IO[ErrorResponse, Unit]
 
-
   def getPartitioningAncestors(
     partitioningId: Long,
     limit: Int,
     offset: Long
   ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
+
+  def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ErrorResponse, PaginatedResponse[PartitioningWithIdDTO]]
+
+  def getPartitioningParents(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ParentPartitioningDTO]]
+
+  def getPartitioningChildren(
+    partitioningId: Long
+  ): IO[ErrorResponse, MultiSuccessResponse[ChildPartitioningDTO]]
+
+  def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ErrorResponse, SingleSuccessResponse[LineageGraphDTO]]
 
 }

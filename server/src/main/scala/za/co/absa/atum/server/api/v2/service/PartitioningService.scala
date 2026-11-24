@@ -22,6 +22,8 @@ import za.co.absa.atum.server.model.{CreationResult, PaginatedResult}
 import zio.IO
 import zio.macros.accessible
 
+import java.time.ZonedDateTime
+
 @accessible
 trait PartitioningService {
 
@@ -46,6 +48,18 @@ trait PartitioningService {
     partitioning: PartitioningDTO
   ): IO[ServiceError, PartitioningWithIdDTO]
 
+  def searchPartitionings(
+    keys: Option[Map[String, Option[String]]] = None,
+    exactKeys: Option[Boolean] = None,
+    author: Option[String] = None,
+    searchText: Option[String] = None,
+    from: Option[ZonedDateTime] = None,
+    to: Option[ZonedDateTime] = None,
+    latestFirst: Option[Boolean] = None,
+    limit: Int = 10,
+    offset: Long = 0L
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
   def getFlowPartitionings(
     flowId: Long,
     limit: Int,
@@ -64,4 +78,20 @@ trait PartitioningService {
     limit: Int,
     offset: Long
   ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningDescendants(
+    partitioningId: Long,
+    limit: Int,
+    offset: Long
+  ): IO[ServiceError, PaginatedResult[PartitioningWithIdDTO]]
+
+  def getPartitioningParents(partitioningId: Long): IO[ServiceError, Seq[ParentPartitioningDTO]]
+
+  def getPartitioningChildren(partitioningId: Long): IO[ServiceError, Seq[ChildPartitioningDTO]]
+
+  def getPartitioningLineageGraph(
+    partitioningId: Long,
+    direction: String,
+    depth: Int
+  ): IO[ServiceError, LineageGraphDTO]
 }

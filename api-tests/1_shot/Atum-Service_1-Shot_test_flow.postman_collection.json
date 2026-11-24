@@ -464,6 +464,147 @@
           "response": []
         },
         {
+          "name": "Act: partitionings (get by id) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const expectedId = pm.collectionVariables.get(\"partitioning_id\");",
+                  "    const expectedPartitioning = pm.collectionVariables.get(\"partitioning_as_obj\");",
+                  "    const expectedAuthor = pm.collectionVariables.get(\"partitioning_author\");",
+                  "",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"][\"id\"]).to.eql(expectedId);",
+                  "    pm.expect(jsonData[\"data\"][\"partitioning\"]).to.eql(expectedPartitioning);",
+                  "    pm.expect(jsonData[\"data\"][\"author\"]).to.eql(expectedAuthor);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioning_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings (get by id, not exists) - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/9223372036854775807",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "9223372036854775807"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Act: createPartitioning (retrieve) - 200",
           "event": [
             {
@@ -529,7 +670,7 @@
           "response": []
         }
       ],
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- POST:/api/v1/createPartitioning",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioning_id}\n    \n",
       "auth": {
         "type": "noauth"
       },
@@ -856,9 +997,312 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Act: get parent partitionings - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    const expectedPartitioningId = pm.collectionVariables.get(\"partitioning_id\");",
+                  "",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\").with.lengthOf(1);",
+                  "    pm.expect(jsonData.data[0].id).to.eql(expectedPartitioningId);",
+                  "    pm.expect(jsonData.data[0].linkedBy).to.be.a(\"string\");",
+                  "    pm.expect(jsonData.data[0].linkedAt).to.be.a(\"string\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/parents",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioningChild_id}}",
+                "parents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: get child partitionings - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    const expectedChildId = pm.collectionVariables.get(\"partitioningChild_id\");",
+                  "",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\").with.lengthOf(1);",
+                  "    pm.expect(jsonData.data[0].id).to.eql(expectedChildId);",
+                  "    pm.expect(jsonData.data[0].linkedBy).to.be.a(\"string\");",
+                  "    pm.expect(jsonData.data[0].linkedAt).to.be.a(\"string\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/children",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioning_id}}",
+                "children"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: get descendant partitionings - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    const expectedChildId = pm.collectionVariables.get(\"partitioningChild_id\");",
+                  "",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\").with.lengthOf(1);",
+                  "    pm.expect(jsonData.data[0].id).to.eql(expectedChildId);",
+                  "    pm.expect(jsonData.pagination.hasMore).to.eql(false);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioning_id}}/descendants",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioning_id}}",
+                "descendants"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: get partitioning lineage graph - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected nodes and edges\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const primaryId = pm.collectionVariables.get(\"partitioningChild_id\");",
+                  "    const parentId = pm.collectionVariables.get(\"partitioning_id\");",
+                  "",
+                  "    pm.expect(jsonData.data.primaryPartitioningId).to.eql(primaryId);",
+                  "    pm.expect(jsonData.data.depth).to.eql(5);",
+                  "    pm.expect(jsonData.data.direction).to.eql(\"both\");",
+                  "    pm.expect(jsonData.data.nodes).to.be.an(\"array\");",
+                  "    const nodeIds = jsonData.data.nodes.map(function (n) { return n.id; });",
+                  "    pm.expect(nodeIds).to.include(parentId);",
+                  "    pm.expect(nodeIds).to.include(primaryId);",
+                  "    pm.expect(jsonData.data.edges).to.be.an(\"array\");",
+                  "    const expectedEdge = jsonData.data.edges.find(function (e) {",
+                  "        return e.parentPartitioningId === parentId && e.childPartitioningId === primaryId;",
+                  "    });",
+                  "    pm.expect(expectedEdge).to.not.be.undefined;",
+                  "    pm.expect(expectedEdge.linkedBy).to.be.a(\"string\");",
+                  "    pm.expect(expectedEdge.linkedAt).to.be.a(\"string\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{partitioningChild_id}}/lineage?direction=both&depth=5",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{partitioningChild_id}}",
+                "lineage"
+              ],
+              "query": [
+                {
+                  "key": "direction",
+                  "value": "both"
+                },
+                {
+                  "key": "depth",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ],
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioningChild_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/ancestors",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioningChild_as_base64}\n    \n- POST:/api/v1/createPartitioning\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/parents\n    \n- GET:/api/v2/partitionings/{partitioning_id}/children\n    \n- GET:/api/v2/partitionings/{partitioningChild_id}/lineage\n    \n- GET:/api/v2/partitionings/{partitioning_id}/descendants\n    \n",
       "event": [
         {
           "listen": "prerequest",
@@ -1389,7 +1833,7 @@
           "response": []
         }
       ],
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings/{partitioning_id}/checkpoints\n    \n- POST:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/checkpoints/{checkpoint_id}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/measures",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings/{partitioning_id}/checkpoints\n    \n- POST:/api/v1/createCheckpoint\n    \n- POST:/api/v2/partitionings\n    \n- GET:/api/v2/partitionings?partitioning={partitioning_as_base64}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/checkpoints\n    \n- GET:/api/v2/partitionings/{partitioning_id}/checkpoints/{checkpoint_id}\n    \n- GET:/api/v2/partitionings/{partitioning_id}/measures",
       "event": [
         {
           "listen": "prerequest",
@@ -1708,6 +2152,8 @@
                   "    pm.expect(jsonData[\"data\"][1][\"id\"]).to.eql(expectedChildPartitioningId);",
                   "    pm.expect(jsonData[\"data\"][1][\"partitioning\"]).to.eql(expectedChildPartitioning);",
                   "    pm.expect(jsonData[\"data\"][1][\"author\"]).to.eql(expectedChildPartitioningAuthor);",
+                  "",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
                   "});",
                   ""
                 ],
@@ -1758,6 +2204,170 @@
                 {
                   "key": "offset",
                   "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: flows / partitionings (page limit=1, offset=0) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected page\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1);",
+                  "    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(pm.collectionVariables.get(\"partitioning_id\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(pm.collectionVariables.get(\"partitioning_as_obj\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(pm.collectionVariables.get(\"partitioning_author\"));",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 1, \"offset\": 0, \"hasMore\": true });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/flows/{{flow_id}}/partitionings?limit=1&offset=0",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "flows",
+                "{{flow_id}}",
+                "partitionings"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "1"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: flows / partitionings (page limit=1, offset=1) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected page\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1);",
+                  "    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(pm.collectionVariables.get(\"partitioningChild_id\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(pm.collectionVariables.get(\"partitioningChild_as_obj\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(pm.collectionVariables.get(\"partitioningChild_author\"));",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 1, \"offset\": 1, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/flows/{{flow_id}}/partitionings?limit=1&offset=1",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "flows",
+                "{{flow_id}}",
+                "partitionings"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "1"
+                },
+                {
+                  "key": "offset",
+                  "value": "1"
                 }
               ]
             }
@@ -1855,8 +2465,1900 @@
       "description": "Covers endpoints:\n\n- GET:/api/v2/partitionings/{partitioning_id}/main-flow\n    \n- GET:/api/v2/flows/{flow_id}/partitionings\n    \n- GET:/api/v2/flows/{flow_id}/checkpoints"
     },
     {
+      "name": "Test: search partitionings",
+      "item": [
+        {
+          "name": "Act: partitionings / search (keys only) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1);",
+                  "    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(pm.collectionVariables.get(\"partitioning_id\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(pm.collectionVariables.get(\"partitioning_as_obj\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(pm.collectionVariables.get(\"partitioning_author\"));",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"partitionForAPITests2\": pm.collectionVariables.get(\"partitioning_value__RUNTIME\")",
+                  "}));",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (keys only, without checkpoints) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1);",
+                  "    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(pm.collectionVariables.get(\"partitioningChild_id\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(pm.collectionVariables.get(\"partitioningChild_as_obj\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(pm.collectionVariables.get(\"partitioningChild_author\"));",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"partitionChildForAPITests2\": pm.collectionVariables.get(\"partitioningChild_value__RUNTIME\")",
+                  "}));",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (keys and time window) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1);",
+                  "    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(pm.collectionVariables.get(\"partitioning_id\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(pm.collectionVariables.get(\"partitioning_as_obj\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(pm.collectionVariables.get(\"partitioning_author\"));",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"partitionForAPITests2\": pm.collectionVariables.get(\"partitioning_value__RUNTIME\")",
+                  "}));",
+                  "",
+                  "const processStart = new Date(pm.collectionVariables.get(\"checkpoint_processStartTime\"));",
+                  "const shiftedIso = (millis) => new Date(processStart.getTime() + millis).toISOString();",
+                  "",
+                  "pm.variables.set(\"search_from\", shiftedIso(-60000));",
+                  "pm.variables.set(\"search_to\", shiftedIso(60000));",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&from={{search_from}}&to={{search_to}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "from",
+                  "value": "{{search_from}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{search_to}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (keys and window before checkpoint) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body is an empty page\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.be.an(\"array\").that.is.empty;",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"partitionForAPITests2\": pm.collectionVariables.get(\"partitioning_value__RUNTIME\")",
+                  "}));",
+                  "",
+                  "const processStart = new Date(pm.collectionVariables.get(\"checkpoint_processStartTime\"));",
+                  "const shiftedIso = (millis) => new Date(processStart.getTime() + millis).toISOString();",
+                  "",
+                  "// 'to' is exclusive, so a window ending exactly at the checkpoint's process start time must not match it",
+                  "pm.variables.set(\"search_from\", shiftedIso(-60000));",
+                  "pm.variables.set(\"search_to\", shiftedIso(0));",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&from={{search_from}}&to={{search_to}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "from",
+                  "value": "{{search_from}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{search_to}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (keys of partitioning without checkpoints and time window) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body is an empty page\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.be.an(\"array\").that.is.empty;",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"partitionChildForAPITests2\": pm.collectionVariables.get(\"partitioningChild_value__RUNTIME\")",
+                  "}));",
+                  "",
+                  "const processStart = new Date(pm.collectionVariables.get(\"checkpoint_processStartTime\"));",
+                  "const shiftedIso = (millis) => new Date(processStart.getTime() + millis).toISOString();",
+                  "",
+                  "pm.variables.set(\"search_from\", shiftedIso(-60000));",
+                  "pm.variables.set(\"search_to\", shiftedIso(60000));",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&from={{search_from}}&to={{search_to}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "from",
+                  "value": "{{search_from}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{search_to}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (time window only, no matches) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Time-only search returns an empty page\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "    const page = pm.response.json();",
+                  "    pm.expect(page.data).to.be.an(\"array\").that.is.empty;",
+                  "    pm.expect(page.pagination).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?from=2100-01-01T00:00:00Z&to=2100-01-02T00:00:00Z&limit=10&offset=0",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2100-01-01T00:00:00Z"
+                },
+                {
+                  "key": "to",
+                  "value": "2100-01-02T00:00:00Z"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (keys not matching) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body is an empty page\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.be.an(\"array\").that.is.empty;",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"partitionForAPITests2\": pm.collectionVariables.get(\"partitioning_value__RUNTIME\") + \"_not_existing\"",
+                  "}));",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (no filters) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (empty keys) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "",
+                  "pm.variables.set(\"search_keys\", toBase64Url({}));",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (malformed keys) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys=not*base64url",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "not*base64url"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (from not before to) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"partitionForAPITests2\": pm.collectionVariables.get(\"partitioning_value__RUNTIME\")",
+                  "}));",
+                  "",
+                  "const processStart = new Date(pm.collectionVariables.get(\"checkpoint_processStartTime\"));",
+                  "const shiftedIso = (millis) => new Date(processStart.getTime() + millis).toISOString();",
+                  "",
+                  "pm.variables.set(\"search_from\", shiftedIso(0));",
+                  "pm.variables.set(\"search_to\", shiftedIso(0));",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&from={{search_from}}&to={{search_to}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "from",
+                  "value": "{{search_from}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{search_to}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (time window only, with matches) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "pm.test(\"Response includes expected partitioning\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const expectedId = pm.collectionVariables.get(\"partitioning_id\");",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\").that.is.not.empty;",
+                  "    pm.expect(jsonData.data.some((item) => item.id === expectedId)).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const processStart = new Date(pm.collectionVariables.get(\"checkpoint_processStartTime\"));",
+                  "const shiftedIso = (millis) => new Date(processStart.getTime() + millis).toISOString();",
+                  "pm.variables.set(\"search_from\", shiftedIso(-5000));",
+                  "pm.variables.set(\"search_to\", shiftedIso(5000));"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?from={{search_from}}&to={{search_to}}&limit=1000&offset=0",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "{{search_from}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{search_to}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "1000"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (from only, with matches) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response body has expected values\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.expect(jsonData[\"data\"]).to.have.lengthOf(1);",
+                  "    pm.expect(jsonData[\"data\"][0][\"id\"]).to.eql(pm.collectionVariables.get(\"partitioning_id\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"partitioning\"]).to.eql(pm.collectionVariables.get(\"partitioning_as_obj\"));",
+                  "    pm.expect(jsonData[\"data\"][0][\"author\"]).to.eql(pm.collectionVariables.get(\"partitioning_author\"));",
+                  "    pm.expect(jsonData[\"pagination\"]).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"partitionForAPITests2\": pm.collectionVariables.get(\"partitioning_value__RUNTIME\")",
+                  "}));",
+                  "const processStart = new Date(pm.collectionVariables.get(\"checkpoint_processStartTime\"));",
+                  "pm.variables.set(\"search_from\", new Date(processStart.getTime() - 5000).toISOString());"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&from={{search_from}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "from",
+                  "value": "{{search_from}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (from older than 365 days) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const stale = new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString();",
+                  "pm.variables.set(\"search_stale_from\", stale);"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?from={{search_stale_from}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "{{search_stale_from}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (seed 1 for pagination) - 201",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.collectionVariables.set(\"search_batch_value\", \"search_batch_\" + Date.now() + \"_\" + Math.random().toString(36).slice(2, 8));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set(\"search_seed1_id\", pm.response.json().data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"partitioning\":[{\"key\":\"searchBatch\",\"value\":\"{{search_batch_value}}\"},{\"key\":\"seq\",\"value\":\"1\"}],\"parentPartitioningIds\":[],\"author\":\"apiTest1ShotSearch\"}"
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (seed 2 for pagination) - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set(\"search_seed2_id\", pm.response.json().data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"partitioning\":[{\"key\":\"searchBatch\",\"value\":\"{{search_batch_value}}\"},{\"key\":\"seq\",\"value\":\"2\"}],\"parentPartitioningIds\":[],\"author\":\"apiTest1ShotSearch\"}"
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (latest-first page limit=1, offset=0) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response page has expected descending item and pagination\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.lengthOf(1);",
+                  "    pm.expect(jsonData.data[0].id).to.eql(pm.collectionVariables.get(\"search_seed2_id\"));",
+                  "    pm.expect(jsonData.pagination).to.eql({ \"limit\": 1, \"offset\": 0, \"hasMore\": true });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"searchBatch\": pm.collectionVariables.get(\"search_batch_value\")",
+                  "}));"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&limit=1&offset=0&latest-first=true",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "latest-first",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (latest-first page limit=1, offset=1) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response page has expected descending item and pagination\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.lengthOf(1);",
+                  "    pm.expect(jsonData.data[0].id).to.eql(pm.collectionVariables.get(\"search_seed1_id\"));",
+                  "    pm.expect(jsonData.pagination).to.eql({ \"limit\": 1, \"offset\": 1, \"hasMore\": false });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"searchBatch\": pm.collectionVariables.get(\"search_batch_value\")",
+                  "}));"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&limit=1&offset=1&latest-first=true",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                },
+                {
+                  "key": "offset",
+                  "value": "1"
+                },
+                {
+                  "key": "latest-first",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (key existence with null value and exact-keys=true) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response includes both seeded partitionings with exact 2-key set\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.lengthOf(2);",
+                  "    pm.expect(jsonData.data.map((item) => item.id)).to.eql([",
+                  "        pm.collectionVariables.get(\"search_seed1_id\"),",
+                  "        pm.collectionVariables.get(\"search_seed2_id\")",
+                  "    ]);",
+                  "    pm.expect(jsonData.pagination).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"searchBatch\": pm.collectionVariables.get(\"search_batch_value\"),",
+                  "    \"seq\": null",
+                  "}));"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&exact-keys=true",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "exact-keys",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (exact-keys=true excludes partitionings with extra keys) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response is empty when extra keys exist on stored partitionings\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\").that.is.empty;",
+                  "    pm.expect(jsonData.pagination).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const toBase64Url = (value) =>",
+                  "    btoa(JSON.stringify(value)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "pm.variables.set(\"search_keys\", toBase64Url({",
+                  "    \"searchBatch\": pm.collectionVariables.get(\"search_batch_value\")",
+                  "}));"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?keys={{search_keys}}&exact-keys=true",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keys",
+                  "value": "{{search_keys}}"
+                },
+                {
+                  "key": "exact-keys",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (exact-keys=true without keys) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?from=2100-01-01T00:00:00Z&to=2100-01-02T00:00:00Z&exact-keys=true",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2100-01-01T00:00:00Z"
+                },
+                {
+                  "key": "to",
+                  "value": "2100-01-02T00:00:00Z"
+                },
+                {
+                  "key": "exact-keys",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (author and case-insensitive search-text) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response includes both seeded partitionings matching author and search-text\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.lengthOf(2);",
+                  "    pm.expect(jsonData.data.map((item) => item.id)).to.eql([",
+                  "        pm.collectionVariables.get(\"search_seed1_id\"),",
+                  "        pm.collectionVariables.get(\"search_seed2_id\")",
+                  "    ]);",
+                  "    pm.expect(jsonData.pagination).to.eql({ \"limit\": 10, \"offset\": 0, \"hasMore\": false });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.variables.set(\"search_text_upper\", String(pm.collectionVariables.get(\"search_batch_value\")).toUpperCase());"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?author=apiTest1ShotSearch&search-text={{search_text_upper}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "author",
+                  "value": "apiTest1ShotSearch"
+                },
+                {
+                  "key": "search-text",
+                  "value": "{{search_text_upper}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (whitespace-only author) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?author=%20%20%20",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "author",
+                  "value": "   "
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (single-char search-text) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?search-text=a",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "search-text",
+                  "value": "a"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: partitionings / search (whitespace-only search-text) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Content-Type is application/json\", function () { pm.response.to.have.header(\"Content-Type\", \"application/json\"); });",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData[\"message\"]).to.be.a(\"string\").and.not.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/search?search-text=%20%20%20",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "search-text",
+                  "value": "   "
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Covers endpoints:\n\n- GET:/api/v2/partitionings/search"
+    },
+    {
       "name": "Test: consolidated POST and linking (v1.1)",
-      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- PATCH:/api/v2/partitionings/{partitioningId}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningId}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningId}/measures\n    \n- GET:/api/v2/partitionings/{partitioningId}/additional-data\n    \n- GET:/api/v2/partitionings/{partitioningId}/main-flow\n    \n- GET:/api/v2/flows/{flowId}/partitionings\n    \n- POST:/api/v2/partitionings/{partitioningId}/checkpoints\n    \n- GET:/api/v2/partitionings?partitioning=\n    \nThe POST covers: 201 created / 200 existing, 0..N parents, 404 unknown parent (the child is not created), 409 cycle, 400 more than 100 distinct parents, copyMeasureDefinitions true / false. The PATCH covers: 400 without the copy flags, 409 when the linked partitioning already has descendants (nothing is written, the flow of the new parent is unchanged). All partitionings of this folder use the unique suffix in the collection variable v11_suffix (regenerated unconditionally by the first request of the folder, so a re-run after an aborted run starts clean); all ids are kept in collection variables with the prefix v11_. Ids of probe requests for unknown partitionings are >= 9007199254740000 (never allocated by the database sequence). This folder is an HTTP-contract smoke test with one happy path per behaviour; the edge cases (boundaries, self-link, copy-flag matrix) are covered by the database and server tests. Error responses are checked by status code and envelope shape (message, requestId), not by message wording.",
+      "description": "Covers endpoints:\n\n- POST:/api/v2/partitionings\n    \n- PATCH:/api/v2/partitionings/{partitioningId}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningId}/ancestors\n    \n- GET:/api/v2/partitionings/{partitioningId}/parents\n    \n- GET:/api/v2/partitionings/{partitioningId}/children\n    \n- GET:/api/v2/partitionings/{partitioningId}/descendants\n    \n- GET:/api/v2/partitionings/{partitioningId}/lineage\n    \n- GET:/api/v2/partitionings/{partitioningId}/measures\n    \n- GET:/api/v2/partitionings/{partitioningId}/additional-data\n    \n- GET:/api/v2/partitionings/{partitioningId}/main-flow\n    \n- GET:/api/v2/flows/{flowId}/partitionings\n    \n- POST:/api/v2/partitionings/{partitioningId}/checkpoints\n    \n- GET:/api/v2/partitionings?partitioning=\n    \nThe POST covers: 201 created / 200 existing, 0..N parents, 404 unknown parent (the child is not created), 409 cycle, 400 more than 100 distinct parents, copyMeasureDefinitions true / false. The PATCH covers: 204 fresh link, 400 without the copy flags, 409 when the linked partitioning already has descendants (nothing is written, the flow of the new parent is unchanged). All partitionings of this folder use the unique suffix in the collection variable v11_suffix (regenerated unconditionally by the first request of the folder, so a re-run after an aborted run starts clean); all ids are kept in collection variables with the prefix v11_. Ids of probe requests for unknown partitionings are >= 9007199254740000 (never allocated by the database sequence). This folder is an HTTP-contract smoke test with one happy path per behaviour; the edge cases (boundaries, self-link, copy-flag matrix) are covered by the database and server tests. Error responses are checked by status code and envelope shape (message, requestId), not by message wording.",
       "event": [
         {
           "listen": "prerequest",
@@ -2518,6 +5020,242 @@
           "response": []
         },
         {
+          "name": "Act: v11 child M ancestors (both P and R) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const g = function (k) { return pm.collectionVariables.get(k); };",
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Ancestors of M are exactly {P, R}', function () {",
+                  "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
+                  "    pm.expect(ids).to.eql([g('v11_p_id'), g('v11_r_id')].map(String).sort());",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_m_id}}/ancestors?limit=10&offset=0",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_m_id}}",
+                "ancestors"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 child M direct parents (both P and R) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const g = function (k) { return pm.collectionVariables.get(k); };",
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Direct parents of M are {P, R} with edge metadata', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    const ids = data.map(function (x) { return String(x.id); }).sort();",
+                  "    pm.expect(ids).to.eql([g('v11_p_id'), g('v11_r_id')].map(String).sort());",
+                  "    data.forEach(function (x) {",
+                  "        pm.expect(x.linkedBy).to.be.a('string');",
+                  "        pm.expect(x.linkedAt).to.be.a('string');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_m_id}}/parents",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_m_id}}",
+                "parents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 parent P direct children (C1, C2, R, M) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const g = function (k) { return pm.collectionVariables.get(k); };",
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Direct children of P are {C1, C2, R, M}', function () {",
+                  "    const ids = pm.response.json().data.map(function (x) { return String(x.id); }).sort();",
+                  "    pm.expect(ids).to.eql([g('v11_c1_id'), g('v11_c2_id'), g('v11_r_id'), g('v11_m_id')].map(String).sort());",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_p_id}}/children",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_p_id}}",
+                "children"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 parent P descendants (deduplicated C1, C2, R, M) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const g = function (k) { return pm.collectionVariables.get(k); };",
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Descendants of P are deduplicated {C1, C2, R, M}', function () {",
+                  "    const j = pm.response.json();",
+                  "    const ids = j.data.map(function (x) { return String(x.id); }).sort();",
+                  "    pm.expect(ids).to.eql([g('v11_c1_id'), g('v11_c2_id'), g('v11_r_id'), g('v11_m_id')].map(String).sort());",
+                  "    pm.expect(j.pagination.hasMore).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_p_id}}/descendants?limit=10&offset=0",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_p_id}}",
+                "descendants"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 child M lineage graph (multi-parent + induced P->R edge) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const g = function (k) { return pm.collectionVariables.get(k); };",
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Lineage graph for M includes {P, R, M} and edges P->R, P->M, R->M', function () {",
+                  "    const d = pm.response.json().data;",
+                  "    const pId = Number(g('v11_p_id'));",
+                  "    const rId = Number(g('v11_r_id'));",
+                  "    const mId = Number(g('v11_m_id'));",
+                  "    pm.expect(d.primaryPartitioningId).to.eql(mId);",
+                  "    pm.expect(d.direction).to.eql('both');",
+                  "    pm.expect(d.depth).to.eql(5);",
+                  "    const nodeIds = d.nodes.map(function (n) { return n.id; }).sort();",
+                  "    pm.expect(nodeIds).to.eql([pId, rId, mId].sort());",
+                  "    const edgeKeys = d.edges.map(function (e) { return e.parentPartitioningId + '->' + e.childPartitioningId; }).sort();",
+                  "    pm.expect(edgeKeys).to.eql([pId + '->' + mId, pId + '->' + rId, rId + '->' + mId].sort());",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_m_id}}/lineage?direction=both&depth=5",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_m_id}}",
+                "lineage"
+              ],
+              "query": [
+                {
+                  "key": "direction",
+                  "value": "both"
+                },
+                {
+                  "key": "depth",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Act: v11 parent P main flow - 200",
           "event": [
             {
@@ -2893,7 +5631,8 @@
                 "packages": {},
                 "exec": [
                   "const n = [{ key: 'v11Test', value: 'N_' + pm.collectionVariables.get('v11_suffix') }];",
-                  "pm.collectionVariables.set('v11_n_b64', btoa(JSON.stringify(n)));"
+                  "const b64url = btoa(JSON.stringify(n)).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('v11_n_b64', b64url);"
                 ]
               }
             },
@@ -3049,14 +5788,10 @@
                 "exec": [
                   "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });",
                   "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
-                  "pm.test('Error envelope carries message and requestId (the wording of the message is not part of the contract)', function () {",
+                  "pm.test('Error envelope carries message and requestId', function () {",
                   "    const j = pm.response.json();",
                   "    pm.expect(j).to.have.property('requestId');",
                   "    pm.expect(j).to.have.property('message');",
-                  "});",
-                  "// Cleanup of the folder state (the first request of the folder resets it anyway)",
-                  "Object.keys(pm.collectionVariables.toObject()).forEach(function (k) {",
-                  "    if (k.indexOf('v11_') === 0) { pm.collectionVariables.unset(k); }",
                   "});"
                 ]
               }
@@ -3089,6 +5824,483 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Act: v11 leaf L (create for fresh PATCH link) - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    try {",
+                  "        const _j = pm.response.json();",
+                  "        if (_j && _j.data && _j.data.id !== undefined) { pm.collectionVariables.set('v11_l_id', _j.data.id); }",
+                  "    } catch (e) { /* not JSON: the status assertion above reports the real problem */ }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"author\": \"postman_v11\", \"partitioning\": [{\"key\": \"v11Test\", \"value\": \"L_{{v11_suffix}}\"}], \"parentPartitioningIds\": []}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 PATCH leaf L under C2 - 204",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"parentPartitioningId\": {{v11_c2_id}}, \"author\": \"postman_v11_patch\", \"copyMeasurements\": false, \"copyAdditionalData\": false}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_l_id}}/ancestors",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_l_id}}",
+                "ancestors"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 leaf L direct parents after PATCH (exactly C2) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const g = function (k) { return pm.collectionVariables.get(k); };",
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Direct parent of L is C2', function () {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.expect(data).to.have.lengthOf(1);",
+                  "    pm.expect(String(data[0].id)).to.eql(String(g('v11_c2_id')));",
+                  "    pm.expect(data[0].linkedBy).to.eql('postman_v11_patch');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_l_id}}/parents",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_l_id}}",
+                "parents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 parents for unknown partitioning - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
+                  "pm.test('Error envelope carries message and requestId', function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('requestId');",
+                  "    pm.expect(j).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/9007199254749999/parents",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "9007199254749999",
+                "parents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 parents for non-numeric partitioningId - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/not-a-number/parents",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "not-a-number",
+                "parents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 children for unknown partitioning - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
+                  "pm.test('Error envelope carries message and requestId', function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('requestId');",
+                  "    pm.expect(j).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/9007199254749999/children",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "9007199254749999",
+                "children"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 children for non-numeric partitioningId - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/not-a-number/children",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "not-a-number",
+                "children"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 descendants for unknown partitioning - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
+                  "pm.test('Error envelope carries message and requestId', function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('requestId');",
+                  "    pm.expect(j).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/9007199254749999/descendants",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "9007199254749999",
+                "descendants"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 descendants with invalid limit=0 - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_m_id}}/descendants?limit=0",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_m_id}}",
+                "descendants"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 lineage graph for unknown partitioning - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
+                  "pm.test('Error envelope carries message and requestId', function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('requestId');",
+                  "    pm.expect(j).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/9007199254749999/lineage",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "9007199254749999",
+                "lineage"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 lineage graph with invalid direction - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type is application/json', function () { pm.response.to.have.header('Content-Type', 'application/json'); });",
+                  "pm.test('Error envelope carries message and requestId', function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('requestId');",
+                  "    pm.expect(j).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_m_id}}/lineage?direction=invalid",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_m_id}}",
+                "lineage"
+              ],
+              "query": [
+                {
+                  "key": "direction",
+                  "value": "invalid"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Act: v11 lineage graph with out-of-range depth=99 - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "pm.test('Status code is 400', function () { pm.response.to.have.status(400); });",
+                  "// Cleanup of the folder state (the first request of the folder resets it anyway)",
+                  "Object.keys(pm.collectionVariables.toObject()).forEach(function (k) {",
+                  "    if (k.indexOf('v11_') === 0) { pm.collectionVariables.unset(k); }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/v2/partitionings/{{v11_m_id}}/lineage?depth=99",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "partitionings",
+                "{{v11_m_id}}",
+                "lineage"
+              ],
+              "query": [
+                {
+                  "key": "depth",
+                  "value": "99"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     }
@@ -3114,7 +6326,7 @@
           "    const partitioningAuthor = \"apiTest1ShotPartitioning\";",
           "    pm.collectionVariables.set(\"partitioning_author\", partitioningAuthor);",
           "",
-          "    const partitioningAsBase64 = btoa(JSON.stringify(partitioningToUse));",
+          "    const partitioningAsBase64 = btoa(JSON.stringify(partitioningToUse)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
           "    pm.collectionVariables.set(\"partitioning_as_base64\", partitioningAsBase64);",
           "}",
           "",
@@ -3140,7 +6352,7 @@
           "  const partitioningChildAuthor = \"apiTest1ShotpartitioningChild\";",
           "  pm.collectionVariables.set(\"partitioningChild_author\", partitioningChildAuthor);",
           "",
-          "  const partitioningChildAsBase64 = btoa(JSON.stringify(partitioningChildToUse));",
+          "  const partitioningChildAsBase64 = btoa(JSON.stringify(partitioningChildToUse)).replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
           "  pm.collectionVariables.set(\"partitioningChild_as_base64\", partitioningChildAsBase64);",
           "}",
           "",

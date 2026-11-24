@@ -45,6 +45,11 @@ object ApiPaths {
     final val Measures = "measures"
     final val MainFlow = "main-flow"
     final val Ancestors = "ancestors"
+    final val Search = "search"
+    final val Parents = "parents"
+    final val Children = "children"
+    final val Descendants = "descendants"
+    final val Lineage = "lineage"
 
   }
 

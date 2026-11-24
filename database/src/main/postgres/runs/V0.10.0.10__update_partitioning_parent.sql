@@ -30,7 +30,7 @@ $$
 --      Update the Parent Partitioning for a given partitioning ID and copies measurements and additional data
 --      from parent to child. Order of work: validate (errs: 41, 42) -> link (errs: 32, 33) -> copy.
 --
---      The link is written by flows._link_to_parents, the routine shared with runs.create_partitioning_with_parents:
+--      The link is written by lineage.link_to_parents, the routine shared with runs.create_partitioning_with_parents:
 --      it rejects self-links, cycles and a child that already has descendants (when a new link would be needed),
 --      serializes writers and adds the child (never its descendants) into every flow containing the parent.
 --
@@ -45,9 +45,9 @@ $$
 -- Parameters:
 --      i_id_partitioning                - id of the partitioning to be changed
 --      i_id_parent_partitioning         - id of the new parent of the partitioning
+--      i_by_user                        - user behind the change
 --      i_copy_measurements              - copies measurements from parent partitioning to child
 --      i_copy_additional_data           - copies additional data from parent partitioning to child
---      i_by_user                        - user behind the change
 --
 -- Returns:
 --      status              - Status code
@@ -59,8 +59,9 @@ $$
 --           the status text names the offending partitioning id(s); nothing is written
 --      33 - The partitioning already has descendants and the parent is not yet its ancestor (it cannot be linked
 --           under a new parent); nothing is written (no copies either)
---      41 - Child Partitioning not found
---      42 - Parent Partitioning not found
+--      41 - Parent Partitioning not found
+--      42 - Child Partitioning not found
+--      51 - Invalid input (i_by_user must not be NULL)
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -72,7 +73,7 @@ BEGIN
     --Check for child partitioning
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_id_partitioning;
     IF NOT FOUND THEN
-        status := 41;
+        status := 42;
         status_text := 'Child Partitioning not found';
         RETURN;
     END IF;
@@ -80,16 +81,16 @@ BEGIN
     --Check for parent partitioning
     PERFORM 1 FROM runs.partitionings WHERE id_partitioning = i_id_parent_partitioning;
     IF NOT FOUND THEN
-        status := 42;
+        status := 41;
         status_text := 'Parent Partitioning not found';
         RETURN;
     END IF;
 
-    --Link FIRST: a self-link, a cycle (32) or a child with descendants (33) returns before anything is written
+    --Link FIRST: any non-success outcome (32, 33, 41, 42, 50, 51) returns before anything is written
     SELECT LTP.status, LTP.status_text
-    FROM flows._link_to_parents(i_id_partitioning, ARRAY[i_id_parent_partitioning], i_by_user) AS LTP
+    FROM lineage.link_to_parents(i_id_partitioning, ARRAY[i_id_parent_partitioning], i_by_user) AS LTP
     INTO _link_status, _link_status_text;
-    IF _link_status IN (32, 33) THEN
+    IF _link_status NOT IN (11, 14) THEN
         status := _link_status;
         status_text := _link_status_text;
         RETURN;
@@ -104,7 +105,9 @@ BEGIN
             runs.get_partitioning_additional_data(i_id_parent_partitioning) AS PAD
         INTO
             _additional_data;
-        PERFORM 1 FROM runs.create_or_update_additional_data(i_id_partitioning, _additional_data, i_by_user);
+        IF _additional_data IS NOT NULL THEN
+            PERFORM 1 FROM runs.create_or_update_additional_data(i_id_partitioning, _additional_data, i_by_user);
+        END IF;
     END IF;
 
     --IF i_copy_measurements is true,
@@ -127,4 +130,5 @@ $$
     SET search_path = pg_catalog, public, pg_temp;
 
 ALTER FUNCTION runs.update_partitioning_parent(BIGINT, BIGINT, TEXT, BOOLEAN, BOOLEAN) OWNER TO atum_owner;
+REVOKE EXECUTE ON FUNCTION runs.update_partitioning_parent(BIGINT, BIGINT, TEXT, BOOLEAN, BOOLEAN) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION runs.update_partitioning_parent(BIGINT, BIGINT, TEXT, BOOLEAN, BOOLEAN) TO atum_user;
