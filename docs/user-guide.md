@@ -151,7 +151,7 @@ You are processing an employee list in a Spark-based data pipeline job. How do y
 
 **Step 1: the employee data to process**
 
-```
+```text
 id  name   salary
 1   Anna   5000
 2   Boris  6000
@@ -164,7 +164,7 @@ id  name   salary
 - Column sum (salary): 18,000
 - Column fingerprint (CRC32 of the name column): each name becomes a number (the result of the hash function), and the numbers are added up:
 
-```
+```text
 Anna  → 2,171,474,313
 Boris → 2,903,660,343
 Clara → 3,324,540,562
